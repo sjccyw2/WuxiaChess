@@ -12,6 +12,7 @@ import { NEW_HEROES } from '../data/new-heroes.js';
 import {
   commandBonus,
   effectsOf,
+  selfEffectsOf,
   applyCondition,
   CONDITION_NAMES,
   progress
@@ -641,6 +642,24 @@ function log(s, type, text, who = '') {
   s.logs.push({ round: s.round, phase: s.phase, type, text, who });
   if (s.logs.length > 250) s.logs.shift();
 }
+// A hero standing in a companion's 布陣 is harder to hit; enemies only find it harder to walk.
+function onZone(s, u) {
+  return (
+    !!s?.zones?.length &&
+    ally(u) &&
+    s.zones.some((z) => z.tiles.some((p) => p.x === u.x && p.y === u.y))
+  );
+}
+// 盟令: while its bearer lives, every other enemy strikes harder. Derived, never stored.
+function bannerBonus(s, u) {
+  if (!s?.units || ally(u)) return 0;
+  let bonus = 0;
+  for (const v of s.units) {
+    const banner = v !== u && living(v) && !ally(v) && unitDetails(v)?.traits?.banner;
+    if (banner) bonus = Math.max(bonus, banner.atk + (s.run?.stage || 0));
+  }
+  return bonus;
+}
 function stat(u, k, s) {
   const items = [ITEMS[u.weapon], ITEMS[u.gear]].filter(Boolean);
   const talent =
@@ -654,9 +673,9 @@ function stat(u, k, s) {
   const c = u.conditions || {};
   const modifier =
     k === 'atk'
-      ? (c.rally?.power || 0) - (c.weak?.power || 0)
+      ? (c.rally?.power || 0) - (c.weak?.power || 0) - (c.disarm?.power || 0) + bannerBonus(s, u)
       : k === 'def'
-        ? -(c.exposed?.power || 0)
+        ? -(c.exposed?.power || 0) - (c.recoil?.power || 0) + (onZone(s, u) ? 4 : 0)
         : k === 'step'
           ? (c.haste?.power || 0) - (c.pin?.power || 0)
           : 0;
@@ -938,6 +957,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
           ' 得 8 護盾'
       );
     }
+    result.notes.push(...priceNotes(art));
     return result;
   }
   if (support) {
@@ -954,6 +974,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       if (entry.overflow) result.notes.push(name + '餘氣護盾 ' + entry.overflow);
     }
     result.amount = result.recipients.find((entry) => entry.id === t.id)?.amount || 0;
+    result.notes.push(...priceNotes(art));
     return result;
   }
   const single = damage(u, t, skill, s?.mapIndex, s, art, basic);
@@ -1030,7 +1051,18 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
     result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
   }
+  result.notes.push(...priceNotes(art));
   return result;
+}
+// What the caster pays after the art, as the preview states it.
+function priceNotes(art) {
+  const notes = [];
+  if (art?.recoil && art.openGuard) notes.push('有攻無守 · 至下回合不還擊，防禦 −' + art.recoil);
+  else if (art?.recoil) notes.push('露空 · 出招後防禦 −' + art.recoil + ' 至下回合');
+  else if (art?.openGuard) notes.push('無守 · 出招後至下回合不還擊');
+  if (art?.rooted) notes.push('立樁 · 下回合不能移動');
+  if (art?.spent) notes.push('曲終 · 下回合不能施展絕技');
+  return notes;
 }
 // Experience and level numbers. The wiki's rules page reads these.
 const GROWTH = {
@@ -1258,6 +1290,12 @@ function resolve(s, u, t, skill) {
       log(s, 'combat', '還擊' + who + '，造成 ' + dealt + ' 點傷害。', unitDetails(t).name);
       reflectStrike(s, u, t, dealt, effects);
     }
+  }
+  if (art && living(u)) {
+    const own = selfEffectsOf(art).map((e) =>
+      e.kind === 'backlash' ? { ...e, turns: LIMIT - s.round + 1 } : e
+    );
+    putEffects(s, u, u, own, effects);
   }
   finishAction(s, u);
   if (f.notes.length) log(s, 'combat', '氣勁變化。' + f.notes.join('。'), who);
