@@ -11,7 +11,7 @@ import { Impact } from '../fx/impact.js';
 import { paintCursor } from './cursor.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
 import { watchArt } from './sprite-sheets.js';
-import { paintField, paintReticles, paintFormations, paintFormationAim } from './zones.js';
+import { paintField, paintReticles, paintFormations, paintFormationAim, paintTauntAim } from './zones.js';
 import {
   compactImage,
   compactSheetName,
@@ -605,6 +605,7 @@ class ActorLayer {
     // formation art is aimed, the tiles it would cover.
     paintFormations(this, this.time);
     paintFormationAim(this, this.formationAim(s, u, art, hover), this.time);
+    paintTauntAim(this, this.tauntAim(s, u, art, hover), this.time);
     const mark = hover && this.mode === 'skill' && G.at(s, hover.x, hover.y);
     if (mark && G.targetOK(s, u, mark, true)) {
       const f = G.forecast(u, mark, true, s);
@@ -694,6 +695,20 @@ class ActorLayer {
     if (!aim) return null;
     const spot = G.targetType(art) === 'ground' ? { x: aim.x, y: aim.y } : G.at(s, aim.x, aim.y);
     return spot && G.targetOK(s, u, spot, true) ? G.zoneTiles(s, spot) : null;
+  }
+  // 挑釁 (SPEC-mechanics §6): the radius is counted from where the hero stands when the art
+  // resolves: his own tile, or for an art that carries him to the ground, the tile aimed at.
+  tauntAim(s, u, art, hover) {
+    if (!art?.taunt) return null;
+    let from = u;
+    if (G.targetType(art) === 'ground' && art.blink) {
+      const aim = this.aim && !this.aim.id ? this.aim : hover;
+      if (!aim || !G.targetOK(s, u, { x: aim.x, y: aim.y }, true)) return null;
+      from = aim;
+    }
+    return fieldCells(s.mapIndex).filter(
+      (p) => G.distance(p, from) <= art.taunt && G.walkable(p.x, p.y, s.mapIndex)
+    );
   }
   location(u, now) {
     const blink = this.tracks.get(u.id)?.clips.find((c) => c.blinkFrom && now < c.blinkAt);
