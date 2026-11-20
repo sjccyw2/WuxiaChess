@@ -196,8 +196,80 @@ function uniqueMembers(ids, allowed) {
     ids.every((id) => allowed.includes(id))
   );
 }
+// The skill redesign renamed some arts and removed others. Saves name arts by id, so a save's ids
+// are brought up to date before it is checked: a renamed id keeps its meaning, and a removed id is
+// forgotten and its points returned (from this table, since the catalogue no longer has it).
+const TECHNIQUES_RENAMED = Object.freeze({ nineYang: 'yijinjing' });
+const TECHNIQUES_REMOVED = Object.freeze({}); // id: { points }
+function migrateSave(s, removed = TECHNIQUES_REMOVED, renamed = TECHNIQUES_RENAMED) {
+  const r = s?.run;
+  if (!r || !Array.isArray(s.units)) return s;
+  // A rename applies once the catalogue has the new id in place of the old one.
+  const names = new Map(
+    Object.entries(renamed).filter(([from, to]) => TECHNIQUES[to] && !TECHNIQUES[from])
+  );
+  const rename = (list) => (Array.isArray(list) ? list.map((id) => names.get(id) ?? id) : list);
+  const gone = (id) => Object.hasOwn(removed, id);
+  let refunded = false;
+  const bench = Array.isArray(r.bench) ? r.bench : [];
+  for (const u of [...s.units.filter((u) => u?.side === 'ally'), ...bench]) {
+    if (!u) continue;
+    for (const k of ['learned', 'guides', 'slots', 'unplacedArts']) u[k] = rename(u[k]);
+    u.activeArt = names.get(u.activeArt) ?? u.activeArt;
+    const lost = Array.isArray(u.learned) ? u.learned.filter(gone) : [];
+    if (Array.isArray(u.slots)) u.slots = u.slots.map((id) => (gone(id) ? null : id));
+    if (Array.isArray(u.unplacedArts)) u.unplacedArts = u.unplacedArts.filter((id) => !gone(id));
+    if (gone(u.activeArt)) u.activeArt = u.slots?.find(Boolean) || null;
+    if (!lost.length) continue;
+    u.learned = u.learned.filter((id) => !gone(id));
+    u.sp = (u.sp || 0) + lost.reduce((n, id) => n + removed[id].points, 0);
+    refunded = true;
+  }
+  r.manuals = rename(r.manuals);
+  if (r.chronicle?.parcel) r.chronicle.parcel.manuals = rename(r.chronicle.parcel.manuals);
+  if (Array.isArray(r.shop))
+    for (const o of r.shop) if (o && names.has(o.id)) o.id = names.get(o.id);
+  if (refunded && Array.isArray(s.logs))
+    G.log(s, 'system', '武學譜重修：已失傳的招式退還武學點數。', '武學傳承');
+  return s;
+}
+// Per-board bookkeeping kept on a hero; `advance` clears it for the next board.
+const BOARD_MARKS = [
+  'struckRound',
+  'hurtRound',
+  'walked',
+  'glideLeft',
+  'againRound',
+  'orderedRound',
+  'usedOnce',
+  'cooldowns'
+];
+const ROUND_MARKS = [...BOARD_MARKS.slice(0, 6), 'signaturePush', 'lastSiphonRound', 'lastDazeRound'];
+// Older saves have none of these fields; a malformed one is dropped rather than failing the save.
+function tidyMarks(s) {
+  for (const u of [...s.units, ...s.run.bench]) {
+    for (const k of ROUND_MARKS) if (u[k] != null && !Number.isFinite(u[k])) delete u[k];
+    for (const k of ['woke', 'phased']) if (u[k] != null && typeof u[k] !== 'boolean') delete u[k];
+    const once = u.usedOnce,
+      cool = u.cooldowns;
+    if (once != null && !(Array.isArray(once) && once.every((id) => typeof id === 'string')))
+      delete u.usedOnce;
+    if (cool != null && !(typeof cool === 'object' && Object.values(cool).every(Number.isInteger)))
+      delete u.cooldowns;
+  }
+  if (s.zones != null) {
+    const zones = Array.isArray(s.zones)
+      ? s.zones.filter(
+          (z) => z && Number.isInteger(z.through) && z.through >= s.round && Array.isArray(z.tiles)
+        )
+      : [];
+    if (zones.length) s.zones = zones;
+    else delete s.zones;
+  }
+}
 function restoreRun(raw) {
   if (!raw) return null;
+  if ([4, 5].includes(raw.version)) migrateSave(raw);
   if (![4, 5].includes(raw.version)) {
     const s = G.restoreGame(raw);
     if (!s) return null;
@@ -426,6 +498,7 @@ function restoreRun(raw) {
     !s.units.every(validConditions)
   )
     return null;
+  tidyMarks(s);
   for (const u of members) {
     if (u.id === 'yang' && u.step === 3) u.step = 4;
     G.settleExperience(s, u);
@@ -818,7 +891,9 @@ function advance(s) {
     delete u.conditions;
     delete u.blinkSerial;
     delete u.unplacedArts;
+    for (const k of BOARD_MARKS) delete u[k];
   }
+  delete s.zones;
   const line = ids.map((id) =>
     Object.assign(
       all.find((u) => u.id === id),
@@ -1108,4 +1183,4 @@ function campModel(s) {
   };
 }
 
-export { NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
