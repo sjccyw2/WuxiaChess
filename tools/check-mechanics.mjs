@@ -3224,6 +3224,75 @@ for (const stage of [5, 6]) {
   check('stage ' + stage + ': a snake slave’s strike poisons', hero.conditions?.poison?.power === venom);
 }
 
+section('board 6 襄陽殘垣: the siege engine and the picker');
+for (const stage of [5, 6]) {
+  const s = realBoard(6, stage);
+  const [jin, huo, bow, scout] = foesOf(s);
+  const want = { 5: [[373, 47, 20, 2, 2], [156, 44, 12, 4, 2]], 6: [[452, 59, 22, 2, 2], [193, 54, 13, 4, 2]] }[stage];
+  check('stage ' + stage + ': 金輪國師 and 霍都 have the spec’s numbers', same(numbersOf(jin), want[0]) && same(numbersOf(huo), want[1]), numbersOf(jin) + ' / ' + numbersOf(huo));
+  check('stage ' + stage + ': 龍象般若功 is a line at 1.30 reaching 3', G.enemyTechnique(jin, s).style === 'line' && G.enemyTechnique(jin, s).factor === 1.3 && G.enemyTechnique(jin, s).reach === 3);
+  check('stage ' + stage + ': 金輪國師’s page', same(pageOf(s, jin), ['輪勢穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。', '絕技射程 3 格。']), JSON.stringify(pageOf(s, jin)));
+  check('stage ' + stage + ': 霍都 holds the gateway (RULINGS F) and picks the lone hero', same(G.enemyTraitLines(s, huo), ['【坐鎮】守在門洞（6，5）一格內，不離位。', '【偏好】專挑落單者。']), JSON.stringify(G.enemyTraitLines(s, huo)));
+  check('stage ' + stage + ': the archer holds the east wall; the horseman rides five', same(G.enemyTraitLines(s, bow), ['【坐鎮】守在東牆（15，6）一格內，不離位。']) && scout.step === 5);
+  check('stage ' + stage + ': the posts are ground the heroes can walk to', postsReachable(s));
+  // 霍都 from his gateway: of two heroes in his reach, the one standing alone.
+  const ring = (c, d) => mapLayout(6).cells.filter((p) => G.distance(p, c) === d && G.walkable(p.x, p.y, 6) && !G.at(s, p.x, p.y));
+  const near = ring(huo, 2);
+  const lone = near[0],
+    pair = near.find((p) => G.distance(p, lone) > 3 && ring(p, 1).some((q) => G.distance(q, huo) >= 2 && G.distance(q, lone) > 1));
+  if (pair) {
+    const friend = ring(pair, 1).find((q) => G.distance(q, huo) >= 2 && G.distance(q, lone) > 1);
+    put(s, 'medic', lone.x, lone.y);
+    put(s, 'guard', pair.x, pair.y).hp = 90;
+    put(s, 'hero', friend.x, friend.y);
+    const before = unit(s, 'medic').hp;
+    soloTurn(s, huo);
+    check('stage ' + stage + ': 霍都 strikes the hero alone, and stays at the gateway', unit(s, 'medic').hp < before && G.distance(huo, { x: 5, y: 4 }) <= 1);
+    closeRound(s);
+  } else check('stage ' + stage + ': room by the gateway for the preference check', false);
+  // The wheels: in line, the hero behind takes half.
+  s.round = 2;
+  const p = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => [1, 2, 3].every((i) => G.walkable(jin.x + dx * i, jin.y + dy * i, 6) && !G.at(s, jin.x + dx * i, jin.y + dy * i)));
+  if (p) {
+    for (const v of G.party(s)) if (['hero', 'medic', 'guard'].includes(v.id)) Object.assign(v, { x: -9, y: -9 }); else v.hp = 0; // the three are put again below; a recruit sits out
+    const front = put(s, 'guard', jin.x + p[0] * 2, jin.y + p[1] * 2);
+    const back = put(s, 'medic', jin.x + p[0] * 3, jin.y + p[1] * 3);
+    put(s, 'hero', mapLayout(6).allies[0].x, mapLayout(6).allies[0].y);
+    const life = back.hp;
+    soloTurn(s, jin);
+    check('stage ' + stage + ': the wheel goes through to the hero behind', back.hp < life, [jin.x, jin.y, front.x, front.y, back.x, back.y]);
+  } else check('stage ' + stage + ': a straight run of ground by 金輪國師', false);
+}
+
+section('board 7 寒玉石室: the venom that stops the healing');
+{
+  const s = realBoard(7, 7);
+  const [li, hong, bow, scout] = foesOf(s);
+  check('李莫愁 and 洪凌波 have the spec’s numbers', same(numbersOf(li), [483, 70, 19, 4, 2]) && same(numbersOf(hong), [255, 65, 16, 3, 2]), numbersOf(li) + ' / ' + numbersOf(hong));
+  check('冰魄銀針: poison 10 and 內傷, reach 3', G.enemyTechnique(li, s).power === 10 && G.enemyTechnique(li, s).extra === 'wound' && G.enemyTechnique(li, s).reach === 3);
+  check('李莫愁’s page', same(pageOf(s, li), ['令目標中毒，兩次毒發各損 10 氣血，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。', '絕技射程 3 格。', '【偏好】專挑療傷者。']), JSON.stringify(pageOf(s, li)));
+  check('洪凌波’s post is (6,4), walkable', G.walkable(5, 3, 7) && same(G.enemyTraitLines(s, hong), ['【坐鎮】守在石頸北口（6，4）一格內，不離位。']), JSON.stringify(G.enemyTraitLines(s, hong)));
+  check('the posts are ground the heroes can walk to', postsReachable(s));
+  check('the rank and file are 赤練門下', G.unitDetails(bow).name === '赤練門下' && G.unitDetails(scout).name === '赤練門下');
+  // Her needles on a healer: poison and 內傷, and the healer's heal is halved.
+  s.round = 2;
+  const ring = mapLayout(7).cells.filter((p) => G.distance(p, li) === 3 && G.walkable(p.x, p.y, 7) && !G.at(s, p.x, p.y));
+  for (const v of G.party(s)) if (['hero', 'medic', 'guard'].includes(v.id)) Object.assign(v, { x: -9, y: -9 }); else v.hp = 0; // the three are put again below; a recruit sits out
+  put(s, 'medic', ring[0].x, ring[0].y);
+  const guardAt = ring.find((p) => G.distance(p, ring[0]) > 2);
+  put(s, 'guard', guardAt.x, guardAt.y).hp = 60;
+  put(s, 'hero', mapLayout(7).allies[0].x, mapLayout(7).allies[0].y);
+  soloTurn(s, li);
+  const medic = unit(s, 'medic');
+  check('she picks the healer over a more hurt hero', medic.conditions?.poison?.power === 10 && medic.conditions?.wound?.power === 5, JSON.stringify(medic.conditions));
+  closeRound(s);
+  const f = G.forecast(medic, medic, true, s);
+  check('wounded, the healer’s own heal is halved', f.notes.includes('內傷 · 療效減半'));
+  // 洪凌波 stays at the neck.
+  soloTurn(s, hong);
+  check('洪凌波 stays within one of the neck', G.distance(hong, { x: 5, y: 3 }) <= 1);
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

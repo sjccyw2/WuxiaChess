@@ -248,11 +248,18 @@ const ENCOUNTERS = [
       '神鵰俠侶',
       '五輪大轉',
       '龍象般若功',
-      'sweep',
+      'line',
       'guo',
       '蒙古國師，立功只肯憑自己的五隻輪子。此刻有一股勁道推著他動手，他不認這是自己的本意。五輪一轉，身旁的人也受波及。',
       'guo',
-      'sepia(.65) saturate(1.3)'
+      'sepia(.65) saturate(1.3)',
+    {
+      mods: { hp: 1.1, def: 2, step: 2, range: 2 },
+      sig: {
+        reach: 3,
+        note: '輪勢穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。'
+      }
+    }
     ),
     adversary(
       '霍都',
@@ -264,7 +271,12 @@ const ENCOUNTERS = [
       'xiao',
       '蒙古王子，拜金輪國師為師，向來見勢不妙便走。今日兩條腿給釘在門洞裡，只好摺扇一指，專挑對手的弱處下手。',
       'duan',
-      'sepia(.25) hue-rotate(-32deg)'
+      'sepia(.25) hue-rotate(-32deg)',
+    {
+      mods: { hp: 0.9, step: 4, range: 2 },
+      prefers: 'isolated',
+      post: { tile: 'spawn', tether: 1, wake: false, note: '守在門洞{tile}一格內，不離位。' }
+    }
     )
   ],
   [
@@ -278,7 +290,12 @@ const ENCOUNTERS = [
       'duan',
       '赤練仙子殺人，向來為的是心裡那個人。這一回連恨都不是她自己的，指間卻仍扣著冰魄銀針。',
       'xiao',
-      'sepia(.4) hue-rotate(-43deg) saturate(1.45)'
+      'sepia(.4) hue-rotate(-43deg) saturate(1.45)',
+    {
+      mods: { def: -2, range: 2 },
+      sig: { reach: 3, extra: 'wound' },
+      prefers: 'healer'
+    }
     ),
     adversary(
       '洪凌波',
@@ -290,7 +307,16 @@ const ENCOUNTERS = [
       'xiao',
       '李莫愁的徒弟，守著寒玉室的出口。她不想動手，心裡的聲音卻催得她放不下拂塵。',
       'medic',
-      'sepia(.32) hue-rotate(26deg)'
+      'sepia(.32) hue-rotate(26deg)',
+    {
+      mods: { def: 2, range: 2 },
+      post: {
+        tile: { x: 5, y: 3 },
+        tether: 1,
+        wake: false,
+        note: '守在石頸北口{tile}一格內，不離位。'
+      }
+    }
     )
   ],
   [
@@ -465,9 +491,47 @@ const RANKS = [
     }
   },
   // ── board 6
-  {},
+  {
+    bow: {
+      name: '蒙古箭手',
+      role: '弓手',
+      school: '蒙古軍',
+      mini: 'archer',
+      basic: '強弓',
+      bio: '伏在東牆缺口，射城下奔走的人。',
+      traits: {
+        post: { tile: 'spawn', tether: 1, wake: false, note: '守在東牆{tile}一格內，不離位。' }
+      }
+    },
+    scout: {
+      name: '蒙古鐵騎',
+      role: '遊騎',
+      school: '蒙古軍',
+      mini: 'bandit',
+      basic: '馬刀',
+      bio: '從牆缺直衝陣後的輕騎。',
+      traits: { mods: { step: 5 } }
+    }
+  },
   // ── board 7
-  {},
+  {
+    bow: {
+      name: '赤練門下',
+      role: '弓手',
+      school: '赤練門下',
+      mini: 'archer',
+      basic: '赤練針',
+      bio: '守北洞的女弟子，針上也淬了毒。'
+    },
+    scout: {
+      name: '赤練門下',
+      role: '弟子',
+      school: '赤練門下',
+      mini: 'bandit',
+      basic: '拂塵手',
+      bio: '在寒玉壁間來回巡看的弟子。'
+    }
+  },
   // ── board 8
   {},
   // ── board 9
@@ -532,7 +596,7 @@ const VILLAIN_FORMS = {
   大嵩陽神掌: [1.22, 'vacantFist'],
   蛤蟆功: [1.4, 'toadLunge'],
   靈蛇拳法: [1.12, 'beggarBind'],
-  龍象般若功: [1.39, 'flyingDragon'],
+  龍象般若功: [1.3, 'flyingDragon'],
   狂風迅雷功: [1.14, 'foxFeint'],
   冰魄銀針: [1.08, 'iceSoulNeedle'],
   赤練掌法: [1.15, 'softPalm'],
