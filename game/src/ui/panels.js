@@ -1076,7 +1076,7 @@ function attackPage(s, source, target, skill) {
   if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
   if (skill)
     lines.push(
-      line('自身消耗', cost(u, s) + ' 內力' + (f.hpCost ? '、' + f.hpCost + ' 氣血' : ''))
+      line('自身消耗', f.mpCost + ' 內力' + (f.hpCost ? '、' + f.hpCost + ' 氣血' : ''))
     );
   return (
     titleHead(friendly || blink ? 'spark' : 'swords', title) +

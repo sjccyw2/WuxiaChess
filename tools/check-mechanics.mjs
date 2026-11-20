@@ -570,6 +570,132 @@ section('reach and counters');
   check('under 無守 there is none', open.taken === 0, open.taken);
 }
 
+// ── Conditional power: strikeFactor (§4) ─────────────────────────────────
+section('conditional power');
+{
+  const MF = await load('rules/move-facts.js');
+  // One strike's factor and notes, and whether the preview and the power agree with it.
+  function strike(s, u, t, fields) {
+    const id = teach(u, defineArt({ range: 3, mp: 2, ...fields }), 2);
+    const art = TECHNIQUES[id];
+    const sf = G.strikeFactor(s, u, art, t);
+    const f = G.forecast(u, t, true, s);
+    const power = G.attackPower(s, u, art, G.basicFor(u), t);
+    const expected = G.stat(u, 'atk', s) * sf.factor + G.stat(u, 'power', s) + 4 + (t.hp <= t.maxHp / 2 ? BM.commandBonus(s, u, 'pursuit') : 0);
+    return { ...sf, f, consistent: Math.abs(power - expected) < 1e-9, facts: MF.moveFacts(s, u, id) };
+  }
+  const near = (a, b) => Math.abs(a - b) < 1e-9;
+
+  // 破招: by the target's class at the moment of the strike.
+  const s = board();
+  const hero = put(s, 'hero', 4, 7);
+  const blade = put(s, 'blade', 5, 7),
+    bow = put(s, 'bow', 6, 7);
+  const close = strike(s, hero, put(s, 'scout', 4, 6), { answer: 'close' });
+  check('破招 close ＋0.30 on a one-tile fighter', near(close.factor, 1.8) && close.f.notes.includes('破招 · 近身兵刃 ＋0.30'), close.factor);
+  check('strikeFactor feeds attackPower', close.consistent);
+  check('moveFacts states the class', close.facts.effectLines.includes('破招 · 目標為近身（射程 1）時倍率 ＋0.30'), close.facts.effectLines);
+  const missed = strike(s, hero, bow, { answer: 'close' });
+  check('破招 close gives nothing on an archer, and says nothing', near(missed.factor, 1.5) && !missed.f.notes.some((n) => n.startsWith('破招')));
+  check('破招 ranged on the archer', near(strike(s, hero, bow, { answer: 'ranged' }).factor, 1.8));
+  const tied = board();
+  const archer = put(tied, 'bow', 6, 7);
+  put(tied, 'hero', 4, 7);
+  BM.applyCondition(tied, archer, { kind: 'disarm', power: 5, turns: 2 }, archer);
+  check('a disarmed archer counts as close', near(strike(tied, unit(tied, 'hero'), archer, { answer: 'close' }).factor, 1.8));
+  const master = strike(s, hero, blade, { answer: 'master' });
+  check('破招 master on the lieutenant', near(master.factor, 1.8) && master.f.notes.includes('破招 · 首領 ＋0.30'));
+  check('the basic attack never takes a bonus', !G.forecast(hero, blade, false, s).notes.some((n) => n.startsWith('破招')));
+
+  // 孤行 and 合璧, with the partner table and 左右互搏.
+  const p = board(['yang', 'xiao', 'hero']);
+  const yang = put(p, 'yang', 4, 7),
+    foe = put(p, 'blade', 5, 7);
+  const alone = strike(p, yang, foe, { lone: 0.25 });
+  check('孤行 ＋0.25 with no companion beside him', near(alone.factor, 1.75) && alone.f.notes.includes('孤行 ＋0.25'));
+  put(p, 'hero', 4, 6);
+  const crowded = strike(p, yang, foe, { lone: 0.25 });
+  check('孤行 fails with a companion beside, and names him', near(crowded.factor, 1.5) && crowded.f.notes.includes('孤行未成 · 令狐冲在旁'), crowded.f.notes);
+  const any = strike(p, yang, foe, { paired: { any: 0.2, partner: 0.4 } });
+  check('合璧 ＋0.20 with any companion beside', near(any.factor, 1.7) && any.f.notes.includes('合璧 ＋0.20'));
+  put(p, 'xiao', 3, 7);
+  const pair = strike(p, yang, foe, { paired: { any: 0.2, partner: 0.4 } });
+  check('合璧 ＋0.40 with his partner beside', near(pair.factor, 1.9) && pair.f.notes.includes('合璧 · 小龍女在旁 ＋0.40'), pair.f.notes);
+  check('moveFacts names the partner', pair.facts.effectLines.includes('合璧 · 有同伴相鄰 ＋0.20，小龍女相鄰 ＋0.40'), pair.facts.effectLines);
+  const lone = board(['xiao', 'yang', 'hero']);
+  const xiao = put(lone, 'xiao', 4, 7),
+    target = put(lone, 'blade', 5, 7);
+  check('合璧 alone gives nothing', near(strike(lone, xiao, target, { paired: { any: 0.2, partner: 0.4 } }).factor, 1.5));
+  xiao.learned.push(defineArt({ pairsSelf: true }));
+  const self = strike(lone, xiao, target, { paired: { any: 0.2, partner: 0.4 } });
+  check('左右互搏 counts as a companion', near(self.factor, 1.7) && self.f.notes.includes('合璧 · 左右互搏 ＋0.20'));
+
+  // 黯然, after the art's own price.
+  const d = board(['yang', 'hero', 'medic']);
+  const hurt = Object.assign(put(d, 'yang', 4, 7), { hp: 70, maxHp: 128 });
+  const dire = strike(d, hurt, put(d, 'blade', 5, 7), { dire: 0.6, hpCost: 9 });
+  const n = Math.round(0.6 * Math.min(1, (1 - 61 / 128) / 0.75) * 100) / 100;
+  check('黯然 reads 氣血 after the price', near(dire.factor, 1.5 + n) && dire.f.notes.includes('黯然 ＋' + n.toFixed(2) + '（氣血 61／128）'), dire.f.notes);
+  hurt.hp = 20;
+  check('黯然 is at most its number', near(strike(d, hurt, unit(d, 'blade'), { dire: 0.6 }).factor, 2.1));
+
+  // 斬殘 at half 氣血.
+  const e = board(['hu', 'hero', 'medic']);
+  const hu = put(e, 'hu', 4, 7),
+    prey = put(e, 'blade', 5, 7);
+  check('斬殘 gives nothing above half', near(strike(e, hu, prey, { execute: 0.5 }).factor, 1.5));
+  prey.hp = Math.floor(prey.maxHp / 2);
+  const kill = strike(e, hu, prey, { execute: 0.5 });
+  check('斬殘 ＋0.50 at half or below', near(kill.factor, 2) && kill.f.notes.includes('斬殘 ＋0.50') && kill.consistent);
+
+  // 還報 and the bookkeeping behind it.
+  const a = board(['guard', 'hero', 'medic']);
+  const guard = put(a, 'guard', 4, 7),
+    attacker = put(a, 'blade', 5, 7);
+  G.startEnemy(a);
+  G.enemyAct(a, attacker);
+  check('an enemy blow that draws blood stamps hurtRound', guard.hurtRound === 1);
+  for (const v of G.enemies(a)) v.acted = true;
+  G.nextRound(a);
+  const avenge = strike(a, guard, attacker, { avenge: 0.4 });
+  check('還報 ＋0.40 the round after', near(avenge.factor, 1.9) && avenge.f.notes.includes('還報 ＋0.40'));
+  quietTurn(a);
+  check('還報 is gone a round later', near(strike(a, guard, attacker, { avenge: 0.4 }).factor, 1.5));
+  const shielded = board(['guard', 'hero', 'medic']);
+  const wall = put(shielded, 'guard', 4, 7);
+  BM.applyCondition(shielded, wall, { kind: 'shield', power: 999, turns: 2 }, wall);
+  G.startEnemy(shielded);
+  G.enemyAct(shielded, put(shielded, 'blade', 5, 7));
+  check('a blow a shield caught does not', wall.hurtRound === undefined);
+  const b = board();
+  const striker = put(b, 'hero', 4, 7);
+  put(b, 'blade', 5, 7);
+  G.resolve(b, striker, unit(b, 'blade'), false);
+  check('a basic attack stamps struckRound', striker.struckRound === 1);
+  const helper = put(b, 'medic', 3, 6);
+  const patient = put(b, 'guard', 3, 7);
+  patient.hp -= 20;
+  check('a support art does not', !!G.resolve(b, helper, patient, true) && helper.struckRound === undefined);
+  G.waitUnit(b, unit(b, 'guard'));
+  check('nor does waiting', unit(b, 'guard').struckRound === undefined);
+
+  // 傾力: spends all 內力, factor by formula, then other bonuses.
+  const g = board(['duan', 'hero', 'medic']);
+  const duan = Object.assign(put(g, 'duan', 4, 7), { mp: 40 });
+  const surgeFields = { factor: 0.8, surge: { rate: 0.015, cap: 1.55 }, mp: 10 };
+  const surge = strike(g, duan, put(g, 'blade', 6, 7), surgeFields);
+  check('傾力 factor is min(cap, factor + rate × 內力)', near(surge.factor, 1.4) && surge.f.notes.includes('傾力 · 耗內力 40，倍率 1.40'), surge.f.notes);
+  check('the preview’s cost is all the 內力', surge.f.mpCost === 40);
+  duan.mp = 80;
+  check('傾力 stops at its cap', near(strike(g, duan, unit(g, 'blade'), surgeFields).factor, 1.55));
+  const low = unit(g, 'blade');
+  low.hp = Math.floor(low.maxHp / 2);
+  check('and other bonuses add on top', near(strike(g, duan, low, { ...surgeFields, execute: 0.5 }).factor, 2.05));
+  check('moveFacts states the rate and cap', surge.facts.effectLines.includes('傾力 · 耗盡內力，每點倍率 ＋0.015，最高 1.55'), surge.facts.effectLines);
+  G.resolve(g, duan, unit(g, 'blade'), true);
+  check('resolving it leaves no 內力', duan.mp === 0);
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

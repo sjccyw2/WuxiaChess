@@ -1000,12 +1000,63 @@ function targetOK(s, u, t, skill) {
     return entry.amount || entry.mp || entry.clean.length || entry.overflow;
   });
 }
+// Partners: each one's 合璧 arts are strongest with the other beside them.
+const PARTNERS = { xiao: 'yang', yang: 'xiao' };
+const ANSWERS = { close: '近身兵刃', ranged: '遠攻', master: '首領' };
+const plus = (n) => '＋' + n.toFixed(2);
+// An art's factor for one strike: its own, with every conditional bonus that holds added (§4).
+// Read where the pieces stand as the blow lands, before its push or pull. The forecast, the strike
+// itself, splash and counters all go through attackPower, so they all see the same number.
+function strikeFactor(s, u, art, t = null) {
+  const notes = [];
+  let factor = art.factor ?? 1.5,
+    extra = 0;
+  const add = (n, note) => {
+    extra += n;
+    notes.push(note);
+  };
+  if (art.surge) {
+    factor = Math.min(art.surge.cap, factor + art.surge.rate * u.mp);
+    notes.push('傾力 · 耗內力 ' + u.mp + '，倍率 ' + factor.toFixed(2));
+  }
+  if (art.answer && t) {
+    const rank = unitDetails(t)?.rank,
+      span = reach(s, t);
+    const hit = { close: span === 1, ranged: span >= 2, master: rank === 'boss' || rank === 'mini' };
+    if (hit[art.answer]) add(0.3, '破招 · ' + ANSWERS[art.answer] + ' ＋0.30');
+  }
+  const beside = (s?.units || []).filter(
+    (v) => v !== u && living(v) && v.side === u.side && distance(v, u) === 1
+  );
+  if (art.lone) {
+    if (!beside.length) add(art.lone, '孤行 ' + plus(art.lone));
+    else notes.push('孤行未成 · ' + beside.map((v) => unitDetails(v).name).join('、') + '在旁');
+  }
+  if (art.paired) {
+    const partner = beside.find((v) => v.id === PARTNERS[u.id]);
+    // 左右互搏: a hero who has learned it is her own second sword.
+    const self = u.learned?.some((id) => TECHNIQUES[id]?.pairsSelf);
+    const { any, partner: most } = art.paired;
+    if (partner) add(most, '合璧 · ' + unitDetails(partner).name + '在旁 ' + plus(most));
+    else if (beside.length) add(any, '合璧 ' + plus(any));
+    else if (self) add(any, '合璧 · 左右互搏 ' + plus(any));
+  }
+  if (art.dire) {
+    const h = u.hp - (art.hpCost || 0);
+    const n = Math.round(art.dire * Math.min(1, (1 - h / u.maxHp) / 0.75) * 100) / 100;
+    if (n > 0) add(n, '黯然 ' + plus(n) + '（氣血 ' + h + '／' + u.maxHp + '）');
+  }
+  if (art.avenge && s && u.hurtRound === s.round - 1) add(art.avenge, '還報 ' + plus(art.avenge));
+  if (art.execute && t && t.hp <= t.maxHp / 2) add(art.execute, '斬殘 ' + plus(art.execute));
+  if (extra) factor = Math.round((factor + extra) * 1e6) / 1e6;
+  return { factor, notes };
+}
 function attackPower(s, u, art, basic = basicFor(u), target = null) {
   const base = art
     ? stat(u, 'power', s) + 4
     : (basic.basicBonus || 0) + commandBonus(s, u, 'basic');
   const pursuit = target && target.hp <= target.maxHp / 2 ? commandBonus(s, u, 'pursuit') : 0;
-  return stat(u, 'atk', s) * (art ? (art.factor ?? 1.5) : 1) + base + pursuit;
+  return stat(u, 'atk', s) * (art ? strikeFactor(s, u, art, target).factor : 1) + base + pursuit;
 }
 function damage(
   u,
@@ -1067,7 +1118,9 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     notes: [],
     landing: [],
     selfHeal: 0,
-    reflected: 0
+    reflected: 0,
+    // 傾力 spends everything the caster has; any other art its price.
+    mpCost: art ? (art.surge ? u.mp : artCost(s, u, art)) : 0
   };
   if (type === 'ground') {
     if (s && result.forms.includes('landing')) {
@@ -1105,6 +1158,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   const plan = contactPlan(s, u, t, art, result.forms, step, unitDetails(t)?.rank === 'boss');
   result.plan = plan;
   result.notes = plan.notes;
+  if (art) result.notes.push(...strikeFactor(s, u, art, t).notes);
   result.effects.push(...plan.effects);
   const baseHits = (art?.hits || [1]).map(
     (part, i) => Math.round(single * part) + (i === 0 ? plan.extra : 0)
@@ -1340,7 +1394,7 @@ function resolve(s, u, t, skill) {
     oldKills = s.stats.kills,
     from = { x: u.x, y: u.y };
   if (skill) {
-    u.mp -= cost(u, s);
+    u.mp -= f.mpCost;
     progress(u, 'casts', 1);
   }
   if (f.hpCost) {
@@ -1381,6 +1435,8 @@ function resolve(s, u, t, skill) {
       putEffects(s, u, v, f.effects, effects);
     }
   } else if (f.type === 'enemy') {
+    // 留力 asks whether the hero struck last round; a counter or a support art is no strike.
+    if (ally(u)) u.struckRound = s.round;
     let total = 0;
     for (const power of f.rawHits) {
       if (!living(t)) break;
@@ -1654,6 +1710,8 @@ function enemyAct(s, u) {
   const raw = damage(u, t, false, s.mapIndex, s);
   const strikePower = art ? Math.round(raw * art.factor) : raw;
   const n = wound(s, t, strikePower, u);
+  // 還報 counts only 氣血 an enemy's own action took, never what a shield caught.
+  if (n) t.hurtRound = s.round;
   const effects = [[t.id, '−' + n]];
   const attack = art?.name || basicFor(u).name;
   log(
@@ -1668,6 +1726,7 @@ function enemyAct(s, u) {
     if (art.style === 'sweep') {
       for (const other of friends.filter((v) => v !== t && living(v) && distance(v, t) === 1)) {
         const chip = wound(s, other, Math.max(1, Math.round(strikePower / 4)), u);
+        if (chip) other.hurtRound = s.round;
         effects.push([other.id, '−' + chip]);
         log(s, 'combat', '被餘勁掃中，損失 ' + chip + ' 點氣血。', unitDetails(other).name);
       }
@@ -1732,4 +1791,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, move, undo, affectedFriends, targetOK, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
