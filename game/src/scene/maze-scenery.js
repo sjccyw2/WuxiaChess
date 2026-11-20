@@ -1073,7 +1073,7 @@ function ranges(m, index, p) {
       if (index === 8) {
         if (j % 3 === 0)
           m.frame(x, r.range(-1.75, 0.11), z, -a, 1, () => {
-            m.rock(0, -1.25, 0, s * 0.61, 1.28, s * 0.56, 0x666e82, 0x9292a1, 8);
+            m.rock(0, -1.25, 0, s * 0.61, 1.28, s * 0.56, 0x9a9bba, 0xd9d3dc, 8);
             m.box(0, 0.34, 0, s * 0.62, 0.68, s * 0.48, 0xa1979b);
             roof(m, s * 0.85, s * 0.71, 0.68, 0.66, [0x606781, 0x798396, 0x959ba7]);
             m.frame(
@@ -1082,7 +1082,7 @@ function ranges(m, index, p) {
               0,
               0,
               1,
-              () => m.crystal(0, 0, 0, s * 0.4, 1.91, 0x626a82, 0x898ca0, 6),
+              () => m.crystal(0, 0, 0, s * 0.4, 1.91, 0x8a8eae, 0xb3b1c9, 6),
               0,
               Math.PI
             );
