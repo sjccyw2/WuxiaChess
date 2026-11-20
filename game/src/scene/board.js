@@ -4,6 +4,9 @@ import { FerryCamera } from './camera.js';
 import { makeScenery, decorateWorld, Cutaway } from './environment.js';
 import { SoftwareScene } from './software.js';
 import { ActorLayer } from '../actors/actors.js';
+import { POLISH } from '../polish.js';
+import { installGrade } from './stage-light.js';
+import { FramePacer } from './pacing.js';
 
 // A legal destination always owns its entire projected tile, including pixels painted by a sprite.
 function resolveBoardPick(s, mode, ground, body, reach) {
@@ -91,6 +94,8 @@ class BattleBoard {
       renderer.outputColorSpace = T.SRGBColorSpace;
       renderer.toneMapping = T.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.02;
+      // The lit stage folds its colour grade into tone mapping.
+      if (POLISH.lighting) installGrade(T, renderer);
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = T.PCFSoftShadowMap;
       renderer.shadowMap.autoUpdate = false;
@@ -225,6 +230,20 @@ class BattleBoard {
   strikeEffect(u, t, kind, origin) {
     this.layers.pose(u, t, kind, origin);
   }
+  // ---- Combat feel: camera direction (polish switch cameraFollow; see scene/camera.js) ----
+  // The enemy phase begins (true) or hands back to the player (false).
+  watch(on) {
+    if (!on && this.pointers.size) this.view.home = null;
+    this.view.watch(on);
+    this.draw();
+  }
+  // Brings an acting piece, and whoever it strikes, into view when they are near the edge.
+  follow(...units) {
+    if (this.pointers.size || this.title) return;
+    const tiles = units.filter(Boolean).map((u) => ({ x: u.x, y: u.y }));
+    if (this.view.follow(tiles, this.prefs.motion ? 320 : 0)) this.draw();
+  }
+  // ---- end combat feel ----
   draw() {
     if (this.pending || document.hidden) return;
     clearTimeout(this.timer);
@@ -264,25 +283,51 @@ class BattleBoard {
       this.layout = false;
       this.dirty = true;
     }
+    // Combat feel: a camera ease in progress moves the view, so the world is redrawn.
+    if (this.view.step(now)) this.dirty = true;
     const cam = this.view.camera;
     if (this.dirty) {
       this.cut.update(cam, this.title);
       this.locateKeys();
     }
     const covered = this.covered();
+    // Smooth idle: the pacer times real frames and says how often the world may redraw.
+    const pace = POLISH.smoothIdle ? (this.pace ||= new FramePacer()) : null;
+    if (pace) {
+      if (this.pacedScenery !== this.scenery) pace.settle();
+      this.pacedScenery = this.scenery;
+      pace.begin(now);
+    }
+    const playing = this.layers.playing;
     // While fighters are acting, their frames take priority over animated water.
-    const ripple =
-      !covered && !this.layers.playing && this.prefs.motion && now - (this.lastWorld || 0) > 115;
-    if (this.renderer && (this.dirty || ripple)) {
+    const ripple = pace
+      ? !covered && this.prefs.motion && pace.worldDue(now, playing)
+      : !covered && !playing && this.prefs.motion && now - (this.lastWorld || 0) > 115;
+    const world = this.renderer && (this.dirty || ripple);
+    if (world) {
       this.water.material.uniforms.time.value = this.prefs.motion ? now / 1000 : 0;
       this.renderer.render(this.world, cam);
       this.lastWorld = now;
     } else if (this.soft && this.dirty) this.soft.render(cam);
     this.dirty = false;
     this.layers.draw(now, this.title, this.reach, this.hover, covered);
+    pace?.end(now, Boolean(world), playing);
     if (covered || this.layers.waitingForArt) return;
-    if (this.layers.playing || (this.prefs.motion && this.layers.effects.length)) this.draw();
-    else if (this.prefs.motion) this.timer = setTimeout(() => this.draw(), 105);
+    if (this.layers.playing || (this.prefs.motion && this.layers.effects.length)) {
+      this.draw();
+      pace?.chain();
+    } else if (this.prefs.motion) {
+      if (pace?.smooth) {
+        // Idle motion at the display's rate; draw() does nothing while the tab is hidden.
+        this.draw();
+        pace.chain();
+      } else this.timer = setTimeout(() => this.draw(), 105);
+    }
+    // Combat feel: keep frames coming until a camera ease has finished.
+    if (this.view.easing) {
+      this.draw();
+      pace?.chain();
+    }
   }
   pointFromEvent(e) {
     const r = this.scene.getBoundingClientRect();

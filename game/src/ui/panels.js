@@ -41,6 +41,8 @@ import {
   stat
 } from '../rules/game.js';
 import { icon } from './icons.js';
+import { POLISH } from '../polish.js';
+import { extraHotkeys } from './field-extras.js';
 const portraits = {
   huang: 'huang',
   yang: 'yang',
@@ -792,7 +794,9 @@ function helpPage() {
           `<details class="hud-disclosure"><summary>${icon(ic, 17)} ${title}</summary><p>${body}</p></details>`
       )
       .join('') +
-    '</div><div class="hotkeys"><kbd>1</kbd> 移動 <kbd>2</kbd> 招式 <kbd>3</kbd> 待命 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 返回 <kbd>?</kbd> 指南</div>'
+    '</div><div class="hotkeys"><kbd>1</kbd> 移動 <kbd>2</kbd> 招式 <kbd>3</kbd> 待命 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 返回 <kbd>?</kbd> 指南' +
+    extraHotkeys() +
+    '</div>'
   );
 }
 function settingsPage(p, inBattle = true) {
@@ -930,7 +934,44 @@ function attackPage(s, source, target, skill) {
       info.school +
       '</small><strong>' +
       info.name +
-      '</strong></div>'
+      '</strong>' +
+      (POLISH.forecastBars ? forecastBar(v) : '') +
+      '</div>'
+    );
+  };
+  // Polish (forecastBars): each fighter's health, with the predicted change as its own segment.
+  // Built only from what forecast() returned: the blow, the reply, and any cost or recovery.
+  const forecastBar = (v) => {
+    const healed = f.heal ? f.recipients.find((e) => e.id === v.id)?.amount || 0 : 0;
+    const own = v === u ? f.selfHeal - f.hpCost - f.counter : 0;
+    const taken = friendly || blink ? healed : v === t ? -f.amount : 0;
+    const after = Math.max(0, Math.min(v.maxHp, v.hp + own + taken));
+    const share = (n) => Math.max(0, Math.min(100, (100 * n) / v.maxHp));
+    const from = share(Math.min(v.hp, after)),
+      to = share(Math.max(v.hp, after));
+    const kind = after < v.hp ? ' loss' : after > v.hp ? ' gain' : '';
+    const left = after / v.maxHp;
+    const level = after <= 0 ? ' ko' : left < 0.25 ? ' crit' : left < 0.5 ? ' warn' : '';
+    return (
+      '<span class="fc-bar' +
+      kind +
+      level +
+      '" role="img" aria-label="氣血 ' +
+      v.hp +
+      (kind ? ' → ' + after : '') +
+      '／' +
+      v.maxHp +
+      '"><span class="fc-track"><i class="fc-now" style="width:' +
+      from +
+      '%"></i>' +
+      (kind ? '<i class="fc-delta" style="left:' + from + '%;width:' + (to - from) + '%"></i>' : '') +
+      '</span><span class="fc-figures"><b>' +
+      v.hp +
+      '</b>' +
+      (kind ? '<i>→</i><b class="fc-after">' + after + '</b>' : '') +
+      '<small>／' +
+      v.maxHp +
+      '</small></span></span>'
     );
   };
   const lines = [];
@@ -954,12 +995,14 @@ function attackPage(s, source, target, skill) {
         f.heal ? 'positive' : 'negative'
       )
     );
-    lines.push(
-      line(
-        '目標氣血',
-        t.hp + ' → ' + (f.heal ? Math.min(t.maxHp, t.hp + f.amount) : Math.max(0, t.hp - f.amount))
-      )
-    );
+    // Polish (forecastTrim): the fighter's health bar already shows this change.
+    if (!(POLISH.forecastTrim && POLISH.forecastBars))
+      lines.push(
+        line(
+          '目標氣血',
+          t.hp + ' → ' + (f.heal ? Math.min(t.maxHp, t.hp + f.amount) : Math.max(0, t.hp - f.amount))
+        )
+      );
   }
   if (!blink && !friendly)
     lines.push(line('敵方還擊', f.counterRaw ? '−' + f.counter + ' 氣血' : '無'));

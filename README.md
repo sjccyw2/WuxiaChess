@@ -37,6 +37,8 @@ game/
   vendor/             three.js
   src/
     app.js            entry point: screens, input, save/load
+    polish.js         presentation switches: one per visual upgrade (see below)
+    loading.js        lifts the loading veil and fetches the dialog font early
     data/             content tables: heroes, arts, foes, maps, story (see below)
     rules/            game logic: combat, journey, shop, formations
     scene/            3D battlefield, camera, scenery, landforms
@@ -63,6 +65,21 @@ tools/
   check-story.mjs     plays hundreds of shuffled runs and checks the story holds
   extra-fonts.py      regenerates the extra font characters for the game and the wiki
 ```
+
+## Presentation switches
+
+Every visual upgrade layered on the original look has a switch in `game/src/polish.js`: board
+pieces, combat effects, lighting and water, panel finish, the loading veil, and the added
+controls (danger zone, `Tab` to the next hero, the side-docked strike forecast). Set a switch to
+`false` to turn that one feature off; nothing else needs to change.
+
+To compare without editing the file:
+
+- `game/?classic` turns every switch off and shows the original look.
+- `game/?polish-off=hitStop,screenShake` turns off only the ones named.
+
+Styles for these features live in `styles/12-combat.css` and `styles/13-panels.css`, and every
+rule there is scoped under an `html.polish-…` class that the switch controls.
 
 ## How the story is put together
 
@@ -122,7 +139,7 @@ Builds the catalog and the text listing from the game sources and fails if a pag
 
 ## Fonts
 
-The two River fonts in `game/assets/` contain only the characters the game first used. Characters added later, in game text or in the wiki's manuscripts, fall back to a system font unless they are added to the supplements: `game/assets/extra-*.woff2` for characters the game needs, and `wiki/assets/lore-*.woff2` for the rest. One command rebuilds both:
+The two River fonts in `game/assets/` contain only the characters the game first used. Each exists twice with the same characters: the game loads `river-*.woff2`; the `.woff` files are what the wiki loads, the fallback for browsers without WOFF2, and what `tools/extra-fonts.py` reads. The `.woff2` files hold the Traditional Chinese glyphs only: the alternate Japanese, Korean, Simplified and Hong Kong shapes of the same characters are left out, which halves them and changes nothing on a page marked `lang="zh-Hant"`, as the game is. Characters added later, in game text or in the wiki's manuscripts, fall back to a system font unless they are added to the supplements: `game/assets/extra-*.woff2` for characters the game needs, and `wiki/assets/lore-*.woff2` for the rest. One command rebuilds both:
 
 ```bash
 python3 tools/extra-fonts.py

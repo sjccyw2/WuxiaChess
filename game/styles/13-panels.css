@@ -1,3 +1,1178 @@
 /* Panel finish: HUD and dialog materials, transitions and button states.
    Every rule here is scoped to html.polish-ui-chrome (or polish-forecast-bars),
-   set by src/polish.js, so the original look returns when the switch is off. */
+   set by src/polish.js, so the original look returns when the switch is off.
+
+   Contents
+     1  Tokens: durations, easings, shared colours
+     2  HUD material: plaque, tool clusters, hero card, command dock
+     3  Flyouts: menu, view, arts
+     4  Meters and the low-health warning
+     5  Board tip and toast
+     6  Dialogs: in-battle backdrops, buttons, tabs, cards
+     7  Title screen
+     8  Strike forecast health bars (polish-forecast-bars)
+     9  Motion: every transition and keyframe, off under no-motion / reduced motion
+    10  Sizes: desktop growth, phone trims */
+
+/* ---------------------------------------------------------------- 1  Tokens */
+html.polish-ui-chrome {
+  --ui-quick: 110ms; /* press, hover */
+  --ui-base: 190ms; /* flyouts, tabs, toasts */
+  --ui-slow: 320ms; /* dialog entrance */
+  --ui-out: cubic-bezier(0.2, 0.8, 0.25, 1); /* arrivals decelerate */
+  --ui-in: cubic-bezier(0.55, 0, 0.9, 0.4); /* departures accelerate */
+  --ui-snap: cubic-bezier(0.3, 1.45, 0.45, 1); /* a small overshoot for things that pop */
+  --ui-gold: #dfc188;
+  --ui-gold-bright: #ffe9b6;
+  --ui-jade: linear-gradient(180deg, #d3f5d8 0%, #84d3a1 42%, #4d9a76 100%);
+  --ui-amber: linear-gradient(180deg, #ffeab1 0%, #ecb957 42%, #b9802f 100%);
+  --ui-red: linear-gradient(180deg, #ffc9b0 0%, #e8694b 42%, #a8392a 100%);
+  --ui-blue: linear-gradient(180deg, #d6f1fb 0%, #7fbfdc 42%, #457fa6 100%);
+  --ui-seal-lit: linear-gradient(180deg, #ad5545 0%, #873d33 52%, #6d2f29 100%);
+}
+
+/* ---------------------------------------------------------- 2  HUD material */
+/* Lacquer box: dark keyline so the gold edge reads against bright scenery, a lacquer gap and an
+   inner gold line, a gold hairline under the top edge, studs at the corners, and a cast shadow. */
+html.polish-ui-chrome .battlefield :is(.hud-box, .hud-flyout) {
+  --stud: linear-gradient(#f0d6a0, #f0d6a0);
+  border: 1px solid #bfa577;
+  border-radius: 4px;
+  background:
+    var(--stud) 0 0 / 3px 3px no-repeat,
+    var(--stud) 100% 0 / 3px 3px no-repeat,
+    var(--stud) 0 100% / 3px 3px no-repeat,
+    var(--stud) 100% 100% / 3px 3px no-repeat,
+    linear-gradient(90deg, #f3dca800, #f3dca866 22%, #f3dca8a6 50%, #f3dca866 78%, #f3dca800) 0 3px /
+      100% 1px no-repeat,
+    linear-gradient(180deg, #ffffff17 0%, #ffffff00 44%, #04081033 100%),
+    var(--bookcloth);
+  box-shadow:
+    0 0 0 1px #0a121cd9,
+    0 14px 26px -10px #050b13e6,
+    0 3px 7px #050b1373,
+    inset 0 0 0 2px #121d2b,
+    inset 0 0 0 3px #c9ad7b42;
+}
+html.polish-ui-chrome .battlefield .field-vignette {
+  background: linear-gradient(to bottom, #0b171b3d, transparent 17%, transparent 78%, #0b171a57);
+}
+
+/* Plaque: place name, then a turn readout that carries the round number and whose side it is. */
+html.polish-ui-chrome .battlefield .map-emblem {
+  box-shadow:
+    inset 0 0 0 2px var(--seal-ink),
+    inset 0 0 0 3px #ddb4989c,
+    0 1px 3px #0a121cb3;
+}
+html.polish-ui-chrome .battlefield .map-title small {
+  letter-spacing: 0.14em;
+}
+html.polish-ui-chrome .battlefield .map-title strong {
+  color: #fbf0d4;
+  text-shadow: 0 1px 2px #0a121c;
+}
+html.polish-ui-chrome .battlefield .phase-readout {
+  gap: 3px;
+  border-inline-start: 1px solid #c9ad7b6b;
+}
+html.polish-ui-chrome .battlefield .phase-readout small {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  color: #c6cdc9;
+  line-height: 1;
+  letter-spacing: 0.08em;
+}
+html.polish-ui-chrome .battlefield .phase-readout small b {
+  color: var(--ui-gold-bright);
+  font: 700 16px/1 var(--serif);
+  text-shadow: 0 1px 2px #0a121c;
+}
+html.polish-ui-chrome .battlefield .phase-readout strong {
+  justify-self: start;
+  gap: 6px;
+  padding: 0 7px 0 6px;
+  border-radius: 2px;
+  color: #c6f6df;
+  font: 700 13px/1.35 var(--serif);
+  letter-spacing: 0.06em;
+  background: linear-gradient(180deg, #25594a, #193f34);
+  box-shadow:
+    inset 0 0 0 1px #74c9a770,
+    0 1px 2px #0a121c80;
+}
+html.polish-ui-chrome .battlefield .phase-readout strong.enemy {
+  color: #ffd6c2;
+  background: linear-gradient(180deg, #83392e, #5c2520);
+  box-shadow:
+    inset 0 0 0 1px #ea9f8480,
+    0 1px 2px #0a121c80;
+}
+html.polish-ui-chrome .battlefield .phase-readout strong::before {
+  width: 6px;
+  height: 6px;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* Tool clusters (top right, and beside the hero card). */
+html.polish-ui-chrome .battlefield :is(.hud-icon, .hud-tool) {
+  position: relative;
+  color: #e9dfc6;
+}
+html.polish-ui-chrome .battlefield :is(.hud-icon, .hud-tool) svg {
+  color: var(--ui-gold);
+}
+html.polish-ui-chrome .battlefield :is(.hud-icon + .hud-icon, .hud-tool + .hud-tool) {
+  border-inline-start: 1px solid #c9ad7b38;
+}
+html.polish-ui-chrome .battlefield .hud-tool:disabled {
+  opacity: 0.4;
+}
+
+/* Hero card. */
+html.polish-ui-chrome .battlefield .unit-face img {
+  box-shadow:
+    0 0 0 1px #c9ad7ba6,
+    0 0 0 2px #0a121c;
+}
+/* The leader's flag is a small seal on the portrait. Laid out as a grid so the icon sits inside
+   it; in the base sheet the icon dropped out of its box on phones. */
+html.polish-ui-chrome .battlefield .unit-flag {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  background: var(--seal-ink);
+  box-shadow: 0 0 0 1px #e3bb8c;
+}
+html.polish-ui-chrome .battlefield .unit-name strong {
+  color: #fdf2d6;
+  text-shadow: 0 1px 2px #0a121c;
+}
+html.polish-ui-chrome .battlefield .unit-name small {
+  color: var(--ui-gold);
+  letter-spacing: 0.04em;
+}
+html.polish-ui-chrome .battlefield .unit-name .unit-spent {
+  align-self: center;
+  padding: 2px 5px;
+  border-radius: 2px;
+  color: #cfd5cf;
+  background: #111b27;
+  box-shadow: inset 0 0 0 1px #8f989c59;
+}
+html.polish-ui-chrome .battlefield .unit-vital {
+  color: #a9e0bd;
+}
+html.polish-ui-chrome .battlefield .unit-vital.mp {
+  color: #a9d6ea;
+}
+html.polish-ui-chrome .battlefield .unit-vital b {
+  color: #f4efdd;
+  font-weight: 700;
+  text-shadow: 0 1px 1px #0a121c;
+}
+html.polish-ui-chrome .battlefield .unit-vital .meter {
+  height: 5px;
+}
+
+/* Command dock: one lit command, quiet neighbours, and an end-turn plate that waits to be asked. */
+html.polish-ui-chrome .battlefield .field-action {
+  position: relative;
+  color: #d5d9d2;
+}
+html.polish-ui-chrome .battlefield .field-action svg {
+  color: #c4ab7d;
+}
+html.polish-ui-chrome .battlefield .field-action:disabled {
+  opacity: 0.36;
+}
+html.polish-ui-chrome
+  .battlefield
+  :is(
+    .field-action.current,
+    .field-action[aria-expanded='true'],
+    .hud-icon[aria-pressed='true'],
+    .hud-icon[aria-expanded='true'],
+    .hud-tool[aria-expanded='true']
+  ) {
+  color: #fff7e2;
+  background: var(--ui-seal-lit);
+  box-shadow:
+    inset 0 0 0 1px #e2ae8366,
+    inset 0 1px 0 1px #ffd9b23d,
+    inset 0 -3px #f4d293,
+    0 0 16px #f0a8684d;
+  text-shadow: 0 1px 2px #3a1410;
+}
+html.polish-ui-chrome
+  .battlefield
+  :is(
+    .field-action.current,
+    .field-action[aria-expanded='true'],
+    .hud-icon[aria-pressed='true'],
+    .hud-icon[aria-expanded='true'],
+    .hud-tool[aria-expanded='true']
+  )
+  svg {
+  color: var(--ui-gold-bright);
+}
+/* A gold pointer above the lit command. */
+html.polish-ui-chrome .battlefield .field-action:is(.current, [aria-expanded='true'])::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  margin-left: -4px;
+  background: #f4d293;
+  box-shadow: 0 0 0 1px #5a2620;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+/* When the arts panel is open it is the lit one; the standing mode keeps only its underline. */
+html.polish-ui-chrome
+  .battlefield
+  .command-dock:has([aria-expanded='true'])
+  .field-action.current:not([aria-expanded='true']) {
+  color: #f2ead6;
+  background: none;
+  box-shadow: inset 0 -3px #f4d29399;
+  text-shadow: none;
+}
+html.polish-ui-chrome
+  .battlefield
+  .command-dock:has([aria-expanded='true'])
+  .field-action.current:not([aria-expanded='true'])::before {
+  content: none;
+}
+/* End turn: a dark cinnabar plate in a gold frame. A different hue from its neighbours, but
+   dimmer than the lit command, so it never competes with it until the pointer is on it. */
+html.polish-ui-chrome .battlefield .field-action.turn-action {
+  color: #f6e2b2;
+  border: 1px solid #c9aa76;
+  background:
+    linear-gradient(180deg, #ffffff14, #ffffff00 46%),
+    linear-gradient(180deg, #6b3d39, #45262a);
+  box-shadow:
+    inset 0 0 0 2px #2e191c,
+    inset 0 0 0 3px #c9aa7647;
+  text-shadow: 0 1px 2px #1c0d0d;
+}
+html.polish-ui-chrome .battlefield .field-action.turn-action svg {
+  color: #f0cf90;
+}
+html.polish-ui-chrome .battlefield .field-action.turn-action:disabled {
+  opacity: 0.4;
+}
+html.polish-ui-chrome .battlefield .field-action.turn-action:enabled:focus-visible {
+  box-shadow:
+    inset 0 0 0 2px #2e191c,
+    inset 0 0 0 3px #c9aa7647;
+}
+
+/* -------------------------------------------------------------- 3  Flyouts */
+html.polish-ui-chrome .battlefield .hud-flyout {
+  padding: 9px;
+  scrollbar-color: #a28b69 #1b2735;
+}
+html.polish-ui-chrome .battlefield .flyout-head {
+  padding-left: 4px;
+  border-bottom: 0;
+  background: linear-gradient(90deg, #c9ad7b00, #c9ad7b8c 12%, #c9ad7b8c 60%, #c9ad7b00) 0 100% / 100% 1px
+    no-repeat;
+}
+html.polish-ui-chrome .battlefield .flyout-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #f7e6bd;
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 2px #0a121c;
+}
+html.polish-ui-chrome .battlefield .flyout-head h2::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: none;
+  background: var(--seal-ink);
+  box-shadow: 0 0 0 1px #e3bb8c;
+  transform: rotate(45deg);
+}
+html.polish-ui-chrome .battlefield .flyout-close {
+  color: #cfd3cc;
+  border-radius: 3px;
+}
+html.polish-ui-chrome .battlefield :is(.menu-choice, .view-grid button) {
+  position: relative;
+  color: #f2ead6;
+  background: linear-gradient(180deg, #3a4b61b3, #26364ab3);
+  box-shadow:
+    inset 0 0 0 1px #9aa4a82e,
+    inset 0 1px #ffffff12;
+}
+html.polish-ui-chrome .battlefield .field-menu {
+  gap: 4px;
+}
+html.polish-ui-chrome .battlefield .view-grid {
+  gap: 4px;
+}
+html.polish-ui-chrome .battlefield :is(.menu-choice, .view-grid, .view-links, .field-loadout) svg {
+  color: var(--ui-gold);
+}
+html.polish-ui-chrome .battlefield .view-grid button[aria-pressed='true'] {
+  color: #fff7e2;
+  background: var(--ui-seal-lit);
+  box-shadow:
+    inset 0 0 0 1px #e2ae8366,
+    inset 0 -2px #f4d293;
+}
+html.polish-ui-chrome .battlefield :is(.menu-foot, .view-links, .field-loadout) {
+  border-top: 0;
+  background: linear-gradient(90deg, #c9ad7b00, #c9ad7b66 12%, #c9ad7b66 60%, #c9ad7b00) 0 0 / 100% 1px
+    no-repeat;
+}
+html.polish-ui-chrome .battlefield .menu-foot button {
+  padding-inline: 8px;
+  border-radius: 3px;
+  color: #f0d59b;
+}
+
+/* Arts: each technique is a card with its sigil, its power in gold, and its cost as a tag. */
+html.polish-ui-chrome .battlefield .field-art {
+  position: relative;
+  gap: 9px;
+  padding: 8px 9px 8px 8px;
+  background: linear-gradient(180deg, #364559b8, #243346b8);
+  box-shadow:
+    inset 0 0 0 1px #9aa4a82e,
+    inset 0 1px #ffffff12;
+}
+html.polish-ui-chrome .battlefield .field-art + .field-art {
+  margin-top: 5px;
+  border-top: 0;
+}
+html.polish-ui-chrome .battlefield .field-art > i {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  width: 27px;
+  height: 29px;
+  border-radius: 2px;
+  color: #f0d59b;
+  background: #141e2b;
+  box-shadow:
+    inset 0 0 0 1px #c9ad7b80,
+    0 1px 2px #0a121c80;
+}
+html.polish-ui-chrome .battlefield .field-art strong {
+  color: #fcf1d5;
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px #0a121c;
+}
+html.polish-ui-chrome .battlefield .field-art > b {
+  align-self: start;
+  padding: 2px 7px;
+  border-radius: 2px;
+  color: #cdeaf2;
+  font-size: 12px;
+  background: #121c29;
+  box-shadow: inset 0 0 0 1px #7fb3c266;
+  white-space: nowrap;
+}
+html.polish-ui-chrome .battlefield #arts-panel .field-art:disabled {
+  color: #a9b1b4;
+  background: #1b2634b8;
+  box-shadow: inset 0 0 0 1px #9aa4a81f;
+}
+html.polish-ui-chrome .battlefield #arts-panel .field-art:disabled > b {
+  color: #f0b3a0;
+  box-shadow: inset 0 0 0 1px #d9806a80;
+}
+html.polish-ui-chrome .battlefield #arts-panel .field-art:disabled :is(strong, .fo-power b) {
+  color: #b9bfbd;
+}
+html.polish-ui-chrome .battlefield .field-loadout {
+  margin-top: 7px;
+}
+
+/* Hover and keyboard focus inside the HUD: a lighter indigo, never the old green. */
+@media (hover: hover) {
+  html.polish-ui-chrome .battlefield :is(.hud-box, .hud-flyout) button:enabled:hover,
+  html.polish-ui-chrome .battlefield button.map-plaque:hover,
+  html.polish-ui-chrome .battlefield button.unit-card:hover {
+    background-color: #40536c;
+  }
+  html.polish-ui-chrome .battlefield button:is(.map-plaque, .unit-card):hover {
+    filter: brightness(1.1);
+    border-color: #f1d9a3;
+    box-shadow:
+      0 0 0 1px #0a121cd9,
+      0 14px 26px -10px #050b13e6,
+      0 0 14px #f0c98140,
+      inset 0 0 0 2px #121d2b,
+      inset 0 0 0 3px #e7c98f80;
+  }
+  html.polish-ui-chrome .battlefield :is(.hud-icon, .hud-tool, .field-action):enabled:hover {
+    color: #fff7e2;
+  }
+  html.polish-ui-chrome .battlefield :is(.hud-icon, .hud-tool, .field-action):enabled:hover svg {
+    color: var(--ui-gold-bright);
+  }
+  html.polish-ui-chrome .battlefield :is(.menu-choice, .view-grid button, .field-art):enabled:hover {
+    background: linear-gradient(180deg, #4d6180cc, #33465fcc);
+    box-shadow:
+      inset 0 0 0 1px #e7c98f99,
+      inset 3px 0 #e7c98f,
+      inset 0 1px #ffffff1f;
+  }
+  html.polish-ui-chrome
+    .battlefield
+    :is(
+      .field-action.current,
+      .field-action[aria-expanded='true'],
+      .hud-icon[aria-pressed='true'],
+      .hud-icon[aria-expanded='true'],
+      .hud-tool[aria-expanded='true'],
+      .view-grid button[aria-pressed='true']
+    ):enabled:hover {
+    background: linear-gradient(180deg, #bb5f4d 0%, #914338 52%, #753329 100%);
+  }
+  html.polish-ui-chrome .battlefield .field-action.turn-action:enabled:hover {
+    color: #fff8e3;
+    border-color: #ffdfad;
+    background: var(--ui-seal-lit);
+    box-shadow:
+      inset 0 0 0 2px #7a342b,
+      inset 0 0 0 3px #f0c79a80,
+      0 0 16px #f0a8684d;
+  }
+  html.polish-ui-chrome .battlefield .field-action.turn-action:enabled:hover svg {
+    color: #fff8e3;
+  }
+}
+
+/* ------------------------------------- 4  Meters and the low-health warning */
+/* The fill is a percentage of the track. Making the track a size container lets the fill's own
+   pseudo-elements compare the two: an overlay grows to cover the fill once it is under half
+   (amber) or under a quarter (red) of the track. No markup or script is involved. */
+html.polish-ui-chrome :is(.battlefield, #modal) .meter {
+  container-type: inline-size;
+  border-radius: 2px;
+  background: #0c141e;
+  box-shadow:
+    inset 0 0 0 1px #000000a6,
+    0 0 0 1px #9a8a6a47;
+}
+html.polish-ui-chrome :is(.battlefield, #modal) .meter i {
+  position: relative;
+  border-radius: 1px;
+}
+html.polish-ui-chrome #modal .bar-row .meter {
+  height: 7px;
+}
+html.polish-ui-chrome :is(.battlefield, #modal) .meter.hp i {
+  background: var(--ui-jade);
+}
+html.polish-ui-chrome :is(.battlefield, #modal) .meter.mp i {
+  background: var(--ui-blue);
+}
+html.polish-ui-chrome :is(.battlefield, #modal) .meter.hp i::before,
+html.polish-ui-chrome :is(.battlefield, #modal) .meter.hp i::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+}
+html.polish-ui-chrome :is(.battlefield, #modal) .meter.hp i::before {
+  width: clamp(0px, (50cqw - 100%) * 999, 100%);
+  background: var(--ui-amber);
+}
+html.polish-ui-chrome :is(.battlefield, #modal) .meter.hp i::after {
+  width: clamp(0px, (25cqw - 100%) * 999, 100%);
+  background: var(--ui-red);
+}
+
+/* ------------------------------------------------- 5  Board tip and toast */
+html.polish-ui-chrome .battlefield > .board-tip {
+  padding: 6px 14px;
+  border: 1px solid #bfa577;
+  border-radius: 3px;
+  color: #f8eed6;
+  background: linear-gradient(180deg, #2c3b4ff2, #1a2636f2);
+  box-shadow:
+    0 0 0 1px #0a121cc7,
+    0 8px 18px -8px #050b13e6,
+    inset 0 0 0 2px #121d2b;
+}
+html.polish-ui-chrome .toast {
+  padding: 10px 18px;
+  border: 1px solid #bfa577;
+  color: #f8eed6;
+  background: linear-gradient(180deg, #2f3f54f7, #1b2737f7);
+  box-shadow:
+    0 0 0 1px #0a121cd9,
+    0 12px 26px -8px #050b13e6,
+    inset 0 0 0 2px #121d2b,
+    inset 0 0 0 3px #c9ad7b38;
+}
+
+/* -------------------------------------------------------------- 6  Dialogs */
+/* The three small dialogs opened in the middle of a turn: the strike forecast, the end-turn
+   confirmation and the enemy report. The player is deciding about the board, so it stays in view. */
+html.polish-ui-chrome #modal:has(.duel, .confirm-copy, .enemy-summary)::backdrop {
+  background: radial-gradient(ellipse 75% 70% at 50% 50%, #0811195c, #08111999);
+  backdrop-filter: none;
+}
+html.polish-ui-chrome #modal:has(.duel, .confirm-copy, .enemy-summary) {
+  box-shadow:
+    0 26px 60px -6px #04090ff2,
+    0 4px 14px #04090f99,
+    0 0 0 2px #0e1722,
+    0 0 0 3px #c7ab7a66,
+    inset 0 0 0 3px #aca08236;
+}
+
+/* Primary action: a raised seal plate. */
+html.polish-ui-chrome #modal :is(.gold-btn, .run-primary, .mj-march),
+html.polish-ui-chrome .opening-menu .embark {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #ffffff24, #ffffff00 48%),
+    linear-gradient(112deg, #a54f40, #7b382f);
+  box-shadow:
+    inset 0 0 0 2px #81382e,
+    inset 0 0 0 3px #e0ad8566,
+    0 2px 0 #3d1915,
+    0 7px 14px -6px #04090fd9;
+  text-shadow: 0 1px 2px #3a1410;
+}
+html.polish-ui-chrome #modal :is(.gold-btn, .run-primary, .mj-march):disabled {
+  box-shadow:
+    inset 0 0 0 2px #81382e,
+    inset 0 0 0 3px #e0ad8566;
+}
+/* A light that crosses the plate on hover; it rests off to the left. */
+html.polish-ui-chrome #modal :is(.gold-btn, .run-primary, .mj-march)::after,
+html.polish-ui-chrome .opening-menu .embark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, #fff0 30%, #fff3dc47 50%, #fff0 70%);
+  opacity: 0;
+  transform: translateX(-70%);
+  pointer-events: none;
+}
+/* Secondary actions. */
+html.polish-ui-chrome #modal :is(.outline-btn, .mj-action, .fo-filter, .fo-stock) {
+  background-image: linear-gradient(180deg, #ffffff12, #ffffff00 55%);
+  box-shadow: 0 1px 0 #0a121c99;
+}
+html.polish-ui-chrome #modal .square-btn {
+  box-shadow: 0 1px 0 #0a121c99;
+}
+/* Tabs: the open tab is lit like the lit command on the field. */
+html.polish-ui-chrome #modal .mj-tab {
+  position: relative;
+}
+html.polish-ui-chrome #modal .mj-tab[aria-selected='true'] {
+  background: var(--ui-seal-lit);
+  box-shadow:
+    inset 0 1px #ffd9b23d,
+    inset 0 -3px #f4d293;
+  text-shadow: 0 1px 2px #3a1410;
+}
+html.polish-ui-chrome #modal .mj-tab[aria-selected='true'] svg {
+  color: var(--ui-gold-bright);
+}
+/* Cards: the chosen one is framed in gold and lit; its neighbours step back. */
+html.polish-ui-chrome #modal .run-lot.lead-lot {
+  outline: 2px solid #f6d999;
+  outline-offset: -2px;
+  box-shadow:
+    0 0 0 3px #9a4638,
+    0 0 0 4px #f6d99999,
+    0 0 26px #f3c57a80,
+    0 8px 14px #03100f8c,
+    inset 0 0 0 1px #382f24;
+}
+html.polish-ui-chrome #modal .run-lot:not(.lead-lot) .run-lot-image img {
+  filter: saturate(0.72) brightness(0.8);
+}
+html.polish-ui-chrome #modal :is(.fo-seat.inspected, .fo-seat.picked, .fo-item.picked, .lk-lot.won) {
+  box-shadow:
+    0 0 0 2px #a75c45,
+    0 0 0 3px #f6d99980,
+    0 0 20px #f3c57a66,
+    inset 0 0 0 1px #f4d198;
+}
+html.polish-ui-chrome #modal .switch.on {
+  background: linear-gradient(180deg, #2f6a55, #3f7f66);
+  border-color: #9fd2b4;
+}
+html.polish-ui-chrome #modal .switch.on i {
+  background: #e9f5df;
+  box-shadow: 0 0 6px #b7f0cf99;
+}
+@media (hover: hover) {
+  html.polish-ui-chrome #modal :is(.outline-btn, .mj-action, .fo-filter, .fo-stock):enabled:hover {
+    color: #fff5dc;
+    background-color: #3a4c63;
+    border-color: #e7c98f;
+  }
+  html.polish-ui-chrome #modal .square-btn:enabled:hover {
+    color: #fff5dc;
+    border-color: #e7c98f;
+  }
+  html.polish-ui-chrome #modal .mj-tab:not([aria-selected='true']):enabled:hover {
+    color: #fff0cf;
+    background: #3a4c63;
+  }
+  html.polish-ui-chrome #modal :is(.gold-btn, .run-primary, .mj-march):enabled:hover,
+  html.polish-ui-chrome .opening-menu .embark:enabled:hover {
+    background:
+      linear-gradient(180deg, #ffffff2e, #ffffff00 48%),
+      linear-gradient(112deg, #b85a48, #8a4035);
+    box-shadow:
+      inset 0 0 0 2px #8f4034,
+      inset 0 0 0 3px #f5c99b80,
+      0 2px 0 #3d1915,
+      0 9px 18px -6px #04090fe6,
+      0 0 18px #f0a8684d;
+  }
+  html.polish-ui-chrome #modal .run-lot:not(.lead-lot):has(.lot-choice:hover) .run-lot-image img {
+    filter: none;
+  }
+  html.polish-ui-chrome #modal .run-lot:not(.lead-lot):has(.lot-choice:hover) {
+    box-shadow:
+      0 0 0 1px #f6d99999,
+      0 10px 18px #03100f99,
+      inset 0 0 0 1px #382f24;
+  }
+  html.polish-ui-chrome #modal:not(.fo-dragging) .fo-seat:not(.empty, .inspected, .picked):hover {
+    border-color: #e7c98f;
+    box-shadow: 0 8px 16px -6px #04090fd9;
+  }
+}
+
+/* --------------------------------------------------------- 7  Title screen */
+html.polish-ui-chrome .opening-tools button,
+html.polish-ui-chrome .panorama-controls button {
+  border-radius: 3px;
+}
+@media (hover: hover) {
+  html.polish-ui-chrome .opening-tools button:hover {
+    background: #16242e80;
+    box-shadow: inset 0 0 0 1px #f1d9a359;
+  }
+  html.polish-ui-chrome .opening-menu :is(.codex-link, .embark-new):enabled:hover {
+    box-shadow: inset 0 -1px #f1d9a3;
+  }
+  html.polish-ui-chrome .panorama-controls button:hover {
+    color: #fff5dc;
+    border-color: #f1d9a3;
+    background: #223246db;
+  }
+}
+
+/* ---------------------------------- 8  Strike forecast health bars */
+html.polish-forecast-bars #modal .duel {
+  align-items: flex-start;
+}
+html.polish-forecast-bars #modal .duelist {
+  flex: 1 1 0;
+  min-width: 0;
+}
+html.polish-forecast-bars #modal .duel-mid {
+  align-self: center;
+}
+html.polish-forecast-bars #modal .fc-bar {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  max-width: 168px;
+  margin-top: 4px;
+}
+html.polish-forecast-bars #modal .fc-track {
+  position: relative;
+  display: block;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #0b131d;
+  box-shadow:
+    inset 0 0 0 1px #000000b3,
+    0 0 0 1px #a8946c,
+    0 0 0 2px #0a121c;
+}
+html.polish-forecast-bars #modal .fc-track i {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 0;
+}
+html.polish-forecast-bars #modal .fc-now {
+  background: linear-gradient(180deg, #d3f5d8 0%, #84d3a1 42%, #4d9a76 100%);
+  transform-origin: 0 50%;
+}
+html.polish-forecast-bars #modal .fc-bar.warn .fc-now {
+  background: linear-gradient(180deg, #ffeab1 0%, #ecb957 42%, #b9802f 100%);
+}
+html.polish-forecast-bars #modal .fc-bar.crit .fc-now {
+  background: linear-gradient(180deg, #ffc9b0 0%, #e8694b 42%, #a8392a 100%);
+}
+/* The health about to be lost: hatched so it reads as a different thing even when it is still. */
+html.polish-forecast-bars #modal .fc-delta {
+  background:
+    repeating-linear-gradient(115deg, #a8301f00 0 3px, #a8301fd9 3px 5px),
+    linear-gradient(180deg, #fff1e6, #ffc3a8);
+}
+html.polish-forecast-bars #modal .fc-bar.gain .fc-delta {
+  background:
+    repeating-linear-gradient(115deg, #2f7d5800 0 3px, #2f7d58cc 3px 5px),
+    linear-gradient(180deg, #f3fff2, #bff0cd);
+}
+html.polish-forecast-bars #modal .fc-figures {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  color: #f4efdd;
+  font: 700 15px/1 var(--fo-sans, var(--sans));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+html.polish-forecast-bars #modal .fc-figures i {
+  color: #b9c0c2;
+  font-style: normal;
+  font-weight: 500;
+}
+html.polish-forecast-bars #modal .fc-figures small {
+  color: #aeb6b8;
+  font-size: 11px;
+  font-weight: 500;
+}
+html.polish-forecast-bars #modal .fc-bar.loss .fc-after {
+  color: #ffb59a;
+}
+html.polish-forecast-bars #modal .fc-bar.gain .fc-after {
+  color: #a8ecc4;
+}
+html.polish-forecast-bars #modal .fc-bar.ko .fc-after {
+  color: #ff8266;
+  text-shadow: 0 0 8px #e2573a99;
+}
+/* The stake pulses until the player decides (opacity only), and the bars fill once when the
+   dialog opens. Still under no-motion and reduced motion: the hatching carries the meaning. */
+@media (prefers-reduced-motion: no-preference) {
+  html.polish-forecast-bars body:not(.no-motion) #modal .fc-delta {
+    animation: fc-stake 0.95s ease-in-out infinite;
+  }
+  html.polish-forecast-bars body:not(.no-motion) #modal.ui-turn .fc-now {
+    animation: fc-fill 420ms cubic-bezier(0.2, 0.8, 0.25, 1) 120ms backwards;
+  }
+}
+@keyframes fc-stake {
+  50% {
+    opacity: 0.28;
+  }
+}
+@keyframes fc-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* --------------------------------------------------------------- 9  Motion */
+/* Only transform and opacity are animated. Everything is gated twice: the game's own setting
+   (body.no-motion) and the system preference. Outside this block nothing moves. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Buttons: keep the colour fades the base sheet already had, add press travel. */
+  html.polish-ui-chrome body:not(.no-motion) :is(.battlefield, #modal, .opening) button {
+    transition:
+      transform var(--ui-quick) var(--ui-out),
+      opacity var(--ui-quick) linear,
+      background-color 0.16s,
+      color 0.16s,
+      border-color 0.16s,
+      filter 0.16s;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .board-hits button {
+    transition: none;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal button:enabled:active,
+  html.polish-ui-chrome body:not(.no-motion) .opening button:enabled:active,
+  html.polish-ui-chrome
+    body:not(.no-motion)
+    .battlefield
+    :is(button.hud-box, .hud-box button, .hud-flyout button):enabled:active {
+    transform: translateY(1px);
+  }
+  html.polish-ui-chrome
+    body:not(.no-motion)
+    .battlefield
+    :is(.hud-icon, .hud-tool, .field-action, .flyout-close, .menu-choice, .view-grid button):enabled:active {
+    transform: translateY(1px) scale(0.96);
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal :is(.gold-btn, .run-primary, .mj-march):enabled:active,
+  html.polish-ui-chrome body:not(.no-motion) .opening-menu .embark:enabled:active {
+    transform: translateY(2px);
+  }
+  @media (hover: hover) {
+    html.polish-ui-chrome body:not(.no-motion) #modal :is(.gold-btn, .run-primary, .mj-march):enabled:hover:not(:active),
+    html.polish-ui-chrome body:not(.no-motion) .opening-menu .embark:enabled:hover:not(:active) {
+      transform: translateY(-1px);
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal :is(.gold-btn, .run-primary, .mj-march):enabled:hover::after,
+    html.polish-ui-chrome body:not(.no-motion) .opening-menu .embark:enabled:hover::after {
+      opacity: 1;
+      transform: translateX(70%);
+      transition:
+        transform 520ms var(--ui-out),
+        opacity 120ms linear;
+    }
+    html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.menu-choice, .field-art):enabled:hover:not(:active) {
+      transform: translateX(2px);
+    }
+    html.polish-ui-chrome body:not(.no-motion) .battlefield .view-grid button:enabled:hover:not(:active),
+    html.polish-ui-chrome body:not(.no-motion) .opening-tools button:hover:not(:active),
+    html.polish-ui-chrome body:not(.no-motion) .panorama-controls button:hover:not(:active) {
+      transform: translateY(-1px);
+    }
+    html.polish-ui-chrome body:not(.no-motion) .opening-menu :is(.codex-link, .embark-new):enabled:hover:not(:active) {
+      transform: translateX(3px);
+    }
+    /* Close buttons turn their cross a quarter. */
+    html.polish-ui-chrome body:not(.no-motion) :is(.square-btn, .flyout-close):hover svg {
+      transform: rotate(90deg);
+    }
+    /* Cards rise to meet the pointer. */
+    html.polish-ui-chrome body:not(.no-motion) #modal:not(.fo-dragging) .fo-seat:not(.empty):hover {
+      transform: translateY(-3px);
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal .run-lot:has(.lot-choice:hover) {
+      transform: translateY(-4px);
+    }
+    /* A raised card leaves a strip under it; keep that strip inside the hover target, or the
+       pointer falls off the card, the card drops, and the two chase each other. */
+    html.polish-ui-chrome body:not(.no-motion) #modal .run-lot .lot-choice:hover {
+      bottom: -5px;
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal:not(.fo-dragging) .fo-seat:not(.empty):hover::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      right: 0;
+      left: 0;
+      height: 4px;
+    }
+  }
+  html.polish-ui-chrome body:not(.no-motion) :is(.square-btn, .flyout-close) svg {
+    transition: transform var(--ui-base) var(--ui-out);
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal :is(.fo-seat, .run-lot) {
+    transition: transform var(--ui-base) var(--ui-out);
+  }
+  /* The settings switch slides its knob by transform, not by moving its left edge. */
+  html.polish-ui-chrome body:not(.no-motion) #modal .switch i {
+    transition: transform var(--ui-base) var(--ui-snap);
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal .switch.on i {
+    left: 2px;
+    transform: translateX(15px);
+  }
+
+  /* Dialog: the shell settles in, the backdrop fades. Leaving is quicker than arriving. */
+  html.polish-ui-chrome body:not(.no-motion) #modal[open] {
+    animation: ui-dialog-in var(--ui-slow) var(--ui-out) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal[open]::backdrop {
+    animation: ui-fade-in var(--ui-slow) ease-out backwards;
+  }
+  @supports (overlay: auto) {
+    html.polish-ui-chrome body:not(.no-motion) #modal {
+      transition:
+        opacity 130ms var(--ui-in),
+        transform 130ms var(--ui-in),
+        overlay 130ms allow-discrete,
+        display 130ms allow-discrete;
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal::backdrop {
+      transition:
+        opacity 130ms linear,
+        overlay 130ms allow-discrete,
+        display 130ms allow-discrete;
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal:not([open]) {
+      opacity: 0;
+      transform: translateY(6px) scale(0.985);
+      pointer-events: none;
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal:not([open])::backdrop {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+  /* A redraw that shows another page or tab (app.js marks it .ui-turn) eases its reading area in. */
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .mj-scroll {
+    animation: ui-rise var(--ui-base) var(--ui-out) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .mj-tab[aria-selected='true'] {
+    animation: ui-tab-in var(--ui-base) var(--ui-out) backwards;
+  }
+  /* Dialogue: the speaker steps in, then the stage note, the name and the line follow. */
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .fy-story .mj-scroll {
+    animation: none;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .fy-speaker-portrait {
+    animation: ui-portrait-in 420ms var(--ui-out) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .fy-dialogue > * {
+    animation: ui-rise 300ms var(--ui-out) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .fy-dialogue > :nth-child(2) {
+    animation-delay: 90ms;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .fy-dialogue > :nth-child(n + 3) {
+    animation-delay: 170ms;
+  }
+
+  /* Flyouts slide out of the edge they hang from, and tuck back when dismissed. */
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .hud-flyout {
+    transform-origin: 100% 100%;
+    animation: ui-flyout-up var(--ui-base) var(--ui-out) backwards;
+    transition:
+      opacity var(--ui-quick) var(--ui-in),
+      transform var(--ui-quick) var(--ui-in),
+      display var(--ui-quick) allow-discrete;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .view-flyout {
+    transform-origin: 0 100%;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .menu-flyout {
+    transform-origin: 100% 0;
+    animation-name: ui-flyout-down;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .hud-flyout[hidden] {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+    pointer-events: none;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .menu-flyout[hidden] {
+    transform: translateY(-6px) scale(0.985);
+  }
+  /* Menu and view entries follow the panel in, a beat apart. Their markup never redraws. */
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > * {
+    animation: ui-rise var(--ui-base) var(--ui-out) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(1) { animation-delay: 20ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(2) { animation-delay: 34ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(3) { animation-delay: 48ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(4) { animation-delay: 62ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(5) { animation-delay: 76ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(6) { animation-delay: 90ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(7) { animation-delay: 104ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(n + 8) { animation-delay: 118ms; }
+
+  /* Whose turn it is: app.js rewrites the readout only when the round or the side changes, so
+     this plays once per change. Nothing on the HUD animates while the board is idle. */
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .phase-readout strong {
+    transform-origin: 0 50%;
+    animation: ui-pop 460ms var(--ui-snap) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .phase-readout small b {
+    display: inline-block;
+    animation: ui-pop 460ms var(--ui-snap) backwards;
+  }
+
+  /* Board tip and toast. */
+  html.polish-ui-chrome body:not(.no-motion) .battlefield > .board-tip {
+    transform: translate(-50%, 6px);
+    transition:
+      opacity var(--ui-quick) linear,
+      transform var(--ui-base) var(--ui-out);
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield > .board-tip.show {
+    transform: translate(-50%, 0);
+  }
+  html.polish-ui-chrome body:not(.no-motion) .toast {
+    transform: translate(-50%, 14px) scale(0.96);
+    transition:
+      opacity var(--ui-base) linear,
+      transform var(--ui-base) var(--ui-in);
+  }
+  html.polish-ui-chrome body:not(.no-motion) .toast.visible {
+    transform: translate(-50%, 0);
+    transition:
+      opacity var(--ui-quick) linear,
+      transform 260ms var(--ui-snap);
+  }
+}
+
+@keyframes ui-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.972);
+  }
+}
+@keyframes ui-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ui-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes ui-tab-in {
+  from {
+    opacity: 0.55;
+    transform: translateY(3px);
+  }
+}
+/* Starts part-visible: the same speaker often continues, and a full blank between lines flickers. */
+@keyframes ui-portrait-in {
+  from {
+    opacity: 0.3;
+    transform: translateX(-10px) scale(1.03);
+  }
+}
+@keyframes ui-flyout-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+@keyframes ui-flyout-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+}
+@keyframes ui-pop {
+  from {
+    opacity: 0;
+    transform: scale(1.22);
+  }
+}
+
+/* --------------------------------------------------------------- 10  Sizes */
+/* Desktop and tablet: everything the two phone sheets (08, 09) do not claim. The dock grows a
+   little; --dock-height grows with it, so the framed board is fitted above the taller dock and
+   is covered no more than before. */
+@media (min-width: 541px) and (orientation: landscape) and (min-height: 601px),
+  (min-width: 801px) and (orientation: portrait),
+  (min-width: 801px) and (min-height: 601px) {
+  html.polish-ui-chrome .battlefield {
+    --dock-height: 72px;
+  }
+  html.polish-ui-chrome .battlefield .phase-readout small b {
+    font-size: 18px;
+  }
+  html.polish-ui-chrome .battlefield .map-title strong {
+    font-size: 20px;
+  }
+  html.polish-ui-chrome .battlefield .unit-card {
+    grid-template-columns: 54px minmax(128px, 1fr);
+    gap: 12px;
+    min-height: 70px;
+    padding: 5px 13px 5px 5px;
+  }
+  html.polish-ui-chrome .battlefield .unit-face {
+    width: 54px;
+    height: 57px;
+  }
+  html.polish-ui-chrome .battlefield .unit-summary {
+    gap: 4px;
+  }
+  html.polish-ui-chrome .battlefield .unit-name strong {
+    font-size: 19px;
+    line-height: 1.15;
+  }
+  html.polish-ui-chrome .battlefield .unit-vital {
+    grid-template-columns: 14px minmax(64px, 1fr) 30px;
+    gap: 6px;
+  }
+  html.polish-ui-chrome .battlefield .unit-vital svg {
+    width: 14px;
+    height: 14px;
+  }
+  html.polish-ui-chrome .battlefield .unit-vital b {
+    font-size: 14px;
+  }
+  html.polish-ui-chrome .battlefield .unit-vital .meter {
+    height: 8px;
+  }
+  html.polish-ui-chrome .battlefield .unit-vital.mp .meter {
+    height: 6px;
+  }
+  html.polish-ui-chrome .battlefield .hud-tool {
+    min-width: 54px;
+    min-height: 52px;
+    gap: 4px;
+    font-size: 15px;
+  }
+  html.polish-ui-chrome .battlefield .hud-tool svg {
+    width: 20px;
+    height: 20px;
+  }
+  html.polish-ui-chrome .battlefield .command-dock {
+    padding: 4px;
+    gap: 2px;
+  }
+  html.polish-ui-chrome .battlefield .field-action {
+    min-width: clamp(62px, 5.4vw, 86px);
+    min-height: 60px;
+    gap: 6px;
+    font-size: 16px;
+  }
+  html.polish-ui-chrome .battlefield .field-action svg {
+    width: 21px;
+    height: 21px;
+  }
+  html.polish-ui-chrome .battlefield .field-action.turn-action {
+    margin-inline-start: 7px;
+  }
+}
+
+/* ------------------------------------------- 12  Owner-approved layout changes */
+/* forecastSide: on wide screens the strike forecast docks on the side away from the two
+   fighters (app sets data-dock), so the duel it describes stays in view. Phones keep it centred. */
+@media (min-width: 1180px) and (min-height: 620px) {
+  html.polish-forecast-side #modal[data-dock]:has(.duel) {
+    width: min(480px, 38vw);
+  }
+  html.polish-forecast-side #modal[data-dock='right']:has(.duel) {
+    margin-inline: auto max(22px, 2.2vw);
+  }
+  html.polish-forecast-side #modal[data-dock='left']:has(.duel) {
+    margin-inline: max(22px, 2.2vw) auto;
+  }
+  html.polish-forecast-side #modal[data-dock]:has(.duel)::backdrop {
+    background: #0811193d;
+    backdrop-filter: none;
+  }
+}
+
+/* dangerZone: the HUD toggle glows in the zone's own colour while the zone is showing. */
+html.polish-danger-zone .battlefield #danger-toggle[aria-pressed='true'] {
+  color: #ffc9ef;
+}
+html.polish-danger-zone .battlefield #danger-toggle[aria-pressed='true'] svg {
+  filter: drop-shadow(0 0 5px #e06fd0b0);
+}
+/* On a narrow portrait phone the fourth tool would push the tool box into the map plaque, so the
+   full-screen tool drops its caption there and keeps its icon (and its accessible name). */
+@media (max-width: 480px) {
+  html.polish-danger-zone .battlefield .hud-tools .hud-fullscreen > span:not([data-icon]) {
+    display: none;
+  }
+}

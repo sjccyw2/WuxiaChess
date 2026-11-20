@@ -1,5 +1,6 @@
 const paths = {
   menu: '<path d="M4 6.5h16M4 12h16M4 17.5h16"/>',
+  danger: '<path d="M12 3.2 2.6 19.8h18.8L12 3.2Z"/><path d="M12 9.6v5.2m0 2.3v.5"/>',
   eye: '<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.8"/>',
   reveal: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15h18m-5 0v5"/>',
   contract: '<path d="M3 9h6V3m6 0v6h6M9 21v-6H3m18 0h-6v6"/>',

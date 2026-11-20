@@ -1,4 +1,5 @@
 import { fieldCells } from '../data/terrain.js';
+import { drawDanger } from './danger.js';
 import { paintMasteryFlourish } from '../fx/mastery-vfx.js';
 // Animated billboard art is painted after the ground. Only the ground ray can accept a move.
 import * as G from '../rules/game.js';
@@ -6,7 +7,11 @@ import { art } from '../ui/artwork.js';
 import { paintTechniqueStroke } from '../fx/technique-strokes.js';
 import { paintTechniqueTier } from '../fx/technique-tiers.js';
 import { paintSkillEffect } from '../fx/skill-effects.js';
+import { Impact } from '../fx/impact.js';
+import { paintCursor } from './cursor.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
+import { watchArt } from './sprite-sheets.js';
+import { paintField, paintReticles } from './zones.js';
 import {
   compactImage,
   compactSheetName,
@@ -16,6 +21,10 @@ import {
   CELL_HEIGHT,
   FOOT_Y
 } from './sprite-sheets.js';
+import { POLISH } from '../polish.js';
+import { paintFrame } from './sprite-frames.js';
+import { paintBase, paintGauge } from './tokens.js';
+import { spentAmount } from './spent.js';
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const openingActors = [
   { id: 'hero', x: 5.1, y: 5.25, side: 'ally', hp: 1 },
@@ -41,12 +50,14 @@ class ActorLayer {
     this.imageFailures = new Set();
     this.width = this.height = 1;
     this.prefs = { motion: true, grid: true };
+    this.impact = new Impact(this);
     this.reset();
   }
   image(filename) {
     if (!this.images.has(filename)) {
       const img = new Image();
       this.images.set(filename, img);
+      watchArt(img); // loading: lets the title wait for its fighters (see sprite-sheets.js)
       img.decoding = 'async';
       if (filename === 'battle-poses') img.fetchPriority = 'high';
       img.onload = () => this.notify();
@@ -91,6 +102,7 @@ class ActorLayer {
     this.latestMoves.clear();
     this.effects = [];
     this.boxes = [];
+    this.impact.reset();
     this.settle();
   }
   get playing() {
@@ -152,7 +164,9 @@ class ActorLayer {
     if (previous !== null) {
       // A slow scenery render can extend playback, but cannot erase an entire pose.
       const dt = Math.max(0, now - previous);
-      this.time += this.playing ? Math.min(dt, 40) : dt;
+      // A landed blow may hold the action clock for a few frames (hit-stop). Held time is
+      // only postponed: `until`, the health-bar impacts and finished() all still arrive.
+      this.time += this.impact.tick(this.playing ? Math.min(dt, 40) : dt, dt);
     }
   }
   sync(state, mode, prefs) {
@@ -224,7 +238,8 @@ class ActorLayer {
         this.hold(this.track(target.id).exit);
       }
     }
-    this.exchange = { actor: actor.id, target: target.id, start, hit, end };
+    this.exchange = { actor: actor.id, target: target.id, start, hit, end, rank };
+    if (rank >= 3) this.impact.prepare(actor);
     if (special) {
       const flourish = art.blink
         ? 'blink'
@@ -275,9 +290,16 @@ class ActorLayer {
   numbers(items) {
     const exchange = this.exchange,
       full = this.prefs.motion;
+    // The last blow against a piece that has fallen is the killing blow.
+    const lastBlow = new Map();
+    const lanes = new Map();
+    for (const [index, [id, value, reason]] of items.entries())
+      if (value.startsWith('−') && reason !== 'sacrifice') lastBlow.set(id, index);
     for (const [index, [id, value, reason]] of items.entries()) {
       let start = (exchange?.hit ?? this.time) + index * (full ? 105 : 32);
-      if (exchange && id === exchange.actor && value.startsWith('−') && reason !== 'sacrifice') {
+      const counter =
+        exchange && id === exchange.actor && value.startsWith('−') && reason !== 'sacrifice';
+      if (counter) {
         const reply = exchange.end + (full ? 35 : 15);
         const initiator = G.find(this.state, exchange.target),
           recipient = G.find(this.state, id);
@@ -320,7 +342,37 @@ class ActorLayer {
       // the corresponding blow, second sword, counter or healing note lands.
       const amount = Number(value.replace('−', '-'));
       if (Number.isFinite(amount)) this.track(id).impacts.push({ at: start, amount });
-      if (full) this.effects.push({ kind: 'number', target: id, value, start, end: start + 800 });
+      const struck = G.find(this.state, id),
+        hurt = !!struck && amount < 0 && reason !== 'sacrifice',
+        kill = hurt && struck.hp <= 0 && lastBlow.get(id) === index,
+        rank = counter ? 0 : exchange?.rank || 0;
+      // Hit-stop, flash and shake are released when the action clock reaches this blow.
+      if (hurt)
+        this.impact.blow({
+          at: start,
+          target: id,
+          from: counter ? exchange.target : exchange?.actor,
+          amount: -amount,
+          rank,
+          lead: counter || index === 0,
+          kill
+        });
+      if (full) {
+        const number = { kind: 'number', target: id, value, start, end: start + 800 };
+        if (POLISH.damagePop) {
+          number.tone = this.impact.tone(
+            value,
+            reason,
+            hurt ? -amount / struck.maxHp : 0,
+            rank,
+            kill
+          );
+          number.lane = lanes.get(id) || 0;
+          if (number.tone !== 'word') lanes.set(id, number.lane + 1);
+          number.end = start + 1100;
+        }
+        this.effects.push(number);
+      }
     }
     this.exchange = null;
     this.notify();
@@ -469,11 +521,15 @@ class ActorLayer {
       u = G.find(s, s.selected);
     const can = G.canAct(s, u),
       cast = ['attack', 'skill'].includes(this.mode) && can;
+    drawDanger(this); // Polish (dangerZone): the enemy's strike zone, under everything else
     const art = cast && this.mode === 'skill' ? G.artFor(u) : null;
     const range = cast ? (art ? art.range : u.range) : 0;
     const heal = art && (G.isSupport(art) || art.blink);
     const canBlink = art?.blink && G.canPay(s, u);
-    for (const { x, y } of fieldCells(s.mapIndex)) {
+    // rangeTiles: zones.js paints the grid and the regions (one outer edge, a strike fringe)
+    // and answers true; the tile-by-tile loop below then has nothing left to do.
+    const zoned = paintField(this, reach, this.time);
+    for (const { x, y } of zoned ? [] : fieldCells(s.mapIndex)) {
       const walk = this.mode === 'move' && can && !u.moved && reach.has(G.key(x, y));
       const aim =
         cast &&
@@ -551,7 +607,8 @@ class ActorLayer {
       c.stroke();
       c.restore();
     }
-    if (hover) {
+    // tileCursor: cursor.js paints animated brackets and answers true.
+    if (hover && !paintCursor(this, hover, this.time)) {
       this.path(this.tile(hover.x, hover.y, 0.47));
       c.fillStyle = 'rgba(250,232,172,.19)';
       c.fill();
@@ -583,6 +640,8 @@ class ActorLayer {
         this.preview = { ...hover, path: G.movementPath(s, u, u, hover) };
       this.drawRoute(this.preview.path, true);
     }
+    // rangeTiles: a reticle on every piece the pending strike or art can be used on.
+    paintReticles(this, reach, hover, this.time);
   }
   location(u, now) {
     const blink = this.tracks.get(u.id)?.clips.find((c) => c.blinkFrom && now < c.blinkAt);
@@ -617,10 +676,22 @@ class ActorLayer {
     if (alpha <= 0) return;
     c.save();
     c.globalAlpha = alpha;
-    this.circle(pos.x + 0.055, pos.y + 0.035, title ? 0.25 : 0.33, 0.094);
+    // unitTokens: the team base, the outlined sprite and the gauge are painted by tokens.js
+    // and sprite-frames.js in place of the plain shadow, disc, sprite and bar below.
+    const tokens = POLISH.unitTokens && !title;
+    // A hero who has acted and is standing still. actedDim draws it grey for the rest of
+    // the player's turn (`grey` runs 0 to 1 as it fades); without the switch it is faint.
+    const spent =
+      !title && u.acted && human && u.hp > 0 && !tr.clips?.some((clip) => clip.end > now);
+    const grey =
+      POLISH.actedDim && !title
+        ? spentAmount(this, u, spent && this.state.phase === 'ally', now)
+        : 0;
+    if (tokens) paintBase(this, u, pos, now, { human, selected, spent: grey > 0.5 });
+    else this.circle(pos.x + 0.055, pos.y + 0.035, title ? 0.25 : 0.33, 0.094);
     c.fillStyle = 'rgba(27,32,25,.32)';
-    c.fill();
-    if (!title) {
+    if (!tokens) c.fill();
+    if (!title && !tokens) {
       this.circle(pos.x, pos.y, 0.308, 0.099);
       c.fillStyle = human ? '#254b41bb' : '#692e25bb';
       c.fill();
@@ -659,16 +730,25 @@ class ActorLayer {
       id = details.mini,
       sheet = this.sheet(id);
     c.save();
-    if (details.robe) c.filter = details.robe;
+    // The cached copy of a frame already carries the robe tint, so with unitTokens no
+    // canvas filter is set while painting.
+    const cached = sheet && (tokens || grey > 0);
+    if (details.robe && !tokens && !cached) c.filter = details.robe;
     c.translate(p.x, p.y);
     if (flip) c.scale(-1, 1);
     if (this.prefs.motion) {
       if (row === 2) c.translate(scale * drive[frame], 0);
       if (row === 3) c.translate(scale * recoil[frame], 0);
     }
-    if (!title && u.acted && human && u.hp > 0 && !tr.clips?.some((clip) => clip.end > now))
-      c.globalAlpha *= 0.82;
-    if (sheet) {
+    if (spent && !POLISH.actedDim) c.globalAlpha *= 0.82;
+    if (cached) {
+      const look = { robe: details.robe, team: tokens ? u.side : null };
+      if (grey < 1) paintFrame(this, sheet, row, frame, w, h, look);
+      // The grey copy is laid over the coloured one while the fade runs.
+      if (grey > 0) paintFrame(this, sheet, row, frame, w, h, { ...look, grey: true }, grey);
+      // Combat feel: the hit flash and the defeat break-up, over the cached frame as well.
+      if (!title) this.impact.sprite(c, u, pos, sheet, frame, row, w, h, flip);
+    } else if (sheet) {
       c.drawImage(
         sheet.image,
         sheet.x + frame * sheet.w,
@@ -680,6 +760,8 @@ class ActorLayer {
         w,
         h
       );
+      // Combat feel: fx/impact.js paints over the sprite it has just drawn.
+      if (!title) this.impact.sprite(c, u, pos, sheet, frame, row, w, h, flip);
     } else {
       const still = this.image('mini-' + id);
       if (still.complete && still.naturalWidth) {
@@ -703,6 +785,22 @@ class ActorLayer {
           top: top + h * 0.15,
           bottom: p.y
         });
+      if (tokens) {
+        paintGauge(this, u, {
+          x: p.x,
+          y: top + h * 0.135,
+          scale,
+          now,
+          human,
+          selected,
+          shown: visibleHP,
+          spent: grey > 0.5,
+          rank: details.rank,
+          leader: u.id === this.state.leader
+        });
+        c.restore();
+        return;
+      }
       const len = clamp(scale * 0.49, 15, 34),
         y = top + h * 0.135;
       c.fillStyle = '#17241fe8';
@@ -782,9 +880,13 @@ class ActorLayer {
   }
   drawEffects(now, visible) {
     const c = this.ctx;
+    this.impact.paintSparks(c);
     for (const e of this.effects) {
       if (now >= e.end) {
-        if (e.kind === 'technique' && e.announced) this.onTechnique?.(e.skill, 'end');
+        if (e.kind === 'technique' && e.announced) {
+          this.onTechnique?.(e.skill, 'end');
+          this.impact.conclude(e);
+        }
         continue;
       }
       if (now < e.start) continue;
@@ -795,10 +897,12 @@ class ActorLayer {
         if (!e.announced && visible && f >= 0.035) {
           e.announced = true;
           this.onTechnique?.(e.skill, 'gather', e.name, e.visual, e.rank);
+          this.impact.herald(e);
         }
         if (!e.struck && visible && f >= 0.52) {
           e.struck = true;
           this.onTechnique?.(e.skill, 'impact', e.name, e.visual, e.rank);
+          this.impact.conclude(e, 250);
         }
         const from = this.point(e.from.x, e.from.y, 0.78);
         const to = this.point(e.to.x, e.to.y, 0.76);
@@ -847,6 +951,14 @@ class ActorLayer {
         continue;
       }
       if (!this.prefs.motion) continue;
+      if (e.kind === 'burst') {
+        this.impact.burst(c, e, now);
+        continue;
+      }
+      if (e.tone) {
+        this.impact.number(c, e, u);
+        continue;
+      }
       const pos = this.location(u, now);
       const to = this.point(pos.x, pos.y, 0.72),
         glow =
@@ -886,10 +998,12 @@ class ActorLayer {
       }
       c.restore();
     }
-    this.effects = this.effects.filter((e) => now < e.end);
+    // A restyled number lives on the unheld clock and says itself when it is done.
+    this.effects = this.effects.filter((e) => (e.tone && e.born != null ? !e.done : now < e.end));
   }
   draw(realTime, title, reach, hover, covered = false) {
     this.advance(realTime, covered);
+    if (!title && this.state && !covered && !this.waitingForArt) this.impact.land(this.time);
     const time = this.time;
     const c = this.ctx;
     c.clearRect(0, 0, this.width, this.height);

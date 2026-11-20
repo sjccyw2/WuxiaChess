@@ -32,7 +32,13 @@ const SWITCHES = {
   // Panels
   uiChrome: true, // HUD and dialog finish, transitions, button states
   forecastBars: true, // health bars in the strike forecast
-  loadingVeil: true // title screen fades in once the scene and fonts are ready
+  loadingVeil: true, // title screen fades in once the scene and fonts are ready
+
+  // Controls and layout (each one adds or moves a control, so each was approved by the owner)
+  dangerZone: true, // HUD button and the D key: shade every tile the enemy can strike next turn
+  nextHeroKey: true, // Tab jumps to the next hero who can still act (Shift+Tab, the previous)
+  forecastSide: true, // on wide screens the strike forecast docks to the side, clear of the fighters
+  forecastTrim: true // drop the forecast's target-health row, which the health bar now shows
 };
 
 const query = new URLSearchParams(globalThis.location?.search || '');
