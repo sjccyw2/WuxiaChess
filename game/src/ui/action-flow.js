@@ -25,6 +25,18 @@ function undoRow(s, u) {
   );
 }
 
+// Marks the entry of the arts list that is ready to strike with, so the choice is visible and
+// another can be picked instead.
+function markReady(list, s, u, mode) {
+  if (!ON || !G.canAct(s, u) || !['attack', 'skill'].includes(mode)) return;
+  const id = mode === 'attack' ? 'basic' : u.activeArt || 'signature';
+  for (const b of list.querySelectorAll('.field-art')) {
+    const on = b.dataset.id === id;
+    b.classList.toggle('armed', on);
+    b.setAttribute('aria-pressed', String(on));
+  }
+}
+
 // The hero to pick next: one who has not been touched this turn, before one who has only moved.
 function nextToAct(s) {
   const line = G.party(s).filter((u) => G.canAct(s, u));
@@ -101,4 +113,4 @@ function followHero(panel, layer, who) {
 const flowHotkeys =
   '<kbd>1</kbd>–<kbd>4</kbd> 招式 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 撤步・返回 <kbd>?</kbd> 指南';
 
-export { ON, undoRow, nextToAct, anyIdle, shouldConfirmEnd, braceTheRest, followHero, flowHotkeys };
+export { ON, markReady, undoRow, nextToAct, anyIdle, shouldConfirmEnd, braceTheRest, followHero, flowHotkeys };

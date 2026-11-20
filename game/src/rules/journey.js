@@ -1047,6 +1047,7 @@ function treeModel(s, u) {
     leaderName: COMMANDS[u.id].name,
     leaderDesc: commandDescription(u.id),
     basicName: G.basicFor(u).name,
+    basicFacts: moveFacts(s, u, 'basic'),
     school,
     guides,
     library,
