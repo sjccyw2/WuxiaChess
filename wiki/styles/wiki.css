@@ -1,12 +1,16 @@
 @font-face {
   font-family: RiverSerif;
-  src: url('../../game/assets/river-serif.woff') format('woff');
+  src:
+    url('../../game/assets/river-serif.woff2') format('woff2'),
+    url('../../game/assets/river-serif.woff') format('woff');
   font-weight: 650 900;
   font-display: swap;
 }
 @font-face {
   font-family: RiverSans;
-  src: url('../../game/assets/river-sans.woff') format('woff');
+  src:
+    url('../../game/assets/river-sans.woff2') format('woff2'),
+    url('../../game/assets/river-sans.woff') format('woff');
   font-weight: 100 900;
   font-display: swap;
 }

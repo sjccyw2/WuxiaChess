@@ -1451,3 +1451,16 @@ html.polish-action-flow .battlefield .field-action.armed-art[aria-expanded='true
     min-width: 132px;
   }
 }
+
+/* tipClear: on a phone held sideways the tip line used to sit on the bottom edge, over the
+   隊伍 / 藥囊 / 視角 buttons whenever it ran long. It now sits in the top row, between the map
+   plaque and the tool box, where nothing else is. */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 480px) {
+  html.polish-tip-clear .battlefield > .board-tip {
+    top: var(--top);
+    bottom: auto;
+    max-width: max(200px, calc(100% - 432px));
+    padding-block: 4px;
+    line-height: 1.35;
+  }
+}

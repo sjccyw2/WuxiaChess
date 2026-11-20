@@ -20,7 +20,7 @@ import { codexPage } from './ui/gates.js';
 import * as R from './rules/journey.js';
 import { rollView, prologuePage, prologueSteps } from './ui/run-views.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
-import { equippedMoves, journeyEnding } from './ui/journey-pages.js';
+import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
 import { mapLayout } from './data/terrain.js';
 import { showPhase, phaseLead } from './ui/phase-banner.js';
 import * as S from './audio/index.js';
@@ -184,6 +184,7 @@ const board = new BattleBoard({
   onUnit: unitClick,
   onHover(x, y) {
     if (screen !== 'battle') return;
+    markAnswers($('field-arts'), state, selected(), x != null && G.at(state, x, y));
     const t = $('board-tip');
     if (x != null && ['skill', 'attack'].includes(mode)) {
       const u = selected(),
@@ -280,6 +281,7 @@ function paint() {
   $('field-arts').innerHTML =
     F.glideRows(state, u) || equippedMoves(state, u) + F.undoRow(state, u);
   F.markReady($('field-arts'), state, u, mode);
+  markAnswers($('field-arts'), state, u, board.hover && G.at(state, board.hover.x, board.hover.y));
   if (hud.panel === 'arts' && !G.canAct(state, u) && !(F.ON && G.canGlide(state, u)))
     hud.closePanel();
   hud.syncPanelButtons();
