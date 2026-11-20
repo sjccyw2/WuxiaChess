@@ -28,6 +28,50 @@ export const TRADE_OFFS = new Set([
   'hpCost', 'recoil', 'rooted', 'spent', 'openGuard', 'backlash', 'consume', 'once', 'cooldown',
   'poised'
 ]);
+// Conditional power (SPEC-mechanics §4): the factor rises only in some situation, so the art is
+// measured twice. `plain` readies the scene where the condition does not hold; by default the field
+// is simply left off the art, and forecast then adds nothing, exactly as when the condition fails
+// in play. `set` lays out on the board the situation the mechanic's own rule describes, and the
+// rules decide what it is worth there. Being measured, these never count as "adds an effect".
+// `share` is the part of turns the bonus is assumed to hold, for the R9 budget (SPEC-heroes §C).
+const ANSWERED = {
+  close: ['target fights at reach 1', (c) => { c.t.range = 1; }],
+  ranged: ['target strikes from 2 tiles or more', (c) => { c.t.range = Math.max(2, c.t.range); }],
+  master: ['target is the master', (c, o) => {
+    const rank = G.unitDetails(c.t)?.rank;
+    if (rank !== 'boss' && rank !== 'mini' && o.master) c.t.encounterId = o.master.encounterId || o.master.id;
+  }]
+};
+export const CONDITIONAL = {
+  answer: { when: (art) => ANSWERED[art.answer][0], set: (c, art, o) => ANSWERED[art.answer][1](c, o), share: 0.5 },
+  lone: { when: () => 'no companion beside the hero', set: () => {}, share: 0.6 },
+  paired: { when: () => 'a companion beside the hero', set: (c) => c.s.units.push(dummyFriend(c.u, 'nearH', c.sc.H)), share: 0.7 },
+  dire: {
+    when: () => 'hero at a quarter of health',
+    set: (c, art) => { c.u.hp = Math.floor(c.u.maxHp / 4) + (art.hpCost || 0); },
+    share: 0.4
+  },
+  avenge: { when: () => 'hero hurt in the last enemy phase', set: (c) => { c.u.hurtRound = c.s.round - 1; }, share: 0.7 },
+  execute: { when: () => 'target at half health', set: (c) => { c.t.maxHp = 1998; c.t.hp = 999; }, share: 0.5 },
+  // 傾力 spends everything: plainly only the art's minimum, favourably a full pool. What it gains
+  // between the two is bought with 內力 point for point, and R9 never prices 內力, so the budget
+  // counts it at the minimum (share 0).
+  surge: {
+    when: () => 'all 內力 spent from a full pool',
+    plain: (c, art) => { c.u.mp = G.artCost(c.s, c.u, art); },
+    set: (c) => { c.u.mp = c.u.maxMp; },
+    share: 0
+  }
+};
+export const conditionalKeys = (art) => Object.keys(CONDITIONAL).filter((k) => art?.[k]);
+// Capabilities that are a job in themselves rather than a rider on a strike: what the art does to
+// a foe's turn, to the hero's own tempo, or to who gets hit. A later strike that carries one is
+// bought for it, so R4 does not hold it to the starting art's damage. Form tags among them are
+// counted as mechanics, not as the small riders other form tags are.
+export const CAPABILITIES = new Set([
+  'siphon', 'again', 'glide', 'order', 'taunt', 'cover', 'stance', 'evade', 'redirect', 'zone',
+  'disarm', 'daze', 'wound'
+].flatMap((k) => [k, 'form:' + k]));
 
 // What an art does besides its measured numbers: every mechanic field and every form tag.
 // Object fields with a `stat` (debuff) are split by stat, so lowering attack and lowering
@@ -36,7 +80,7 @@ export function effectKeys(art) {
   const keys = new Set();
   if (!art) return keys;
   for (const [k, v] of Object.entries(art)) {
-    if (BOOKKEEPING.has(k) || MEASURED.has(k) || TRADE_OFFS.has(k)) continue;
+    if (BOOKKEEPING.has(k) || MEASURED.has(k) || TRADE_OFFS.has(k) || CONDITIONAL[k]) continue;
     if (v === false || v === null || v === undefined || v === 0) continue;
     keys.add(v && typeof v === 'object' && !Array.isArray(v) && v.stat ? k + ':' + v.stat : k);
   }
@@ -156,7 +200,7 @@ const SITUATIONS = [
     c.s.units.push(dummyFriend(c.u, 'nearH', c.sc.H));
   }],
   ['hero at a third of health', (c) => { c.u.hp = Math.ceil(c.u.maxHp / 3); }],
-  ['hero struck last turn', (c) => { c.u.struck = true; c.u.lastHitRound = 1; }]
+  ['hero hurt in the last enemy phase', (c) => { c.u.hurtRound = c.s.round - 1; }]
 ];
 
 // Build a scene: hero u at A, the primary at T (enemy or companion), the others at B and S.
@@ -218,16 +262,32 @@ function readForecast(f, type) {
   return out;
 }
 
+// The art as it resolves when none of its conditional bonuses holds.
+const withoutConditions = (art) =>
+  art && Object.fromEntries(Object.entries(art).filter(([k]) => !CONDITIONAL[k] || CONDITIONAL[k].plain));
+
 // Measure one art (or the basic attack, art = null with basic given) for hero u against a
 // reference foe. Returns the plain case, plus the best favourable situation if one helps.
-export function measure(u, art, ref, basic = null) {
+// With `opts.conditional` the plain case is the art with its conditional power not holding, and
+// `fav` is the art in the situation its conditional mechanics describe, all of them at once (no
+// art carries two that contradict: SPEC-mechanics §4). `opts.master` is the board's master, for
+// a 破招 that answers masters.
+export function measure(u, art, ref, basic = null, opts = {}) {
   const reach = art ? art.range ?? 1 : u.range;
-  const c = build(u, art, ref, reach);
+  const conds = opts.conditional ? conditionalKeys(art) : [];
+  const plainArt = opts.conditional ? withoutConditions(art) : art;
+  const scene = (hooks = []) => {
+    const ctx = build(u, art, ref, reach);
+    for (const hook of hooks) hook(ctx);
+    return ctx;
+  };
+  const readyPlain = (ctx) => conds.forEach((k) => CONDITIONAL[k].plain?.(ctx, art, opts));
+  const c = scene([readyPlain]);
   if (c.type === 'ground') return { plain: { reach }, type: 'ground' };
-  const run = (ctx) => {
+  const run = (ctx, a = plainArt) => {
     try {
       return readForecast(
-        G.forecast(ctx.u, ctx.t, !!art, ctx.s, art, basic || G.basicFor(ctx.u)),
+        G.forecast(ctx.u, ctx.t, !!a, ctx.s, a, basic || G.basicFor(ctx.u)),
         ctx.type
       );
     } catch (e) {
@@ -238,12 +298,16 @@ export function measure(u, art, ref, basic = null) {
   let best = null;
   if (c.type === 'enemy')
     for (const [label, apply] of SITUATIONS) {
-      const ctx = build(u, art, ref, reach);
-      apply({ ...ctx, sc: ctx.sc });
+      const ctx = scene([readyPlain, apply]);
       const m = run(ctx);
       if (m && !m.error && m.damage > (best?.m.damage ?? plain.damage)) best = { label, m };
     }
-  return { plain, type: c.type, best, short: c.sc.short };
+  let fav = null;
+  if (conds.length && c.type === 'enemy') {
+    const m = run(scene(conds.map((k) => (ctx) => CONDITIONAL[k].set(ctx, art, opts))), art);
+    fav = { label: conds.map((k) => CONDITIONAL[k].when(art)).join(', '), m: m.error ? plain : m };
+  }
+  return { plain, type: c.type, best, fav, short: c.sc.short };
 }
 
 // ── Classification ──────────────────────────────────────────────────────
@@ -311,6 +375,11 @@ export function mainMeasure(job, m) {
   }
   return 0;
 }
+// The same number in the art's favourable case (equal to the plain one without conditional power).
+export function favMeasure(job, m) {
+  if (FAMILY[job] !== 'strike' || !m.fav) return mainMeasure(job, m);
+  return job === 'area' ? m.favArea : m.favDamage;
+}
 export const MEASURE_NAMES = {
   strike: 'damage (avg of soft and hard foe, early/mid/late)',
   area: 'damage incl. splash on two neighbours (avg)',
@@ -324,30 +393,43 @@ export const measureName = (job) => MEASURE_NAMES[job] || MEASURE_NAMES[FAMILY[j
 
 // A full profile of one art for hero `id`: plain and favourable numbers at each reference.
 // refs: [{label, stage, level}]
-export function profile(id, artId, refs, learnedExtra = []) {
+// opts.conditional: read conditional power as described at `measure`, and measure the art with
+// what must already be learned to reach it (its ancestors: a passive such as 左右互搏's is then in
+// force, as it is in play). The battle simulator leaves it off and keeps its own reading.
+export function profile(id, artId, refs, learnedExtra = [], opts = {}) {
   const foes = boardFoes();
   const isBasicNode = artId !== 'signature' && artId !== 'basic' && TECHNIQUES[artId]?.kind === 'basic';
-  const out = { id: artId, points: [], conditional: null };
+  const out = { id: artId, points: [], conditional: null, fav: null };
+  const upstream = opts.conditional && TECHNIQUES[artId] ? [...ancestors(artId)].filter((a) => TECHNIQUES[a]) : [];
   let sumDmg = 0,
     sumArea = 0,
+    favDmg = 0,
+    favArea = 0,
     n = 0;
   for (const ref of refs) {
-    const learned = [...learnedExtra, ...(isBasicNode ? [artId] : [])];
+    const learned = [...new Set([...learnedExtra, ...upstream, ...(isBasicNode ? [artId] : [])])];
     const u = heroAt(id, ref.level, learned);
     const art =
       artId === 'basic' || isBasicNode ? null : artId === 'signature' ? G.artFor(u, 'signature') : TECHNIQUES[artId];
     const basic = isBasicNode ? TECHNIQUES[artId] : G.basicFor(heroAt(id, ref.level));
     const board = foes[Math.min(ref.stage, foes.length - 1)];
-    const soft = measure(u, art, board.soft, basic),
-      hard = measure(u, art, board.boss, basic);
+    const how = { conditional: !!opts.conditional, master: board.boss };
+    const soft = measure(u, art, board.soft, basic, how),
+      hard = measure(u, art, board.boss, basic, how);
     const plainBasic = measure(heroAt(id, ref.level), null, board.boss, G.basicFor(heroAt(id, ref.level)));
     const row = { label: ref.label, soft: soft.plain, hard: hard.plain, basicHard: plainBasic.plain.damage };
+    if (hard.fav) row.fav = { soft: soft.fav.m, hard: hard.fav.m };
     out.points.push(row);
     out.type = hard.type;
     out.short ||= hard.short;
     if (hard.type === 'enemy') {
       sumDmg += (soft.plain.damage + hard.plain.damage) / 2;
       sumArea += (soft.plain.area + hard.plain.area) / 2;
+      const fs = soft.fav?.m || soft.plain,
+        fh = hard.fav?.m || hard.plain;
+      favDmg += (fs.damage + fh.damage) / 2;
+      favArea += (fs.area + fh.area) / 2;
+      if (hard.fav) out.fav = { label: hard.fav.label };
       n++;
       if (hard.best && hard.best.m.damage >= hard.plain.damage + 2) {
         const gain = hard.best.m.damage - hard.plain.damage;
@@ -361,6 +443,9 @@ export function profile(id, artId, refs, learnedExtra = []) {
   out.basicMid = mid.basicHard;
   out.avgDamage = n ? Math.round(sumDmg / n) : 0;
   out.avgArea = n ? Math.round(sumArea / n) : 0;
+  // Without conditional power, the favourable case is the plain one.
+  out.favDamage = n ? Math.round(favDmg / n) : 0;
+  out.favArea = n ? Math.round(favArea / n) : 0;
   // The counter a plain basic attack at reach 1 would take at mid level: tells "safe" apart.
   const u = heroAt(id, refs[Math.floor(refs.length / 2)].level);
   const board = foes[Math.min(refs[Math.floor(refs.length / 2)].stage, foes.length - 1)];
@@ -375,21 +460,34 @@ export function artOf(heroId, artId) {
   return TECHNIQUES[artId];
 }
 
-// Plain strike equivalent, priced with the framework's R9 table. Unpriced mechanics are listed.
+// The factor a conditional mechanic adds when it holds (破招 is always +0.30; 合璧 counted at its
+// lesser, any-companion value; 傾力 at its minimum spend, see CONDITIONAL).
+const conditionalBonus = (k, art) =>
+  k === 'answer' ? 0.3 : k === 'paired' ? art.paired.any : k === 'surge' ? 0 : art[k];
+
+// Plain strike equivalent, priced with the framework's R9 table and the prices in `prices`
+// (check-skills.mjs keeps them, with their sources). Mechanics with no price are listed.
+// Support arts are valued in 氣血 restored or shielded: `support` is the total over the people it
+// reaches, `perHead` what each of them gets.
 export function strikeEquivalent(art, prices) {
-  if (!art) return { value: 1, unpriced: [] };
-  if (art.kind === 'basic') return { value: null, note: 'basic +' + (art.basicBonus || 0), unpriced: [] };
+  if (!art) return { value: 1, unpriced: [], paid: [] };
+  if (art.kind === 'basic') return { value: null, note: 'basic +' + (art.basicBonus || 0), unpriced: [], paid: [] };
   const type = G.targetType(art);
-  const unpriced = [];
+  const unpriced = [],
+    paid = [];
   if (type === 'ally' || type === 'self') {
     const people = art.aura ? prices.auraPeople : 1;
-    const amount = ((art.heal || 0) + (art.shield?.power || 0)) * people;
-    for (const k of effectKeys(art)) if (!['shield'].includes(k)) unpriced.push(k);
-    return { support: amount ? Math.round(amount) : null, unpriced };
+    let each = (art.heal || 0) + (art.shield?.power || 0);
+    for (const k of effectKeys(art))
+      if (prices.guards[k]) each += prices.guards[k];
+      else if (k !== 'shield') unpriced.push(k);
+    // A support art's price has no worth in 氣血; it is named, not deducted.
+    for (const k of costKeys(art)) unpriced.push(k);
+    return { support: each ? Math.round(each * people) : null, perHead: each, people, unpriced, paid };
   }
-  if (type === 'ground') return { value: null, note: 'mobility', unpriced: [] };
+  if (type === 'ground') return { value: null, note: 'mobility', unpriced: [], paid: [] };
   const hits = (art.hits || [1]).reduce((a, b) => a + b, 0);
-  let v = (art.factor ?? 1.5) * hits;
+  let v = ((art.factor ?? 1.5) + conditionalKeys(art).reduce((n, k) => n + conditionalBonus(k, art) * CONDITIONAL[k].share, 0)) * hits;
   if (art.safe) v += prices.safe;
   if (art.pierce) v += (prices.pierceHalf * art.pierce) / 0.5;
   if ((art.range ?? 1) > 2) v += prices.reachTile * ((art.range ?? 1) - 2);
@@ -398,11 +496,22 @@ export function strikeEquivalent(art, prices) {
   if (art.debuff) v += (prices.debuffTwoTurns * (art.debuff.turns || 2)) / 2;
   if (art.poison) v += (prices.debuffTwoTurns * (art.poison.turns || 2)) / 2;
   if (art.hpCost) v -= prices.hpCost;
-  for (const k of effectKeys(art))
-    if (!['safe', 'splash', 'push', 'debuff:atk', 'debuff:def', 'poison'].includes(k) && !k.startsWith('form:'))
-      unpriced.push(k);
-  for (const k of costKeys(art)) if (k !== 'hpCost') unpriced.push(k);
-  return { value: Math.round(v * 100) / 100, unpriced };
+  const riders = ['safe', 'splash', 'push', 'debuff:atk', 'debuff:def', 'poison'];
+  for (const k of effectKeys(art)) {
+    const bare = k.replace(/^form:/, '');
+    if (riders.includes(k)) continue;
+    if (prices.riders[bare] != null && (k === bare || CAPABILITIES.has(k))) v += prices.riders[bare];
+    else if (!k.startsWith('form:') || CAPABILITIES.has(k)) unpriced.push(k);
+  }
+  for (const k of costKeys(art)) {
+    if (k === 'hpCost') continue;
+    if (prices.costs[k] == null) unpriced.push(k);
+    else {
+      v -= prices.costs[k];
+      paid.push(k);
+    }
+  }
+  return { value: Math.round(v * 100) / 100, unpriced, paid };
 }
 
 export function heroTree(id) {
