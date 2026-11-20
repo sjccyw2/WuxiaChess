@@ -67,12 +67,13 @@ const RECIPES = {
   holyFireTurn: ['聖火令武功','ember','plunge','fireTablets','snap','三枚火令斜插盤旋，令心的刻焰反向撩起。'],
   qiankunSeventh: ['乾坤大挪移・第七層','jade','lattice','heavenCanopy','echo','飛簷形的護氣展作華蓋，垂穗護住蓋下眾人。'],
 
-  'signature:hu': ['胡家刀法','frost','draw','snowSaber','double','寬背雪刀橫過，短促的回刀緊隨冰白刀痕。'],
-  snowPursuit: ['雪野追蹤','frost','steps','foxTracks','quick','三組狐爪在浮雪上由密至疏，最後一爪帶起碎雪。'],
+  'signature:hu': ['胡家刀法','frost','draw','snowSaber','snap','寬背雪刀橫過，留下一道冰白刀痕。'],
+  snowPursuit: ['四象步','frost','steps','foxTracks','quick','三組狐爪在浮雪上由密至疏，最後一爪帶起碎雪。'],
+  foxFeint: ['胡家刀法・懷中抱月','frost','draw','foxFeint','double','先出半道斷刀影，再從另一側翻腕出鋒。'],
   silkwormPalm: ['春蠶掌法','pearl','coil','silkCocoon','glide','細蠶絲纏成橢繭，一縷柔掌從繭口穿出。'],
-  foxFeint: ['胡家刀・虛招引劍','frost','draw','foxFeint','double','先出半道斷刀影，再從另一側翻腕出鋒。'],
-  foxWrist: ['胡家刀・截腕','steel','thrust','wristHook','snap','彎刀鉤住一道腕環，短白刃橫過圓心。'],
-  foxTwinChange: ['胡家刀法・一刀兩變','frost','draw','foxMask','echo','兩次反向刀彎交出雪狐的耳尖與雙眼。'],
+  miaoSword: ['苗家劍法','pearl','thrust','swordBind','snap','劍鋒相交，一線從對方的護手旁穿出。'],
+  heartCut: ['胡家刀法・纏身摘心刀','cinnabar','draw','foxFeint','double','先出半道斷刀影，再從另一側翻腕出鋒。'],
+  cliffCut: ['胡家刀法・懸崖一刀','frost','draw','foxMask','heavy','一道反向刀彎劈出雪狐的耳尖與雙眼。'],
 
   fingerFlick: ['彈指神通','bamboo','pebble','flickStone','quick','一枚帶稜青石脫指而出，身後拖著三道短波。'],
   softPalm: ['綿掌','pearl','wave','cottonPalm','glide','掌影沉進層疊的棉絮雲，掌邊綿力外散。'],
@@ -88,7 +89,8 @@ const RECIPES = {
   vacantFist: ['空明拳','jade','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。'],
   toadLunge: ['蛤蟆功','bronze','leap','toadLeap','heavy','伏地蟾影伸展雙腿，貼著低弧彈起。'],
   northernSea: ['北冥神功','sea','return','seaFunnel','return','墨藍水渦逐層內收，一束內息流回掌心。'],
-  universeCanopy: ['乾坤大挪移・借力回護','jade','lattice','heavenCanopy','echo','飛簷形的護氣展作華蓋，垂穗護住蓋下眾人。']
+  universeCanopy: ['乾坤大挪移・借力回護','jade','lattice','heavenCanopy','echo','飛簷形的護氣展作華蓋，垂穗護住蓋下眾人。'],
+  foxTwinChange: ['胡家刀法・一刀兩變','frost','draw','foxMask','echo','兩次反向刀彎交出雪狐的耳尖與雙眼。']
 };
 
 const STROKE_NAMES = Object.freeze(Object.fromEntries(Object.entries(RECIPES).map(([id, row])=>[id,row[0]])));

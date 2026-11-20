@@ -500,7 +500,7 @@ const HERO_STATS = {
   huang: [96, 74, 20, 8, 4, 2, 'jadeCane'],
   yang: [128, 54, 27, 10, 4, 1, 'darkIron'],
   zhang: [132, 76, 22, 14, 3, 1, 'mingSash'],
-  hu: [116, 61, 24, 9, 4, 1, 'foxSaber'],
+  hu: [110, 58, 25, 9, 5, 1, 'foxSaber'],
   hero: [112, 48, 27, 10, 3, 1, 'pine'],
   medic: [94, 76, 18, 7, 3, 2, 'staff'],
   guard: [148, 44, 23, 17, 3, 1, 'pole'],
@@ -679,7 +679,7 @@ const SIGNATURE_RULES_BY_HERO = {
   huang: { factor: 1.15, visual: 'guard' },
   yang: { factor: 1.32, visual: 'guo' },
   zhang: { visual: 'medic', heal: 30, target: 'ally' },
-  hu: { factor: 1.27, visual: 'xiao', hits: [0.68, 0.68] }
+  hu: { factor: 1.3, visual: 'xiao' }
 };
 function artFor(u, key = u.activeArt || 'signature') {
   if (u.learned?.includes(key) && TECHNIQUES[key]) return TECHNIQUES[key];

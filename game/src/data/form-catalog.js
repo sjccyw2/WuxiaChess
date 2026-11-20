@@ -89,10 +89,11 @@ const ART_FORMS = {
   'signature:hu': ['mark'],
   huQuickDraw: ['exploit'],
   snowPursuit: ['cleanse'],
+  foxFeint: ['pull'],
   silkwormPalm: ['pin'],
-  foxFeint: ['mark'],
-  foxWrist: ['seal'],
-  foxTwinChange: ['exploit', 'flank'],
+  miaoSword: ['glide'],
+  heartCut: ['exploit', 'again'],
+  cliffCut: ['exploit', 'mark'],
 
   // 可分授給俠客的八部武譜
   fingerFlick: ['mark'],
