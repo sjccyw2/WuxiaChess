@@ -227,15 +227,18 @@ function loadout(model, ui) {
     [...list(model.school), ...list(model.guides), ...library].map((a) => [a.id, a])
   );
   const slotTitle = (id) => (id ? text(artById.get(id)?.name || id) : '空位');
+  // Reach and 內力 cost, shown on every box and every row so arts can be compared at a glance.
+  const reach = (f) =>
+    f ? `<span class="mj-move-cost"><span>射程 <b>${whole(f.range)}</b> 格</span><span>${f.mp ? `內力 <b>${whole(f.mp)}</b>` : '免內力'}</span>${f.hpCost ? `<span>氣血 <b>${whole(f.hpCost)}</b></span>` : ''}</span>` : '';
   // The basic attack is always carried and cannot be swapped: shown first, as a fixed box.
   const basicBox = model.basicName
-    ? `<div class="mj-slot mj-slot-basic" role="img" aria-label="基本攻擊，${text(model.basicName)}，固定不可更換"><span class="mj-slot-number">基本攻擊</span><span class="mj-slot-title">${glyph('sword', 16)}<b>${text(model.basicName)}</b></span></div>`
+    ? `<div class="mj-slot mj-slot-basic" role="img" aria-label="基本攻擊，${text(model.basicName)}，固定不可更換"><span class="mj-slot-number">基本攻擊</span><span class="mj-slot-title">${glyph('sword', 16)}<b>${text(model.basicName)}</b></span>${reach(model.basicFacts)}</div>`
     : '';
   const slotControls = slots
     .map((id, i) =>
       btn(
         'slot-select',
-        `<span class="mj-slot-number">${slotName(i)}</span><span class="mj-slot-title">${glyph(id ? artById.get(id)?.icon || 'sword' : 'plus', 16)}<b>${slotTitle(id)}</b></span>`,
+        `<span class="mj-slot-number">${slotName(i)}</span><span class="mj-slot-title">${glyph(id ? artById.get(id)?.icon || 'sword' : 'plus', 16)}<b>${slotTitle(id)}</b></span>${id ? reach(artById.get(id)?.facts) : ''}`,
         `mj-slot ${id ? '' : 'mj-vacant'}`,
         `${data(i)} ${pressed(i === index)} aria-label="選擇${slotName(i)}，${slotTitle(id)}"`
       )
@@ -252,7 +255,7 @@ function loadout(model, ui) {
             ? '成名絕學'
             : '門派武學';
       const label = here ? '已配置' : used >= 0 ? '移至此格' : '配置此格';
-      return `<li class="mj-library-row"><span class="mj-item-symbol">${glyph(a.icon, 20)}</span><div><small>${what}${used >= 0 ? ` · ${slotName(used)}` : ''}</small><h4>${text(a.name)}</h4>${factBadge(a.facts)}</div>${btn('slot-set', label, 'mj-action mj-compact', `${data(a.id)} data-slot="${index}" ${here || a.canEquip === false ? 'disabled' : ''} aria-label="${text(a.name)}${here ? '已配置於' : '配置到'}${slotName(index)}"`)}</li>`;
+      return `<li class="mj-library-row"><span class="mj-item-symbol">${glyph(a.icon, 20)}</span><div><small>${what}${used >= 0 ? ` · ${slotName(used)}` : ''}</small><h4>${text(a.name)}</h4>${reach(a.facts)}${factBadge(a.facts)}</div>${btn('slot-set', label, 'mj-action mj-compact', `${data(a.id)} data-slot="${index}" ${here || a.canEquip === false ? 'disabled' : ''} aria-label="${text(a.name)}${here ? '已配置於' : '配置到'}${slotName(index)}"`)}</li>`;
     })
     .join('');
   const clear = slots[index]

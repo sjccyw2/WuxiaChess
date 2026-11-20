@@ -780,6 +780,25 @@
 .mj-slot.mj-vacant {
   border-style: dashed;
 }
+/* Reach and cost of an art, on the slot boxes and the rows of the loadout tab. */
+.mj-move-cost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  color: #b9c2ad;
+  font: 500 12px/1.4 var(--sans);
+}
+.mj-move-cost b {
+  color: #f0dcae;
+  font: 650 14px/1 var(--serif);
+}
+.mj-library-row .mj-move-cost {
+  margin: 1px 0 3px;
+  font-size: 13px;
+}
+.mj-slot-basic .mj-move-cost {
+  color: #d3b891;
+}
 /* The basic attack: always carried, never swapped. A fixed box in its own colour, left of the
    three slots. */
 .mj-slot-bar.mj-with-basic {
