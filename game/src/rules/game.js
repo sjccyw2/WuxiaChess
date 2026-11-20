@@ -248,11 +248,11 @@ const DETAILS = {
     epithet: '大漠俠士',
     bio: '自幼長於漠北，後隨洪七公修習降龍十八掌，鎮守襄陽多年。他應帖的理由很簡單：有人喊救命。',
     basic: '南山掌法',
-    skill: '降龍十八掌',
+    skill: '分筋錯骨手',
     skillIcon: 'hand',
-    skillDesc: '使一招亢龍有悔。擊中兩格內敵人後，若身後地格空置，將其擊退一格再判定還擊。',
-    skillRange: 2,
-    cost: 17
+    skillDesc: '扣住相鄰敵人的關節一扭，攻擊降低 4 點，持續兩回合。',
+    skillRange: 1,
+    cost: 9
   },
   xiao: {
     name: '小龍女',
@@ -504,7 +504,7 @@ const HERO_STATS = {
   hero: [112, 48, 27, 10, 3, 1, 'pine'],
   medic: [94, 76, 18, 7, 3, 2, 'staff'],
   guard: [148, 44, 23, 17, 3, 1, 'pole'],
-  guo: [136, 56, 26, 13, 3, 1, 'wraps'],
+  guo: [146, 50, 23, 15, 3, 1, 'wraps'],
   xiao: [103, 66, 24, 9, 4, 1, 'twins'],
   duan: [95, 78, 20, 8, 4, 2, 'fan']
 };
@@ -673,7 +673,7 @@ const SIGNATURE_RULES_BY_HERO = {
   hero: { factor: 1.35 },
   medic: { heal: 30 },
   guard: { factor: 1.15, safe: true, stance: 30 },
-  guo: { factor: 1.74, push: true },
+  guo: { factor: 1.28, debuff: { stat: 'atk', power: 4, turns: 2 } },
   xiao: { factor: 1.44, hits: [0.65, 0.65] },
   duan: { factor: 1.62, pierce: 0.5 },
   huang: { factor: 1.36, visual: 'guard', safe: true, debuff: { stat: 'atk', power: 4, turns: 2 } },

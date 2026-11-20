@@ -30,13 +30,14 @@ const ART_FORMS = {
   earthThroughChain: [],
 
   // 郭靖
-  'signature:guo': ['collision'],
+  'signature:guo': [],
   southernStance: ['still'],
-  vacantFist: ['mark'],
-  fieldDragonWard: ['cleanse'],
-  flyingDragon: ['flank'],
+  kanglongRegret: ['collision'],
+  guoPairedHands: [],
+  fieldDragonWard: [],
+  flyingDragon: [],
   armyBookRally: ['channel'],
-  dragonReserve: ['collision', 'mark'],
+  dragonReserve: ['collision'],
 
   // 小龍女
   'signature:xiao': ['flank'],

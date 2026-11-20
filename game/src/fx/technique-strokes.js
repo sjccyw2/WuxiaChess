@@ -23,12 +23,13 @@ const RECIPES = {
   bloodAtPass: ['捨身截騎','cinnabar','thrust','gateSpike','heavy','赤色鐵錐從傾倒的關柵間直出。'],
   earthThroughChain: ['吸功入地・涼亭鐵鏈','slate','wave','chainBridge','echo','鏈身平鋪跨過三段石樑，餘勁從橋面散開。'],
 
-  'signature:guo': ['降龍十八掌','gold','dragon','dragonHead','heavy','金龍昂首出掌，龍鬚卷向受掌之人。'],
-  vacantFist: ['空明拳','jade','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。'],
-  fieldDragonWard: ['見龍在田','bamboo','lattice','scaleWard','gather','龍鱗逐排合起，結成低伏的掌牆。'],
-  flyingDragon: ['飛龍在天','gold','plunge','skyDragon','heavy','龍首從高處折下，三道雲痕往下壓。'],
+  'signature:guo': ['分筋錯骨手','bronze','thrust','wristHook','snap','彎鉤扣住一道腕環，短白勁橫過圓心。'],
+  kanglongRegret: ['降龍十八掌・亢龍有悔','gold','dragon','dragonHead','heavy','金龍昂首出掌，龍鬚卷向受掌之人。'],
+  guoPairedHands: ['左右互搏術','gold','twins','crossedHands','double','左右手各走一路，前直後橫，交擊有別。'],
+  fieldDragonWard: ['降龍十八掌・見龍在田','bamboo','lattice','scaleWard','gather','龍鱗逐排合起，結成低伏的掌牆。'],
+  flyingDragon: ['降龍十八掌・飛龍在天','gold','plunge','skyDragon','heavy','龍首從高處折下，三道雲痕往下壓。'],
   armyBookRally: ['武穆遺書・合陣','cinnabar','banner','warPennant','gather','繫著三枚指令帶的軍旗下展，陣線隨旗立起。'],
-  dragonReserve: ['降龍十八掌・掌有餘勁','bronze','dragon','dragonEcho','echo','前龍甩首後，第二道小龍影從反面折回。'],
+  dragonReserve: ['降龍十八掌','bronze','dragon','dragonEcho','echo','前龍甩首後，第二道小龍影從反面折回。'],
 
   'signature:xiao': ['玉女素心劍法','pearl','twins','pairedLotus','double','兩柄纖劍向相反方向張開，在蓮心處交鋒。'],
   sparrowSteps: ['天羅地網勢・捕雀步','pearl','steps','sparrowNet','glide','飛雀一高一低，從細索織成的網眼間穿過。'],
@@ -82,7 +83,8 @@ const RECIPES = {
   waterSkim: ['水上漂','sea','ripple','waterSkim','glide','腳尖只點過三圈低低的水紋，最後一滴向後飛起。'],
 
   // No hero art uses the strokes below any more; villain signatures still borrow them (VILLAIN_FORMS).
-  breakPalm: ['破掌式','bronze','thrust','brokenPalm','snap','薄刃從掌影的指縫穿過。']
+  breakPalm: ['破掌式','bronze','thrust','brokenPalm','snap','薄刃從掌影的指縫穿過。'],
+  vacantFist: ['空明拳','jade','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。']
 };
 
 const STROKE_NAMES = Object.freeze(Object.fromEntries(Object.entries(RECIPES).map(([id, row])=>[id,row[0]])));
