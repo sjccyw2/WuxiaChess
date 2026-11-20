@@ -10,7 +10,7 @@ The pictures are in three groups:
 | B | New pictures for story moments that are text-only today | The file name is reserved here. The game needs a small change to show each one. |
 | C | Cover art that still shows the old ferry | Save over the existing file. |
 
-Start with group A. Those are the placeholders a player sees most.
+Group A is finished: all of its pictures are in the game. Group B and C remain.
 
 ---
 
@@ -68,7 +68,9 @@ text, letters, Chinese characters, calligraphy, watermark, signature, seal stamp
 
 ## Group A: replacements for pictures already in the game
 
-### A1. The youth: `game/assets/npc-youth.webp`
+### A1. The youth: `game/assets/npc-youth.webp` (done)
+
+In the game. The source picture was taller than wide, so it was cropped square from the top edge to keep the whole head.
 
 - **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
 - **Appears in:** every dialogue where the youth speaks, and the prologue.
@@ -80,7 +82,9 @@ A Chinese youth of about seventeen, lean and sun-browned, with plain features th
 
 Avoid also: `armour, jewellery, crown, embroidered robes, heroic pose, smirk`
 
-### A2. 韋小寶: `game/assets/npc-wei.webp`
+### A2. 韋小寶: `game/assets/npc-wei.webp` (done)
+
+In the game, cropped square from the top edge.
 
 - **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
 - **Appears in:** the shop, the three-cup game, the prologue, and after a lost run.
@@ -92,7 +96,9 @@ A wiry young Chinese man in his early twenties from the Qing dynasty. Shaved for
 
 Avoid also: `official's hat, peacock feather, court robes, old man, beard, martial arts stance`
 
-### A3. The shop, 通吃坊: `game/assets/run-merchant.webp`
+### A3. The shop, 通吃坊: `game/assets/run-merchant.webp` (done)
+
+In the game. Cropped to 2:1, leaving out a faint seal-like mark the model put in the bottom right corner.
 
 - **Final size:** 1000 × 500. **Generate at:** 1536 × 768 (2:1), or 16:9 and crop.
 - **Appears in:** the banner at the top of the shop page, with the shop's name printed over the left side.
@@ -104,7 +110,9 @@ A makeshift gambling stall and shop at the foot of a cliff in a misty valley at 
 
 Avoid also: `boat, river, bridge, crowd, shopkeeper, signboard writing`
 
-### A4. The marked stone: `game/assets/stone-marks.webp`
+### A4. The marked stone: `game/assets/stone-marks-0.webp` to `stone-marks-5.webp` (done)
+
+In the game as six files showing none to five marks, all made from the one painting: later marks are covered with bare stone taken from unmarked parts of the same picture. The journal shows the file that matches the number of runs finished. If the painting is ever redone, keep the marks well apart, as below, so the same can be done again.
 
 - **Final size:** 1000 × 360. **Generate at:** 21:9, then crop to 25:9.
 - **Appears in:** the 石上的痕 journal, above a row of five labels numbered one to five.
@@ -116,11 +124,11 @@ A flat, weathered grey rock face seen straight on and filling the frame, lit by 
 
 Avoid also: `readable characters, paint, colour pigment, blood, cracks through the marks`
 
-### A5. The dice cup: `game/assets/bowl-cover.webp` (optional)
+### A5. The dice cup: `game/assets/bowl-cover.webp` (done)
 
 - **Final size:** 360 × 360. **Generate at:** 1024 × 1024.
 - **Appears in:** the three-cup game, three times side by side, as the cover over each prize.
-- **Note:** the current picture is an upturned wooden bowl, which already passes for a cup. Replace it only if you want a proper dice cup.
+- **Note:** this replaced an upturned wooden bowl left over from the old three-bowl game.
 
 ```text
 An upturned dice cup of dark lacquered wood, taller than it is wide, with a worn brass band around the rim that rests on the surface. Fine scratches and the polish of long handling.
@@ -134,7 +142,9 @@ Use the **Objects** house style.
 
 These file names are reserved. Each needs a small change in the game before it shows; say when the art is ready.
 
-### B1. The eagle: `game/assets/npc-eagle.webp`
+### B1. The eagle: `game/assets/npc-eagle.webp` (done)
+
+In the game: beside the prologue line where the youth first sees it, and on the screen after a lost run. Cropped from a full-body picture to the head and upper body.
 
 - **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
 - **For:** the prologue and the screen after a lost run. It never speaks.
@@ -284,12 +294,12 @@ Use the **Scenes** house style. Avoid also: `boat, river, ferry, bright sky`
 
 | File | Folder | Size | Group |
 | --- | --- | --- | --- |
-| `npc-youth.webp` | `game/assets/` | 480 × 480 | A |
-| `npc-wei.webp` | `game/assets/` | 480 × 480 | A |
-| `run-merchant.webp` | `game/assets/` | 1000 × 500 | A |
-| `stone-marks.webp` | `game/assets/` | 1000 × 360 | A |
-| `bowl-cover.webp` (optional) | `game/assets/` | 360 × 360 | A |
-| `npc-eagle.webp` | `game/assets/` | 480 × 480 | B |
+| `npc-youth.webp` (done) | `game/assets/` | 480 × 480 | A |
+| `npc-wei.webp` (done) | `game/assets/` | 480 × 480 | A |
+| `run-merchant.webp` (done) | `game/assets/` | 1000 × 500 | A |
+| `stone-marks-0.webp` to `-5.webp` (done) | `game/assets/` | 1000 × 360 | A |
+| `bowl-cover.webp` (done) | `game/assets/` | 360 × 360 | A |
+| `npc-eagle.webp` (done) | `game/assets/` | 480 × 480 | B |
 | `scene-open-eyes.webp` | `game/assets/` | 1000 × 500 | B |
 | `scene-board.webp` | `game/assets/` | 1000 × 500 | B |
 | `scene-summit.webp` | `game/assets/` | 1000 × 500 | B |

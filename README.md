@@ -93,9 +93,9 @@ Heroes are drawn at random and the boards come in a different order each run, so
 
 To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`.
 
-Three pictures are placeholders until real art is drawn; replace the files in `game/assets/` under the same names: `npc-youth.webp`, `npc-wei.webp`, `stone-marks.webp`.
+Prompts for the pictures the story still needs are in `asset-gen/prompts.md`, with each file's name, size and where its subject must sit. Pictures the game already shows (its group A) are all in place; the rest are new scenes that are text-only today.
 
-Prompts for generating these and the other pictures the story still needs are in `asset-gen/prompts.md`, with each file's name, size and where its subject must sit.
+The marked stone is six files, `stone-marks-0.webp` to `stone-marks-5.webp`, showing none to five marks. They were made from one painting by covering the later marks with bare stone from the same picture, so the journal can show exactly as many marks as runs have been finished.
 
 ## How the wiki stays in step with the game
 
