@@ -148,6 +148,17 @@ node tools/check-skills.mjs --verbose hero guo   # only these heroes, and why ea
 
 Prints each hero's tree as a table and then every problem it finds against the skill-redesign rules: the tree's structure (layout and `MASTERY_ARTS` agree, tiers, prerequisites in earlier tiers, everything reachable, one basic upgrade, a single gated summit that costs the most, total points), R2 (no node weaker than an ancestor at that ancestor's job unless it adds reach, safety, an effect or a lower cost), R4 (the summit is the hero's best at its job; the starting art does not out-damage later strikes), R5 (no two nodes doing the same job equally well) and, as warnings only, R9 (each art's plain strike equivalent against its tier band). It also lists the shop manuals in the same measures and warns where one duplicates a node of the hero most likely to buy it. Every number is the game's own `forecast` on a small scene on a real board, against enemies taken from real boards, including a favourable case for arts whose power depends on the situation. Any art field not listed as bookkeeping in `tools/lib/skill-measure.mjs` counts as a mechanic, so new mechanics need no change to the tool. Thresholds and the reference levels are in one block at the top of `check-skills.mjs`.
 
+### Battle simulator
+
+```bash
+node tools/sim-battles.mjs --runs 200 --seed 1 --json before.json
+node tools/sim-battles.mjs --boards 1-4 --runs 50      # only the first four boards
+node tools/sim-battles.mjs --compare before.json after.json
+node tools/sim-battles.mjs --runs 1 --trace            # the battle log of one run
+```
+
+A fixed, deterministic headless player fights whole runs with the real rules and enemy code: it draws heroes, starts the run, spends points (cheapest node toward the summit, spare points into talents), equips its three strongest arts with distinct jobs, buys medicine and gear, and on every turn scores each legal move-and-action with `forecast` (kills, damage minus counter, cover, the enemy reach it ends in, the leader's safety, the board's marker or time limit). Per board it reports win rate, rounds to win, health left, heroes downed, side objectives and how often the basic attack, the starting art and each tier were used; per hero, damage dealt and taken, share of kills and damage, and level and points at each board. `--compare` prints what moved between two saved runs and flags boards whose win rate changed by more than ten points. The same seed always gives the same result, so compare runs made with the same `--runs` and `--seed`.
+
 ## Fonts
 
 The two River fonts in `game/assets/` contain only the characters the game first used. Each exists twice with the same characters: the game loads `river-*.woff2`; the `.woff` files are what the wiki loads, the fallback for browsers without WOFF2, and what `tools/extra-fonts.py` reads. The `.woff2` files hold the Traditional Chinese glyphs only: the alternate Japanese, Korean, Simplified and Hong Kong shapes of the same characters are left out, which halves them and changes nothing on a page marked `lang="zh-Hant"`, as the game is. Characters added later, in game text or in the wiki's manuscripts, fall back to a system font unless they are added to the supplements: `game/assets/extra-*.woff2` for characters the game needs, and `wiki/assets/lore-*.woff2` for the rest. One command rebuilds both:
