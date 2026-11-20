@@ -13,6 +13,7 @@ import {
   unitDetails,
   enemyTechnique,
   enemyTraitLines,
+  reach,
   roundsToSignature,
   ITEMS,
   LIMIT,
@@ -933,8 +934,10 @@ function enemyPage(s, id) {
     ' 步</b></span><span>招式 <b>' +
     i.basic +
     '</b></span><span>射程 <b>' +
-    u.range +
-    ' 格</b></span></div>' +
+    reach(s, u) +
+    ' 格' +
+    (u.conditions?.disarm ? '（纏械）' : '') +
+    '</b></span></div>' +
     enemyTraitLines(s, u)
       .map((line) => '<p class="footnote">' + icon('flag', 15) + esc(line) + '</p>')
       .join('') +

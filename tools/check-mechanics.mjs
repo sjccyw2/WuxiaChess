@@ -491,6 +491,85 @@ section('villain traits');
   check('the enemy page shows the step and the trait lines', html.includes('移動 <b>') && html.includes('游擊 · 出手後退開至多 2 步'));
 }
 
+// ── Reach and the counter ratio (§5 disarm, §6 counterRatio) ─────────────
+section('reach and counters');
+{
+  const disarm = (u) => BM.applyCondition({ round: 1 }, u, { kind: 'disarm', power: 5, turns: 2 }, u);
+  const s = board();
+  const bow = put(s, 'bow', 6, 7);
+  check('reach is the weapon’s range', G.reach(s, bow) === bow.range && bow.range === 3);
+  const hero = put(s, 'hero', 4, 7);
+  teach(hero, defineArt({ range: 2, factor: 0.5 }));
+  const shot = G.forecast(hero, bow, true, s);
+  check('an archer two tiles off counters', shot.counterRaw > 0);
+  disarm(bow);
+  check('纏械 holds reach to one tile', G.reach(s, bow) === 1 && G.strikeReach(s, bow) === 1);
+  check('a disarmed archer two tiles off does not counter', G.forecast(hero, bow, true, s).counterRaw === 0);
+  check('the enemy page says why', P.enemyPage(s, 'bow').includes('1 格（纏械）'));
+
+  // A disarmed archer plans with reach 1: it closes in instead of shooting.
+  const a = board();
+  const archer = put(a, 'bow', 3, 7),
+    prey = put(a, 'guard', 7, 7);
+  const zone = dangerTiles(a);
+  disarm(archer);
+  const narrow = dangerTiles(a);
+  check('the danger zone shrinks under 纏械', narrow.size < zone.size && !narrow.has(G.key(7, 7)) && zone.has(G.key(7, 7)));
+  const hp = prey.hp;
+  G.startEnemy(a);
+  G.enemyAct(a, archer);
+  check('a disarmed archer cannot shoot from afar', prey.hp === hp && G.distance(archer, prey) > 1);
+
+  // The ratio itself.
+  const r = board();
+  const guard = unit(r, 'guard'),
+    chief = unit(r, 'chief');
+  const cond = (u, kind) => BM.applyCondition(r, u, { kind, power: kind === 'stance' ? 30 : 1, turns: 1 }, u);
+  check('a counter is 0.55 of a basic strike', G.counterRatio(r, guard) === 0.55);
+  const retort = defineArt({ kind: 'basic', name: '試後發', retort: 0.8 });
+  guard.learned.push(retort);
+  check('a learned 後發 sets 0.8', G.counterRatio(r, guard) === 0.8);
+  cond(guard, 'stance');
+  check('卸勁 gives 1.0', G.counterRatio(r, guard) === 1);
+  cond(guard, 'unguarded');
+  check('無守 gives 0 whatever else holds', G.counterRatio(r, guard) === 0);
+  r.round = 3;
+  check('a villain without 蓄勢反擊 counters at 0.55 when due', G.counterRatio(r, chief) === 0.55);
+  withTraits('chief', { stance: { while: 'charged', cut: 0, holds: true } }, () => {
+    check('a charged villain with 蓄勢反擊 counters at 1.0', G.counterRatio(r, chief) === 1);
+    chief.signatureRound = 3;
+    r.round = 4;
+    check('and at 0.55 once the signature has fired', G.counterRatio(r, chief) === 0.55);
+    delete chief.signatureRound;
+    r.round = 3;
+    put(r, 'chief', 5, 7);
+    const striker = put(r, 'hero', 4, 7);
+    striker.activeArt = 'signature';
+    const f = G.forecast(striker, chief, false, r);
+    const full = Math.max(2, Math.round(G.damage(chief, striker, false, r.mapIndex, r)));
+    check('the preview counts the full counter', f.counterRaw === full, f.counterRaw + ' vs ' + full);
+    check('and says so', f.notes.includes('蓄勢反擊 · 還擊全力'));
+  });
+
+  // In the enemy phase: the hero's counter follows his ratio.
+  function counterOf(kind) {
+    const e = board();
+    const foe = put(e, 'blade', 4, 7),
+      tank = put(e, 'guard', 5, 7);
+    if (kind) BM.applyCondition(e, tank, { kind, power: kind === 'stance' ? 30 : 1, turns: 1 }, tank);
+    G.startEnemy(e);
+    const life = foe.hp;
+    G.enemyAct(e, foe);
+    return { taken: life - foe.hp, expected: Math.round(G.damage(tank, foe, false, e.mapIndex, e)) };
+  }
+  const usual = counterOf(null),
+    stanced = counterOf('stance'),
+    open = counterOf('unguarded');
+  check('an enemy-phase counter is 0.55 of the hero’s basic', usual.taken === Math.max(2, Math.round(usual.expected * 0.55)), usual.taken);
+  check('under 卸勁 it is the full basic', stanced.taken === Math.max(2, stanced.expected), stanced.taken);
+  check('under 無守 there is none', open.taken === 0, open.taken);
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

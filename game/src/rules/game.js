@@ -385,10 +385,23 @@ function roundsToSignature(s, u) {
 }
 const signatureDue = (s, u) =>
   !!s?.run && !u.conditions?.seal && roundsToSignature(s, u) === 0;
+// How far a unit strikes and counters. Every test of an enemy's range goes through here, so 纏械
+// only has to set its condition.
+function reach(s, u) {
+  return u.conditions?.disarm ? 1 : u.range;
+}
 // How far an enemy strikes this turn: when its signature is due, with the signature's own reach.
 function strikeReach(s, u) {
   const sig = signatureDue(s, u) ? enemyTechnique(u, s) : null;
-  return Math.max(u.range, sig?.reach || 0);
+  return u.conditions?.disarm ? 1 : Math.max(reach(s, u), sig?.reach || 0);
+}
+// The share of a full basic strike a counter carries: none while 無守; full under 卸勁, or for a
+// villain whose 蓄勢反擊 is charged; a learned 後發 sets its own; otherwise 0.55.
+function counterRatio(s, defender) {
+  const c = defender.conditions || {};
+  if (c.unguarded) return 0;
+  if (c.stance || (unitDetails(defender)?.traits?.stance && signatureDue(s, defender))) return 1;
+  return basicFor(defender).retort || 0.55;
 }
 const PREFERS = {
   wounded: '專挑傷重者',
@@ -1117,7 +1130,13 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     );
     if (result.selfHeal) result.notes.push('回生 · 自身氣血 ＋' + result.selfHeal);
   }
-  if (!plan.safe && t.hp > result.amount && distance(u, result.push || t) <= t.range) {
+  const share = counterRatio(s, t);
+  if (
+    share &&
+    !plan.safe &&
+    t.hp > result.amount &&
+    distance(u, result.push || t) <= reach(s, t)
+  ) {
     const reply =
       art?.debuff?.stat === 'atk'
         ? {
@@ -1128,8 +1147,9 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
             }
           }
         : t;
-    result.counterRaw = Math.max(2, Math.round(damage(reply, u, false, s?.mapIndex, s) * 0.55));
+    result.counterRaw = Math.max(2, Math.round(damage(reply, u, false, s?.mapIndex, s) * share));
     result.counter = Math.max(0, result.counterRaw - (u.conditions?.shield?.power || 0));
+    if (share === 1 && !t.conditions?.stance) result.notes.push('蓄勢反擊 · 還擊全力');
   }
   if (s && (art?.splash || result.forms.includes('line') || result.forms.includes('arc'))) {
     const targets = secondaryTargets(s, u, t, result.push || t, art, result.forms, walkable);
@@ -1658,9 +1678,10 @@ function enemyAct(s, u) {
     }
   }
   reflectStrike(s, t, u, n, effects);
+  const share = counterRatio(s, t);
   if (!living(t)) log(s, 'combat', '負傷退場。', unitDetails(t).name);
-  else if (living(u) && !t.conditions?.seal && distance(u, t) <= t.range) {
-    const power = Math.max(2, Math.round(damage(t, u, false, s.mapIndex, s) * 0.55));
+  else if (living(u) && !t.conditions?.seal && distance(u, t) <= reach(s, t) && share) {
+    const power = Math.max(2, Math.round(damage(t, u, false, s.mapIndex, s) * share));
     const hit = wound(s, u, afterWard(power, wardPercent(s, u)), t);
     effects.push([u.id, '−' + hit]);
     log(s, 'combat', '還擊，造成 ' + hit + ' 點傷害。', unitDetails(t).name);
@@ -1711,4 +1732,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, strikeReach, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, move, undo, affectedFriends, targetOK, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, move, undo, affectedFriends, targetOK, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
