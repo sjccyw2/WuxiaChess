@@ -122,7 +122,11 @@ function notice(msg) {
   else document.body.append(t);
   toastTimer = setTimeout(() => t.classList.remove('visible'), 2650);
 }
-function mapTip(msg, ms = 2200) {
+// A tip that must be read (a villain's 變招) holds the board tip until it has been shown.
+let tipHeld = 0;
+function mapTip(msg, ms = 2200, held = false) {
+  if (!held && Date.now() < tipHeld) return;
+  if (held) tipHeld = Date.now() + ms;
   clearTimeout(terrainTimer);
   transientTip = !!msg;
   const t = $('board-tip');
@@ -303,6 +307,25 @@ function syncZoom() {
 function update() {
   save();
   paint();
+  notePhases();
+}
+// 變招: the moment a master changes at half health the board tip says so, in the phase's own
+// line, and holds it a while; the log has the same line and the enemy page shows it from then on.
+// Masters already changed when a board is opened are noted without a tip.
+const phasesSeen = new Set();
+let phasesBoard = null;
+function notePhases() {
+  if (!state?.units) return;
+  const where = state.run ? state.run.stage + ':' + state.mapIndex : 'ferry';
+  const fresh = where !== phasesBoard;
+  phasesBoard = where;
+  if (fresh) phasesSeen.clear();
+  for (const e of G.enemies(state)) {
+    if (!e.phased || phasesSeen.has(e.id)) continue;
+    phasesSeen.add(e.id);
+    const p = G.unitDetails(e).traits?.phase;
+    if (!fresh && p) mapTip(uName(e) + '半血變招 · ' + (p.log || p.note), 4800, true);
+  }
 }
 function choose(id, quiet = false) {
   const u = G.find(state, id);
@@ -836,11 +859,16 @@ async function runEnemy() {
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
     if (dazed) mapTip(uName(e) + ' 失神，錯過了這一手');
+    // 續命: a mend is shown as healing, not a blow; enemyAct says whether its signature struck.
     else if (effects[0])
       board.strikeEffect(
         e,
         G.find(state, effects[0][0]),
-        e.signatureRound === state.round ? 'villain-skill' : 'enemy-hit'
+        effects[0][1].startsWith('+')
+          ? 'healing'
+          : (effects.signature ?? e.signatureRound === state.round)
+            ? 'villain-skill'
+            : 'enemy-hit'
       );
     board.showEffects(effects);
     if (result(true)) return;

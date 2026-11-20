@@ -2223,17 +2223,25 @@ function check(s) {
     s.round = LIMIT;
   } else if (!s.foreshadow && chief.hp <= chief.maxHp / 2) {
     s.foreshadow = true;
-    if (chief.id === 'murong') {
-      chief.atk += 5;
-      chief.range += 1;
-      chief.brace = true;
-      log(s, 'combat', '斗轉星移倒轉銅漏，攻擊增加 5、防禦增加 4，射程擴至三格。', '慕容博');
-    } else log(s, 'story', '收勢退了半步，重整陣腳。', DETAILS[chief.id].name);
+    shiftPhase(s, chief); // 變招: the master's half-health change, if its data has one
   }
   if (s.result) {
     s.phase = 'done';
     log(s, 'story', s.reason, s.result === 'win' ? '破關' : '敗退');
   }
+}
+// 變招 (§7.4): the first time the board's master falls to half 氣血, its `phase` changes it for
+// the rest of the board. Its numbers go onto the unit itself (so a save keeps them, and the danger
+// zone, which reads step and reach, redraws); its cadence, preference and hold are read through
+// traitsOf once `phased` is set. The phase's own line is logged for the player; a master with no
+// phase changes nothing and says nothing.
+function shiftPhase(s, u) {
+  const p = unitDetails(u)?.traits?.phase;
+  if (!p || u.phased || !living(u)) return;
+  u.phased = true;
+  for (const k of ['atk', 'def', 'step', 'range']) u[k] += p[k] || 0;
+  if (p.brace) u.brace = true;
+  log(s, 'combat', p.log || '', unitDetails(u).name);
 }
 function restOnHerbs(s, units) {
   for (const u of units.filter(living)) {
@@ -2405,6 +2413,7 @@ function enemyAct(s, u) {
   // 還報 counts only 氣血 an enemy's own action took, never what a shield caught.
   if (n) t.hurtRound = s.round;
   const effects = [[t.id, '−' + n]];
+  effects.signature = !!art; // for the board: a signature blow or a plain one
   const attack = art?.name || basicFor(u).name;
   log(
     s,

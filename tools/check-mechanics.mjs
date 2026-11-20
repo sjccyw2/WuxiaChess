@@ -2560,6 +2560,77 @@ section('prefers');
   });
 }
 
+// ── 變招 phase (§7.4) ───────────────────────────────────────────────────
+section('phase');
+{
+  const mad = {
+    stance: { while: 'charged', cut: 0, holds: true },
+    prefers: 'wounded',
+    phase: { name: '逆練', atk: 6, def: -4, step: 1, cadence: 2, prefers: 'nearest', holds: false, log: '試變招。', note: '試變招說明。' }
+  };
+  withTraits('chief', mad, () => {
+    const s = board();
+    const chief = unit(s, 'chief');
+    const before = { atk: chief.atk, def: chief.def, step: chief.step, range: chief.range };
+    check('the page shows the phase from the start', G.enemyTraitLines(s, chief).includes('【半血變招 · 逆練】試變招說明。'));
+    chief.hp = Math.floor(chief.maxHp / 2) + 1;
+    G.check(s);
+    check('above half nothing happens', !chief.phased && chief.atk === before.atk);
+    chief.hp = Math.floor(chief.maxHp / 2);
+    G.check(s);
+    check('at half the phase fires', chief.phased === true && s.foreshadow === true);
+    check('its numbers go onto the unit', chief.atk === before.atk + 6 && chief.def === before.def - 4 && chief.step === before.step + 1 && chief.range === before.range);
+    check('its line is logged', s.logs.at(-1).text === '試變招。' && s.logs.at(-1).who === '余滄海');
+    check('cadence and preference are the phase’s now', G.traitsOf(chief).sig.cadence === 2 && G.traitsOf(chief).prefers === 'nearest');
+    s.round = 3;
+    check('holds: false — charged, it is no longer held', G.signatureDue(s, chief) && !G.holdOf(s, chief));
+    check('…but still counters at full force', G.counterRatio(s, chief) === 1);
+    chief.signatureRound = 3;
+    s.round = 5;
+    check('the countdown uses the phase’s cadence', G.roundsToSignature(s, chief) === 0);
+    check('the page says it has changed', G.enemyTraitLines(s, chief).includes('【已變招 · 逆練】試變招說明。') && G.enemyTraitLines(s, chief).includes('【偏好】見人就撲。'));
+    G.check(s);
+    check('it fires once', chief.atk === before.atk + 6);
+    const saved = R.restoreRun(copy(s));
+    const c2 = saved && unit(saved, 'chief');
+    check('a save keeps the change', c2?.phased === true && c2.atk === chief.atk && G.traitsOf(c2).prefers === 'nearest');
+  });
+  {
+    const s = board();
+    const chief = unit(s, 'chief');
+    const atk = chief.atk;
+    chief.hp = Math.floor(chief.maxHp / 2);
+    const lines = s.logs.length;
+    G.check(s);
+    check('a master without a phase changes nothing and logs nothing', !chief.phased && chief.atk === atk && s.logs.length === lines);
+    check('the old false line is gone', !s.logs.some((l) => l.text === '收勢退了半步，重整陣腳。'));
+  }
+  // A multi-hit that crosses half health: the whole action lands before the phase fires.
+  withTraits('chief', { phase: { def: -4, log: '試變招。' } }, () => {
+    const s = board();
+    const hero = put(s, 'hero', 4, 3),
+      chief = put(s, 'chief', 5, 3);
+    teach(hero, defineArt({ hits: [0.5, 0.5], factor: 2 }));
+    hero.mp = 40;
+    chief.hp = Math.floor(chief.maxHp / 2) + 10;
+    const f = G.forecast(hero, chief, true, s);
+    const life = chief.hp;
+    G.resolve(s, hero, chief, true);
+    check('a multi-hit lands as forecast, every hit before the change', life - chief.hp === f.amount && f.hits.length === 2, [life - chief.hp, f.amount]);
+    check('then the phase fires once', chief.phased && s.logs.filter((l) => l.text === '試變招。').length === 1);
+  });
+  // In the enemy phase: a counter that takes the master to half.
+  withTraits('chief', { phase: { atk: 1, log: '試變招。' } }, () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    put(s, 'guard', 4, 3);
+    chief.hp = Math.floor(chief.maxHp / 2) + 1;
+    G.startEnemy(s);
+    G.enemyAct(s, chief);
+    check('a counter that brings it to half fires the phase in the enemy phase', chief.phased === true);
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
