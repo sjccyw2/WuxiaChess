@@ -17,11 +17,11 @@ const RECIPES = {
   clearHeartCoda: ['笑傲江湖','pearl','strings','lotusChord','echo','五絃收於同一朵白蓮，花開後仍留金線。'],
 
   'signature:guard': ['吸功入地小法','slate','plunge','earthRoot','heavy','下沉的勁線壓入層岩，石脊從兩側隆起。'],
+  chainShelter: ['鐵索並肩','steel','lattice','chainFence','gather','兩根短柱之間搭起交錯的護身鐵鏈。'],
   sweepingWhip: ['長鞭破陣','bronze','lash','whipArc','sweep','鐵索節節甩開，倒鉤掠過一道長弧。'],
   reverseForce: ['吸功入地・返勁','slate','return','returnHook','return','兩道鉤力回卷，鐵環沿原路收回。'],
-  chainShelter: ['鐵索並肩','steel','lattice','chainFence','gather','兩根短柱之間搭起交錯的護身鐵鏈。'],
   bloodAtPass: ['捨身截騎','cinnabar','thrust','gateSpike','heavy','赤色鐵錐從傾倒的關柵間直出。'],
-  earthThroughChain: ['吸功入地・長橋卸勁','slate','wave','chainBridge','echo','鏈身平鋪跨過三段石樑，餘勁從橋面散開。'],
+  earthThroughChain: ['吸功入地・涼亭鐵鏈','slate','wave','chainBridge','echo','鏈身平鋪跨過三段石樑，餘勁從橋面散開。'],
 
   'signature:guo': ['降龍十八掌','gold','dragon','dragonHead','heavy','金龍昂首出掌，龍鬚卷向受掌之人。'],
   vacantFist: ['空明拳','jade','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。'],

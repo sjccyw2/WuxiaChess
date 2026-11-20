@@ -235,9 +235,9 @@ const DETAILS = {
     basic: '鐵鞭橫江',
     skill: '吸功入地小法',
     skillIcon: 'spark',
-    skillDesc: '借力卸勁，重擊相鄰敵人。餘勁波及目標身旁敵軍，本次交鋒免受反擊。',
+    skillDesc: '卸去相鄰敵人的來勁並還擊，此擊免受還擊；至下回合受到的傷害減三成，還擊改以全力計算。',
     skillRange: 1,
-    cost: 16
+    cost: 9
   },
   guo: {
     name: '郭靖',
@@ -503,7 +503,7 @@ const HERO_STATS = {
   hu: [116, 61, 24, 9, 4, 1, 'foxSaber'],
   hero: [112, 48, 27, 10, 3, 1, 'pine'],
   medic: [94, 76, 18, 7, 3, 2, 'staff'],
-  guard: [142, 48, 24, 16, 3, 1, 'pole'],
+  guard: [148, 44, 23, 17, 3, 1, 'pole'],
   guo: [136, 56, 26, 13, 3, 1, 'wraps'],
   xiao: [103, 66, 24, 9, 4, 1, 'twins'],
   duan: [95, 78, 20, 8, 4, 2, 'fan']
@@ -672,7 +672,7 @@ function stat(u, k, s) {
 const SIGNATURE_RULES_BY_HERO = {
   hero: { factor: 1.35 },
   medic: { heal: 30 },
-  guard: { factor: 1.42, splash: 0.45, safe: true },
+  guard: { factor: 1.15, safe: true, stance: 30 },
   guo: { factor: 1.74, push: true },
   xiao: { factor: 1.44, hits: [0.65, 0.65] },
   duan: { factor: 1.62, pierce: 0.5 },

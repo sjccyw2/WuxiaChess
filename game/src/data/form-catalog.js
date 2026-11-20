@@ -21,13 +21,13 @@ const ART_FORMS = {
   clearHeartCoda: ['cleanse'],
 
   // 向問天
-  'signature:guard': ['leech'],
+  'signature:guard': [],
   ironChainForm: ['mark'],
+  chainShelter: [],
   sweepingWhip: ['pull'],
-  reverseForce: ['antidote'],
-  chainShelter: ['channel'],
+  reverseForce: [],
   bloodAtPass: ['leech'],
-  earthThroughChain: ['pin'],
+  earthThroughChain: [],
 
   // 郭靖
   'signature:guo': ['collision'],
