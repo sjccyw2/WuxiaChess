@@ -625,59 +625,7 @@ function landmarks(index, add) {
       lantern(m, 0.3, 2.13, -0.12, 0.91);
     });
   } else if (index === 2) {
-    add('罾網與木架', -6.83, 2.41, -0.91, net);
-    add('蘆舍', 2.25, -7.31, 0.09, (m) => {
-      for (const x of [-1.43, 1.43])
-        for (const z of [-0.71, 0.71]) m.tube([x, -0.68, z], [x, 0.45, z], 0.1, 0.082, wood);
-      m.frame(0, 0.36, 0, 0, 1, () => {
-        hall(m, 3.31, 1.74, false, {
-          post: 0x7f704d,
-          plaster: 0xa1855f,
-          tile: [0x746e50, 0x9c9164, 0xc2b482]
-        });
-        for (const side of [-1, 1])
-          for (let j = 0; j < 38; j++) {
-            const x = -1.7 + j * 0.092,
-              h = 1.79 + 0.26 * Math.pow(Math.abs(x) / 1.7, 3);
-            m.tube(
-              [x, h, side * 1.04],
-              [x + 0.017, h - 0.1 - m.rng.next() * 0.13, side * 1.2],
-              0.017,
-              0.009,
-              0xb1a272,
-              5
-            );
-          }
-      });
-    });
-    add('沙洲上的風帆', 5.08, -8.6, -0.48, (m) => boat(m, true), { y: -0.46 });
-    add('漁舟與魚簍', -3.15, 7.02, 0.55, (m) => boat(m, false), { y: -0.43 });
-    for (const [x, z, k] of [
-      [-6.6, 2.4, 1.1],
-      [2.5, 6.65, 0.7],
-      [6.34, -3.12, 0.9],
-      [-4.65, -6.48, 1.0]
-    ]) {
-      add(
-        '白花蘆叢',
-        x,
-        z,
-        0,
-        (m) => {
-          for (let j = 0; j < 18; j++)
-            reeds(
-              m,
-              m.rng.range(-0.97, 0.98),
-              m.rng.range(-0.44, 0.42),
-              m.rng.range(0.58, 1.03) * k,
-              9,
-              true,
-              -0.16
-            );
-        },
-        { fade: false }
-      );
-    }
+    // 蘆花汀's hut, boats and nets stand on its own tidal relief, in landforms/fishers-2.js.
   } else if (index === 3) {
     add('覆雪懸棧', -5.04, -7.23, 0.11, alpineWalk);
     add('峭壁木棧', -7.16, 1.37, 1.42, (m) => {
