@@ -324,7 +324,11 @@ function notePhases() {
     if (!e.phased || phasesSeen.has(e.id)) continue;
     phasesSeen.add(e.id);
     const p = G.unitDetails(e).traits?.phase;
-    if (!fresh && p) mapTip(uName(e) + '半血變招 · ' + (p.log || p.note), 4800, true);
+    if (fresh || !p) continue;
+    const line = p.log || p.note || '';
+    // The phase's line usually names him already; when it does not, the tip does.
+    const who = line.includes(uName(e)) ? '' : uName(e) + ' ';
+    mapTip(who + '半血變招' + (p.name ? ' · ' + p.name : '') + ' · ' + line, 4800, true);
   }
 }
 function choose(id, quiet = false) {
@@ -859,6 +863,12 @@ async function runEnemy() {
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
     if (dazed) mapTip(uName(e) + ' 失神，錯過了這一手');
+    // 續命: a mend is no blow, so the board says what it did.
+    else if (effects[0]?.[1].startsWith('+'))
+      mapTip(
+        uName(e) + ' · ' + G.enemyTechnique(e, state).name + '，替' + uName(G.find(state, effects[0][0])) + '回復 ' + effects[0][1].slice(1) + ' 氣血',
+        3200
+      );
     // 續命: a mend is shown as healing, not a blow; enemyAct says whether its signature struck.
     else if (effects[0])
       board.strikeEffect(

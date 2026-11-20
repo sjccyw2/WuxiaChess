@@ -980,8 +980,10 @@ function enemyPage(s, id) {
         (line) =>
           '<p class="footnote">' +
           icon('flag', 15) +
-          esc(line).replace(/^【(.+?)】/, '<b>$1</b>　') +
-          '</p>'
+          // One flowing line: the trait's name in bold, then its words (no column to wrap in).
+          '<span>' +
+          esc(line).replace(/^【(.+?)】/, '<b class="trait-name">$1</b>　') +
+          '</span></p>'
       )
       .join('') +
     '<p class="footnote">' +

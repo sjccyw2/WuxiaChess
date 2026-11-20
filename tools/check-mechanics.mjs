@@ -544,7 +544,7 @@ section('villain traits');
   check('the signature lines carry its rider and its reach', same(sigLines, ['令目標攻擊降低 3，持續至下回合，並令目標絆足，移動減 2，持續至下回合。', '絕技射程 3 格。']), JSON.stringify(sigLines));
   check('the enemy page lists each trait', same(lines, expected), JSON.stringify(lines));
   const html = withTraits('chief', { glide: 2 }, () => P.enemyPage(page, 'chief'));
-  check('the enemy page shows the step and the trait lines', html.includes('移動 <b>') && html.includes('<b>游擊</b>　出手後退開至多 2 步，離俠客越遠越好。'));
+  check('the enemy page shows the step and the trait lines', html.includes('移動 <b>') && html.includes('<b class="trait-name">游擊</b>　出手後退開至多 2 步，離俠客越遠越好。'));
 }
 
 // ── Reach and the counter ratio (§5 disarm, §6 counterRatio) ─────────────
