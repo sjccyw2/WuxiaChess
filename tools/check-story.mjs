@@ -49,9 +49,13 @@ ENCOUNTER_SCRIPT.forEach((script, map) => {
     for (const beat of script[part])
       if (!['boss', 'mini', 'youth', 'leader', 'ally'].includes(beat.who) || !beat.text)
         fail(here + ' ' + part + ': a line has no speaker or no text');
-  if (!script.rescue || !script.missed) fail(here + ': missing the shadow saved / not saved');
-  if (!CHAMBER_TALES[map].obsession || !CHAMBER_TALES[map].shade) fail(here + ': missing obsession or shade');
+  if (!CHAMBER_TALES[map].arrival || !CHAMBER_TALES[map].victory) fail(here + ': missing arrival or victory');
+  // Whatever the side objective is here, there is a line for having done it.
+  if (!SIDE_TALES[R.mapGoalType(map)]) fail(here + ': no line for its side objective');
+  // The boards are about masters made to fight, not about bystanders to be saved.
+  for (const word of ['影子', '救下', '執念']) if (text.includes(word)) fail(here + ': still speaks of ' + word);
 });
+if (!MAZE_TALE.unlit) fail('no line for a won board whose side objective was not done');
 // Nothing in the story may give away who set the boards, or fall back on the old ferry.
 const story = JSON.stringify([MAZE_TALE, CHAMBER_TALES, SIDE_TALES, WORLD, WAKES, FATES, FRAGMENTS, ENCOUNTER_SCRIPT, HERO_VOICES, VISITOR]);
 for (const word of ['劍塚', '劍仙', '獨孤', '求敗', '桑婆婆', '回牒', '歸印', '渡船', '船娘', '周伯通'])
@@ -126,7 +130,7 @@ for (let player = 0; player < 60; player++) {
       const won = r.stage + 1 <= reach;
       s.result = won ? 'win' : 'loss';
       s.reason = won ? CHAMBER_TALES[s.mapIndex].victory : '';
-      // Sometimes the shadow is saved, which brings a new hero.
+      // Sometimes the side objective is done, which brings a new hero.
       if (won && roll() < 0.7) {
         r.marked = true;
         s.round = 3;
@@ -139,6 +143,8 @@ for (let player = 0; player < 60; player++) {
       scenes++;
       if (r.last.recruit && !after.some((line) => line.person?.id === r.last.recruit))
         fail(at + ': ' + G.DETAILS[r.last.recruit].name + ' joined without a word');
+      if (won && !after.some((line) => line.text === (r.last.optional ? SIDE_TALES[r.goal] : MAZE_TALE.unlit)))
+        fail(at + ': nothing said about the side objective');
       if (r.last.terminal && won)
         for (const u of G.party(s))
           if (!after.some((line) => line.text === HERO_VOICES[u.id].farewell))

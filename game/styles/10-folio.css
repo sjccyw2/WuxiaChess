@@ -128,7 +128,6 @@
     .mj-product,
     .fo-item,
     .lk-lot,
-    .fo-side-story,
     .lk-guest,
     .fo-inspector
   ) {
@@ -158,12 +157,12 @@
   color: #74563d;
 }
 #modal
-  :is(.mj-product, .fo-inspector, .fo-item, .lk-lot, .fo-side-story)
+  :is(.mj-product, .fo-inspector, .fo-item, .lk-lot)
   :is(strong, h3, h4, summary) {
   color: var(--ink-on-leaf);
 }
 #modal
-  :is(.mj-product, .fo-inspector, .fo-item, .lk-lot, .fo-side-story)
+  :is(.mj-product, .fo-inspector, .fo-item, .lk-lot)
   :is(small, p, figcaption) {
   color: var(--annotation);
 }

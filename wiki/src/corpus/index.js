@@ -11,8 +11,6 @@ const SCENE_PARTS = {
   before: '戰前',
   win: '勝後',
   loss: '敗後',
-  rescue: '支線完成',
-  missed: '支線未達',
   heroLines: '指定俠客應答'
 };
 const rootOf = (context) => context.split(' / ')[0].split(/[.[]/)[0];
