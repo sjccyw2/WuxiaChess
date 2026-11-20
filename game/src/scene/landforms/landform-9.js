@@ -1,6 +1,10 @@
-// The dial, the instrument terraces and both cisterns are quarried from one
-// annular outcrop. The opening goes through to the existing star field.
+// The observatory stands on a mountain top above a sea of cloud: the board is
+// a raised dial in the middle of a round paved terrace, walled by a coursed
+// drum. The well in the middle goes down through the rock, and the clock's
+// conduit crosses the terrace and spills over the balustrade.
 import { Model, circle } from '../scenery-kit.js';
+import { BED, FOOT, edgeRadius, gateLamps, painter, paving, drum, parapet, footing, spillAngle } from './terrace-9.js';
+import { instruments9, clockLamps } from './instruments-9.js';
 
 const stone = 0x54636a;
 const coping = 0x87928a;
@@ -10,23 +14,6 @@ const patina = 0x517c75;
 const water = 0x739f9a;
 const clamp = (x, low, high) => Math.max(low, Math.min(x, high));
 const mix = (a, b, f) => a + (b - a) * f;
-
-// Bounds include the projecting feet of the existing instruments. The smaller
-// southern terraces carry the conduit between the large clock and the divider.
-const terraces = [
-  [-9.8, 5.33, 2.42, 2.42],
-  [-7.32, -8.39, 1.16, 1.13],
-  [6.11, -8.62, 1.4, 1.36],
-  [-8.5, -1.45, 1.38, 1.32],
-  [8.47, -3.12, 1.46, 1.43],
-  [0.52, -9.11, 1.42, 1.45],
-  [3.39, 8.56, 1.5, 1.51],
-  [-7.8, 7.3, 1.45, 0.93],
-  [-5.4, 7.96, 1.86, 1.64],
-  [-2.85, 8.12, 1.52, 0.93],
-  [-0.33, 8.35, 1.71, 1.09],
-  [5.57, 8.4, 1.78, 1.44]
-];
 
 function rayRectangle(dx, dz, x, z, half) {
   const ax =
@@ -47,13 +34,6 @@ function rayRectangle(dx, dz, x, z, half) {
   return hi >= lo ? [lo, hi] : null;
 }
 
-function rayTerrace(dx, dz, [x, z, rx, rz]) {
-  const a = (dx / rx) ** 2 + (dz / rz) ** 2;
-  const b = (x * dx) / rx ** 2 + (z * dz) / rz ** 2;
-  const c = (x / rx) ** 2 + (z / rz) ** 2 - 1;
-  const discriminant = b * b - a * c;
-  return discriminant < 0 ? 0 : (b + Math.sqrt(discriminant)) / a;
-}
 function geometry(T, name, verts, colors, indices) {
   const geo = new T.BufferGeometry();
   geo.setAttribute('position', new T.Float32BufferAttribute(verts, 3));
@@ -97,31 +77,25 @@ function mountain(T, layout) {
         rim = Math.max(rim, cut[1]);
       }
     }
-    const radius = terraces.reduce((r, v) => Math.max(r, rayTerrace(dx, dz, v)), rim);
-    return { inner, rim, radius };
+    return { inner, rim };
   };
   const bounds = Array.from({ length: samples }, (_, i) => samplesAt(i));
   const at = (i) => bounds[(i + samples) % samples];
   let rowLength;
   for (let j = 0; j < samples; j++) {
     const a = (j * circle) / samples;
-    const near = [at(j - 1), at(j), at(j + 1)],
-      shoulder = [...near, at(j - 2), at(j + 2)];
+    const near = [at(j - 1), at(j), at(j + 1)];
     const inner = Math.min(...near.map((v) => v.inner)) - 0.055;
     const rim = Math.max(...near.map((v) => v.rim)) + 0.06;
-    let summit = Math.max(rim + 0.45, ...shoulder.map((v) => v.radius)) + 0.24;
-    for (let n = 3; n <= 10; n++) {
-      const fall = 0.08 * (n - 2) ** 1.55;
-      summit = Math.max(summit, at(j - n).radius + 0.23 - fall, at(j + n).radius + 0.23 - fall);
-    }
+    const edge = edgeRadius(a);
     const ridge =
       0.25 * Math.sin(7 * a + 1.43) +
       0.2 * Math.sin(13 * a - 0.84) +
       0.12 * Math.sin(27 * a + 0.18);
     const crease = Math.sin(17 * a + 0.87) + 0.35 * Math.cos(34 * a);
-    const shoulderHeight = -0.42 + 0.16 * ridge;
-    // Left to right in section: bed of the well, inside wall, summit, outer
-    // ledges, talus. All rings share their vertices around the full mountain.
+    // Left to right in section: bed of the well, inside wall, the mortar bed
+    // under the flags, the backing of the drum, the footing walk, and the
+    // bedrock falling away into the cloud. Band 3 is mortar, never seen bare.
     const profile = [
       [1.48 + 0.1 * ridge, -10.8 - 0.3 * ridge, 0],
       [1.68 + 0.21 * ridge, -7.52 + 0.26 * ridge, 0],
@@ -133,28 +107,24 @@ function mountain(T, layout) {
       [inner - 0.18, -1.37 + 0.08 * crease, 1],
       [inner - 0.13, -0.7 + 0.08 * ridge, 1],
       [inner, -0.285 + 0.03 * ridge, 2],
-      [mix(inner, rim, 0.35), -0.193 + 0.035 * ridge, 2],
-      [mix(inner, rim, 0.72), -0.22 + 0.042 * ridge, 2],
-      [rim, -0.3 + 0.06 * ridge, 2],
-      [mix(rim, summit, 0.63), shoulderHeight + 0.035 * crease, 2],
-      [summit, shoulderHeight - 0.11 + 0.045 * crease, 2],
-      [summit + 0.25 + 0.16 * ridge, -1.04 + 0.13 * crease, 1],
-      [summit + 0.17 + 0.25 * ridge, -1.6 + 0.13 * crease, 0],
-      [summit + 0.64 + 0.37 * ridge, -2.11 + 0.19 * crease, 1],
-      [summit + 0.78 + 0.38 * ridge, -2.38 + 0.23 * crease, 2],
-      [summit + 0.48 + 0.36 * ridge, -3.35 + 0.19 * crease, 0],
-      [summit + 0.67 + 0.58 * ridge, -3.98 + 0.15 * crease, 1],
-      [summit + 1.27 + 0.68 * ridge, -4.6 + 0.21 * crease, 2],
-      [summit + 1.39 + 0.66 * ridge, -4.9 + 0.14 * crease, 1],
-      [summit + 1.23 + 0.63 * ridge, -5.68 + 0.2 * crease, 0],
-      [summit + 1.9 + 0.83 * ridge, -6.29 + 0.2 * crease, 1],
-      [summit + 2.6 + 0.98 * ridge, -7.29 + 0.22 * crease, 1],
-      [summit + 3.8 + 1.1 * ridge, -9.85 + 0.21 * crease, 0]
+      [mix(inner, rim, 0.35), BED, 3],
+      [mix(inner, rim, 0.72), BED, 3],
+      [rim, BED, 3],
+      [edge - 0.01, BED, 3],
+      [edge - 0.01, FOOT - 0.02, 3],
+      [edge + 1.76, FOOT - 0.02, 3],
+      [edge + 1.76, FOOT - 0.52, 0],
+      [edge + 2.05 + 0.3 * ridge, FOOT - 0.8 + 0.1 * crease, 2],
+      [edge + 1.75 + 0.4 * ridge, FOOT - 1.5 + 0.15 * crease, 0],
+      [edge + 2.6 + 0.5 * ridge, FOOT - 2.05 + 0.2 * crease, 2],
+      [edge + 2.35 + 0.5 * ridge, FOOT - 2.8 + 0.2 * crease, 1],
+      [edge + 3.5 + 0.7 * ridge, FOOT - 3.5 + 0.2 * crease, 2],
+      [edge + 4.9 + 0.9 * ridge, FOOT - 5.4 + 0.2 * crease, 0]
     ];
     rowLength = profile.length;
     for (let k = 0; k < rowLength; k++) {
       const [r, y, band] = profile[k];
-      const phase = a + (k < 8 || k > 14 ? 0.011 * Math.sin(k * 1.89 + 2 * a) : 0);
+      const phase = a + (k < 8 || k > 16 ? 0.011 * Math.sin(k * 1.89 + 2 * a) : 0);
       const x = r * Math.cos(phase),
         z = r * Math.sin(phase);
       verts.push(x, y, z);
@@ -163,7 +133,9 @@ function mountain(T, layout) {
           ? [0x30414e, 0x536169]
           : band === 1
             ? [0x4b5b64, 0x808985]
-            : [0x53665e, 0x858778];
+            : band === 2
+              ? [0x4f5f66, 0x7c8887]
+              : [0x222a2c, 0x2f383a];
       const mineral =
         0.42 +
         0.21 * Math.sin(0.71 * x - 0.63 * z + 0.61 * y) +
@@ -448,150 +420,33 @@ function waterWorks(m) {
     water,
     8
   );
-  const end = [
-    [6.29, 0.218, 8.31],
-    [6.71, 0.14, 8.03],
-    [6.98, -0.05, 7.66]
-  ];
+  // The last reach runs out across the flags and leaves through a bronze
+  // spout in the balustrade, falling down the drum to a basin on the walk.
+  const lip = edgeRadius(spillAngle);
+  const out = (r, y) => [Math.cos(spillAngle) * r, y, Math.sin(spillAngle) * r];
+  const end = [[6.29, 0.218, 8.31], [6.85, 0.15, 8.2], out(11.4, 0.0), out(lip - 0.02, -0.1)];
   race(m, end);
-  for (const [x, y, z] of [end[0], end[1], end[2]]) m.box(x, y - 0.56, z, 0.35, 1.1, 0.32, stone);
-  m.line(
-    [
-      [6.98, -0.02, 7.66],
-      [7.1, -0.12, 7.55],
-      [7.15, -0.33, 7.51],
-      [7.16, -0.72, 7.5]
-    ],
-    0.047,
-    water,
-    7
-  );
-  // Overspill stones collect the final discharge on the shoulder.
-  for (let j = 0; j < 5; j++) {
-    m.rock(
-      7.03 + 0.14 * Math.cos(j),
-      -0.66 + j * 0.014,
-      7.53 + 0.24 * Math.sin(j),
-      0.24,
-      0.21,
-      0.14,
-      0x647571,
-      0x8b9c8d,
-      7,
-      j * 0.8
+  for (const p of end.slice(1, 3)) m.box(p[0], p[1] - 0.25, p[2], 0.35, 0.5, 0.32, stone);
+  m.tube(out(lip - 0.1, -0.07), out(lip + 0.36, -0.09), 0.1, 0.075, bronze, 8);
+  m.tube(out(lip + 0.36, -0.09), out(lip + 0.46, -0.03), 0.075, 0.045, gold, 8);
+  const fall = [out(lip + 0.42, -0.12), out(lip + 0.5, -0.35), out(lip + 0.55, -0.9), out(lip + 0.56, -1.9), out(lip + 0.56, FOOT + 0.1)];
+  m.line(fall, 0.048, 0xa6c7c3, 7);
+  m.line(fall.map(([x, y, z]) => [x + 0.04, y - 0.05, z - 0.03]), 0.03, water, 5);
+  // The basin on the footing walk, and its overflow off the lip of the walk.
+  const [bx, , bz] = out(lip + 0.62, 0);
+  m.lathe(bx, FOOT + 0.04, bz, [[0, 0.42], [0.2, 0.46], [0.24, 0.42], [0.18, 0.36]], coping, 16);
+  m.lathe(bx, FOOT + 0.2, bz, [[0, 0.37], [0.003, 0.37]], water, 16);
+  for (let j = 0; j < 4; j++)
+    m.line(
+      [
+        [bx + Math.cos(j * 1.6) * 0.12, FOOT + 0.21, bz + Math.sin(j * 1.6) * 0.12],
+        [bx + Math.cos(j * 1.6 + 0.5) * 0.28, FOOT + 0.21, bz + Math.sin(j * 1.6 + 0.5) * 0.28]
+      ],
+      0.01,
+      0xc2d8d2,
+      4
     );
-  }
-}
-function serviceWays(T, m, bed, layout) {
-  const cx = (layout.width - 1) / 2,
-    cz = (layout.height - 1) / 2;
-  const occupied = (x, z) =>
-    layout.mask[Math.floor(z + cz + 0.5)]?.[Math.floor(x + cx + 0.5)] === '#';
-  const ray = new T.Raycaster(),
-    up = new T.Vector3(),
-    down = new T.Vector3(0, -1, 0);
-  const height = (x, z) => {
-    ray.set(up.set(x, 2, z), down);
-    return ray.intersectObject(bed, false)[0]?.point.y ?? -9;
-  };
-  const roads = [
-    [
-      [-6.42, 3.91],
-      [-7.06, 4.14],
-      [-7.77, 4.44],
-      [-8.32, 4.64]
-    ],
-    [
-      [-4.67, -5.52],
-      [-5.32, -6.36],
-      [-6.27, -7.06],
-      [-7.04, -7.83]
-    ],
-    [
-      [4.45, -5.52],
-      [4.8, -6.35],
-      [5.5, -7.17],
-      [5.91, -8.02]
-    ],
-    [
-      [-0.09, -7.51],
-      [0.08, -7.99],
-      [0.31, -8.59]
-    ],
-    [
-      [-7.54, -0.73],
-      [-8.03, -0.87],
-      [-8.23, -1.12]
-    ],
-    [
-      [6.46, -3.42],
-      [7.12, -3.64],
-      [7.64, -3.47],
-      [7.93, -3.27]
-    ],
-    [
-      [2.22, 7.45],
-      [2.49, 7.96],
-      [2.91, 8.28]
-    ]
-  ];
-  for (const road of roads) {
-    for (let i = 1; i < road.length; i++) {
-      const [a, b] = [road[i - 1], road[i]],
-        dx = b[0] - a[0],
-        dz = b[1] - a[1],
-        len = Math.hypot(dx, dz);
-      const count = Math.ceil(len / 0.32),
-        w = 0.26;
-      for (let j = 0; j < count; j++) {
-        const q = (j + 0.5) / count;
-        const x = mix(a[0], b[0], q),
-          z = mix(a[1], b[1], q);
-        if (occupied(x, z)) continue;
-        const h = height(x, z);
-        const step = mix(0.06, 0.16, ((j + i) % 3) / 2);
-        m.frame(x, h, z, -Math.atan2(dz, dx), 1, () => {
-          m.box(
-            0,
-            step / 2 - 0.06,
-            0,
-            len / count - 0.018,
-            0.2,
-            w * 2,
-            (i + j) % 4 === 2 ? 0x828a7e : 0x748079
-          );
-          if (j % 3 === 1) m.box(0, step / 2 + 0.044, 0, 0.021, 0.008, w * 1.52, 0x998c70);
-        });
-      }
-    }
-  }
-  // Local quartz seams and scree mark water-worn slopes beneath the conduits.
-  // Each trace follows the surface instead of floating across a gully.
-  for (const [sx, sz, r, direction] of [
-    [-10.53, 7.72, 1.6, 1.59],
-    [-8.44, 8.98, 1.21, 0.51],
-    [-4.48, 9.09, 1.45, -0.15],
-    [1.63, 9.56, 1.32, 0.31],
-    [6.87, 9.1, 1.17, -0.64],
-    [8.62, -4.83, 1.24, 0.59],
-    [-8.61, -6.92, 1.22, -0.53],
-    [4.97, -9.62, 1.36, -0.82]
-  ]) {
-    const strokes = [];
-    for (let i = 0; i <= 7; i++) {
-      const t = i / 7,
-        a = direction + 0.19 * Math.sin(t * 9 + sx);
-      const x = sx + Math.cos(a) * r * t,
-        z = sz + Math.sin(a) * r * t;
-      const h = height(x, z);
-      strokes.push([x, h + 0.007, z]);
-      if (i === 2 || i === 5) {
-        const scale = 0.1 + 0.052 * m.rng.next();
-        m.rock(x, h - 0.045, z, scale * 0.82, 0.13, scale * 1.29, 0x475b59, 0x829085, 7, a);
-      }
-    }
-    m.line(strokes, 0.013, 0x95a48d, 4);
-  }
+  m.line([out(lip + 1.0, FOOT + 0.16), out(lip + 1.78, FOOT + 0.05), out(lip + 1.86, FOOT - 0.3), out(lip + 2.1, FOOT - 1.2)], 0.035, water, 5);
 }
 function innerWell(m, layout) {
   const cx = (layout.width - 1) / 2,
@@ -654,6 +509,63 @@ function innerWell(m, layout) {
     });
   }
 }
+// Banks of moonlit cloud around the foot of the mountain and far out to the
+// horizon. Each bank is a low
+// dome whose rim takes the colour of the cloud sea below, so it settles in.
+function puff(m, x, y, z, rx, h, rz, top) {
+  const r = m.rng,
+    n = 9,
+    turn = r.range(0, circle);
+  const rings = [
+    [0, 1, 0x2d3a55],
+    [0.45, 0.86, m.mix(0x2d3a55, top, 0.55)],
+    [0.82, 0.55, top],
+    [1, 0.12, m.mix(top, 0x9ba7c0, 0.25)]
+  ];
+  const jitter = Array.from({ length: n }, () => r.range(0.8, 1.18));
+  let last;
+  for (const [k, s, col] of rings) {
+    const ring = jitter.map((j, i) => {
+      const a = turn + (i * circle) / n;
+      return [x + Math.cos(a) * rx * s * j, y + h * k, z + Math.sin(a) * rz * s * j];
+    });
+    if (last)
+      for (let i = 0; i < n; i++) {
+        const q = (i + 1) % n;
+        m.face([last.ring[i], ring[i], ring[q], last.ring[q]], [m.rgb(last.col), m.rgb(col), m.rgb(col), m.rgb(last.col)]);
+      }
+    last = { ring, col };
+  }
+  m.face([...last.ring].reverse(), last.col);
+}
+function cloudSea(m) {
+  const r = m.rng;
+  for (let i = 0; i < 64; i++) {
+    const near = i < 24;
+    const a = (i / (near ? 24 : 40)) * circle + r.range(-0.12, 0.12),
+      rad = near ? r.range(16, 19.5) : r.range(22, 50);
+    const x = Math.cos(a) * rad,
+      z = Math.sin(a) * rad,
+      y = -7.15 + r.range(0, 0.35);
+    const puffs = near ? 4 : 3,
+      size = near ? 1.9 : 2.4 + rad * 0.04;
+    for (let k = 0; k < puffs; k++) {
+      const s = size * r.range(0.6, 1.3),
+        t = a + Math.PI / 2;
+      const along = (k - (puffs - 1) / 2) * size * 1.25;
+      puff(
+        m,
+        x + Math.cos(t) * along + r.range(-0.6, 0.6),
+        y,
+        z + Math.sin(t) * along + r.range(-0.6, 0.6),
+        s * 1.7,
+        s * r.range(0.2, 0.32),
+        s * 1.25,
+        m.mix(0x56627f, 0x76819b, r.next())
+      );
+    }
+  }
+}
 function landform9(T, layout) {
   const site = new T.Group();
   site.name = '漏臺山根與分水工事';
@@ -665,10 +577,21 @@ function landform9(T, layout) {
   sluiceSupports(structure, layout);
   innerWell(structure, layout);
   site.add(structure.finish('分瓣石盤與四門泄洪嘴'));
+  // The terrace, its drum and balustrade, painted with the light of its lamps.
+  const terrace = new Model(T, 52361);
+  const light = painter(terrace, [...gateLamps(), ...clockLamps()]);
+  paving(terrace, layout, light);
+  drum(terrace, light);
+  parapet(terrace, light);
+  footing(terrace, light);
+  site.add(terrace.finish('環臺石鋪與欄杆'));
   const hydraulics = new Model(T, 74347);
   waterWorks(hydraulics);
-  serviceWays(T, hydraulics, bed, layout);
   site.add(hydraulics.finish('漏刻引渠與兩級沉澱池'));
+  site.add(...instruments9(T));
+  const sky = new Model(T, 61813);
+  cloudSea(sky);
+  site.add(sky.finish('臺下雲海', { distant: true, cast: false }));
   site.updateMatrixWorld(true);
   return site;
 }

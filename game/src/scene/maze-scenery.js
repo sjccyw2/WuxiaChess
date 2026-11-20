@@ -1045,20 +1045,7 @@ function ranges(m, index, p) {
   const r = m.rng,
     style = setting(index);
   if (index === 9) {
-    for (let j = 0; j < 74; j++) {
-      const a = (j * circle) / 74 + r.range(-0.11, 0.11),
-        rad = r.range(16, 32),
-        h = r.range(2.4, 10.5);
-      const x = Math.cos(a) * rad,
-        z = Math.sin(a) * rad;
-      if (j % 11 === 0) {
-        m.frame(x, -4.6, z, a, 1, () =>
-          m.crystal(0, 0, 0, r.range(0.64, 1.05), r.range(6, 10), 0x465569, 0x84908c, 7, 0.41)
-        );
-      }
-      const c = j % 6 === 0 ? 0xc2b58e : 0xabb5be;
-      m.glow(() => m.crystal(x, h, z, r.range(0.026, 0.071), r.range(0.079, 0.155), c, c, 5));
-    }
+    // The cloud sea and far peaks are drawn with the terrace in landform-9.js.
     return;
   }
   for (let tier = 0; tier < 2; tier++)
