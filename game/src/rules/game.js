@@ -1389,7 +1389,7 @@ function woundedHealNotes(t, friends, result) {
 // What an action goes on to cost its own caster's 氣血 once it is over (內傷 after an attack,
 // then a 反噬 burst), counted from where the preview leaves him; shown on his bar as `selfLoss`.
 function selfLoss(s, u, art, result, attack) {
-  let left = u.hp - result.hpCost + result.selfHeal - result.counter;
+  let left = u.hp - result.hpCost + result.selfHeal - result.counter - (result.rebound || 0);
   result.selfLoss = 0;
   const hurt = attack && u.conditions?.wound;
   if (hurt && left > 1) {
@@ -2143,6 +2143,7 @@ function startEnemy(s) {
 // 挑釁: the taunting heroes enemy u is bound to strike this turn — each one whose radius u starts
 // its action within and whom it can strike from a tile it can stand on (`cells`, with `range`).
 function taunters(s, u, cells = null, range = strikeReach(s, u)) {
+  if (u.conditions?.daze) return []; // 失神: it will not act at all
   cells ??= [u, ...Array.from(reachable(s, u).keys(), (k) => fromKey(k))];
   return party(s).filter(
     (t) =>
