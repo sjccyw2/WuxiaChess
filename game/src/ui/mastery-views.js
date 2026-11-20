@@ -227,6 +227,10 @@ function loadout(model, ui) {
     [...list(model.school), ...list(model.guides), ...library].map((a) => [a.id, a])
   );
   const slotTitle = (id) => (id ? text(artById.get(id)?.name || id) : '空位');
+  // The basic attack is always carried and cannot be swapped: shown first, as a fixed box.
+  const basicBox = model.basicName
+    ? `<div class="mj-slot mj-slot-basic" role="img" aria-label="基本攻擊，${text(model.basicName)}，固定不可更換"><span class="mj-slot-number">基本攻擊</span><span class="mj-slot-title">${glyph('sword', 16)}<b>${text(model.basicName)}</b></span></div>`
+    : '';
   const slotControls = slots
     .map((id, i) =>
       btn(
@@ -262,7 +266,7 @@ function loadout(model, ui) {
   const studyLinks = [btn('skill-tab', '查看門派武學', 'mj-text-button', data('school'))];
   if (list(model.guides).some((n) => !n.learned))
     studyLinks.push(btn('skill-tab', '修習已授武譜', 'mj-text-button', data('guides')));
-  return `<div class="mj-slot-bar" role="group" aria-label="三格出戰招式">${slotControls}</div><div class="mj-subhead"><div><h4>可用招式</h4><p>${model.fieldStudy ? '可將剛參悟的招式配置一次。' : model.canConfigure === false ? '可於戰前整備、通吃坊，或全隊尚未行動時換招。' : `選擇招式，裝入${slotName(index)}。`}</p></div>${clear}</div>${entries ? `<ul class="mj-library">${entries}</ul>` : '<p class="mj-empty">尚未習得可配置的招式。</p>'}<div class="mj-study-links">${studyLinks.join('')}</div>`;
+  return `<div class="mj-slot-bar${basicBox ? ' mj-with-basic' : ''}" role="group" aria-label="基本攻擊與三格出戰招式">${basicBox}${slotControls}</div><div class="mj-subhead"><div><h4>可用招式</h4><p>${model.fieldStudy ? '可將剛參悟的招式配置一次。' : model.canConfigure === false ? '可於戰前整備、通吃坊，或全隊尚未行動時換招。' : `選擇招式，裝入${slotName(index)}。`}</p></div>${clear}</div>${entries ? `<ul class="mj-library">${entries}</ul>` : '<p class="mj-empty">尚未習得可配置的招式。</p>'}<div class="mj-study-links">${studyLinks.join('')}</div>`;
 }
 
 function personalTraining(model, ui) {
