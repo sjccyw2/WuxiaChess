@@ -7,6 +7,7 @@ import { paintTechniqueStroke } from '../fx/technique-strokes.js';
 import { paintTechniqueTier } from '../fx/technique-tiers.js';
 import { paintSkillEffect } from '../fx/skill-effects.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
+import { paintField, paintReticles } from './zones.js';
 import {
   compactImage,
   compactSheetName,
@@ -477,7 +478,10 @@ class ActorLayer {
     const range = cast ? (art ? art.range : u.range) : 0;
     const heal = art && (G.isSupport(art) || art.blink);
     const canBlink = art?.blink && G.canPay(s, u);
-    for (const { x, y } of fieldCells(s.mapIndex)) {
+    // rangeTiles: zones.js paints the grid and the regions (one outer edge, a strike fringe)
+    // and answers true; the tile-by-tile loop below then has nothing left to do.
+    const zoned = paintField(this, reach, this.time);
+    for (const { x, y } of zoned ? [] : fieldCells(s.mapIndex)) {
       const walk = this.mode === 'move' && can && !u.moved && reach.has(G.key(x, y));
       const aim =
         cast &&
@@ -587,6 +591,8 @@ class ActorLayer {
         this.preview = { ...hover, path: G.movementPath(s, u, u, hover) };
       this.drawRoute(this.preview.path, true);
     }
+    // rangeTiles: a reticle on every piece the pending strike or art can be used on.
+    paintReticles(this, reach, hover, this.time);
   }
   location(u, now) {
     const blink = this.tracks.get(u.id)?.clips.find((c) => c.blinkFrom && now < c.blinkAt);
