@@ -914,9 +914,11 @@ function enemyPage(s, id) {
         '</strong><span>' +
         (u.conditions?.seal
           ? '本回合封穴，無法施展絕技'
-          : turns === 0
-            ? '本回合蓄勢，正是破綻'
-            : '距蓄勢 ' + turns + ' 回合') +
+          : u.conditions?.daze
+            ? '本回合失神，不會出手'
+            : turns === 0
+              ? '本回合蓄勢，正是破綻'
+              : '距蓄勢 ' + turns + ' 回合') +
         '</span><p>' +
         '普攻傷害 × ' +
         special.factor +

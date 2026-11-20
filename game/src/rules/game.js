@@ -822,6 +822,37 @@ function expireZones(s) {
   s.zones = s.zones.filter((z) => z.through > s.round);
   if (!s.zones.length) delete s.zones;
 }
+// 失神 (§5): whether this strike takes the target's next action. `daze: 'setup'` needs the target
+// disarmed or standing in a formation as the blow lands; a master who lost an action last round
+// shakes off a second (the rule 封穴 follows). A strike at a piece already dazed says it will
+// not act; whether it counters is the counter line's to say (a dazed piece still does).
+function dazePlan(s, u, t, art, result) {
+  const name = unitDetails(t).name;
+  if (t.conditions?.daze) result.notes.push('失神 · ' + name + '本回合不會行動');
+  if (!art?.daze) return;
+  const drop = () => (result.effects = result.effects.filter((e) => e.kind !== 'daze'));
+  if (art.daze === 'setup' && !(t.conditions?.disarm || zoneAt(s, t))) {
+    drop();
+    result.notes.push('條件未成 · 未能失神');
+    return;
+  }
+  if (unitDetails(t).rank === 'boss' && t.lastDazeRound === s?.round - 1) {
+    drop();
+    result.notes.push('局主已換氣，本回合抵抗失神');
+    return;
+  }
+  if (!result.effects.some((e) => e.kind === 'daze'))
+    result.effects.push({ kind: 'daze', power: 1, turns: 1 });
+  result.notes.push('失神 · ' + name + '失去下一次行動');
+}
+// 失神 in the enemy phase: the dazed piece does nothing this turn and the condition is spent.
+// A signature that was due stays due.
+function loseAction(s, u) {
+  u.acted = true;
+  delete u.conditions.daze;
+  log(s, 'combat', '失神，錯過了這一手。', unitDetails(u).name);
+  return [[u.id, '失神', 'status']];
+}
 // Chips the panels derive from where a piece stands, not stored as conditions.
 function standingLines(s, u) {
   const zone = living(u) && zoneAt(s, u);
@@ -1330,6 +1361,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   result.notes = plan.notes;
   if (art) result.notes.push(...strikeFactor(s, u, art, t).notes);
   result.effects.push(...plan.effects);
+  dazePlan(s, u, t, art, result); // 失神: a setup to meet, a master to resist
   const baseHits = (art?.hits || [1]).map(
     (part, i) => Math.round(single * part) + (i === 0 ? plan.extra : 0)
   );
@@ -1636,6 +1668,8 @@ function resolve(s, u, t, skill) {
       if (f.plan.spentMark) delete t.conditions.mark;
       if (f.plan.spentPoison) delete t.conditions.poison;
       if (f.effects.some((e) => e.kind === 'seal')) t.lastSealRound = s.round;
+      if (f.effects.some((e) => e.kind === 'daze') && unitDetails(t).rank === 'boss')
+        t.lastDazeRound = s.round;
       putEffects(s, u, t, f.effects, effects);
     } else log(s, 'combat', '失去戰力。', unitDetails(t).name);
     // 吸勁 lands before the counter, so a signature it puts back is no longer charged for it.
@@ -1841,6 +1875,7 @@ function startEnemy(s) {
 }
 function enemyAct(s, u) {
   if (s.phase !== 'enemy' || s.result || ally(u) || !living(u) || u.acted) return [];
+  if (u.conditions?.daze) return loseAction(s, u); // 失神: the action is lost, not the reflexes
   const friends = party(s).filter(living);
   const field = availableField(s, u);
   const cells = [

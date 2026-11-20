@@ -1273,6 +1273,106 @@ section('zone');
   }
 }
 
+// ── 失神 daze (§5) ───────────────────────────────────────────────────────
+section('daze');
+{
+  const MF = await load('rules/move-facts.js');
+  function setup(daze, foe = 'chief') {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, foe, 5, 7);
+    const art = teach(u, defineArt({ daze, safe: true, mp: 2, factor: 0.2 }));
+    return { s, u, t, art };
+  }
+  {
+    const { s, u, t } = setup(true);
+    const f = G.forecast(u, t, true, s);
+    check('the preview says the target loses its next action', f.notes.includes('失神 · 余滄海失去下一次行動') && f.effects.some((e) => e.kind === 'daze'), f.notes);
+    G.resolve(s, u, t, true);
+    check('失神 lands until the end of this enemy phase', t.conditions?.daze?.through === 1 && t.lastDazeRound === 1);
+    check('the chip shows it', BM.activeEffects(t, s.round).some((l) => l.startsWith('失神')));
+    check('the enemy page says he will not strike this turn', P.enemyPage(s, 'chief').includes('本回合失神，不會出手'));
+    check('a save keeps it', !!unit(R.restoreRun(copy(s)), 'chief').conditions?.daze && unit(R.restoreRun(copy(s)), 'chief').lastDazeRound === 1);
+    // A second hero strikes the dazed master: he still counters, and the preview says both.
+    const guard = put(s, 'guard', 5, 6);
+    const g = G.forecast(guard, t, false, s);
+    check('a dazed enemy still counters, and the preview says it will not act', g.counterRaw > 0 && g.notes.includes('失神 · 余滄海本回合不會行動'), g.notes);
+    const dazed = new Set(dangerTiles(s));
+    const daze = t.conditions.daze;
+    delete t.conditions.daze;
+    const awake = new Set(dangerTiles(s));
+    t.conditions.daze = daze;
+    check('the danger zone leaves out a dazed enemy', awake.has('6,7') && !dazed.has('6,7') && dazed.size < awake.size);
+    const hp = [u.hp, guard.hp],
+      at = [t.x, t.y];
+    G.startEnemy(s);
+    const effects = G.enemyAct(s, t);
+    check('in the enemy phase it does nothing', t.x === at[0] && t.y === at[1] && u.hp === hp[0] && guard.hp === hp[1] && t.acted);
+    check('the condition is spent, and the action reports it', !t.conditions?.daze && same(effects, [['chief', '失神', 'status']]));
+    check('the log says so', s.logs.at(-1).text === '失神，錯過了這一手。' && s.logs.at(-1).who === '余滄海');
+  }
+  {
+    // His signature, if due, stays due.
+    const { s, u, t } = setup(true);
+    s.round = 3;
+    check('the master’s signature is due', G.signatureDue(s, t));
+    G.resolve(s, u, t, true);
+    G.startEnemy(s);
+    G.enemyAct(s, t);
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    check('after losing his action it is still due', G.signatureDue(s, t) && !Number.isInteger(t.signatureRound));
+  }
+  {
+    // A master shakes off a daze the round after one; a lieutenant does not.
+    const { s, u, t } = setup(true);
+    G.resolve(s, u, t, true);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    const f = G.forecast(u, t, true, s);
+    check('the round after, the master resists', !f.effects.some((e) => e.kind === 'daze') && f.notes.includes('局主已換氣，本回合抵抗失神'), f.notes);
+    G.resolve(s, u, t, true);
+    check('and is not dazed', !t.conditions?.daze && t.lastDazeRound === 1);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    G.resolve(s, u, t, true);
+    check('the round after that he can be again', !!t.conditions?.daze && t.lastDazeRound === 3);
+    const l = setup(true, 'blade');
+    G.resolve(l.s, l.u, l.t, true);
+    quietTurn(l.s);
+    l.u.mp = l.u.maxMp;
+    G.resolve(l.s, l.u, l.t, true);
+    check('a lieutenant is dazed two rounds running', !!l.t.conditions?.daze);
+  }
+  {
+    // 'setup': only on a disarmed target, or one standing in a formation.
+    const { s, u, t, art } = setup('setup', 'blade');
+    const f = G.forecast(u, t, true, s);
+    check('without the setup it does not daze, and says so', !f.effects.some((e) => e.kind === 'daze') && f.notes.includes('條件未成 · 未能失神'), f.notes);
+    G.resolve(s, u, t, true);
+    check('nor does the strike', !t.conditions?.daze);
+    check('moveFacts states the setup', MF.moveFacts(s, u, art).effectLines.includes('失神 · 目標兵刃遭纏或站在陣中時，失去下一次行動'));
+    quietTurn(s);
+    u.mp = u.maxMp;
+    BM.applyCondition(s, t, { kind: 'disarm', power: 5, turns: 2 }, u);
+    const g = G.forecast(u, t, true, s);
+    check('on a disarmed target it dazes', g.effects.some((e) => e.kind === 'daze') && g.notes.includes('失神 · ' + G.unitDetails(t).name + '失去下一次行動'));
+    G.resolve(s, u, t, true);
+    check('and the strike lands it', !!t.conditions?.daze);
+    const z = setup('setup', 'blade');
+    z.s.zones = [{ owner: 'medic', tiles: G.zoneTiles(z.s, { x: 5, y: 7 }), through: 2 }];
+    G.resolve(z.s, z.u, z.t, true);
+    check('on a target standing in a formation it dazes', !!z.t.conditions?.daze);
+  }
+  {
+    // Not consumed (it never got to act): gone at the end of the enemy phase all the same.
+    const { s, u, t } = setup(true);
+    G.resolve(s, u, t, true);
+    quietTurn(s);
+    check('a daze never spent is gone by the next ally phase', !t.conditions?.daze);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

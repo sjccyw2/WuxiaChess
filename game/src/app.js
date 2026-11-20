@@ -836,11 +836,13 @@ async function runEnemy() {
       }
       return;
     }
+    const dazed = !!e.conditions?.daze; // 失神: the piece loses its action, and says so
     const effects = G.enemyAct(state, e);
-    audio(effects.length ? 'strike' : 'step');
+    audio(effects.length && !dazed ? 'strike' : 'step');
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
-    if (effects[0])
+    if (dazed) mapTip(uName(e) + ' 失神，錯過了這一手');
+    else if (effects[0])
       board.strikeEffect(
         e,
         G.find(state, effects[0][0]),

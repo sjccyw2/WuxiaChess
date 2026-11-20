@@ -45,6 +45,8 @@ function useLines(art) {
 function conditionLines(art) {
   const lines = [];
   if (art.backlash) lines.push('反噬 · 每次施展積一層亂氣，第三層時自損兩成最大氣血並清空');
+  if (art.daze === 'setup') lines.push('失神 · 目標兵刃遭纏或站在陣中時，失去下一次行動');
+  if (art.daze) lines.push('局主失神後，下一回合可抵抗');
   if (art.zone)
     lines.push(
       '布陣 · 以' +
