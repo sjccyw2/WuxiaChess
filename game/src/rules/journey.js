@@ -10,7 +10,7 @@ import {
   blankRecord,
   CONDITION_NAMES
 } from './battle-mastery.js';
-import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE } from '../data/mastery-catalog.js';
+import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE, RECALL_NOTE } from '../data/mastery-catalog.js';
 import * as G from './game.js';
 import { mapLayout } from '../data/terrain.js';
 import { TECHNIQUES, MANUAL_PRICES, CAPTAINS } from '../data/martial-arts.js';
@@ -30,10 +30,12 @@ const goals = [
   'speed',
   'beacon'
 ];
+// Three kinds are done the same way, by ending an action on the marked tile, and the
+// story tells them as one thing: lighting the lamp. The kinds stay apart for saved games.
 const goalNames = {
   beacon: '點亮引路燈',
-  cache: '尋回姓名籤',
-  herbs: '接應傷者',
+  cache: '點亮引路燈',
+  herbs: '點亮引路燈',
   speed: '搶在限時之前',
   safe: '全員生還'
 };
@@ -97,6 +99,7 @@ function initialRun(ids, seed, legacy) {
   chronicle.returns ??= chronicle.wins;
   fillProfile(chronicle);
   const run = {
+    trees: TREES_EDITION,
     voyage: chronicle.returns + 1,
     priorFate: chronicle.lastFate,
     seed,
@@ -200,10 +203,56 @@ function uniqueMembers(ids, allowed) {
 // are brought up to date before it is checked: a renamed id keeps its meaning, and a removed id is
 // forgotten and its points returned (from this table, since the catalogue no longer has it).
 const TECHNIQUES_RENAMED = Object.freeze({ nineYang: 'yijinjing' });
-const TECHNIQUES_REMOVED = Object.freeze({}); // id: { points }
+// The hero trees as they stood before the redesign: every node and the points it cost. Prices,
+// tiers and prerequisites changed throughout, and twelve nodes went, so a save from before it gives
+// all of these back and the player buys again in the new trees. Shop manuals are not in the table.
+const TREES_EDITION = 2;
+const OLD_TREE_POINTS = {
+  mountainOpening: 1, breakSword: 2, breakArrow: 1, breakPalm: 2, breakQi: 2, ninefoldIntent: 3,
+  sheathedDagger: 1, returningSong: 2, blackNeedle: 2, bambooWard: 1, qinXiaoRally: 2,
+  clearHeartCoda: 3, ironChainForm: 1, sweepingWhip: 2, reverseForce: 2, chainShelter: 1,
+  bloodAtPass: 2, earthThroughChain: 3, southernStance: 1, vacantFist: 2, fieldDragonWard: 1,
+  flyingDragon: 3, armyBookRally: 2, dragonReserve: 3, jadeThread: 1, sparrowSteps: 1,
+  jadeNeedle: 2, pairedHands: 3, silkBell: 2, maidenHarmony: 3, fingerPrimer: 1, northernSea: 2,
+  ripplingSteps: 2, shangYang: 2, lesserMarsh: 2, sixMeridians: 3, huangPetals: 1, peachWard: 1,
+  orchidPoint: 2, beggarBind: 2, peachGate: 2, staffWithoutDogs: 3, darkIronEdge: 1,
+  jadeFluteCut: 1, tideBreaker: 2, toadLunge: 2, mournfulCloud: 2, solitaryPalm: 3, taijiGate: 1,
+  valleyPulse: 1, taijiSword: 2, nineYangMantle: 2, holyFireTurn: 2, universeCanopy: 3,
+  huQuickDraw: 1, snowPursuit: 1, silkwormPalm: 2, foxFeint: 1, foxWrist: 2, foxTwinChange: 3
+};
+const TECHNIQUES_REMOVED = Object.freeze(
+  Object.fromEntries(Object.entries(OLD_TREE_POINTS).map(([id, points]) => [id, { points }]))
+);
+// 青鋒劍 left the shop when its place went to 楊過's 古墓長劍. A save still holding one gets its
+// price back: the hero who carried it takes up their own weapon, and it leaves shelf and stores.
+const ITEMS_REMOVED = Object.freeze({ blueEdge: 33 });
+function dropRemovedItems(s) {
+  const r = s.run;
+  for (const [id, price] of Object.entries(ITEMS_REMOVED)) {
+    let count = 0;
+    for (const u of [...s.units, ...(Array.isArray(r.bench) ? r.bench : [])]) {
+      if (u?.weapon !== id) continue;
+      const own = G.startingHero(u.id).weapon;
+      if (s.stock?.[own] > 0) s.stock[own]--;
+      u.weapon = own;
+      count++;
+    }
+    for (const stock of [s.stock, r.chronicle?.parcel?.stock])
+      if (stock && id in stock) {
+        count += Number.isInteger(stock[id]) && stock[id] > 0 ? stock[id] : 0;
+        delete stock[id];
+      }
+    if (Array.isArray(r.shop)) r.shop = r.shop.filter((o) => o?.id !== id);
+    if (count && Number.isInteger(r.coins)) r.coins += count * price;
+  }
+}
 function migrateSave(s, removed = TECHNIQUES_REMOVED, renamed = TECHNIQUES_RENAMED) {
   const r = s?.run;
   if (!r || !Array.isArray(s.units)) return s;
+  dropRemovedItems(s);
+  // A save made under the new trees keeps what it learned; only renames still apply to it.
+  if (r.trees === TREES_EDITION) removed = {};
+  r.trees = TREES_EDITION;
   // A rename applies once the catalogue has the new id in place of the old one.
   const names = new Map(
     Object.entries(renamed).filter(([from, to]) => TECHNIQUES[to] && !TECHNIQUES[from])
@@ -260,7 +309,13 @@ function tidyMarks(s) {
   if (s.zones != null) {
     const zones = Array.isArray(s.zones)
       ? s.zones.filter(
-          (z) => z && Number.isInteger(z.through) && z.through >= s.round && Array.isArray(z.tiles)
+          (z) =>
+            z &&
+            typeof z.owner === 'string' &&
+            Number.isInteger(z.through) &&
+            z.through >= s.round &&
+            Array.isArray(z.tiles) &&
+            z.tiles.every((p) => p && Number.isInteger(p.x) && Number.isInteger(p.y))
         )
       : [];
     if (zones.length) s.zones = zones;
@@ -564,7 +619,7 @@ function dialogue(s, scene = s.run.scene) {
     if (echo) beats.push(echo);
   } else if (s.result === 'win') {
     beats.push(...script.win);
-    beats.push({ who: 'youth', text: r.last?.optional ? script.rescue : script.missed });
+    beats.push({ who: 'youth', text: r.last?.optional ? SIDE_TALES[r.goal] : MAZE_TALE.unlit });
     const who = r.last?.recruit;
     if (who) {
       const arrival = HERO_VOICES[who].arrival;
@@ -588,7 +643,8 @@ function dialogue(s, scene = s.run.scene) {
       info = person && G.unitDetails(person);
     return {
       speaker: off?.name || info?.name || '',
-      role: off?.role || info?.role || '',
+      // A hero's role label is not shown; enemies and off-board people keep theirs.
+      role: off?.role || (person && G.ally(person) ? '' : info?.role) || '',
       person,
       portrait: off?.portrait || '',
       note: beat.note || '',
@@ -1116,6 +1172,7 @@ function treeModel(s, u) {
     pathTitle: path.title,
     origin: path.origin,
     originNote: CATALOG_NOTE,
+    recallNote: RECALL_NOTE,
     sp: u.sp,
     camp: s.run.status === 'camp',
     leaderName: COMMANDS[u.id].name,
@@ -1146,7 +1203,7 @@ function campModel(s) {
     coins: r.coins,
     reward: last.reward,
     recruit: G.DETAILS[last.recruit]?.name || '',
-    objective: last.optional ? SIDE_TALES[r.goal] : '這一局沒有救下局中的影子。',
+    objective: last.optional ? SIDE_TALES[r.goal] : MAZE_TALE.unlit,
     story: !last.won
       ? s.reason + MAZE_TALE.loss
       : r.stage === 9

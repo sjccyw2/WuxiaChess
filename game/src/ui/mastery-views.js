@@ -20,7 +20,7 @@ const slotName = (i) => ['第一格', '第二格', '第三格'][i];
 const kindNames = {
   root: '根基',
   basic: '基本招式',
-  signature: '成名絕學',
+  signature: '根基',
   active: '主動招式',
   refinement: '絕技精修'
 };
@@ -195,7 +195,8 @@ function schoolContents(model, ui) {
   const nodes = list(model.school),
     current = chooseNode(nodes, ui.node);
   if (!current) return '<p class="mj-empty">此俠客尚無門派武學可供查看。</p>';
-  return `<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
+  const recall = model.recallNote ? `<p class="mj-recall">${text(model.recallNote)}</p>` : '';
+  return `${recall}<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
 }
 function guideContents(model, ui) {
   const nodes = list(model.guides),
@@ -252,7 +253,7 @@ function loadout(model, ui) {
         a.source === 'guides'
           ? '授業武譜'
           : a.source === 'signature' || a.id === 'signature'
-            ? '成名絕學'
+            ? '根基'
             : '門派武學';
       const label = here ? '已配置' : used >= 0 ? '移至此格' : '配置此格';
       return `<li class="mj-library-row"><span class="mj-item-symbol">${glyph(a.icon, 20)}</span><div><small>${what}${used >= 0 ? ` · ${slotName(used)}` : ''}</small><h4>${text(a.name)}</h4>${reach(a.facts)}${factBadge(a.facts)}</div>${btn('slot-set', label, 'mj-action mj-compact', `${data(a.id)} data-slot="${index}" ${here || a.canEquip === false ? 'disabled' : ''} aria-label="${text(a.name)}${here ? '已配置於' : '配置到'}${slotName(index)}"`)}</li>`;
@@ -308,7 +309,7 @@ function campRecap(model) {
         : ''
       : text(model.reward);
   const provenance = model.lost ? '此局失利' : '此局已過';
-  return `<section class="mj-berth">${illustration('run-merchant.webp')}<img class="fo-shop-face" src="${text(art('npc-wei.webp'))}" alt="通吃坊掌櫃韋小寶"><div class="mj-berth-copy"><small>${glyph('pin', 13)}韋小寶的通吃坊</small><h3>${text(model.stageName)}</h3><p>${provenance}${reward ? ` · ${reward}` : ''}${model.recruit ? ` · ${text(model.recruit)}入隊` : ''}</p></div></section>${model.objective || model.story ? `<details class="mj-origin mj-recap"><summary>${glyph('scroll', 14)}本局紀錄${glyph('down', 14)}</summary>${model.story ? `<p>${text(model.story)}</p>` : ''}${model.objective ? `<dl><div><dt>局中影</dt><dd>${text(model.objective)}</dd></div></dl>` : ''}</details>` : ''}`;
+  return `<section class="mj-berth">${illustration('run-merchant.webp')}<img class="fo-shop-face" src="${text(art('npc-wei.webp'))}" alt="通吃坊掌櫃韋小寶"><div class="mj-berth-copy"><small>${glyph('pin', 13)}韋小寶的通吃坊</small><h3>${text(model.stageName)}</h3><p>${provenance}${reward ? ` · ${reward}` : ''}${model.recruit ? ` · ${text(model.recruit)}入隊` : ''}</p></div></section>${model.objective || model.story ? `<details class="mj-origin mj-recap"><summary>${glyph('scroll', 14)}本局紀錄${glyph('down', 14)}</summary>${model.story ? `<p>${text(model.story)}</p>` : ''}${model.objective ? `<dl><div><dt>支線</dt><dd>${text(model.objective)}</dd></div></dl>` : ''}</details>` : ''}`;
 }
 function productRow(item, coins) {
   const left = whole(item.left),

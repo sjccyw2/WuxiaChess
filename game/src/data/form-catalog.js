@@ -4,101 +4,105 @@ const ART_FORMS = {
   // 令狐冲
   'signature:hero': ['exploit'],
   mountainOpening: ['line'],
-  breakSword: ['flank'],
-  breakArrow: ['pin'],
-  breakPalm: ['mark'],
+  ninefoldFormula: ['exploit'],
+  breakSword: [],
+  breakArrow: [],
+  starSuction: ['siphon'],
   breakQi: ['seal'],
-  ninefoldIntent: ['line', 'still'],
+  ninefoldIntent: ['exploit'],
 
   // 任盈盈
   'signature:medic': ['cleanse'],
   sheathedDagger: ['distill'],
-  returningSong: ['overflow'],
   blackNeedle: ['mark'],
-  bambooWard: ['cleanse'],
+  returningSong: ['cleanse', 'overflow'],
   qinXiaoRally: ['riposte'],
+  saintessOrder: [],
   clearHeartCoda: ['cleanse'],
 
   // 向問天
-  'signature:guard': ['leech'],
+  'signature:guard': [],
   ironChainForm: ['mark'],
+  chainShelter: [],
   sweepingWhip: ['pull'],
-  reverseForce: ['antidote'],
-  chainShelter: ['channel'],
+  reverseForce: [],
   bloodAtPass: ['leech'],
-  earthThroughChain: ['pin'],
+  earthThroughChain: [],
 
   // 郭靖
-  'signature:guo': ['collision'],
+  'signature:guo': [],
   southernStance: ['still'],
-  vacantFist: ['mark'],
-  fieldDragonWard: ['cleanse'],
-  flyingDragon: ['flank'],
+  kanglongRegret: ['collision'],
+  guoPairedHands: [],
+  fieldDragonWard: [],
+  flyingDragon: [],
   armyBookRally: ['channel'],
-  dragonReserve: ['collision', 'mark'],
+  dragonReserve: ['collision'],
 
   // 小龍女
-  'signature:xiao': ['flank'],
+  'signature:xiao': ['pin'],
   jadeThread: ['exploit'],
-  sparrowSteps: ['riposte'],
-  jadeNeedle: ['pin'],
-  pairedHands: ['distill'],
+  jadeNeedle: ['glide'],
   silkBell: ['pull', 'collision'],
-  maidenHarmony: ['flank', 'arc'],
+  jadeHeart: ['glide'],
+  pairedHands: ['distill'],
+  maidenHarmony: [],
 
   // 段譽
-  'signature:duan': ['line'],
+  'signature:duan': ['siphon'],
   fingerPrimer: ['pin'],
-  northernSea: ['leech'],
-  ripplingSteps: ['landing'],
   shangYang: ['still'],
+  ripplingSteps: [],
   lesserMarsh: ['mark'],
+  guanChong: ['collision'],
+  shaoShang: ['line'],
   sixMeridians: ['line', 'exploit'],
 
   // 黃蓉
-  'signature:huang': ['pin'],
+  'signature:huang': ['seal'],
   huangPetals: ['mark'],
-  peachWard: ['channel'],
-  orchidPoint: ['seal'],
-  beggarBind: ['pull'],
+  peachWard: [],
+  beggarBind: [],
+  beggarTrip: ['pin'],
   peachGate: ['cleanse'],
-  staffWithoutDogs: ['pin'],
+  staffWithoutDogs: [],
 
   // 楊過
   'signature:yang': ['still'],
+  quanzhenSword: [],
   darkIronEdge: ['line'],
-  jadeFluteCut: ['mark'],
-  tideBreaker: ['exploit'],
-  toadLunge: ['collision'],
-  mournfulCloud: ['mark'],
-  solitaryPalm: ['still', 'leech'],
+  jadeFluteCut: [],
+  tideBreaker: [],
+  mournfulCloud: [],
+  solitaryPalm: [],
 
   // 張無忌
-  'signature:zhang': ['channel'],
-  taijiGate: ['flank'],
-  valleyPulse: ['overflow'],
-  taijiSword: ['arc'],
+  'signature:zhang': ['overflow'],
   nineYangMantle: ['cleanse'],
+  qiankunYield: [],
+  qiankunShove: ['collision'],
   holyFireTurn: ['pull'],
-  universeCanopy: ['cleanse', 'channel'],
+  taijiGate: ['still'],
+  qiankunSeventh: ['cleanse'],
 
   // 胡斐
   'signature:hu': ['mark'],
   huQuickDraw: ['exploit'],
   snowPursuit: ['cleanse'],
+  foxFeint: ['pull'],
   silkwormPalm: ['pin'],
-  foxFeint: ['mark'],
-  foxWrist: ['seal'],
-  foxTwinChange: ['exploit', 'flank'],
+  miaoSword: ['glide'],
+  heartCut: ['exploit', 'again'],
+  cliffCut: ['exploit', 'mark'],
 
   // 可分授給俠客的八部武譜
-  fingerFlick: ['mark'],
+  fingerFlick: [],
   softPalm: ['pin'],
   yangFinger: ['channel'],
-  nineYang: ['cleanse', 'overflow'],
+  yijinjing: ['cleanse'],
   iceSoulNeedle: ['still'],
-  diamondWard: ['cleanse'],
-  sevenInjuries: ['leech'],
+  diamondWard: [],
+  sevenInjuries: [],
   waterSkim: ['landing']
 };
 
@@ -114,7 +118,6 @@ const WEAPON_FORMS = {
   mingSash: ['antidote', 'riposte'],
   foxSaber: ['flank'],
   frost: ['distill'],
-  blueEdge: ['exploit'],
   ironFan: ['mark', 'overflow'],
   silkWhip: ['pull', 'pin'],
   travelBlade: ['arc'],
@@ -124,15 +127,15 @@ const WEAPON_FORMS = {
 const COMBINATIONS = [
   {
     name: '拂花遞劍',
-    skills: ['huangPetals', 'signature:hero'],
+    skills: ['huangPetals', 'signature:hero', 'ninefoldFormula', 'ninefoldIntent'],
     weapons: ['jadeCane'],
-    text: '黃蓉與敵人之間留一空格，持青竹棒使拂花，把人拉近，逼他露出破綻。令狐冲進到兩格內接獨孤九劍，抓住破綻，多打 9 點原始傷害，這次交鋒也免受還擊。'
+    text: '黃蓉與敵人之間留一空格，持青竹棒使拂花，把人拉近，逼他露出破綻。令狐冲進到兩格內接石壁劍招、總訣式或獨孤九劍，抓住破綻，多打 9 點原始傷害，這次交鋒也免受還擊。'
   },
   {
     name: '前掌後刀',
-    skills: ['signature:guo'],
+    skills: ['kanglongRegret'],
     weapons: ['foxSaber'],
-    text: '郭靖和胡斐各站在敵人南北相鄰的一格。胡斐持胡家單刀先攻，夾擊多打 7 點，郭靖回 4 點內力。郭靖再出降龍十八掌，敵人的退路正被胡斐佔住，掌力再添 7 點。'
+    text: '郭靖和胡斐各站在敵人南北相鄰的一格。胡斐持胡家單刀先攻，夾擊多打 7 點，郭靖回 4 點內力。郭靖再出亢龍有悔，敵人的退路正被胡斐佔住，掌力再添 7 點。'
   },
   {
     name: '飛針催毒',
@@ -142,15 +145,15 @@ const COMBINATIONS = [
   },
   {
     name: '牽敵成列',
-    skills: ['sweepingWhip', 'signature:duan'],
+    skills: ['sweepingWhip', 'shaoShang'],
     weapons: ['silkWhip'],
-    text: '向問天隔一空格用長鞭破陣，將敵人拉進段譽與另一敵人所在的直線。任盈盈換錦紋軟鞭，也能普攻牽敵。段譽再出六脈神劍，主敵後兩格內若有敵人且通路無阻，劍氣便以四成半威力穿中一人。'
+    text: '向問天隔一空格用長鞭破陣，將敵人拉進段譽與另一敵人所在的直線。任盈盈換錦紋軟鞭，也能普攻牽敵。段譽再出少商劍，主敵後兩格內若有敵人且通路無阻，劍氣便以四成半威力穿中一人。'
   },
   {
     name: '一指續孤掌',
-    skills: ['signature:yang', 'yangFinger'],
+    skills: ['mournfulCloud', 'yangFinger'],
     weapons: ['ironFan'],
-    text: '楊過先出黯然銷魂掌，自耗 9 點氣血。讓已習一陽指的張無忌持鐵骨折扇，在三格內替他療傷兼回 6 點內力。多出的療量最多有 12 點化為一回合護盾，可留待敵方出招。'
+    text: '楊過先出杞人憂天，自耗 10 點氣血。讓已習一陽指的張無忌持鐵骨折扇，在三格內替他療傷兼回 6 點內力。多出的療量最多有 12 點化為一回合護盾，可留待敵方出招。'
   },
   {
     name: '踏浪回陣',

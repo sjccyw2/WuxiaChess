@@ -1300,22 +1300,6 @@
   overflow: auto;
   overscroll-behavior: contain;
 }
-.fo-side-story {
-  display: flex;
-  gap: 9px;
-  align-items: center;
-  margin: 12px 0 0;
-  padding-top: 8px;
-  border-top: 1px solid #667059;
-  font-size: 12px;
-  color: #d8c9a0;
-}
-.fo-side-story img {
-  width: 53px;
-  height: 53px;
-  object-fit: cover;
-  border: 1px solid #ae9870;
-}
 .mj-berth .fo-shop-face {
   position: relative;
   align-self: center;

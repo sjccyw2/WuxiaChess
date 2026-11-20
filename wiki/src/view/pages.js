@@ -100,7 +100,7 @@ export function home() {
       ['items', 'item-ironFan.webp'],
       ['folk', 'npc-wei.webp'],
       ['foes', 'captain-9.webp'],
-      ['missions', 'npc-tale-0.webp']
+      ['missions', 'run-meridians.webp']
     ]
       .map(([g, f]) => shelf(g, f))
       .join('') +

@@ -24,7 +24,7 @@ function codexPage(id) {
     titleHead(
       'book',
       '群俠列傳',
-      '每一輪有三位俠客應帖。救下各局的影子，便有餘下的俠客應帖而來。每局至多五人上盤。'
+      '每一輪有三位俠客應帖。達成各局的支線並取勝，便有餘下的俠客應帖而來。每局至多五人上盤。'
     ) +
     '<div class="codex-nav">' +
     list +
@@ -38,8 +38,6 @@ function codexPage(id) {
     h.name +
     '</h3><div class="codex-school">' +
     h.school +
-    ' · ' +
-    h.role +
     '</div><p>' +
     h.bio +
     '</p><h4>' +

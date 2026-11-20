@@ -175,8 +175,9 @@ function stage(i) {
     image: wikiArt('map-' + i + '.webp'),
     sections: [
       rows('這一局', [
-        ['局主的執念', tale.obsession],
-        ['局中影', tale.shade]
+        ['局主', boss.name],
+        ['副手', second.name],
+        ['支線', missionLabel(i)]
       ]),
       speech('戰前', beats(script.before, i)),
       speech(
@@ -184,7 +185,11 @@ function stage(i) {
         Object.entries(script.heroLines).map(([id, line]) => said(G.DETAILS[id].name, line))
       ),
       speech('戰後 · 勝', beats(script.win, i)),
-      speech('局中影 · 救下 / 錯過', said('救下', script.rescue), said('錯過', script.missed)),
+      speech(
+        '支線 · 達成 / 未達成',
+        said('達成', G.SIDE_TALES[G.mapGoalType(i)]),
+        said('未達成', G.MAZE_TALE.unlit)
+      ),
       speech('戰後 · 敗', beats(script.loss, i)),
       speech('局的紀事', tale.arrival, tale.victory),
       links('同局條目', [
@@ -194,7 +199,7 @@ function stage(i) {
         link('missions', 'map-' + i, missionLabel(i))
       ])
     ],
-    sources: cites(cite(script.rescue, 'src/data/encounter-script.js'), cite(tale.arrival, 'src/data/maze-tale.js'))
+    sources: cites(cite(script.before[0].text, 'src/data/encounter-script.js'), cite(tale.arrival, 'src/data/maze-tale.js'))
   };
 }
 

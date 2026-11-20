@@ -32,7 +32,7 @@ function resolveBoardPick(s, mode, ground, body, reach) {
     (reach || G.glideField(s, actor).costs).has(G.key(ground.x, ground.y))
   )
     return ground;
-  if (mode === 'skill' && G.artFor(actor).blink && ground) return ground;
+  if (mode === 'skill' && G.targetType(G.artFor(actor)) === 'ground' && ground) return ground;
   if (mode === 'attack' || mode === 'skill') {
     if (G.targetOK(s, actor, occupant, mode === 'skill')) return { id: occupant.id };
     if (G.targetOK(s, actor, silhouette, mode === 'skill')) return { id: silhouette.id };

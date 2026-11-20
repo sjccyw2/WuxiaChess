@@ -56,7 +56,7 @@ function map(stage) {
     ],
     sources: cites(
       cite(layout.name, 'src/data/terrain.js'),
-      cite(G.ENCOUNTER_SCRIPT[stage].rescue, 'src/data/encounter-script.js')
+      cite(G.ENCOUNTER_SCRIPT[stage].before[0].text, 'src/data/encounter-script.js')
     )
   };
 }

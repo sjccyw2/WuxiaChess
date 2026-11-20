@@ -321,6 +321,13 @@
   inset: 0;
   background: linear-gradient(90deg, #172b24 2%, #172b24de 34%, #14282355 65%, #15282190);
 }
+/* One line above the tree: why the hero holds only an early art. */
+.mj-recall {
+  margin: 8px 2px 10px;
+  color: #cfc7a8;
+  font: 500 13.5px/1.6 var(--sans);
+  letter-spacing: 0.02em;
+}
 .mj-path {
   display: flex;
   justify-content: space-between;

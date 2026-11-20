@@ -363,18 +363,6 @@ function dossier(s, u, section, ui, parent) {
     '</footer></section>'
   );
 }
-const taleCaptions = [
-  ['橋洞裡的孩子', '青竹渡的石橋下，孩子肩上繫著一雙濕草鞋。'],
-  ['紅楓驛的信使', '傷了肩的信使仍握著一封封好的急報。'],
-  ['蘆汀吹哨的傷者', '蘆花間，揹著藥簍的傷者吹起竹哨。'],
-  ['解開安全繩的行旅', '聽雪棧旁的行旅將安全繩盤在肩上。'],
-  ['隔谷吹簫人', '吹簫人倚著山風，接起琴臺未盡的一音。'],
-  ['牆後的女子', '女子從桃花間推門，衣領邊掛著一片竹籤。'],
-  ['城門守車人', '襄陽門下，守車人身後停著木輪車。'],
-  ['寒玉室的傷者', '寒玉壁前，披著衣裳的傷者捧著剛接過的藥。'],
-  ['攥著銅錢的孩子', '孩子伸出兩手，掌心裡躺著一枚銅錢。'],
-  ['望見家門的老人', '燈亮起來，一位白鬚老人望向遠處的家門。']
-];
 function encounterPage(s, scene, beat, archive = false) {
   const map = mapLayout(s.mapIndex),
     lines = R.dialogue(s, scene),
@@ -408,20 +396,11 @@ function encounterPage(s, scene, beat, archive = false) {
     (p.note ? '<p class="fy-stage-note">' + esc(p.note) + '</p>' : '') +
     '<div class="fy-byline"><strong>' +
     esc(p.speaker) +
-    '</strong><small>' +
-    esc(p.role) +
-    '</small></div><blockquote>' +
+    '</strong>' +
+    (p.role ? '<small>' + esc(p.role) + '</small>' : '') +
+    '</div><blockquote>' +
     esc(p.text) +
     '</blockquote>' +
-    (!opening && last && s.run.last?.optional
-      ? '<figure class="fo-side-story"><img src="' +
-        art('npc-tale-' + s.mapIndex + '.webp') +
-        '" alt="' +
-        esc(taleCaptions[s.mapIndex][1]) +
-        '"><figcaption>' +
-        esc(taleCaptions[s.mapIndex][0]) +
-        '</figcaption></figure>'
-      : '') +
     '</div></div><footer class="mj-footer"><div class="fy-reading">' +
     (current ? btn('scene-prev', '上一句', 'mj-action') : '') +
     '<span>' +
@@ -435,4 +414,4 @@ function encounterPage(s, scene, beat, archive = false) {
   );
 }
 
-export { teamPage, dossier, taleCaptions, encounterPage };
+export { teamPage, dossier, encounterPage };

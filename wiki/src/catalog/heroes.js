@@ -20,7 +20,6 @@ export function heroes() {
       sections: [
         rows('人物誌', [
           ['稱號', d.epithet],
-          ['身分', d.role],
           ['原著', G.BOOKS[id]],
           ['門派', d.school]
         ]),

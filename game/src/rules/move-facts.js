@@ -41,6 +41,21 @@ function useLines(art) {
   return [...lines, ...G.guardNotes(art), ...G.priceNotes(art)];
 }
 
+// What the conditions stage's fields do, as rules: 反噬, a conditional 失神, 布陣.
+function conditionLines(art) {
+  const lines = [];
+  if (art.backlash) lines.push('反噬 · 每次施展積一層亂氣，第三層時自損兩成最大氣血並清空');
+  if (art.daze === 'setup') lines.push('失神 · 目標兵刃遭纏或站在陣中時，失去下一次行動');
+  if (art.daze) lines.push('局主失神後，下一回合可抵抗');
+  if (art.zone)
+    lines.push(
+      '布陣 · 以' +
+        (G.targetType(art) === 'ground' ? '落點' : '目標腳下') +
+        '為中心布下五格陣勢，至下一敵方回合結束：敵人踏入即須停步，回合開始時站在陣中移動 −2；我方站在陣中防禦 ＋4'
+    );
+  return lines;
+}
+
 function moveFacts(s, u, id = 'basic', target = null) {
   if (Object.hasOwn(roots, id)) {
     return {
@@ -113,6 +128,10 @@ function moveFacts(s, u, id = 'basic', target = null) {
     powerLabel = forecast ? '預估回復' : '療傷威力';
     powerText = (forecast ? forecast.amount : G.healingPower(u, s, art)) + ' 氣血';
     lines.push(art.aura ? '範圍療傷' : '單體療傷');
+  } else if (kind === 'ground' && art.zone) {
+    powerLabel = '布陣距離';
+    powerText = range + ' 格';
+    lines.push('在空地布下陣勢，自身不移動，結束行動');
   } else if (kind === 'ground') {
     powerLabel = '身法距離';
     powerText = range + ' 格';
@@ -133,7 +152,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
   }
   for (const effect of effectsOf(art))
     lines.push(effectDescription(effect.kind, effect.power, effect.turns));
-  if (art) lines.push(...bonusLines(u, art), ...useLines(art));
+  if (art) lines.push(...bonusLines(u, art), ...useLines(art), ...conditionLines(art));
   if (art?.aura) lines.push('目標及周圍 ' + art.aura + ' 格友軍');
   if (hpCost) lines.push('自耗 ' + hpCost + ' 氣血');
   const forms = G.formsFor(u, art, basic ? definition : undefined);

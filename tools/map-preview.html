@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <title>Map preview</title>
+    <!-- The game finds its pictures beside its own page, so this page borrows that address. -->
+    <base href="../game/" />
+    <!--
+      Developer preview of one battlefield, drawn by the game's own board, camera and lighting.
+      Serve the repository root and open  tools/map-preview.html?map=3
+        map=0..9        which battlefield
+        bare            scenery only: no pieces and no tile grid
+        title           the title screen's low camera (it always shows map 0)
+        yaw, pitch      camera angles in radians (the game opens at yaw 0.69, pitch 0.85)
+        zoom            0.78 to 2.4
+        tile=x,y        centre the camera on one tile (needs zoom above 1)
+      tools/shoot-map.mjs drives this page and saves pictures from a set of angles.
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+      }
+      #scene {
+        position: fixed;
+        inset: 0;
+      }
+      #scene canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      #board-hits {
+        position: absolute;
+        inset: 0;
+        visibility: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="scene">
+      <canvas id="board"></canvas>
+      <canvas id="tactics"></canvas>
+      <div id="board-hits"></div>
+    </div>
+    <script src="vendor/three.min.js"></script>
+    <script type="module">
+      import { BattleBoard } from './src/scene/board.js';
+      import * as R from './src/rules/journey.js';
+      import * as G from './src/rules/game.js';
+      import { mapLayout } from './src/data/terrain.js';
+
+      const q = new URLSearchParams(location.search);
+      const map = q.has('title') ? 0 : Math.max(0, Math.min(9, Number(q.get('map')) || 0));
+      const title = q.has('title'),
+        bare = title || q.has('bare');
+      const $ = (id) => document.getElementById(id);
+      const board = new BattleBoard({
+        canvas: $('board'),
+        tactics: $('tactics'),
+        hits: $('board-hits'),
+        scene: $('scene'),
+        frame: null,
+        onCell() {},
+        onUnit() {},
+        onHover() {},
+        onCamera() {},
+        onTechnique() {}
+      });
+      const state = R.startRun(R.drawLots(7));
+      const layout = mapLayout(map);
+      state.mapIndex = map;
+      const heroes = G.party(state),
+        foes = state.units.filter((u) => !heroes.includes(u));
+      heroes.forEach((u, i) => Object.assign(u, { x: layout.allies[i][0], y: layout.allies[i][1] }));
+      foes.forEach((u, i) => {
+        const seat = layout.enemies[i];
+        if (seat) Object.assign(u, { x: seat[0], y: seat[1] });
+      });
+      state.units = bare ? [] : [...heroes, ...foes.slice(0, layout.enemies.length)];
+      if (bare) state.selected = null;
+      board.changeMap(map);
+      board.present(title);
+      if (!bare) board.sync(state, 'move', { motion: false, grid: true });
+      else board.prefs = { motion: false, grid: false };
+      const view = board.view;
+      if (q.has('yaw') || q.has('pitch'))
+        view.orbit(
+          q.has('yaw') ? Number(q.get('yaw')) - view.yaw : 0,
+          q.has('pitch') ? Number(q.get('pitch')) - view.pitch : 0
+        );
+      if (q.has('zoom')) view.setZoom(Number(q.get('zoom')));
+      if (q.has('tile')) {
+        const [x, y] = q.get('tile').split(',').map(Number);
+        view.focusTile(x, y, view.zoom);
+      }
+      board.changed();
+      // The shooting script waits for this, then for a few more frames.
+      window.preview = { board, state, map, ready: true };
+    </script>
+  </body>
+</html>

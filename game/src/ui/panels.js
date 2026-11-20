@@ -17,6 +17,7 @@ import {
   taunters,
   reach,
   roundsToSignature,
+  standingLines,
   ITEMS,
   LIMIT,
   PARTY,
@@ -117,7 +118,6 @@ const bar = (label, value, max, cls, ic) =>
   ' <small>/ ' +
   max +
   '</small></span></div>';
-const roleTag = (u) => '<span class="role-tag">' + DETAILS[u.id].role + '</span>';
 const lv = (u) => '<span class="lv">Lv. <b>' + String(u.level).padStart(2, '0') + '</b></span>';
 const titleHead = (ic, title, sub = '') =>
   '<div class="modal-head"><div class="modal-title">' +
@@ -335,7 +335,6 @@ function portraitSummary(u) {
     '</div><h3>' +
     i.name +
     '</h3><div class="sheet-meta">' +
-    roleTag(u) +
     '<span>' +
     bookCitation(BOOKS[u.id]) +
     '</span>' +
@@ -363,7 +362,7 @@ function equippedCard(u, id, slot) {
   );
 }
 function conditionChips(s, u) {
-  const labels = activeEffects(u, s.round);
+  const labels = [...activeEffects(u, s.round), ...standingLines(s, u)];
   // 受護: derived, never stored — a companion beside a hero who covers.
   const guard = ally(u) && coverer(s, u);
   if (guard) labels.push('受護 · ' + DETAILS[guard.id].name + '在旁代受直接攻擊');
@@ -669,7 +668,7 @@ function goalsPage(s) {
       ' 兩</span></div>' +
       '<details class="hud-disclosure"><summary>地勢與勝敗條件</summary><p>' +
       esc(mapLayout(s.mapIndex).tactic) +
-      '</p><p>須於第十二回合結束前擊敗局主。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。救下局中的影子並取勝，便有新俠客應帖而來。</p></details>' +
+      '</p><p>須於第十二回合結束前擊敗局主。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。達成支線並取勝，便有新俠客應帖而來。</p></details>' +
       '<details class="hud-disclosure"><summary>十局次序 · ' +
       (s.run.stage + 1) +
       '／10</summary><ol class="journey-route">' +
@@ -797,7 +796,7 @@ function helpPage() {
     [
       'scroll',
       '一念江湖',
-      '每一輪有三位俠客應帖，由你執子。十局各有一位局主與一個待救的影子；救下影子並取勝，便多一位同伴。每局至多五人上盤。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。'
+      '每一輪有三位俠客應帖，由你執子。十局各有一位局主，給一道劍意壓著心神，非戰不可；勝了，他才醒得過來。每局另有一道支線，達成支線並取勝，便多一位同伴。每局至多五人上盤。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。'
     ],
     [
       'bag',
@@ -933,9 +932,11 @@ function enemyPage(s, id) {
         '</strong><span>' +
         (u.conditions?.seal
           ? '本回合封穴，無法施展絕技'
-          : turns === 0
-            ? '本回合蓄勢，正是破綻'
-            : '距蓄勢 ' + turns + ' 回合') +
+          : u.conditions?.daze
+            ? '本回合失神，不會出手'
+            : turns === 0
+              ? '本回合蓄勢，正是破綻'
+              : '距蓄勢 ' + turns + ' 回合') +
         '</span><p>' +
         '普攻傷害 × ' +
         special.factor +
@@ -982,8 +983,17 @@ function attackPage(s, source, target, skill) {
   // 代受: the piece clicked is not the one struck; the coverer stands opposite (§9.7).
   const t = f.coveredBy ? find(s, f.coveredBy) : aimed;
   const friendly = f.support,
-    blink = f.type === 'ground';
-  const title = blink ? '輕功落點' : f.heal ? '運功療傷' : friendly ? '護持預覽' : '交鋒預覽';
+    blink = f.type === 'ground',
+    formation = blink && !!a.zone; // 布陣: the caster stays; the tile is the formation's centre
+  const title = formation
+    ? '布陣'
+    : blink
+      ? '輕功落點'
+      : f.heal
+        ? '運功療傷'
+        : friendly
+          ? '護持預覽'
+          : '交鋒預覽';
   const line = (label, value, cls = '') =>
     '<div><span>' + label + '</span><b class="' + cls + '">' + value + '</b></div>';
   const who = (v) => {
@@ -991,7 +1001,9 @@ function attackPage(s, source, target, skill) {
       return (
         '<div class="duelist"><i class="forecast-destination">' +
         icon('move', 29) +
-        '</i><small>落點</small><strong>第 ' +
+        '</i><small>' +
+        (formation ? '陣眼' : '落點') +
+        '</small><strong>第 ' +
         (v.x + 1) +
         ' 列・' +
         (v.y + 1) +
@@ -1016,7 +1028,8 @@ function attackPage(s, source, target, skill) {
   // Built only from what forecast() returned: the blow, the reply, and any cost or recovery.
   const forecastBar = (v) => {
     const healed = f.heal ? f.recipients.find((e) => e.id === v.id)?.amount || 0 : 0;
-    const own = v === u ? f.selfHeal - f.hpCost - f.counter - (f.rebound || 0) : 0;
+    const own =
+      v === u ? f.selfHeal - f.hpCost - f.counter - (f.selfLoss || 0) - (f.rebound || 0) : 0;
     const taken = friendly || blink ? healed : v === t ? -f.amount : 0;
     const after = Math.max(0, Math.min(v.maxHp, v.hp + own + taken));
     const share = (n) => Math.max(0, Math.min(100, (100 * n) / v.maxHp));
@@ -1048,7 +1061,11 @@ function attackPage(s, source, target, skill) {
     );
   };
   const lines = [];
-  if (blink)
+  if (formation)
+    lines.push(
+      line('陣眼', tileInfo(t.x, t.y, s.mapIndex).name + ' · 陣勢 ' + f.zone.length + ' 格')
+    );
+  else if (blink)
     lines.push(
       line(
         '移至',
@@ -1131,7 +1148,11 @@ function attackPage(s, source, target, skill) {
       : '') +
     '</div><div class="modal-foot right">' +
     btn('close', '重選目標', 'outline-btn') +
-    btn('strike', blink ? '施展輕功' : friendly ? '施展招式' : '確認出招', 'gold-btn') +
+    btn(
+      'strike',
+      formation ? '布下陣勢' : blink ? '施展輕功' : friendly ? '施展招式' : '確認出招',
+      'gold-btn'
+    ) +
     '</div>'
   );
 }
