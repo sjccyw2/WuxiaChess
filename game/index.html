@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101a1a" />
+    <meta
+      name="description"
+      content="《十漏迷津》十關立體江湖戰棋。十位俠客中抽三人同行，拜習武學、入鋪整裝，闖過銅漏中的十重江湖。"
+    />
+    <title>劍影江湖 · 十漏迷津</title>
+    <link rel="icon" type="image/svg+xml" href="assets/seal.svg" />
+    <link rel="stylesheet" href="styles/01-base.css" />
+    <link rel="stylesheet" href="styles/02-materials.css" />
+    <link rel="stylesheet" href="styles/03-lots.css" />
+    <link rel="stylesheet" href="styles/04-ferry.css" />
+    <link rel="stylesheet" href="styles/05-mastery-tree.css" />
+    <link rel="stylesheet" href="styles/06-dialogs.css" />
+    <link rel="stylesheet" href="styles/07-field.css" />
+    <link rel="stylesheet" href="styles/08-phone-portrait.css" />
+    <link rel="stylesheet" href="styles/09-phone-landscape.css" />
+    <link rel="stylesheet" href="styles/10-folio.css" />
+  </head>
+  <body>
+    <section class="opening" id="start-screen" aria-labelledby="game-title">
+      <div id="start-world" class="start-world">
+        <div class="scene" id="scene" aria-label="可拖曳旋轉的青竹渡立體場景">
+          <canvas id="board" aria-hidden="true"></canvas>
+          <canvas id="tactics" aria-hidden="true"></canvas>
+          <div
+            id="board-hits"
+            class="board-hits"
+            role="group"
+            aria-label="戰棋地格，以方向鍵選格、Enter 確認"
+            hidden
+          ></div>
+        </div>
+      </div>
+      <div class="opening-glaze" aria-hidden="true"></div>
+      <header class="opening-head">
+        <div class="opening-brand">
+          <img src="assets/seal.svg" width="34" height="38" alt="" /><span>金庸群俠戰棋</span>
+        </div>
+        <div class="opening-tools">
+          <button class="opening-icon title-fullscreen" data-do="fullscreen" aria-label="全螢幕" title="全螢幕" aria-pressed="false"><span data-icon="expand"></span></button>
+          <button data-do="title-help" class="start-help"><span data-icon="help"></span>遊玩指南</button
+          ><i></i>
+          <button
+            class="opening-icon"
+            id="title-sound"
+            data-do="sound-toggle"
+            aria-label="開啟音效"
+          ></button>
+          <button class="opening-icon" data-do="settings" aria-label="遊戲設定" title="遊戲設定">
+            <span data-icon="settings"></span>
+          </button>
+        </div>
+      </header>
+      <div class="opening-content">
+        <div class="chapter-label"><span>群俠外傳</span><i></i><b>十漏迷津</b></div>
+        <h1 id="game-title">劍影江湖</h1>
+        <div class="title-rule" aria-hidden="true"><i></i><b></b><i></i></div>
+        <p class="opening-description">幾百年前，有人在岸邊喊了一聲。你伸手應了。</p>
+        <div class="opening-menu">
+          <button class="embark" id="start-primary" data-do="start-primary">
+            <span data-icon="sword"></span><strong>抽籤入江湖</strong>
+          </button>
+          <button class="embark-new" id="title-new" data-do="title-new" hidden>
+            <span data-icon="people"></span>另開新局
+          </button>
+          <button class="codex-link" data-do="codex"><span data-icon="book"></span>群俠列傳</button>
+        </div>
+      </div>
+      <footer class="opening-foot">
+        <div class="chapter-place">
+          <span data-icon="pin"></span><span>河南洛陽</span><i></i><b>青竹渡</b>
+        </div>
+        <a class="opening-wiki" href="../wiki/" target="_blank" rel="noopener">江湖志 ↗</a>
+        <div class="panorama-controls">
+          <span class="panorama-hint">拖曳環視渡口</span
+          ><button data-do="orbit-left" aria-label="向左環視" title="向左環視">‹</button
+          ><span class="compass" aria-hidden="true"></span
+          ><button data-do="orbit-right" aria-label="向右環視" title="向右環視">›</button>
+        </div>
+      </footer>
+    </section>
+    <main id="main" class="battle-screen" hidden>
+      <section id="field" class="battlefield" aria-label="戰棋地圖與行動指令">
+        <div id="board-frame" aria-hidden="true"></div>
+        <div class="field-vignette" aria-hidden="true"></div>
+        <header class="field-heading">
+          <button id="trip-ledger" class="hud-box map-plaque" data-do="goals" title="戰役目標與路簿">
+            <span class="map-emblem" aria-hidden="true" data-icon="flag"></span>
+            <span class="map-title"><small id="chapter-number">第一渡</small><strong id="map-name">青竹渡</strong></span>
+            <span id="round-badge" class="phase-readout" aria-live="polite"></span>
+          </button>
+        </header>
+        <div class="hud-box hud-tools" aria-label="畫面控制">
+          <button id="grid-toggle" class="hud-icon" data-do="field-grid" aria-pressed="false" aria-controls="board" title="顯示棋格" aria-label="顯示棋格"><span data-icon="grid"></span></button>
+          <button id="expand" class="hud-icon hud-fullscreen" data-do="fullscreen" aria-pressed="false" title="全螢幕" aria-label="全螢幕"><span data-icon="expand"></span><span>全螢幕</span></button>
+          <button id="menu-toggle" class="hud-icon" data-do="hud-panel" data-id="menu" aria-expanded="false" aria-controls="menu-panel" title="選單" aria-label="選單"><span data-icon="menu"></span></button>
+        </div>
+        <section id="menu-panel" class="hud-flyout menu-flyout" aria-labelledby="menu-title" hidden>
+          <div class="flyout-head"><h2 id="menu-title">選單</h2><button class="flyout-close" data-do="hud-close" aria-label="關閉選單"><span data-icon="close"></span></button></div>
+          <nav id="nav" class="field-menu" aria-label="戰場選單"></nav>
+          <div class="menu-foot"><small id="save-state">進度已自動保存</small><button data-do="home">主畫面</button></div>
+        </section>
+        <div id="field-dock" class="field-dock">
+          <div class="unit-dock">
+            <button id="active-hero" class="hud-box unit-card" data-do="sheet" title="俠客資料"></button>
+            <div class="hud-box unit-tools">
+              <button id="party-toggle" class="hud-tool" data-do="team" aria-haspopup="dialog" aria-controls="modal"><span data-icon="people"></span><span>隊伍</span></button>
+              <button id="medicine-button" class="hud-tool" data-do="field-medicine" aria-haspopup="dialog" aria-controls="modal" title="使用隊伍共用丹藥"><span data-icon="bottle"></span><span>藥囊</span></button>
+              <button id="view-toggle" class="hud-tool" data-do="hud-panel" data-id="view" aria-expanded="false" aria-controls="view-panel"><span data-icon="cube"></span><span>視角</span></button>
+            </div>
+          </div>
+          <div id="commander" class="hud-box command-dock" role="group" aria-label="行動指令"></div>
+        </div>
+        <section id="view-panel" class="hud-flyout view-flyout" aria-labelledby="view-title" hidden>
+          <div class="flyout-head"><h2 id="view-title">戰場視角</h2><button class="flyout-close" data-do="hud-close" aria-label="收起視角"><span data-icon="close"></span></button></div>
+          <div class="view-grid">
+            <button id="rotate-left" aria-label="向左旋轉戰場" title="向左旋轉"><span data-icon="undo"></span><span>左轉</span></button>
+            <button id="camera" aria-pressed="false" title="切換俯視角度"></button>
+            <button id="rotate-right" aria-label="向右旋轉戰場" title="向右旋轉"><span data-icon="undo"></span><span>右轉</span></button>
+            <button id="zoom-out" aria-label="縮小戰場" title="縮小"><span data-icon="minus"></span></button>
+            <button id="zoom-value" aria-label="重設視角" title="重設視角">100%</button>
+            <button id="zoom-in" aria-label="放大戰場" title="放大"><span data-icon="plus"></span></button>
+          </div>
+          <div class="view-links"><button id="focus-piece"><span data-icon="target"></span>定位俠客</button><button id="terrain-guide"><span data-icon="grid"></span>地形圖</button></div>
+        </section>
+        <section id="arts-panel" class="hud-flyout arts-flyout" aria-labelledby="arts-title" hidden>
+          <div class="flyout-head"><h2 id="arts-title">出招</h2><button class="flyout-close" data-do="hud-close" aria-label="收起招式"><span data-icon="close"></span></button></div>
+          <div id="field-arts"></div>
+        </section>
+        <div id="technique-caption" class="technique-caption" role="status" aria-atomic="true" hidden><span></span><strong></strong></div>
+        <div id="board-tip" class="board-tip" role="status"></div>
+      </section>
+    </main>
+    <dialog id="modal">
+      <div class="modal-shell"><div id="modal-content"></div></div>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="vendor/three.min.js"></script>
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>

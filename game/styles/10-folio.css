@@ -1,0 +1,570 @@
+/* Indigo bindings, cinnabar seals and unbleached folios from the ferry ledger. */
+:root {
+  --binding: #182638;
+  --binding-light: #304254;
+  --stitched-edge: #9c8868;
+  --leaf: #eee2c2;
+  --ink-on-leaf: #302b27;
+  --annotation: #625342;
+  --seal-ink: #923f36;
+  --seal-text: #fff2d3;
+  --ready-jade: #9bdec2;
+  --bookcloth:
+    repeating-linear-gradient(0deg, transparent 0 3px, #bbd0db08 3px 4px),
+    repeating-linear-gradient(90deg, transparent 0 2px, #050b161c 2px 3px),
+    linear-gradient(115deg, #344357, #1f2d40 48%, #182535);
+  --paper-leaf:
+    repeating-linear-gradient(3deg, transparent 0 6px, #826b3c06 6px 7px),
+    radial-gradient(ellipse at 86% 15%, #fbf4dd, transparent 75%),
+    linear-gradient(110deg, #dfcdab, #efe5c9 27%, #f3ead3);
+}
+#modal:has(.mj-frame) {
+  --fo-panel: #293848;
+  --fo-line: #776f64;
+  --fo-paper: #f8ecd0;
+  --fo-quiet: #ccd1ce;
+  --fo-jade: var(--ready-jade);
+  --fo-gold: #ead09b;
+  --mj-rule: #657076;
+  --mj-paper: var(--fo-paper);
+  --mj-quiet: var(--fo-quiet);
+  --mj-brass: var(--fo-gold);
+  --mj-jade: var(--ready-jade);
+  border: 1px solid var(--stitched-edge);
+  border-radius: 4px;
+  background: var(--bookcloth);
+  color: var(--fo-paper);
+  box-shadow:
+    0 15px 48px #07101acc,
+    0 0 0 2px #172130,
+    inset 0 0 0 3px #aca08236;
+}
+#modal .mj-fixed-head {
+  background:
+    linear-gradient(96deg, #1b2839 8%, #233347f5 45%, #233347aa 73%, #1d2738ed),
+    url("../assets/panel-river.webp") 70% 55% / cover;
+  border-bottom: 3px double #ad9471;
+}
+#modal .mj-fixed-head::after {
+  inset: 0 auto 0 0;
+  width: 7px;
+  height: auto;
+  background:
+    repeating-linear-gradient(
+      156deg,
+      transparent 0 9px,
+      #e8d6ac 9px 10px,
+      transparent 11px 19px
+    ),
+    #16202d;
+  border-right: 1px solid #82715b;
+}
+#modal .modal-title > svg,
+.battlefield .map-emblem {
+  box-sizing: content-box;
+  color: var(--seal-text);
+  background: var(--seal-ink);
+  border: 1px solid #e3bb8c;
+  border-radius: 2px 3px 1px 2px;
+  box-shadow:
+    inset 0 0 0 2px var(--seal-ink),
+    inset 0 0 0 3px #ddb4989c;
+}
+#modal .modal-title > svg {
+  padding: 4px;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+#modal .modal-title h2 {
+  color: #f8ebca;
+  letter-spacing: 0.09em;
+  text-shadow: 0 2px 3px #111d2a;
+}
+#modal .mj-scroll {
+  scrollbar-color: #a28b69 #1b2735;
+}
+#modal :is(.mj-fixed-foot, .mj-tools, .fy-shopbar, .mj-tabs) {
+  background: #212f40;
+  border-color: #81735f;
+}
+#modal :is(.mj-tab, .fo-filter, .outline-btn, .mj-action, .fo-stock) {
+  color: #eee5ce;
+  border-color: #788080;
+  background: #2b3a49;
+}
+#modal
+  :is(
+    .mj-tab[aria-selected="true"],
+    .fo-filter[aria-pressed="true"],
+    .mj-picker-unit[aria-pressed="true"]
+  ) {
+  background: #713b35;
+  color: var(--seal-text);
+  border-color: #deb58d;
+  box-shadow: inset 0 -2px #e5bf8a;
+}
+#modal :is(.gold-btn, .run-primary, .mj-march),
+.opening-menu .embark,
+.battlefield .turn-action {
+  color: var(--seal-text);
+  border: 1px solid #d5a37c;
+  background: linear-gradient(112deg, #98483b, #79372f);
+  box-shadow:
+    inset 0 0 0 2px #81382e,
+    inset 0 0 0 3px #d4a17a65;
+  text-shadow: none;
+}
+#modal :is(.gold-btn, .mj-march, .run-primary):enabled:hover,
+.opening-menu .embark:enabled:hover,
+.battlefield .field-action.turn-action:enabled:hover {
+  color: #fff8e3;
+  background: #98483b;
+  border-color: #ffdfad;
+}
+#modal
+  :is(
+    .fy-dialogue,
+    .mj-product,
+    .fo-item,
+    .lk-lot,
+    .fo-side-story,
+    .lk-guest,
+    .fo-inspector
+  ) {
+  color: var(--ink-on-leaf);
+  background: var(--paper-leaf);
+  border-color: #a38d69;
+}
+#modal .fy-dialogue {
+  border-inline-start: 3px double #ac9675;
+}
+#modal .fy-dialogue blockquote,
+#modal .lk-guest blockquote {
+  color: var(--ink-on-leaf);
+  font-family: var(--serif);
+  line-height: 1.8;
+}
+#modal .fy-dialogue .fy-stage-note {
+  color: var(--annotation);
+  font-family: var(--fo-sans);
+}
+#modal .fy-dialogue .fy-byline strong,
+#modal .lk-guest h3 {
+  color: #78372e;
+}
+#modal .fy-dialogue .fy-byline small,
+#modal .lk-guest small {
+  color: #74563d;
+}
+#modal
+  :is(.mj-product, .fo-inspector, .fo-item, .lk-lot, .fo-side-story)
+  :is(strong, h3, h4, summary) {
+  color: var(--ink-on-leaf);
+}
+#modal
+  :is(.mj-product, .fo-inspector, .fo-item, .lk-lot, .fo-side-story)
+  :is(small, p, figcaption) {
+  color: var(--annotation);
+}
+#modal .fo-inspector b,
+#modal .mj-product .mj-buy {
+  color: #78392d;
+}
+#modal .mj-product .mj-buy {
+  background: #eee0bc;
+  border-color: #937358;
+}
+#modal .mj-product .mj-buy:enabled:hover {
+  background: #e6cda0;
+  color: #562822;
+}
+#modal .fo-item > span {
+  border-top: 1px solid #baa887;
+}
+#modal .fo-item small {
+  font-size: 0.86rem;
+}
+#modal .fo-inspector {
+  border-left: 4px solid var(--seal-ink);
+}
+#modal
+  :is(
+    .fo-seat,
+    .fo-doll,
+    .fo-cabinet,
+    .mj-detail,
+    .mj-guide,
+    .mj-slot,
+    .fy-group,
+    .fy-row,
+    .mj-origin,
+    .mj-boon,
+    .lk-invite,
+    .mj-prep-block
+  ) {
+  background-color: #253442;
+  border-color: #706d61;
+}
+#modal .fo-seat {
+  background: var(--bookcloth);
+}
+#modal .fo-seat.empty {
+  background: #1b2836;
+  border-style: dashed;
+}
+#modal :is(.fo-seat.inspected, .fo-seat.picked, .fo-item.picked, .lk-lot.won) {
+  border-color: #f0cf93;
+  box-shadow:
+    0 0 0 2px #a75c45,
+    inset 0 0 0 1px #f4d198;
+}
+#modal .fo-seal {
+  background: #883f35;
+  border: 1px solid #f2d1a0;
+  box-shadow: inset 0 0 0 1px #a95645;
+}
+#modal .fo-figure {
+  background: radial-gradient(
+    ellipse at 50% 43%,
+    #b0a387,
+    #7a7a72 57%,
+    #414953
+  );
+  border-color: #998972;
+}
+#modal .fo-slot {
+  background: #213042;
+  color: #fff1d5;
+  border-color: #c5b18d;
+}
+#modal .fo-slot small {
+  color: #d6c8ad;
+}
+#modal .fo-slot strong {
+  color: #fff2d6;
+}
+#modal .mj-weave {
+  background-color: #1a2838;
+}
+#modal .mj-node {
+  background: #263747;
+  border-color: #7d817a;
+}
+#modal .mj-node[aria-pressed="true"] {
+  border-color: #efd099;
+  box-shadow:
+    inset 0 -2px #e7b978,
+    0 0 0 1px #ad7958;
+}
+#modal .mj-state-known {
+  color: #a7e3c9;
+}
+#modal .mj-state-ready {
+  color: #f6d19b;
+}
+#modal .mj-seal {
+  background: #794137;
+  color: #ffedcc;
+  border-color: #bc9777;
+}
+#modal .lk-covered:enabled:hover {
+  background: #ead4ae;
+  border-color: #88483a;
+}
+.battlefield :is(.hud-box, .hud-flyout) {
+  color: #f6ecd6;
+  background: var(--bookcloth);
+  border: 1px solid #ab9773;
+  border-radius: 3px;
+  box-shadow:
+    0 3px 12px #10192380,
+    inset 0 0 0 2px #152332,
+    inset 0 0 0 3px #ad967435;
+}
+.battlefield
+  :is(
+    .hud-icon[aria-pressed="true"],
+    .hud-icon[aria-expanded="true"],
+    .hud-tool[aria-expanded="true"],
+    .field-action.current,
+    .field-action[aria-expanded="true"]
+  ) {
+  color: #fff3d7;
+  background: #774138;
+  box-shadow: inset 0 -2px #efc891;
+}
+.battlefield :is(.field-action, .hud-tool, .map-title strong) {
+  font-family: var(--serif);
+}
+.battlefield .map-title small {
+  color: #e3c599;
+}
+.battlefield .phase-readout strong {
+  color: #a0e0c5;
+}
+.battlefield .phase-readout strong.enemy {
+  color: #ffbb9f;
+}
+.battlefield .map-emblem {
+  box-sizing: border-box;
+}
+#modal :is(button, summary):focus-visible,
+.battlefield :is(button, summary):focus-visible {
+  outline: 2px solid #fff1bb;
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 4px #39434b;
+}
+#modal.fo-dragging .fo-drop-ready {
+  outline: 2px dashed #a6e7ce;
+  outline-offset: -3px;
+}
+#modal.fo-dragging .over {
+  outline: 3px solid #ffda97;
+  outline-offset: -3px;
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #modal .modal-title > svg {
+    width: 15px;
+    height: 15px;
+    padding: 2px;
+  }
+}
+#modal .mj-node.mj-known {
+  background: #214239;
+  color: #d8f3df;
+  border-color: #7bb99a;
+}
+#modal .mj-node.mj-ready {
+  background: #4c4032;
+  color: #fff0ce;
+  border-color: #dcb879;
+}
+#modal .mj-node[aria-pressed="true"] {
+  outline: 2px solid #efcc8d;
+  outline-offset: 1px;
+}
+#modal .mj-wires .mj-wire-known {
+  stroke: #83c9ab;
+}
+#modal .mj-wires .mj-wire-open {
+  stroke: #dab77c;
+}
+#modal .run-lacquer {
+  background:
+    linear-gradient(100deg, #192a3aef, #243549e8 55%, #1c2b3bdd),
+    url("../assets/panel-river.webp") center 62% / cover;
+  border-color: #b19b75;
+}
+#modal .result-banner {
+  background: var(--paper-leaf);
+  border-top: 3px double #9d8764;
+  border-bottom: 3px double #9d8764;
+}
+#modal .result-banner h3 {
+  color: #513429;
+}
+#modal .result-banner p {
+  color: var(--annotation);
+}
+#modal .result-seal {
+  border: 3px double var(--seal-ink);
+  color: var(--seal-ink);
+}
+#modal :is(.log-row, .terrain-list li, .setting-row) {
+  border-color: #616871;
+}
+#modal .log-round {
+  color: #e2c79f;
+  font-variant-numeric: tabular-nums;
+}
+#modal .duel {
+  border-block: 1px solid #99876b;
+  background: #1d2b3a;
+}
+#modal .duel-mid {
+  color: #e3c291;
+}
+#modal .mj-product h5 {
+  color: var(--ink-on-leaf);
+}
+#modal .mj-product button:disabled {
+  opacity: 0.72;
+}
+.opening-menu :is(.codex-link, .embark-new):enabled:hover {
+  background: #223246db;
+}
+
+.wake-mission,
+.wake-choice {
+  margin: 0 0 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #8b744c;
+  border-radius: 4px;
+  background: linear-gradient(110deg, #253b36, #1a2928 70%);
+  color: #f0e5cc;
+}
+.wake-mission header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #e3c588;
+}
+.wake-mission h3,
+.wake-choice h3 {
+  margin: 0;
+  font-family: var(--serif, serif);
+  font-size: 1.14rem;
+}
+.wake-mission header span {
+  margin-left: auto;
+  color: #d7c9af;
+  font-size: 0.81rem;
+}
+.wake-mission dl {
+  margin: 0.5rem 0 0;
+}
+.wake-mission dl div {
+  display: grid;
+  grid-template-columns: 3em 1fr;
+  gap: 0.45rem;
+  padding: 0.28rem 0;
+}
+.wake-mission dt {
+  font-weight: 700;
+  color: #ded2b3;
+}
+.wake-mission dt:first-letter {
+  letter-spacing: 0.12em;
+}
+.wake-mission dd {
+  margin: 0;
+  line-height: 1.5;
+}
+.wake-mission dd small {
+  display: block;
+  color: #c9bc9f;
+}
+.wake-map-lamp {
+  pointer-events: none;
+  z-index: 1;
+  place-self: center;
+  color: #ffe597;
+  line-height: 1;
+  text-shadow: 0 1px 3px #000;
+}
+.wake-journal {
+  margin: 0.7rem 0;
+}
+.wake-journal > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+}
+.wake-journal > summary span {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold, #c5a668);
+}
+.wake-leaf {
+  padding: 0.2rem 0.75rem 0.8rem;
+}
+.wake-leaf > img {
+  width: 100%;
+  max-height: 12rem;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 3px;
+  display: block;
+}
+.wake-leaf ol {
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0.6rem 0;
+  list-style: none;
+  gap: 0.3rem;
+  text-align: center;
+}
+.wake-leaf li {
+  display: grid;
+  justify-items: center;
+  gap: 0.18rem;
+  color: #a89c87;
+}
+.wake-leaf li span {
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  width: 1.5rem;
+  line-height: 1.45rem;
+}
+.wake-leaf li strong {
+  font-size: 0.72rem;
+}
+.wake-leaf li.known {
+  color: #dfbf7c;
+}
+.wake-leaf p,
+.wake-choice p {
+  line-height: 1.7;
+}
+.wake-leaf details {
+  padding: 0.4rem 0;
+  border-top: 1px solid #89795252;
+}
+.wake-leaf details summary {
+  cursor: pointer;
+}
+.wake-choice > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+}
+.wake-choice button {
+  display: block;
+  text-align: left;
+  white-space: normal;
+  height: auto;
+  padding: 0.8rem;
+}
+.wake-choice button strong,
+.wake-choice button span {
+  display: block;
+}
+.wake-choice button span {
+  margin-top: 0.35rem;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+.wake-manifest {
+  font-size: 0.9rem;
+}
+@media (max-width: 560px) {
+  .wake-mission {
+    padding: 0.65rem 0.75rem;
+  }
+  .wake-mission dl div {
+    font-size: 0.82rem;
+  }
+  .wake-choice > div {
+    grid-template-columns: 1fr;
+  }
+  .wake-leaf {
+    padding: 0.2rem 0.25rem 0.6rem;
+  }
+}
+
+.wake-combinations {
+  margin-top: 0.8rem;
+}
+.wake-combinations details {
+  margin: 0.35rem 0.6rem;
+  padding: 0.3rem 0;
+}
+.wake-combinations details summary {
+  cursor: pointer;
+}
+.wake-combinations details p {
+  line-height: 1.7;
+}
