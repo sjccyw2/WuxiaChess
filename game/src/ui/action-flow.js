@@ -77,10 +77,12 @@ function shouldConfirmEnd(s) {
   );
 }
 
-// What the wait button did, for every hero who has not struck: brace for the enemy's turn.
+// What the wait button did, for every hero who has not struck: brace for the enemy's turn. A hero
+// given a second turn by 號令 who leaves it unused has made his choice and gets no free brace.
 function braceTheRest(s) {
   if (!ON) return;
-  for (const u of G.party(s).filter(G.living)) if (G.canAct(s, u)) G.waitUnit(s, u);
+  for (const u of G.party(s).filter(G.living))
+    if (G.canAct(s, u) && u.orderedRound !== s.round) G.waitUnit(s, u);
 }
 
 // Keeps the arts list beside the selected hero while it is open (wide screens; on phones the

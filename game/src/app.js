@@ -492,8 +492,9 @@ function targetHint(art) {
   return {
     ground: '點選射程內的空地，可越過阻礙',
     self: '選擇施術者自身',
-    ally:
-      art.heal && !(art.shield || art.rally || art.haste)
+    ally: art.order
+      ? '選擇範圍內已行動的同伴'
+      : art.heal && !(art.shield || art.rally || art.haste)
         ? '選擇範圍內負傷的友軍'
         : '選擇範圍內的友軍',
     enemy: '選擇範圍內的敵人'
@@ -726,7 +727,7 @@ function autoSelect() {
   const n = F.ON ? F.nextToAct(state) : G.party(state).find((u) => G.canAct(state, u));
   if (n) {
     state.selected = n.id;
-    mode = n.moved ? 'attack' : 'move';
+    mode = n.moved || n.conditions?.rooted ? 'attack' : 'move';
   } else mode = '';
 }
 function finishAlly() {
@@ -735,8 +736,8 @@ function finishAlly() {
   if (!result() && !(F.ON ? F.anyIdle(state) : G.party(state).some((u) => G.canAct(state, u))))
     mapTip('我方已全數行動，可結束回合', 3200);
 }
-// What the turn offers once a strike has played out: the next hero, or, after 連環, a second
-// action for this one, or, after 回身, the walk still open to him.
+// What the turn offers once a strike has played out: the next hero; or, after 號令, the companion
+// ordered; after 連環, a second action for this one; after 回身, the walk still open to him.
 function advanceAfterStrike(id, hit = {}) {
   if (state.result) {
     result(true);
@@ -755,8 +756,13 @@ function advanceAfterStrike(id, hit = {}) {
       )
     )
       return;
-    // 連環: the same hero again, his arts list open for the second action.
-    if (hit.again && G.canAct(state, selected())) {
+    const ordered = hit.ordered && G.find(state, hit.ordered);
+    if (ordered && G.canAct(state, ordered)) {
+      // 號令: the companion ordered is chosen, ready to move.
+      choose(ordered.id, true);
+      mapTip('號令 · ' + uName(ordered) + '可再移動並出手一次', 3200);
+    } else if (hit.again && G.canAct(state, selected())) {
+      // 連環: the same hero again, his arts list open for the second action.
       choose(id, true);
       openArts();
       mapTip('連環 · 擊倒敵人，可再出手一次', 3200);

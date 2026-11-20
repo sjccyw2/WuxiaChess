@@ -1098,9 +1098,12 @@ function attackPage(s, source, target, skill) {
   for (const e of f.effects)
     lines.push(line('附加效果', effectDescription(e.kind, e.power, e.turns)));
   if (f.push) lines.push(line(a.push ? '擊退' : '牽引', '一格'));
+  // 代受 and 號令 change who the action is for: each gets its own row.
   for (const note of f.notes)
     lines.push(
-      note.startsWith('代受 · ') ? line('代受', esc(note.slice(5))) : line('招式連攜', esc(note))
+      /^(代受|號令) · /.test(note)
+        ? line(note.slice(0, 2), esc(note.slice(5)))
+        : line('招式連攜', esc(note))
     );
   if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
   if (skill)

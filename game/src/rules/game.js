@@ -1170,6 +1170,8 @@ function targetOK(s, u, t, skill) {
   if (!t.id || !living(t)) return false;
   if (type === 'enemy') return !ally(t);
   if (!ally(t) || (type === 'self' && t.id !== u.id)) return false;
+  // 號令: a companion who has acted this turn, never the caster.
+  if (art.order) return t.id !== u.id && !!t.acted;
   if (effectsOf(art).length) return true;
   const forms = formsFor(u, art);
   if (forms.includes('riposte')) return true;
@@ -1340,6 +1342,8 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
         '轉護 · 移出自身護盾 ' + u.conditions.shield.power + '，各人得 ' + result.passed + ' 護盾'
       );
     }
+    if (art.order)
+      result.notes.push('號令 · ' + unitDetails(t).name + '可再移動並出手一次（本局僅一次）');
     result.notes.push(...guardNotes(art), ...priceNotes(art));
     return result;
   }
@@ -1695,6 +1699,7 @@ function resolve(s, u, t, skill) {
         progress(u, 'protects', 1);
       putEffects(s, u, v, f.effects, effects);
     }
+    if (art.order) giveOrder(s, t); // 號令
   } else if (f.type === 'enemy') {
     // 留力 asks whether the hero struck last round; a counter or a support art is no strike.
     if (ally(u)) u.struckRound = s.round;
@@ -1770,8 +1775,16 @@ function resolve(s, u, t, skill) {
     hits: f.hits.length,
     from,
     glide: canGlide(s, u) ? u.glideLeft : 0,
-    again
+    again,
+    ordered: art?.order ? t.id : null
   };
+}
+// 號令: the companion gets a whole move and a whole action again this round; a brace he already
+// has stays. Every limit on his arts still holds.
+function giveOrder(s, t) {
+  Object.assign(t, { acted: false, moved: false, origin: null, walked: 0, glideLeft: 0 });
+  t.orderedRound = s.round;
+  log(s, 'combat', '奉號令，可再移動並出手一次。', unitDetails(t).name);
 }
 // 連環: once per hero per round, whatever triggered it. He acts again from where he stands (or
 // moves first, if he had not); the move already made is committed, so it cannot be taken back.

@@ -1468,6 +1468,78 @@ section('again');
   check('next round it is offered again', G.resolve(r.s, r.hu, fresh, true)?.again === true);
 }
 
+// ── 號令 order (§2, §8, §9.1, §9.3) ──────────────────────────────────────
+section('order');
+{
+  const F = await load('ui/action-flow.js');
+  const MF = await load('rules/move-facts.js');
+  function setup() {
+    const s = board(['medic', 'hero', 'guard']);
+    const medic = put(s, 'medic', 3, 7),
+      hero = put(s, 'hero', 4, 7),
+      guard = put(s, 'guard', 5, 6);
+    const art = teach(medic, defineArt({ target: 'ally', range: 3, mp: 8, order: true, once: true, factor: undefined }));
+    medic.mp = medic.maxMp;
+    return { s, medic, hero, guard, art };
+  }
+  const { s, medic, hero, guard, art } = setup();
+  check('a companion who has not acted is no target', !G.targetOK(s, medic, hero, true));
+  put(s, 'blade', 5, 7);
+  G.move(s, hero, 5, 8);
+  G.resolve(s, hero, unit(s, 'blade'), false);
+  check('one who has acted is', G.targetOK(s, medic, hero, true));
+  check('the caster never is', !G.targetOK(s, medic, medic, true));
+  G.waitUnit(s, guard);
+  put(s, 'guard', 7, 7);
+  check('nor one out of range', !G.targetOK(s, medic, guard, true));
+  const f = G.forecast(medic, hero, true, s);
+  check('the preview lists him and says what he gets', same(f.recipients.map((e) => e.id), ['hero']) && f.notes.includes('號令 · 令狐冲可再移動並出手一次（本局僅一次）') && f.notes.includes('壓箱 · 每局一次'), f.notes);
+  const facts = MF.moveFacts(s, medic, art);
+  check('the art’s facts state the rule', facts.powerLabel === '號令' && facts.effectLines.includes('號令 · 令一位本回合已行動的同伴重新移動並出手一次'));
+  check('the support preview page names him', P.attackPage(s, 'medic', 'hero', true).includes('<span>號令</span><b class="">令狐冲可再移動並出手一次'));
+  hero.brace = true;
+  const hit = G.resolve(s, medic, hero, true);
+  check('resolve reports whom it ordered', hit.ordered === 'hero');
+  check('he may move and act again', G.canAct(s, hero) && G.canMove(s, hero) && !hero.moved && hero.origin === null);
+  check('his walk is reset and he is marked', hero.walked === 0 && hero.glideLeft === 0 && hero.orderedRound === 1);
+  check('a brace he had stays', hero.brace === true);
+  check('the caster’s action is spent', medic.acted && !G.canAct(s, medic));
+  check('and the art is used for the board', G.artReady(s, medic, art).reason === '壓箱 · 本局已用');
+  const back = R.restoreRun(copy(s));
+  check('a save keeps it', G.canAct(back, unit(back, 'hero')) && unit(back, 'hero').orderedRound === 1);
+  check('an ordered hero is the next to act', F.nextToAct(s) === hero);
+  check('he can move for real', G.move(s, hero, 4, 8) && hero.walked === 2);
+  // Declining the order: no free brace; others are braced as usual.
+  F.braceTheRest(s);
+  check('an ordered hero who declines gets no brace', !hero.acted);
+  // The brace he had before stays from his first action; a fresh order on an unbraced hero:
+  const t = setup();
+  put(t.s, 'blade', 5, 7);
+  G.resolve(t.s, t.hero, unit(t.s, 'blade'), false);
+  G.resolve(t.s, t.medic, t.hero, true);
+  F.braceTheRest(t.s);
+  check('declined, he is not braced', !t.hero.brace && !t.hero.acted);
+  check('the hero who never acted is', t.guard.brace && t.guard.acted);
+
+  // With 連環: an ordered hero may still trigger it; restrictions apply.
+  const a = setup();
+  const prey = Object.assign(put(a.s, 'blade', 5, 7), { hp: 200 });
+  G.resolve(a.s, a.hero, prey, false);
+  G.resolve(a.s, a.medic, a.hero, true);
+  const chain = teach(a.hero, defineArt({ forms: ['again'], mp: 2 }));
+  prey.hp = 1;
+  check('an ordered hero may trigger 連環', G.resolve(a.s, a.hero, prey, true).again === true && G.canAct(a.s, a.hero));
+  check('and the ordered action obeys the art’s limits', G.canPay(a.s, a.hero, chain));
+
+  // 立樁: an order gives him an action but no move.
+  const r = setup();
+  put(r.s, 'blade', 5, 7);
+  G.resolve(r.s, r.hero, unit(r.s, 'blade'), false);
+  BM.applyCondition(r.s, r.hero, { kind: 'rooted', power: 1, turns: 1 }, r.hero);
+  G.resolve(r.s, r.medic, r.hero, true);
+  check('a rooted hero ordered may act but not move', G.canAct(r.s, r.hero) && !G.canMove(r.s, r.hero));
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
