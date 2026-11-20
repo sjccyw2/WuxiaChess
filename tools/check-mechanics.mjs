@@ -107,17 +107,21 @@ function teach(u, id, slot = 1) {
 }
 // A villain's traits (by DETAILS key: a master's id, 'lieutenant-' + map, 'bow-' + map,
 // 'scout-' + map), in force while `body` runs.
+// The entry is put back whole afterwards, so a check may also rename the piece inside.
 function withTraits(key, traits, body) {
   const had = Object.hasOwn(G.DETAILS, key),
-    prior = G.DETAILS[key]?.traits;
-  G.DETAILS[key] = { ...(G.DETAILS[key] || {}), traits };
+    prior = G.DETAILS[key];
+  G.DETAILS[key] = { ...(prior || {}), traits };
   try {
     return body();
   } finally {
-    if (had) G.DETAILS[key].traits = prior;
+    if (had) G.DETAILS[key] = prior;
     else delete G.DETAILS[key];
   }
 }
+// Board 0's master and lieutenant hold the bridge (坐鎮, SPEC-villains board 0). Checks of other
+// mechanics that need them to walk run them without their traits.
+const loose = (body) => withTraits('chief', {}, () => withTraits('lieutenant-0', {}, body));
 // Run the enemy phase through to the start of the next ally phase.
 function enemyTurn(s) {
   G.startEnemy(s);
@@ -459,7 +463,7 @@ section('villain traits');
   s.run.stage = 4;
   const chief = unit(s, 'chief');
   const style = G.DETAILS.chief.style;
-  check('without traits a signature keeps the flat stage-0 strength', G.enemyTechnique(chief, s).power === 3);
+  check('without traits a signature keeps the flat stage-0 strength', loose(() => G.enemyTechnique(chief, s).power === 3));
   withTraits('chief', { mods: {} }, () => {
     const art = G.enemyTechnique(chief, s);
     check('with traits weak/exposed scale as 3 + ⌊stage/2⌋', style === 'weak' && art.power === 5, art.power);
@@ -1303,6 +1307,9 @@ section('taunt');
   // An enemy that starts within two tiles and can reach him must strike him, though another
   // hero is the cheaper target; one that starts farther, or cannot reach him, acts as usual.
   function scene(foeId, foeAt, guardAt, setup) {
+    return loose(() => looseScene(foeId, foeAt, guardAt, setup));
+  }
+  function looseScene(foeId, foeAt, guardAt, setup) {
     const e = board(['guard', 'hero', 'medic']);
     const foe = put(e, foeId, ...foeAt);
     const g = put(e, 'guard', ...guardAt);
@@ -2278,7 +2285,7 @@ section('interactions');
     check('a taunter in a formation still binds an enemy that can step into it', G.taunters(s, foe).length === 1);
     G.startEnemy(s);
     const hp = guard.hp;
-    G.enemyAct(s, foe);
+    loose(() => G.enemyAct(s, foe));
     check('which strikes him from the formation’s edge', guard.hp < hp && G.zoneAt(s, foe));
     // Starting on a formation, it has two steps less to reach him with.
     const slow = scene(false, [5, 7]);
@@ -2412,9 +2419,11 @@ section('post');
       alone(s);
       return s;
     };
-    const free = lone();
-    put(free, 'chief', 5, 3);
-    const open = dangerTiles(free);
+    const open = loose(() => {
+      const free = lone();
+      put(free, 'chief', 5, 3);
+      return new Set(dangerTiles(free));
+    });
     const held = withTraits('chief', post(0, false), () => {
       const s = lone();
       put(s, 'chief', 5, 3);
@@ -2981,6 +2990,107 @@ section('flee');
     G.nextRound(s);
     check('內傷 halves the herbs', chief.hp - life === Math.floor(Math.round(chief.maxHp * 0.08) / 2), chief.hp - life);
   });
+}
+
+// ── The ten boards, built with the real data on their real maps (SPEC-villains) ──────────────
+// Each block below builds a board as a run reaches it, at a stage it can be met at, and checks
+// that its villains carry the spec's traits and numbers and that what defines them happens there.
+// The run's map `map`, reached at `stage` (a seed whose route puts it there), in the fight with
+// the three original heroes at their spawn tiles.
+function realBoard(map, stage) {
+  for (let n = 1; n < 400; n++) {
+    const s = board(['hero', 'medic', 'guard'], Math.imul(n, 2654435761) >>> 0);
+    if (s.run.route[stage] !== map) continue;
+    for (let i = 0; i < stage; i++) {
+      s.run.scene = 'fight';
+      if (!nextBoard(s)) throw new Error('could not reach board ' + map);
+    }
+    if (stage) {
+      s.run.scene = 'fight';
+      s.run.formationOpen = false;
+    } else {
+      // board() parks every piece; put them back where board 0's layout sets them.
+      const layout = mapLayout(0);
+      foesOf(s).forEach((u, i) => Object.assign(u, layout.enemies[i]));
+      G.party(s).forEach((u, i) => Object.assign(u, layout.allies[i]));
+    }
+    return s;
+  }
+  throw new Error('no route puts board ' + map + ' at stage ' + stage);
+}
+// The board's four enemies by their place in the layout: master, lieutenant, archer, scout.
+const foesOf = (s) => {
+  const ids = s.mapIndex ? [G.commanderId(s), 'echoBlade', 'echoBow', 'echoScout'] : ['chief', 'blade', 'bow', 'scout'];
+  return ids.map((id) => unit(s, id));
+};
+const numbersOf = (u) => [u.maxHp, u.atk, u.def, u.step, u.range];
+// Every post on a board is on walkable ground a hero can walk to from his side's spawn.
+function postsReachable(s) {
+  const from = mapLayout(s.mapIndex).allies[0];
+  return foesOf(s).every((u) => {
+    const post = G.traitsOf(u).post;
+    if (!post || post.tile === 'master') return true;
+    const tile = G.postTile(s, u, post);
+    const ghost = { ...unit(s, s.leader), x: from.x, y: from.y, side: 'ally' };
+    return G.walkable(tile.x, tile.y, s.mapIndex) && G.movementPath({ ...s, units: [] }, ghost, from, tile).length > 0;
+  });
+}
+// The page lines a piece shows now.
+const pageOf = (s, u) => [...G.signatureLines(s, u), ...G.enemyTraitLines(s, u)];
+// One enemy turn with every other enemy standing still; the heroes are where they are.
+function soloTurn(s, u) {
+  G.startEnemy(s);
+  for (const e of G.enemies(s)) if (e !== u) e.acted = true;
+  const effects = G.enemyAct(s, u);
+  return effects;
+}
+// The end of the enemy phase and the start of the next ally phase.
+function closeRound(s) {
+  for (const e of G.enemies(s)) e.acted = true;
+  G.nextRound(s);
+}
+
+section('board 0 青竹渡: the bridge wardens');
+{
+  const s = realBoard(0, 0);
+  const [chief, blade, bow, scout] = foesOf(s);
+  check('余滄海 and 木高峰 have the spec’s numbers', same(numbersOf(chief), [104, 25, 12, 2, 1]) && same(numbersOf(blade), [56, 20, 7, 2, 1]), numbersOf(chief) + ' / ' + numbersOf(blade));
+  check('archer and scout keep the stage curve and their 青城 names', same(numbersOf(bow), [48, 18, 5, 2, 3]) && G.unitDetails(bow).name === '青城弓手' && G.unitDetails(scout).name === '青城斥候', numbersOf(bow) + G.unitDetails(bow).name + G.unitDetails(scout).name);
+  check('both hold their spawn, tether 0, waking', ['chief', 'lieutenant-0'].every((k) => same(G.DETAILS[k].traits.post && { ...G.DETAILS[k].traits.post, note: 0 }, { tile: 'spawn', tether: 0, wake: true, note: 0 })));
+  check('余滄海’s page', same(pageOf(s, chief).slice(1), ['【坐鎮】守在橋頭不動；有俠客踏入他的攻擊範圍，或他受到攻擊後，才離位追擊。']), JSON.stringify(pageOf(s, chief)));
+  check('木高峰’s page', same(pageOf(s, blade).slice(1), ['【坐鎮】守在橋尾不動；有俠客踏入攻擊範圍或受到攻擊後，才離位追擊。']), JSON.stringify(pageOf(s, blade)));
+  check('their posts are ground the heroes can walk to', postsReachable(s));
+  check('the danger zone shows them where they stand only', G.standCells(s, chief).length === 1 && G.standCells(s, blade).length === 1);
+  const at = [chief, blade].map((u) => [u.x, u.y]);
+  G.startEnemy(s);
+  for (const e of G.enemies(s)) G.enemyAct(s, e);
+  check('the heroes far off, neither moves in the first enemy turn', same([chief, blade].map((u) => [u.x, u.y]), at));
+  closeRound(s);
+  // A hero steps beside 余滄海: he strikes and leaves the bridgehead.
+  const p = [chief.x - 1, chief.y];
+  if (!G.walkable(...p, 0) || G.at(s, ...p)) p[0] += 2;
+  const hero = put(s, 'hero', ...p);
+  soloTurn(s, chief);
+  check('a hero beside him is struck, and he wakes', hero.hp < hero.maxHp && chief.woke === true);
+}
+
+section('board 1 紅楓驛: the physician');
+for (const stage of [1, 2]) {
+  const s = realBoard(1, stage);
+  const [tian, yan, bow, scout] = foesOf(s);
+  const want = { 1: [[118, 26, 14, 3, 1], [60, 18, 8, 2, 1]], 2: [[147, 29, 15, 3, 1], [71, 20, 9, 2, 1]] }[stage];
+  check('stage ' + stage + ': 田歸農 and 閻基 have the spec’s numbers', same(numbersOf(tian), want[0]) && same(numbersOf(yan), want[1]), numbersOf(tian) + ' / ' + numbersOf(yan));
+  check('stage ' + stage + ': 閻基 knows 接骨續筋, a mend', G.unitDetails(yan).skill === '接骨續筋' && G.enemyTechnique(yan, s).style === 'mend' && !G.enemyTechnique(yan, s).strikes);
+  const heal = 20 + 5 * stage;
+  check('stage ' + stage + ': his page', same(pageOf(s, yan), ['蓄勢時替三格內氣血不足七成的同夥回復 ' + heal + ' 點氣血，此回合不出手；無人受傷時改以普攻出手，蓄勢保留。']), JSON.stringify(pageOf(s, yan)));
+  check('stage ' + stage + ': 天龍快劍 at 1.20', G.enemyTechnique(tian, s).factor === 1.2);
+  check('stage ' + stage + ': the rank and file are named', G.unitDetails(bow).name === '天龍門弟子' && G.unitDetails(scout).name === '驛站打手' && G.unitDetails(scout).school === '閻府');
+  // His mend is due from round 2; the archer, hurt, stands near enough on the real map.
+  s.round = 2;
+  bow.hp = Math.floor(bow.maxHp / 3);
+  const life = bow.hp;
+  const effects = soloTurn(s, yan);
+  check('stage ' + stage + ': in round 2 he mends the hurt archer on this map', bow.hp === Math.min(bow.maxHp, life + heal) && effects.signature && G.distance(yan, bow) <= 3, [bow.hp, life, yan.x, yan.y]);
 }
 
 // ─────────────────────────────────────────────────────────────────────────

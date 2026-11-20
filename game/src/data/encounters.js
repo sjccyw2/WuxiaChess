@@ -4,9 +4,13 @@
 //
 // `traits` is how one villain differs from another (SPEC-mechanics §7.1):
 //   mods     { hp: multiplier, atk: added, def: added, step: set, range: set } on the stage numbers
-//   sig      { reach, power, turns, cadence, extra: 'pin' | 'line' | 'wound', heal } for the signature
-//   post, phase, prefers, stance, redirect, contact, cover, banner, glide, basicPoison
-// A villain without traits plays exactly as before the redesign.
+//   sig      { reach, power, turns, cadence, sweep, extra: 'pin' | 'line' | 'wound', heal, note }
+//   post     { tile: 'spawn' | 'master' | {x, y}, tether, wake: true | 'struck' | false, note }
+//   phase    { name, atk, def, step, range, cadence, prefers, brace, holds, flee, log, note }
+//   prefers, stance, redirect, contact, cover, banner, glide, basicPoison { power, turns, name }
+//   ward     the share (percent) a living rank-and-file piece takes off its master's blows
+// A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
+// without traits plays exactly as before the redesign.
 function adversary(name, school, book, basic, skill, style, visual, bio, mini, robe, traits = {}) {
   return { name, school, book, basic, skill, style, visual, bio, mini, robe, traits };
 }
@@ -22,7 +26,15 @@ const ENCOUNTERS = [
       'guard',
       '青城派掌門，為林家的辟邪劍譜結下滿門血仇。他給落在橋頭，心裡只剩一個念頭：誰上橋便打誰。森冷一掌，能壓低對手的攻勢。',
       'chief',
-      ''
+      '',
+    {
+      post: {
+        tile: 'spawn',
+        tether: 0,
+        wake: true,
+        note: '守在橋頭不動；有俠客踏入他的攻擊範圍，或他受到攻擊後，才離位追擊。'
+      }
+    }
     ),
     adversary(
       '木高峰',
@@ -34,7 +46,15 @@ const ENCOUNTERS = [
       'duan',
       '塞北明駝，也在追尋辟邪劍譜。他與余滄海素來不和，此刻卻給同一道劍意按在橋尾，駝杖想收也收不回來。',
       'bandit',
-      'sepia(.22)'
+      'sepia(.22)',
+    {
+      post: {
+        tile: 'spawn',
+        tether: 0,
+        wake: true,
+        note: '守在橋尾不動；有俠客踏入攻擊範圍或受到攻擊後，才離位追擊。'
+      }
+    }
     )
   ],
   [
@@ -48,19 +68,21 @@ const ENCOUNTERS = [
       'hero',
       '天龍門北宗掌門，一生不打沒有把握的仗。這一回由不得他，兩隻腳自己往前走。快劍專破對手的守勢。',
       'hero',
-      'sepia(.38) saturate(.8)'
+      'sepia(.38) saturate(.8)',
+    { mods: { hp: 0.9, def: 2, step: 3, range: 1 } }
     ),
     adversary(
       '閻基',
       '閻府',
       '飛狐外傳',
       '奪手刀',
-      '毒砂掌',
-      'poison',
+      '接骨續筋',
+      'mend',
       'guard',
       '昔日的跌打醫生，靠暗中下藥起家。他搭得出自己沒有中藥，卻說不出心裡那個「戰」字是誰擱的。',
       'bandit',
-      'hue-rotate(15deg) saturate(.7)'
+      'hue-rotate(15deg) saturate(.7)',
+    { mods: { hp: 0.9, atk: -3, step: 2, range: 1 }, sig: { heal: 'stage' } }
     )
   ],
   [
@@ -276,7 +298,46 @@ const ENCOUNTERS = [
 // of a DETAILS entry (name, role, school, mini, basic, bio) and optionally `traits` (only `mods`,
 // `post`, `cover`, `prefers`, `basicPoison` and `glide` apply to them). A board left empty keeps
 // the shared 黑子 pieces.
-const RANKS = Array.from({ length: 10 }, () => ({}));
+const RANKS = [
+  // ── board 0
+  // Board 0: the 青城 archer and scout keep the shared pieces' text.
+  { bow: {}, scout: {} },
+  // ── board 1
+  {
+    bow: {
+      name: '天龍門弟子',
+      role: '弓手',
+      school: '天龍門北宗',
+      mini: 'archer',
+      basic: '天龍連珠箭',
+      bio: '替掌門守住驛道口的弟子，箭隨人走，專射趕路的人。'
+    },
+    scout: {
+      name: '驛站打手',
+      role: '打手',
+      school: '閻府',
+      mini: 'bandit',
+      basic: '短棍',
+      bio: '閻基花錢雇來的打手，搶先堵住岔路。'
+    }
+  },
+  // ── board 2
+  {},
+  // ── board 3
+  {},
+  // ── board 4
+  {},
+  // ── board 5
+  {},
+  // ── board 6
+  {},
+  // ── board 7
+  {},
+  // ── board 8
+  {},
+  // ── board 9
+  {}
+];
 // How strong a signature's status is at each stage of the run. At stage 0 these are the numbers
 // every villain used before the redesign.
 const STATUS_POWER = {
@@ -326,8 +387,8 @@ const SIGNATURE_RULES = {
 const VILLAIN_FORMS = {
   摧心掌: [1.16, 'breakPalm'],
   駝峰毒霧: [1.04, 'blackNeedle'],
-  天龍快劍: [1.25, 'breakSword'],
-  毒砂掌: [1.07, 'silkwormPalm'],
+  天龍快劍: [1.2, 'breakSword'],
+  接骨續筋: [0, 'silkwormPalm'], // 續命: no blow, so no strength
   化功大法: [1.03, 'northernSea'],
   星宿毒焰: [1.09, 'holyFireTurn'],
   血刀奇襲: [1.29, 'bloodAtPass'],
