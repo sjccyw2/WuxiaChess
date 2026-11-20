@@ -41,6 +41,13 @@ function useLines(art) {
   return [...lines, ...G.priceNotes(art)];
 }
 
+// What the conditions stage's fields do, as rules: 反噬, a conditional 失神, 布陣.
+function conditionLines(art) {
+  const lines = [];
+  if (art.backlash) lines.push('反噬 · 每次施展積一層亂氣，第三層時自損兩成最大氣血並清空');
+  return lines;
+}
+
 function moveFacts(s, u, id = 'basic', target = null) {
   if (Object.hasOwn(roots, id)) {
     return {
@@ -129,7 +136,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
   }
   for (const effect of effectsOf(art))
     lines.push(effectDescription(effect.kind, effect.power, effect.turns));
-  if (art) lines.push(...bonusLines(u, art), ...useLines(art));
+  if (art) lines.push(...bonusLines(u, art), ...useLines(art), ...conditionLines(art));
   if (art?.aura) lines.push('目標及周圍 ' + art.aura + ' 格友軍');
   if (hpCost) lines.push('自耗 ' + hpCost + ' 氣血');
   const forms = G.formsFor(u, art, basic ? definition : undefined);

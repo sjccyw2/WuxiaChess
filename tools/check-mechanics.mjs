@@ -1037,6 +1037,71 @@ section('wound');
   }
 }
 
+// ── 反噬 backlash (§3) ───────────────────────────────────────────────────
+section('backlash');
+{
+  const s = board(['hero', 'medic', 'guard']);
+  const u = put(s, 'hero', 4, 7);
+  const t = put(s, 'chief', 5, 7);
+  teach(u, defineArt({ backlash: true, safe: true, mp: 2, factor: 0.2 }));
+  const cast = () => {
+    u.acted = false;
+    u.mp = u.maxMp;
+    const f = G.forecast(u, t, true, s);
+    G.resolve(s, u, t, true);
+    return f;
+  };
+  const first = cast();
+  check('the first use lays one layer and says so', u.conditions.backlash.power === 1 && first.notes.includes('反噬 · 亂氣 1／3') && !first.selfLoss, first.notes);
+  const second = cast();
+  check('the second lays two', u.conditions.backlash.power === 2 && second.notes.includes('反噬 · 亂氣 2／3'));
+  const back = R.restoreRun(copy(s));
+  check('the layers survive a save', unit(back, 'hero').conditions.backlash.power === 2);
+  BM.applyCondition(s, u, { kind: 'shield', power: 50, turns: 2 }, u);
+  u.acted = false;
+  u.mp = u.maxMp;
+  const loss = Math.ceil(u.maxHp * 0.2);
+  const third = G.forecast(u, t, true, s);
+  check('the preview warns of the burst before the third use', third.notes.includes('反噬 · 亂氣滿三層，自損 ' + loss + ' 氣血') && third.selfLoss === loss, third.notes);
+  check('and the caster’s bar in the preview includes it', P.attackPage(s, 'hero', 'chief', true).includes('→ ' + (u.hp - loss) + '／'));
+  const hp = u.hp;
+  G.resolve(s, u, t, true);
+  check('the third use bursts for a fifth of greatest 氣血, rounded up', u.hp === hp - loss, hp - u.hp + ' vs ' + loss);
+  check('not through a shield', u.conditions.shield.power === 50);
+  check('and clears the layers', !u.conditions.backlash);
+  cast();
+  check('the next use starts again at one', u.conditions.backlash.power === 1);
+  cast();
+  u.hp = 5;
+  const low = cast();
+  check('a burst never takes him below 1', u.hp === 1 && low.selfLoss === 4, u.hp);
+  // A support art with 反噬 counts too: the layer comes whether or not anything was struck.
+  const h = board(['medic', 'hero', 'guard']);
+  const medic = put(h, 'medic', 4, 7);
+  teach(medic, defineArt({ target: 'self', range: 0, shield: { power: 5, turns: 1 }, backlash: true, mp: 2 }));
+  G.resolve(h, medic, medic, true);
+  check('a support art with it lays a layer too', medic.conditions.backlash?.power === 1);
+  // 解厄 clears the layers.
+  const c = board(['medic', 'hero', 'guard']);
+  const healer = put(c, 'medic', 4, 7),
+    sick = put(c, 'hero', 5, 7);
+  BM.applyCondition(c, sick, { kind: 'backlash', power: 2, turns: 12 }, sick);
+  sick.hp -= 10;
+  teach(healer, defineArt({ target: 'ally', heal: 5, range: 2, mp: 2, forms: ['cleanse'] }));
+  G.resolve(c, healer, sick, true);
+  check('解厄 clears the layers', !sick.conditions?.backlash);
+  // The layers last the board, and go with it.
+  const b = board();
+  const v = put(b, 'hero', 4, 7);
+  BM.applyCondition(b, v, { kind: 'backlash', power: 1, turns: G.LIMIT - b.round + 1 }, v);
+  for (let i = 0; i < 4; i++) quietTurn(b);
+  check('they last round after round', v.conditions?.backlash?.power === 1);
+  nextBoard(b);
+  check('and are gone on the next board', !v.conditions?.backlash);
+  const MF = await load('rules/move-facts.js');
+  check('moveFacts states the rule', MF.moveFacts(s, u, u.activeArt).effectLines.includes('反噬 · 每次施展積一層亂氣，第三層時自損兩成最大氣血並清空'), MF.moveFacts(s, u, u.activeArt).effectLines);
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

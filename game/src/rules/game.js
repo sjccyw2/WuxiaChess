@@ -1142,8 +1142,8 @@ function woundedHealNotes(t, friends, result) {
   if (hurt.length === 1 && hurt[0] === t) result.notes.push('內傷 · 療效減半');
   else result.notes.push('內傷 · ' + hurt.map((v) => unitDetails(v).name).join('、') + '療效減半');
 }
-// What an action goes on to cost its own caster's 氣血 once it is over (內傷 after an attack),
-// counted from where the preview leaves him; the preview shows it on his bar as `selfLoss`.
+// What an action goes on to cost its own caster's 氣血 once it is over (內傷 after an attack,
+// then a 反噬 burst), counted from where the preview leaves him; shown on his bar as `selfLoss`.
 function selfLoss(s, u, art, result, attack) {
   let left = u.hp - result.hpCost + result.selfHeal - result.counter;
   result.selfLoss = 0;
@@ -1154,7 +1154,33 @@ function selfLoss(s, u, art, result, attack) {
     left -= n;
     result.notes.push('內傷 · 出手後自損 ' + n + ' 氣血');
   }
+  if (art?.backlash) {
+    const layers = (u.conditions?.backlash?.power || 0) + 1;
+    if (layers < 3) result.notes.push('反噬 · 亂氣 ' + layers + '／3');
+    else {
+      const n = left > 1 ? Math.min(backlashLoss(u), left - 1) : 0;
+      result.selfLoss += n;
+      left -= n;
+      result.notes.push('反噬 · 亂氣滿三層，自損 ' + n + ' 氣血');
+    }
+  }
   return left;
+}
+// 反噬 (§3): the burst is a fifth of the caster's greatest 氣血, rounded up.
+const backlashLoss = (u) => Math.ceil(u.maxHp * 0.2);
+// 反噬: each use of a 反噬 art lays a layer of 亂氣; the use that would lay the third bursts
+// instead, costing a fifth of the caster's greatest 氣血 (not below 1, not through a shield) and
+// clearing the layers. Answers the caster effects still to put on him.
+function backlashBurst(s, u, own, effects) {
+  if (!own.some((e) => e.kind === 'backlash') || !(u.conditions?.backlash?.power >= 2)) return own;
+  const n = Math.min(backlashLoss(u), u.hp - 1);
+  delete u.conditions.backlash;
+  if (n > 0) {
+    u.hp -= n;
+    effects.push([u.id, '−' + n, 'sacrifice']);
+  }
+  log(s, 'combat', '亂氣滿三層，反噬自身，損失 ' + n + ' 點氣血。', unitDetails(u).name);
+  return own.filter((e) => e.kind !== 'backlash');
 }
 function healingPower(u, s, art) {
   return (art.heal || 35) + stat(u, 'power', s) + (u.level - 1) * 4;
@@ -1586,7 +1612,7 @@ function resolve(s, u, t, skill) {
     const own = selfEffectsOf(art).map((e) =>
       e.kind === 'backlash' ? { ...e, turns: LIMIT - s.round + 1 } : e
     );
-    putEffects(s, u, u, own, effects);
+    putEffects(s, u, u, backlashBurst(s, u, own, effects), effects); // 反噬: the third layer bursts
   }
   finishAction(s, u);
   if (f.notes.length) log(s, 'combat', '氣勁變化。' + f.notes.join('。'), who);
