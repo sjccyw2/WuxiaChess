@@ -532,6 +532,22 @@ body.in-battle {
 .field-art b small {
   color: #e6b4a1;
 }
+/* 破招: a form that answers the enemy under the pointer. A rule the player needs, so it is not
+   behind a polish switch. */
+.field-art.answers {
+  box-shadow: inset 3px 0 0 #f0a35e;
+}
+.field-art.answers strong::after {
+  content: '破招';
+  display: inline-block;
+  margin-inline-start: 6px;
+  padding: 0 4px;
+  vertical-align: 2px;
+  font: 600 11px/1.5 var(--sans);
+  color: #2a1508;
+  background: #f0a35e;
+  border-radius: 2px;
+}
 .field-empty {
   padding: 8px;
   color: var(--subtle);
