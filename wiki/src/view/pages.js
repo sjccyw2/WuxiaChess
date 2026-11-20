@@ -5,7 +5,7 @@ import { normal, match, paginate, pager } from './search.js';
 import { toggleSection } from './sections.js';
 import { gameArt, wikiArt } from '../catalog/parts.js';
 import { BASELINE_ATTACK } from '../catalog/skills.js';
-import { legacy, loreShelf, featuredLore } from './lore.js';
+import { legacy, loreShelf, featured } from './lore.js';
 
 function detailHead(r, g) {
   return (
@@ -76,9 +76,18 @@ export function home() {
         '</h2>' +
         anchor('#lore', '全部 ' + lore.length + ' 節 →') +
         '</div><blockquote class="text-body">' +
-        esc(store.worldview.logline) +
+        esc(store.docs.lore.logline) +
         '</blockquote><div class="home-grid">' +
-        featuredLore().map(loreShelf).join('') +
+        featured('lore').map((r) => loreShelf('lore', r)).join('') +
+        '</div>'
+      : '') +
+    (store.entries.run?.length
+      ? '<div class="home-title"><h2>' +
+        categories.run[0] +
+        '</h2>' +
+        anchor('#run', '全部 ' + store.entries.run.length + ' 節 →') +
+        '</div><div class="home-grid">' +
+        featured('run').map((r) => loreShelf('run', r)).join('') +
         '</div>'
       : '') +
     '<div class="home-title"><h2>查閱圖鑑</h2>' +

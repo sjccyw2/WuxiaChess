@@ -17,7 +17,7 @@ const HERO_PATHS = {
     boon: '料敵先機',
     signature: '獨孤九劍',
     origin:
-      '風清揚在思過崖授劍。入渡時，令狐沖已懂得循破綻出劍，往後要學的是在變招中仍能掌握先機。',
+      '風清揚在思過崖授劍。入渡時，令狐冲已懂得循破綻出劍，往後要學的是在變招中仍能掌握先機。',
     layout: [
       [null, 'mountainOpening', null],
       ['breakSword', null, 'breakArrow'],
@@ -31,7 +31,7 @@ const HERO_PATHS = {
     boon: '綠竹清音',
     signature: '清心普善咒',
     origin:
-      '綠竹巷中，任盈盈以琴曲安定令狐沖的心神。入渡時她已能奏出此曲，後續所修在於照應同舟數人的呼吸。',
+      '綠竹巷中，任盈盈以琴曲安定令狐冲的心神。入渡時她已能奏出此曲，後續所修在於照應同舟數人的呼吸。',
     layout: [
       ['sheathedDagger', null, 'returningSong'],
       ['blackNeedle', 'bambooWard', null],
@@ -258,7 +258,7 @@ const MASTERY_ARTS = {
     safe: true,
     gate: { metric: 'kills', atLeast: 3 },
     desc: '按總訣臨敵變式，三格內穿透八成防禦，敵人無從還擊。',
-    source: '九劍有總訣式。此節演繹令狐沖融會各式後的運用。'
+    source: '九劍有總訣式。此節演繹令狐冲融會各式後的運用。'
   },
   sheathedDagger: {
     name: '日月短劍・藏鋒',
@@ -343,7 +343,7 @@ const MASTERY_ARTS = {
     rally: { power: 5, turns: 3 },
     aura: 1,
     desc: '以琴引眾聲，目標及相鄰友軍的攻擊增加 5 點，持續三回合。',
-    source: '曲本為劉正風、曲洋所作，後由任盈盈與令狐沖合奏。此處演繹以琴起引。'
+    source: '曲本為劉正風、曲洋所作，後由任盈盈與令狐冲合奏。此處演繹以琴起引。'
   },
   clearHeartCoda: {
     name: '清心普善咒・合絃',
@@ -432,7 +432,7 @@ const MASTERY_ARTS = {
     shield: { power: 18, turns: 2 },
     aura: 1,
     desc: '以鐵索架出屏障，目標及相鄰友軍各得 18 點護盾，最多保留兩回合。',
-    source: '依向問天與令狐沖並肩脫險的情節另擬。'
+    source: '依向問天與令狐冲並肩脫險的情節另擬。'
   },
   bloodAtPass: {
     name: '捨身截騎',

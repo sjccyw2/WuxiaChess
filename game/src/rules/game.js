@@ -195,7 +195,7 @@ const TALENTS = {
 const DETAILS = {
   ...NEW_HEROES,
   hero: {
-    name: '令狐沖',
+    name: '令狐冲',
     role: '劍客',
     school: '華山派',
     mini: 'hero',
@@ -216,7 +216,7 @@ const DETAILS = {
     mini: 'medic',
     portrait: 'medic',
     epithet: '綠竹知音',
-    bio: '日月神教聖姑，精於琴簫。她在洛陽綠竹巷以琴音為令狐沖療傷，兩人由一卷曲譜結緣。',
+    bio: '日月神教聖姑，精於琴簫。她在洛陽綠竹巷以琴音為令狐冲療傷，兩人由一卷曲譜結緣。',
     basic: '日月短劍',
     skill: '清心普善咒',
     skillIcon: 'leaf',
@@ -231,7 +231,7 @@ const DETAILS = {
     mini: 'guard',
     portrait: 'guard',
     epithet: '天王老子',
-    bio: '人稱「天王老子」，是任我行的親信。他使鞭剛猛，曾與令狐沖並肩脫險，兩人從此肝膽相照。',
+    bio: '人稱「天王老子」，是任我行的親信。他使鞭剛猛，曾與令狐冲並肩脫險，兩人從此肝膽相照。',
     basic: '鐵鞭橫江',
     skill: '吸功入地小法',
     skillIcon: 'spark',
@@ -377,10 +377,10 @@ DETAILS.echoScout = {
 const STORIES = [
   {
     place: '洛陽 · 綠竹巷',
-    speaker: '令狐沖',
+    speaker: '令狐冲',
     face: 'hero',
     text: '我只道琴譜該由懂琴的人來看。偏偏這江湖上，看不懂的人，比誰都想搶到手。',
-    note: '令狐沖曾受曲洋、劉正風臨終所託，攜《笑傲江湖》曲譜尋覓知音。這一夕，綠竹巷外又來了不速之客。'
+    note: '令狐冲曾受曲洋、劉正風臨終所託，攜《笑傲江湖》曲譜尋覓知音。這一夕，綠竹巷外又來了不速之客。'
   },
   {
     place: '竹渡 · 琴聲',
@@ -394,7 +394,7 @@ const STORIES = [
     speaker: '余滄海',
     face: 'chief',
     text: '琴譜也好，劍譜也罷。讓我翻過一遍，你們要往哪裡去，余某絕不攔阻。',
-    note: '余滄海認定譜中藏有辟邪劍法。令狐沖橫劍一笑，與兩名知己並肩立在石坪上。'
+    note: '余滄海認定譜中藏有辟邪劍法。令狐冲橫劍一笑，與兩名知己並肩立在石坪上。'
   },
   {
     place: '渡口 · 曲終',
@@ -405,7 +405,7 @@ const STORIES = [
   },
   {
     place: '洛水 · 歸舟',
-    speaker: '令狐沖',
+    speaker: '令狐冲',
     face: 'hero',
     text: '盈盈，你來吹簫，我來划船。這回咱們走慢些，好好聽完這一支曲子。',
     note: '向問天解纜，一葉小舟離開青竹渡。岸上的劍痕漸被雨水填平，江心那縷簫聲卻傳了很遠。'

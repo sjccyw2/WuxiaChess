@@ -18,10 +18,10 @@ function render() {
         ? searchPage(p)
         : g === 'text' && id
           ? textEntry(id)
-          : g === 'lore' && store.entries.lore
+          : store.docs[g]
             ? id
-              ? loreEntry(id, lost)
-              : loreIndex()
+              ? loreEntry(g, id, lost)
+              : loreIndex(g)
           : categories[g]
             ? id
               ? entry(g, id)

@@ -1,8 +1,9 @@
 // What the pages read from. Filled once by main.js after the game data is loaded.
 //
 //   game        the current build's title
-//   worldview   世界觀設定: title, opening notes, one-line summary, the Markdown itself
-//   loreFile    a download address for that Markdown
+//   docs        the hand-written manuscripts (世界觀設定, 單輪劇本), by category: title,
+//               opening notes, one-line summary, the Markdown itself
+//   docFiles    a download address for each manuscript's Markdown
 //   entries     catalog groups: { heroes: [...], skills: [...], ... }
 //   tables      the same, as id -> entry lookups
 //   terms       searchable text of each catalog entry

@@ -1,16 +1,20 @@
-// 世界觀設定: the world view, written by hand in wiki/content/世界觀設定.md.
+// The manuscripts: pages written by hand in wiki/content/, one Markdown file per wiki
+// category.
 //
-// This is the one part of the wiki that is not read from the game. Edit the Markdown
-// file and reload the page; there is nothing to rebuild. Each "## N. 標題" in the file
-// becomes one page.
-
-export const LORE_FILE = '世界觀設定.md';
-const LORE_PATH = 'wiki/content/' + LORE_FILE;
-
-// Address, category and a one-line guide for each numbered section. The guide only says
-// what the section covers. A section that is not listed here still appears, using its
-// first paragraph as the guide.
-const SECTIONS = {
+// This is the one part of the wiki that is not read from the game. Edit a Markdown file
+// and reload the page; there is nothing to rebuild. Each "## N. 標題" in a file becomes
+// one page.
+//
+// For each manuscript:
+//   file      the Markdown file in wiki/content/
+//   note      shown under the title on its index page
+//   logline   the numbered section whose first paragraph is the one-line summary
+//   featured  sections shown on the home page
+//   sections  address, category and a one-line guide for each numbered section. The guide
+//             only says what the section covers. A section that is not listed still
+//             appears, using its first paragraph as the guide.
+const CONTENT = 'wiki/content/';
+const LORE_SECTIONS = {
   0: ['brief', '協作須知', '哪些設定已定案、哪些已否決、哪些尚待決定，以及補白而不改寫的寫作原則。'],
   1: ['premise', '機制', '世界觀要解釋的機制前提：一輪十張地圖、開局隨機三人、五人上場、養成、經濟與局外主線。'],
   2: ['logline', '核心設定', '把整個世界觀濃縮成一句話。'],
@@ -24,8 +28,39 @@ const SECTIONS = {
   10: ['rights', '協作須知', '金庸人物的授權提醒，以及無法取得授權時的替代方案。'],
   11: ['glossary', '名詞表', '劍境、一念、劍解、了緣、絕位等專有名詞的釋義。']
 };
-// Sections shown on the home page.
-export const FEATURED = ['dugu', 'rules', 'player', 'mechanics', 'npcs', 'volumes'];
+const RUN_SECTIONS = {
+  0: ['scope', '協作須知', '這份文件管甚麼、不管甚麼，對世界觀設定作了哪兩處更動，以及現有版本有哪些玩法原樣沿用。'],
+  1: ['loop', '核心設定', '一輪遊戲的故事梗概，與四條設計原則。'],
+  2: ['memory', '核心設定', '新的記憶規則：人每輪都忘，劍境卻留著痕。誰記得多少，似曾相識是甚麼、不是甚麼。'],
+  3: ['boy', '核心設定', '玩家角色：不知道自己是誰的少年。名字的由來，為何由他號令，領隊為何是「眼」。'],
+  4: ['motive', '核心設定', '英雄、少年、局主與劍仙，各自在一輪之內非走下去不可的理由，以及每一局裡要救的「局中影」。'],
+  5: ['flow', '流程', '一輪從醒來到留痕的十一個段落，逐段對應現有環節，附開場與夜話的示例對白。'],
+  6: ['arrivals', '人物與十局', '現有十位英雄各自從原著哪一瞬被請來、以為自己在哪裡、回去要面對甚麼。'],
+  7: ['boards', '人物與十局', '現有十張地圖與十組局主各代表哪一種「執」，每局待救的是誰，哪三局對少年特別要緊。'],
+  8: ['dejavu', '輪迴', '似曾相識何時出現、一輪出現多少，以及十位英雄各自的說法。'],
+  9: ['endings', '輪迴', '勝與敗兩種結尾、少年留在石上的五道記號，以及第五輪起的抉擇。'],
+  10: ['ladder', '輪迴', '劇中人每輪都忘，玩家卻越看越懂：逐輪多出甚麼，與五卷主線如何分工。'],
+  11: ['mapping', '機制', '現有每一項機制的新說法、世界內的解釋，以及要改的是文字、美術還是程式。'],
+  12: ['art', '美術', '這套故事需要新畫的圖，各用在哪裡、甚麼尺寸。'],
+  13: ['open', '未定案', '要請製作人拿主意的問題。'],
+  14: ['terms', '名詞表', '本文件在世界觀名詞表之外新增的用語。']
+};
+export const MANUSCRIPTS = {
+  lore: {
+    file: '世界觀設定.md',
+    note: '本分類揭露全部主線真相與結局。',
+    logline: 2,
+    featured: ['dugu', 'rules', 'player', 'mechanics', 'npcs', 'volumes'],
+    sections: LORE_SECTIONS
+  },
+  run: {
+    file: '單輪劇本.md',
+    note: '一輪遊戲裡發生的故事，逐項對應現有機制。提案稿，內含全部主線真相。',
+    logline: 1,
+    featured: ['loop', 'boy', 'motive', 'arrivals', 'boards', 'dejavu'],
+    sections: RUN_SECTIONS
+  }
+};
 
 const plain = (text) => text.replaceAll('**', '');
 
@@ -98,27 +133,34 @@ export function parseMarkdown(source) {
 const firstParagraph = (section) =>
   plain(section.sections.flatMap((p) => p.blocks).find((b) => b.p)?.p ?? '');
 
-let source = '',
-  doc = null;
+const loaded = {};
 
 // reader(path) -> Promise<string>, path relative to the repository root.
-export async function loadLore(reader) {
+export async function loadManuscripts(reader) {
   const read =
     reader ||
-    (async () => {
-      const r = await fetch(new URL('../../content/' + LORE_FILE, import.meta.url));
-      if (!r.ok) throw Error('無法讀取 ' + LORE_FILE);
+    (async (path) => {
+      const file = path.slice(CONTENT.length);
+      const r = await fetch(new URL('../../content/' + file, import.meta.url));
+      if (!r.ok) throw Error('無法讀取 ' + file);
       return r.text();
     });
-  source = await read(LORE_PATH);
-  doc = parseMarkdown(source);
-  if (!doc.title || !doc.sections.length) throw Error('原稿缺少標題或章節');
+  await Promise.all(
+    Object.entries(MANUSCRIPTS).map(async ([group, { file }]) => {
+      const source = await read(CONTENT + file),
+        doc = parseMarkdown(source);
+      if (!doc.title || !doc.sections.length) throw Error(file + ' 缺少標題或章節');
+      loaded[group] = { source, doc };
+    })
+  );
 }
 
-export function lore() {
-  if (!doc) return [];
-  const entries = doc.sections.map((s) => {
-    const [id, tag, guide] = SECTIONS[s.num] || ['sec-' + s.num, '設定', null];
+// The pages of one manuscript, as catalog entries.
+export function pages(group) {
+  if (!loaded[group]) return [];
+  const { file, sections } = MANUSCRIPTS[group];
+  const entries = loaded[group].doc.sections.map((s) => {
+    const [id, tag, guide] = sections[s.num] || ['sec-' + s.num, '設定', null];
     return {
       id,
       num: s.num,
@@ -126,21 +168,26 @@ export function lore() {
       tag,
       summary: guide || firstParagraph(s),
       sections: s.sections,
-      sources: [{ file: LORE_PATH, line: s.line, endLine: s.endLine }]
+      sources: [{ file: CONTENT + file, line: s.line, endLine: s.endLine }]
     };
   });
-  if (new Set(entries.map((e) => e.id)).size !== entries.length) throw Error('原稿有重複的節號');
+  if (new Set(entries.map((e) => e.id)).size !== entries.length) throw Error(file + ' 有重複的節號');
   return entries;
 }
 
-export function worldview() {
-  if (!doc) return null;
-  const two = doc.sections.find((s) => s.num === 2);
+// What the index page and the download need to know about one manuscript.
+export function manuscript(group) {
+  if (!loaded[group]) return null;
+  const { file, note, logline, featured } = MANUSCRIPTS[group],
+    { source, doc } = loaded[group],
+    lead = doc.sections.find((s) => s.num === logline);
   return {
     title: doc.title,
     meta: doc.meta,
-    logline: two ? firstParagraph(two) : '',
-    source: LORE_FILE,
+    note,
+    logline: lead ? firstParagraph(lead) : '',
+    featured,
+    source: file,
     markdown: source
   };
 }
