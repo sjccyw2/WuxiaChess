@@ -2286,17 +2286,43 @@ function taunters(s, u, cells = null, range = strikeReach(s, u)) {
 }
 // How little an enemy wants to strike hero t: lower is the better target. A hero under 卸勁 counts
 // his 氣血 as the cut makes it last. A covered hero is scored as the one who would take the blow.
-function aimCost(s, u, t, friends) {
+function aimCost(s, u, t, friends, walk) {
+  const lean = preference(s, u, t, friends, walk); // 偏好: whom this villain looks for
   t = coverer(s, t) || t;
   const hp = t.hp / (1 - stanceCut(s, t) / 100);
-  if (!(s.run?.stage >= 6)) return hp * 0.6 + wariness(s, u, t);
+  if (!(s.run?.stage >= 6)) return hp * 0.6 + wariness(s, u, t) + lean;
   const protectedByAlly = friends.some((v) => v !== t && distance(v, t) === 1);
   const cover = tileInfo(t.x, t.y, s.mapIndex).defense > 0;
   const exposedLeader = t.id === s.leader && !protectedByAlly && !cover;
   const vitality = hp + (t.conditions?.shield?.power || 0);
   return (
-    vitality * 0.28 + (35 * vitality) / t.maxHp - (exposedLeader ? 28 : 0) + wariness(s, u, t)
+    vitality * 0.28 +
+    (35 * vitality) / t.maxHp -
+    (exposedLeader ? 28 : 0) +
+    wariness(s, u, t) +
+    lean
   );
+}
+// 偏好 (§7.5): the term a villain's preference adds to the cost of striking hero t (lower is
+// wanted more), at every stage; it is read for the hero chosen, before any 代受 moves the blow.
+// `walk` is the walk this villain still needs to strike t from where it stands.
+function preference(s, u, t, friends, walk = 20) {
+  switch (traitsOf(u).prefers) {
+    case 'wounded':
+      return -40 * (1 - t.hp / t.maxHp);
+    case 'isolated':
+      return friends.some((v) => v !== t && living(v) && distance(v, t) === 1) ? 0 : -30;
+    case 'leader':
+      return t.id === s.leader ? -40 : 0;
+    case 'healer':
+      return equippedArts(t).some((id) => isSupport(artFor(t, id)) && artFor(t, id).heal) ? -40 : 0;
+    case 'mp':
+      return -0.5 * t.mp;
+    case 'nearest':
+      return -8 * (20 - Math.min(20, walk));
+    default:
+      return 0;
+  }
 }
 // What an enemy holds against striking hero t beyond his 氣血: under 閃身 the blow is wasted, and
 // a 挪移 ward would turn up to half of it back.
@@ -2334,7 +2360,12 @@ function enemyAct(s, u) {
       return [target.id, movementField(s, u, positions, Infinity, true).costs];
     })
   );
-  const targetCost = new Map(friends.map((t) => [t.id, aimCost(s, u, t, friends)]));
+  const targetCost = new Map(
+    friends.map((t) => [
+      t.id,
+      aimCost(s, u, t, friends, approach.get(t.id).get(key(u.x, u.y)) ?? Infinity)
+    ])
+  );
   // 挑釁: a taunter it can strike this turn is all it may choose from.
   const bound = taunters(s, u, cells, range),
     prey = bound.length ? bound : friends;
@@ -2496,4 +2527,4 @@ function nextRound(s) {
   return true;
 }
 
-export { traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

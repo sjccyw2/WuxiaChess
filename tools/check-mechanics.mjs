@@ -2498,6 +2498,68 @@ section('post');
   });
 }
 
+// ── 偏好 prefers (§7.5) ─────────────────────────────────────────────────
+section('prefers');
+{
+  // Two heroes beside the master on row 3; which one it strikes, with and without its preference.
+  const struck = (prefers, setup, stage = 0) =>
+    withTraits('chief', prefers ? { prefers } : {}, () => {
+      const s = board();
+      s.run.stage = stage;
+      const chief = put(s, 'chief', 5, 3);
+      setup(s);
+      const before = new Map(G.party(s).map((v) => [v.id, v.hp]));
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      return G.party(s).find((v) => v.hp < before.get(v.id))?.id;
+    });
+  const wounded = (s) => {
+    put(s, 'medic', 4, 3);
+    put(s, 'guard', 6, 3).hp = 110;
+  };
+  check('without a preference, the frailer full-health medic is struck', struck(null, wounded) === 'medic');
+  check('wounded: the hero who has lost most is struck', struck('wounded', wounded) === 'guard');
+  check('wounded: the same at a late stage, where the AI weighs differently', struck('wounded', wounded, 7) === 'guard');
+  const lonely = (s) => {
+    put(s, 'medic', 4, 3);
+    put(s, 'hero', 4, 4);
+    put(s, 'guard', 6, 3).hp = 120;
+  };
+  check('without a preference, the medic', struck(null, lonely) === 'medic');
+  check('isolated: the hero with no companion beside him', struck('isolated', lonely) === 'guard');
+  const leading = (s) => {
+    put(s, 'hero', 4, 3);
+    put(s, 'medic', 6, 3);
+  };
+  check('without a preference, not the leader', struck(null, leading) === 'medic');
+  check('leader: the leader', struck('leader', leading) === 'hero');
+  const healing = (s) => {
+    put(s, 'medic', 4, 3);
+    put(s, 'guard', 6, 3).hp = 70;
+  };
+  check('without a preference, the hurt guard', struck(null, healing) === 'guard');
+  check('healer: the hero with a healing art', struck('healer', healing) === 'medic');
+  const deep = (s) => {
+    put(s, 'medic', 4, 3);
+    Object.assign(put(s, 'guard', 6, 3), { hp: 70, mp: 0 });
+  };
+  check('mp: the hero with most 內力', struck(null, deep) === 'guard' && struck('mp', deep) === 'medic');
+  // The terms themselves.
+  withTraits('chief', { prefers: 'nearest' }, () => {
+    const s = board();
+    const c = unit(s, 'chief'),
+      h = unit(s, 'hero');
+    check('nearest: −8 per tile short of 20 to walk', G.preference(s, c, h, [], 3) === -136 && G.preference(s, c, h, [], 40) === 0);
+  });
+  withTraits('chief', { prefers: 'wounded' }, () => {
+    const s = board();
+    const h = unit(s, 'hero');
+    h.hp = h.maxHp / 2;
+    check('wounded: −40 × the share lost', G.preference(s, unit(s, 'chief'), h, []) === -20);
+    check('the page names it', G.enemyTraitLines(s, unit(s, 'chief')).includes('【偏好】專挑傷重者。'));
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
