@@ -220,7 +220,20 @@ section('save migration');
   const again = R.restoreRun(copy(respec));
   check('loading it again refunds nothing more', again && unit(again, 'hero').sp === 5);
 
-  // The new bookkeeping: tolerated, tidied on restore, cleared between boards.
+  // 青鋒劍 is gone from the game: a save holding one gets its price back and stays loadable.
+  const armed = board(['hero', 'medic', 'guard']);
+  unit(armed, 'hero').weapon = 'blueEdge';
+  armed.stock.pine = 1;
+  armed.stock.blueEdge = 1;
+  armed.run.shop.push({ id: 'blueEdge', price: 33, left: 1 });
+  const purse = armed.run.coins;
+  const disarmed = R.restoreRun(copy(armed));
+  check('a save holding the removed sword restores', !!disarmed);
+  check('its bearer takes up his own weapon again', disarmed && unit(disarmed, 'hero').weapon === 'pine' && !disarmed.stock.pine);
+  check('it leaves the stores and the shelf', disarmed && !('blueEdge' in disarmed.stock) && !disarmed.run.shop.some((o) => o.id === 'blueEdge'));
+  check('both swords are paid for', disarmed?.run.coins === purse + 66, disarmed?.run.coins);
+  check('楊過 starts with the 古墓 sword', G.startingHero('yang').weapon === 'tombSword' && G.ITEMS.tombSword.owner === 'yang');
+
   const z = board();
   const zh = unit(z, 'hero');
   Object.assign(zh, { struckRound: 1, hurtRound: 1, usedOnce: ['x'], cooldowns: { x: 4 } });

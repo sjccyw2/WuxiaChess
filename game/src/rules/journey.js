@@ -221,9 +221,33 @@ const OLD_TREE_POINTS = {
 const TECHNIQUES_REMOVED = Object.freeze(
   Object.fromEntries(Object.entries(OLD_TREE_POINTS).map(([id, points]) => [id, { points }]))
 );
+// 青鋒劍 left the shop when its place went to 楊過's 古墓長劍. A save still holding one gets its
+// price back: the hero who carried it takes up their own weapon, and it leaves shelf and stores.
+const ITEMS_REMOVED = Object.freeze({ blueEdge: 33 });
+function dropRemovedItems(s) {
+  const r = s.run;
+  for (const [id, price] of Object.entries(ITEMS_REMOVED)) {
+    let count = 0;
+    for (const u of [...s.units, ...(Array.isArray(r.bench) ? r.bench : [])]) {
+      if (u?.weapon !== id) continue;
+      const own = G.startingHero(u.id).weapon;
+      if (s.stock?.[own] > 0) s.stock[own]--;
+      u.weapon = own;
+      count++;
+    }
+    for (const stock of [s.stock, r.chronicle?.parcel?.stock])
+      if (stock && id in stock) {
+        count += Number.isInteger(stock[id]) && stock[id] > 0 ? stock[id] : 0;
+        delete stock[id];
+      }
+    if (Array.isArray(r.shop)) r.shop = r.shop.filter((o) => o?.id !== id);
+    if (count && Number.isInteger(r.coins)) r.coins += count * price;
+  }
+}
 function migrateSave(s, removed = TECHNIQUES_REMOVED, renamed = TECHNIQUES_RENAMED) {
   const r = s?.run;
   if (!r || !Array.isArray(s.units)) return s;
+  dropRemovedItems(s);
   // A save made under the new trees keeps what it learned; only renames still apply to it.
   if (r.trees === TREES_EDITION) removed = {};
   r.trees = TREES_EDITION;

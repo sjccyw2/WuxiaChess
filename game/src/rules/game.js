@@ -74,6 +74,14 @@ const ITEMS = {
     icon: 'sword',
     desc: '竹節勻直，棒頭輕靈。'
   },
+  tombSword: {
+    name: '古墓長劍',
+    kind: 'weapon',
+    owner: 'yang',
+    atk: 5,
+    icon: 'sword',
+    desc: '古墓派的輕劍，劍身細窄，出手極快。'
+  },
   darkIron: {
     name: '玄鐵重劍',
     kind: 'weapon',
@@ -613,7 +621,7 @@ function makeUnit(id, side, x, y, hp, mp, atk, def, step, range, weapon = null) 
 }
 const HERO_STATS = {
   huang: [96, 74, 20, 8, 4, 2, 'jadeCane'],
-  yang: [128, 54, 27, 10, 4, 1, 'darkIron'],
+  yang: [128, 54, 27, 10, 4, 1, 'tombSword'],
   zhang: [132, 76, 22, 14, 3, 1, 'mingSash'],
   hu: [110, 58, 25, 9, 5, 1, 'foxSaber'],
   hero: [112, 48, 27, 10, 3, 1, 'pine'],

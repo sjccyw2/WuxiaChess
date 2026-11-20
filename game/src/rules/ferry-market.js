@@ -21,11 +21,11 @@ const VISITOR = {
 // Base prices exclude a small, seeded premium. Minimum depth is one-based.
 const MARKET_STOCK = {
   travelBlade: [23, 1],
-  blueEdge: [33, 1],
   ironFan: [31, 1],
   silkWhip: [29, 1],
   starSteel: [45, 3],
   jadeCane: [20, 1],
+  tombSword: [18, 1],
   darkIron: [31, 1],
   mingSash: [24, 1],
   foxSaber: [26, 1],
