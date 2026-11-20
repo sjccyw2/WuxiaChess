@@ -179,13 +179,33 @@ function commander(s, mode) {
     );
   // Polish (actionFlow): the bar is reduced to End turn, which lights up once every hero has
   // at least moved.
-  if (actionFlow)
-    return btn(
-      'end',
-      icon('end', 18) + '<span>結束回合</span>',
-      'field-action turn-action' + (s.phase === 'ally' && !anyIdle(s) ? ' ready' : ''),
-      'title="結束回合" ' + (s.phase !== 'ally' ? 'disabled' : '')
+  if (actionFlow) {
+    // The art the hero has ready, as a chip that reopens the list so it can be changed.
+    const armed =
+      canAct(s, u) && ['attack', 'skill'].includes(mode)
+        ? mode === 'attack'
+          ? { name: basicFor(u).name, icon: 'swords' }
+          : artFor(u)
+        : null;
+    return (
+      (armed
+        ? btn(
+            'arts-open',
+            icon(armed.icon || 'spark', 17) + '<span>' + esc(armed.name) + '</span>' + icon('down', 12),
+            'field-action armed-art',
+            'id="arts-toggle" aria-controls="arts-panel" aria-expanded="false" title="' +
+              esc(armed.name) +
+              '・招式"'
+          )
+        : '') +
+      btn(
+        'end',
+        icon('end', 18) + '<span>結束回合</span>',
+        'field-action turn-action' + (s.phase === 'ally' && !anyIdle(s) ? ' ready' : ''),
+        'title="結束回合" ' + (s.phase !== 'ally' ? 'disabled' : '')
+      )
     );
+  }
   const acts = [
     ['move', u.moved ? 'undo' : 'move', u.moved ? '撤步' : '移動'],
     ['skill', 'spark', '招式'],
