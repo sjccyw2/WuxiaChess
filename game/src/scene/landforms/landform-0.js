@@ -38,7 +38,9 @@ function riverProfile(layout) {
     const drift = 0.5 + 0.5 * Math.sin(2.02 * x + 1.33 * z + Math.sin(z * 1.7) * 0.49);
     const narrow = 0.35 + 0.28 * drift;
     const bed = -1.52 + 0.083 * Math.sin(z * 0.73 + x) + 0.027 * Math.cos(x * 2.36 - z * 2.1);
-    const shore = lerp(-0.105, bed, smooth(0, narrow + 0.45, distance));
+    // Only a narrow lip of wet silt shows at the foot of each quay; the channels
+    // between the street blocks hold open water, not a dry ditch.
+    const shore = lerp(-0.56, bed, smooth(0, narrow + 0.3, distance));
     const landing = lerp(-0.12, bed, smooth(0.27, 1.39, shoal));
     const boatFoot = lerp(-0.1, bed, smooth(0.29, 1.35, gangplank));
     const dockD = Math.hypot((x + 1.89) / 1.17, (z - 7.19) / 2.17);
@@ -47,7 +49,7 @@ function riverProfile(layout) {
     // stone approach to the east. Their toes taper into the tidal water.
     const west = Math.hypot((x + 5.62 + 0.25 * Math.sin(z * 1.1)) / 1.21, (z + 2.29) / 2.12);
     const east = Math.hypot((x - 5.38 + 0.23 * Math.sin(z * 1.26)) / 1.02, (z - 1.49) / 1.39);
-    const bars = lerp(-0.19, bed, smooth(0.24, 1.23, Math.min(west, east)));
+    const bars = lerp(-0.5, bed, smooth(0.24, 1.23, Math.min(west, east)));
     return Math.max(shore, landing, boatFoot, dockBed, bars);
   }
   return { height, fieldDistance };
@@ -83,7 +85,7 @@ function alluvium(m, profile) {
         z = zs[iz],
         y = profile.height(x, z),
         streak = 0.5 + 0.5 * Math.sin(0.84 * x + z * 4.7 + 1.7 * Math.cos(x * 1.8 + z * 0.4));
-      const sediment = m.mix(0x536560, 0x8b8665, smooth(water - 0.28, water + 0.27, y));
+      const sediment = m.mix(0x4a5d58, 0x8b8665, smooth(water - 0.28, water + 0.45, y));
       const bank = m.mix(sediment, x < 1 ? 0x566744 : 0x6b7353, smooth(-0.53, -0.12, y) * 0.75);
       p.push(x, y, z);
       c.push(...bank.map((channel) => channel * (0.87 + 0.19 * streak)));
@@ -310,7 +312,7 @@ function reedBed(m, profile) {
     const x = r.range(-5.8, 5.85),
       z = r.range(-6.0, 6.45);
     const y = profile.height(x, z);
-    if (y < -0.62 || y > -0.19 || (Math.abs(Math.abs(z) - 2) < 0.85 && Math.abs(x - 1) < 1.24))
+    if (y < -0.95 || y > -0.19 || (Math.abs(Math.abs(z) - 2) < 0.85 && Math.abs(x - 1) < 1.24))
       continue;
     const distance = profile.fieldDistance(x, z);
     if (distance < 0.24 || (x > 3.1 && z > 5.4)) continue;
@@ -319,7 +321,8 @@ function reedBed(m, profile) {
       const xx = x + r.range(-0.115, 0.115),
         zz = z + r.range(-0.105, 0.105);
       const base = profile.height(xx, zz) - 0.025;
-      const h = r.range(0.21, 0.47),
+      // Reeds rooted in deeper silt grow taller to reach the light.
+      const h = r.range(0.21, 0.47) + Math.max(0, water - base),
         lean = r.range(-0.067, 0.04);
       m.tube([xx, base, zz], [xx + lean, base + h, zz + 0.035], 0.011, 0.004, 0x899059, 4);
       m.leaf(

@@ -9,6 +9,12 @@ function buildLandscape(T) {
     return seed / 4294967296;
   }
   const range = (lo, hi) => lo + (hi - lo) * rand();
+  // Fine shape detail draws on a second stream, so adding it never moves what rand() places.
+  let grain = 0x2c1b7e45;
+  const jitter = (lo, hi) => {
+    grain = (Math.imul(grain, 1103515245) + 12345) >>> 0;
+    return lo + (hi - lo) * (grain / 4294967296);
+  };
   const choose = (v) => v[Math.floor(rand() * v.length)];
   const lerp = (a, b, t) => a + (b - a) * t;
   const point = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
@@ -114,6 +120,21 @@ function buildLandscape(T) {
         d = range(0.85, 1.15);
       outline.push([Math.cos(theta) * d * sx, Math.sin(theta) * d * sz, range(-0.055, 0.055)]);
     }
+    // Larger stones get a bulging point between each pair of corners, so their
+    // outline reads as a worn boulder rather than a cut hexagon.
+    if (Math.max(sx, sz) > 0.3) {
+      const corners = outline.splice(0);
+      for (let i = 0; i < corners.length; i++) {
+        const a = corners[i],
+          b = corners[(i + 1) % corners.length],
+          bulge = jitter(1.02, 1.12);
+        outline.push(a, [
+          ((a[0] + b[0]) / 2) * bulge,
+          ((a[1] + b[1]) / 2) * bulge,
+          (a[2] + b[2]) / 2
+        ]);
+      }
+    }
     const c = Math.cos(angle),
       h = Math.sin(angle);
     const vertex = (u, v, hei, k) => [x + (u * c - v * h) * k, y + hei * sy, z + (u * h + v * c) * k];
@@ -121,26 +142,57 @@ function buildLandscape(T) {
     const faces = Array.from({ length: n }, () =>
       wet ? mix(choose(stone), 0x344e4d, 0.35) : choose(stone)
     );
-    let prev;
+    // The crown is weathered round and leans a little off the stone's axis, so
+    // no two read as the same cut prism. Its shape draws on its own stream.
+    const leanU = jitter(-0.1, 0.1) * sx,
+      leanV = jitter(-0.1, 0.1) * sz;
+    const sides = outline.length,
+      side = (i) => faces[Math.floor((i * n) / sides)];
+    const tone = (level, i) =>
+      level > 0.3
+        ? mix(side(i), cap, 0.8)
+        : level > 0.2
+          ? mix(side(i), cap, 0.42)
+          : level < -0.3 && wet
+            ? mix(side(i), 0x2f4644, 0.3)
+            : side(i);
+    let prev, prevLevel;
     for (const [level, width] of [
-      [-0.46, 0.78],
-      [-0.22, 1.01],
-      [0.18, 1.0],
-      [0.37, 0.8]
+      [-0.46, 0.8],
+      [-0.2, 1.0],
+      [0.1, 1.0],
+      [0.27, 0.87],
+      [0.38, 0.6]
     ]) {
-      const loop = outline.map(([u, v, noise]) => vertex(u, v, level + noise, width));
+      const lift = Math.max(0, level) * 2;
+      const loop = outline.map(([u, v, noise]) =>
+        vertex(
+          u + leanU * lift,
+          v + leanV * lift,
+          level + noise * (level > 0.3 ? 0.5 : 1),
+          width * (level > 0 ? jitter(0.92, 1.06) : 1)
+        )
+      );
       if (prev)
-        for (let i = 0; i < n; i++) {
-          const j = (i + 1) % n;
-          const side = faces[i],
-            hu = level > 0.3 ? mix(side, cap, 0.52) : side;
-          s.quad(prev[i], loop[i], loop[j], prev[j], side, hu, hu, side);
+        for (let i = 0; i < sides; i++) {
+          const j = (i + 1) % sides;
+          const low = tone(prevLevel, i),
+            high = tone(level, i);
+          s.quad(prev[i], loop[i], loop[j], prev[j], low, high, high, low);
         }
       prev = loop;
+      prevLevel = level;
     }
-    const top = vertex(sx * 0.12, sz * 0.14, 0.43, 1);
-    for (let i = 0; i < n; i++)
-      s.tri(top, prev[(i + 1) % n], prev[i], cap, mix(cap, faces[i], 0.09), cap);
+    const top = vertex(sx * 0.12 + leanU, sz * 0.14 + leanV, 0.45, 1);
+    for (let i = 0; i < sides; i++)
+      s.tri(
+        top,
+        prev[(i + 1) % sides],
+        prev[i],
+        cap,
+        mix(cap, side(i), 0.12),
+        mix(cap, side(i), 0.06)
+      );
   }
   const mainShore = [
     [-4.33, 2.92],
@@ -729,7 +781,9 @@ function buildLandscape(T) {
     for (const [px, py, pz, rx, rz] of pads) {
       const dark = choose(pineShadow),
         hi = choose(pineLight);
-      foliagePad(s, px, py + 0.03 * size, pz, rx, rz, rx * 0.33, dark, hi, far ? 7 : 12);
+      // Far pines have no needle tufts, so their pads are fuller to keep their mass.
+      const depth = rx * (far ? 0.46 : 0.33);
+      foliagePad(s, px, py + 0.03 * size, pz, rx, rz, depth, dark, hi, far ? 7 : 12);
       if (far) continue;
       for (let j = 0; j < 25; j++) {
         const a = range(0, TAU),
@@ -1044,6 +1098,69 @@ function buildLandscape(T) {
   meadow(main, [-6.41, 7.02, -7.47, 3.76], 410, 'Patches of thyme moss and river gravel');
   meadow(east, [6.8, 11.6, -1.5, 4.88], 115, 'Sunlit moss between the eastern stones');
 
+  // Broad, soft drifts of deep moss and warm bare soil break up the open bank
+  // tops. Each drift has an inner ring so it follows the ground it lies on.
+  function groundTones(coast, bounds, count, name) {
+    const s = new Surface();
+    const allowed = (x, z) => Math.abs(x) > 3.52 || Math.abs(z) > 3.52;
+    const tones = [0x4f5f39, 0x5a6b40, 0x667749, 0x8a7a54, 0x7b6a48, 0x5f7050];
+    for (let i = 0; i < count; i++) {
+      const cx = jitter(bounds[0], bounds[1]),
+        cz = jitter(bounds[2], bounds[3]);
+      const centre = coast.topAt(cx, cz);
+      if (!centre || !allowed(cx, cz)) continue;
+      const radius = jitter(0.35, 0.85),
+        squash = jitter(0.5, 1),
+        turn = jitter(0, TAU);
+      const tint = tones[Math.floor(jitter(0, tones.length))],
+        strength = jitter(0.34, 0.6);
+      const n = 11,
+        rings = [[], []],
+        paints = [[], []];
+      let whole = true;
+      for (let j = 0; j < n && whole; j++) {
+        const a = (j * TAU) / n,
+          k = jitter(0.7, 1.15);
+        for (const [r, f] of [
+          [0, 0.5],
+          [1, 1]
+        ]) {
+          const lx = Math.cos(a) * radius * k * f,
+            lz = Math.sin(a) * radius * squash * k * f;
+          const x = cx + lx * Math.cos(turn) - lz * Math.sin(turn),
+            z = cz + lx * Math.sin(turn) + lz * Math.cos(turn);
+          const g = coast.topAt(x, z);
+          if (!g || !allowed(x, z)) {
+            whole = false;
+            break;
+          }
+          rings[r].push([x, g.y + 0.0035, z]);
+          paints[r].push(mix(g.color, tint, strength * (r ? 0.2 : 0.75)));
+        }
+      }
+      if (!whole) continue;
+      const mid = [cx, centre.y + 0.0035, cz],
+        core = mix(centre.color, tint, strength);
+      for (let j = 0; j < n; j++) {
+        const k = (j + 1) % n;
+        s.tri(mid, rings[0][k], rings[0][j], core, paints[0][k], paints[0][j]);
+        s.quad(
+          rings[0][j],
+          rings[0][k],
+          rings[1][k],
+          rings[1][j],
+          paints[0][j],
+          paints[0][k],
+          paints[1][k],
+          paints[1][j]
+        );
+      }
+    }
+    s.finish(name, { kind: 'groundcover', shadows: false });
+  }
+  groundTones(main, [-6.41, 7.02, -7.47, 3.76], 150, 'Deep moss and bare soil on the west bank');
+  groundTones(east, [6.8, 11.6, -1.5, 4.88], 40, 'Deep moss and bare soil beyond the bridge');
+
   const shrubs = new Surface();
   const bushColors = [0x526e56, 0x698468, 0x798c63, 0x7d905d, 0x68816a];
   for (const [x, z, sz] of [
@@ -1151,6 +1268,9 @@ function buildLandscape(T) {
       f3 = range(0, TAU);
     const rough = Array.from({ length: n }, () => range(0.93, 1.07));
     const rib = Array.from({ length: n }, () => range(-0.15, 0.6));
+    // Vertical streaks of wet and dry limestone, and a dark wooded skirt at the water.
+    const streak = Array.from({ length: n }, () => jitter(near ? 0.78 : 0.84, 1.12)),
+      forest = mix(palette.base, 0x3f5749, near ? 0.5 : 0.25);
     const tipX = range(-0.27, 0.27),
       tipZ = range(-0.32, 0.32),
       ca = Math.cos(yaw),
@@ -1190,7 +1310,10 @@ function buildLandscape(T) {
         let green = mix(palette.base, palette.face, Math.min(1, 0.16 + v * 0.76));
         if (v > 0.7) green = mix(green, palette.leaf, 0.42);
         if (v > 0.91) green = mix(green, palette.head, 0.48);
-        colors.push(mix(green, palette.rock, Math.min(0.72, rocky * (v > 0.8 ? 0.47 : 1.0))));
+        if (v < 0.12) green = mix(green, forest, 0.75);
+        const tone = mix(green, palette.rock, Math.min(0.72, rocky * (v > 0.8 ? 0.47 : 1.0)));
+        const k = v > 0.05 ? streak[i] : 1;
+        colors.push(tone.map((channel) => Math.min(1, channel * k)));
       }
       if (previous)
         for (let i = 0; i < n; i++) {

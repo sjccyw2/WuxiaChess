@@ -1,4 +1,6 @@
 import { Model, circle } from '../scenery-kit.js';
+import { tileDressing } from './props-4.js';
+import { oldPine, peaksAndClouds } from './peaks-4.js';
 
 // The court has two narrow necks. The north gate and bell court, the western
 // qin bench and the eastern tuning rack were cut into the same mountain spur.
@@ -17,6 +19,36 @@ const spurs = [
   [7.09, -3.72, 1.18, 0.87, -2.98]
 ];
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const smooth = (e0, e1, v) => {
+  const t = clamp((v - e0) / (e1 - e0), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+// Deterministic value noise for colour patches and rock grain.
+const hash = (x, z) => {
+  const s = Math.sin(x * 127.1 + z * 311.7) * 43758.545;
+  return s - Math.floor(s);
+};
+function noise(x, z) {
+  const i = Math.floor(x),
+    j = Math.floor(z),
+    u = x - i,
+    v = z - j;
+  const su = u * u * (3 - 2 * u),
+    sv = v * v * (3 - 2 * v);
+  const a = hash(i, j),
+    b = hash(i + 1, j),
+    c = hash(i, j + 1),
+    d = hash(i + 1, j + 1);
+  return a + (b - a) * su + (c - a) * sv + (a - b - c + d) * su * sv;
+}
+// The granite splits into tall columns along joints that run down the slope.
+// Each column has its own height and its own rhythm of ledges.
+function columnAt(x, z) {
+  const a = Math.atan2(z, x * 0.92);
+  const u = (a / circle) * 52 + 0.5 * Math.sin(a * 5 + 0.7) + 0.06 * Math.hypot(x, z);
+  const k = Math.floor(u);
+  return [k, u - k];
+}
 
 function mountain(layout) {
   const strips = [];
@@ -42,12 +74,20 @@ function mountain(layout) {
       Math.sin(x * 0.89 - z * 0.46) * 0.24 +
       Math.sin(x * 1.81 + z * 0.59) * 0.13 +
       Math.cos(z * 1.76 + 0.44) * 0.1;
+    const [column] = columnAt(x, z);
+    const grain = hash(column, 7.3);
     function bed(d, top) {
       const q = Math.max(0, d + fold * Math.min(d, 1));
-      const strata = (1 - Math.cos(q * 7.1 + 0.22 * x)) * Math.min(q, 1) * 0.12;
-      return top + 0.16 * fold - 0.24 * q - 0.44 * q * q - strata;
+      // Below a grassy apron the slope breaks into cliffs: flat ledges and
+      // sheer risers, offset from column to column.
+      const cliff = smooth(0.55, 1.6, q);
+      const s = q * 1.45 + grain * 0.9,
+        f = s - Math.floor(s);
+      const stepped = (Math.floor(s) + smooth(0.42, 1, f) - grain * 0.9) / 1.45;
+      const qq = q + (stepped - q) * cliff;
+      return top + 0.16 * fold - 0.22 * qq - 0.42 * qq * qq - cliff * (grain - 0.5) * 0.6;
     }
-    let y = bed(distance(x, z), -0.31);
+    let y = bed(distance(x, z), -0.6);
     for (const [px, pz, width, depth, top] of spurs) {
       const radius = Math.hypot((x - px) / width, (z - pz) / depth);
       y = Math.max(y, bed(Math.max(0, (radius - 1) * Math.min(width, depth)), top));
@@ -57,50 +97,86 @@ function mountain(layout) {
   return { distance, surface };
 }
 
+// Rock where the slope is steep, turf where it is not. Shaded faces carry
+// moss, the rock has pale lichen and dark cracks, and the lower slopes fade
+// into the mist below.
+const sun = [-0.515, 0.798, 0.313];
+function groundTone(m, ground, x, y, z, n) {
+  const [column, across] = columnAt(x, z);
+  const grain = hash(column, 3.7);
+  const band = 0.5 + 0.5 * Math.sin(y * 2.7 + grain * 5);
+  // Each column of granite has its own tone; the joints between them are dark.
+  let rock = m.mix(0x656d68, 0xa8a493, 0.1 + 0.6 * grain + 0.25 * band);
+  if (across < 0.12 || across > 0.9) rock = m.mix(rock, 0x404a45, 0.45);
+  const lit = n[0] * sun[0] + n[1] * sun[1] + n[2] * sun[2];
+  rock = m.mix(rock, 0x4f6447, clamp((0.42 - lit) * 1.3, 0, 0.5));
+  const fleck = hash(x * 5.3 + y, z * 5.3);
+  if (fleck > 0.88) rock = m.mix(rock, 0xcbc6a8, 0.42);
+  else if (fleck < 0.1) rock = m.mix(rock, 0x3c4640, 0.4);
+  const patch = noise(x * 0.42 + 3, z * 0.42),
+    dry = noise(x * 1.1, z * 1.1 - 5);
+  let turf = m.mix(0x526247, 0x7a7c58, 0.15 + 0.7 * patch);
+  if (dry > 0.64) turf = m.mix(turf, 0x9c9573, (dry - 0.64) * 1.7);
+  if (patch < 0.32) turf = m.mix(turf, 0x5e5b48, (0.32 - patch) * 1.6);
+  const d = ground.distance(x, z);
+  if (d < 1) turf = m.mix(turf, 0x4a5a3e, (1 - d) * 0.45);
+  const grassy = smooth(0.66, 0.82, n[1]) * smooth(-5.4, -3.4, y);
+  const c = m.mix(rock, turf, grassy);
+  return [m.mix(c, 0xbcc6b8, smooth(-2.4, -6, y) * 0.55), grassy];
+}
+
+// The slope as one mesh. Rock keeps its hard facets; turf is shaded smooth
+// from the slope itself, so the grass rolls while the cliffs stay broken.
 function rockAndSoil(T, ground) {
   const m = new Model(T, 470411);
-  const columns = 63,
-    rows = 56,
-    meshPoints = [];
+  const step = 0.4,
+    columns = 88,
+    rows = 78,
+    grid = [];
   for (let j = 0; j < rows; j++) {
     for (let i = 0; i < columns; i++) {
-      const x = -18.25 + 0.55 * (i + m.rng.range(-0.21, 0.21));
-      const z = -15.25 + 0.55 * (j + m.rng.range(-0.21, 0.21));
-      meshPoints.push([x, ground.surface(x, z), z]);
+      const x = -18.4 + step * (i + m.rng.range(-0.22, 0.22));
+      const z = -15.4 + step * (j + m.rng.range(-0.22, 0.22));
+      const y = ground.surface(x, z),
+        e = 0.2;
+      const sx = (ground.surface(x + e, z) - ground.surface(x - e, z)) / (2 * e),
+        sz = (ground.surface(x, z + e) - ground.surface(x, z - e)) / (2 * e),
+        k = 1 / Math.hypot(sx, 1, sz);
+      grid.push([x, y, z, ground.distance(x, z), [-sx * k, k, -sz * k]]);
     }
   }
   const positions = [],
-    colors = [],
-    indices = [],
-    seen = new Map();
-  function vertex(k) {
-    if (seen.has(k)) return seen.get(k);
-    const [x, y, z] = meshPoints[k];
-    const loX = meshPoints[k % columns ? k - 1 : k];
-    const hiX = meshPoints[(k + 1) % columns ? k + 1 : k];
-    const loZ = meshPoints[k - columns] || meshPoints[k];
-    const hiZ = meshPoints[k + columns] || meshPoints[k];
-    const steep = Math.hypot(
-      (hiX[1] - loX[1]) / (hiX[0] - loX[0]),
-      (hiZ[1] - loZ[1]) / (hiZ[2] - loZ[2])
-    );
-    const folded = 0.5 + 0.5 * Math.sin(4.15 * y + 0.62 * x - 0.26 * z);
-    const stone = m.mix(0x506465, 0x92917b, 0.17 + 0.69 * folded);
-    const cover = m.mix(
-      0x526e56,
-      0x909571,
-      0.47 + 0.18 * Math.sin(0.52 * x - 0.83 * z) + 0.2 * Math.sin(0.79 * z + 0.31 * x)
-    );
-    const turf = clamp(1.4 - 0.94 * steep, 0, 1) * clamp((y + 4.1) / 1.8, 0, 1);
-    const index = positions.length / 3;
-    positions.push(x, y, z);
-    colors.push(...m.mix(stone, cover, turf));
-    seen.set(k, index);
-    return index;
-  }
+    normals = [],
+    colors = [];
   function triangle(a, b, c) {
-    if (Math.max(meshPoints[a][1], meshPoints[b][1], meshPoints[c][1]) > -6.06)
-      indices.push(vertex(a), vertex(b), vertex(c));
+    const A = grid[a],
+      B = grid[b],
+      C = grid[c];
+    if (Math.max(A[1], B[1], C[1]) < -6.06) return;
+    // Hidden under the paved court.
+    if (!A[3] && !B[3] && !C[3]) return;
+    const ux = B[0] - A[0],
+      uy = B[1] - A[1],
+      uz = B[2] - A[2],
+      vx = C[0] - A[0],
+      vy = C[1] - A[1],
+      vz = C[2] - A[2];
+    let n = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx];
+    const len = Math.hypot(...n) || 1;
+    n = n.map((v) => (v / len) * (n[1] < 0 ? -1 : 1));
+    const [col, grassy] = groundTone(
+      m,
+      ground,
+      (A[0] + B[0] + C[0]) / 3,
+      (A[1] + B[1] + C[1]) / 3,
+      (A[2] + B[2] + C[2]) / 3,
+      n
+    );
+    for (const P of [A, B, C]) {
+      positions.push(P[0], P[1], P[2]);
+      normals.push(...(grassy > 0.5 ? P[4] : n));
+      colors.push(...col);
+    }
   }
   for (let j = 1; j < rows; j++) {
     for (let i = 1; i < columns; i++) {
@@ -119,9 +195,8 @@ function rockAndSoil(T, ground) {
   }
   const geometry = new T.BufferGeometry();
   geometry.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('normal', new T.Float32BufferAttribute(normals, 3));
   geometry.setAttribute('color', new T.Float32BufferAttribute(colors, 3));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
   geometry.computeBoundingSphere();
   const rock = new T.Mesh(
     geometry,
@@ -129,6 +204,7 @@ function rockAndSoil(T, ground) {
   );
   rock.name = '層岩山脊與雲壑';
   rock.receiveShadow = true;
+  rock.castShadow = true;
   return rock;
 }
 
@@ -207,17 +283,30 @@ function terraceFloor(m, layout) {
           [right, 0.046, far],
           [right, 0.046, near]
         ],
-        0x748277
+        0x56654a
       );
     }
   });
+  // Slabs near an open edge or a damp hollow take on moss and darker stain.
+  const inside = (x, z) => layout.mask[Math.floor(z + hh)]?.[Math.floor(x + hw)] === '#';
+  function weathered(tone, x, z) {
+    let open = 0;
+    for (let k = 0; k < 8; k++) {
+      const a = (k * circle) / 8;
+      if (!inside(x + Math.cos(a) * 0.6, z + Math.sin(a) * 0.6)) open++;
+    }
+    const damp = noise(x * 0.55 + 11, z * 0.55);
+    let c = m.mix(tone, 0x7b8a6a, (open / 8) * 0.75 * (0.5 + damp));
+    c = m.mix(c, 0x7d8576, smooth(0.6, 0.9, damp) * 0.45);
+    return c;
+  }
 
   const seeds = [],
     angle = 0.27,
     cs = Math.cos(angle),
     sn = Math.sin(angle);
-  for (let j = -8; j <= 8; j++) {
-    for (let i = -6; i <= 6; i++) {
+  for (let j = -11; j <= 11; j++) {
+    for (let i = -8; i <= 8; i++) {
       seeds.push([i + (j & 1) * 0.42 + m.rng.range(-0.3, 0.3), j + m.rng.range(-0.32, 0.32)]);
     }
   }
@@ -246,14 +335,18 @@ function terraceFloor(m, layout) {
       for (const b of [before, next]) {
         const x = u + (a[0] - u) * 0.988 + (b[0] - a[0]) * bite;
         const z = v + (a[1] - v) * 0.981 + (b[1] - a[1]) * bite;
-        bitten.push([x * 2.38 * cs - z * 1.32 * sn, x * 2.38 * sn + z * 1.32 * cs]);
+        bitten.push([x * 1.5 * cs - z * 0.92 * sn, x * 1.5 * sn + z * 0.92 * cs]);
       }
     }
     const minX = Math.min(...bitten.map((p) => p[0])),
       maxX = Math.max(...bitten.map((p) => p[0]));
     const minZ = Math.min(...bitten.map((p) => p[1])),
       maxZ = Math.max(...bitten.map((p) => p[1]));
-    const tone = m.mix(0x8c9b8c, 0xb1b39a, m.rng.range(0.17, 0.78));
+    const tone = m.mix(
+      m.mix(0x899484, 0xbdb89d, m.rng.range(0, 1)),
+      m.rng.pick([0xa59d86, 0x8f9a91, 0xb0ae98]),
+      0.3
+    );
     for (const [left, right, near, far] of strips) {
       if (minX >= right || maxX <= left || minZ >= far || maxZ <= near) continue;
       let piece = clipStone(bitten, -1, 0, -left);
@@ -263,9 +356,26 @@ function terraceFloor(m, layout) {
       if (piece.length >= 3)
         m.face(
           piece.map(([x, z]) => [x, 0.049, z]),
-          tone
+          piece.map(([x, z]) => weathered(tone, x, z))
         );
     }
+  }
+  // Rosettes of lichen and moss cushions dot the older slabs, thickest
+  // toward the open edges.
+  for (let k = 0; k < 260; k++) {
+    const x = m.rng.range(-hw, hw),
+      z = m.rng.range(-hh, hh);
+    const edge = [-0.4, 0.4].some((d) => !inside(x + d, z) || !inside(x, z + d));
+    if (!inside(x, z) || (!edge && k % 3)) continue;
+    const r = m.rng.range(0.03, 0.08),
+      col = m.rng.pick([0xbab792, 0xb3b590, 0x9ea67f]),
+      ring = [];
+    for (let i = 0; i < 8; i++) {
+      const a = (i * circle) / 8 + m.rng.range(-0.3, 0.3),
+        d = r * m.rng.range(0.45, 1.25);
+      ring.push([x + Math.cos(a) * d, 0.0502, z + Math.sin(a) * d]);
+    }
+    m.face(ring, col);
   }
 }
 
@@ -438,81 +548,376 @@ function guideLight(m, x, y, z) {
   });
 }
 
-function grasses(m, ground, x, z, scale) {
-  const y = ground.surface(x, z) - 0.06;
-  for (let i = 0; i < 4; i++) {
+function grasses(m, ground, x, z, scale, y = ground.surface(x, z) - 0.04) {
+  const blades = 5 + Math.floor(m.rng.next() * 3),
+    dry = m.rng.next() < 0.3;
+  for (let i = 0; i < blades; i++) {
     const az = m.rng.range(0, circle);
-    const dx = Math.cos(az) * scale,
-      dz = Math.sin(az) * scale;
+    const dx = Math.cos(az) * scale * 0.7,
+      dz = Math.sin(az) * scale * 0.7;
     m.leaf(
       [x, y, z],
-      [x + dx, y + scale * m.rng.range(0.78, 1.48), z + dz],
-      0.09 * scale,
-      0x586d4c,
-      0x9ca276,
+      [x + dx, y + scale * m.rng.range(0.7, 1.4), z + dz],
+      0.07 * scale,
+      dry ? 0x86845e : 0x4f6446,
+      dry ? 0xaaa27a : 0x84925f,
       0.35 * scale
     );
   }
 }
 
-function bentPine(m, ground, x, z, scale) {
-  const y = ground.surface(x, z) - 0.14;
-  const yaw = Math.atan2(
-    ground.surface(x, z + 0.27) - ground.surface(x, z - 0.27),
-    ground.surface(x - 0.27, z) - ground.surface(x + 0.27, z)
-  );
-  m.frame(x, y, z, yaw, scale, () => {
-    const ankle = [-0.13, 0.42, 0.03],
-      bend = [0.05, 0.58, 0.09],
-      tip = [0.36, 0.8, 0.04];
-    m.tube([0, -0.08, 0], ankle, 0.102, 0.063, 0x655b49, 7);
-    m.tube(ankle, bend, 0.069, 0.047, 0x71624e, 7);
-    m.tube(bend, tip, 0.052, 0.022, 0x74654f, 6);
-    for (const [from, px, h, pz, span] of [
-      [ankle, -0.45, 0.57, -0.09, 0.34],
-      [bend, 0.16, 0.67, 0.36, 0.34],
-      [tip, 0.53, 0.88, -0.11, 0.44],
-      [tip, 0.31, 1.03, 0.1, 0.32]
-    ]) {
-      m.tube(from, [px, h, pz], 0.035, 0.015, 0x73654f, 5);
-      m.rock(px, h - 0.045, pz, span, 0.154, span * 0.77, 0x486353, 0x6d815f, 7);
-    }
-  });
+// A low mountain shrub: a few lumps of small leaves on a woody base, now and
+// then with a scatter of pale blossom.
+function shrub(m, x, y, z, s, blossom) {
+  const r = m.rng;
+  for (let k = 0; k < 4; k++) {
+    const a = r.range(0, circle),
+      d = s * r.range(0.1, 0.45);
+    const px = x + Math.cos(a) * d,
+      pz = z + Math.sin(a) * d,
+      h = s * r.range(0.35, 0.6);
+    m.tube([x, y, z], [px, y + h * 0.6, pz], 0.025 * s, 0.012 * s, 0x5e4d3c, 4);
+    m.rock(
+      px,
+      y + h * 0.3,
+      pz,
+      s * r.range(0.28, 0.4),
+      h * 0.75,
+      s * r.range(0.22, 0.32),
+      0x3f5a3a,
+      0x6d8650,
+      7
+    );
+    if (blossom)
+      for (let l = 0; l < 3; l++)
+        m.crystal(
+          px + r.range(-0.15, 0.15) * s,
+          y + h * 0.9,
+          pz + r.range(-0.12, 0.12) * s,
+          0.035 * s,
+          0.05 * s,
+          0xd9a2a8,
+          0xf4d6d2,
+          4
+        );
+  }
 }
 
-function cliffGarden(m, ground) {
-  // A weathered toe of bedrock and grasses marks the outside of each ledge.
-  // The crown can lean over a slope; its root always intersects the subgrade.
-  const ledges = [
-    [-7.3, -3.8, 1.25, 0.6],
-    [-5.5, -4.8, 1.35, 0.5],
-    [-11.1, 5.67, 1.3, 0.65],
-    [-8.2, 6.4, 0.83, 0.43],
-    [-3.04, 7.45, 1.12, 0.51],
-    [3.0, 7.48, 0.9, 0.39],
-    [5.4, 4.55, 1.12, 0.44],
-    [7.8, -2.73, 1.04, 0.46],
-    [4.9, -4.96, 1.1, 0.44],
-    [7.27, -8.82, 1.21, 0.64]
+// A fern fan of long fronds, for the shady foot of rocks and walls.
+function fern(m, x, y, z, s) {
+  for (let k = 0; k < 6; k++) {
+    const a = (k * circle) / 6 + m.rng.range(-0.3, 0.3),
+      l = s * m.rng.range(0.7, 1.0);
+    m.leaf(
+      [x, y, z],
+      [x + Math.cos(a) * l, y + l * 0.45, z + Math.sin(a) * l],
+      l * 0.18,
+      0x46663f,
+      0x7b9a5a,
+      l * 0.25
+    );
+  }
+}
+
+// One jointed column of granite: a five-sided prism with a slanting top,
+// light and shadow alternating face to face, moss on the top.
+function column(m, x, y, z, w, h, yaw, tone) {
+  const n = 5,
+    lo = [],
+    hi = [];
+  const tilt = m.rng.range(-0.18, 0.18);
+  for (let i = 0; i < n; i++) {
+    const a = yaw + (i * circle) / n + m.rng.range(-0.15, 0.15),
+      k = m.rng.range(0.85, 1.1),
+      dx = Math.cos(a) * w * k,
+      dz = Math.sin(a) * w * k * 0.8;
+    lo.push([x + dx, y, z + dz]);
+    hi.push([x + dx * 0.88, y + h + dx * tilt, z + dz * 0.88]);
+  }
+  const light = m.mix(tone, 0xc0bca6, 0.4),
+    dark = m.mix(tone, 0x46524a, 0.45),
+    moss = m.mix(tone, 0x55703f, 0.65);
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n,
+      face = i % 2 ? tone : m.mix(tone, light, 0.4);
+    m.face([lo[i], hi[i], hi[j], lo[j]], [dark, face, face, dark]);
+  }
+  m.face([...hi].reverse(), moss);
+}
+
+// A cluster of columns standing out of the slope, buried at the root, with
+// grass and a fern in its lee.
+function outcrop(m, ground, x, z, size, yaw) {
+  const r = m.rng,
+    count = 4 + Math.floor(r.next() * 4),
+    tone = m.mix(0x6c746c, 0x969483, r.next());
+  for (let k = 0; k < count; k++) {
+    const t = (k - (count - 1) / 2) / count,
+      along = t * count * size * 0.3 + r.range(-0.05, 0.05),
+      out = r.range(-0.12, 0.12) * size;
+    const px = x + Math.cos(yaw) * along - Math.sin(yaw) * out,
+      pz = z + Math.sin(yaw) * along + Math.cos(yaw) * out;
+    // Taller in the middle of the cluster, broken unevenly at the ends.
+    const h = size * (1 - Math.abs(t) * 1.1) * r.range(0.55, 1.1);
+    const y = ground.surface(px, pz);
+    column(
+      m,
+      px,
+      y - 0.5 * size,
+      pz,
+      size * r.range(0.2, 0.27),
+      Math.max(0.1, h) + 0.5 * size,
+      yaw,
+      tone
+    );
+  }
+  for (let k = 0; k < 2; k++) {
+    const a = r.range(0, circle),
+      d = size * r.range(0.35, 0.6),
+      px = x + Math.cos(a) * d,
+      pz = z + Math.sin(a) * d;
+    if (ground.distance(px, pz) > 0.3) grasses(m, ground, px, pz, r.range(0.16, 0.28));
+  }
+  const fx = x - Math.sin(yaw) * size * 0.4,
+    fz = z + Math.cos(yaw) * size * 0.4;
+  if (ground.distance(fx, fz) > 0.3) fern(m, fx, ground.surface(fx, fz) - 0.02, fz, size * 0.32);
+}
+
+// A dressed block seen only from outside the wall: its face, bed and ends.
+function ashlar(m, x, y, z, w, h, d, tone) {
+  const l = x - w / 2,
+    r = x + w / 2,
+    b = z - d / 2,
+    f = z + d / 2,
+    lo = y - h / 2,
+    hi = y + h / 2;
+  m.face(
+    [
+      [l, hi, b],
+      [l, hi, f],
+      [r, hi, f],
+      [r, hi, b]
+    ],
+    m.mix(tone, 0xc4c1ab, 0.15)
+  );
+  m.face(
+    [
+      [l, lo, f],
+      [r, lo, f],
+      [r, hi, f],
+      [l, hi, f]
+    ],
+    tone
+  );
+  for (const e of [l, r])
+    m.face(
+      [
+        [e, lo, b],
+        [e, lo, f],
+        [e, hi, f],
+        [e, hi, b]
+      ],
+      m.mix(tone, 0x4b5247, 0.2)
+    );
+}
+
+// The dressed retaining wall that holds the court: a coping course flush
+// with the paving, battered courses of staggered ashlar below it running
+// into the slope, drain spouts with their stains, and moss at the foot.
+function retainingWalls(m, layout, ground) {
+  const { width, height, mask, cells } = layout,
+    cx = (width - 1) / 2,
+    cz = (height - 1) / 2;
+  const open = (x, y) => mask[y]?.[x] !== '#';
+  const sides = [
+    [0, -1],
+    [1, 0],
+    [0, 1],
+    [-1, 0]
   ];
-  for (const [x, z, width, height] of ledges) {
-    const root = ground.surface(x, z) - height * 0.85 - 0.1;
-    m.rock(x, root, z, width, height * 1.47, width * 0.48, 0x616f6c, 0x8a907b, 9, -0.33);
-    for (let i = 0; i < 6; i++) {
-      const px = x + m.rng.range(-width * 0.72, width * 0.72);
-      const pz = z + m.rng.range(0.3, 0.83) * (z > 0 ? 1 : -1);
-      if (ground.distance(px, pz) > 0.18) grasses(m, ground, px, pz, m.rng.range(0.16, 0.31));
+  const r = m.rng;
+  for (const cell of cells) {
+    for (const [dx, dz] of sides) {
+      if (!open(cell.x + dx, cell.y + dz)) continue;
+      const salt = cell.x * 37 + cell.y * 91 + dx * 13 + dz * 7 + 40;
+      const ex = cell.x - cx + dx * 0.5,
+        ez = cell.y - cz + dz * 0.5;
+      // Convex corners: extend so the two walls lap like quoins.
+      const before = open(cell.x - dz, cell.y + dx) ? 0.13 : 0,
+        after = open(cell.x + dz, cell.y - dx) ? 0.13 : 0;
+      let foot = Infinity;
+      for (const t of [-0.5, 0, 0.5]) {
+        const wx = ex + dz * t + dx * 0.25,
+          wz = ez - dx * t + dz * 0.25;
+        foot = Math.min(foot, ground.surface(wx, wz));
+      }
+      foot -= 0.18;
+      const lo = -0.5 - before,
+        hi = 0.5 + after;
+      const front = (y) => 0.085 + 0.06 * (-0.05 - y);
+      m.frame(ex, 0, ez, Math.atan2(dx, dz), 1, () => {
+        // Mortar bed seen through the joints.
+        m.face(
+          [
+            [lo, -0.04, 0.078],
+            [lo, foot, front(foot) - 0.01],
+            [hi, foot, front(foot) - 0.01],
+            [hi, -0.04, 0.078]
+          ],
+          0x4b5247
+        );
+        // Coping slabs.
+        let x = lo;
+        while (x < hi - 0.02) {
+          const len = Math.min(hi - x, r.range(0.45, 0.75));
+          const tone = m.mix(0x9fa18d, 0xb5b29a, r.next());
+          ashlar(m, x + len / 2, 0.0, 0.058, len - 0.012, 0.1, 0.12, tone);
+          x += len;
+        }
+        // Ashlar courses, staggered.
+        let y = -0.06,
+          course = 0;
+        while (y > foot) {
+          const h = [0.19, 0.15, 0.21, 0.17, 0.2][(course + salt) % 5];
+          const yc = y - h / 2,
+            f = front(yc) + r.range(-0.006, 0.006);
+          const depthShade = clamp((-0.06 - yc) / 0.9, 0, 1);
+          x = lo;
+          let first = true;
+          while (x < hi - 0.03) {
+            const len = Math.min(hi - x, first ? r.range(0.18, 0.42) : r.range(0.32, 0.56));
+            first = false;
+            let tone = m.mix(0x7a8172, 0xa29e89, r.next());
+            if (r.next() < 0.15) tone = m.mix(tone, 0x646b60, 0.5);
+            tone = m.mix(tone, 0x5a6d49, depthShade * r.range(0.15, 0.6));
+            ashlar(m, x + len / 2, yc, f - 0.065, len - 0.016, h - 0.016, 0.13, tone);
+            x += len;
+          }
+          y -= h;
+          course++;
+        }
+        // A drain spout every few bays, with the stain it leaves below.
+        if (salt % 5 === 0 && !before && !after) {
+          const sy = -0.2;
+          m.box(0, sy, front(sy) + 0.07, 0.11, 0.07, 0.18, 0x8e917f);
+          m.box(0, sy + 0.03, front(sy) + 0.08, 0.05, 0.014, 0.18, 0x4f5649);
+          m.face(
+            [
+              [-0.055, sy - 0.04, front(sy) + 0.004],
+              [-0.08, foot + 0.1, front(foot) + 0.004],
+              [0.07, foot + 0.1, front(foot) + 0.004],
+              [0.05, sy - 0.04, front(sy) + 0.004]
+            ],
+            0x4c5848
+          );
+        }
+      });
+      // Moss, grass and fallen stone where the wall meets the slope.
+      for (let k = 0; k < (salt % 3 ? 1 : 0); k++) {
+        const t = r.range(-0.45, 0.45),
+          o = r.range(0.2, 0.42);
+        const wx = ex + dz * t + dx * o,
+          wz = ez - dx * t + dz * o;
+        const y = ground.surface(wx, wz);
+        if (y > -1.4) {
+          if ((salt + k) % 3 === 0) fern(m, wx, y - 0.02, wz, 0.22);
+          else grasses(m, ground, wx, wz, r.range(0.14, 0.24), y - 0.03);
+        }
+      }
+      if (salt % 4 === 1) {
+        const wx = ex + dx * 0.35,
+          wz = ez + dz * 0.35;
+        m.rock(wx, ground.surface(wx, wz) - 0.05, wz, 0.13, 0.11, 0.1, 0x6f766b, 0x8f937f, 6);
+      }
     }
   }
-  for (const [x, z, scale] of [
-    [-5.5, 5.38, 1.13],
-    [-5.89, 5.69, 0.61],
-    [6.54, -3.61, 1.07],
-    [-6.5, -6.1, 0.81],
-    [3.79, 8.01, 0.77]
-  ]) {
-    bentPine(m, ground, x, z, scale);
+}
+
+// Outcrops ring the court where the apron breaks into cliff, kept clear of
+// the stairs and the landmarks, with shrubs and ferns on the ledges.
+function cliffGarden(m, ground) {
+  const keepClear = [
+    [-2.06, -8.1, 2.2],
+    [3.91, -7.89, 2.6],
+    [-7.91, 3.04, 2.4],
+    [-3.6, -10.6, 1.8],
+    [-8.2, 1.3, 1.5],
+    [7.3, 0.6, 1.6],
+    [8.55, 1.7, 1.0],
+    [-7.65, -2.45, 1.0]
+  ];
+  const clear = (x, z) => keepClear.every(([a, b, d]) => Math.hypot(x - a, z - b) > d);
+  function rim(angle, reach) {
+    // March out from the middle until the slope is `reach` from the court.
+    const dx = Math.cos(angle),
+      dz = Math.sin(angle);
+    let t = 3;
+    while (t < 20 && ground.distance(dx * t, dz * t) < reach) t += 0.1;
+    return [dx * t, dz * t];
   }
+  for (let j = 0; j < 40; j++) {
+    const a = (j * circle) / 40 + m.rng.range(-0.05, 0.05),
+      [x, z] = rim(a, j % 2 ? m.rng.range(1.5, 2.2) : m.rng.range(2.4, 3.2));
+    if (!clear(x, z) || ground.surface(x, z) < -4.6) continue;
+    outcrop(m, ground, x, z, m.rng.range(0.7, 1.25), a + Math.PI / 2);
+  }
+  for (let j = 0; j < 34; j++) {
+    const a = (j * circle) / 34 + m.rng.range(-0.08, 0.08),
+      [x, z] = rim(a, m.rng.range(0.6, 1.4));
+    if (!clear(x, z)) continue;
+    const y = ground.surface(x, z);
+    if (j % 3 === 0) shrub(m, x, y - 0.04, z, m.rng.range(0.4, 0.65), j % 2 === 0);
+    else if (j % 3 === 1)
+      // A clump of tussocks rather than a scatter of single blades.
+      for (let k = 0; k < 3; k++)
+        grasses(
+          m,
+          ground,
+          x + m.rng.range(-0.2, 0.2),
+          z + m.rng.range(-0.2, 0.2),
+          m.rng.range(0.18, 0.3)
+        );
+    else fern(m, x, y - 0.02, z, 0.3);
+  }
+}
+
+// Pines stand tall beside the court, so they are drawn as one group the
+// cutaway can thin out of the way.
+function pines(T, ground) {
+  const m = new Model(T, 470467);
+  for (const [x, z, scale, yaw, lean, limbs] of [
+    [-7.65, -2.45, 1.85, Math.PI + 0.2, 0.7, 6],
+    [8.55, 1.7, 1.55, -0.35, 0.95, 4],
+    [-6.35, 5.75, 0.62, 2.4, 0.9, 4],
+    [6.75, -3.75, 0.66, 0.5, 0.8, 4],
+    [-6.6, -6.2, 0.58, 2.0, 0.8, 4],
+    [3.9, 8.05, 0.6, -1.4, 0.9, 4],
+    [5.9, 5.6, 0.5, -0.9, 0.8, 3],
+    [-4.0, 8.15, 0.52, -1.9, 0.9, 3]
+  ])
+    oldPine(m, x, ground.surface(x, z) - 0.05, z, scale, yaw, lean, limbs);
+  // Fallen needles drift on the ground below the two old pines.
+  for (const [x, z] of [
+    [-7.65, -2.45],
+    [8.55, 1.7]
+  ])
+    for (let k = 0; k < 40; k++) {
+      const a = m.rng.range(0, circle),
+        d = Math.sqrt(m.rng.next()) * 1.6,
+        px = x + Math.cos(a) * d,
+        pz = z + Math.sin(a) * d;
+      const y = (ground.distance(px, pz) < 0.01 ? 0.05 : ground.surface(px, pz)) + 0.012;
+      const t = m.rng.range(0, circle);
+      m.face(
+        [
+          [px, y, pz],
+          [px + Math.cos(t) * 0.09, y, pz + Math.sin(t) * 0.09],
+          [px + Math.cos(t) * 0.09 + 0.012, y, pz + Math.sin(t) * 0.09 + 0.012]
+        ],
+        m.rng.pick([0x8a6a45, 0x9b7a4e, 0x7a5d40])
+      );
+    }
+  return m.finish('松影', { occluder: true });
 }
 
 function landform4(T, layout) {
@@ -603,11 +1008,15 @@ function landform4(T, layout) {
   stairs(court, ground.surface, [6.39, 0.008, -0.85], [7.46, -0.112, 0.26], 5, 0.78);
   landing(court, ground.surface, 7.46, 0.27, -0.065, 1.0, 0.67, 0.69);
   guideLight(court, 7.21, ground.surface(7.21, -1.12), -1.12);
+  retainingWalls(court, layout, ground);
+  tileDressing(court, layout);
   scene.add(court.finish('琴心石坪與引聲燈'));
 
   const plants = new Model(T, 470449);
   cliffGarden(plants, ground);
   scene.add(plants.finish('石罅與崖草'));
+  scene.add(pines(T, ground));
+  scene.add(peaksAndClouds(T));
   return scene;
 }
 

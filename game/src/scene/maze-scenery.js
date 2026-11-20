@@ -1,17 +1,23 @@
 import { Model, circle, midway } from './scenery-kit.js';
 import { banners, cargo, lantern, rail, reeds, roof } from './maze-models.js';
 import { landmarks } from './maze-landmarks.js';
+import { mapleScrub } from './landforms/country-1.js';
 import { setting } from './maze-atmosphere.js';
+import { armsChest, bramble, breastwork, paving, ruinTile } from './landforms/siege-6.js';
 import { mapLayout } from '../data/terrain.js';
+import { hewnSide, iceTile, snowTile } from './landforms/shelf-3.js';
+import { pavilionCrag } from './landforms/crags-3.js';
+import { peaks3 } from './landforms/peaks-3.js';
+import { farMarsh } from './landforms/distance-2.js';
 
 const stonework = [
   null,
-  [0x977e64, 0xc0a183, 0x766c56, 0x8d7254, 0xab935e, 0x79856f],
+  [0x8c8478, 0xb0a593, 0x6b665c, 0x80786b, 0xa69a7c, 0x79856f],
   [0x788669, 0xa5aa82, 0x606d59, 0x748366, 0xb9b28b, 0x54857b],
-  [0xb8c7ca, 0xe4e5d7, 0x657b88, 0x829398, 0xd0dcd7, 0x7fa2ae],
+  [0xb8c7ca, 0xe4e5d7, 0x5a646b, 0x7c8589, 0xd0dcd7, 0x7fa2ae],
   [0x929c91, 0xb5bca3, 0x6c7a70, 0x86937f, 0xbba679, 0x819a93],
   [0x9a9b83, 0xc2b29c, 0x737a68, 0x839077, 0xcbac80, 0x829989],
-  [0x998571, 0xb2a18b, 0x756b60, 0x887661, 0xb19a78, 0x737d75],
+  [0x8b887f, 0xa29d91, 0x57544d, 0x6c6558, 0x8f8a7e, 0x5d6763],
   [0x728e89, 0x9ab6a1, 0x4e6468, 0x5d7475, 0x9abaa3, 0x4f8b86],
   [0x939aa8, 0xc4beb1, 0x6c7586, 0x898c98, 0xc8ad84, 0x8295ad],
   [0x4d606a, 0x778381, 0x394954, 0x475b61, 0xd0ad6a, 0x527f82]
@@ -26,6 +32,7 @@ const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32];
 // Each side is measured in local coordinates. The first and last point of
 // every course meet the neighbouring side even along a re-entrant corner.
 function exposedSide(m, index, p, cell, salt) {
+  if (index === 3) return hewnSide(m, cell, salt, landDepth[index]);
   const r = m.rng,
     depth = landDepth[index];
   const masonry = [1, 4, 6, 8, 9].includes(index);
@@ -181,6 +188,8 @@ function exposedSide(m, index, p, cell, salt) {
 // A playable bridge has a deck and open air or water below it. Every other
 // actual tile contributes one top; walls are emitted only along exposed sides.
 function shapedShelf(m, index, p, layout) {
+  // 桃花石陣 lays its own ground and well shaft in landforms/landform-5.js.
+  if (index === 5) return;
   const { width, height, cells, mask } = layout;
   const cx = (width - 1) / 2,
     cz = (height - 1) / 2;
@@ -279,29 +288,7 @@ function innerWaterAndStars(m, index, layout) {
     const x = (k % width) - cx,
       z = Math.floor(k / width) - cz;
     if (index === 5) {
-      const c = m.mix(0x467768, 0x71998a, 0.34 + 0.22 * Math.cos(k * 0.8));
-      const q = m.mix(0x668a75, 0x7e9b80, 0.28 + 0.12 * Math.sin(k));
-      m.face(
-        [
-          [x - 0.502, -0.73, z - 0.502],
-          [x - 0.502, -0.73, z + 0.502],
-          [x + 0.502, -0.73, z + 0.502],
-          [x + 0.502, -0.73, z - 0.502]
-        ],
-        [c, q, c, q]
-      );
-      if (k % 6 === 1) lotus(m, x, z, -0.689, 0.47);
-      if (k % 3 === 1)
-        m.line(
-          [
-            [x - 0.23, -0.717, z],
-            [x, -0.717, z + 0.013],
-            [x + 0.19, -0.717, z - 0.008]
-          ],
-          0.009,
-          0x90b3a0,
-          4
-        );
+      // The well's deep water is drawn with its shaft in landforms/landform-5.js.
     } else if (k % 4 === 1) {
       const a = [x, -3.3 - 0.29 * Math.sin(k), z],
         b = [x + 0.41, a[1] + 0.063, z - 0.23];
@@ -338,6 +325,7 @@ function slate(m, x, z, w, d, top, base, hi = 0.04, cut = 0.06) {
   }
 }
 function puddle(m, x, z, index, p, bridge) {
+  if (index === 3 && !bridge) return iceTile(m, x, z);
   const col = p[5],
     dark = m.mix(col, p[2], 0.3);
   if (!bridge) {
@@ -392,6 +380,7 @@ function puddle(m, x, z, index, p, bridge) {
   }
 }
 function plain(m, x, z, index, p) {
+  if (index === 6) return paving(m, x, z, p);
   const c = m.mix(p[0], p[1], m.rng.range(0.07, 0.48)),
     lo = p[2];
   if (index === 1 || index === 6) {
@@ -446,18 +435,7 @@ function plain(m, x, z, index, p) {
       );
     }
   } else if (index === 3) {
-    slate(m, x, z, 0.994, 0.994, c, lo, 0.034, 0.052);
-    const q = m.rng.range(0.52, 0.74);
-    m.face(
-      [
-        [x - 0.48, 0.04, z - 0.46],
-        [x - 0.48, 0.04, z + 0.4],
-        [x - 0.1, 0.04, z + 0.46],
-        [x + q * 0.46, 0.04, z + 0.13],
-        [x + 0.46, 0.04, z - 0.42]
-      ],
-      m.mix(c, 0xe2e6dc, m.rng.range(0.36, 0.67))
-    );
+    snowTile(m, x, z);
   } else {
     slate(m, x, z, 0.989, 0.989, c, lo, 0.039, [4, 9].includes(index) ? 0.095 : 0.055);
     if ([4, 8, 9].includes(index)) {
@@ -495,7 +473,10 @@ function plain(m, x, z, index, p) {
   }
 }
 function cover(m, index, p) {
+  if (index === 6) return breastwork(m);
   const r = m.rng;
+  // Map 7's broken jade seats are drawn with its cave, in landforms/cave-7.js.
+  if (index === 7) return;
   if ([4, 6, 8, 9].includes(index)) {
     for (let i = 0; i < 3; i++) {
       const x = -0.28 + 0.25 * i,
@@ -560,6 +541,10 @@ function herbs(m, index, p) {
 }
 function brush(m, index, p) {
   const r = m.rng;
+  // 紅楓驛 grows maple saplings of its own (landforms/country-1.js).
+  if (index === 1) return mapleScrub(m);
+  // Map 7's frosted stone curtains are drawn with its cave, in landforms/cave-7.js.
+  if (index === 7) return;
   if ([1, 2, 5].includes(index)) {
     const col = index === 1 ? 0xc66a38 : index === 5 ? 0xdba0a5 : 0x94a76b;
     for (let j = 0; j < 5; j++) {
@@ -598,10 +583,7 @@ function brush(m, index, p) {
       );
     }
   } else if (index === 6) {
-    for (let j = 0; j < 4; j++) {
-      const x = -0.29 + 0.19 * j;
-      m.tube([x, 0.04, -0.31], [x + 0.082, r.range(0.31, 0.54), -0.28], 0.037, 0.018, 0x786750, 5);
-    }
+    bramble(m);
   } else {
     for (let j = 0; j < 4; j++) {
       const x = r.range(-0.34, 0.34),
@@ -611,29 +593,15 @@ function brush(m, index, p) {
   }
 }
 function obstacle(m, index, p, crate) {
+  if (index === 6) return crate ? armsChest(m) : ruinTile(m);
   const r = m.rng;
   if (crate && [1, 2, 3, 6].includes(index)) {
     cargo(m, -0.075, -0.08, 0.72, index === 3 ? 0x968777 : index === 6 ? 0x857059 : 0xa28259);
     m.frame(0.18, 0.59, 0.02, 0.17, 0.57, () => cargo(m, 0, 0, 0.68));
     return;
   }
-  if (index === 7) {
-    for (let i = 0; i < (crate ? 4 : 6); i++)
-      m.glow(() =>
-        m.crystal(
-          r.range(-0.23, 0.24),
-          0.043,
-          r.range(-0.23, 0.22),
-          r.range(0.1, 0.2),
-          r.range(0.44, 0.95),
-          0x588e86,
-          0xa1cbb1,
-          6,
-          r.range(-0.16, 0.16)
-        )
-      );
-    return;
-  }
+  // Map 7's jade outcrops are drawn with its cave, in landforms/cave-7.js.
+  if (index === 7) return;
   if (index === 8 || index === 9) {
     if (crate) {
       m.lathe(
@@ -680,6 +648,8 @@ function obstacle(m, index, p, crate) {
   m.rock(0.24, 0.05, 0.16, 0.15, 0.27, 0.13, p[3], p[0], 7);
 }
 function field(m, index, cells, p, size) {
+  // 桃花石陣 dresses its tiles in landforms/formation-5.js.
+  if (index === 5) return;
   const centerX = (size.width - 1) / 2;
   const centerZ = (size.height - 1) / 2;
   for (const cell of cells) {
@@ -689,6 +659,8 @@ function field(m, index, cells, p, size) {
     if (index === 7 && k === 'reeds') continue;
     if (k === 'reeds' || k === 'bridge') puddle(m, x, z, index, p, k === 'bridge');
     else if (index !== 4) plain(m, x, z, index, p);
+    // 空山琴臺 dresses its own tiles in landforms/props-4.js.
+    if (index === 4) continue;
     m.frame(x, 0, z, 0, 1, () => {
       if (k === 'cover') cover(m, index, p);
       else if (k === 'bamboo') brush(m, index, p);
@@ -917,6 +889,11 @@ function cutRing(m, index, p, layout) {
     }
 }
 function lowerLandscape(m, index, p, layout) {
+  // 紅楓驛's own relief covers this low ground (landforms/landform-1.js).
+  if (index === 1) return;
+  if (index === 6) return; // landform-6 lays its own ground and litter
+  // 桃花石陣 is an island; its shore and the sea beyond are in landforms/landform-5.js.
+  if (index === 5) return;
   const water = index === 2,
     dry = [1, 5, 6].includes(index);
   if (!water && !dry) return;
@@ -960,9 +937,7 @@ function lowerLandscape(m, index, p, layout) {
     const rad = Math.max(Math.abs(x) / (cx + 5.4), Math.abs(z) / (cz + 4.4));
     if (rad > 0.93 && random.next() > 0.38) continue;
     if (water) {
-      // Patches of nenuphars occupy the actual water below the various spits.
-      if (rad < 0.89 && random.next() < 0.6)
-        lotus(m, x, z, level + 0.028, random.range(0.29, 0.68));
+      // 蘆花汀 floats its own lily pads in the lee of the reed beds (landforms/fishers-2.js).
       continue;
     }
     const spread = random.range(0.12, 0.52),
@@ -1042,25 +1017,21 @@ function lowerLandscape(m, index, p, layout) {
 }
 
 function ranges(m, index, p) {
+  // 紅楓驛 is closed by its own wooded hills (landforms/landform-1.js).
+  if (index === 1) return;
+  if (index === 6) return; // landform-6 draws its own horizon
+  // 桃花石陣's distant islets are in landforms/island-5.js.
+  if (index === 5) return;
   const r = m.rng,
     style = setting(index);
+  if (index === 3) return peaks3(m, style);
+  // 空山琴臺 raises its own spires and cloud banks in landforms/peaks-4.js.
+  if (index === 4) return;
   if (index === 9) {
-    for (let j = 0; j < 74; j++) {
-      const a = (j * circle) / 74 + r.range(-0.11, 0.11),
-        rad = r.range(16, 32),
-        h = r.range(2.4, 10.5);
-      const x = Math.cos(a) * rad,
-        z = Math.sin(a) * rad;
-      if (j % 11 === 0) {
-        m.frame(x, -4.6, z, a, 1, () =>
-          m.crystal(0, 0, 0, r.range(0.64, 1.05), r.range(6, 10), 0x465569, 0x84908c, 7, 0.41)
-        );
-      }
-      const c = j % 6 === 0 ? 0xc2b58e : 0xabb5be;
-      m.glow(() => m.crystal(x, h, z, r.range(0.026, 0.071), r.range(0.079, 0.155), c, c, 5));
-    }
+    // The cloud sea and far peaks are drawn with the terrace in landform-9.js.
     return;
   }
+  if (index === 2) return farMarsh(m, style);
   for (let tier = 0; tier < 2; tier++)
     for (let j = 0; j < (tier ? 19 : 13); j++) {
       const a = tier * 0.23 + (j * circle) / (tier ? 19 : 13) + r.range(-0.07, 0.07),
@@ -1073,7 +1044,7 @@ function ranges(m, index, p) {
       if (index === 8) {
         if (j % 3 === 0)
           m.frame(x, r.range(-1.75, 0.11), z, -a, 1, () => {
-            m.rock(0, -1.25, 0, s * 0.61, 1.28, s * 0.56, 0x666e82, 0x9292a1, 8);
+            m.rock(0, -1.25, 0, s * 0.61, 1.28, s * 0.56, 0x9a9bba, 0xd9d3dc, 8);
             m.box(0, 0.34, 0, s * 0.62, 0.68, s * 0.48, 0xa1979b);
             roof(m, s * 0.85, s * 0.71, 0.68, 0.66, [0x606781, 0x798396, 0x959ba7]);
             m.frame(
@@ -1082,28 +1053,15 @@ function ranges(m, index, p) {
               0,
               0,
               1,
-              () => m.crystal(0, 0, 0, s * 0.4, 1.91, 0x626a82, 0x898ca0, 6),
+              () => m.crystal(0, 0, 0, s * 0.4, 1.91, 0x8a8eae, 0xb3b1c9, 6),
               0,
               Math.PI
             );
           });
         continue;
       }
-      if (index === 7) {
-        for (let k = 0; k < 3; k++)
-          m.rock(
-            x + Math.cos(a + 1.5) * k * 1.03,
-            -1.0,
-            z + Math.sin(a + 1.5) * k * 1.03,
-            s * 0.78,
-            r.range(3.5, 7.8),
-            s * 0.7,
-            0x485c66,
-            0x657a79,
-            9
-          );
-        continue;
-      }
+      // Map 7 is closed in by its own cave wall (landforms/cave-7.js).
+      if (index === 7) continue;
       const base = style.level - 0.65,
         w = index === 2 ? s * 1.24 : s;
       const H =
@@ -1208,42 +1166,10 @@ function approachLandmark(index, size, add, p) {
       cargo(m, 0.66, 0.1, 0.64, 0x977755);
     });
   } else if (index === 2) {
-    add('南汊繫纜樁', 2.8, south + 0.91, -0.18, (m) => {
-      for (const x of [-0.7, 0.7]) {
-        m.tube([x, -0.65, 0], [x, 0.66, 0], 0.087, 0.061, wood, 8);
-        m.hoop(x, 0.32, 0, 0.107, 0.017, brass, 14);
-      }
-      m.line(
-        [
-          [-0.7, 0.53, 0],
-          [-0.18, 0.31, 0.05],
-          [0.26, 0.3, 0.05],
-          [0.7, 0.51, 0]
-        ],
-        0.026,
-        0xa79971,
-        5
-      );
-      for (const x of [-0.3, 0.13])
-        m.lathe(
-          x,
-          -0.06,
-          0.22,
-          [
-            [0, 0.14],
-            [0.05, 0.23],
-            [0.23, 0.24],
-            [0.35, 0.14],
-            [0.38, 0.16],
-            [0.38, 0.1]
-          ],
-          0x9c895e,
-          12
-        );
-      reeds(m, 0.92, 0.1, 0.62, 10, true, -0.08);
-    });
+    // The southern landing is part of landforms/fishers-2.js.
   } else if (index === 3) {
     add('南麓報雪亭', -2.38, south + 0.99, Math.PI, (m) => {
+      pavilionCrag(m);
       for (const x of [-0.64, 0.64]) {
         m.box(x, 0.77, 0, 0.11, 1.54, 0.13, wood);
         m.box(x, 0.12, 0, 0.22, 0.24, 0.24, slate);
@@ -1290,33 +1216,9 @@ function approachLandmark(index, size, add, p) {
       }
     });
   } else if (index === 5) {
-    add('桃溪陣後石扉', east + 1.03, 3.6, -Math.PI / 2, (m) => {
-      for (const x of [-0.7, 0.7]) {
-        m.rock(x, -0.05, 0, 0.29, 1.32, 0.24, slate, 0x9a9c85, 8);
-        for (let j = 0; j < 3; j++)
-          m.line(
-            [
-              [x - 0.076, 0.49 + j * 0.19, 0.179],
-              [x, 0.57 + j * 0.19, 0.19],
-              [x + 0.076, 0.49 + j * 0.19, 0.18]
-            ],
-            0.013,
-            brass,
-            5
-          );
-      }
-      m.rock(0, 1.16, 0, 1.02, 0.29, 0.33, 0x888975, 0xa2a28a, 8, 0.13);
-      shrub(m, 0.79, 0.03, 0.21, 0.56, [0x6d875d, 0x8d9969, 0x9da46e], true);
-    });
+    // The east gate's moon-gate screen is built in landforms/gates-5.js.
   } else if (index === 6) {
-    add('東甕城軍需哨', east + 1.15, -1.93, -Math.PI / 2, (m) => {
-      for (let j = 0; j < 3; j++) {
-        m.box(-0.71 + j * 0.62, 0.21, 0, 0.6, 0.37, 0.57, j % 2 ? 0x929082 : 0x828276);
-        if (j !== 1) m.box(-0.69 + j * 0.62, 0.48, 0, 0.57, 0.15, 0.52, 0x989181);
-      }
-      banners(m, 0.52, -0.23, 1.99, 0x944537);
-      cargo(m, -0.45, 0.49, 0.5, 0x90765b);
-    });
+    // The barbican and its standards are part of landforms/landform-6.js.
   } else if (index === 7) {
     add('南泉玉座', -0.25, south + 0.91, Math.PI, (m) => {
       m.lathe(
@@ -1436,7 +1338,7 @@ function mazeScenery(T, index, cells) {
   const add = (name, x, z, yaw, draw, { fade = true, y = 0, scale = 1 } = {}) => {
     const m = new Model(T, seed + ++serial * 103);
     draw(m);
-    if (index !== 3 || !['覆雪懸棧','峭壁木棧'].includes(name)) landmarkFoundation(m, index, name, p);
+    if (index !== 3 || !['覆雪懸棧','峭壁木棧','南麓報雪亭'].includes(name)) landmarkFoundation(m, index, name, p);
     const g = m.finish(name, { occluder: fade });
     g.position.set(x, y, z);
     g.rotation.y = yaw;

@@ -822,25 +822,55 @@ function buildVillage(T) {
     }
   }
   const deckPieces = 17;
+  const deckStones = [
+    stone,
+    stoneM,
+    paint('worn deck stone', 0x7a7f74),
+    stone,
+    paint('damp deck stone', 0x6e766d),
+    paint('sun-bleached deck stone', 0x8d8f83)
+  ];
+  // A single bed of mortar shows in the joints between the deck stones.
+  for (let n = 0; n < deckPieces; n++) {
+    const x0 = mix(-reach, reach, n / deckPieces),
+      x1 = mix(-reach, reach, (n + 1) / deckPieces);
+    const bed = box(
+      bridge,
+      (x0 + x1) / 2,
+      (bridgeTop(x0) + bridgeTop(x1)) / 2 + 0.006,
+      0,
+      (x1 - x0) * 1.015,
+      0.04,
+      1.2,
+      stoneD
+    );
+    bed.rotation.z = Math.atan2(bridgeTop(x1) - bridgeTop(x0), x1 - x0);
+  }
   for (let n = 0; n < deckPieces; n++) {
     const x0 = mix(-reach, reach, n / deckPieces),
       x1 = mix(-reach, reach, (n + 1) / deckPieces);
     const xx = (x0 + x1) / 2,
-      h = (bridgeTop(x0) + bridgeTop(x1)) / 2;
-    const slab = box(
-      bridge,
-      xx,
-      h + 0.026,
-      0,
-      (x1 - x0) * 1.015,
-      0.059,
-      1.216,
-      n % 5 === 2 ? stoneL : n % 3 === 0 ? stoneM : stone
-    );
-    slab.rotation.z = Math.atan2(bridgeTop(x1) - bridgeTop(x0), x1 - x0);
+      h = (bridgeTop(x0) + bridgeTop(x1)) / 2,
+      tilt = Math.atan2(bridgeTop(x1) - bridgeTop(x0), x1 - x0);
+    // Each course is laid as two or three stones with staggered joints, in
+    // close greys, so the deck reads as worn paving rather than painted stripes.
+    const joints = n % 2 ? [-0.608, -0.17, 0.25, 0.608] : [-0.608, 0.05, 0.608];
+    for (let k = 0; k + 1 < joints.length; k++) {
+      const slab = box(
+        bridge,
+        xx,
+        h + 0.026 - 0.004 * ((n + k) % 2),
+        (joints[k] + joints[k + 1]) / 2,
+        (x1 - x0) * 0.985,
+        0.059,
+        joints[k + 1] - joints[k] - 0.012,
+        deckStones[(n * 5 + k * 3 + (n >> 2)) % deckStones.length]
+      );
+      slab.rotation.z = tilt;
+    }
     for (const s of [-1, 1]) {
       const cur = box(bridge, xx, h + 0.071, s * 0.567, (x1 - x0) * 1.01, 0.07, 0.119, stoneL);
-      cur.rotation.z = slab.rotation.z;
+      cur.rotation.z = tilt;
     }
   }
   const postXs = [-1.69, -1.15, -0.585, 0, 0.585, 1.15, 1.69];
@@ -875,7 +905,10 @@ function buildVillage(T) {
 
   const dock = group('western-timber-landing', -1.2, 0, 4.59);
   for (const x of [-0.383, 0.383]) box(dock, x, -0.231, 0, 0.099, 0.142, 1.93, woodDark);
-  const plankColors = [woodMid, cinnamon, woodMid, woodLight, cinnamon];
+  // Boards long in the weather go silver-brown; a few newer ones keep their honey colour.
+  const greyPlank = paint('weathered grey plank', 0x8a7862),
+    silverPlank = paint('sun-silvered plank', 0x9b8b70);
+  const plankColors = [woodMid, greyPlank, cinnamon, silverPlank, greyPlank, woodMid, cinnamon];
   for (let n = 0; n < 14; n++) {
     const z = -0.901 + n * 0.139;
     const p = box(

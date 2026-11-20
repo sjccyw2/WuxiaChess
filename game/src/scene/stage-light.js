@@ -46,7 +46,7 @@ const rigs = [
   { warm: 0.35, key: 3.1, fill: 1.05, cool: 0.5, exposure: 0.97 }, // 聽雪棧: cold high light on snow
   { warm: 0.22, key: 2.7, fill: 1.1, cool: 0.45, mist: 0.5 }, // 空山琴臺: thin sun in mountain mist
   { warm: 0.3, key: 2.9, fill: 1.1, cool: 0.4 }, // 桃花石陣: soft spring light
-  { warm: 0.5, key: 3.2, fill: 0.98, cool: 0.3 }, // 襄陽殘垣: dusty sunset
+  { warm: 0.14, key: 3.1, fill: 1.02, cool: 0.5 }, // 襄陽殘垣: low sun through dust and smoke
   { warm: 0, key: 2.9, fill: 1.2, cool: 0.2, rim: 1.0, exposure: 1.02, mist: 0.5 }, // 寒玉石室: jade glow in the dark
   { warm: 0.25, key: 2.9, fill: 1.1, cool: 0.55 }, // 倒影天街: lavender dusk
   { warm: 0.1, key: 3.0, fill: 1.3, cool: 0.3, rim: 1.0, exposure: 0.82, mist: 0.5 } // 無刻漏臺: lamplight under stars
