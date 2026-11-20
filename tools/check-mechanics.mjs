@@ -807,6 +807,99 @@ section('use restrictions');
   }
 }
 
+// ── 吸勁 siphon (§5) ─────────────────────────────────────────────────────
+section('siphon');
+{
+  // A hero beside the master with a 吸勁 art; `mp` is set so the gain is not capped.
+  function setup(foe = 'chief') {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, foe, 5, 7);
+    const art = teach(u, defineArt({ forms: ['siphon'], mp: 4, factor: 0.3 }));
+    u.mp = 20;
+    return { s, u, t, art };
+  }
+  check('吸勁 has its player rule', same(FR.FORM_RULES.siphon, ['吸勁', '命中後回復 8 點內力，並使目標的絕技延後一回合；同一敵人每回合只延一次，局主不能連續兩回合被延。']));
+  {
+    const { s, u, t } = setup();
+    const before = G.roundsToSignature(s, t);
+    const f = G.forecast(u, t, true, s);
+    check('the preview names the gain and the delay', f.notes.includes('吸勁 · 內力 ＋8，余滄海絕技延後一回合'), f.notes);
+    G.resolve(s, u, t, true);
+    check('a blow that lands gives 8 內力 after the art’s price', u.mp === 20 - f.mpCost + 8, u.mp);
+    check('and puts the signature back one round', G.roundsToSignature(s, t) === before + 1 && t.signaturePush === 1 && t.lastSiphonRound === 1);
+    check('the enemy page counts down to the later round', P.enemyPage(s, 'chief').includes('距蓄勢 ' + (before + 1) + ' 回合'));
+    const back = R.restoreRun(copy(s));
+    check('the push and the round survive a save', unit(back, 'chief').signaturePush === 1 && unit(back, 'chief').lastSiphonRound === 1);
+    // A second 吸勁 the same round (as after 連環 or 號令): 內力 yes, delay no.
+    u.acted = false;
+    const again = G.forecast(u, t, true, s);
+    check('the same enemy is put back only once a round', !again.siphon.delay && again.notes.includes('吸勁 · 內力 ＋8（本回合已延後過）'), again.notes);
+    G.resolve(s, u, t, true);
+    check('so the push stays at one', t.signaturePush === 1);
+    quietTurn(s);
+    u.mp = 20;
+    const next = G.forecast(u, t, true, s);
+    check('a master is not put back two rounds running', !next.siphon.delay && next.notes.includes('吸勁 · 內力 ＋8（局主已換氣，未能延後）'), next.notes);
+    G.resolve(s, u, t, true);
+    check('nor is the push raised', t.signaturePush === 1 && t.lastSiphonRound === 1);
+    quietTurn(s);
+    u.mp = 20;
+    check('the round after that he can be again', G.forecast(u, t, true, s).siphon.delay);
+  }
+  {
+    const { s, u, t } = setup('blade');
+    G.resolve(s, u, t, true);
+    quietTurn(s);
+    u.mp = 20;
+    check('a lieutenant may be put back two rounds running', G.forecast(u, t, true, s).siphon.delay);
+    G.resolve(s, u, t, true);
+    check('and is', t.signaturePush === 2);
+  }
+  {
+    const { s, u, t } = setup('scout');
+    const f = G.forecast(u, t, true, s);
+    check('a piece with no signature gives 內力 only', !f.siphon.delay && f.notes.includes('吸勁 · 內力 ＋8'), f.notes);
+    u.mp = u.maxMp - 2;
+    check('the gain is capped at full 內力', G.forecast(u, t, true, s).siphon.mp === Math.min(8, 2 + G.forecast(u, t, true, s).mpCost));
+  }
+  {
+    const { s, u, t } = setup();
+    BM.applyCondition(s, t, { kind: 'shield', power: 999, turns: 2 }, t);
+    const f = G.forecast(u, t, true, s);
+    check('a blow a shield caught still landed', f.amount === 0 && f.siphon?.mp === 8 && f.siphon.delay);
+  }
+  {
+    const { s, u, t } = setup();
+    t.hp = 1;
+    const f = G.forecast(u, t, true, s);
+    G.resolve(s, u, t, true);
+    check('a felled target gives 內力 and is not put back', f.siphon.mp === 8 && !f.siphon.delay && !t.signaturePush);
+  }
+  {
+    // A charged reaction (蓄勢反擊) is un-charged by the delay, so this blow's counter is ordinary.
+    const { s, u, t } = setup();
+    s.round = 3;
+    withTraits('chief', { stance: { while: 'charged', cut: 0, holds: true } }, () => {
+      const plain = G.forecast(u, t, false, s);
+      check('the master is charged: a basic blow draws a full counter', G.counterRatio(s, t) === 1 && plain.notes.includes('蓄勢反擊 · 還擊全力'));
+      const f = G.forecast(u, t, true, s);
+      const usual = Math.max(2, Math.round(G.damage(t, u, false, s.mapIndex, s) * 0.55));
+      check('吸勁 un-charges him before he counters', f.counterRaw === usual && !f.notes.includes('蓄勢反擊 · 還擊全力'), f.counterRaw + ' vs ' + usual);
+      const hp = u.hp;
+      G.resolve(s, u, t, true);
+      check('and the counter struck at the ordinary ratio', hp - u.hp === usual, hp - u.hp);
+      check('he is charged no longer', G.counterRatio(s, t) === 0.55 && G.roundsToSignature(s, t) === 1);
+    });
+  }
+  {
+    const { s, u, t } = setup();
+    check('the basic attack does not siphon', !G.forecast(u, t, false, s).siphon);
+    const MF = await load('rules/move-facts.js');
+    check('moveFacts shows the form', MF.moveFacts(s, u, u.activeArt).effectLines.includes('吸勁'));
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

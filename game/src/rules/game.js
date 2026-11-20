@@ -385,6 +385,31 @@ function roundsToSignature(s, u) {
 }
 const signatureDue = (s, u) =>
   !!s?.run && !u.conditions?.seal && roundsToSignature(s, u) === 0;
+// 吸勁 (§5): a blow that lands draws 8 內力 back to the striker and puts the target's signature
+// back one round, at most once per enemy per round and never two rounds running on a master.
+// A blow a shield caught still landed. Read from the strike's forecast `f`, after its 內力 is paid.
+function siphonPlan(s, u, t, f) {
+  if (!f.forms.includes('siphon') || !f.rawHits.some((n) => n > 0)) return null;
+  const mp = Math.min(8, Math.max(0, u.maxMp - (u.mp - f.mpCost))),
+    gain = '吸勁 · 內力 ＋' + mp;
+  if (!s || !enemyTechnique(t, s) || f.amount >= t.hp) return { mp, delay: false, note: gain };
+  if (t.lastSiphonRound === s.round) return { mp, delay: false, note: gain + '（本回合已延後過）' };
+  if (unitDetails(t).rank === 'boss' && t.lastSiphonRound === s.round - 1)
+    return { mp, delay: false, note: gain + '（局主已換氣，未能延後）' };
+  return { mp, delay: true, note: gain + '，' + unitDetails(t).name + '絕技延後一回合' };
+}
+// The target as it stands once 吸勁 has put its signature back: a charged reaction is spent.
+const afterSiphon = (t, plan) =>
+  plan?.delay ? { ...t, signaturePush: (t.signaturePush || 0) + 1 } : t;
+function applySiphon(s, u, t, plan) {
+  if (!plan) return;
+  u.mp = Math.min(u.maxMp, u.mp + plan.mp);
+  if (plan.mp) log(s, 'combat', '吸勁回復 ' + plan.mp + ' 點內力。', unitDetails(u).name);
+  if (!plan.delay || !living(t)) return;
+  t.signaturePush = (t.signaturePush || 0) + 1;
+  t.lastSiphonRound = s.round;
+  log(s, 'combat', '勁力被吸，絕技延後一回合。', unitDetails(t).name);
+}
 // How far a unit strikes and counters. Every test of an enemy's range goes through here, so 纏械
 // only has to set its condition.
 function reach(s, u) {
@@ -1214,7 +1239,10 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     );
     if (result.selfHeal) result.notes.push('回生 · 自身氣血 ＋' + result.selfHeal);
   }
-  const share = counterRatio(s, t);
+  // 吸勁: decided as the blow lands, before the counter it may un-charge.
+  result.siphon = siphonPlan(s, u, t, result);
+  if (result.siphon) result.notes.push(result.siphon.note);
+  const share = counterRatio(s, afterSiphon(t, result.siphon));
   if (
     share &&
     !plan.safe &&
@@ -1491,6 +1519,8 @@ function resolve(s, u, t, skill) {
       if (f.effects.some((e) => e.kind === 'seal')) t.lastSealRound = s.round;
       putEffects(s, u, t, f.effects, effects);
     } else log(s, 'combat', '失去戰力。', unitDetails(t).name);
+    // 吸勁 lands before the counter, so a signature it puts back is no longer charged for it.
+    applySiphon(s, u, t, f.siphon);
     if (f.plan.partnerMp) find(s, f.plan.partner).mp += f.plan.partnerMp;
     if (f.plan.clearPoison) delete u.conditions.poison;
     restoreHealth(s, u, u, f.selfHeal, effects);
