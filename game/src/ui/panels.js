@@ -14,6 +14,7 @@ import {
   enemyTechnique,
   enemyTraitLines,
   coverer,
+  taunters,
   reach,
   roundsToSignature,
   ITEMS,
@@ -943,6 +944,10 @@ function enemyPage(s, id) {
     (u.conditions?.disarm ? '（纏械）' : '') +
     '</b></span></div>' +
     enemyTraitLines(s, u)
+      .concat(
+        // 挑釁: derived from where the pieces stand now, as its own action will read it.
+        taunters(s, u).map((t) => '受挑釁 · 本回合須攻擊' + DETAILS[t.id].name)
+      )
       .map((line) => '<p class="footnote">' + icon('flag', 15) + esc(line) + '</p>')
       .join('') +
     '<p class="footnote">' +

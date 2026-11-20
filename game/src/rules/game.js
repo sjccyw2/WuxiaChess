@@ -36,6 +36,10 @@ const BOOKS = {
 };
 const leader = (s) => s.leader || 'hero';
 const key = (x, y) => x + ',' + y;
+const fromKey = (k) => {
+  const [x, y] = k.split(',').map(Number);
+  return { x, y };
+};
 const distance = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 const living = (u) => u.hp > 0;
 const ally = (u) => u.side === 'ally';
@@ -1439,6 +1443,10 @@ function guardNotes(art) {
   if (art?.stance) notes.push('卸勁 · 至下回合受擊減' + tenths(art.stance) + '，還擊全力');
   if (art?.cover) notes.push('代受 · 至下回合，敵人對相鄰同伴的直接攻擊改由自己承受');
   if (art?.evade) notes.push('閃身 · 下一次直接攻擊落空');
+  if (art?.taunt)
+    notes.push(
+      '挑釁 · 至下回合，' + (art.taunt === 2 ? '兩' : art.taunt) + '格內可攻到他的敵人只能攻擊他'
+    );
   return notes;
 }
 // Experience and level numbers. The wiki's rules page reads these.
@@ -1852,6 +1860,18 @@ function startEnemy(s) {
   log(s, 'system', '守關敵軍開始行動。', '敵方回合');
   return true;
 }
+// 挑釁: the taunting heroes enemy u is bound to strike this turn — each one whose radius u starts
+// its action within and whom it can strike from a tile it can stand on (`cells`, with `range`).
+function taunters(s, u, cells = null, range = strikeReach(s, u)) {
+  cells ??= [u, ...Array.from(reachable(s, u).keys(), (k) => fromKey(k))];
+  return party(s).filter(
+    (t) =>
+      living(t) &&
+      t.conditions?.taunt &&
+      distance(u, t) <= t.conditions.taunt.power &&
+      cells.some((c) => distance(c, t) <= range)
+  );
+}
 // How little an enemy wants to strike hero t: lower is the better target. A hero under 卸勁 counts
 // his 氣血 as the cut makes it last. A covered hero is scored as the one who would take the blow.
 function aimCost(s, u, t, friends) {
@@ -1905,8 +1925,11 @@ function enemyAct(s, u) {
     })
   );
   const targetCost = new Map(friends.map((t) => [t.id, aimCost(s, u, t, friends)]));
+  // 挑釁: a taunter it can strike this turn is all it may choose from.
+  const bound = taunters(s, u, cells, range),
+    prey = bound.length ? bound : friends;
   for (const c of cells)
-    for (const t of friends) {
+    for (const t of prey) {
       const d = distance(c, t),
         can = d <= range,
         score =
@@ -1927,6 +1950,7 @@ function enemyAct(s, u) {
   }
   // 代受: the piece it chose may have someone beside it who takes the blow instead.
   const t = takeCover(s, best.t);
+  if (t.conditions?.taunt) progress(t, 'protects', 1); // 挑釁: the blow he drew
   const art = signatureDue(s, u) ? enemyTechnique(u, s) : null;
   const raw = damage(u, t, false, s.mapIndex, s);
   const strikePower = art ? Math.round(raw * art.factor) : raw;
@@ -2027,4 +2051,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, stanceCut, coverer, redirectOf, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

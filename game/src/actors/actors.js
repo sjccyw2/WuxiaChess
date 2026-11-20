@@ -853,7 +853,8 @@ class ActorLayer {
         stance: '#e0c48a',
         cover: '#9fc6e8',
         redirect: '#b9a6e6',
-        evade: '#c9ecf5'
+        evade: '#c9ecf5',
+        taunt: '#f2a07a'
       };
       const signs = {
         mark: '隙',
@@ -869,7 +870,8 @@ class ActorLayer {
         stance: '卸',
         cover: '代',
         redirect: '挪',
-        evade: '閃'
+        evade: '閃',
+        taunt: '挑'
       };
       const statuses = Object.keys(u.conditions || {});
       const size = clamp(scale * 0.235, 10, 15);

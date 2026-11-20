@@ -197,7 +197,8 @@ const STATUS_COLOURS = {
   stance: '#e0c48a',
   cover: '#9fc6e8',
   redirect: '#b9a6e6',
-  evade: '#c9ecf5'
+  evade: '#c9ecf5',
+  taunt: '#f2a07a'
 };
 const STATUS_SIGNS = {
   mark: '隙',
@@ -213,7 +214,8 @@ const STATUS_SIGNS = {
   stance: '卸',
   cover: '代',
   redirect: '挪',
-  evade: '閃'
+  evade: '閃',
+  taunt: '挑'
 };
 
 // Per layer: what each bar last showed, so a wound can linger as a pale segment and drain.

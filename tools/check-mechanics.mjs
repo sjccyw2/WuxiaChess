@@ -1249,6 +1249,58 @@ section('evade');
   check('with no other, it strikes her and wastes the blow', !only.weak && !only.left);
 }
 
+// ── 挑釁 taunt (§6, §8) ──────────────────────────────────────────────────
+section('taunt');
+{
+  const taunt = (u, s) => BM.applyCondition(s, u, { kind: 'taunt', power: 2, turns: 1 }, u);
+  const s = board(['guard', 'hero', 'medic']);
+  const guard = put(s, 'guard', 4, 7);
+  put(s, 'blade', 5, 7);
+  teach(guard, defineArt({ taunt: 2, safe: true, mp: 2 }));
+  check('the preview names it', G.forecast(guard, unit(s, 'blade'), true, s).notes.includes('挑釁 · 至下回合，兩格內可攻到他的敵人只能攻擊他'));
+  G.resolve(s, guard, unit(s, 'blade'), true);
+  check('挑釁 lands on the caster until his next turn', guard.conditions?.taunt?.power === 2 && guard.conditions.taunt.through === 1);
+  check('a save with it restores', unit(R.restoreRun(copy(s)), 'guard').conditions?.taunt?.power === 2);
+
+  // An enemy that starts within two tiles and can reach him must strike him, though another
+  // hero is the cheaper target; one that starts farther, or cannot reach him, acts as usual.
+  function scene(foeId, foeAt, guardAt, setup) {
+    const e = board(['guard', 'hero', 'medic']);
+    const foe = put(e, foeId, ...foeAt);
+    const g = put(e, 'guard', ...guardAt);
+    const weak = Object.assign(put(e, 'hero', 5, 6), { hp: 20 });
+    taunt(g, e);
+    setup?.(e, foe, g);
+    G.startEnemy(e);
+    const hp = [g.hp, weak.hp, g.mastery.protects];
+    const bound = G.taunters(e, foe).map((v) => v.id);
+    G.enemyAct(e, foe);
+    return { e, foe, bound, guard: g.hp < hp[0], weak: weak.hp < hp[1], protects: g.mastery.protects - hp[2] };
+  }
+  const near = scene('blade', [5, 7], [3, 7]);
+  check('within two tiles and able to reach him, it is bound', same(near.bound, ['guard']));
+  check('it strikes the taunter, not the weaker hero', near.guard && !near.weak);
+  check('drawing the blow counts as protecting', near.protects === 1);
+  const page = board(['guard', 'hero', 'medic']);
+  put(page, 'blade', 5, 7);
+  taunt(put(page, 'guard', 3, 7), page);
+  check('the enemy page of a bound enemy says whom it must strike', P.enemyPage(page, 'blade').includes('受挑釁 · 本回合須攻擊向問天'));
+  check('one out of radius says nothing', !P.enemyPage(page, 'chief').includes('受挑釁'));
+  const far = scene('blade', [6, 7], [3, 7]);
+  check('three tiles off at the start of its action, it is not bound', !far.bound.length && far.weak && !far.guard);
+  const stuck = scene('blade', [5, 7], [3, 7], (e, foe) => (foe.step = 0));
+  check('unable to reach him this turn, it is not bound', !stuck.bound.length && stuck.weak);
+  const boss = scene('chief', [5, 7], [3, 7]);
+  check('a master obeys it too', boss.guard && !boss.weak);
+  // 代受 still applies after: the taunter's coverer takes the blow.
+  const covered = scene('blade', [5, 7], [3, 7], (e) => {
+    const guo = put(e, 'medic', 2, 7);
+    BM.applyCondition(e, guo, { kind: 'cover', power: 1, turns: 1 }, guo);
+    guo.hp = guo.maxHp = 300;
+  });
+  check('a coverer beside the taunter takes the blow', !covered.guard && !covered.weak && unit(covered.e, 'medic').hp < 300);
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
