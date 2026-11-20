@@ -3,6 +3,7 @@ import { banners, cargo, lantern, rail, reeds, roof } from './maze-models.js';
 import { landmarks } from './maze-landmarks.js';
 import { mapleScrub } from './landforms/country-1.js';
 import { setting } from './maze-atmosphere.js';
+import { armsChest, bramble, breastwork, paving, ruinTile } from './landforms/siege-6.js';
 import { mapLayout } from '../data/terrain.js';
 import { hewnSide, iceTile, snowTile } from './landforms/shelf-3.js';
 import { pavilionCrag } from './landforms/crags-3.js';
@@ -15,7 +16,7 @@ const stonework = [
   [0xb8c7ca, 0xe4e5d7, 0x5a646b, 0x7c8589, 0xd0dcd7, 0x7fa2ae],
   [0x929c91, 0xb5bca3, 0x6c7a70, 0x86937f, 0xbba679, 0x819a93],
   [0x9a9b83, 0xc2b29c, 0x737a68, 0x839077, 0xcbac80, 0x829989],
-  [0x998571, 0xb2a18b, 0x756b60, 0x887661, 0xb19a78, 0x737d75],
+  [0x8b887f, 0xa29d91, 0x57544d, 0x6c6558, 0x8f8a7e, 0x5d6763],
   [0x728e89, 0x9ab6a1, 0x4e6468, 0x5d7475, 0x9abaa3, 0x4f8b86],
   [0x939aa8, 0xc4beb1, 0x6c7586, 0x898c98, 0xc8ad84, 0x8295ad],
   [0x4d606a, 0x778381, 0x394954, 0x475b61, 0xd0ad6a, 0x527f82]
@@ -398,6 +399,7 @@ function puddle(m, x, z, index, p, bridge) {
   }
 }
 function plain(m, x, z, index, p) {
+  if (index === 6) return paving(m, x, z, p);
   const c = m.mix(p[0], p[1], m.rng.range(0.07, 0.48)),
     lo = p[2];
   if (index === 1 || index === 6) {
@@ -490,6 +492,7 @@ function plain(m, x, z, index, p) {
   }
 }
 function cover(m, index, p) {
+  if (index === 6) return breastwork(m);
   const r = m.rng;
   if ([4, 6, 8, 9].includes(index)) {
     for (let i = 0; i < 3; i++) {
@@ -595,10 +598,7 @@ function brush(m, index, p) {
       );
     }
   } else if (index === 6) {
-    for (let j = 0; j < 4; j++) {
-      const x = -0.29 + 0.19 * j;
-      m.tube([x, 0.04, -0.31], [x + 0.082, r.range(0.31, 0.54), -0.28], 0.037, 0.018, 0x786750, 5);
-    }
+    bramble(m);
   } else {
     for (let j = 0; j < 4; j++) {
       const x = r.range(-0.34, 0.34),
@@ -608,6 +608,7 @@ function brush(m, index, p) {
   }
 }
 function obstacle(m, index, p, crate) {
+  if (index === 6) return crate ? armsChest(m) : ruinTile(m);
   const r = m.rng;
   if (crate && [1, 2, 3, 6].includes(index)) {
     cargo(m, -0.075, -0.08, 0.72, index === 3 ? 0x968777 : index === 6 ? 0x857059 : 0xa28259);
@@ -916,6 +917,7 @@ function cutRing(m, index, p, layout) {
 function lowerLandscape(m, index, p, layout) {
   // 紅楓驛's own relief covers this low ground (landforms/landform-1.js).
   if (index === 1) return;
+  if (index === 6) return; // landform-6 lays its own ground and litter
   const water = index === 2,
     dry = [1, 5, 6].includes(index);
   if (!water && !dry) return;
@@ -1043,6 +1045,7 @@ function lowerLandscape(m, index, p, layout) {
 function ranges(m, index, p) {
   // 紅楓驛 is closed by its own wooded hills (landforms/landform-1.js).
   if (index === 1) return;
+  if (index === 6) return; // landform-6 draws its own horizon
   const r = m.rng,
     style = setting(index);
   if (index === 3) return peaks3(m, style);
@@ -1299,14 +1302,7 @@ function approachLandmark(index, size, add, p) {
       shrub(m, 0.79, 0.03, 0.21, 0.56, [0x6d875d, 0x8d9969, 0x9da46e], true);
     });
   } else if (index === 6) {
-    add('東甕城軍需哨', east + 1.15, -1.93, -Math.PI / 2, (m) => {
-      for (let j = 0; j < 3; j++) {
-        m.box(-0.71 + j * 0.62, 0.21, 0, 0.6, 0.37, 0.57, j % 2 ? 0x929082 : 0x828276);
-        if (j !== 1) m.box(-0.69 + j * 0.62, 0.48, 0, 0.57, 0.15, 0.52, 0x989181);
-      }
-      banners(m, 0.52, -0.23, 1.99, 0x944537);
-      cargo(m, -0.45, 0.49, 0.5, 0x90765b);
-    });
+    // The barbican and its standards are part of landforms/landform-6.js.
   } else if (index === 7) {
     add('南泉玉座', -0.25, south + 0.91, Math.PI, (m) => {
       m.lathe(
