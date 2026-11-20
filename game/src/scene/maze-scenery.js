@@ -3,12 +3,15 @@ import { banners, cargo, lantern, rail, reeds, roof } from './maze-models.js';
 import { landmarks } from './maze-landmarks.js';
 import { setting } from './maze-atmosphere.js';
 import { mapLayout } from '../data/terrain.js';
+import { hewnSide, iceTile, snowTile } from './landforms/shelf-3.js';
+import { pavilionCrag } from './landforms/crags-3.js';
+import { peaks3 } from './landforms/peaks-3.js';
 
 const stonework = [
   null,
   [0x977e64, 0xc0a183, 0x766c56, 0x8d7254, 0xab935e, 0x79856f],
   [0x788669, 0xa5aa82, 0x606d59, 0x748366, 0xb9b28b, 0x54857b],
-  [0xb8c7ca, 0xe4e5d7, 0x657b88, 0x829398, 0xd0dcd7, 0x7fa2ae],
+  [0xb8c7ca, 0xe4e5d7, 0x5a646b, 0x7c8589, 0xd0dcd7, 0x7fa2ae],
   [0x929c91, 0xb5bca3, 0x6c7a70, 0x86937f, 0xbba679, 0x819a93],
   [0x9a9b83, 0xc2b29c, 0x737a68, 0x839077, 0xcbac80, 0x829989],
   [0x998571, 0xb2a18b, 0x756b60, 0x887661, 0xb19a78, 0x737d75],
@@ -26,6 +29,7 @@ const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32];
 // Each side is measured in local coordinates. The first and last point of
 // every course meet the neighbouring side even along a re-entrant corner.
 function exposedSide(m, index, p, cell, salt) {
+  if (index === 3) return hewnSide(m, cell, salt, landDepth[index]);
   const r = m.rng,
     depth = landDepth[index];
   const masonry = [1, 4, 6, 8, 9].includes(index);
@@ -338,6 +342,7 @@ function slate(m, x, z, w, d, top, base, hi = 0.04, cut = 0.06) {
   }
 }
 function puddle(m, x, z, index, p, bridge) {
+  if (index === 3 && !bridge) return iceTile(m, x, z);
   const col = p[5],
     dark = m.mix(col, p[2], 0.3);
   if (!bridge) {
@@ -446,18 +451,7 @@ function plain(m, x, z, index, p) {
       );
     }
   } else if (index === 3) {
-    slate(m, x, z, 0.994, 0.994, c, lo, 0.034, 0.052);
-    const q = m.rng.range(0.52, 0.74);
-    m.face(
-      [
-        [x - 0.48, 0.04, z - 0.46],
-        [x - 0.48, 0.04, z + 0.4],
-        [x - 0.1, 0.04, z + 0.46],
-        [x + q * 0.46, 0.04, z + 0.13],
-        [x + 0.46, 0.04, z - 0.42]
-      ],
-      m.mix(c, 0xe2e6dc, m.rng.range(0.36, 0.67))
-    );
+    snowTile(m, x, z);
   } else {
     slate(m, x, z, 0.989, 0.989, c, lo, 0.039, [4, 9].includes(index) ? 0.095 : 0.055);
     if ([4, 8, 9].includes(index)) {
@@ -1044,6 +1038,7 @@ function lowerLandscape(m, index, p, layout) {
 function ranges(m, index, p) {
   const r = m.rng,
     style = setting(index);
+  if (index === 3) return peaks3(m, style);
   if (index === 9) {
     for (let j = 0; j < 74; j++) {
       const a = (j * circle) / 74 + r.range(-0.11, 0.11),
@@ -1244,6 +1239,7 @@ function approachLandmark(index, size, add, p) {
     });
   } else if (index === 3) {
     add('南麓報雪亭', -2.38, south + 0.99, Math.PI, (m) => {
+      pavilionCrag(m);
       for (const x of [-0.64, 0.64]) {
         m.box(x, 0.77, 0, 0.11, 1.54, 0.13, wood);
         m.box(x, 0.12, 0, 0.22, 0.24, 0.24, slate);
@@ -1436,7 +1432,7 @@ function mazeScenery(T, index, cells) {
   const add = (name, x, z, yaw, draw, { fade = true, y = 0, scale = 1 } = {}) => {
     const m = new Model(T, seed + ++serial * 103);
     draw(m);
-    if (index !== 3 || !['覆雪懸棧','峭壁木棧'].includes(name)) landmarkFoundation(m, index, name, p);
+    if (index !== 3 || !['覆雪懸棧','峭壁木棧','南麓報雪亭'].includes(name)) landmarkFoundation(m, index, name, p);
     const g = m.finish(name, { occluder: fade });
     g.position.set(x, y, z);
     g.rotation.y = yaw;
