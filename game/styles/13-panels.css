@@ -681,6 +681,281 @@ html.polish-ui-chrome .panorama-controls button {
   }
 }
 
+/* --------------------------------------------------------------- 9  Motion */
+/* Only transform and opacity are animated. Everything is gated twice: the game's own setting
+   (body.no-motion) and the system preference. Outside this block nothing moves. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Buttons: keep the colour fades the base sheet already had, add press travel. */
+  html.polish-ui-chrome body:not(.no-motion) :is(.battlefield, #modal, .opening) button {
+    transition:
+      transform var(--ui-quick) var(--ui-out),
+      opacity var(--ui-quick) linear,
+      background-color 0.16s,
+      color 0.16s,
+      border-color 0.16s,
+      filter 0.16s;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .board-hits button {
+    transition: none;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal button:enabled:active,
+  html.polish-ui-chrome body:not(.no-motion) .opening button:enabled:active,
+  html.polish-ui-chrome
+    body:not(.no-motion)
+    .battlefield
+    :is(button.hud-box, .hud-box button, .hud-flyout button):enabled:active {
+    transform: translateY(1px);
+  }
+  html.polish-ui-chrome
+    body:not(.no-motion)
+    .battlefield
+    :is(.hud-icon, .hud-tool, .field-action, .flyout-close, .menu-choice, .view-grid button):enabled:active {
+    transform: translateY(1px) scale(0.96);
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal :is(.gold-btn, .run-primary, .mj-march):enabled:active,
+  html.polish-ui-chrome body:not(.no-motion) .opening-menu .embark:enabled:active {
+    transform: translateY(2px);
+  }
+  @media (hover: hover) {
+    html.polish-ui-chrome body:not(.no-motion) #modal :is(.gold-btn, .run-primary, .mj-march):enabled:hover:not(:active),
+    html.polish-ui-chrome body:not(.no-motion) .opening-menu .embark:enabled:hover:not(:active) {
+      transform: translateY(-1px);
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal :is(.gold-btn, .run-primary, .mj-march):enabled:hover::after,
+    html.polish-ui-chrome body:not(.no-motion) .opening-menu .embark:enabled:hover::after {
+      opacity: 1;
+      transform: translateX(70%);
+      transition:
+        transform 520ms var(--ui-out),
+        opacity 120ms linear;
+    }
+    html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.menu-choice, .field-art):enabled:hover:not(:active) {
+      transform: translateX(2px);
+    }
+    html.polish-ui-chrome body:not(.no-motion) .battlefield .view-grid button:enabled:hover:not(:active),
+    html.polish-ui-chrome body:not(.no-motion) .opening-tools button:hover:not(:active),
+    html.polish-ui-chrome body:not(.no-motion) .panorama-controls button:hover:not(:active) {
+      transform: translateY(-1px);
+    }
+    html.polish-ui-chrome body:not(.no-motion) .opening-menu :is(.codex-link, .embark-new):enabled:hover:not(:active) {
+      transform: translateX(3px);
+    }
+    /* Close buttons turn their cross a quarter. */
+    html.polish-ui-chrome body:not(.no-motion) :is(.square-btn, .flyout-close):hover svg {
+      transform: rotate(90deg);
+    }
+    /* Cards rise to meet the pointer. */
+    html.polish-ui-chrome body:not(.no-motion) #modal:not(.fo-dragging) .fo-seat:not(.empty):hover {
+      transform: translateY(-3px);
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal .run-lot:has(.lot-choice:hover) {
+      transform: translateY(-4px);
+    }
+    /* A raised card leaves a strip under it; keep that strip inside the hover target, or the
+       pointer falls off the card, the card drops, and the two chase each other. */
+    html.polish-ui-chrome body:not(.no-motion) #modal .run-lot .lot-choice:hover {
+      bottom: -5px;
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal:not(.fo-dragging) .fo-seat:not(.empty):hover::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      right: 0;
+      left: 0;
+      height: 4px;
+    }
+  }
+  html.polish-ui-chrome body:not(.no-motion) :is(.square-btn, .flyout-close) svg {
+    transition: transform var(--ui-base) var(--ui-out);
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal :is(.fo-seat, .run-lot) {
+    transition: transform var(--ui-base) var(--ui-out);
+  }
+  /* The settings switch slides its knob by transform, not by moving its left edge. */
+  html.polish-ui-chrome body:not(.no-motion) #modal .switch i {
+    transition: transform var(--ui-base) var(--ui-snap);
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal .switch.on i {
+    left: 2px;
+    transform: translateX(15px);
+  }
+
+  /* Dialog: the shell settles in, the backdrop fades. Leaving is quicker than arriving. */
+  html.polish-ui-chrome body:not(.no-motion) #modal[open] {
+    animation: ui-dialog-in var(--ui-slow) var(--ui-out) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal[open]::backdrop {
+    animation: ui-fade-in var(--ui-slow) ease-out backwards;
+  }
+  @supports (overlay: auto) {
+    html.polish-ui-chrome body:not(.no-motion) #modal {
+      transition:
+        opacity 130ms var(--ui-in),
+        transform 130ms var(--ui-in),
+        overlay 130ms allow-discrete,
+        display 130ms allow-discrete;
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal::backdrop {
+      transition:
+        opacity 130ms linear,
+        overlay 130ms allow-discrete,
+        display 130ms allow-discrete;
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal:not([open]) {
+      opacity: 0;
+      transform: translateY(6px) scale(0.985);
+      pointer-events: none;
+    }
+    html.polish-ui-chrome body:not(.no-motion) #modal:not([open])::backdrop {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+  /* A redraw that shows another page or tab (app.js marks it .ui-turn) eases its reading area in. */
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .mj-scroll {
+    animation: ui-rise var(--ui-base) var(--ui-out) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .mj-tab[aria-selected='true'] {
+    animation: ui-tab-in var(--ui-base) var(--ui-out) backwards;
+  }
+  /* Dialogue: the speaker steps in, then the stage note, the name and the line follow. */
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .fy-story .mj-scroll {
+    animation: none;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .fy-speaker-portrait {
+    animation: ui-portrait-in 420ms var(--ui-out) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .fy-dialogue > * {
+    animation: ui-rise 300ms var(--ui-out) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .fy-dialogue > :nth-child(2) {
+    animation-delay: 90ms;
+  }
+  html.polish-ui-chrome body:not(.no-motion) #modal.ui-turn .fy-dialogue > :nth-child(n + 3) {
+    animation-delay: 170ms;
+  }
+
+  /* Flyouts slide out of the edge they hang from, and tuck back when dismissed. */
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .hud-flyout {
+    transform-origin: 100% 100%;
+    animation: ui-flyout-up var(--ui-base) var(--ui-out) backwards;
+    transition:
+      opacity var(--ui-quick) var(--ui-in),
+      transform var(--ui-quick) var(--ui-in),
+      display var(--ui-quick) allow-discrete;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .view-flyout {
+    transform-origin: 0 100%;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .menu-flyout {
+    transform-origin: 100% 0;
+    animation-name: ui-flyout-down;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .hud-flyout[hidden] {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+    pointer-events: none;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .menu-flyout[hidden] {
+    transform: translateY(-6px) scale(0.985);
+  }
+  /* Menu and view entries follow the panel in, a beat apart. Their markup never redraws. */
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > * {
+    animation: ui-rise var(--ui-base) var(--ui-out) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(1) { animation-delay: 20ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(2) { animation-delay: 34ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(3) { animation-delay: 48ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(4) { animation-delay: 62ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(5) { animation-delay: 76ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(6) { animation-delay: 90ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(7) { animation-delay: 104ms; }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield :is(.field-menu, .view-grid) > :nth-child(n + 8) { animation-delay: 118ms; }
+
+  /* Whose turn it is: app.js rewrites the readout only when the round or the side changes, so
+     this plays once per change. Nothing on the HUD animates while the board is idle. */
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .phase-readout strong {
+    transform-origin: 0 50%;
+    animation: ui-pop 460ms var(--ui-snap) backwards;
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield .phase-readout small b {
+    display: inline-block;
+    animation: ui-pop 460ms var(--ui-snap) backwards;
+  }
+
+  /* Board tip and toast. */
+  html.polish-ui-chrome body:not(.no-motion) .battlefield > .board-tip {
+    transform: translate(-50%, 6px);
+    transition:
+      opacity var(--ui-quick) linear,
+      transform var(--ui-base) var(--ui-out);
+  }
+  html.polish-ui-chrome body:not(.no-motion) .battlefield > .board-tip.show {
+    transform: translate(-50%, 0);
+  }
+  html.polish-ui-chrome body:not(.no-motion) .toast {
+    transform: translate(-50%, 14px) scale(0.96);
+    transition:
+      opacity var(--ui-base) linear,
+      transform var(--ui-base) var(--ui-in);
+  }
+  html.polish-ui-chrome body:not(.no-motion) .toast.visible {
+    transform: translate(-50%, 0);
+    transition:
+      opacity var(--ui-quick) linear,
+      transform 260ms var(--ui-snap);
+  }
+}
+
+@keyframes ui-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.972);
+  }
+}
+@keyframes ui-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ui-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes ui-tab-in {
+  from {
+    opacity: 0.55;
+    transform: translateY(3px);
+  }
+}
+/* Starts part-visible: the same speaker often continues, and a full blank between lines flickers. */
+@keyframes ui-portrait-in {
+  from {
+    opacity: 0.3;
+    transform: translateX(-10px) scale(1.03);
+  }
+}
+@keyframes ui-flyout-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+@keyframes ui-flyout-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+}
+@keyframes ui-pop {
+  from {
+    opacity: 0;
+    transform: scale(1.22);
+  }
+}
+
 /* --------------------------------------------------------------- 10  Sizes */
 /* Desktop and tablet: everything the two phone sheets (08, 09) do not claim. The dock grows a
    little; --dock-height grows with it, so the framed board is fitted above the taller dock and

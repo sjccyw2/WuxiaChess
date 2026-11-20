@@ -543,6 +543,15 @@ function drawModal(keepScroll = false) {
   }
   if (body) body.scrollTop = keepScroll ? top : 0;
   dialog.scrollTop = 0;
+  // Polish (uiChrome): mark a redraw that shows another page, tab or line of dialogue, so the
+  // stylesheet eases only those in and leaves in-place refreshes still.
+  if (document.documentElement.classList.contains('polish-ui-chrome')) {
+    const shown = [dialogState, ...dialog.querySelectorAll('[role="tab"][aria-selected="true"], .fy-reading')]
+      .map((part) => part.textContent ?? part)
+      .join('|');
+    dialog.classList.toggle('ui-turn', !dialog.open || shown !== dialog.dataset.shown);
+    dialog.dataset.shown = shown;
+  }
 }
 function openPage(name, heroId) {
   if (!dialog.open) {
