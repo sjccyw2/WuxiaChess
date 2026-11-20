@@ -434,11 +434,69 @@ function takeCover(s, t) {
   return v;
 }
 const afterCut = (n, cut) => (cut ? Math.round((n * (100 - cut)) / 100) : n);
+// 挪移: how a unit about to take a direct blow turns part of it back, or null. A hero's ward keeps
+// half, returns half up to its cap, and he still counters; a villain's 斗轉星移, while charged,
+// keeps and returns by its trait and does not counter.
+function redirectOf(s, v) {
+  const ward = v.conditions?.redirect;
+  if (ward) return { keep: 0.5, back: 0.5, cap: ward.power, counters: true, source: ward.source };
+  const mirror = unitDetails(v)?.traits?.redirect;
+  if (!mirror || !signatureDue(s, v)) return null;
+  return { keep: mirror.keep ?? 0, back: mirror.back ?? 0.5, cap: Infinity, counters: false };
+}
 // What a direct blow does to the unit that receives it, hit by hit, before shields (§6 steps
-// 2–4). Poison, 亂氣 and reflected damage never come through here.
+// 2–4). Poison, 亂氣 and reflected damage never come through here. `back` is what a 挪移 turns
+// on the striker; `void` means nothing of the blow lands, its effects included; `silent`, that
+// the receiver does not counter it.
 function received(s, v, raws) {
+  const ward = redirectOf(s, v);
+  let hits = raws,
+    back = 0;
+  if (ward) {
+    // The blow is one total; the share kept is spread over its hits in proportion.
+    let sum = 0,
+      kept = 0;
+    hits = raws.map((n) => {
+      sum += n;
+      const k = Math.round(sum * ward.keep) - kept;
+      kept += k;
+      return k;
+    });
+    back = Math.min(ward.cap, Math.round(sum * ward.back));
+  }
   const cut = stanceCut(s, v);
-  return { hits: raws.map((n) => afterCut(n, cut)) };
+  return {
+    hits: hits.map((n) => afterCut(n, cut)),
+    ward,
+    back,
+    void: !!ward && !ward.keep,
+    silent: !!ward && !ward.counters
+  };
+}
+// 挪移 after the blow: the ward is used up (a hero's) or the charge spent (a villain's), and the
+// share turned back lands on the striker, through his shield. It may fell an enemy; it never
+// takes a hero below 1 氣血.
+function turnBack(s, striker, bearer, blow, effects) {
+  const ward = blow.ward,
+    source = ward.source ? find(s, ward.source) : bearer;
+  if (ward.source) {
+    if (bearer.conditions) delete bearer.conditions.redirect;
+    progress(source, 'protects', 1);
+  } else {
+    bearer.signatureRound = s.round;
+    if (bearer.signaturePush) bearer.signaturePush = 0;
+  }
+  if (!blow.back || !living(striker)) return;
+  let n = afterWard(blow.back, wardPercent(s, striker));
+  if (ally(striker)) n = Math.min(n, (striker.conditions?.shield?.power || 0) + striker.hp - 1);
+  const dealt = n > 0 ? wound(s, striker, n, source) : 0;
+  effects.push([striker.id, '−' + dealt]);
+  log(
+    s,
+    'combat',
+    (ward.source ? '挪移' : '斗轉星移') + '反震' + unitDetails(striker).name + '，造成 ' + dealt + ' 點傷害。',
+    unitDetails(bearer).name
+  );
 }
 const PREFERS = {
   wounded: '專挑傷重者',
@@ -1251,9 +1309,11 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   });
   result.amount = result.hits.reduce((sum, n) => sum + n, 0);
   result.push = t.hp > result.amount ? step : null;
-  if (plan.partnerMp)
+  // 挪移: what the receiver's guard did to the blow as a whole.
+  if (blow.ward || blow.void) answerBlow(s, u, t, blow, result);
+  if (result.plan.partnerMp)
     result.notes.push(unitDetails(find(s, plan.partner)).name + '內力 ＋' + plan.partnerMp);
-  if (plan.clearPoison) result.notes.push('以毒解毒 · 解除自身中毒');
+  if (result.plan.clearPoison) result.notes.push('以毒解毒 · 解除自身中毒');
   if (result.forms.includes('leech')) {
     result.selfHeal = Math.min(
       9,
@@ -1266,6 +1326,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   if (
     share &&
     !plan.safe &&
+    !blow.silent &&
     t.hp > result.amount &&
     distance(u, result.push || t) <= reach(s, t)
   ) {
@@ -1318,6 +1379,33 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   }
   result.notes.push(...guardNotes(art), ...priceNotes(art));
   return result;
+}
+// The preview of a blow the receiver's guard answers: one that does not land carries none of its
+// effects or push; what a 挪移 turns back is shown on the striker, never below 1 氣血.
+function answerBlow(s, u, t, blow, result) {
+  if (blow.void) {
+    result.effects = [];
+    result.push = null;
+    result.plan = {
+      ...result.plan,
+      effects: [],
+      spentMark: false,
+      spentPoison: false,
+      partnerMp: 0,
+      clearPoison: false
+    };
+  }
+  if (!blow.ward) return;
+  result.turned = { ward: blow.ward, back: blow.back };
+  const left = Math.max(0, blow.back - (u.conditions?.shield?.power || 0));
+  result.rebound = Math.min(left, Math.max(0, u.hp - result.hpCost - 1));
+  const name = unitDetails(t).name,
+    keep = blow.ward.keep;
+  result.notes.push(
+    blow.ward.source
+      ? '挪移 · ' + name + '受擊減半，反震 ' + blow.back
+      : '斗轉星移 · ' + name + (keep ? '只受' + tenths(keep * 100) : '不受此擊') + '，反震 ' + blow.back
+  );
 }
 // What using the art costs its caster beyond 內力 and 氣血, as the preview states it.
 function priceNotes(art) {
@@ -1546,6 +1634,8 @@ function resolve(s, u, t, skill) {
       '以「' + verb + '」擊中' + unitDetails(t).name + '，造成 ' + total + ' 點傷害。',
       who
     );
+    // 挪移: the share turned back lands on the striker, and the ward or charge is spent.
+    if (f.turned) turnBack(s, u, t, f.turned, effects);
     if (living(t)) {
       if (f.plan.spentMark) delete t.conditions.mark;
       if (f.plan.spentPoison) delete t.conditions.poison;
@@ -1752,12 +1842,26 @@ function startEnemy(s) {
 function aimCost(s, u, t, friends) {
   t = coverer(s, t) || t;
   const hp = t.hp / (1 - stanceCut(s, t) / 100);
-  if (!(s.run?.stage >= 6)) return hp * 0.6;
+  if (!(s.run?.stage >= 6)) return hp * 0.6 + wariness(s, u, t);
   const protectedByAlly = friends.some((v) => v !== t && distance(v, t) === 1);
   const cover = tileInfo(t.x, t.y, s.mapIndex).defense > 0;
   const exposedLeader = t.id === s.leader && !protectedByAlly && !cover;
   const vitality = hp + (t.conditions?.shield?.power || 0);
-  return vitality * 0.28 + (35 * vitality) / t.maxHp - (exposedLeader ? 28 : 0);
+  return (
+    vitality * 0.28 + (35 * vitality) / t.maxHp - (exposedLeader ? 28 : 0) + wariness(s, u, t)
+  );
+}
+// What an enemy holds against striking hero t beyond his 氣血: a 挪移 ward would turn up to half
+// its blow back on it.
+function wariness(s, u, t) {
+  let cost = 0;
+  const ward = redirectOf(s, t);
+  if (ward) {
+    const art = signatureDue(s, u) ? enemyTechnique(u, s) : null,
+      raw = damage(u, t, false, s.mapIndex, s);
+    cost += Math.min(ward.cap, (art ? Math.round(raw * art.factor) : raw) / 2) * 1.5;
+  }
+  return cost;
 }
 function enemyAct(s, u) {
   if (s.phase !== 'enemy' || s.result || ally(u) || !living(u) || u.acted) return [];
@@ -1823,6 +1927,8 @@ function enemyAct(s, u) {
     '以「' + attack + '」擊中' + unitDetails(t).name + '，造成 ' + n + ' 點傷害。',
     unitDetails(u).name
   );
+  // 挪移: the ward turns its share back on the striker.
+  if (blow.ward) turnBack(s, u, t, blow, effects);
   if (art) {
     u.signatureRound = s.round;
     if (u.signaturePush) u.signaturePush = 0;
@@ -1838,7 +1944,7 @@ function enemyAct(s, u) {
         effects.push([other.id, '−' + chip]);
         log(s, 'combat', '被餘勁掃中，損失 ' + chip + ' 點氣血。', unitDetails(other).name);
       }
-    } else if (living(t)) {
+    } else if (living(t) && !blow.void) {
       if (art.style === 'drain') t.mp = Math.max(0, t.mp - art.power);
       else applyCondition(s, t, { kind: art.style, power: art.power, turns: art.turns }, u);
       log(s, 'combat', art.note, unitDetails(u).name);
@@ -1847,7 +1953,13 @@ function enemyAct(s, u) {
   reflectStrike(s, t, u, n, effects);
   const share = counterRatio(s, t);
   if (!living(t)) log(s, 'combat', '負傷退場。', unitDetails(t).name);
-  else if (living(u) && !t.conditions?.seal && distance(u, t) <= reach(s, t) && share) {
+  else if (
+    living(u) &&
+    !blow.silent &&
+    !t.conditions?.seal &&
+    distance(u, t) <= reach(s, t) &&
+    share
+  ) {
     const power = Math.max(2, Math.round(damage(t, u, false, s.mapIndex, s) * share));
     const hit = wound(s, u, afterCut(afterWard(power, wardPercent(s, u)), stanceCut(s, u)), t);
     effects.push([u.id, '−' + hit]);
@@ -1899,4 +2011,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, stanceCut, coverer, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, stanceCut, coverer, redirectOf, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

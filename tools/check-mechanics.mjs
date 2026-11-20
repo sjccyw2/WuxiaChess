@@ -1050,6 +1050,122 @@ section('cover');
   });
 }
 
+// ── 挪移 redirect: the hero ward and the villain mirror (§6, §7.6) ───────
+section('redirect');
+{
+  // 張無忌's ward on a companion.
+  const s = board(['zhang', 'medic', 'hero']);
+  const zhang = put(s, 'zhang', 3, 7),
+    medic = put(s, 'medic', 4, 7);
+  const art = teach(zhang, defineArt({ target: 'ally', range: 3, mp: 2, redirect: { cap: 24 }, factor: undefined }));
+  const f = G.forecast(zhang, medic, true, s);
+  check('the ward is a legal target and shows as an effect', G.targetOK(s, zhang, medic, true) && f.effects.some((e) => e.kind === 'redirect' && e.power === 24));
+  G.resolve(s, zhang, medic, true);
+  check('挪移 lands on the recipient until the next turn', medic.conditions?.redirect?.power === 24 && medic.conditions.redirect.through === 1);
+  check('a save with it restores', unit(R.restoreRun(copy(s)), 'medic').conditions?.redirect?.power === 24);
+
+  // An enemy blow at a warded hero: half kept, half (at most the cap) back; she still counters.
+  function warded(cap, setup) {
+    const e = board(['medic', 'zhang', 'hero']);
+    const foe = put(e, 'blade', 5, 7),
+      bearer = put(e, 'medic', 4, 7);
+    BM.applyCondition(e, bearer, { kind: 'redirect', power: cap, turns: 1 }, unit(e, 'zhang'));
+    setup?.(e, foe, bearer);
+    G.startEnemy(e);
+    const raw = G.damage(foe, bearer, false, e.mapIndex, e);
+    const life = { foe: foe.hp, bearer: bearer.hp, protects: unit(e, 'zhang').mastery.protects };
+    G.enemyAct(e, foe);
+    return { e, foe, bearer, raw, life, counter: Math.max(2, Math.round(G.damage(bearer, foe, false, e.mapIndex, e) * 0.55)) };
+  }
+  const w = warded(24);
+  check('the bearer takes half', w.life.bearer - w.bearer.hp === Math.round(w.raw * 0.5), w.life.bearer - w.bearer.hp + ' of ' + w.raw);
+  check('the striker takes the other half, and her counter', w.life.foe - w.foe.hp === Math.round(w.raw * 0.5) + w.counter, w.life.foe - w.foe.hp);
+  check('the ward is used up', !w.bearer.conditions?.redirect);
+  check('it counts as 張無忌 protecting', unit(w.e, 'zhang').mastery.protects === w.life.protects + 1);
+  const capped = warded(1);
+  check('what is turned back is at most the cap', capped.life.foe - capped.foe.hp === 1 + capped.counter, capped.life.foe - capped.foe.hp);
+  const felled = warded(24, (e, foe) => (foe.hp = 2));
+  check('the turned share can fell the striker', felled.foe.hp === 0 && felled.bearer.hp === felled.life.bearer - Math.round(felled.raw * 0.5));
+  const cut = warded(24, (e, foe, b) => BM.applyCondition(e, b, { kind: 'stance', power: 30, turns: 1 }, b));
+  check('the kept half is then cut by 卸勁', cut.life.bearer - cut.bearer.hp === Math.round(Math.round(cut.raw * 0.5) * 0.7));
+
+  // A signature on a warded hero still puts its effect on her.
+  const sig = board(['medic', 'zhang', 'hero']);
+  put(sig, 'chief', 5, 7);
+  const target = put(sig, 'medic', 4, 7);
+  BM.applyCondition(sig, target, { kind: 'redirect', power: 24, turns: 1 }, unit(sig, 'zhang'));
+  sig.round = 3;
+  G.startEnemy(sig);
+  G.enemyAct(sig, unit(sig, 'chief'));
+  check('the signature’s effect still lands on the bearer', !!target.conditions?.weak && !target.conditions?.redirect);
+
+  // With 代受, the coverer's own guard counts, not the companion's.
+  const cv = warded(24, (e) => {
+    const guo = put(e, 'zhang', 4, 6);
+    BM.applyCondition(e, guo, { kind: 'cover', power: 1, turns: 1 }, guo);
+  });
+  check('a covered companion keeps her ward', !!cv.bearer.conditions?.redirect && cv.bearer.hp === cv.life.bearer);
+
+  // The enemy dislikes striking a warded hero.
+  const choose = (ward) => {
+    const a = board(['medic', 'hero', 'zhang']);
+    const foe = Object.assign(put(a, 'blade', 6, 7), { step: 0, range: 2 });
+    const m = Object.assign(put(a, 'medic', 4, 7), { hp: 60 });
+    const h = Object.assign(put(a, 'hero', 8, 7), { hp: 70 });
+    if (ward) BM.applyCondition(a, m, { kind: 'redirect', power: 24, turns: 1 }, unit(a, 'zhang'));
+    G.startEnemy(a);
+    G.enemyAct(a, foe);
+    return m.hp < 60 ? 'medic' : h.hp < 70 ? 'hero' : 'none';
+  };
+  check('unwarded, the weaker is struck', choose(false) === 'medic');
+  check('warded, the other is', choose(true) === 'hero');
+
+  // The villain's 斗轉星移, while charged.
+  const mirror = { redirect: { while: 'charged', keep: 0, back: 0.5 } };
+  withTraits('chief', mirror, () => {
+    const v = board();
+    const hero = put(v, 'hero', 4, 7),
+      boss = put(v, 'chief', 5, 7);
+    teach(hero, defineArt({ debuff: { stat: 'def', power: 3, turns: 2 }, mp: 2 }));
+    const open = G.forecast(hero, boss, true, v);
+    v.round = 3;
+    const f = G.forecast(hero, boss, true, v);
+    const back = Math.round(open.rawHits.reduce((a, b) => a + b, 0) * 0.5);
+    check('charged, the preview shows no damage, no effect, no counter', f.amount === 0 && !f.effects.length && f.counterRaw === 0);
+    check('and says what comes back', f.notes.includes('斗轉星移 · 余滄海不受此擊，反震 ' + back) && f.rebound === back, f.notes);
+    check('the self bar takes it', P.attackPage(v, 'hero', 'chief', true).includes('→ ' + (hero.hp - back)));
+    const life = [hero.hp, boss.hp];
+    G.resolve(v, hero, boss, true);
+    check('the master takes nothing and gets no effect', boss.hp === life[1] && !boss.conditions?.exposed);
+    check('the striker takes half', life[0] - hero.hp === back, life[0] - hero.hp);
+    check('the charge is spent', boss.signatureRound === 3 && G.roundsToSignature(v, boss) > 0);
+    check('the log says so', v.logs.some((l) => l.text.startsWith('斗轉星移反震令狐冲')));
+
+    // Never below 1; shields first; not when uncharged or sealed.
+    const low = board();
+    const weak = Object.assign(put(low, 'hero', 4, 7), { hp: 5 });
+    put(low, 'chief', 5, 7);
+    low.round = 3;
+    G.resolve(low, weak, unit(low, 'chief'), false);
+    check('it never takes a hero below 1', weak.hp === 1);
+    const sh = board();
+    const guarded = put(sh, 'hero', 4, 7);
+    put(sh, 'chief', 5, 7);
+    BM.applyCondition(sh, guarded, { kind: 'shield', power: 4, turns: 1 }, guarded);
+    sh.round = 3;
+    const sf = G.forecast(guarded, unit(sh, 'chief'), false, sh);
+    check('the hero’s shield takes it first', sf.rebound === sf.turned.back - 4);
+    v.round = 4;
+    check('not charged, the blow lands as usual', G.forecast(hero, boss, false, v).amount > 0);
+    const sealed = board();
+    const sb = put(sealed, 'chief', 5, 7);
+    put(sealed, 'hero', 4, 7);
+    sealed.round = 3;
+    BM.applyCondition(sealed, sb, { kind: 'seal', power: 1, turns: 1 }, sb);
+    check('a sealed master cannot mirror', G.forecast(unit(sealed, 'hero'), sb, false, sealed).amount > 0);
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

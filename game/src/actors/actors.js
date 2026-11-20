@@ -851,7 +851,8 @@ class ActorLayer {
         weak: '#ec91ae',
         exposed: '#e8a781',
         stance: '#e0c48a',
-        cover: '#9fc6e8'
+        cover: '#9fc6e8',
+        redirect: '#b9a6e6'
       };
       const signs = {
         mark: '隙',
@@ -865,7 +866,8 @@ class ActorLayer {
         weak: '弱',
         exposed: '破',
         stance: '卸',
-        cover: '代'
+        cover: '代',
+        redirect: '挪'
       };
       const statuses = Object.keys(u.conditions || {});
       const size = clamp(scale * 0.235, 10, 15);

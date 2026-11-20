@@ -195,7 +195,8 @@ const STATUS_COLOURS = {
   weak: '#ec91ae',
   exposed: '#e8a781',
   stance: '#e0c48a',
-  cover: '#9fc6e8'
+  cover: '#9fc6e8',
+  redirect: '#b9a6e6'
 };
 const STATUS_SIGNS = {
   mark: '隙',
@@ -209,7 +210,8 @@ const STATUS_SIGNS = {
   weak: '弱',
   exposed: '破',
   stance: '卸',
-  cover: '代'
+  cover: '代',
+  redirect: '挪'
 };
 
 // Per layer: what each bar last showed, so a wound can linger as a pale segment and drain.
