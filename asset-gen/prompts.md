@@ -68,7 +68,9 @@ text, letters, Chinese characters, calligraphy, watermark, signature, seal stamp
 
 ## Group A: replacements for pictures already in the game
 
-### A1. The youth: `game/assets/npc-youth.webp`
+### A1. The youth: `game/assets/npc-youth.webp` (done)
+
+In the game. The source picture was taller than wide, so it was cropped square from the top edge to keep the whole head.
 
 - **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
 - **Appears in:** every dialogue where the youth speaks, and the prologue.
@@ -284,7 +286,7 @@ Use the **Scenes** house style. Avoid also: `boat, river, ferry, bright sky`
 
 | File | Folder | Size | Group |
 | --- | --- | --- | --- |
-| `npc-youth.webp` | `game/assets/` | 480 × 480 | A |
+| `npc-youth.webp` (done) | `game/assets/` | 480 × 480 | A |
 | `npc-wei.webp` | `game/assets/` | 480 × 480 | A |
 | `run-merchant.webp` | `game/assets/` | 1000 × 500 | A |
 | `stone-marks.webp` | `game/assets/` | 1000 × 360 | A |
