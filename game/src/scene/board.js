@@ -230,6 +230,20 @@ class BattleBoard {
   strikeEffect(u, t, kind, origin) {
     this.layers.pose(u, t, kind, origin);
   }
+  // ---- Combat feel: camera direction (polish switch cameraFollow; see scene/camera.js) ----
+  // The enemy phase begins (true) or hands back to the player (false).
+  watch(on) {
+    if (!on && this.pointers.size) this.view.home = null;
+    this.view.watch(on);
+    this.draw();
+  }
+  // Brings an acting piece, and whoever it strikes, into view when they are near the edge.
+  follow(...units) {
+    if (this.pointers.size || this.title) return;
+    const tiles = units.filter(Boolean).map((u) => ({ x: u.x, y: u.y }));
+    if (this.view.follow(tiles, this.prefs.motion ? 320 : 0)) this.draw();
+  }
+  // ---- end combat feel ----
   draw() {
     if (this.pending || document.hidden) return;
     clearTimeout(this.timer);
@@ -269,6 +283,8 @@ class BattleBoard {
       this.layout = false;
       this.dirty = true;
     }
+    // Combat feel: a camera ease in progress moves the view, so the world is redrawn.
+    if (this.view.step(now)) this.dirty = true;
     const cam = this.view.camera;
     if (this.dirty) {
       this.cut.update(cam, this.title);
@@ -306,6 +322,11 @@ class BattleBoard {
         this.draw();
         pace.chain();
       } else this.timer = setTimeout(() => this.draw(), 105);
+    }
+    // Combat feel: keep frames coming until a camera ease has finished.
+    if (this.view.easing) {
+      this.draw();
+      pace?.chain();
     }
   }
   pointFromEvent(e) {

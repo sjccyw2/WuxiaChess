@@ -7,6 +7,8 @@ import { art } from '../ui/artwork.js';
 import { paintTechniqueStroke } from '../fx/technique-strokes.js';
 import { paintTechniqueTier } from '../fx/technique-tiers.js';
 import { paintSkillEffect } from '../fx/skill-effects.js';
+import { Impact } from '../fx/impact.js';
+import { POLISH } from '../polish.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
 import {
   compactImage,
@@ -42,6 +44,7 @@ class ActorLayer {
     this.imageFailures = new Set();
     this.width = this.height = 1;
     this.prefs = { motion: true, grid: true };
+    this.impact = new Impact(this);
     this.reset();
   }
   image(filename) {
@@ -92,6 +95,7 @@ class ActorLayer {
     this.latestMoves.clear();
     this.effects = [];
     this.boxes = [];
+    this.impact.reset();
     this.settle();
   }
   get playing() {
@@ -153,7 +157,9 @@ class ActorLayer {
     if (previous !== null) {
       // A slow scenery render can extend playback, but cannot erase an entire pose.
       const dt = Math.max(0, now - previous);
-      this.time += this.playing ? Math.min(dt, 40) : dt;
+      // A landed blow may hold the action clock for a few frames (hit-stop). Held time is
+      // only postponed: `until`, the health-bar impacts and finished() all still arrive.
+      this.time += this.impact.tick(this.playing ? Math.min(dt, 40) : dt, dt);
     }
   }
   sync(state, mode, prefs) {
@@ -225,7 +231,8 @@ class ActorLayer {
         this.hold(this.track(target.id).exit);
       }
     }
-    this.exchange = { actor: actor.id, target: target.id, start, hit, end };
+    this.exchange = { actor: actor.id, target: target.id, start, hit, end, rank };
+    if (rank >= 3) this.impact.prepare(actor);
     if (special) {
       const flourish = art.blink
         ? 'blink'
@@ -276,9 +283,16 @@ class ActorLayer {
   numbers(items) {
     const exchange = this.exchange,
       full = this.prefs.motion;
+    // The last blow against a piece that has fallen is the killing blow.
+    const lastBlow = new Map();
+    const lanes = new Map();
+    for (const [index, [id, value, reason]] of items.entries())
+      if (value.startsWith('−') && reason !== 'sacrifice') lastBlow.set(id, index);
     for (const [index, [id, value, reason]] of items.entries()) {
       let start = (exchange?.hit ?? this.time) + index * (full ? 105 : 32);
-      if (exchange && id === exchange.actor && value.startsWith('−') && reason !== 'sacrifice') {
+      const counter =
+        exchange && id === exchange.actor && value.startsWith('−') && reason !== 'sacrifice';
+      if (counter) {
         const reply = exchange.end + (full ? 35 : 15);
         const initiator = G.find(this.state, exchange.target),
           recipient = G.find(this.state, id);
@@ -321,7 +335,37 @@ class ActorLayer {
       // the corresponding blow, second sword, counter or healing note lands.
       const amount = Number(value.replace('−', '-'));
       if (Number.isFinite(amount)) this.track(id).impacts.push({ at: start, amount });
-      if (full) this.effects.push({ kind: 'number', target: id, value, start, end: start + 800 });
+      const struck = G.find(this.state, id),
+        hurt = !!struck && amount < 0 && reason !== 'sacrifice',
+        kill = hurt && struck.hp <= 0 && lastBlow.get(id) === index,
+        rank = counter ? 0 : exchange?.rank || 0;
+      // Hit-stop, flash and shake are released when the action clock reaches this blow.
+      if (hurt)
+        this.impact.blow({
+          at: start,
+          target: id,
+          from: counter ? exchange.target : exchange?.actor,
+          amount: -amount,
+          rank,
+          lead: counter || index === 0,
+          kill
+        });
+      if (full) {
+        const number = { kind: 'number', target: id, value, start, end: start + 800 };
+        if (POLISH.damagePop) {
+          number.tone = this.impact.tone(
+            value,
+            reason,
+            hurt ? -amount / struck.maxHp : 0,
+            rank,
+            kill
+          );
+          number.lane = lanes.get(id) || 0;
+          if (number.tone !== 'word') lanes.set(id, number.lane + 1);
+          number.end = start + 1100;
+        }
+        this.effects.push(number);
+      }
     }
     this.exchange = null;
     this.notify();
@@ -682,6 +726,8 @@ class ActorLayer {
         w,
         h
       );
+      // Combat feel: fx/impact.js paints over the sprite it has just drawn.
+      if (!title) this.impact.sprite(c, u, pos, sheet, frame, row, w, h, flip);
     } else {
       const still = this.image('mini-' + id);
       if (still.complete && still.naturalWidth) {
@@ -784,9 +830,13 @@ class ActorLayer {
   }
   drawEffects(now, visible) {
     const c = this.ctx;
+    this.impact.paintSparks(c);
     for (const e of this.effects) {
       if (now >= e.end) {
-        if (e.kind === 'technique' && e.announced) this.onTechnique?.(e.skill, 'end');
+        if (e.kind === 'technique' && e.announced) {
+          this.onTechnique?.(e.skill, 'end');
+          this.impact.conclude(e);
+        }
         continue;
       }
       if (now < e.start) continue;
@@ -797,10 +847,12 @@ class ActorLayer {
         if (!e.announced && visible && f >= 0.035) {
           e.announced = true;
           this.onTechnique?.(e.skill, 'gather', e.name, e.visual, e.rank);
+          this.impact.herald(e);
         }
         if (!e.struck && visible && f >= 0.52) {
           e.struck = true;
           this.onTechnique?.(e.skill, 'impact', e.name, e.visual, e.rank);
+          this.impact.conclude(e, 250);
         }
         const from = this.point(e.from.x, e.from.y, 0.78);
         const to = this.point(e.to.x, e.to.y, 0.76);
@@ -849,6 +901,14 @@ class ActorLayer {
         continue;
       }
       if (!this.prefs.motion) continue;
+      if (e.kind === 'burst') {
+        this.impact.burst(c, e, now);
+        continue;
+      }
+      if (e.tone) {
+        this.impact.number(c, e, u);
+        continue;
+      }
       const pos = this.location(u, now);
       const to = this.point(pos.x, pos.y, 0.72),
         glow =
@@ -888,10 +948,12 @@ class ActorLayer {
       }
       c.restore();
     }
-    this.effects = this.effects.filter((e) => now < e.end);
+    // A restyled number lives on the unheld clock and says itself when it is done.
+    this.effects = this.effects.filter((e) => (e.tone && e.born != null ? !e.done : now < e.end));
   }
   draw(realTime, title, reach, hover, covered = false) {
     this.advance(realTime, covered);
+    if (!title && this.state && !covered && !this.waitingForArt) this.impact.land(this.time);
     const time = this.time;
     const c = this.ctx;
     c.clearRect(0, 0, this.width, this.height);

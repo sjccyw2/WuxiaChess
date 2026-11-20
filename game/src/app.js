@@ -20,6 +20,7 @@ import { rollView, prologuePage, prologueSteps } from './ui/run-views.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, journeyEnding } from './ui/journey-pages.js';
 import { mapLayout } from './data/terrain.js';
+import { showPhase, phaseLead } from './ui/phase-banner.js';
 
 const $ = (id) => document.getElementById(id);
 const saveKey = 'jianying.qingzhudu.chapter1.v1',
@@ -230,6 +231,7 @@ const board = new BattleBoard({
     if (phase === 'gather') {
       caption.dataset.artist = id;
       caption.dataset.tier = rank || 1;
+      caption.dataset.side = G.find(state, id)?.side || ''; // combat feel: enemy tint
       caption.querySelector('span').textContent =
         G.unitDetails(G.find(state, id))?.name || G.DETAILS[id].name;
       caption.querySelector('strong').textContent = name || G.DETAILS[id].skill;
@@ -769,21 +771,25 @@ async function runEnemy() {
   const token = ++aiRun;
   await board.finished();
   await sleep(prefs.motion ? 240 : 60);
+  await phaseLead(); // combat feel: let the phase banner land before the first enemy moves
   while (token === aiRun && screen === 'battle' && state.phase === 'enemy' && !state.result) {
     const e = G.enemies(state).find((u) => G.living(u) && !u.acted);
     if (!e) {
       G.nextRound(state);
       mode = 'move';
       update();
+      board.watch(false); // combat feel: hand the camera back
       if (!result()) {
         audio('turn');
         mapTip('第 ' + state.round + ' 回合 · 我方行動');
+        showPhase('ally', state.round, prefs.motion);
       }
       return;
     }
     const effects = G.enemyAct(state, e);
     audio(effects.length ? 'strike' : 'step');
     update();
+    board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
     if (effects[0])
       board.strikeEffect(
         e,
@@ -802,6 +808,8 @@ function beginEnemy() {
   mode = '';
   audio('enemy');
   update();
+  showPhase('enemy', state.round, prefs.motion); // combat feel: phase banner
+  board.watch(true); // combat feel: the camera may follow enemy actions
   mapTip('守關敵軍開始行動');
   runEnemy();
 }
@@ -1172,6 +1180,7 @@ function command(action, id, data = {}, keyboard = false) {
         update();
         audio('turn');
         mapTip('我方行動');
+        showPhase('ally', state.round, prefs.motion); // combat feel: phase banner
       }
       break;
     case 'scene-prev':
