@@ -22,7 +22,6 @@ export * from '../../game/src/rules/ferry-market.js';
 export * from '../../game/src/rules/journey.js';
 export * from '../../game/src/fx/technique-strokes.js';
 export { portraits } from '../../game/src/ui/panels.js';
-export { taleCaptions } from '../../game/src/ui/company-views.js';
 
 // Game source files whose text the wiki reads (for 來源 line references and 遊戲原文).
 export const GAME_ROOT = new URL('../../game/', import.meta.url);

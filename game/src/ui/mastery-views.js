@@ -309,7 +309,7 @@ function campRecap(model) {
         : ''
       : text(model.reward);
   const provenance = model.lost ? '此局失利' : '此局已過';
-  return `<section class="mj-berth">${illustration('run-merchant.webp')}<img class="fo-shop-face" src="${text(art('npc-wei.webp'))}" alt="通吃坊掌櫃韋小寶"><div class="mj-berth-copy"><small>${glyph('pin', 13)}韋小寶的通吃坊</small><h3>${text(model.stageName)}</h3><p>${provenance}${reward ? ` · ${reward}` : ''}${model.recruit ? ` · ${text(model.recruit)}入隊` : ''}</p></div></section>${model.objective || model.story ? `<details class="mj-origin mj-recap"><summary>${glyph('scroll', 14)}本局紀錄${glyph('down', 14)}</summary>${model.story ? `<p>${text(model.story)}</p>` : ''}${model.objective ? `<dl><div><dt>局中影</dt><dd>${text(model.objective)}</dd></div></dl>` : ''}</details>` : ''}`;
+  return `<section class="mj-berth">${illustration('run-merchant.webp')}<img class="fo-shop-face" src="${text(art('npc-wei.webp'))}" alt="通吃坊掌櫃韋小寶"><div class="mj-berth-copy"><small>${glyph('pin', 13)}韋小寶的通吃坊</small><h3>${text(model.stageName)}</h3><p>${provenance}${reward ? ` · ${reward}` : ''}${model.recruit ? ` · ${text(model.recruit)}入隊` : ''}</p></div></section>${model.objective || model.story ? `<details class="mj-origin mj-recap"><summary>${glyph('scroll', 14)}本局紀錄${glyph('down', 14)}</summary>${model.story ? `<p>${text(model.story)}</p>` : ''}${model.objective ? `<dl><div><dt>支線</dt><dd>${text(model.objective)}</dd></div></dl>` : ''}</details>` : ''}`;
 }
 function productRow(item, coins) {
   const left = whole(item.left),

@@ -3,9 +3,10 @@
 //   the spine   MAZE_TALE: what happens at a position in the run (opening his eyes, the
 //               first board, the night talk, the end). Told by the youth, 韋小寶 and narration,
 //               who are present whoever was drawn.
-//   the boards  CHAMBER_TALES here, ENCOUNTER_SCRIPT in encounter-script.js: one board, its
-//               master's obsession and the shadow to be saved. A board never refers to
-//               another board or to its place in the order, so boards can be shuffled.
+//   the boards  CHAMBER_TALES here, ENCOUNTER_SCRIPT in encounter-script.js: one board and
+//               its master, who is made to fight by something pressing on his mind from
+//               outside the board. A board never refers to another board or to its place
+//               in the order, so boards can be shuffled.
 //   the heroes  hero-voices.js: lines a hero says wherever they are.
 //
 // Nothing here names the one who set the boards. The invitation is unsigned.
@@ -68,94 +69,76 @@ const MAZE_TALE = {
   win: '十級階走完，同行的人都回去了。階頂站著一個人，背對著他，手裡沒有劍。這一次，他可以走上去。他拔出劍。那人折了一根樹枝。只一招。「還不夠。」',
   winAgain: '他沒有得到名字。',
   loss: '這一輪的眼破了。盤上的白子一齊暗下去，石臺邊只剩他與那隻大鵰。',
-  join: '救下一個影子，盤邊便多了一枚白子。又有人應帖而來。',
+  join: '盤邊多亮了一枚白子。又有人應帖而來。',
+  // Said after a won board whose side objective was not done.
+  unlit: '這一局贏了。盤邊的白子，沒有多亮一枚。',
   joined: '應帖而來。',
   closing: '他闔上眼。'
 };
 
-// One entry per board. `obsession` is what its master cannot bear to lose; `shade` is the
-// figure caught under that obsession, whom the side objective saves.
+// One entry per board: what is seen on arriving, and what changes when the board is won.
 const CHAMBER_TALES = [
   {
     name: '青竹渡',
-    obsession: '一本劍譜。別人有的，他要。',
-    shade: '橋洞裡的孩子',
-    arrival: '石橋橫在淺水上，兩頭都給人封了。橋孔裡露出半隻破草鞋，鞋底脫了三針。',
-    victory: '橋頭的鐵鏈鬆了。兩個搶劍譜的人各退了半步，橋下的水重新流過橋孔。'
+    arrival: '石橋橫在淺水上。橋頭與橋尾各立著一個人，一動不動，像兩枚落定的黑子。',
+    victory: '橋頭的鐵鏈鬆了。兩人眉心的劍意一散，各退了半步，橋下的水重新流過橋孔。'
   },
   {
     name: '紅楓驛',
-    obsession: '一樁舊事。他怕它見光。',
-    shade: '受傷的信使',
-    arrival: '雨把驛桌洗得發亮。楓葉下兩封信一模一樣，獨有一封在蠟裡留了拇指掐過的月牙。',
-    victory: '驛馬再度起步。路邊那片紅楓頭一回給馬蹄踩破，沒再倒飛回樹上。'
+    arrival: '雨把驛桌洗得發亮。桌旁兩個人手按兵刃，眼睛卻望著別處，像在聽一句旁人聽不見的話。',
+    victory: '驛鈴又響了。兩個人醒過來，頭一件事是各自往後退了一步。'
   },
   {
     name: '蘆花汀',
-    obsession: '一句好話。他要人人說他贏。',
-    shade: '吹哨的採藥女',
-    arrival: '蘆葉齊齊向西點頭，像一排奉承人的脖子。有人捂住芒草間的竹哨，掌心還在震。',
-    victory: '蘆花各往各的方向散開。一聲真咳嗽從喝采的空隙傳出，水面的小蜉蝣也跟著一跳。'
+    arrival: '蘆葉齊齊向西點頭。蘆叢裡立著一老一少，衣袖無風自動。',
+    victory: '蘆花各往各的方向散開。壓在灘頭的那道劍意散了，水面的小蜉蝣跟著一跳。'
   },
   {
     name: '聽雪棧',
-    obsession: '一條命。只要自己活。',
-    shade: '讓人先過的旅客',
-    arrival: '棧橋下的鈴舌結了冰。雪面有兩行腳印去，一行腳印回，回來那行比去時每步都深。',
-    victory: '崖口的冰鈴終於響了。山風穿過棧底，只剩一股洗淨油垢的粗麻味。'
+    arrival: '棧橋下的鈴舌結了冰。兩個僧人背靠崖壁立在棧道當中，刀已經出了鞘。',
+    victory: '崖口的冰鈴終於響了。兩柄血刀各自回鞘，這一回沒有再彈出來。'
   },
   {
     name: '空山琴臺',
-    obsession: '一個盟。天下只許一個聲音。',
-    shade: '隔谷吹簫的人',
-    arrival: '琴腹裡壓著一枚銅片。每到該停手的地方，銅片就撞出尖音，把山那頭剛起的簫蓋住。',
-    victory: '銅片取出，琴停的地方留下了一口氣的空白。有人在石凳上挪了半尺，給一位遲來的朋友留座。'
+    arrival: '臺上的琴沒有人彈。石階上一高一低立著兩個人，掌心都凝著勁。',
+    victory: '石階上的霜化了。兩個人收了掌，琴絃給山風撥了一下，自己響了一聲。'
   },
   {
     name: '桃花石陣',
-    obsession: '天下第一。贏到了，卻不知道贏的人是誰。',
-    shade: '牆後的女子',
-    arrival: '桃瓣沾上石壁就變作朱漆。牆裡的門閂年久發黑，拇指挨過的那一段卻磨得透亮。',
-    victory: '沉了多年的門閂抬高半寸，裡外的風終於通了。一片桃花從門檻下鑽過，沾了鞋尖才落地。'
+    arrival: '桃瓣落在石上，沒有人去拂。陣心伏著一個人，嘴裡反覆問著同一句話。',
+    victory: '陣心的勁道平了。一片桃花從石縫裡鑽出來，沾了鞋尖才落地。'
   },
   {
     name: '襄陽殘垣',
-    obsession: '一座城。他要立不世之功。',
-    shade: '守車的老伯',
-    arrival: '襄陽東門橫著一塊車輪楔，刻滿過城的車數。城頭鼓槌就停在最後一道短痕上方。',
-    victory: '車楔讓開，鼓槌落下。一枚原本朝人背心來的流矢，終於只釘在搬空的菜筐上。'
+    arrival: '襄陽東門的門洞下立著兩個人。更鼓不響，城頭無人，他們卻像在等一聲號令。',
+    victory: '城頭的鼓槌終於落下。門洞裡那股勁道散了，五隻金輪停在地上，不再轉。'
   },
   {
     name: '寒玉石室',
-    obsession: '一個人。她輸不起的是情。',
-    shade: '寒玉旁的傷者',
-    arrival: '寒玉壁上結著半句話的霜。霜深處壓著一隻手，掌紋還在抖。',
-    victory: '霜融開一掌寬。那半句話的後頭，原來一個字也沒有。'
+    arrival: '寒玉壁上結滿了霜。壁前立著兩個女子，年長的那個指間扣著三枚銀針。',
+    victory: '霜融開一掌寬。銀針落在玉上，叮的一聲，再沒有人去拾。'
   },
   {
     name: '倒影天街',
-    obsession: '一個名聲。君子的名。',
-    shade: '攥著銅錢的孩子',
-    arrival: '華山與嵩山的旗號縫在一塊布的兩面。收旗的線從一枚方孔錢中穿過，街角的孩子已經舉酸了手。',
-    victory: '兩層店旗在地上攤平。客人們認出夥計袖口補過的針腳，頭一回問起他自己的姓名。'
+    arrival: '長街上店門都閂著。街心立著兩個人，一個青衫佩劍，一個垂手在後。',
+    victory: '長劍歸鞘，這一回沒有再滑出來。街邊有一扇窗，悄悄推開了一道縫。'
   },
   {
     name: '無刻漏臺',
-    obsession: '一個國。他要把輸掉的贏回來。',
-    shade: '望見家門的老人',
-    arrival: '銅漏的最後一滴水懸在半空。兩根星索托住它，水滴裡含著一個沒能說完的「我」字。',
-    victory: '那滴水落了下去。銅漏響了一聲，高臺第一次投下完整的影子。'
+    arrival: '銅漏的最後一滴水懸在半空。兩股星索從盤外垂下來，繫在臺心一位老者身上。',
+    victory: '兩股星索斷了，縮回盤外。懸了許久的那滴水終於落下，銅漏響了一聲。'
   }
 ];
 
-// Said in the shop when the side objective was done. One per kind of objective, so it
-// reads true on any board.
+// Said when the side objective was done. One per kind of objective, so it reads true on
+// any board. The three kinds that are done by reaching a marked tile are all the lamp.
+const LAMP_TALE = '引路燈亮了。盤外持帖的人，望得見入局的路了。';
 const SIDE_TALES = {
-  speed: '你趕在限時之前取勝。局裡那個影子，來得及做完他要做的事。',
-  safe: '點過出戰的人，一個也沒少。那個一直讓別人先走的影子，這才肯跟上來。',
-  beacon: '引路燈亮了。燈下那個影子看清了路，也看清了來接他的人。',
-  cache: '姓名籤回到了主人手裡。她把自己的名字唸了一遍，門便開了。',
-  herbs: '藥送到了那隻發冷的手裡。影子緩過一口氣，握住了伸過來的手。'
+  speed: '這一局贏得快。盤外持帖觀望的人，看在眼裡。',
+  safe: '點過出戰的人，一個也沒少。盤外持帖觀望的人，看在眼裡。',
+  beacon: LAMP_TALE,
+  cache: LAMP_TALE,
+  herbs: LAMP_TALE
 };
 
 export { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, YOUTH, WEI, EAGLE };

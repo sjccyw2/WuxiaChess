@@ -1367,12 +1367,7 @@ function holdObjective(s, u) {
   const marker = unclaimedObjectiveTile(s);
   if (marker && ally(u) && living(u) && distance(u, marker) === 0) {
     s.run.marked = true;
-    const discoveries = {
-      beacon: '點亮了引路燈',
-      herbs: '循燈找到傷者，把藥送到他手裡',
-      cache: '在燈下尋回一枚姓名籤'
-    };
-    log(s, 'story', discoveries[s.run.goal] + '。局裡那個影子抬起了頭。', unitDetails(u).name);
+    log(s, 'story', '點亮了引路燈。盤外持帖的人，望得見入局的路了。', unitDetails(u).name);
   }
 }
 function commitSteps(u) {
