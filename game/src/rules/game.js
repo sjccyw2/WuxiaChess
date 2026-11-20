@@ -263,11 +263,11 @@ const DETAILS = {
     epithet: '古墓清影',
     bio: '古墓派傳人。習得左右互搏後，她能以雙手合使玉女素心劍法，一人分擔兩條劍路。',
     basic: '玉女劍法',
-    skill: '玉女素心劍法',
-    skillIcon: 'swords',
-    skillDesc: '以雙劍各擊一次，每劍獨立扣除氣血。目標撐過兩劍才有機會還擊。',
+    skill: '天羅地網勢',
+    skillIcon: 'feather',
+    skillDesc: '雙掌織成羅網擊中相鄰敵人，本回合與下一回合敵人移動減 2。',
     skillRange: 1,
-    cost: 15
+    cost: 9
   },
   duan: {
     name: '段譽',
@@ -505,7 +505,7 @@ const HERO_STATS = {
   medic: [94, 76, 18, 7, 3, 2, 'staff'],
   guard: [148, 44, 23, 17, 3, 1, 'pole'],
   guo: [146, 50, 23, 15, 3, 1, 'wraps'],
-  xiao: [103, 66, 24, 9, 4, 1, 'twins'],
+  xiao: [102, 66, 23, 9, 4, 1, 'twins'],
   duan: [95, 78, 20, 8, 4, 2, 'fan']
 };
 const startingHero = (id) => makeUnit(id, 'ally', 0, 0, ...HERO_STATS[id]);
@@ -674,7 +674,7 @@ const SIGNATURE_RULES_BY_HERO = {
   medic: { heal: 30 },
   guard: { factor: 1.15, safe: true, stance: 30 },
   guo: { factor: 1.28, debuff: { stat: 'atk', power: 4, turns: 2 } },
-  xiao: { factor: 1.44, hits: [0.65, 0.65] },
+  xiao: { factor: 1.25 },
   duan: { factor: 1.62, pierce: 0.5 },
   huang: { factor: 1.15, visual: 'guard' },
   yang: { factor: 1.32, visual: 'guo' },

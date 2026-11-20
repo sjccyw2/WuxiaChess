@@ -31,12 +31,12 @@ const RECIPES = {
   armyBookRally: ['武穆遺書・合陣','cinnabar','banner','warPennant','gather','繫著三枚指令帶的軍旗下展，陣線隨旗立起。'],
   dragonReserve: ['降龍十八掌','bronze','dragon','dragonEcho','echo','前龍甩首後，第二道小龍影從反面折回。'],
 
-  'signature:xiao': ['玉女素心劍法','pearl','twins','pairedLotus','double','兩柄纖劍向相反方向張開，在蓮心處交鋒。'],
-  sparrowSteps: ['天羅地網勢・捕雀步','pearl','steps','sparrowNet','glide','飛雀一高一低，從細索織成的網眼間穿過。'],
+  'signature:xiao': ['天羅地網勢','pearl','steps','sparrowNet','glide','飛雀一高一低，從細索織成的網眼間穿過。'],
   jadeNeedle: ['玉蜂針','bamboo','bee','jadeSwarm','quick','幾隻玉蜂繞弧撲近，雙翼開合後露出針尾。'],
-  pairedHands: ['左右互搏術','jade','twins','crossedHands','double','左右手各走一條劍路，前直後橫，交擊有別。'],
   silkBell: ['金鈴索','bronze','lash','silkBells','sweep','兩條紅綢分頭回旋，兩枚金鈴錯拍落下。'],
-  maidenHarmony: ['玉女素心・雙手合璧','pearl','twins','twinHarmony','echo','兩柄長劍成合璧雙弧，白花從交點綻開。'],
+  jadeHeart: ['玉女心經','pearl','twins','pairedLotus','double','兩柄纖劍向相反方向張開，在蓮心處交鋒。'],
+  pairedHands: ['左右互搏術','jade','twins','crossedHands','double','左右手各走一條劍路，前直後橫，交擊有別。'],
+  maidenHarmony: ['玉女素心劍法','pearl','twins','twinHarmony','echo','兩柄長劍成合璧雙弧，白花從交點綻開。'],
 
   'signature:duan': ['六脈神劍','violet','beams','sixFan','snap','六道不同顏色的指光由一點扇形發出。'],
   northernSea: ['北冥神功','sea','return','seaFunnel','return','墨藍水渦逐層內收，一束內息流回掌心。'],

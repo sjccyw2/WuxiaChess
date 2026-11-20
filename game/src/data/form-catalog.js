@@ -40,13 +40,13 @@ const ART_FORMS = {
   dragonReserve: ['collision'],
 
   // 小龍女
-  'signature:xiao': ['flank'],
+  'signature:xiao': ['pin'],
   jadeThread: ['exploit'],
-  sparrowSteps: ['riposte'],
-  jadeNeedle: ['pin'],
-  pairedHands: ['distill'],
+  jadeNeedle: ['glide'],
   silkBell: ['pull', 'collision'],
-  maidenHarmony: ['flank', 'arc'],
+  jadeHeart: ['glide'],
+  pairedHands: ['distill'],
+  maidenHarmony: [],
 
   // 段譽
   'signature:duan': ['line'],
