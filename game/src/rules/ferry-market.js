@@ -57,10 +57,13 @@ function pools(s) {
       continue;
     groups[item.kind].push(id);
   }
-  groups.manual = Object.keys(MANUAL_PRICES).filter(
-    (id) => TECHNIQUES[id].tier <= Math.min(4, depth + 1)
-  );
+  groups.manual = Object.keys(MANUAL_PRICES).filter((id) => manualStage(id) <= depth);
   return groups;
+}
+// The first ferry stop (counted from 1) whose shelf can carry this manual.
+function manualStage(id) {
+  const tier = TECHNIQUES[id].tier;
+  return tier > 4 ? Infinity : Math.max(1, tier - 1);
 }
 // Mix every bit of the run and stage before taking the first draw.
 function ferryRandom(run, salt) {
@@ -168,4 +171,4 @@ function pickBowl(s, position) {
   return true;
 }
 
-export { VISITOR, MARKET_STOCK, MARKET_RULES, makeOffers, makeVisit, validVisit, lotName, lotImage, grantLot, coverBowls, pickBowl };
+export { VISITOR, MARKET_STOCK, MARKET_RULES, manualStage, makeOffers, makeVisit, validVisit, lotName, lotImage, grantLot, coverBowls, pickBowl };

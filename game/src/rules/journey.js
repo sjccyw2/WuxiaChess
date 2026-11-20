@@ -542,13 +542,21 @@ function recruit(s) {
   G.log(s, 'story', MAZE_TALE.join, G.DETAILS[id].name);
   return id;
 }
+// Silver paid after a won battle. The wiki's mission pages read these.
+const REWARDS = {
+  clear: 36, // for winning the first stop
+  perStage: 5, // added for each later stop
+  side: 19 // extra when the side objective is also done
+};
 function settle(s) {
   const r = s.run;
   if (!s.result || r.status !== 'battle' || r.scene !== 'fight') return false;
   const won = s.result === 'win',
     optional = won && objective(s).done,
     terminal = !won || r.stage === 9;
-  const reward = won ? 36 + 5 * r.stage + (optional ? 19 : 0) : 0;
+  const reward = won
+    ? REWARDS.clear + REWARDS.perStage * r.stage + (optional ? REWARDS.side : 0)
+    : 0;
   r.next = G.party(s).map((u) => u.id);
   r.coins += reward;
   // Credits, stock, recruits and the receipt persist in the same saved transaction.
@@ -1024,4 +1032,4 @@ function campModel(s) {
   };
 }
 
-export { NUMERALS, mapGoalType, mapGoalName, LEGACY, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

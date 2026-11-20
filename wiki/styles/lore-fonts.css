@@ -1,0 +1,15 @@
+/* Extra characters the game's two fonts lack. Written by tools/lore-fonts.py; do not edit by hand. */
+@font-face {
+  font-family: RiverSerif;
+  src: url('../assets/lore-serif.woff2') format('woff2');
+  font-weight: 650 900;
+  font-display: swap;
+  unicode-range: U+3008-3009, U+4EC0, U+4ECB, U+4F46, U+4F48, U+4F8B, U+4FC2, U+507D, U+51A0, U+51B2, U+52AB, U+52DF, U+52FF, U+5319, U+5354, U+53F0, U+53F2, U+5426, U+552F, U+5617, U+56E0, U+578B, U+5BE1, U+5C0A, U+5C38, U+5C45, U+5C4D, U+60B2, U+614B, U+64CE, U+6558, U+65E6, U+671F, U+67EF, U+68AF, U+6982, U+69CB, U+69CD, U+6B0A, U+6B3E, U+6B72, U+6C38, U+6D3D, U+6E4A, U+6FC3, U+7194, U+721B, U+723D, U+7260, U+7272, U+72A7, U+72C0, U+74CF, U+756A, U+7981, U+7A3F, U+7A81, U+7CB5, U+7CCA, U+7CFB, U+7D71, U+7E41, U+805A, U+8089, U+821E, U+838A, U+856D, U+8587, U+864E, U+8868, U+89BA, U+8A00, U+8A9E, U+8ABC, U+8AD6, U+8B0E, U+8CE2, U+8CF4, U+8D0F, U+9444, U+9470, U+96C5-96C6, U+97CB, U+9846, U+9AB0, U+9B54, U+9E7F, U+9F0E;
+}
+@font-face {
+  font-family: RiverSans;
+  src: url('../assets/lore-sans.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+3008-3009, U+4EC0, U+4ECB, U+4F46, U+4F48, U+4F8B, U+4FC2, U+507D, U+51A0, U+51B2, U+52AB, U+52DF, U+52FF, U+5319, U+5354, U+53F0, U+53F2, U+5426, U+552F, U+5617, U+56E0, U+578B, U+5BE1, U+5C0A, U+5C38, U+5C45, U+5C4D, U+60B2, U+614B, U+64CE, U+6558, U+65E6, U+671F, U+67EF, U+68AF, U+6982, U+69CB, U+69CD, U+6B0A, U+6B3E, U+6B72, U+6C38, U+6D3D, U+6E4A, U+6FC3, U+7194, U+721B, U+723D, U+7260, U+7272, U+72A7, U+72C0, U+74CF, U+756A, U+7981, U+7A3F, U+7A81, U+7CB5, U+7CCA, U+7CFB, U+7D71, U+7E41, U+805A, U+8089, U+821E, U+838A, U+856D, U+8587, U+864E, U+8868, U+89BA, U+8A00, U+8A9E, U+8ABC, U+8AD6, U+8B0E, U+8CE2, U+8CF4, U+8D0F, U+9444, U+9470, U+96C5-96C6, U+97CB, U+9846, U+9AB0, U+9B54, U+9E7F, U+9F0E;
+}

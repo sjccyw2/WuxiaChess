@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#203932" />
+    <meta
+      name="description"
+      content="《劍影江湖》遊戲圖鑑。查閱《一念江湖》（暫名）世界觀設定、群俠、武學、十渡輿圖與逐句劇情。"
+    />
+    <title>江湖志 · 劍影江湖</title>
+    <link rel="icon" type="image/svg+xml" href="../game/assets/seal.svg" />
+    <link rel="stylesheet" href="styles/lore-fonts.css" />
+    <link rel="stylesheet" href="styles/wiki.css" />
+    <link rel="stylesheet" href="styles/lore.css" />
+  </head>
+  <body>
+    <a class="skip" href="#content">跳至內容</a>
+    <header class="mast">
+      <button
+        id="menu"
+        class="navbtn"
+        type="button"
+        aria-label="打開目錄"
+        aria-controls="nav"
+        aria-expanded="false"
+      >
+        <span></span><span></span><span></span>
+      </button>
+      <a class="brand" href="#home"
+        ><span class="brand-seal" aria-hidden="true">志</span><span>江湖志</span></a
+      >
+      <form id="search-form" role="search">
+        <label class="sr" for="query">全文檢索</label
+        ><span class="magnify" aria-hidden="true"></span
+        ><input
+          id="query"
+          type="search"
+          autocomplete="off"
+          placeholder="搜尋人物、招式、原文…"
+        /><button type="submit">檢索</button>
+      </form>
+      <a
+        class="play"
+        href="../game/"
+        target="_blank"
+        rel="noopener"
+        >進入遊戲 <span aria-hidden="true">↗</span></a
+      >
+    </header>
+    <div class="layout">
+      <aside class="rail" id="nav">
+        <nav id="nav-list" aria-label="圖鑑目錄"></nav>
+        <div class="rail-foot">
+          <a id="export-catalog" href="#" download="江湖志-圖鑑.json">匯出圖鑑 ↓</a
+          ><a id="export-text" href="#" download="江湖志-遊戲原文.json">匯出原文 ↓</a>
+        </div>
+      </aside>
+      <main id="content" tabindex="-1"><p class="loading" role="status">正在翻開江湖志……</p></main>
+    </div>
+    <button class="scrim" id="scrim" aria-label="收起目錄" hidden></button>
+    <div role="status" aria-live="polite" id="notice"></div>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

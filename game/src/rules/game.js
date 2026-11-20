@@ -1032,6 +1032,15 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   }
   return result;
 }
+// Experience and level numbers. The wiki's rules page reads these.
+const GROWTH = {
+  levelXp: 100, // experience needed for each level
+  basicXp: 36, // earned by a basic attack
+  skillXp: 44, // earned by a signature art
+  killXp: 30, // extra for each foe felled by the action
+  seasoned: 3, // from this level on, action experience is scaled down
+  drag: 38 // percent added to the divisor for each level above `seasoned`
+};
 function raiseLevel(u, levels) {
   const novice = Math.min(levels, Math.max(0, 3 - u.level));
   const veteran = levels - novice;
@@ -1045,9 +1054,9 @@ function raiseLevel(u, levels) {
   u.mp = Math.min(u.maxMp, u.mp + 6 * levels);
 }
 function settleExperience(s, u) {
-  if (!Number.isSafeInteger(u.xp) || u.xp < 100) return false;
-  const levels = Math.floor(u.xp / 100);
-  u.xp %= 100;
+  if (!Number.isSafeInteger(u.xp) || u.xp < GROWTH.levelXp) return false;
+  const levels = Math.floor(u.xp / GROWTH.levelXp);
+  u.xp %= GROWTH.levelXp;
   u.sp += levels;
   raiseLevel(u, levels);
   log(s, 'grow', '升至等級 ' + u.level + '，獲得 ' + levels + ' 點武學點數。', unitDetails(u).name);
@@ -1055,7 +1064,7 @@ function settleExperience(s, u) {
 }
 function exp(s, u, n) {
   if (!Number.isSafeInteger(n) || n < 0) return false;
-  n = Math.round((n * 100) / (100 + 38 * Math.max(0, u.level - 3)));
+  n = Math.round((n * 100) / (100 + GROWTH.drag * Math.max(0, u.level - GROWTH.seasoned)));
   u.xp += n;
   log(s, 'grow', '獲得 ' + n + ' 點歷練。', unitDetails(u).name);
   return settleExperience(s, u);
@@ -1252,7 +1261,11 @@ function resolve(s, u, t, skill) {
   }
   finishAction(s, u);
   if (f.notes.length) log(s, 'combat', '氣勁變化。' + f.notes.join('。'), who);
-  const leveled = living(u) && exp(s, u, (skill ? 44 : 36) + (s.stats.kills - oldKills) * 30);
+  const leveled = living(u) && exp(
+      s,
+      u,
+      (skill ? GROWTH.skillXp : GROWTH.basicXp) + (s.stats.kills - oldKills) * GROWTH.killXp
+    );
   check(s);
   return { effects, leveled, counter: f.counterRaw > 0, hits: f.hits.length, from };
 }
@@ -1549,4 +1562,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, identifyEncounter, unitDetails, enemyTechnique, roundsToSignature, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, move, undo, affectedFriends, targetOK, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, identifyEncounter, unitDetails, enemyTechnique, roundsToSignature, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, move, undo, affectedFriends, targetOK, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
