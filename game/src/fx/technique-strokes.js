@@ -60,12 +60,12 @@ const RECIPES = {
   mournfulCloud: ['黯然銷魂掌・杞人憂天','cinnabar','mist','grievingCloud','sweep','兩層暗雲裂開，朱紅落掌從縫隙墜下。'],
   solitaryPalm: ['黯然銷魂掌','cinnabar','palm','lonelyPalm','heavy','一枚朱掌獨落，指尖帶出飄散的墨灰。'],
 
-  'signature:zhang': ['乾坤大挪移','jade','coil','shiftCircle','glide','一陰一陽兩股墨弧在掌前互換位置。'],
-  valleyPulse: ['蝶谷醫術・理傷','bamboo','pulse','valleyPulse','pulse','雙葉之間的一段脈線由紊亂轉為平緩。'],
-  taijiSword: ['太極劍法','steel','coil','taijiBlade','sweep','一輪太極墨痕留有缺口，實劍從缺口出鋒。'],
-  nineYangMantle: ['九陽真氣・護脈','gold','halo','sunShell','gather','朝陽從三重護脈氣弧中升起，九線護住心口。'],
-  holyFireTurn: ['聖火令・移鋒','ember','plunge','fireTablets','snap','三枚火令斜插盤旋，令心的刻焰反向撩起。'],
-  universeCanopy: ['乾坤大挪移・借力回護','jade','lattice','heavenCanopy','echo','飛簷形的護氣展作華蓋，垂穗護住蓋下眾人。'],
+  'signature:zhang': ['蝶谷醫術','bamboo','pulse','valleyPulse','pulse','雙葉之間的一段脈線由紊亂轉為平緩。'],
+  nineYangMantle: ['九陽神功・護體','gold','halo','sunShell','gather','朝陽從三重護脈氣弧中升起，九線護住心口。'],
+  qiankunYield: ['乾坤大挪移・卸力','jade','coil','shiftCircle','glide','一陰一陽兩股墨弧在掌前互換位置。'],
+  qiankunShove: ['乾坤大挪移・移勁','jade','return','returnHook','return','兩道鉤力回卷，把來勁沿原路送回。'],
+  holyFireTurn: ['聖火令武功','ember','plunge','fireTablets','snap','三枚火令斜插盤旋，令心的刻焰反向撩起。'],
+  qiankunSeventh: ['乾坤大挪移・第七層','jade','lattice','heavenCanopy','echo','飛簷形的護氣展作華蓋，垂穗護住蓋下眾人。'],
 
   'signature:hu': ['胡家刀法','frost','draw','snowSaber','double','寬背雪刀橫過，短促的回刀緊隨冰白刀痕。'],
   snowPursuit: ['雪野追蹤','frost','steps','foxTracks','quick','三組狐爪在浮雪上由密至疏，最後一爪帶起碎雪。'],
@@ -87,7 +87,8 @@ const RECIPES = {
   breakPalm: ['破掌式','bronze','thrust','brokenPalm','snap','薄刃從掌影的指縫穿過。'],
   vacantFist: ['空明拳','jade','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。'],
   toadLunge: ['蛤蟆功','bronze','leap','toadLeap','heavy','伏地蟾影伸展雙腿，貼著低弧彈起。'],
-  northernSea: ['北冥神功','sea','return','seaFunnel','return','墨藍水渦逐層內收，一束內息流回掌心。']
+  northernSea: ['北冥神功','sea','return','seaFunnel','return','墨藍水渦逐層內收，一束內息流回掌心。'],
+  universeCanopy: ['乾坤大挪移・借力回護','jade','lattice','heavenCanopy','echo','飛簷形的護氣展作華蓋，垂穗護住蓋下眾人。']
 };
 
 const STROKE_NAMES = Object.freeze(Object.fromEntries(Object.entries(RECIPES).map(([id, row])=>[id,row[0]])));

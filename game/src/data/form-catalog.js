@@ -77,13 +77,13 @@ const ART_FORMS = {
   solitaryPalm: [],
 
   // 張無忌
-  'signature:zhang': ['channel'],
-  taijiGate: ['flank'],
-  valleyPulse: ['overflow'],
-  taijiSword: ['arc'],
+  'signature:zhang': ['overflow'],
   nineYangMantle: ['cleanse'],
+  qiankunYield: [],
+  qiankunShove: ['collision'],
   holyFireTurn: ['pull'],
-  universeCanopy: ['cleanse', 'channel'],
+  taijiGate: ['still'],
+  qiankunSeventh: ['cleanse'],
 
   // 胡斐
   'signature:hu': ['mark'],

@@ -499,7 +499,7 @@ function makeUnit(id, side, x, y, hp, mp, atk, def, step, range, weapon = null) 
 const HERO_STATS = {
   huang: [96, 74, 20, 8, 4, 2, 'jadeCane'],
   yang: [128, 54, 27, 10, 4, 1, 'darkIron'],
-  zhang: [125, 78, 21, 14, 3, 1, 'mingSash'],
+  zhang: [132, 76, 22, 14, 3, 1, 'mingSash'],
   hu: [116, 61, 24, 9, 4, 1, 'foxSaber'],
   hero: [112, 48, 27, 10, 3, 1, 'pine'],
   medic: [94, 76, 18, 7, 3, 2, 'staff'],
@@ -678,7 +678,7 @@ const SIGNATURE_RULES_BY_HERO = {
   duan: { factor: 1.1, safe: true },
   huang: { factor: 1.15, visual: 'guard' },
   yang: { factor: 1.32, visual: 'guo' },
-  zhang: { visual: 'medic', shield: { power: 32, turns: 2 }, target: 'ally' },
+  zhang: { visual: 'medic', heal: 30, target: 'ally' },
   hu: { factor: 1.27, visual: 'xiao', hits: [0.68, 0.68] }
 };
 function artFor(u, key = u.activeArt || 'signature') {
