@@ -128,15 +128,15 @@ const WEAPON_FORMS = {
 const COMBINATIONS = [
   {
     name: '拂花遞劍',
-    skills: ['huangPetals', 'signature:hero'],
+    skills: ['huangPetals', 'signature:hero', 'ninefoldFormula', 'ninefoldIntent'],
     weapons: ['jadeCane'],
-    text: '黃蓉與敵人之間留一空格，持青竹棒使拂花，把人拉近，逼他露出破綻。令狐冲進到兩格內接獨孤九劍，抓住破綻，多打 9 點原始傷害，這次交鋒也免受還擊。'
+    text: '黃蓉與敵人之間留一空格，持青竹棒使拂花，把人拉近，逼他露出破綻。令狐冲進到兩格內接石壁劍招、總訣式或獨孤九劍，抓住破綻，多打 9 點原始傷害，這次交鋒也免受還擊。'
   },
   {
     name: '前掌後刀',
-    skills: ['signature:guo'],
+    skills: ['kanglongRegret'],
     weapons: ['foxSaber'],
-    text: '郭靖和胡斐各站在敵人南北相鄰的一格。胡斐持胡家單刀先攻，夾擊多打 7 點，郭靖回 4 點內力。郭靖再出降龍十八掌，敵人的退路正被胡斐佔住，掌力再添 7 點。'
+    text: '郭靖和胡斐各站在敵人南北相鄰的一格。胡斐持胡家單刀先攻，夾擊多打 7 點，郭靖回 4 點內力。郭靖再出亢龍有悔，敵人的退路正被胡斐佔住，掌力再添 7 點。'
   },
   {
     name: '飛針催毒',
@@ -146,15 +146,15 @@ const COMBINATIONS = [
   },
   {
     name: '牽敵成列',
-    skills: ['sweepingWhip', 'signature:duan'],
+    skills: ['sweepingWhip', 'shaoShang'],
     weapons: ['silkWhip'],
-    text: '向問天隔一空格用長鞭破陣，將敵人拉進段譽與另一敵人所在的直線。任盈盈換錦紋軟鞭，也能普攻牽敵。段譽再出六脈神劍，主敵後兩格內若有敵人且通路無阻，劍氣便以四成半威力穿中一人。'
+    text: '向問天隔一空格用長鞭破陣，將敵人拉進段譽與另一敵人所在的直線。任盈盈換錦紋軟鞭，也能普攻牽敵。段譽再出少商劍，主敵後兩格內若有敵人且通路無阻，劍氣便以四成半威力穿中一人。'
   },
   {
     name: '一指續孤掌',
-    skills: ['signature:yang', 'yangFinger'],
+    skills: ['mournfulCloud', 'yangFinger'],
     weapons: ['ironFan'],
-    text: '楊過先出黯然銷魂掌，自耗 9 點氣血。讓已習一陽指的張無忌持鐵骨折扇，在三格內替他療傷兼回 6 點內力。多出的療量最多有 12 點化為一回合護盾，可留待敵方出招。'
+    text: '楊過先出杞人憂天，自耗 10 點氣血。讓已習一陽指的張無忌持鐵骨折扇，在三格內替他療傷兼回 6 點內力。多出的療量最多有 12 點化為一回合護盾，可留待敵方出招。'
   },
   {
     name: '踏浪回陣',

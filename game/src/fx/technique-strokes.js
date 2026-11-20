@@ -1,5 +1,6 @@
-// Ink strokes for the 68 active arts. The action's stable ID owns its paint, even when
-// the same manual is used by different heroes. Coordinates in the recipes are tile units.
+// Ink strokes for the 72 active arts, and six that only villain signatures still borrow.
+// The action's stable ID owns its paint, even when the same manual is used by different
+// heroes. Coordinates in the recipes are tile units.
 const RECIPES = {
   'signature:hero': ['石壁劍招','slate','thrust','swordBind','snap','石壁上刻下的劍招一線穿出，劍鋒從護手旁掠過。'],
   ninefoldFormula: ['獨孤九劍・總訣式','steel','fan','nineFan','snap','九柄劍影張扇，劍尖同指一處。'],

@@ -686,7 +686,7 @@ function artFor(u, key = u.activeArt || 'signature') {
   const info = unitDetails(u);
   return {
     name: info.skill,
-    tier: 3,
+    tier: 0,
     desc: info.skillDesc,
     icon: info.skillIcon,
     range: info.skillRange,
