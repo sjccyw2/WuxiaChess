@@ -2631,6 +2631,196 @@ section('phase');
   });
 }
 
+// ── 化功 contact, 盟令 banner, 蛇毒 basicPoison, signature riders, 星索 wards (§7.2, 7.7, 7.8) ─
+section('contact, banner, riders and wards');
+{
+  // A villain's style for the length of a test (its traits stay as given).
+  function withStyle(key, style, traits, body) {
+    const prior = G.DETAILS[key].style;
+    G.DETAILS[key].style = style;
+    try {
+      return withTraits(key, traits, body);
+    } finally {
+      G.DETAILS[key].style = prior;
+    }
+  }
+  const scoutAs = (traits) => Object.assign(G.DETAILS['scout-0'], { ...G.DETAILS.scout, name: '試弟子', traits });
+
+  withTraits('chief', { contact: { mp: 8 } }, () => {
+    const s = board();
+    s.run.stage = 1;
+    const hero = put(s, 'hero', 4, 3),
+      chief = put(s, 'chief', 5, 3);
+    const f = G.forecast(hero, chief, false, s);
+    check('化功: a blow from beside him costs 8 + stage 內力', f.contact === 9 && f.notes.includes('化功 · 內力 −9'), f.contact);
+    check('the preview gives it its own row', P.attackPage(s, 'hero', 'chief', false).includes('<span>化功</span><b class="">內力 −9'));
+    const mp = hero.mp;
+    G.resolve(s, hero, chief, false);
+    check('and the strike takes it', hero.mp === mp - 9, hero.mp);
+    check('his page says so', G.enemyTraitLines(s, chief).includes('【化功】貼身打中他的俠客損失 9 點內力（封穴時無效）。'));
+    const medic = put(s, 'medic', 7, 3);
+    check('a blow from two tiles off costs nothing', !G.forecast(medic, chief, false, s).contact);
+    chief.conditions = { seal: { power: 1, through: s.round, source: 'hero' } };
+    hero.acted = false;
+    check('sealed, he dissolves nothing', !G.forecast(hero, chief, false, s).contact);
+    delete chief.conditions;
+    teach(hero, defineArt({ safe: true }));
+    hero.mp = 40;
+    check('免受還擊 does not spare the striker', G.forecast(hero, chief, true, s).contact === 9);
+    hero.mp = 3;
+    hero.activeArt = 'signature';
+    check('never more than he has', G.forecast(hero, chief, false, s).contact === 3);
+  });
+  withTraits('scout-0', { cover: 'master' }, () =>
+    withTraits('chief', { contact: { mp: 8 } }, () => {
+      scoutAs({ cover: 'master' });
+      const s = board();
+      const hero = put(s, 'hero', 4, 3);
+      put(s, 'chief', 5, 3);
+      put(s, 'scout', 5, 4);
+      const f = G.forecast(hero, unit(s, 'chief'), false, s);
+      check('a disciple who takes the blow for him has no 化功', f.coveredBy === 'scout' && !f.contact);
+    })
+  );
+
+  withTraits('chief', { banner: { atk: 1 } }, () => {
+    const s = board();
+    s.run.stage = 3;
+    const blade = unit(s, 'blade'),
+      chief = unit(s, 'chief');
+    const base = blade.atk;
+    check('盟令: every other enemy strikes harder by 1 + stage', G.stat(blade, 'atk', s) === base + 4 && G.stat(chief, 'atk', s) === chief.atk);
+    check('and shows a chip', G.standingLines(s, blade).includes('盟令 ＋4') && !G.standingLines(s, chief).length);
+    check('the bearer’s page says so', G.enemyTraitLines(s, chief).includes('【盟令】存活時其餘敵人攻擊 ＋4。'));
+    chief.hp = 0;
+    check('with the bearer fallen it is gone', G.stat(blade, 'atk', s) === base && !G.standingLines(s, blade).length);
+  });
+
+  withTraits('scout-0', { basicPoison: { power: 2, turns: 2, name: '蛇毒' } }, () => {
+    scoutAs({ basicPoison: { power: 2, turns: 2, name: '蛇毒' } });
+    const s = board();
+    s.run.stage = 5;
+    const scout = put(s, 'scout', 5, 3),
+      hero = put(s, 'hero', 4, 3);
+    G.startEnemy(s);
+    G.enemyAct(s, scout);
+    check('蛇毒: its plain strike poisons with 2 + ⌊stage/2⌋', hero.conditions?.poison?.power === 4 && hero.conditions.poison.through === s.round + 1);
+    check('its page says so', G.enemyTraitLines(s, scout).includes('【蛇毒】普攻令目標中毒，兩次毒發各損 4 氣血。'));
+  });
+
+  // Signature styles and riders, struck when due (board 0's master: round 3).
+  // The checks run inside, while the style and traits hold.
+  const due = (style, traits, setup, checks) =>
+    withStyle('chief', style, traits, () => {
+      const s = board();
+      s.round = 3;
+      const chief = put(s, 'chief', 3, 3);
+      // Only the heroes the setup puts are in play.
+      for (const id of ['medic', 'guard']) unit(s, id).hp = 0;
+      setup(s);
+      G.startEnemy(s);
+      const effects = G.enemyAct(s, chief);
+      checks({ s, chief, effects });
+    });
+  due('pin', { mods: {} }, (s) => put(s, 'hero', 4, 3), ({ s }) => {
+    const pin = unit(s, 'hero').conditions?.pin;
+    check('pin: the struck hero is 絆足 2 until his next turn is over', pin?.power === 2 && pin.through === s.round + 1);
+    check('its note', G.enemyTechnique(unit(s, 'chief'), s).note === '令目標絆足，移動減 2，持續至下回合。');
+  });
+  due('poison', { mods: {}, sig: { extra: 'wound' } }, (s) => put(s, 'hero', 4, 3), ({ s }) => {
+    const c = unit(s, 'hero').conditions || {};
+    check('poison with extra wound: poison and 內傷 both', c.poison?.power === 3 && c.wound?.power === 5);
+    check('its note names both', G.enemyTechnique(unit(s, 'chief'), s).note === '令目標中毒，兩次毒發各損 3 氣血，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。');
+  });
+  due(
+    'line',
+    { mods: {} },
+    (s) => {
+      put(s, 'hero', 4, 3);
+      Object.assign(put(s, 'medic', 6, 3), { hp: 94 });
+    },
+    ({ s, effects }) => {
+      const hit = effects.find((e) => e[0] === 'hero'),
+        through = effects.find((e) => e[0] === 'medic');
+      check('line: the hero two behind takes half the blow', !!through && Math.abs(Number(through[1].slice(1)) - Math.round(Number(hit[1].slice(1)) / 2)) <= 2, JSON.stringify(effects));
+      check('line: no condition on the target', !unit(s, 'hero').conditions || !Object.keys(unit(s, 'hero').conditions).length);
+      check('line note says the danger zone does not show it', G.enemyTechnique(unit(s, 'chief'), s).note.includes('（危險範圍不顯示穿透）'));
+      unit(s, 'medic').x = 7;
+      check('three tiles behind is too far', !G.lineVictim(s, { x: 3, y: 3 }, unit(s, 'hero')));
+      unit(s, 'medic').x = 5;
+      check('one behind is in it', G.lineVictim(s, { x: 3, y: 3 }, unit(s, 'hero'))?.id === 'medic');
+      check('a striker off the row sends nothing through', !G.lineVictim(s, { x: 3, y: 4 }, unit(s, 'hero')));
+    }
+  );
+  due(
+    'sweep',
+    { mods: {}, sig: { sweep: 0.33 } },
+    (s) => {
+      put(s, 'hero', 4, 3);
+      Object.assign(put(s, 'medic', 5, 3), { hp: 94 });
+    },
+    ({ s, effects }) => {
+      const hit = Number(effects.find((e) => e[0] === 'hero')[1].slice(1)),
+        chip = Number(effects.find((e) => e[0] === 'medic')[1].slice(1));
+      check('sweep share: chips take the signature’s third', chip >= Math.round(hit * 0.33) - 2 && chip <= Math.round(hit * 0.33) + 2, [hit, chip]);
+      check('its note says a third', G.enemyTechnique(unit(s, 'chief'), s).note === '相鄰的其他我方俠客也會受到三分之一傷害。');
+    }
+  );
+  {
+    const plain = (() => {
+      const s = board();
+      s.round = 2;
+      const chief = put(s, 'chief', 3, 3),
+        hero = put(s, 'hero', 4, 3);
+      for (const id of ['medic', 'guard']) unit(s, id).hp = 0;
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      return hero.maxHp - hero.hp;
+    })();
+    due('mirror', { redirect: { while: 'charged', keep: 0, back: 0.5 } }, (s) => put(s, 'hero', 4, 3), ({ s, chief, effects }) => {
+      const hero = unit(s, 'hero');
+      check('mirror: charged, it strikes with its plain blow', hero.maxHp - hero.hp === plain && !effects.signature, [hero.maxHp - hero.hp, plain]);
+      check('and keeps its charge', chief.signatureRound === undefined && G.signatureDue(s, chief));
+      s.phase = 'ally';
+      const page = P.enemyPage(s, 'chief');
+      check('its page has no strength line, and the mirror’s words', page.includes('蓄勢時，第一次受到的直接攻擊全數不中') && !page.includes('普攻傷害 ×'));
+      check('charged, the page warns of the mirror', page.includes('蓄勢已成 · 第一下直接攻擊將被反震'));
+    });
+  }
+  // 吸勁 against a charged 蓄勢反擊: the blow that delays it is answered at the ordinary share.
+  withTraits('chief', { stance: { while: 'charged', cut: 0, holds: true } }, () => {
+    const s = board();
+    s.round = 3;
+    const hero = put(s, 'hero', 4, 3),
+      chief = put(s, 'chief', 5, 3);
+    const plainCounter = G.forecast(hero, chief, false, s).counterRaw;
+    teach(hero, defineArt({ forms: ['siphon'], factor: 1 }));
+    hero.mp = 40;
+    const f = G.forecast(hero, chief, true, s);
+    check('charged, a plain blow draws the full counter', G.counterRatio(s, chief) === 1 && plainCounter > 0);
+    check('吸勁 un-charges it: the counter is the ordinary share', f.siphon?.delay && f.counterRaw < plainCounter, [f.counterRaw, plainCounter]);
+    G.resolve(s, hero, chief, true);
+    check('…and it is no longer held', !G.signatureDue(s, chief) && !G.holdOf(s, chief));
+  });
+
+  // 星索護陣: the wards are data now.
+  withTraits('scout-0', { ward: 35 }, () => {
+    scoutAs({ ward: 35 });
+    const s = board();
+    const hero = put(s, 'hero', 4, 3),
+      chief = put(s, 'chief', 5, 3),
+      scout = put(s, 'scout', 7, 3);
+    check('a living ward takes 35% off the master', G.forecast(hero, chief, false, s).ward === 35 && G.wardEscorts(s).length === 1);
+    check('and not off anyone else', !G.forecast(hero, scout, false, s).ward);
+    check('the master’s page', G.enemyTraitLines(s, chief).includes('【星索護陣】每名存活的試弟子替他抵擋 35% 傷害。'));
+    check('the ward’s page', G.enemyTraitLines(s, scout).includes('【護陣】存活時替余滄海抵擋 35% 傷害。'));
+    scout.hp = 1;
+    put(s, 'medic', 8, 3);
+    G.resolve(s, unit(s, 'medic'), scout, false);
+    check('felled, its rope breaks and says so', !G.wardEscorts(s).length && s.logs.some((l) => l.text === '星索皆斷，余滄海的護陣已破。'));
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

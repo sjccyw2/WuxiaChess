@@ -1097,10 +1097,14 @@ function loseAction(s, u) {
 }
 // Chips the panels derive from where a piece stands, not stored as conditions.
 function standingLines(s, u) {
+  const lines = [];
+  // 盟令: the commander's bonus on every other enemy while he lives.
+  const banner = living(u) && bannerBonus(s, u);
+  if (banner) lines.push('盟令 ＋' + banner);
   const zone = living(u) && zoneAt(s, u);
-  if (!zone) return [];
+  if (!zone) return lines;
   const owner = unitDetails(find(s, zone.owner))?.name || '';
-  return [ally(u) ? '陣中 · 防禦 ＋4（' + owner + '布陣）' : '陣中 · 移動 −2'];
+  return [...lines, ally(u) ? '陣中 · 防禦 ＋4（' + owner + '布陣）' : '陣中 · 移動 −2'];
 }
 // The preview's line for an art that lays a formation where it is aimed.
 function zoneNote(s, u, art, t, result) {
@@ -1567,11 +1571,17 @@ function formsFor(u, art, basic = basicFor(u)) {
 function pushCell(s, u, t, art = artFor(u)) {
   return forcedStep(s, u, t, art, formsFor(u, art), walkable);
 }
+// 星索護陣: the living pieces whose `ward` trait shields their board's master.
 function wardEscorts(s) {
-  if (s?.mapIndex !== 9) return [];
-  return s.units.filter((u) => (u.id === 'echoBow' || u.id === 'echoScout') && living(u));
+  if (!s?.units) return [];
+  return s.units.filter((u) => !ally(u) && living(u) && unitDetails(u)?.traits?.ward);
 }
-const wardPercent = (s, target) => (target.id === 'murong' ? wardEscorts(s).length * 35 : 0);
+// The share, in percent, the master's living escorts (or those of `escorts`) take off a blow.
+function wardShare(s, target, escorts = wardEscorts(s)) {
+  if (!s?.units || target.id !== commanderId(s)) return 0;
+  return escorts.reduce((n, v) => n + unitDetails(v).traits.ward, 0);
+}
+const wardPercent = (s, target) => wardShare(s, target);
 const afterWard = (power, percent) =>
   percent ? Math.max(1, Math.round((power * (100 - percent)) / 100)) : power;
 function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicFor(u)) {
@@ -1691,6 +1701,9 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     );
     if (result.selfHeal) result.notes.push('回生 · 自身氣血 ＋' + result.selfHeal);
   }
+  // 化功: what touching the receiver costs the striker in 內力.
+  result.contact = contactLoss(s, u, t, result);
+  if (result.contact) result.notes.push('化功 · 內力 −' + result.contact);
   // 吸勁: decided as the blow lands, before the counter it may un-charge.
   result.siphon = siphonPlan(s, u, t, result);
   if (result.siphon) result.notes.push(result.siphon.note);
@@ -1721,16 +1734,13 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   }
   if (s && (art?.splash || result.forms.includes('line') || result.forms.includes('arc'))) {
     const targets = secondaryTargets(s, u, t, result.push || t, art, result.forms, walkable);
-    const guards = new Set(wardEscorts(s).map((v) => v.id));
-    if (result.amount >= t.hp) guards.delete(t.id);
+    const guards = new Set(wardEscorts(s));
+    if (result.amount >= t.hp) guards.delete(t);
     const power = baseHits.reduce((a, b) => a + b, 0);
     for (const [v, ratio] of targets) {
-      const raw = afterWard(
-        Math.max(4, Math.round(power * ratio)),
-        v.id === 'murong' ? guards.size * 35 : 0
-      );
+      const raw = afterWard(Math.max(4, Math.round(power * ratio)), wardShare(s, v, [...guards]));
       const amount = Math.min(v.hp, Math.max(0, raw - (v.conditions?.shield?.power || 0)));
-      if (amount >= v.hp) guards.delete(v.id);
+      if (amount >= v.hp) guards.delete(v);
       result.splash.push({ id: v.id, raw, amount });
     }
   }
@@ -1744,7 +1754,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     );
     const raw = afterWard(
       Math.min(u.conditions.riposte.power, result.counter),
-      t.id === 'murong' ? guards.length * 35 : 0
+      wardShare(s, t, guards)
     );
     result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
     result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
@@ -1759,6 +1769,15 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   selfLoss(s, u, art, result, true); // 內傷 and 反噬: what the strike costs its caster after
   result.notes.push(...guardNotes(art), ...priceNotes(art));
   return result;
+}
+// 化功 (§7.7): a hero whose direct blow lands on a villain with `contact` from the tile beside him
+// loses contact.mp + stage 內力 (never below 0), unless the villain is sealed before or by this
+// blow. 免受還擊 does not spare him; a disciple who took the blow for his master has no 化功.
+function contactLoss(s, u, t, result) {
+  const c = traitsOf(t).contact;
+  if (!c || !ally(u) || distance(u, t) !== 1 || t.conditions?.seal) return 0;
+  if (result.effects.some((e) => e.kind === 'seal')) return 0;
+  return Math.min(c.mp + (s?.run?.stage || 0), Math.max(0, u.mp - result.mpCost));
 }
 // The preview of a blow the receiver's guard answers: one that does not land carries none of its
 // effects or push; what a 挪移 turns back is shown on the striker, never below 1 氣血.
@@ -1805,6 +1824,8 @@ function priceNotes(art) {
   if (art?.cooldown) notes.push('調息 · 施展後隔 ' + art.cooldown + ' 回合');
   return notes;
 }
+// 35 → 三成半: a share as the ward lines say it.
+const shareWords = (n) => (n % 10 === 5 && n > 5 ? tenths(n - 5) + '半' : tenths(n));
 const tenths = (n) => (n % 10 ? n + '%' : '一二三四五六七八九'[n / 10 - 1] + '成');
 // The guard an art leaves on its caster until his next turn, as the preview states it.
 function guardNotes(art) {
@@ -1872,12 +1893,16 @@ function wound(s, u, n, source) {
     if (!living(u)) {
       s.stats.kills++;
       progress(source, 'kills', 1);
-      if (s.mapIndex === 9 && (u.id === 'echoBow' || u.id === 'echoScout')) {
-        const left = wardEscorts(s).length;
+      if (unitDetails(u)?.traits?.ward) {
+        const master = find(s, commanderId(s)),
+          left = wardShare(s, master);
+        const name = unitDetails(master).name;
         log(
           s,
           'combat',
-          left ? '一條星索斷了。慕容博的護勁降至三成半。' : '兩條星索皆斷，慕容博的護陣已破。',
+          left
+            ? '一條星索斷了。' + name + '的護勁降至' + shareWords(left) + '。'
+            : '星索皆斷，' + name + '的護陣已破。',
           '星索護陣'
         );
       }
@@ -2041,6 +2066,10 @@ function resolve(s, u, t, skill) {
     } else log(s, 'combat', '失去戰力。', unitDetails(t).name);
     // 吸勁 lands before the counter, so a signature it puts back is no longer charged for it.
     applySiphon(s, u, t, f.siphon);
+    if (f.contact) {
+      u.mp = Math.max(0, u.mp - f.contact); // 化功
+      log(s, 'combat', '被化功大法化去 ' + f.contact + ' 點內力。', who);
+    }
     if (f.plan.partnerMp) find(s, f.plan.partner).mp += f.plan.partnerMp;
     if (f.plan.clearPoison) delete u.conditions.poison;
     restoreHealth(s, u, u, f.selfHeal, effects);
@@ -2338,7 +2367,7 @@ function wariness(s, u, t) {
   let cost = t.conditions?.evade ? 200 : 0;
   const ward = redirectOf(s, t);
   if (ward) {
-    const art = signatureDue(s, u) ? enemyTechnique(u, s) : null,
+    const art = strikingSignature(s, u),
       raw = damage(u, t, false, s.mapIndex, s);
     cost += Math.min(ward.cap, (art ? Math.round(raw * art.factor) : raw) / 2) * 1.5;
   }
@@ -2355,6 +2384,7 @@ function enemyAct(s, u) {
   const cells = standCells(s, u, all);
   let best = null;
   const range = strikeReach(s, u);
+  const lineDue = !!lineKind(strikingSignature(s, u));
   const approach = new Map(
     friends.map((target) => {
       const positions = fieldCells(s.mapIndex).filter((cell) => {
@@ -2386,7 +2416,9 @@ function enemyAct(s, u) {
           (can ? 0 : (approach.get(t.id).get(key(c.x, c.y)) ?? fieldCells(s.mapIndex).length + d)) *
             40 -
           c.n * 2 +
-          tileInfo(c.x, c.y, s.mapIndex).defense * 0.4;
+          tileInfo(c.x, c.y, s.mapIndex).defense * 0.4 +
+          // 穿行: a line signature looks for a tile with a second hero straight behind its mark.
+          (can && lineDue && lineVictim(s, c, t) ? 30 : 0);
       if (!best || score > best.score) best = { c, t, can, score };
     }
   u.acted = true;
@@ -2405,7 +2437,7 @@ function enemyAct(s, u) {
   // 代受: the piece it chose may have someone beside it who takes the blow instead.
   const t = takeCover(s, best.t);
   if (t.conditions?.taunt) progress(t, 'protects', 1); // 挑釁: the blow he drew
-  const art = signatureDue(s, u) ? enemyTechnique(u, s) : null;
+  const art = strikingSignature(s, u);
   const raw = damage(u, t, false, s.mapIndex, s);
   const strikePower = art ? Math.round(raw * art.factor) : raw;
   const blow = received(s, t, [strikePower]);
@@ -2428,11 +2460,12 @@ function enemyAct(s, u) {
     u.signatureRound = s.round;
     if (u.signaturePush) u.signaturePush = 0;
     if (art.style === 'sweep') {
+      // The share its chips take is the signature's own (a quarter unless it says otherwise).
       for (const other of friends.filter((v) => v !== t && living(v) && distance(v, t) === 1)) {
         const chip = wound(
           s,
           other,
-          afterCut(Math.max(1, Math.round(strikePower / 4)), stanceCut(s, other)),
+          afterCut(Math.max(1, Math.round(strikePower * art.sweep)), stanceCut(s, other)),
           u
         );
         if (chip) other.hurtRound = s.round;
@@ -2441,10 +2474,15 @@ function enemyAct(s, u) {
       }
     } else if (living(t) && !blow.void) {
       if (art.style === 'drain') t.mp = Math.max(0, t.mp - art.power);
-      else applyCondition(s, t, { kind: art.style, power: art.power, turns: art.turns }, u);
+      else if (art.style !== 'line')
+        applyCondition(s, t, { kind: art.style, power: art.power, turns: art.turns }, u);
+      // The signature's rider: 內傷 or 絆足 as well.
+      if (art.extra === 'wound') applyCondition(s, t, { kind: 'wound', power: 5, turns: 2 }, u);
+      if (art.extra === 'pin') applyCondition(s, t, { kind: 'pin', power: 2, turns: 2 }, u);
       log(s, 'combat', art.note, unitDetails(u).name);
     }
-  }
+    if (lineKind(art)) lineThrough(s, u, t, strikePower, effects); // 穿行
+  } else if (living(t) && !blow.void) basicPoison(s, u, t, effects); // 蛇毒
   reflectStrike(s, t, u, n, effects);
   const share = counterRatio(s, t);
   if (!living(t)) log(s, 'combat', '負傷退場。', unitDetails(t).name);
@@ -2466,6 +2504,46 @@ function enemyAct(s, u) {
   if (unitDetails(u)?.traits?.glide) glideAway(s, u, best.c.n, step);
   check(s);
   return effects;
+}
+// The signature an enemy strikes with this turn, if it is due and is a blow at all (a mend or a
+// mirror is not: on its turn such a villain makes its plain strike).
+function strikingSignature(s, u) {
+  const art = signatureDue(s, u) ? enemyTechnique(u, s) : null;
+  return art?.strikes ? art : null;
+}
+const lineKind = (art) =>
+  !art ? null : art.style === 'line' ? 'line' : art.extra === 'line' ? 'extra:line' : null;
+// 穿行 (§7.2): the hero a line signature goes on to — the first within two tiles behind its mark,
+// straight on from where the striker stands along their shared row or column. Ground that cannot
+// be walked stops it; a striker not in line with its mark sends nothing through.
+function lineVictim(s, from, t) {
+  const dx = Math.sign(t.x - from.x),
+    dy = Math.sign(t.y - from.y);
+  if (dx && dy) return null;
+  for (let i = 1; i <= 2; i++) {
+    const p = { x: t.x + dx * i, y: t.y + dy * i };
+    if (!walkable(p.x, p.y, s.mapIndex)) return null;
+    const v = at(s, p.x, p.y);
+    if (v && ally(v)) return v;
+  }
+  return null;
+}
+// The second hero takes half the blow: a pass-through, so no 代受, 閃身 or 挪移 meets it, but his
+// 卸勁 and shield do.
+function lineThrough(s, u, t, strikePower, effects) {
+  const v = lineVictim(s, u, t);
+  if (!v) return;
+  const n = wound(s, v, afterCut(Math.max(1, Math.round(strikePower * 0.5)), stanceCut(s, v)), u);
+  if (n) v.hurtRound = s.round;
+  effects.push([v.id, '−' + n]);
+  log(s, 'combat', '被穿透的勁力擊中，損失 ' + n + ' 點氣血。', unitDetails(v).name);
+}
+// 蛇毒 (§7.2): a piece with `basicPoison` poisons with its plain strike, stronger by half the stage.
+function basicPoison(s, u, t, effects) {
+  const venom = traitsOf(u).basicPoison;
+  if (!venom) return;
+  const power = venom.power + Math.floor((s.run?.stage || 0) / 2);
+  putEffects(s, u, t, [{ kind: 'poison', power, turns: venom.turns || 2 }], effects);
 }
 // 游擊: a villain with `glide: n` walks, after its blow, up to n of the steps it has left (out of
 // `step`, its step as the action began) to the free tile farthest from the nearest hero (then the
@@ -2536,4 +2614,4 @@ function nextRound(s) {
   return true;
 }
 
-export { preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

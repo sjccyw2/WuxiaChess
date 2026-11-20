@@ -46,6 +46,7 @@ import {
   party,
   unclaimedObjectiveTile,
   wardEscorts,
+  wardShare,
   stat
 } from '../rules/game.js';
 import { icon } from './icons.js';
@@ -269,11 +270,13 @@ function goalRows(s) {
       '<p class="goal-detail">副手 · ' +
       unitDetails(s.units.find((u) => u.encounterId?.startsWith('lieutenant-')))?.name +
       '</p>' +
-      (target.id === 'murong'
+      (wardEscorts(s).length || s.units.some((v) => unitDetails(v)?.traits?.ward)
         ? '<p class="goal-detail">星索護陣・' +
           wardEscorts(s).length +
-          ' / 2 名護陣者，減傷 ' +
-          wardEscorts(s).length * 35 +
+          ' / ' +
+          s.units.filter((v) => unitDetails(v)?.traits?.ward).length +
+          ' 名護陣者，減傷 ' +
+          wardShare(s, target) +
           '%</p>'
         : '') +
       '</div></div>' +
@@ -1130,7 +1133,7 @@ function attackPage(s, source, target, skill) {
   // 代受 and 號令 change who the action is for: each gets its own row.
   for (const note of f.notes)
     lines.push(
-      /^(代受|號令) · /.test(note)
+      /^(代受|號令|化功) · /.test(note)
         ? line(note.slice(0, 2), esc(note.slice(5)))
         : line('招式連攜', esc(note))
     );
