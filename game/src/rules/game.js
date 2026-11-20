@@ -425,6 +425,12 @@ function coverer(s, t) {
   }
   return best;
 }
+// 閃身 after the blow it made miss: the condition is used up.
+function dodge(s, v, effects) {
+  delete v.conditions.evade;
+  effects.push([v.id, CONDITION_NAMES.evade, 'status']);
+  log(s, 'combat', '閃身避開，這一擊落空。', unitDetails(v).name);
+}
 // The blow aimed at t lands on its coverer, if it has one; a hero who covers counts it.
 function takeCover(s, t) {
   const v = coverer(s, t);
@@ -449,6 +455,9 @@ function redirectOf(s, v) {
 // on the striker; `void` means nothing of the blow lands, its effects included; `silent`, that
 // the receiver does not counter it.
 function received(s, v, raws) {
+  // 閃身: the whole action misses, effects and counter included.
+  if (v.conditions?.evade)
+    return { hits: raws.map(() => 0), ward: null, back: 0, void: true, silent: true, evaded: true };
   const ward = redirectOf(s, v);
   let hits = raws,
     back = 0;
@@ -1309,7 +1318,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   });
   result.amount = result.hits.reduce((sum, n) => sum + n, 0);
   result.push = t.hp > result.amount ? step : null;
-  // 挪移: what the receiver's guard did to the blow as a whole.
+  // 閃身, 挪移: what the receiver's guard did to the blow as a whole.
   if (blow.ward || blow.void) answerBlow(s, u, t, blow, result);
   if (result.plan.partnerMp)
     result.notes.push(unitDetails(find(s, plan.partner)).name + '內力 ＋' + plan.partnerMp);
@@ -1395,6 +1404,10 @@ function answerBlow(s, u, t, blow, result) {
       clearPoison: false
     };
   }
+  if (blow.evaded) {
+    result.evaded = true;
+    result.notes.push('閃身 · ' + unitDetails(t).name + '閃開此擊，不還擊');
+  }
   if (!blow.ward) return;
   result.turned = { ward: blow.ward, back: blow.back };
   const left = Math.max(0, blow.back - (u.conditions?.shield?.power || 0));
@@ -1425,6 +1438,7 @@ function guardNotes(art) {
   const notes = [];
   if (art?.stance) notes.push('卸勁 · 至下回合受擊減' + tenths(art.stance) + '，還擊全力');
   if (art?.cover) notes.push('代受 · 至下回合，敵人對相鄰同伴的直接攻擊改由自己承受');
+  if (art?.evade) notes.push('閃身 · 下一次直接攻擊落空');
   return notes;
 }
 // Experience and level numbers. The wiki's rules page reads these.
@@ -1634,7 +1648,8 @@ function resolve(s, u, t, skill) {
       '以「' + verb + '」擊中' + unitDetails(t).name + '，造成 ' + total + ' 點傷害。',
       who
     );
-    // 挪移: the share turned back lands on the striker, and the ward or charge is spent.
+    // 閃身 is used up by the blow it made miss; 挪移 turns its share back on the striker.
+    if (f.evaded) dodge(s, t, effects);
     if (f.turned) turnBack(s, u, t, f.turned, effects);
     if (living(t)) {
       if (f.plan.spentMark) delete t.conditions.mark;
@@ -1851,10 +1866,10 @@ function aimCost(s, u, t, friends) {
     vitality * 0.28 + (35 * vitality) / t.maxHp - (exposedLeader ? 28 : 0) + wariness(s, u, t)
   );
 }
-// What an enemy holds against striking hero t beyond his 氣血: a 挪移 ward would turn up to half
-// its blow back on it.
+// What an enemy holds against striking hero t beyond his 氣血: under 閃身 the blow is wasted, and
+// a 挪移 ward would turn up to half of it back.
 function wariness(s, u, t) {
-  let cost = 0;
+  let cost = t.conditions?.evade ? 200 : 0;
   const ward = redirectOf(s, t);
   if (ward) {
     const art = signatureDue(s, u) ? enemyTechnique(u, s) : null,
@@ -1927,7 +1942,8 @@ function enemyAct(s, u) {
     '以「' + attack + '」擊中' + unitDetails(t).name + '，造成 ' + n + ' 點傷害。',
     unitDetails(u).name
   );
-  // 挪移: the ward turns its share back on the striker.
+  // 閃身 is used up by the blow it made miss; 挪移 turns its share back on the striker.
+  if (blow.evaded) dodge(s, t, effects);
   if (blow.ward) turnBack(s, u, t, blow, effects);
   if (art) {
     u.signatureRound = s.round;

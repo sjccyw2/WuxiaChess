@@ -993,8 +993,9 @@ section('cover');
     const other = Object.assign(put(s, 'hero', 8, 7), { hp: 80 });
     if (covered) cover(g, s);
     G.startEnemy(s);
+    const hp = [weak.hp, g.hp, other.hp];
     G.enemyAct(s, foe);
-    return weak.hp < 30 || g.hp < g.maxHp ? 'medic' : other.hp < 80 ? 'hero' : 'none';
+    return weak.hp < hp[0] || g.hp < hp[1] ? 'medic' : other.hp < hp[2] ? 'hero' : 'none';
   };
   check('uncovered, the weakest is struck', pick(false) === 'medic');
   check('covered, she weighs as 郭靖 and another is struck', pick(true) === 'hero');
@@ -1114,8 +1115,9 @@ section('redirect');
     const h = Object.assign(put(a, 'hero', 8, 7), { hp: 70 });
     if (ward) BM.applyCondition(a, m, { kind: 'redirect', power: 24, turns: 1 }, unit(a, 'zhang'));
     G.startEnemy(a);
+    const hp = [m.hp, h.hp];
     G.enemyAct(a, foe);
-    return m.hp < 60 ? 'medic' : h.hp < 70 ? 'hero' : 'none';
+    return m.hp < hp[0] ? 'medic' : h.hp < hp[1] ? 'hero' : 'none';
   };
   check('unwarded, the weaker is struck', choose(false) === 'medic');
   check('warded, the other is', choose(true) === 'hero');
@@ -1164,6 +1166,87 @@ section('redirect');
     BM.applyCondition(sealed, sb, { kind: 'seal', power: 1, turns: 1 }, sb);
     check('a sealed master cannot mirror', G.forecast(unit(sealed, 'hero'), sb, false, sealed).amount > 0);
   });
+}
+
+// ── 閃身 evade (§6, §8) ──────────────────────────────────────────────────
+section('evade');
+{
+  const evade = (u, s) => BM.applyCondition(s, u, { kind: 'evade', power: 1, turns: 1 }, u);
+  // 段譽's art, a ground one: he steps, and the condition is his once he lands.
+  const s = board(['duan', 'hero', 'medic']);
+  const duan = put(s, 'duan', 4, 7);
+  teach(duan, defineArt({ target: 'ground', blink: true, range: 2, mp: 2, evade: true, factor: undefined }));
+  const f = G.forecast(duan, { x: 6, y: 7 }, true, s);
+  check('the preview names it', f.notes.includes('閃身 · 下一次直接攻擊落空'));
+  G.resolve(s, duan, { x: 6, y: 7 }, true);
+  check('閃身 lands on the caster after the step', duan.x === 6 && duan.conditions?.evade?.through === 1);
+  check('a save with it restores', !!unit(R.restoreRun(copy(s)), 'duan').conditions?.evade);
+
+  // The next enemy blow misses whole: no damage, no effect, no counter; the next one lands.
+  const e = board(['duan', 'hero', 'medic']);
+  const d = put(e, 'duan', 4, 7);
+  const boss = put(e, 'chief', 5, 7),
+    blade = put(e, 'blade', 4, 8);
+  evade(d, e);
+  e.round = 3;
+  G.startEnemy(e);
+  const life = [d.hp, boss.hp];
+  G.enemyAct(e, boss);
+  check('the blow misses', d.hp === life[0]);
+  check('its signature effect does not land', !d.conditions?.weak);
+  check('he does not counter it', boss.hp === life[1]);
+  check('閃身 is used up', !d.conditions?.evade && e.logs.some((l) => l.text === '閃身避開，這一擊落空。'));
+  G.enemyAct(e, blade);
+  check('the next blow lands', d.hp < life[0]);
+
+  // A hero's strike at an evading piece: every hit misses, the splash does not, and it stays
+  // for the splash.
+  const h = board();
+  const hero = put(h, 'hero', 4, 7);
+  const a = put(h, 'chief', 5, 7),
+    b = put(h, 'scout', 5, 8);
+  evade(a, h);
+  evade(b, h);
+  teach(hero, defineArt({ hits: [0.6, 0.6], splash: 0.5, mp: 2, debuff: { stat: 'def', power: 3, turns: 2 } }));
+  const hf = G.forecast(hero, a, true, h);
+  check('every hit of the action misses', hf.amount === 0 && hf.rawHits.every((n) => n === 0) && hf.counterRaw === 0 && !hf.effects.length);
+  check('the preview says so', hf.notes.includes('閃身 · 余滄海閃開此擊，不還擊'));
+  check('the splash still lands', hf.splash.some((v) => v.id === 'scout' && v.amount > 0));
+  const bl = b.hp;
+  G.resolve(h, hero, a, true);
+  check('the evader is untouched and its 閃身 spent', a.hp === a.maxHp && !a.conditions?.evade && !a.conditions?.exposed);
+  check('splash neither misses nor spends it', b.hp < bl && !!b.conditions?.evade);
+
+  // 代受 first: the coverer's 閃身 counts; the companion's own is not touched.
+  const c = board(['medic', 'guo', 'hero']);
+  const foe = Object.assign(put(c, 'blade', 6, 7), { step: 0, range: 2 });
+  const m = put(c, 'medic', 4, 7),
+    guo = put(c, 'guo', 5, 7);
+  BM.applyCondition(c, guo, { kind: 'cover', power: 1, turns: 1 }, guo);
+  evade(guo, c);
+  evade(m, c);
+  G.startEnemy(c);
+  G.enemyAct(c, foe);
+  check('the coverer’s 閃身 takes the blow', guo.hp === guo.maxHp && !guo.conditions?.evade);
+  check('the companion’s is left for later', !!m.conditions?.evade && m.hp === m.maxHp);
+
+  // The enemy prefers any other target; with none, it strikes and wastes the action.
+  const ai = (evading, alone) => {
+    const a = board(['medic', 'hero', 'guard']);
+    const foe = Object.assign(put(a, 'blade', 6, 7), { step: 0, range: 2 });
+    const weak = Object.assign(put(a, 'medic', 4, 7), { hp: 30 });
+    const other = alone ? null : put(a, 'hero', 8, 7);
+    if (evading) evade(weak, a);
+    G.startEnemy(a);
+    const hp = [weak.hp, other?.hp];
+    G.enemyAct(a, foe);
+    return { weak: weak.hp < hp[0], other: other && other.hp < hp[1], left: !!weak.conditions?.evade };
+  };
+  check('it strikes the weakest when she has no 閃身', ai(false).weak);
+  const shy = ai(true);
+  check('it goes for another when she has', !shy.weak && shy.other && shy.left);
+  const only = ai(true, true);
+  check('with no other, it strikes her and wastes the blow', !only.weak && !only.left);
 }
 
 // ─────────────────────────────────────────────────────────────────────────
