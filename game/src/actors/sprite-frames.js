@@ -272,11 +272,13 @@ function paintFrame(layer, sheet, row, frame, w, h, look, alpha = 1) {
     // Dense screens hide that softening and their copies are already large.
     wanted = ratio < 1.5 && shown < CELL_HEIGHT ? Math.min(shown * 1.4, CELL_HEIGHT) : shown,
     cell = HEIGHTS.find((size) => size >= wanted * 0.97) || HEIGHTS.at(-1),
-    // The outline is a fixed share of the figure, but never under about a CSS pixel. It
-    // is rounded coarsely so pieces at slightly different depths share one copy.
+    // The outline is a fixed share of the figure, but never under about a CSS pixel (less
+    // on dense screens, where a full pixel swamps a phone-sized figure). It is rounded
+    // coarsely so pieces at slightly different depths share one copy.
     step = ratio >= 2 ? 1 : 0.5,
+    least = clamp(1.45 - 0.35 * ratio, 0.75, 1.1),
     edge = look.team
-      ? Math.round(Math.max(cell * 0.0165, (1.1 * ratio * cell) / shown) / step) * step
+      ? Math.round(Math.max(cell * 0.0165, (least * ratio * cell) / shown) / step) * step
       : 0,
     atlas = atlasFor(sheet, look, cell, Math.min(edge, 8));
   if (!atlas.ready[row * FRAMES + frame]) bake(atlas, sheet, look, row, frame);
