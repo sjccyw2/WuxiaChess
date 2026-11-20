@@ -8,6 +8,7 @@ import { mapLayout } from '../data/terrain.js';
 import { hewnSide, iceTile, snowTile } from './landforms/shelf-3.js';
 import { pavilionCrag } from './landforms/crags-3.js';
 import { peaks3 } from './landforms/peaks-3.js';
+import { farMarsh } from './landforms/distance-2.js';
 
 const stonework = [
   null,
@@ -947,9 +948,7 @@ function lowerLandscape(m, index, p, layout) {
     const rad = Math.max(Math.abs(x) / (cx + 5.4), Math.abs(z) / (cz + 4.4));
     if (rad > 0.93 && random.next() > 0.38) continue;
     if (water) {
-      // Patches of nenuphars occupy the actual water below the various spits.
-      if (rad < 0.89 && random.next() < 0.6)
-        lotus(m, x, z, level + 0.028, random.range(0.29, 0.68));
+      // 蘆花汀 floats its own lily pads in the lee of the reed beds (landforms/fishers-2.js).
       continue;
     }
     const spread = random.range(0.12, 0.52),
@@ -1043,6 +1042,7 @@ function ranges(m, index, p) {
     // The cloud sea and far peaks are drawn with the terrace in landform-9.js.
     return;
   }
+  if (index === 2) return farMarsh(m, style);
   for (let tier = 0; tier < 2; tier++)
     for (let j = 0; j < (tier ? 19 : 13); j++) {
       const a = tier * 0.23 + (j * circle) / (tier ? 19 : 13) + r.range(-0.07, 0.07),
@@ -1190,40 +1190,7 @@ function approachLandmark(index, size, add, p) {
       cargo(m, 0.66, 0.1, 0.64, 0x977755);
     });
   } else if (index === 2) {
-    add('南汊繫纜樁', 2.8, south + 0.91, -0.18, (m) => {
-      for (const x of [-0.7, 0.7]) {
-        m.tube([x, -0.65, 0], [x, 0.66, 0], 0.087, 0.061, wood, 8);
-        m.hoop(x, 0.32, 0, 0.107, 0.017, brass, 14);
-      }
-      m.line(
-        [
-          [-0.7, 0.53, 0],
-          [-0.18, 0.31, 0.05],
-          [0.26, 0.3, 0.05],
-          [0.7, 0.51, 0]
-        ],
-        0.026,
-        0xa79971,
-        5
-      );
-      for (const x of [-0.3, 0.13])
-        m.lathe(
-          x,
-          -0.06,
-          0.22,
-          [
-            [0, 0.14],
-            [0.05, 0.23],
-            [0.23, 0.24],
-            [0.35, 0.14],
-            [0.38, 0.16],
-            [0.38, 0.1]
-          ],
-          0x9c895e,
-          12
-        );
-      reeds(m, 0.92, 0.1, 0.62, 10, true, -0.08);
-    });
+    // The southern landing is part of landforms/fishers-2.js.
   } else if (index === 3) {
     add('南麓報雪亭', -2.38, south + 0.99, Math.PI, (m) => {
       pavilionCrag(m);

@@ -4,7 +4,7 @@ import { shoreField, waterShader } from './water-surface.js';
 const styles = [
   ['青竹渡', 0xbac7b6, 0x7fa7ae, 0xffdfaa, 0x41786c, 'water', -0.65, 0.02],
   ['紅楓驛', 0xd0baa0, 0x91a1a2, 0xffcd87, 0x90745d, 'earth', -0.79, 0.02],
-  ['蘆花汀', 0xb3d3ce, 0x6aa3b1, 0xffe7ac, 0x427c79, 'water', -0.65, 0.018],
+  ['蘆花汀', 0xb3d3ce, 0x6aa3b1, 0xffe7ac, 0x427c79, 'water', -0.65, 0.021],
   ['聽雪棧', 0xcbd9e3, 0x7998b5, 0xf1f3ff, 0x95aebe, 'mist', -7.5, 0.019],
   ['空山琴臺', 0xbfc7b5, 0x82969a, 0xffd3a0, 0xa9b8b2, 'mist', -5.5, 0.022],
   ['桃花石陣', 0xdac9c0, 0xabb8b1, 0xffdcbd, 0x5f8c84, 'water', -1.6, 0.02],
