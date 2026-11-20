@@ -360,17 +360,22 @@ function unitDetails(u) {
 function enemyTechnique(u, s) {
   const info = unitDetails(u);
   if (!info?.rank) return null;
-  const sig = info.traits?.sig || {},
+  const sig = traitsOf(u).sig || {},
     stage = Object.keys(info.traits || {}).length ? s?.run?.stage || 0 : 0;
   const status = {
     power: sig.power ?? STATUS_POWER[info.style]?.(stage),
-    turns: sig.turns ?? 2
+    turns: sig.turns ?? 2,
+    sweep: sig.sweep ?? 0.25,
+    extra: sig.extra || null,
+    // 續命: what 接骨續筋 restores at this stage.
+    heal: sig.heal === 'stage' ? 20 + 5 * stage : sig.heal || 0
   };
   return {
     ...status,
+    // A mend or a mirror is a signature that is not a blow: it has no strike of its own.
+    strikes: !['mend', 'mirror'].includes(info.style),
     reach: sig.reach || 0,
     cadence: sig.cadence || 3,
-    extra: sig.extra || null,
     name: info.skill,
     factor: VILLAIN_FORMS[info.skill][0],
     stroke: VILLAIN_FORMS[info.skill][1],
@@ -380,10 +385,10 @@ function enemyTechnique(u, s) {
     family:
       info.style === 'poison'
         ? 'poison'
-        : info.style === 'weak' || info.style === 'exposed'
+        : ['weak', 'exposed', 'pin'].includes(info.style)
           ? 'debuff'
           : null,
-    note: SIGNATURE_RULES[info.style]?.(status) || '',
+    note: sig.note || SIGNATURE_RULES[info.style]?.(status) || '',
     offset: info.rank === 'boss' ? 0 : 1
   };
 }
@@ -540,6 +545,77 @@ function turnBack(s, striker, bearer, blow, effects) {
   const verb = (ward.source ? '挪移' : '斗轉星移') + '反震' + unitDetails(striker).name;
   log(s, 'combat', verb + '，造成 ' + dealt + ' 點傷害。', unitDetails(bearer).name);
 }
+// ── Villain behaviour (SPEC-mechanics §7) ─────────────────────────────────
+// A villain's traits as they stand now: once its 變招 has fired, the phase's cadence, preference
+// and hold replace those it began the board with.
+function traitsOf(u) {
+  const t = unitDetails(u)?.traits || {},
+    p = u?.phased ? t.phase : null;
+  if (!p) return t;
+  return {
+    ...t,
+    sig: p.cadence ? { ...t.sig, cadence: p.cadence } : t.sig,
+    prefers: p.prefers || t.prefers,
+    stance: t.stance && p.holds === false ? { ...t.stance, holds: false } : t.stance
+  };
+}
+// 坐鎮: the tile a posted piece guards — its spawn on this board, a tile its traits name, or its
+// board master's tile as its own action begins ('master'; none once the master has fallen).
+function postTile(s, u, post) {
+  if (post.tile === 'master') {
+    const m = find(s, commanderId(s));
+    return m && living(m) && m !== u ? { x: m.x, y: m.y } : null;
+  }
+  if (post.tile === 'spawn') {
+    const i = encounterKeys(s.mapIndex).indexOf(u.encounterId || u.id);
+    return mapLayout(s.mapIndex).enemies[i] || null;
+  }
+  return post.tile || null;
+}
+// Where an enemy is held this turn, or null: an un-woken 坐鎮, to within its tether of the post;
+// a 蓄勢反擊 that holds, while charged, to its own tile, striking only from there.
+function holdOf(s, u) {
+  const t = traitsOf(u);
+  if (t.stance?.holds && signatureDue(s, u)) return { tile: { x: u.x, y: u.y }, tether: 0 };
+  if (!t.post || u.woke) return null;
+  const tile = postTile(s, u, t.post);
+  return tile ? { tile, tether: t.post.tether || 0 } : null;
+}
+// Where an enemy can stand as its action begins: its own tile (n 0) and every tile its walk
+// reaches, each with the steps to it.
+function walkCells(s, u, field = availableField(s, u)) {
+  return [{ x: u.x, y: u.y, n: 0 }, ...Array.from(field.costs, ([k, n]) => ({ ...fromKey(k), n }))];
+}
+// The tiles an enemy may end its action on: the ones it can walk to, clipped to its hold (its own
+// tile is always kept, so a piece pulled off its post can still strike, or walk back). The
+// enemy turn and the danger zone both read this, so the zone never shows a strike the piece
+// will not make.
+function standCells(s, u, all = walkCells(s, u)) {
+  const hold = holdOf(s, u);
+  if (!hold) return all;
+  return all.filter((c, i) => !i || distance(c, hold.tile) <= hold.tether);
+}
+// A held piece with no one to strike walks back toward its post: to the tile it can reach with
+// the least walk still to make to the post's ground, then the fewest steps.
+function homeward(s, u, all, hold) {
+  const ground = fieldCells(s.mapIndex).filter(
+    (c) => walkable(c.x, c.y, s.mapIndex) && distance(c, hold.tile) <= hold.tether
+  );
+  const back = movementField(s, u, ground, Infinity, true).costs;
+  const left = (c) => back.get(key(c.x, c.y)) ?? Infinity;
+  return all.reduce((best, c) =>
+    left(c) < left(best) || (left(c) === left(best) && c.n < best.n) ? c : best
+  );
+}
+// 坐鎮 ends for good as its trait says: `wake: true` once a hero strikes the piece or it strikes
+// a hero; 'struck' only once a hero strikes it; false never.
+function wakePost(s, u, struck) {
+  const post = unitDetails(u)?.traits?.post;
+  if (!post || u.woke || !living(u) || !(post.wake === true || (post.wake === 'struck' && struck)))
+    return;
+  u.woke = true;
+  log(s, 'combat', '離位追擊。', unitDetails(u).name);
+}
 const PREFERS = {
   wounded: '專挑傷重者',
   isolated: '專挑落單者',
@@ -549,51 +625,105 @@ const PREFERS = {
   nearest: '見人就撲'
 };
 const tileName = (p) => '（' + (p.x + 1) + '，' + (p.y + 1) + '）';
-// The enemy page's account of how this piece differs from the others: one line per trait.
+const COUNTS = ['', '一', '兩', '三', '四', '五'];
+const WAKES = {
+  true: '有俠客踏入攻擊範圍或受到攻擊後，才離位追擊。',
+  struck: '受到攻擊後才離位。',
+  false: '不離位。'
+};
+// A trait's own words from the data, with {tile} filled in.
+const fill = (text, vars) => text.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+// The lines under an enemy's signature: what it does, with this stage's numbers, and its reach.
+function signatureLines(s, u) {
+  const sig = enemyTechnique(u, s);
+  if (!sig) return [];
+  return [sig.note, ...(sig.reach ? ['絕技射程 ' + sig.reach + ' 格。'] : [])].filter(Boolean);
+}
+// The reach an enemy strikes with once its signature is due.
+function strikeReachWhenDue(s, u) {
+  const sig = enemyTechnique(u, s);
+  return u.conditions?.disarm ? 1 : Math.max(reach(s, u), sig?.strikes ? sig.reach || 0 : 0);
+}
+// The enemy page's account of how this piece differs from the others: one line per trait, each
+// '【name】words', in the villain's own words where its data gives them (SPEC-villains).
 function enemyTraitLines(s, u) {
   const info = unitDetails(u),
-    t = info?.traits || {},
+    t = traitsOf(u),
     stage = s.run?.stage || 0,
     lines = [];
+  const say = (label, text) => lines.push('【' + label + '】' + text);
   const master = unitDetails(find(s, commanderId(s)))?.name;
-  const sig = enemyTechnique(u, s);
-  if (sig?.reach) lines.push('絕技射程 ' + sig.reach + ' 格');
-  if (sig?.extra === 'pin') lines.push('絕技絆足 · 中招者移動 −2，2 回合');
-  if (sig?.extra === 'wound') lines.push('絕技內傷 · 中招者療傷減半，出手後自損 5，2 回合');
-  if (sig?.extra === 'line') lines.push('絕技穿行 · 目標身後兩格內首名俠客受一半傷害（危險區不顯示）');
-  if (t.post?.tile === 'master') lines.push('護駕 · 每回合先回到' + master + '身旁');
-  else if (t.post && !u.woke) {
-    const index = encounterKeys(s.mapIndex).indexOf(u.encounterId || u.id);
-    const tile = t.post.tile === 'spawn' ? mapLayout(s.mapIndex).enemies[index] : t.post.tile;
-    lines.push(
-      '坐鎮 · 守在' +
-        tileName(tile) +
-        (t.post.tether ? t.post.tether + ' 格內' : '') +
-        '；有俠客踏入攻擊範圍才出手' +
-        (t.post.wake ? '，受擊或出手後離位追擊' : '')
+  const others = enemies(s).filter((v) => v !== u && living(v));
+  const named = (list) => [...new Set(list.map((v) => unitDetails(v).name))].join('、');
+  if (t.banner) say('盟令', '存活時其餘敵人攻擊 ＋' + (t.banner.atk + stage) + '。');
+  const guards = others.filter((v) => unitDetails(v)?.traits?.cover === 'master');
+  if (u.id === commanderId(s) && guards.length)
+    say(
+      '門人代受',
+      '相鄰的' +
+        named(guards) +
+        '替他承受俠客的直接攻擊（氣血較多者先上）；波及、穿行、走勁與毒傷仍會落在他身上。'
+    );
+  if (t.post?.tile === 'master' || t.cover === 'master')
+    say(
+      '護駕',
+      [
+        t.post?.tile === 'master' ? '每回合先回到' + master + '身旁' : '',
+        t.cover === 'master' ? (t.post?.tile === 'master' ? '與他' : '與' + master) + '相鄰時替他受招' : ''
+      ]
+        .filter(Boolean)
+        .join('；') + '。'
+    );
+  else if (t.post && u.woke) say('坐鎮', '已離位追擊。');
+  else if (t.post) {
+    const tile = postTile(s, u, t.post);
+    const words = t.post.note
+      ? fill(t.post.note, { tile: tile ? tileName(tile) : '' })
+      : '守在' +
+        (tile ? tileName(tile) : '原地') +
+        (t.post.tether ? COUNTS[t.post.tether] + '格內' : '不動') +
+        '；' +
+        WAKES[t.post.wake];
+    say('坐鎮', words);
+  }
+  if (t.contact)
+    say('化功', '貼身打中他的俠客損失 ' + (t.contact.mp + stage) + ' 點內力（封穴時無效）。');
+  if (t.stance) {
+    const r = COUNTS[strikeReachWhenDue(s, u)];
+    say(
+      '蓄勢反擊',
+      (t.stance.holds ? '蓄勢時原地不動，只打' + r + '格內的人；' : '蓄勢時') +
+        r +
+        '格內打他，必遭全力還擊（免受還擊之招與封穴除外）。'
     );
   }
-  if (t.phase) lines.push('半血變招 · ' + (t.phase.note || t.phase.log || ''));
-  if (t.prefers) lines.push(PREFERS[t.prefers]);
-  if (t.stance)
-    lines.push('蓄勢反擊 · 蓄勢時兩格內受擊必以全力還擊' + (t.stance.holds ? '，且原地不動' : ''));
-  if (t.redirect) lines.push('斗轉星移 · 蓄勢時第一次受到的直接攻擊全數反震一半給出手者');
-  if (t.contact) lines.push('化功 · 貼身打中他的俠客損失 ' + (t.contact.mp + stage) + ' 內力');
-  if (t.banner) lines.push('盟令 · 存活時其餘敵人攻擊 ＋' + (t.banner.atk + stage));
-  if (t.cover === 'master') lines.push('代受 · 相鄰的' + master + '受到直接攻擊時，由他代受');
-  const guards = enemies(s).filter(
-    (v) => v !== u && living(v) && unitDetails(v)?.traits?.cover === 'master'
-  );
-  if (u.id === commanderId(s) && guards.length)
-    lines.push(
-      '代受 · 身旁的' + [...new Set(guards.map((v) => unitDetails(v).name))].join('、') + '替他承受直接攻擊'
+  // A mirror that is the villain's signature is told in the signature's own lines.
+  if (t.redirect && info.style !== 'mirror')
+    say('挪移', '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。');
+  const wards = others.filter((v) => unitDetails(v)?.traits?.ward);
+  if (u.id === commanderId(s) && wards.length)
+    say(
+      '星索護陣',
+      '每名存活的' + named(wards) + '替他抵擋 ' + unitDetails(wards[0]).traits.ward + '% 傷害。'
     );
-  if (t.glide) lines.push('游擊 · 出手後退開至多 ' + t.glide + ' 步');
+  if (t.ward && master && u.id !== commanderId(s))
+    say('護陣', '存活時替' + master + '抵擋 ' + t.ward + '% 傷害。');
+  if (t.glide) say('游擊', '出手後退開至多 ' + t.glide + ' 步，離俠客越遠越好。');
   if (t.basicPoison)
-    lines.push(
-      '毒手 · 普攻令目標中毒，兩次毒發各損 ' +
+    say(
+      t.basicPoison.name || '毒手',
+      '普攻令目標中毒，' +
+        (t.basicPoison.turns === 2 ? '兩' : t.basicPoison.turns) +
+        '次毒發各損 ' +
         (t.basicPoison.power + Math.floor(stage / 2)) +
-        ' 氣血'
+        ' 氣血。'
+    );
+  if (t.prefers) say('偏好', PREFERS[t.prefers] + '。');
+  const phase = info.traits?.phase;
+  if (phase)
+    say(
+      (u.phased ? '已變招' : '半血變招') + (phase.name ? ' · ' + phase.name : ''),
+      phase.note || phase.log || ''
     );
   return lines;
 }
@@ -972,7 +1102,6 @@ function standingLines(s, u) {
   const owner = unitDetails(find(s, zone.owner))?.name || '';
   return [ally(u) ? '陣中 · 防禦 ＋4（' + owner + '布陣）' : '陣中 · 移動 −2'];
 }
-const COUNTS = ['', '一', '兩', '三', '四', '五'];
 // The preview's line for an art that lays a formation where it is aimed.
 function zoneNote(s, u, art, t, result) {
   if (!art?.zone || !s) return;
@@ -1897,6 +2026,7 @@ function resolve(s, u, t, skill) {
       who
     );
     // 閃身 is used up by the blow it made miss; 挪移 turns its share back on the striker.
+    if (!ally(t)) wakePost(s, t, true); // 坐鎮: a struck piece may leave its post
     if (f.evaded) dodge(s, t, effects);
     if (f.turned) turnBack(s, u, t, f.turned, effects);
     // 布陣 rider: centred where the target stood when struck; a blow that did not land lays none.
@@ -1924,6 +2054,7 @@ function resolve(s, u, t, skill) {
         dealt = wound(s, v, other.raw, u);
       effects.push([v.id, '−' + dealt]);
       log(s, 'combat', '受到氣勁波及，損失 ' + dealt + ' 點氣血。', unitDetails(v).name);
+      if (!ally(v)) wakePost(s, v, true);
     }
     if (f.counterRaw) {
       const dealt = wound(s, u, f.counterRaw, t);
@@ -2185,13 +2316,9 @@ function enemyAct(s, u) {
   const step = stat(u, 'step', s); // as the action begins, before any formation it walks onto
   const friends = party(s).filter(living);
   const field = availableField(s, u);
-  const cells = [
-    { x: u.x, y: u.y, n: 0 },
-    ...Array.from(field.costs, ([k, n]) => {
-      const [x, y] = k.split(',').map(Number);
-      return { x, y, n };
-    })
-  ];
+  const all = walkCells(s, u, field);
+  // 坐鎮, and a 蓄勢反擊 that holds: where this piece may end its action.
+  const cells = standCells(s, u, all);
   let best = null;
   const range = strikeReach(s, u);
   const approach = new Map(
@@ -2225,12 +2352,17 @@ function enemyAct(s, u) {
     }
   u.acted = true;
   if (!best) return [];
+  // 坐鎮: a held piece with no one to strike from its ground walks back toward its post.
+  const hold = !best.can && holdOf(s, u);
+  if (hold) best.c = homeward(s, u, all, hold);
   u.moved = distance(u, best.c) > 0;
   if (u.moved) followRoute(u, tracePath(field, best.c));
   if (!best.can) {
-    log(s, 'move', '逼近我方陣地。', unitDetails(u).name);
+    if (!hold) log(s, 'move', '逼近我方陣地。', unitDetails(u).name);
+    else if (u.moved) log(s, 'move', '退回崗位。', unitDetails(u).name);
     return [];
   }
+  wakePost(s, u, false); // 坐鎮: a piece that wakes on striking leaves its post for good
   // 代受: the piece it chose may have someone beside it who takes the blow instead.
   const t = takeCover(s, best.t);
   if (t.conditions?.taunt) progress(t, 'protects', 1); // 挑釁: the blow he drew
@@ -2364,4 +2496,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

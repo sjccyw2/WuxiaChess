@@ -110,7 +110,8 @@ function threatMap(s) {
   return G.enemies(s)
     .filter(G.living)
     .map((e) => {
-      const stand = [{ x: e.x, y: e.y }, ...[...G.reachable(s, e).keys()].map(unkey)];
+      // Where the rules say it may end its action (a posted or charged piece stays put).
+      const stand = G.standCells(s, e);
       const hits = new Set(),
         range = G.strikeReach(s, e);
       for (const p of stand)

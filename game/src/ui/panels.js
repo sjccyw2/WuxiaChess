@@ -13,6 +13,8 @@ import {
   unitDetails,
   enemyTechnique,
   enemyTraitLines,
+  signatureLines,
+  traitsOf,
   coverer,
   taunters,
   reach,
@@ -905,6 +907,13 @@ function endPage(s) {
     '</div>'
   );
 }
+// What a charged signature means for whoever strikes next, for signatures that answer a blow
+// (or wait for a wounded companion) rather than make one.
+const CHARGED = {
+  mirror: '蓄勢已成 · 第一下直接攻擊將被反震',
+  mend: '蓄勢已成 · 同夥傷重便替他續命',
+  stance: '蓄勢已成 · 近身打他必遭全力還擊'
+};
 function enemyPage(s, id) {
   const u = find(s, id),
     i = unitDetails(u),
@@ -935,13 +944,13 @@ function enemyPage(s, id) {
           : u.conditions?.daze
             ? '本回合失神，不會出手'
             : turns === 0
-              ? '本回合蓄勢，正是破綻'
+              ? CHARGED[special.style] ||
+                (traitsOf(u).stance ? CHARGED.stance : '本回合蓄勢，正是破綻')
               : '距蓄勢 ' + turns + ' 回合') +
         '</span><p>' +
-        '普攻傷害 × ' +
-        special.factor +
-        '。' +
-        special.note +
+        // A mend or a mirror is no blow, so it has no strength against the normal strike.
+        (special.strikes ? '普攻傷害 × ' + special.factor + '。' : '') +
+        signatureLines(s, u).map(esc).join('') +
         '</p></div>'
       : '') +
     bar('氣血', u.hp, u.maxHp, 'hp', 'heart') +
@@ -964,14 +973,17 @@ function enemyPage(s, id) {
         // 挑釁: derived from where the pieces stand now, as its own action will read it.
         taunters(s, u).map((t) => '受挑釁 · 本回合須攻擊' + DETAILS[t.id].name)
       )
-      .map((line) => '<p class="footnote">' + icon('flag', 15) + esc(line) + '</p>')
+      .map(
+        (line) =>
+          '<p class="footnote">' +
+          icon('flag', 15) +
+          esc(line).replace(/^【(.+?)】/, '<b>$1</b>　') +
+          '</p>'
+      )
       .join('') +
     '<p class="footnote">' +
     icon('stone', 15) +
     ('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。' + tileInfo(u.x, u.y, s.mapIndex).note) +
-    (s.mapIndex === 9 && ['murong', 'echoBow', 'echoScout'].includes(id)
-      ? '　每名存活的護陣者替慕容博抵擋 35% 傷害。'
-      : '') +
     '</p>'
   );
 }

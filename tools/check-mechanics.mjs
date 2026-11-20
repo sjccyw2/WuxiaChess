@@ -521,19 +521,21 @@ section('villain traits');
     basicPoison: { power: 2, turns: 2 }
   }, () => G.enemyTraitLines(page, unit(page, 'chief')));
   const spawn = mapLayout(0).enemies[0];
+  // In the spec's words (SPEC-villains §0.5): '【name】' and the villain's line. The signature's
+  // reach and rider are told under the signature itself (signatureLines).
   const expected = [
-    '絕技射程 3 格',
-    '絕技絆足 · 中招者移動 −2，2 回合',
-    '坐鎮 · 守在（' + (spawn.x + 1) + '，' + (spawn.y + 1) + '）1 格內；有俠客踏入攻擊範圍才出手，受擊或出手後離位追擊',
-    '專挑傷重者',
-    '化功 · 貼身打中他的俠客損失 8 內力',
-    '盟令 · 存活時其餘敵人攻擊 ＋1',
-    '游擊 · 出手後退開至多 2 步',
-    '毒手 · 普攻令目標中毒，兩次毒發各損 2 氣血'
+    '【盟令】存活時其餘敵人攻擊 ＋1。',
+    '【坐鎮】守在（' + (spawn.x + 1) + '，' + (spawn.y + 1) + '）一格內；有俠客踏入攻擊範圍或受到攻擊後，才離位追擊。',
+    '【化功】貼身打中他的俠客損失 8 點內力（封穴時無效）。',
+    '【游擊】出手後退開至多 2 步，離俠客越遠越好。',
+    '【毒手】普攻令目標中毒，兩次毒發各損 2 氣血。',
+    '【偏好】專挑傷重者。'
   ];
+  const sigLines = withTraits('chief', { sig: { reach: 3, extra: 'pin' } }, () => G.signatureLines(page, unit(page, 'chief')));
+  check('the signature lines carry its rider and its reach', same(sigLines, ['令目標攻擊降低 3，持續至下回合，並令目標絆足，移動減 2，持續至下回合。', '絕技射程 3 格。']), JSON.stringify(sigLines));
   check('the enemy page lists each trait', same(lines, expected), JSON.stringify(lines));
   const html = withTraits('chief', { glide: 2 }, () => P.enemyPage(page, 'chief'));
-  check('the enemy page shows the step and the trait lines', html.includes('移動 <b>') && html.includes('游擊 · 出手後退開至多 2 步'));
+  check('the enemy page shows the step and the trait lines', html.includes('移動 <b>') && html.includes('<b>游擊</b>　出手後退開至多 2 步，離俠客越遠越好。'));
 }
 
 // ── Reach and the counter ratio (§5 disarm, §6 counterRatio) ─────────────
@@ -1054,7 +1056,7 @@ section('cover');
     check('the disciple two tiles off cannot counter', f.counterRaw === 0);
     const page = P.attackPage(s, 'hero', 'chief', false);
     check('the preview shows the disciple opposite, with a 代受 line', page.includes('<strong>' + names[0] + '</strong>') && page.includes('<span>代受</span><b class="">' + names[0] + '代' + names[1] + '受招'));
-    check('the master’s page names who covers him', G.enemyTraitLines(s, chief).includes('代受 · 身旁的' + names[0] + '替他承受直接攻擊'));
+    check('the master’s page names who covers him', G.enemyTraitLines(s, chief).includes('【門人代受】相鄰的' + names[0] + '替他承受俠客的直接攻擊（氣血較多者先上）；波及、穿行、走勁與毒傷仍會落在他身上。'));
     const life = [chief.hp, scout.hp];
     G.resolve(s, hero, chief, false);
     check('the strike lands on the disciple only', chief.hp === life[0] && life[1] - scout.hp === f.amount);
@@ -2324,6 +2326,175 @@ section('interactions');
     check('a step left over after walking into a formation is not walked', walkedIn.x === 5 && walkedIn.y === 7, [walkedIn.x, walkedIn.y]);
     const begun = run({ x: 5, y: 7 }, [5, 7]);
     check('begun in one, its step as the action began (two less, so one) bounds the walk off', begun.x === 6 && begun.y === 7, [begun.x, begun.y]);
+  });
+}
+
+// ── 坐鎮 post (§7.3), and a 蓄勢反擊 that holds (§7.6) ─────────────────────
+section('post');
+{
+  // Board 0's open row 3: the post on (5,3); heroes put east of it.
+  const posted = (traits, setup) =>
+    withTraits('chief', traits, () => {
+      const s = board();
+      const chief = put(s, 'chief', 5, 3);
+      setup?.(s, chief);
+      return { s, chief };
+    });
+  const act = (s, u) => {
+    G.startEnemy(s);
+    return G.enemyAct(s, u);
+  };
+  const post = (tether, wake, more = {}) => ({ post: { tile: { x: 5, y: 3 }, tether, wake, ...more } });
+
+  withTraits('chief', post(1, true), () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    const hero = put(s, 'hero', 8, 3);
+    const life = hero.hp;
+    act(s, chief);
+    check('no hero within reach of its ground: it stays on its post', chief.x === 5 && chief.y === 3 && hero.hp === life, [chief.x, chief.y]);
+    check('and it is not woken', !chief.woke);
+    check('it does not claim to close in', !s.logs.some((l) => l.text === '逼近我方陣地。' && l.who === '余滄海'));
+  });
+  withTraits('chief', post(1, true), () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    const hero = put(s, 'hero', 7, 3);
+    const life = hero.hp;
+    act(s, chief);
+    check('a hero strikable from within the tether is struck', hero.hp < life && G.distance(chief, { x: 5, y: 3 }) <= 1, [chief.x, chief.y]);
+    check('wake: true — striking wakes it for good', chief.woke === true && s.logs.some((l) => l.text === '離位追擊。'));
+    const saved = R.restoreRun(copy(s));
+    check('a save keeps the woken post', saved && unit(saved, 'chief').woke === true);
+    put(s, 'hero', 8, 7);
+    for (const id of ['medic', 'guard']) unit(s, id).hp = 0; // only the hero to chase
+    G.nextRound(s);
+    s.phase = 'ally';
+    const from = { x: chief.x, y: chief.y };
+    act(s, chief);
+    check('once woken it is held no more and goes after the hero', !G.holdOf(s, chief) && G.distance(chief, from) > 0, [chief.x, chief.y]);
+    check('its page says it has left', G.enemyTraitLines(s, chief).includes('【坐鎮】已離位追擊。'));
+  });
+  // wake 'struck' and false: striking keeps the post; being struck drops only 'struck'.
+  for (const [wake, after] of [['struck', true], [false, false]])
+    withTraits('chief', post(1, wake), () => {
+      const s = board();
+      const chief = put(s, 'chief', 5, 3);
+      const hero = put(s, 'hero', 7, 3);
+      act(s, chief);
+      check('wake ' + JSON.stringify(wake) + ': its own blow keeps it on post', !chief.woke && hero.hp < hero.maxHp);
+      s.phase = 'ally';
+      hero.acted = hero.moved = false;
+      G.resolve(s, hero, chief, false);
+      check('wake ' + JSON.stringify(wake) + ': struck by a hero, ' + (after ? 'it wakes' : 'it holds'), !!chief.woke === after);
+    });
+  withTraits('chief', post(0, false), () => {
+    const s = board();
+    const chief = put(s, 'chief', 7, 3);
+    put(s, 'hero', 8, 7);
+    act(s, chief);
+    check('pulled off its post, it walks back', chief.x === 5 && chief.y === 3, [chief.x, chief.y]);
+    check('and says so', s.logs.some((l) => l.text === '退回崗位。'));
+  });
+  withTraits('chief', post(0, false), () => {
+    const s = board();
+    const chief = put(s, 'chief', 8, 3);
+    put(s, 'hero', 8, 7);
+    s.zones = [{ owner: 'medic', tiles: [{ x: 7, y: 3 }], through: s.round + 1 }];
+    act(s, chief);
+    check('a formation in front of its post stops the walk back', chief.x === 7 && chief.y === 3, [chief.x, chief.y]);
+  });
+  // The danger zone: what it can strike from its ground, not from anywhere it could walk.
+  {
+    const alone = (s) => G.enemies(s).filter((e) => e.id !== 'chief').forEach((e) => (e.hp = 0));
+    const lone = () => {
+      const s = board();
+      alone(s);
+      return s;
+    };
+    const free = lone();
+    put(free, 'chief', 5, 3);
+    const open = dangerTiles(free);
+    const held = withTraits('chief', post(0, false), () => {
+      const s = lone();
+      put(s, 'chief', 5, 3);
+      return new Set(dangerTiles(s));
+    });
+    check('unposted, the zone reaches three tiles out', open.has(G.key(8, 3)));
+    check('posted with tether 0, only the tiles beside it', held.has(G.key(6, 3)) && held.has(G.key(4, 3)) && !held.has(G.key(7, 3)), [...held].join(' '));
+    const tethered = withTraits('chief', post(1, false), () => {
+      const s = lone();
+      put(s, 'chief', 5, 3);
+      return new Set(dangerTiles(s));
+    });
+    check('with tether 1, two tiles out and no further', tethered.has(G.key(7, 3)) && !tethered.has(G.key(8, 3)));
+    const woken = withTraits('chief', post(0, true), () => {
+      const s = lone();
+      const c = put(s, 'chief', 5, 3);
+      dangerTiles(s);
+      c.woke = true;
+      return dangerTiles(s);
+    });
+    check('a woken post draws its whole walk again (the memo sees the change)', woken.has(G.key(8, 3)));
+  }
+  // 挑釁: a taunter it can strike from its ground binds it; one it cannot is ignored.
+  withTraits('chief', post(1, false), () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    const hero = put(s, 'hero', 4, 3);
+    const guard = put(s, 'guard', 7, 3);
+    guard.conditions = { taunt: { power: 2, through: s.round, source: 'guard' } };
+    act(s, chief);
+    check('a taunt answerable from inside the tether binds it', guard.hp < guard.maxHp && hero.hp === hero.maxHp);
+  });
+  withTraits('chief', post(0, false), () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    const hero = put(s, 'hero', 4, 3);
+    const guard = put(s, 'guard', 7, 3);
+    guard.conditions = { taunt: { power: 2, through: s.round, source: 'guard' } };
+    act(s, chief);
+    check('a taunt it cannot answer from its post is ignored', hero.hp < hero.maxHp && guard.hp === guard.maxHp && chief.x === 5);
+  });
+  // A post on its master: rank and file keep beside him.
+  withTraits('scout-0', { post: { tile: 'master', tether: 1, wake: false } }, () => {
+    Object.assign(G.DETAILS['scout-0'], { ...G.DETAILS.scout, traits: { post: { tile: 'master', tether: 1, wake: false } } });
+    const s = board();
+    put(s, 'chief', 5, 3);
+    const scout = put(s, 'scout', 8, 3);
+    put(s, 'hero', 8, 7);
+    act(s, scout);
+    check('a piece posted on its master walks to his side', G.distance(scout, { x: 5, y: 3 }) === 1, [scout.x, scout.y]);
+    check('its page says so', G.enemyTraitLines(s, scout).includes('【護駕】每回合先回到余滄海身旁。'));
+  });
+  // The page, generic and in the villain's own words.
+  withTraits('chief', post(2, 'struck'), () => {
+    const s = board();
+    check('the generic post line', G.enemyTraitLines(s, unit(s, 'chief'))[0] === '【坐鎮】守在（6，4）兩格內；受到攻擊後才離位。', G.enemyTraitLines(s, unit(s, 'chief'))[0]);
+  });
+  withTraits('chief', post(1, false, { note: '守在石階{tile}一格內，不離位。' }), () => {
+    const s = board();
+    check('a post line in the villain’s words, its tile filled in', G.enemyTraitLines(s, unit(s, 'chief'))[0] === '【坐鎮】守在石階（6，4）一格內，不離位。');
+  });
+
+  // 蓄勢反擊 that holds: while charged it stays and strikes only from where it stands.
+  const crouch = { stance: { while: 'charged', cut: 0, holds: true } };
+  withTraits('chief', crouch, () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    const hero = put(s, 'hero', 7, 3);
+    s.round = 3; // board 0's master is charged from round 3
+    check('charged, it is held', G.signatureDue(s, chief) && !!G.holdOf(s, chief));
+    const zone = dangerTiles(s);
+    check('charged, the danger zone is its own tile’s reach only', zone.has(G.key(6, 3)) && !zone.has(G.key(7, 3)));
+    act(s, chief);
+    check('charged, it does not walk to a hero out of reach', chief.x === 5 && hero.hp === hero.maxHp);
+    const t = board();
+    const c2 = put(t, 'chief', 5, 3);
+    const h2 = put(t, 'hero', 7, 3);
+    t.round = 2;
+    act(t, c2);
+    check('not charged, it walks in and strikes', h2.hp < h2.maxHp && c2.x === 6);
   });
 }
 

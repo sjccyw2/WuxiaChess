@@ -284,16 +284,42 @@ const STATUS_POWER = {
   exposed: (stage) => 3 + Math.floor(stage / 2),
   poison: (stage) => 3 + stage,
   drain: (stage) => 6 + 2 * stage,
-  sweep: () => 0
+  pin: () => 2,
+  sweep: () => 0,
+  line: () => 0,
+  mend: () => 0,
+  mirror: () => 0
 };
 const lasting = (turns) => (turns === 2 ? '持續至下回合。' : '持續 ' + turns + ' 回合。');
+const SHARES = { 2: '二', 3: '三', 4: '四', 5: '五' };
+// What a signature's rider adds to its note (`sig.extra`, or the style itself).
+const EXTRAS = {
+  wound: '，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。',
+  pin: '，並令目標絆足，移動減 2，持續至下回合。',
+  line: '，並穿過目標，以一半威力擊中其後兩格內首名俠客。'
+};
+const riding = (text, extra) => (extra ? text.replace(/。$/, '') + EXTRAS[extra] : text);
+// Each style's note, from the numbers of the stage it is met at.
 const SIGNATURE_RULES = {
-  weak: ({ power, turns }) => '令目標攻擊降低 ' + power + '，' + lasting(turns),
-  exposed: ({ power, turns }) => '令目標防禦降低 ' + power + '，' + lasting(turns),
-  poison: ({ power, turns }) =>
-    '令目標中毒，' + (turns === 2 ? '兩' : turns) + '次毒發各損 ' + power + ' 氣血。',
-  drain: ({ power }) => '另外削去目標 ' + power + ' 點內力。',
-  sweep: () => '相鄰的其他我方俠客也會受到四分之一傷害。'
+  weak: ({ power, turns, extra }) => riding('令目標攻擊降低 ' + power + '，' + lasting(turns), extra),
+  exposed: ({ power, turns, extra }) =>
+    riding('令目標防禦降低 ' + power + '，' + lasting(turns), extra),
+  poison: ({ power, turns, extra }) =>
+    riding('令目標中毒，' + (turns === 2 ? '兩' : turns) + '次毒發各損 ' + power + ' 氣血。', extra),
+  drain: ({ power, extra }) => riding('另外削去目標 ' + power + ' 點內力。', extra),
+  sweep: ({ sweep, extra }) =>
+    riding(
+      '相鄰的其他我方俠客也會受到' + (SHARES[Math.round(1 / sweep)] || '') + '分之一傷害。',
+      extra
+    ),
+  pin: ({ power, turns, extra }) =>
+    riding('令目標絆足，移動減 ' + power + '，' + lasting(turns), extra),
+  line: () => '穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。',
+  mend: ({ heal }) =>
+    '蓄勢時替三格內氣血不足七成的同夥回復 ' +
+    heal +
+    ' 點氣血，此回合不出手；無人受傷時改以普攻出手，蓄勢保留。',
+  mirror: () => '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。'
 };
 
 // Damage is measured against the same foe's normal strike after the target's defenses.
