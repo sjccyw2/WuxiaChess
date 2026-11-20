@@ -195,6 +195,11 @@ const STATUS_COLOURS = {
   haste: '#8ee3cb',
   weak: '#ec91ae',
   exposed: '#e8a781',
+  stance: '#e0c48a',
+  cover: '#9fc6e8',
+  redirect: '#b9a6e6',
+  evade: '#c9ecf5',
+  taunt: '#f2a07a',
   wound: '#d9796a',
   formation: '#ffd98c'
 };
@@ -209,6 +214,11 @@ const STATUS_SIGNS = {
   haste: '疾',
   weak: '弱',
   exposed: '破',
+  stance: '卸',
+  cover: '代',
+  redirect: '挪',
+  evade: '閃',
+  taunt: '挑',
   wound: '傷',
   formation: '陣' // derived: the piece has a 布陣 on the board
 };

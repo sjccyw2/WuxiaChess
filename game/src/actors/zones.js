@@ -113,7 +113,8 @@ function plan(layer, reach) {
     ground = !!art && G.targetType(art) === 'ground',
     heal = !!(art && (G.isSupport(art) || ground)),
     canBlink = ground && G.canPay(s, u),
-    moving = layer.mode === 'move' && G.canMove(s, u);
+    gliding = layer.mode === 'glide' && G.canGlide(s, u), // 回身: tiles for the walk left
+    moving = (layer.mode === 'move' && G.canMove(s, u)) || gliding;
   const cells = fieldCells(s.mapIndex),
     field = new Set(),
     move = new Set(),
@@ -128,7 +129,7 @@ function plan(layer, reach) {
     const stand = new Set(move);
     // A friend's tile cannot be stopped on, but it belongs to the region when the piece
     // has the steps to pass through it, so the outline does not break around companions.
-    const steps = G.stat(u, 'step', s);
+    const steps = gliding ? u.glideLeft : G.stat(u, 'step', s);
     for (const v of s.units) {
       if (!friends.has(cellKey(v.x, v.y)) || !G.living(v) || !G.ally(v)) continue;
       const path = G.movementPath(s, u, u, v);
@@ -136,8 +137,9 @@ function plan(layer, reach) {
       for (const step of path.slice(1)) spent += G.terrainInfo(step.x, step.y, s.mapIndex).cost;
       if (path.length > 1 && spent <= steps) move.add(cellKey(v.x, v.y));
     }
-    // Every tile the basic strike could reach from somewhere the piece can stand.
-    const far = u.range || 0;
+    // Every tile the basic strike could reach from somewhere the piece can stand (none for a
+    // hero who has already struck).
+    const far = gliding ? -1 : u.range || 0;
     for (const { x, y } of cells) {
       if (!stand.has(cellKey(x, y))) continue;
       for (let dy = -far; dy <= far; dy++)

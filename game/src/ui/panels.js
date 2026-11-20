@@ -13,6 +13,8 @@ import {
   unitDetails,
   enemyTechnique,
   enemyTraitLines,
+  coverer,
+  taunters,
   reach,
   roundsToSignature,
   standingLines,
@@ -25,6 +27,7 @@ import {
   TALENTS,
   ally,
   canAct,
+  canGlide,
   targetOK,
   canPrepare,
   canUseMedicine,
@@ -208,22 +211,36 @@ function commander(s, mode) {
       )
     );
   }
-  const acts = [
-    ['move', u.moved ? 'undo' : 'move', u.moved ? '撤步' : '移動'],
-    ['skill', 'spark', '招式'],
-    ['wait', 'wait', '待命'],
-    ['end', 'end', '結束回合']
-  ];
+  // 回身: once a glide art has struck, move walks on and wait stays put.
+  const gliding = canGlide(s, u);
+  const acts = gliding
+    ? [
+        ['glide', 'move', '回身'],
+        ['skill', 'spark', '招式'],
+        ['glide-stop', 'wait', '不走了'],
+        ['end', 'end', '結束回合']
+      ]
+    : [
+        ['move', u.moved ? 'undo' : 'move', u.moved ? '撤步' : '移動'],
+        ['skill', 'spark', '招式'],
+        ['wait', 'wait', '待命'],
+        ['end', 'end', '結束回合']
+      ];
   return acts
     .map(([a, ic, label]) => {
-      const current = canAct(s, u) && mode === a;
+      const current = (canAct(s, u) || gliding) && mode === a;
       const attrs =
         a === 'skill'
           ? 'id="arts-toggle" aria-controls="arts-panel" aria-expanded="false"'
-          : ['move', 'attack'].includes(a)
+          : ['move', 'attack', 'glide'].includes(a)
             ? `aria-pressed="${current}"`
             : '';
-      const disabled = a === 'end' ? s.phase !== 'ally' : !canAct(s, u);
+      const disabled =
+        a === 'end'
+          ? s.phase !== 'ally'
+          : gliding
+            ? a === 'skill'
+            : !canAct(s, u) || (a === 'move' && u.moved && !u.origin);
       return btn(
         a,
         icon(ic, 18) + '<span>' + label + '</span>',
@@ -346,6 +363,9 @@ function equippedCard(u, id, slot) {
 }
 function conditionChips(s, u) {
   const labels = [...activeEffects(u, s.round), ...standingLines(s, u)];
+  // 受護: derived, never stored — a companion beside a hero who covers.
+  const guard = ally(u) && coverer(s, u);
+  if (guard) labels.push('受護 · ' + DETAILS[guard.id].name + '在旁代受直接攻擊');
   return labels.length
     ? '<div class="condition-chips">' +
         labels.map((x) => '<span>' + esc(x) + '</span>').join('') +
@@ -940,6 +960,10 @@ function enemyPage(s, id) {
     (u.conditions?.disarm ? '（纏械）' : '') +
     '</b></span></div>' +
     enemyTraitLines(s, u)
+      .concat(
+        // 挑釁: derived from where the pieces stand now, as its own action will read it.
+        taunters(s, u).map((t) => '受挑釁 · 本回合須攻擊' + DETAILS[t.id].name)
+      )
       .map((line) => '<p class="footnote">' + icon('flag', 15) + esc(line) + '</p>')
       .join('') +
     '<p class="footnote">' +
@@ -953,9 +977,11 @@ function enemyPage(s, id) {
 }
 function attackPage(s, source, target, skill) {
   const u = find(s, source),
-    t = typeof target === 'string' ? find(s, target) : target;
-  const f = forecast(u, t, skill, s),
+    aimed = typeof target === 'string' ? find(s, target) : target;
+  const f = forecast(u, aimed, skill, s),
     a = skill ? artFor(u) : basicFor(u);
+  // 代受: the piece clicked is not the one struck; the coverer stands opposite (§9.7).
+  const t = f.coveredBy ? find(s, f.coveredBy) : aimed;
   const friendly = f.support,
     blink = f.type === 'ground',
     formation = blink && !!a.zone; // 布陣: the caster stays; the tile is the formation's centre
@@ -1002,7 +1028,8 @@ function attackPage(s, source, target, skill) {
   // Built only from what forecast() returned: the blow, the reply, and any cost or recovery.
   const forecastBar = (v) => {
     const healed = f.heal ? f.recipients.find((e) => e.id === v.id)?.amount || 0 : 0;
-    const own = v === u ? f.selfHeal - f.hpCost - f.counter - (f.selfLoss || 0) : 0;
+    const own =
+      v === u ? f.selfHeal - f.hpCost - f.counter - (f.selfLoss || 0) - (f.rebound || 0) : 0;
     const taken = friendly || blink ? healed : v === t ? -f.amount : 0;
     const after = Math.max(0, Math.min(v.maxHp, v.hp + own + taken));
     const share = (n) => Math.max(0, Math.min(100, (100 * n) / v.maxHp));
@@ -1088,7 +1115,13 @@ function attackPage(s, source, target, skill) {
   for (const e of f.effects)
     lines.push(line('附加效果', effectDescription(e.kind, e.power, e.turns)));
   if (f.push) lines.push(line(a.push ? '擊退' : '牽引', '一格'));
-  for (const note of f.notes) lines.push(line('招式連攜', esc(note)));
+  // 代受 and 號令 change who the action is for: each gets its own row.
+  for (const note of f.notes)
+    lines.push(
+      /^(代受|號令) · /.test(note)
+        ? line(note.slice(0, 2), esc(note.slice(5)))
+        : line('招式連攜', esc(note))
+    );
   if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
   if (skill)
     lines.push(

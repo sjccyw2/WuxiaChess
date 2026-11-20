@@ -257,7 +257,15 @@ const board = new BattleBoard({
         skill = mode === 'skill';
       if (target && G.targetOK(state, u, target, skill)) {
         const facts = moveFacts(state, u, skill ? u.activeArt || 'signature' : 'basic', target);
-        t.textContent = uName(target) + ' · ' + facts.powerLabel + ' ' + facts.powerText;
+        // 代受: the figure is for the coverer, so the tip names him.
+        const guard = !G.ally(target) && G.coverer(state, target);
+        t.textContent =
+          uName(target) +
+          (guard ? '（' + uName(guard) + '代受）' : '') +
+          ' · ' +
+          facts.powerLabel +
+          ' ' +
+          facts.powerText;
         t.classList.add('show');
         return;
       }
@@ -276,7 +284,7 @@ const board = new BattleBoard({
     }
     let info = '';
     if (goal && goal.x === x && goal.y === y) info = '支線燈記';
-    else if (mode === 'move' && steps) info = steps + ' 步';
+    else if ((mode === 'move' || mode === 'glide') && steps) info = steps + ' 步';
     else if (place.defense) info = '防禦 ＋' + place.defense;
     t.textContent = place.name + (info ? ' · ' + info : '');
     t.classList.add('show');
@@ -334,9 +342,12 @@ function paint() {
       '。查看俠客資料'
   );
   $('commander').innerHTML = P.commander(state, mode);
-  $('field-arts').innerHTML = equippedMoves(state, u) + F.undoRow(state, u);
+  // 回身: a hero who has struck with a glide art has only the walk, or staying, in his list.
+  $('field-arts').innerHTML =
+    F.glideRows(state, u) || equippedMoves(state, u) + F.undoRow(state, u);
   F.markReady($('field-arts'), state, u, mode);
-  if (hud.panel === 'arts' && !G.canAct(state, u)) hud.closePanel();
+  if (hud.panel === 'arts' && !G.canAct(state, u) && !(F.ON && G.canGlide(state, u)))
+    hud.closePanel();
   hud.syncPanelButtons();
   if (priorGroup && !priorGroup.closest('[hidden]')) {
     const next = [...priorGroup.querySelectorAll('[data-do]')].find(
@@ -371,14 +382,18 @@ function choose(id, quiet = false) {
   viewId = id;
   // A hero held by 立樁 is treated as one who has already moved: straight to his arts.
   const placed = u.moved || !!u.conditions?.rooted;
-  mode = placed && !u.acted ? 'attack' : 'move';
+  // 回身: a hero with a walk left comes back to it (the tiles drawn, the list offering it).
+  const gliding = G.canGlide(state, u);
+  mode = gliding ? 'glide' : placed && !u.acted ? 'attack' : 'move';
   update();
   if (!quiet) audio('tap');
-  if (F.ON && placed && G.canAct(state, u)) openArts();
+  if (F.ON && ((placed && G.canAct(state, u)) || gliding)) openArts();
 }
 // Polish (actionFlow): the arts list, opened without a button and kept beside the hero.
 function openArts(keyboard = false) {
-  if (!F.ON || screen !== 'battle' || dialog.open || !G.canAct(state, selected())) return;
+  const u = selected();
+  if (!F.ON || screen !== 'battle' || dialog.open || !(G.canAct(state, u) || G.canGlide(state, u)))
+    return;
   if (hud.panel !== 'arts') hud.togglePanel('arts', keyboard);
   F.followHero($('arts-panel'), board.layers, () =>
     hud.panel === 'arts' && screen === 'battle' ? { hero: selected(), state } : null
@@ -398,6 +413,15 @@ function cellClick(x, y) {
     return;
   }
   const u = selected();
+  // 回身: the one walk left to a hero who has struck; it cannot be taken back.
+  if (mode === 'glide' && G.canGlide(state, u)) {
+    if (G.glideMove(state, u, x, y)) {
+      audio('step');
+      mapTip('已回身');
+      finishAlly();
+    } else mapTip(G.terrain(x, y, state.mapIndex) + ' · 回身走不到這裡。');
+    return;
+  }
   if (!G.canAct(state, u)) {
     mapTip(zoneTip(x, y) || '請選擇一位尚可行動的俠客');
     return;
@@ -454,7 +478,7 @@ function unitClick(id) {
     openPage('attack-preview');
     return;
   }
-  if (F.ON && t === u && G.canAct(state, u)) {
+  if (F.ON && t === u && (G.canAct(state, u) || G.canGlide(state, u))) {
     openArts(document.activeElement?.matches?.('.key-cell:focus-visible'));
     return;
   }
@@ -483,8 +507,9 @@ function targetHint(art) {
   return {
     ground: art.zone ? '點選射程內的空地布陣' : '點選射程內的空地，可越過阻礙',
     self: '選擇施術者自身',
-    ally:
-      art.heal && !(art.shield || art.rally || art.haste)
+    ally: art.order
+      ? '選擇範圍內已行動的同伴'
+      : art.heal && !(art.shield || art.rally || art.haste)
         ? '選擇範圍內負傷的友軍'
         : '選擇範圍內的友軍',
     enemy: '選擇範圍內的敵人'
@@ -726,7 +751,7 @@ function autoSelect() {
   const n = F.ON ? F.nextToAct(state) : G.party(state).find((u) => G.canAct(state, u));
   if (n) {
     state.selected = n.id;
-    mode = n.moved ? 'attack' : 'move';
+    mode = n.moved || n.conditions?.rooted ? 'attack' : 'move';
   } else mode = '';
 }
 function finishAlly() {
@@ -735,7 +760,9 @@ function finishAlly() {
   if (!result() && !(F.ON ? F.anyIdle(state) : G.party(state).some((u) => G.canAct(state, u))))
     mapTip('我方已全數行動，可結束回合', 3200);
 }
-function advanceAfterStrike(id) {
+// What the turn offers once a strike has played out: the next hero; or, after 號令, the companion
+// ordered; after 連環, a second action for this one; after 回身, the walk still open to him.
+function advanceAfterStrike(id, hit = {}) {
   if (state.result) {
     result(true);
     return;
@@ -744,17 +771,49 @@ function advanceAfterStrike(id) {
     selection = selectionVersion;
   board.finished().then(() => {
     if (
-      screen === 'battle' &&
-      state.phase === 'ally' &&
-      aiRun === run &&
-      selection === selectionVersion &&
-      state.selected === id
+      !(
+        screen === 'battle' &&
+        state.phase === 'ally' &&
+        aiRun === run &&
+        selection === selectionVersion &&
+        state.selected === id
+      )
     )
-      finishAlly();
+      return;
+    const ordered = hit.ordered && G.find(state, hit.ordered);
+    if (ordered && G.canAct(state, ordered)) {
+      // 號令: the companion ordered is chosen, ready to move.
+      choose(ordered.id, true);
+      mapTip('號令 · ' + uName(ordered) + '可再移動並出手一次', 3200);
+    } else if (hit.again && G.canAct(state, selected())) {
+      // 連環: the same hero again, his arts list open for the second action.
+      choose(id, true);
+      openArts();
+      mapTip('連環 · 擊倒敵人，可再出手一次', 3200);
+    } else if (hit.glide && G.canGlide(state, selected())) {
+      mode = 'glide';
+      update();
+      openArts();
+      mapTip('回身 · 點選青綠色地格，尚可走 ' + hit.glide + ' 步，或選「不走了」', 3200);
+    } else finishAlly();
   });
 }
 function doCommand(action, selectedArt = false, keyboard = false) {
   const u = selected();
+  // 回身: walk on (the list's row, or the bar's move button) or stay (its other row, or wait).
+  if (G.canGlide(state, u)) {
+    hud.closePanel();
+    if (['glide', 'move'].includes(action)) {
+      mode = 'glide';
+      paint();
+      mapTip('回身 · 點選青綠色地格，尚可走 ' + u.glideLeft + ' 步');
+    } else if (['glide-stop', 'wait'].includes(action)) {
+      G.stopGlide(state, u);
+      audio('tap');
+      finishAlly();
+    }
+    return;
+  }
   if (!G.canAct(state, u)) return;
   if (action === 'skill' && !selectedArt) {
     hud.togglePanel('arts', keyboard);
@@ -949,7 +1008,14 @@ function enterBattle(fresh) {
   if (state.run.scene === 'fight' && state.phase === 'ally' && !G.canAct(state, selected()))
     autoSelect();
   viewId = state.selected;
-  mode = state.phase === 'ally' ? (selected().moved && !selected().acted ? 'attack' : 'move') : '';
+  mode =
+    state.phase !== 'ally'
+      ? ''
+      : G.canGlide(state, selected())
+        ? 'glide'
+        : selected().moved && !selected().acted
+          ? 'attack'
+          : 'move';
   window.scrollTo({ top: 0, behavior: 'instant' });
   update();
   if (fresh) {
@@ -1008,7 +1074,7 @@ function panelPlacement(source, destination) {
 }
 const cancelPanelDrag = panelDrag(dialog, panelPlacement, allowedDrop);
 function command(action, id, data = {}, keyboard = false) {
-  if (['move', 'attack', 'skill', 'wait'].includes(action)) {
+  if (['move', 'attack', 'skill', 'wait', 'glide', 'glide-stop'].includes(action)) {
     doCommand(action, false, keyboard);
     return;
   }
@@ -1499,7 +1565,7 @@ function command(action, id, data = {}, keyboard = false) {
         hit.from
       );
       board.showEffects(hit.effects);
-      advanceAfterStrike(u.id);
+      advanceAfterStrike(u.id, hit);
       if (hit.leveled) {
         audio('grow');
         notice(uName(u) + '升至等級 ' + u.level + '，武學點數 +1');
@@ -1561,7 +1627,8 @@ document.addEventListener('keydown', (e) => {
   if (k === 'escape') {
     // Polish (actionFlow): Esc takes back the move while the hero has not yet struck.
     const u = screen === 'battle' && F.ON && state.phase === 'ally' ? selected() : null;
-    if (u?.moved && G.canAct(state, u) && (!hud.panel || hud.panel === 'arts')) doCommand('move');
+    if (u?.moved && u.origin && G.canAct(state, u) && (!hud.panel || hud.panel === 'arts'))
+      doCommand('move');
     else if (hud.panel) hud.closePanel(true);
     else if (hud.fallback) hud.setFallback(false);
     else {

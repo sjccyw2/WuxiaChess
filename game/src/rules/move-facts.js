@@ -38,7 +38,7 @@ function useLines(art) {
   const lines = [];
   if (art.poised) lines.push('留力 · 上回合未出手方可施展');
   if (art.consume === 'shield') lines.push('轉護 · 須自身帶有護盾，施展時護盾轉給受術者');
-  return [...lines, ...G.priceNotes(art)];
+  return [...lines, ...G.guardNotes(art), ...G.priceNotes(art)];
 }
 
 // What the conditions stage's fields do, as rules: 反噬, a conditional 失神, 布陣.
@@ -136,6 +136,10 @@ function moveFacts(s, u, id = 'basic', target = null) {
     powerLabel = '身法距離';
     powerText = range + ' 格';
     lines.push('越障移至可站立的空格，結束行動');
+  } else if (art.order) {
+    powerLabel = '號令';
+    powerText = '再行動一次';
+    lines.push('號令 · 令一位本回合已行動的同伴重新移動並出手一次');
   } else {
     const effect = effectsOf(art)[0];
     const entry = {
