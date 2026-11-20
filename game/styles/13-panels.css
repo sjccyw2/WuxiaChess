@@ -1142,3 +1142,30 @@ html.polish-forecast-bars #modal .fc-bar.ko .fc-after {
     margin-inline-start: 7px;
   }
 }
+
+/* ------------------------------------------- 12  Owner-approved layout changes */
+/* forecastSide: on wide screens the strike forecast docks on the side away from the two
+   fighters (app sets data-dock), so the duel it describes stays in view. Phones keep it centred. */
+@media (min-width: 1180px) and (min-height: 620px) {
+  html.polish-forecast-side #modal[data-dock]:has(.duel) {
+    width: min(480px, 38vw);
+  }
+  html.polish-forecast-side #modal[data-dock='right']:has(.duel) {
+    margin-inline: auto max(22px, 2.2vw);
+  }
+  html.polish-forecast-side #modal[data-dock='left']:has(.duel) {
+    margin-inline: max(22px, 2.2vw) auto;
+  }
+  html.polish-forecast-side #modal[data-dock]:has(.duel)::backdrop {
+    background: #0811193d;
+    backdrop-filter: none;
+  }
+}
+
+/* dangerZone: the HUD toggle glows in the zone's own colour while the zone is showing. */
+html.polish-danger-zone .battlefield #danger-toggle[aria-pressed='true'] {
+  color: #ffc9ef;
+}
+html.polish-danger-zone .battlefield #danger-toggle[aria-pressed='true'] svg {
+  filter: drop-shadow(0 0 5px #e06fd0b0);
+}

@@ -42,6 +42,7 @@ import {
 } from '../rules/game.js';
 import { icon } from './icons.js';
 import { POLISH } from '../polish.js';
+import { extraHotkeys } from './field-extras.js';
 const portraits = {
   huang: 'huang',
   yang: 'yang',
@@ -793,7 +794,9 @@ function helpPage() {
           `<details class="hud-disclosure"><summary>${icon(ic, 17)} ${title}</summary><p>${body}</p></details>`
       )
       .join('') +
-    '</div><div class="hotkeys"><kbd>1</kbd> 移動 <kbd>2</kbd> 招式 <kbd>3</kbd> 待命 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 返回 <kbd>?</kbd> 指南</div>'
+    '</div><div class="hotkeys"><kbd>1</kbd> 移動 <kbd>2</kbd> 招式 <kbd>3</kbd> 待命 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 返回 <kbd>?</kbd> 指南' +
+    extraHotkeys() +
+    '</div>'
   );
 }
 function settingsPage(p, inBattle = true) {

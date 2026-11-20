@@ -1,5 +1,7 @@
 // Polish: sets the html.polish-* classes that styles/12 and 13 key off, before first paint.
 import './polish.js';
+// Polish: the owner-approved control additions (danger zone, Tab to the next hero, forecast dock).
+import * as X from './ui/field-extras.js';
 import { journalPage } from './ui/wake-views.js';
 import { bowlsPage } from './ui/bowl-views.js';
 import { coverBowls, pickBowl } from './rules/ferry-market.js';
@@ -294,6 +296,7 @@ function paint() {
   grid.setAttribute('aria-pressed', String(Boolean(prefs.grid)));
   grid.title = grid.ariaLabel = prefs.grid ? '隱藏棋格' : '顯示棋格';
   grid.setAttribute('aria-label', grid.title);
+  X.syncDangerButton($('danger-toggle'), prefs.danger);
   const path = mapLayout(state.mapIndex);
   $('medicine-button').disabled = !G.canUseMedicine(state, selected());
   $('chapter-number').textContent = '第' + R.NUMERALS[state.run.stage] + '局';
@@ -556,6 +559,7 @@ function drawModal(keepScroll = false) {
     dialog.classList.toggle('ui-turn', !dialog.open || shown !== dialog.dataset.shown);
     dialog.dataset.shown = shown;
   }
+  X.dockForecast(dialog, board?.layers, state, strikeData, dialogState);
 }
 function openPage(name, heroId) {
   if (!dialog.open) {
@@ -1009,6 +1013,13 @@ function command(action, id, data = {}, keyboard = false) {
       prefs.grid = !prefs.grid;
       savePrefs();
       paint();
+      break;
+    // Polish (dangerZone): show or hide the tiles the enemy can strike next turn.
+    case 'field-danger':
+      prefs.danger = !prefs.danger;
+      savePrefs();
+      paint();
+      audio('tap');
       break;
     case 'fullscreen':
       hud.fullscreen();
@@ -1498,6 +1509,22 @@ document.addEventListener('keydown', (e) => {
   if (k === 'g') {
     e.preventDefault();
     command('field-grid');
+    return;
+  }
+  // Polish (dangerZone): D toggles the enemy's strike zone.
+  if (k === 'd' && !$('danger-toggle')?.hidden) {
+    e.preventDefault();
+    command('field-danger');
+    return;
+  }
+  // Polish (nextHeroKey): Tab picks the next hero who can still act, unless the keyboard focus
+  // is showing on a control, in which case Tab moves between controls as it always did.
+  if (k === 'tab' && screen === 'battle' && X.tabIsFree()) {
+    const id = X.nextHero(state, e.shiftKey ? -1 : 1);
+    if (id) {
+      e.preventDefault();
+      choose(id);
+    }
     return;
   }
   const act = { 1: 'move', 2: 'skill', 3: 'wait' }[k];

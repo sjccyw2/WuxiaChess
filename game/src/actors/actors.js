@@ -1,4 +1,5 @@
 import { fieldCells } from '../data/terrain.js';
+import { drawDanger } from './danger.js';
 import { paintMasteryFlourish } from '../fx/mastery-vfx.js';
 // Animated billboard art is painted after the ground. Only the ground ray can accept a move.
 import * as G from '../rules/game.js';
@@ -469,6 +470,7 @@ class ActorLayer {
       u = G.find(s, s.selected);
     const can = G.canAct(s, u),
       cast = ['attack', 'skill'].includes(this.mode) && can;
+    drawDanger(this); // Polish (dangerZone): the enemy's strike zone, under everything else
     const art = cast && this.mode === 'skill' ? G.artFor(u) : null;
     const range = cast ? (art ? art.range : u.range) : 0;
     const heal = art && (G.isSupport(art) || art.blink);
