@@ -159,6 +159,22 @@ function renderParty(s) {
     })
     .join('');
 }
+// What the hero's own last turns have readied, shown while he can still act (SPEC-mechanics §4):
+// 留力, he did not strike last turn, so an equipped art that needs it may be used; 還報, an enemy
+// hurt him in the last enemy phase, so an equipped art that pays it back is stronger.
+function turnPips(s, u) {
+  if (s.phase !== 'ally' || !canAct(s, u)) return '';
+  const arts = equippedArts(u).map((id) => artFor(u, id));
+  const pip = (name, rule) => `<small class="unit-pip" title="${rule}">${name}</small>`;
+  return (
+    (arts.some((a) => a.poised) && u.struckRound !== s.round - 1
+      ? pip('留力', '上一回合未曾出手，留力之招可以施展')
+      : '') +
+    (arts.some((a) => a.avenge) && u.hurtRound === s.round - 1
+      ? pip('還報', '上一個敵方回合曾受敵人攻擊而損血，還報之招威力增加')
+      : '')
+  );
+}
 function activeHero(s) {
   const u = find(s, s.selected);
   const stateMark =
@@ -168,7 +184,7 @@ function activeHero(s) {
   const vitality = (ic, key, v, max) =>
     `<span class="unit-vital ${key}">${icon(ic, 12)}${meter(v, max, key)}<b>${v}</b></span>`;
   return `<span class="unit-face"><img src="${face(u.id)}" alt="">${flag}</span><span class="unit-summary">
-    <span class="unit-name"><strong>${DETAILS[u.id].name}</strong><small>Lv.${u.level}</small>${stateMark}</span>
+    <span class="unit-name"><strong>${DETAILS[u.id].name}</strong><small>Lv.${u.level}</small>${stateMark}${turnPips(s, u)}</span>
     ${vitality('heart', 'hp', u.hp, u.maxHp)}${vitality('drop', 'mp', u.mp, u.maxMp)}</span>`;
 }
 function commander(s, mode) {
@@ -822,7 +838,32 @@ function helpPage() {
       'swords',
       '攻擊與絕技',
       (actionFlow ? '移動後，或再點一次俠客，' : '打開「招式」，') +
-        '選普攻或已攜帶的武學，再點目標可預覽實際傷害。射程內的敵人若仍存活便會還擊，清心普善咒與一陽指則可治療受傷的友軍。'
+        '選普攻或已攜帶的武學，再點目標可預覽實際傷害。射程內的敵人若仍存活便會還擊。療傷、護盾與助勢的武學施於友軍或自身，同樣先預覽再施展。'
+    ],
+    [
+      'tree',
+      '想起武學',
+      '應帖而來的只是一念：俠客只帶著入門的功夫，放在武學樹的根基一行。後來所學，要在局中花武學點數一招一招想起來，越往上越近他的成名絕學。'
+    ],
+    [
+      'spark',
+      '出手節奏',
+      '連環：擊倒主目標時，本回合可再出手一次，每回合限一次。回身：出招後仍可走完未用的步數，走後不能撤步。號令：令一位本回合已行動的同伴重新移動並出手一次。留力：上一回合未曾普攻或攻擊敵人，方可施展。壓箱：每局只能施展一次。調息：施展後須隔數回合才能再用。'
+    ],
+    [
+      'danger',
+      '絕技的代價',
+      '有些絕技要出招者自己付代價，至多延續到他的下一回合：露空，至下回合防禦降低；無守，至下回合不能還擊；立樁，下一回合不能移動；曲終，下一回合不能施展絕技，仍可普攻。這是代價，不是傷病，解厄解不掉。'
+    ],
+    [
+      'shield',
+      '護人與布陣',
+      '代受：至下回合，敵人對相鄰同伴的直接攻擊改由自己承受。挑釁：至下回合，兩格內能攻到自己的敵人只能攻擊自己，兩格從出招後所站之處算起，預覽時棋盤會框出範圍。布陣：以落點為中心布下五格陣勢，至下一敵方回合結束；敵人踏入即須停步，回合開始時站在陣中移動減 2，我方站在陣中防禦 ＋4。'
+    ],
+    [
+      'pin',
+      '附加狀態',
+      '吸勁：命中後回復 8 點內力，並使目標的絕技延後一回合；同一敵人每回合只延一次，局主不能連續兩回合被延。內傷：療傷減半，每次出手攻擊後自損氣血。失神：失去下一次行動；局主受過後，下一回合可抵抗。纏械：攻擊降低，普攻與絕技只能攻擊相鄰一格。'
     ],
     [
       'end',

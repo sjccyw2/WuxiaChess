@@ -13,7 +13,7 @@
 import {
   G, TECHNIQUES, HERO_PATHS, MASTERY_ARTS, TRADE_MANUALS, profile, classify, mainMeasure,
   measureName, effectKeys, costKeys, strikeEquivalent, heroTree, ancestors, artOf, FAMILY, JOB_NAMES,
-  boardFoes
+  boardFoes, favMeasure, conditionalKeys, CAPABILITIES
 } from './lib/skill-measure.mjs';
 
 // ── Thresholds: every judgement call in one place ──────────────────────────
@@ -38,6 +38,10 @@ const T = {
   // R4: a later strike that out-reaches the starting art by at least this many tiles is only
   // warned about, not failed, when the starting art out-damages it.
   R4_REACH_EXCUSE: 2,
+  // R4: a later strike bought for a capability (CAPABILITIES in skill-measure.mjs: 吸勁, 失神,
+  // 纏械, 代受 …) is not held to the starting art's damage, unless it falls below it by more than
+  // this fraction (then a warning).
+  UTILITY_FLOOR: 0.25,
   // R5: twins have reach within this many tiles and main measures within this fraction.
   TWIN_REACH: 1,
   TWIN_MEASURE: 0.1,
@@ -53,9 +57,27 @@ const T = {
   SUPPORT_BANDS: { start: [28, 34], 1: [30, 40], 2: [36, 46], 3: [42, 54], 4: [50, 60] },
   STRIKE_SLACK: 0.1, // "well outside": this far past the band edge
   SUPPORT_SLACK: 6,
+  // R2 and R4: an art whose power is conditional (破招, 孤行, 合璧, 黯然, 還報, 斬殘, 傾力) is an
+  // upgrade where its situation holds; it may be weaker than the art it is held against when the
+  // situation does not, by at most this fraction, provided it is at least as strong when it does.
+  CONDITIONAL_MARGIN: 0.1,
   PRICES: {
+    // FRAMEWORK.md R9.
     safe: 0.15, pierceHalf: 0.15, reachTile: 0.1, splash: 0.25, push: 0.1, debuffTwoTurns: 0.15,
-    hpCost: 0.25, auraPeople: 2
+    hpCost: 0.25, auraPeople: 2,
+    // What the newer mechanics add to a strike, in factor, as the designers priced them
+    // (design-*.md): 吸勁 0.20 at its merged 8 內力 (段譽's designer; 令狐冲's said 0.25 at 10),
+    // 卸勁 0.20, 纏械 0.30, 失神 0.50 when it lands, 內傷 0.15, 回身 0.20; 布陣 as a strike's rider
+    // 0.20, the area pin it replaced on 天下無狗. 代受 had no factor price: it is priced as 卸勁,
+    // the other guard a strike leaves until the hero's next turn. 連環 has none and is listed.
+    riders: { siphon: 0.2, stance: 0.2, disarm: 0.3, daze: 0.5, wound: 0.15, glide: 0.2, zone: 0.2, cover: 0.2 },
+    // What a price takes off a strike: 有攻無守 0.30 for 無守 and 露空 together, 露空 alone 0.15,
+    // 立樁 0.15, 留力 0.30, 調息 0.20, 反噬 0.15 (design-*.md). 壓箱 had none: at least 留力's,
+    // since it allows one use a board.
+    costs: { openGuard: 0.15, recoil: 0.15, rooted: 0.15, poised: 0.3, cooldown: 0.2, backlash: 0.15, once: 0.3 },
+    // A guard that a support art lays, in 氣血: 代受 ≈ a 30-point shield on the companion it
+    // covers (郭靖's designer); 挑釁 took 代受's place on 鐵索並肩 (RULINGS A) and is priced alike.
+    guards: { cover: 30, taunt: 30 }
   },
   // Shop manuals: a manual duplicates a node of its likely buyer when the jobs match, reach is
   // within TWIN_REACH and the main measures are within this fraction.
@@ -81,12 +103,15 @@ const cache = new Map();
 function prof(heroId, id) {
   const k = heroId + '/' + id;
   if (!cache.has(k)) {
-    const p = profile(heroId, id, T.REFERENCE);
+    const p = profile(heroId, id, T.REFERENCE, [], { conditional: true });
     const art = id === 'basic' ? null : artOf(heroId, id);
     p.art = art;
     p.cls = classify(art, p, T);
     p.job = p.cls.job;
     p.measure = mainMeasure(p.job, p);
+    p.favMeasure = favMeasure(p.job, p);
+    p.conds = new Set(conditionalKeys(art));
+    p.utility = [...effectKeys(art)].filter((k) => CAPABILITIES.has(k));
     p.mp = art && art.kind !== 'basic' ? art.mp || 0 : 0;
     p.effects = effectKeys(art);
     p.costs = costKeys(art);
@@ -106,7 +131,20 @@ function additions(node, anc) {
   if (anc.job !== 'basic' && node.mp <= anc.mp - T.LOWER_COST_MP) adds.push('mp ' + node.mp + ' vs ' + anc.mp);
   const dropped = [...anc.costs].filter((k) => !node.costs.has(k));
   if (dropped.length) adds.push('drops ' + dropped.join(', '));
-  return { adds, formOnly: adds.length > 0 && adds.length === 1 && fx.length > 0 && fx.every((k) => k.startsWith('form:')) && !adds[0].startsWith('reach') };
+  // 吸勁, 連環 and 回身 are form tags in the data but mechanics in play, not small riders.
+  const small = (k) => k.startsWith('form:') && !CAPABILITIES.has(k);
+  return { adds, formOnly: adds.length > 0 && adds.length === 1 && fx.length > 0 && fx.every(small) && !adds[0].startsWith('reach') };
+}
+// A node whose power is conditional is an upgrade of `anc` at `job` where its situation holds: it
+// must be at least as strong there, and not more than CONDITIONAL_MARGIN weaker where it does not.
+// Answers the reason, or null.
+function situational(node, anc, job) {
+  if (![...node.conds].some((k) => !anc.conds.has(k))) return null;
+  const plain = mainMeasure(job, node),
+    fav = favMeasure(job, node);
+  if (fav < favMeasure(job, anc) * (1 - T.WEAKER_MARGIN)) return null;
+  if (plain < mainMeasure(job, anc) * (1 - T.CONDITIONAL_MARGIN)) return null;
+  return 'when ' + node.fav.label + ' it is ' + fav + ' vs ' + favMeasure(job, anc) + ', otherwise ' + plain + ' vs ' + mainMeasure(job, anc);
 }
 const describe = (heroId, id, p) =>
   id + ' ' + name(heroId, id) + ' (' + JOB_NAMES[p.job] + ', ' + p.measure + ')';
@@ -186,15 +224,26 @@ function checkHero(heroId) {
     for (const aid of ancestors(id)) {
       const a = aid === 'signature' ? P.signature : P[aid] || (TECHNIQUES[aid]?.kind === 'basic' ? prof(heroId, aid) : null);
       if (!a || FAMILY[a.job] !== FAMILY[n.job]) continue;
-      const mine = mainMeasure(a.job, n),
-        theirs = mainMeasure(a.job, a);
-      const label = name(heroId, aid) + ' at ' + JOB_NAMES[a.job] + ' (' + measureName(a.job) + ')';
-      if (mine >= theirs * (1 - T.WEAKER_MARGIN)) {
-        note('R2', id + ' >= ' + aid + ': ' + mine + ' vs ' + theirs);
+      // A single-target strike below an area strike has narrowed the job to one foe: it is held
+      // to the ancestor's blow on the main target, not to its splash, which it does not claim.
+      const job = a.job === 'area' && n.job !== 'area' ? 'strike' : a.job;
+      // Held against the ancestor both plainly and where each is at its best.
+      const plain = [mainMeasure(job, n), mainMeasure(job, a)],
+        best = [favMeasure(job, n), favMeasure(job, a)];
+      const label = name(heroId, aid) + ' at ' + JOB_NAMES[job] + ' (' + measureName(job) + ')';
+      const plainOk = plain[0] >= plain[1] * (1 - T.WEAKER_MARGIN);
+      if (plainOk && best[0] >= best[1] * (1 - T.WEAKER_MARGIN)) {
+        note('R2', id + ' >= ' + aid + ': ' + plain.join(' vs ') + (a.fav || n.fav ? ', at best ' + best.join(' vs ') : ''));
         continue;
       }
+      const why = situational(n, a, job);
+      if (why) {
+        note('R2', id + ' is an upgrade of ' + aid + ' in its situation: ' + why);
+        continue;
+      }
+      const [mine, theirs] = plainOk ? best : plain;
       const { adds, formOnly } = additions(n, a);
-      const gap = mine + ' vs ' + theirs + ' (' + pct(mine, theirs) + '%)';
+      const gap = mine + ' vs ' + theirs + ' (' + pct(mine, theirs) + '%)' + (plainOk ? ' when ' + a.fav.label : '');
       if (!adds.length)
         fail('R2', id + ' ' + name(heroId, id) + ' is weaker than its ancestor ' + aid + ' ' + label + ': ' + gap + ', and adds no reach, safety, effect or lower cost');
       else if (formOnly && mine < theirs * (1 - T.FORM_ONLY_MARGIN))
@@ -208,9 +257,12 @@ function checkHero(heroId) {
     const s = P[summit];
     for (const id of arts) {
       if (id === summit || FAMILY[P[id].job] !== FAMILY[s.job] || P[id].job === 'basic') continue;
-      const theirs = mainMeasure(s.job, P[id]);
+      const theirs = mainMeasure(s.job, P[id]),
+        theirBest = favMeasure(s.job, P[id]);
       if (theirs > s.measure)
         fail('R4', 'the summit ' + describe(heroId, summit, s) + ' is beaten at its own job by ' + id + ' ' + name(heroId, id) + ': ' + theirs + ' vs ' + s.measure + ' ' + measureName(s.job));
+      else if (theirBest > s.favMeasure)
+        fail('R4', 'the summit ' + describe(heroId, summit, s) + ' at its best (' + s.favMeasure + ') is beaten by ' + id + ' ' + name(heroId, id) + ' at its best: ' + theirBest + (P[id].fav ? ' when ' + P[id].fav.label : '') + ' (' + measureName(s.job) + ')');
     }
   }
   const start = P.signature;
@@ -224,7 +276,12 @@ function checkHero(heroId) {
       theirs = mainMeasure(n.job, start);
     if (theirs <= mine) continue;
     const text = 'the starting art ' + name(heroId, 'signature') + ' out-' + (strike ? 'damages' : 'does') + ' the later ' + describe(heroId, id, n) + ': ' + theirs + ' vs ' + mine + ' (' + measureName(n.job) + ')';
-    if (n.reach >= start.reach + T.R4_REACH_EXCUSE) warn('R4', text + '; it does reach ' + n.reach + ' vs ' + start.reach);
+    const own = n.utility.filter((k) => !start.effects.has(k));
+    const why = situational(n, start, n.job);
+    if (why) note('R4', text + ', but ' + why);
+    else if (own.length && mine >= theirs * (1 - T.UTILITY_FLOOR)) note('R4', text + ', but it is bought for ' + own.join(', '));
+    else if (n.reach >= start.reach + T.R4_REACH_EXCUSE) warn('R4', text + '; it does reach ' + n.reach + ' vs ' + start.reach);
+    else if (own.length) warn('R4', text + '; it carries ' + own.join(', ') + ', but is more than ' + T.UTILITY_FLOOR * 100 + '% weaker');
     else fail('R4', text);
   }
 
@@ -240,7 +297,10 @@ function checkHero(heroId) {
       const hi = Math.max(a.measure, b.measure),
         lo = Math.min(a.measure, b.measure);
       if (hi && (hi - lo) / hi > T.TWIN_MEASURE) continue;
-      const diff = [...a.effects].filter((k) => !b.effects.has(k)).concat([...b.effects].filter((k) => !a.effects.has(k)));
+      // A conditional bonus is a difference too: the two are equipped for different situations.
+      const ta = new Set([...a.effects, ...a.conds]),
+        tb = new Set([...b.effects, ...b.conds]);
+      const diff = [...ta].filter((k) => !tb.has(k)).concat([...tb].filter((k) => !ta.has(k)));
       const text = x + ' ' + name(heroId, x) + ' and ' + y + ' ' + name(heroId, y) + ' are both ' + JOB_NAMES[a.job] + ', reach ' + a.reach + '/' + b.reach + ', ' + a.measure + ' vs ' + b.measure;
       if (!diff.length) fail('R5', text + ', with no differing effect: one will crowd the other out');
       else if (diff.every((k) => k.startsWith('form:'))) warn('R5', text + '; they differ only in form tags (' + diff.join(', ') + ')');
@@ -262,12 +322,15 @@ function checkHero(heroId) {
       if (band && (e.value < band[0] - T.STRIKE_SLACK || e.value > band[1] + T.STRIKE_SLACK)) off = e.value < band[0] ? 'low' : 'high';
     } else if (e.support != null) {
       band = T.SUPPORT_BANDS[tier];
-      shown = String(e.support);
-      if (band && (e.support < band[0] - T.SUPPORT_SLACK || e.support > band[1] + T.SUPPORT_SLACK)) off = e.support < band[0] ? 'low' : 'high';
+      // FRAMEWORK R9: the summit restores "about 50–60, or several people at once"; one that
+      // reaches several people is held to the band for each of them.
+      const v = tier === 4 && e.people > 1 ? e.perHead : e.support;
+      shown = String(v) + (v !== e.support ? 'x' + e.people : '');
+      if (band && (v < band[0] - T.SUPPORT_SLACK || v > band[1] + T.SUPPORT_SLACK)) off = v < band[0] ? 'low' : 'high';
     }
-    budget[id] = { shown, band: band ? band.join('-') : '-', off, unpriced: e.unpriced };
+    budget[id] = { shown, band: band ? band.join('-') : '-', off, unpriced: e.unpriced, paid: e.paid };
     if (off)
-      warn('R9', id + ' ' + name(heroId, id) + ' is ' + shown + ', well ' + (off === 'low' ? 'below' : 'above') + ' the tier-' + tier + ' band ' + band.join('-') + (e.unpriced.length ? ' (unpriced: ' + e.unpriced.join(', ') + ')' : ''));
+      warn('R9', id + ' ' + name(heroId, id) + ' is ' + shown + ', well ' + (off === 'low' ? 'below' : 'above') + ' the tier-' + tier + ' band ' + band.join('-') + (e.paid.length ? ' (after its price: ' + e.paid.join(', ') + ')' : '') + (e.unpriced.length ? ' (unpriced: ' + e.unpriced.join(', ') + ')' : ''));
   }
 
   // ── Print ──
@@ -281,7 +344,10 @@ function checkHero(heroId) {
     const hard = p.points.map((pt) => (p.type === 'enemy' ? pt.hard.damage : p.type === 'ground' ? '-' : pt.hard.heal + pt.hard.shield + pt.hard.buff));
     const b = budget[id] || { shown: '-', band: '-' };
     const notes = [];
+    if (p.fav) notes.push('when ' + p.fav.label + ': ' + p.favMeasure + ' (+' + (p.favMeasure - p.measure) + ')');
     if (p.conditional) notes.push('conditional: ' + p.conditional.damage + ' (+' + p.conditional.gain + ') when ' + p.conditional.label + ' (' + p.conditional.at + ')');
+    if (p.utility.length) notes.push('bought for ' + p.utility.join(', '));
+    if (b.paid?.length) notes.push('priced: ' + b.paid.join(', '));
     if (p.short) notes.push('measured at a shorter reach than it has');
     if (b.off) notes.push('budget ' + b.off);
     console.log(
@@ -323,7 +389,11 @@ function checkManuals(results) {
     for (const [nid, n] of Object.entries(tree)) {
       if (n.job !== p.job || n.type !== p.type || Math.abs(n.reach - p.reach) > T.TWIN_REACH) continue;
       const hi = Math.max(n.measure, p.measure);
-      if (hi && Math.abs(n.measure - p.measure) / hi <= T.MANUAL_DUPLICATE) dupes.push(nid + ' ' + name(h, nid) + ' (' + n.measure + ')');
+      // As in R5: a different effect or conditional bonus makes it a different choice, not a copy.
+      const tn = new Set([...n.effects, ...n.conds]),
+        tp = new Set([...p.effects, ...p.conds]);
+      const differs = [...tn].some((k) => !tp.has(k) && !k.startsWith('form:')) || [...tp].some((k) => !tn.has(k) && !k.startsWith('form:'));
+      if (hi && Math.abs(n.measure - p.measure) / hi <= T.MANUAL_DUPLICATE && !differs) dupes.push(nid + ' ' + name(h, nid) + ' (' + n.measure + ')');
       else if (n.measure > p.measure) already.push(nid + ' ' + name(h, nid) + ' (' + n.measure + ')');
     }
     const e = strikeEquivalent(book, T.PRICES);
