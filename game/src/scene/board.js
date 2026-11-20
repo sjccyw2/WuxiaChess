@@ -6,6 +6,7 @@ import { SoftwareScene } from './software.js';
 import { ActorLayer } from '../actors/actors.js';
 import { POLISH } from '../polish.js';
 import { installGrade } from './stage-light.js';
+import { FramePacer } from './pacing.js';
 
 // A legal destination always owns its entire projected tile, including pixels painted by a sprite.
 function resolveBoardPick(s, mode, ground, body, reach) {
@@ -274,19 +275,38 @@ class BattleBoard {
       this.locateKeys();
     }
     const covered = this.covered();
+    // Smooth idle: the pacer times real frames and says how often the world may redraw.
+    const pace = POLISH.smoothIdle ? (this.pace ||= new FramePacer()) : null;
+    if (pace) {
+      if (this.pacedScenery !== this.scenery) pace.settle();
+      this.pacedScenery = this.scenery;
+      pace.begin(now);
+    }
+    const playing = this.layers.playing;
     // While fighters are acting, their frames take priority over animated water.
-    const ripple =
-      !covered && !this.layers.playing && this.prefs.motion && now - (this.lastWorld || 0) > 115;
-    if (this.renderer && (this.dirty || ripple)) {
+    const ripple = pace
+      ? !covered && this.prefs.motion && pace.worldDue(now, playing)
+      : !covered && !playing && this.prefs.motion && now - (this.lastWorld || 0) > 115;
+    const world = this.renderer && (this.dirty || ripple);
+    if (world) {
       this.water.material.uniforms.time.value = this.prefs.motion ? now / 1000 : 0;
       this.renderer.render(this.world, cam);
       this.lastWorld = now;
     } else if (this.soft && this.dirty) this.soft.render(cam);
     this.dirty = false;
     this.layers.draw(now, this.title, this.reach, this.hover, covered);
+    pace?.end(now, Boolean(world), playing);
     if (covered || this.layers.waitingForArt) return;
-    if (this.layers.playing || (this.prefs.motion && this.layers.effects.length)) this.draw();
-    else if (this.prefs.motion) this.timer = setTimeout(() => this.draw(), 105);
+    if (this.layers.playing || (this.prefs.motion && this.layers.effects.length)) {
+      this.draw();
+      pace?.chain();
+    } else if (this.prefs.motion) {
+      if (pace?.smooth) {
+        // Idle motion at the display's rate; draw() does nothing while the tab is hidden.
+        this.draw();
+        pace.chain();
+      } else this.timer = setTimeout(() => this.draw(), 105);
+    }
   }
   pointFromEvent(e) {
     const r = this.scene.getBoundingClientRect();
