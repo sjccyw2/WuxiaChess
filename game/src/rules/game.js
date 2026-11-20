@@ -204,11 +204,11 @@ const DETAILS = {
     epithet: '華山浪子',
     bio: '華山派大弟子，生性灑脫而重情義。思過崖上得風清揚指點，以獨孤九劍擇人劍勢中的破綻。',
     basic: '華山劍法',
-    skill: '獨孤九劍',
+    skill: '石壁劍招',
     skillIcon: 'sword',
-    skillDesc: '看破劍勢，搶步直取破綻，可攻擊兩格內的一名敵人。',
+    skillDesc: '依思過崖石壁所刻的五嶽劍招出劍，可攻擊兩格內的一名敵人。',
     skillRange: 2,
-    cost: 14
+    cost: 9
   },
   medic: {
     name: '任盈盈',
@@ -221,9 +221,9 @@ const DETAILS = {
     basic: '日月短劍',
     skill: '清心普善咒',
     skillIcon: 'leaf',
-    skillDesc: '為三格內一位友軍回復氣血，也可為自己施術。',
+    skillDesc: '奏清心普善咒，為三格內一位友軍回復氣血並解除不良狀態，也可為自己施術。',
     skillRange: 3,
-    cost: 12
+    cost: 10
   },
   guard: {
     name: '向問天',
@@ -236,9 +236,9 @@ const DETAILS = {
     basic: '鐵鞭橫江',
     skill: '吸功入地小法',
     skillIcon: 'spark',
-    skillDesc: '借力卸勁，重擊相鄰敵人。餘勁波及目標身旁敵軍，本次交鋒免受反擊。',
+    skillDesc: '卸去相鄰敵人的來勁並還擊，此擊免受還擊；至下回合受到的傷害減三成，還擊改以全力計算。',
     skillRange: 1,
-    cost: 16
+    cost: 9
   },
   guo: {
     name: '郭靖',
@@ -249,11 +249,11 @@ const DETAILS = {
     epithet: '大漠俠士',
     bio: '自幼長於漠北，後隨洪七公修習降龍十八掌，鎮守襄陽多年。他應帖的理由很簡單：有人喊救命。',
     basic: '南山掌法',
-    skill: '降龍十八掌',
+    skill: '分筋錯骨手',
     skillIcon: 'hand',
-    skillDesc: '使一招亢龍有悔。擊中兩格內敵人後，若身後地格空置，將其擊退一格再判定還擊。',
-    skillRange: 2,
-    cost: 17
+    skillDesc: '扣住相鄰敵人的關節一扭，攻擊降低 4 點，持續兩回合。',
+    skillRange: 1,
+    cost: 9
   },
   xiao: {
     name: '小龍女',
@@ -264,11 +264,11 @@ const DETAILS = {
     epithet: '古墓清影',
     bio: '古墓派傳人。習得左右互搏後，她能以雙手合使玉女素心劍法，一人分擔兩條劍路。',
     basic: '玉女劍法',
-    skill: '玉女素心劍法',
-    skillIcon: 'swords',
-    skillDesc: '以雙劍各擊一次，每劍獨立扣除氣血。目標撐過兩劍才有機會還擊。',
+    skill: '天羅地網勢',
+    skillIcon: 'feather',
+    skillDesc: '雙掌織成羅網擊中相鄰敵人，本回合與下一回合敵人移動減 2。',
     skillRange: 1,
-    cost: 15
+    cost: 9
   },
   duan: {
     name: '段譽',
@@ -279,11 +279,11 @@ const DETAILS = {
     epithet: '大理公子',
     bio: '大理段氏子弟，擅凌波微步與六脈神劍。他把這趟稀奇的際遇當作又一場白日夢，照樣向人人作揖。',
     basic: '點指截脈',
-    skill: '六脈神劍',
-    skillIcon: 'spark',
-    skillDesc: '以指發出無形劍氣，可攻擊四格內敵人，並穿透一半防禦。',
-    skillRange: 4,
-    cost: 20
+    skill: '北冥神功',
+    skillIcon: 'drop',
+    skillDesc: '貼身以北冥神功化去敵勁，此擊免受還擊；吸取 8 點內力，並使其絕技延後一回合。',
+    skillRange: 1,
+    cost: 6
   },
   chief: {
     name: '余滄海',
@@ -612,16 +612,16 @@ function makeUnit(id, side, x, y, hp, mp, atk, def, step, range, weapon = null) 
   };
 }
 const HERO_STATS = {
-  huang: [99, 70, 21, 9, 4, 2, 'jadeCane'],
-  yang: [137, 57, 26, 12, 4, 1, 'darkIron'],
-  zhang: [125, 78, 21, 14, 3, 1, 'mingSash'],
-  hu: [116, 61, 24, 9, 4, 1, 'foxSaber'],
-  hero: [120, 60, 25, 11, 3, 1, 'pine'],
-  medic: [92, 72, 19, 7, 3, 2, 'staff'],
-  guard: [142, 48, 24, 16, 3, 1, 'pole'],
-  guo: [136, 56, 26, 13, 3, 1, 'wraps'],
-  xiao: [103, 66, 24, 9, 4, 1, 'twins'],
-  duan: [95, 78, 20, 8, 4, 2, 'fan']
+  huang: [96, 74, 20, 8, 4, 2, 'jadeCane'],
+  yang: [128, 54, 27, 10, 4, 1, 'darkIron'],
+  zhang: [132, 76, 22, 14, 3, 1, 'mingSash'],
+  hu: [110, 58, 25, 9, 5, 1, 'foxSaber'],
+  hero: [112, 48, 27, 10, 3, 1, 'pine'],
+  medic: [94, 76, 18, 7, 3, 2, 'staff'],
+  guard: [148, 44, 23, 17, 3, 1, 'pole'],
+  guo: [146, 50, 23, 15, 3, 1, 'wraps'],
+  xiao: [102, 66, 23, 9, 4, 1, 'twins'],
+  duan: [92, 82, 20, 7, 4, 2, 'fan']
 };
 const FOES = ['chief', 'blade', 'bow', 'scout'];
 const startingHero = (id) => makeUnit(id, 'ally', 0, 0, ...HERO_STATS[id]);
@@ -812,23 +812,23 @@ function stat(u, k, s) {
   );
 }
 const SIGNATURE_RULES_BY_HERO = {
-  hero: { factor: 1.82 },
-  medic: { heal: 39 },
-  guard: { factor: 1.42, splash: 0.45, safe: true },
-  guo: { factor: 1.74, push: true },
-  xiao: { factor: 1.44, hits: [0.65, 0.65] },
-  duan: { factor: 1.62, pierce: 0.5 },
-  huang: { factor: 1.36, visual: 'guard', safe: true, debuff: { stat: 'atk', power: 4, turns: 2 } },
-  yang: { factor: 2.04, visual: 'guo', hpCost: 9 },
-  zhang: { visual: 'medic', shield: { power: 32, turns: 2 }, target: 'ally' },
-  hu: { factor: 1.27, visual: 'xiao', hits: [0.68, 0.68] }
+  hero: { factor: 1.35 },
+  medic: { heal: 30 },
+  guard: { factor: 1.15, safe: true, stance: 30 },
+  guo: { factor: 1.28, debuff: { stat: 'atk', power: 4, turns: 2 } },
+  xiao: { factor: 1.25 },
+  duan: { factor: 1.1, safe: true },
+  huang: { factor: 1.15, visual: 'guard' },
+  yang: { factor: 1.32, visual: 'guo' },
+  zhang: { visual: 'medic', heal: 30, target: 'ally' },
+  hu: { factor: 1.3, visual: 'xiao' }
 };
 function artFor(u, key = u.activeArt || 'signature') {
   if (u.learned?.includes(key) && TECHNIQUES[key]) return TECHNIQUES[key];
   const info = unitDetails(u);
   return {
     name: info.skill,
-    tier: 3,
+    tier: 0,
     desc: info.skillDesc,
     icon: info.skillIcon,
     range: info.skillRange,

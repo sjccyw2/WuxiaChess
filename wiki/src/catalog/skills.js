@@ -36,7 +36,7 @@ const figures = (f, art) =>
     f.hpCost && ['氣血消耗', f.hpCost],
     f.factor && ['攻擊倍率', '× ' + f.factor],
     art?.hits && ['連擊分段', art.hits.map(share).join(' ＋ ')],
-    ['招式效果', f.effectLines.join('。')]
+    f.effectLines.length && ['招式效果', f.effectLines.join('。')]
   ]);
 const triggers = (f) => f.formRules.length && speech('招式觸發條件與效果', f.formRules);
 const motion = (f) => f.animation && speech('招式動作', f.animation);
