@@ -706,6 +706,8 @@ class ActorLayer {
         w,
         h
       );
+      // Combat feel: fx/impact.js paints over the sprite it has just drawn.
+      if (!title) this.impact.sprite(c, u, pos, sheet, frame, row, w, h, flip);
     } else {
       const still = this.image('mini-' + id);
       if (still.complete && still.naturalWidth) {
@@ -808,6 +810,7 @@ class ActorLayer {
   }
   drawEffects(now, visible) {
     const c = this.ctx;
+    this.impact.paintSparks(c);
     for (const e of this.effects) {
       if (now >= e.end) {
         if (e.kind === 'technique' && e.announced) this.onTechnique?.(e.skill, 'end');
