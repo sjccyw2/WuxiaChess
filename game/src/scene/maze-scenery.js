@@ -187,6 +187,8 @@ function exposedSide(m, index, p, cell, salt) {
 // A playable bridge has a deck and open air or water below it. Every other
 // actual tile contributes one top; walls are emitted only along exposed sides.
 function shapedShelf(m, index, p, layout) {
+  // 桃花石陣 lays its own ground and well shaft in landforms/landform-5.js.
+  if (index === 5) return;
   const { width, height, cells, mask } = layout;
   const cx = (width - 1) / 2,
     cz = (height - 1) / 2;
@@ -285,29 +287,7 @@ function innerWaterAndStars(m, index, layout) {
     const x = (k % width) - cx,
       z = Math.floor(k / width) - cz;
     if (index === 5) {
-      const c = m.mix(0x467768, 0x71998a, 0.34 + 0.22 * Math.cos(k * 0.8));
-      const q = m.mix(0x668a75, 0x7e9b80, 0.28 + 0.12 * Math.sin(k));
-      m.face(
-        [
-          [x - 0.502, -0.73, z - 0.502],
-          [x - 0.502, -0.73, z + 0.502],
-          [x + 0.502, -0.73, z + 0.502],
-          [x + 0.502, -0.73, z - 0.502]
-        ],
-        [c, q, c, q]
-      );
-      if (k % 6 === 1) lotus(m, x, z, -0.689, 0.47);
-      if (k % 3 === 1)
-        m.line(
-          [
-            [x - 0.23, -0.717, z],
-            [x, -0.717, z + 0.013],
-            [x + 0.19, -0.717, z - 0.008]
-          ],
-          0.009,
-          0x90b3a0,
-          4
-        );
+      // The well's deep water is drawn with its shaft in landforms/landform-5.js.
     } else if (k % 4 === 1) {
       const a = [x, -3.3 - 0.29 * Math.sin(k), z],
         b = [x + 0.41, a[1] + 0.063, z - 0.23];
@@ -678,6 +658,8 @@ function obstacle(m, index, p, crate) {
   m.rock(0.24, 0.05, 0.16, 0.15, 0.27, 0.13, p[3], p[0], 7);
 }
 function field(m, index, cells, p, size) {
+  // 桃花石陣 dresses its tiles in landforms/formation-5.js.
+  if (index === 5) return;
   const centerX = (size.width - 1) / 2;
   const centerZ = (size.height - 1) / 2;
   for (const cell of cells) {
@@ -920,6 +902,8 @@ function lowerLandscape(m, index, p, layout) {
   // 紅楓驛's own relief covers this low ground (landforms/landform-1.js).
   if (index === 1) return;
   if (index === 6) return; // landform-6 lays its own ground and litter
+  // 桃花石陣 is an island; its shore and the sea beyond are in landforms/landform-5.js.
+  if (index === 5) return;
   const water = index === 2,
     dry = [1, 5, 6].includes(index);
   if (!water && !dry) return;
@@ -1048,6 +1032,8 @@ function ranges(m, index, p) {
   // 紅楓驛 is closed by its own wooded hills (landforms/landform-1.js).
   if (index === 1) return;
   if (index === 6) return; // landform-6 draws its own horizon
+  // 桃花石陣's distant islets are in landforms/island-5.js.
+  if (index === 5) return;
   const r = m.rng,
     style = setting(index);
   if (index === 3) return peaks3(m, style);
@@ -1287,24 +1273,7 @@ function approachLandmark(index, size, add, p) {
       }
     });
   } else if (index === 5) {
-    add('桃溪陣後石扉', east + 1.03, 3.6, -Math.PI / 2, (m) => {
-      for (const x of [-0.7, 0.7]) {
-        m.rock(x, -0.05, 0, 0.29, 1.32, 0.24, slate, 0x9a9c85, 8);
-        for (let j = 0; j < 3; j++)
-          m.line(
-            [
-              [x - 0.076, 0.49 + j * 0.19, 0.179],
-              [x, 0.57 + j * 0.19, 0.19],
-              [x + 0.076, 0.49 + j * 0.19, 0.18]
-            ],
-            0.013,
-            brass,
-            5
-          );
-      }
-      m.rock(0, 1.16, 0, 1.02, 0.29, 0.33, 0x888975, 0xa2a28a, 8, 0.13);
-      shrub(m, 0.79, 0.03, 0.21, 0.56, [0x6d875d, 0x8d9969, 0x9da46e], true);
-    });
+    // The east gate's moon-gate screen is built in landforms/gates-5.js.
   } else if (index === 6) {
     // The barbican and its standards are part of landforms/landform-6.js.
   } else if (index === 7) {
