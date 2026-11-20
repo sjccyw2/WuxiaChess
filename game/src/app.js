@@ -1,3 +1,5 @@
+// Polish: sets the html.polish-* classes that styles/12 and 13 key off, before first paint.
+import './polish.js';
 import { journalPage } from './ui/wake-views.js';
 import { bowlsPage } from './ui/bowl-views.js';
 import { coverBowls, pickBowl } from './rules/ferry-market.js';
