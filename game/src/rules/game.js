@@ -393,6 +393,31 @@ function roundsToSignature(s, u) {
 }
 const signatureDue = (s, u) =>
   !!s?.run && !u.conditions?.seal && roundsToSignature(s, u) === 0;
+// 吸勁 (§5): a blow that lands draws 8 內力 back to the striker and puts the target's signature
+// back one round, at most once per enemy per round and never two rounds running on a master.
+// A blow a shield caught still landed. Read from the strike's forecast `f`, after its 內力 is paid.
+function siphonPlan(s, u, t, f) {
+  if (!f.forms.includes('siphon') || !f.rawHits.some((n) => n > 0)) return null;
+  const mp = Math.min(8, Math.max(0, u.maxMp - (u.mp - f.mpCost))),
+    gain = '吸勁 · 內力 ＋' + mp;
+  if (!s || !enemyTechnique(t, s) || f.amount >= t.hp) return { mp, delay: false, note: gain };
+  if (t.lastSiphonRound === s.round) return { mp, delay: false, note: gain + '（本回合已延後過）' };
+  if (unitDetails(t).rank === 'boss' && t.lastSiphonRound === s.round - 1)
+    return { mp, delay: false, note: gain + '（局主已換氣，未能延後）' };
+  return { mp, delay: true, note: gain + '，' + unitDetails(t).name + '絕技延後一回合' };
+}
+// The target as it stands once 吸勁 has put its signature back: a charged reaction is spent.
+const afterSiphon = (t, plan) =>
+  plan?.delay ? { ...t, signaturePush: (t.signaturePush || 0) + 1 } : t;
+function applySiphon(s, u, t, plan) {
+  if (!plan) return;
+  u.mp = Math.min(u.maxMp, u.mp + plan.mp);
+  if (plan.mp) log(s, 'combat', '吸勁回復 ' + plan.mp + ' 點內力。', unitDetails(u).name);
+  if (!plan.delay || !living(t)) return;
+  t.signaturePush = (t.signaturePush || 0) + 1;
+  t.lastSiphonRound = s.round;
+  log(s, 'combat', '勁力被吸，絕技延後一回合。', unitDetails(t).name);
+}
 // How far a unit strikes and counters. Every test of an enemy's range goes through here, so 纏械
 // only has to set its condition.
 function reach(s, u) {
@@ -773,12 +798,84 @@ function log(s, type, text, who = '') {
   s.logs.push({ round: s.round, phase: s.phase, type, text, who });
   if (s.logs.length > 250) s.logs.shift();
 }
+// The 布陣 laid over a tile, if any.
+function zoneAt(s, p) {
+  if (!s?.zones?.length) return null;
+  return s.zones.find((z) => z.tiles.some((q) => q.x === p.x && q.y === p.y)) || null;
+}
 // A hero standing in a companion's 布陣 is harder to hit; enemies only find it harder to walk.
 function onZone(s, u) {
-  return (
-    !!s?.zones?.length &&
-    ally(u) &&
-    s.zones.some((z) => z.tiles.some((p) => p.x === u.x && p.y === u.y))
+  return ally(u) && !!zoneAt(s, u);
+}
+// 布陣 (§6): an enemy that starts its action on a formation tile moves 2 less (never below 1)...
+const zoneSlows = (s, u) => !ally(u) && !!zoneAt(s, u);
+// ...and an enemy walking onto one must stop there. Heroes walk through freely.
+const zoneHalts = (s, u, p) => !ally(u) && !!zoneAt(s, p);
+// The tiles of a formation: its centre and the centre's walkable orthogonal neighbours.
+function zoneTiles(s, centre) {
+  return [[0, 0], ...adjacent]
+    .map(([dx, dy]) => ({ x: centre.x + dx, y: centre.y + dy }))
+    .filter((p) => walkable(p.x, p.y, s.mapIndex));
+}
+// One formation per owner: laying another replaces hers. Laid in ally phase r, it holds until
+// the end of enemy phase r + 1.
+function layZone(s, u, centre) {
+  const zones = (s.zones || []).filter((z) => z.owner !== u.id);
+  zones.push({ owner: u.id, tiles: zoneTiles(s, centre), through: s.round + 1 });
+  s.zones = zones;
+  log(s, 'combat', '於' + tileName(centre) + '布下陣勢。', unitDetails(u).name);
+}
+function expireZones(s) {
+  if (!s.zones) return;
+  s.zones = s.zones.filter((z) => z.through > s.round);
+  if (!s.zones.length) delete s.zones;
+}
+// 失神 (§5): whether this strike takes the target's next action. `daze: 'setup'` needs the target
+// disarmed or standing in a formation as the blow lands; a master who lost an action last round
+// shakes off a second (the rule 封穴 follows). A strike at a piece already dazed says it will
+// not act; whether it counters is the counter line's to say (a dazed piece still does).
+function dazePlan(s, u, t, art, result) {
+  const name = unitDetails(t).name;
+  if (t.conditions?.daze) result.notes.push('失神 · ' + name + '本回合不會行動');
+  if (!art?.daze) return;
+  const drop = () => (result.effects = result.effects.filter((e) => e.kind !== 'daze'));
+  if (art.daze === 'setup' && !(t.conditions?.disarm || zoneAt(s, t))) {
+    drop();
+    result.notes.push('條件未成 · 未能失神');
+    return;
+  }
+  if (unitDetails(t).rank === 'boss' && t.lastDazeRound === s?.round - 1) {
+    drop();
+    result.notes.push('局主已換氣，本回合抵抗失神');
+    return;
+  }
+  if (!result.effects.some((e) => e.kind === 'daze'))
+    result.effects.push({ kind: 'daze', power: 1, turns: 1 });
+  result.notes.push('失神 · ' + name + '失去下一次行動');
+}
+// 失神 in the enemy phase: the dazed piece does nothing this turn and the condition is spent.
+// A signature that was due stays due.
+function loseAction(s, u) {
+  u.acted = true;
+  delete u.conditions.daze;
+  log(s, 'combat', '失神，錯過了這一手。', unitDetails(u).name);
+  return [[u.id, '失神', 'status']];
+}
+// Chips the panels derive from where a piece stands, not stored as conditions.
+function standingLines(s, u) {
+  const zone = living(u) && zoneAt(s, u);
+  if (!zone) return [];
+  const owner = unitDetails(find(s, zone.owner))?.name || '';
+  return [ally(u) ? '陣中 · 防禦 ＋4（' + owner + '布陣）' : '陣中 · 移動 −2'];
+}
+const COUNTS = ['', '一', '兩', '三', '四', '五'];
+// The preview's line for an art that lays a formation where it is aimed.
+function zoneNote(s, u, art, t, result) {
+  if (!art?.zone || !s) return;
+  result.zone = zoneTiles(s, t);
+  const old = s.zones?.some((z) => z.owner === u.id);
+  result.notes.push(
+    '布陣 · ' + COUNTS[result.zone.length] + '格，至下一敵方回合結束' + (old ? '（舊陣撤去）' : '')
   );
 }
 // 盟令: while its bearer lives, every other enemy strikes harder. Derived, never stored.
@@ -808,10 +905,11 @@ function stat(u, k, s) {
       : k === 'def'
         ? -(c.exposed?.power || 0) - (c.recoil?.power || 0) + (onZone(s, u) ? 4 : 0)
         : k === 'step'
-          ? (c.haste?.power || 0) - (c.pin?.power || 0)
+          ? (c.haste?.power || 0) - (c.pin?.power || 0) - (zoneSlows(s, u) ? 2 : 0)
           : 0;
+  // 絆足 and 布陣 never hold a piece below one step, alone or together.
   return Math.max(
-    k === 'step' && c.pin ? 1 : 0,
+    k === 'step' && (c.pin || zoneSlows(s, u)) ? 1 : 0,
     (u[k] || 0) +
       talent +
       items.reduce((sum, item) => sum + (item[k] || 0), 0) +
@@ -914,15 +1012,24 @@ function movementField(s, u, origins, limit = Infinity, reverse = false) {
     costs.set(key(p.x, p.y), 0);
     queue.push({ x: p.x, y: p.y, n: 0 });
   }
+  // 布陣: an enemy's walk may end on a formation tile but never goes on from one. The reverse
+  // search measures how far a tile is from striking over several turns: to it, going on through
+  // a formation costs a turn (the walk stops there), and a turn begun on one starts 2 short.
+  const pause = reverse && s.zones?.length ? stat(u, 'step', s) : 0;
   for (const p of queue) {
     if (p.n !== costs.get(key(p.x, p.y))) continue;
+    const halted = p.n > 0 && zoneHalts(s, u, p);
+    if (halted && !reverse) continue;
     for (const [dx, dy] of adjacent) {
       const x = p.x + dx,
         y = p.y + dy,
         k = key(x, y);
       if (!walkable(x, y, s.mapIndex)) continue;
       const n =
-        p.n + (reverse ? tileInfo(p.x, p.y, s.mapIndex).cost : tileInfo(x, y, s.mapIndex).cost);
+        p.n +
+        (halted ? pause : 0) +
+        (pause && zoneHalts(s, u, { x, y }) ? 2 : 0) +
+        (reverse ? tileInfo(p.x, p.y, s.mapIndex).cost : tileInfo(x, y, s.mapIndex).cost);
       if (n > limit || n >= (costs.get(k) ?? Infinity)) continue;
       const occupant = at(s, x, y);
       if (occupant && occupant.side !== u.side) continue;
@@ -1027,7 +1134,7 @@ function targetOK(s, u, t, skill) {
   if (forms.includes('riposte')) return true;
   const power = art.heal ? healingPower(u, s, art) : 0;
   return affectedFriends(s, u, t, art).some((v) => {
-    const entry = supportEntry(forms, u, v, power);
+    const entry = supportEntry(forms, u, v, healAmount(v, power));
     return entry.amount || entry.mp || entry.clean.length || entry.overflow;
   });
 }
@@ -1105,11 +1212,71 @@ function damage(
     Math.round(attackPower(s, u, art, basic, t) - protection * 0.65 * (1 - pierce))
   );
 }
+// 內傷 (§5): a wounded unit gets half of every heal, rounded down, before the cap at its missing
+// 氣血. Shields are not heals and are not halved.
+const healAmount = (v, n) => (v?.conditions?.wound ? Math.floor(n / 2) : n);
+// 內傷: after each direct attack it makes (never a counter), its bearer loses the condition's
+// power in 氣血, not below 1 and not through a shield.
+function woundSelfLoss(s, u, effects) {
+  const hurt = living(u) && u.conditions?.wound;
+  const n = hurt ? Math.min(hurt.power, u.hp - 1) : 0;
+  if (n <= 0) return;
+  u.hp -= n;
+  effects.push([u.id, '−' + n, 'sacrifice']);
+  log(s, 'combat', '內傷發作，損失 ' + n + ' 點氣血。', unitDetails(u).name);
+}
+// The heal preview's amounts are already halved; it says so for whoever is wounded.
+function woundedHealNotes(t, friends, result) {
+  const hurt = friends.filter((v) => v.conditions?.wound);
+  if (!hurt.length) return;
+  if (hurt.length === 1 && hurt[0] === t) result.notes.push('內傷 · 療效減半');
+  else result.notes.push('內傷 · ' + hurt.map((v) => unitDetails(v).name).join('、') + '療效減半');
+}
+// What an action goes on to cost its own caster's 氣血 once it is over (內傷 after an attack,
+// then a 反噬 burst), counted from where the preview leaves him; shown on his bar as `selfLoss`.
+function selfLoss(s, u, art, result, attack) {
+  let left = u.hp - result.hpCost + result.selfHeal - result.counter;
+  result.selfLoss = 0;
+  const hurt = attack && u.conditions?.wound;
+  if (hurt && left > 1) {
+    const n = Math.min(hurt.power, left - 1);
+    result.selfLoss += n;
+    left -= n;
+    result.notes.push('內傷 · 出手後自損 ' + n + ' 氣血');
+  }
+  if (art?.backlash) {
+    const layers = (u.conditions?.backlash?.power || 0) + 1;
+    if (layers < 3) result.notes.push('反噬 · 亂氣 ' + layers + '／3');
+    else {
+      const n = left > 1 ? Math.min(backlashLoss(u), left - 1) : 0;
+      result.selfLoss += n;
+      left -= n;
+      result.notes.push('反噬 · 亂氣滿三層，自損 ' + n + ' 氣血');
+    }
+  }
+  return left;
+}
+// 反噬 (§3): the burst is a fifth of the caster's greatest 氣血, rounded up.
+const backlashLoss = (u) => Math.ceil(u.maxHp * 0.2);
+// 反噬: each use of a 反噬 art lays a layer of 亂氣; the use that would lay the third bursts
+// instead, costing a fifth of the caster's greatest 氣血 (not below 1, not through a shield) and
+// clearing the layers. Answers the caster effects still to put on him.
+function backlashBurst(s, u, own, effects) {
+  if (!own.some((e) => e.kind === 'backlash') || !(u.conditions?.backlash?.power >= 2)) return own;
+  const n = Math.min(backlashLoss(u), u.hp - 1);
+  delete u.conditions.backlash;
+  if (n > 0) {
+    u.hp -= n;
+    effects.push([u.id, '−' + n, 'sacrifice']);
+  }
+  log(s, 'combat', '亂氣滿三層，反噬自身，損失 ' + n + ' 點氣血。', unitDetails(u).name);
+  return own.filter((e) => e.kind !== 'backlash');
+}
 function healingPower(u, s, art) {
   return (art.heal || 35) + stat(u, 'power', s) + (u.level - 1) * 4;
 }
 function healing(u, t, s, art = artFor(u)) {
-  return Math.min(t.maxHp - t.hp, healingPower(u, s, art));
+  return Math.min(t.maxHp - t.hp, healAmount(t, healingPower(u, s, art)));
 }
 function formsFor(u, art, basic = basicFor(u)) {
   return actionForms(ITEMS[u.weapon], art, basic);
@@ -1164,13 +1331,16 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
           ' 得 8 護盾'
       );
     }
+    zoneNote(s, u, art, t, result); // 布陣 on a ground art: its tiles and its line
+    selfLoss(s, u, art, result, false);
     result.notes.push(...priceNotes(art));
     return result;
   }
   if (support) {
     const friends = s ? affectedFriends(s, u, t, art) : [t];
     const power = heal ? healingPower(u, s, art) : 0;
-    result.recipients = friends.map((v) => supportEntry(result.forms, u, v, power));
+    result.recipients = friends.map((v) => supportEntry(result.forms, u, v, healAmount(v, power)));
+    if (heal) woundedHealNotes(t, friends, result);
     if (result.forms.includes('riposte'))
       result.effects.push({ kind: 'riposte', power: 9, turns: 1 });
     for (const entry of result.recipients) {
@@ -1188,6 +1358,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
         '轉護 · 移出自身護盾 ' + u.conditions.shield.power + '，各人得 ' + result.passed + ' 護盾'
       );
     }
+    selfLoss(s, u, art, result, false);
     result.notes.push(...priceNotes(art));
     return result;
   }
@@ -1198,6 +1369,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   result.notes = plan.notes;
   if (art) result.notes.push(...strikeFactor(s, u, art, t).notes);
   result.effects.push(...plan.effects);
+  dazePlan(s, u, t, art, result); // 失神: a setup to meet, a master to resist
   const baseHits = (art?.hits || [1]).map(
     (part, i) => Math.round(single * part) + (i === 0 ? plan.extra : 0)
   );
@@ -1216,13 +1388,15 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   if (plan.clearPoison) result.notes.push('以毒解毒 · 解除自身中毒');
   if (result.forms.includes('leech')) {
     result.selfHeal = Math.min(
-      9,
-      Math.floor(Math.min(t.hp, result.amount) / 4),
+      healAmount(u, Math.min(9, Math.floor(Math.min(t.hp, result.amount) / 4))),
       u.maxHp - u.hp + result.hpCost
     );
     if (result.selfHeal) result.notes.push('回生 · 自身氣血 ＋' + result.selfHeal);
   }
-  const share = counterRatio(s, t);
+  // 吸勁: decided as the blow lands, before the counter it may un-charge.
+  result.siphon = siphonPlan(s, u, t, result);
+  if (result.siphon) result.notes.push(result.siphon.note);
+  const share = counterRatio(s, afterSiphon(t, result.siphon));
   if (
     share &&
     !plan.safe &&
@@ -1273,6 +1447,8 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
     result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
   }
+  zoneNote(s, u, art, t, result); // 布陣 rider: the tiles round the target's feet
+  selfLoss(s, u, art, result, true); // 內傷 and 反噬: what the strike costs its caster after
   result.notes.push(...priceNotes(art));
   return result;
 }
@@ -1438,7 +1614,9 @@ function resolve(s, u, t, skill) {
     effects.push([u.id, '−' + f.hpCost, 'sacrifice']);
   }
   // Ordinary movement is counted once when confirmed. Lightness skills move instantaneously.
-  if (f.type === 'ground') {
+  // 布陣 is laid where it is aimed; its caster stays where she is.
+  if (f.type === 'ground' && art.zone) layZone(s, u, t);
+  else if (f.type === 'ground') {
     commitSteps(u);
     u.x = t.x;
     u.y = t.y;
@@ -1488,12 +1666,17 @@ function resolve(s, u, t, skill) {
       '以「' + verb + '」擊中' + unitDetails(t).name + '，造成 ' + total + ' 點傷害。',
       who
     );
+    if (art?.zone) layZone(s, u, t); // 布陣 rider: centred where the target stood when struck
     if (living(t)) {
       if (f.plan.spentMark) delete t.conditions.mark;
       if (f.plan.spentPoison) delete t.conditions.poison;
       if (f.effects.some((e) => e.kind === 'seal')) t.lastSealRound = s.round;
+      if (f.effects.some((e) => e.kind === 'daze') && unitDetails(t).rank === 'boss')
+        t.lastDazeRound = s.round;
       putEffects(s, u, t, f.effects, effects);
     } else log(s, 'combat', '失去戰力。', unitDetails(t).name);
+    // 吸勁 lands before the counter, so a signature it puts back is no longer charged for it.
+    applySiphon(s, u, t, f.siphon);
     if (f.plan.partnerMp) find(s, f.plan.partner).mp += f.plan.partnerMp;
     if (f.plan.clearPoison) delete u.conditions.poison;
     restoreHealth(s, u, u, f.selfHeal, effects);
@@ -1514,6 +1697,7 @@ function resolve(s, u, t, skill) {
       log(s, 'combat', '還擊' + who + '，造成 ' + dealt + ' 點傷害。', unitDetails(t).name);
       reflectStrike(s, u, t, dealt, effects);
     }
+    woundSelfLoss(s, u, effects); // 內傷: the attacker pays once the exchange is over
   }
   if (art?.once) (u.usedOnce ??= []).push(id);
   if (art?.cooldown) (u.cooldowns ??= {})[id] = s.round + art.cooldown + 1;
@@ -1521,7 +1705,7 @@ function resolve(s, u, t, skill) {
     const own = selfEffectsOf(art).map((e) =>
       e.kind === 'backlash' ? { ...e, turns: LIMIT - s.round + 1 } : e
     );
-    putEffects(s, u, u, own, effects);
+    putEffects(s, u, u, backlashBurst(s, u, own, effects), effects); // 反噬: the third layer bursts
   }
   finishAction(s, u);
   if (f.notes.length) log(s, 'combat', '氣勁變化。' + f.notes.join('。'), who);
@@ -1556,7 +1740,7 @@ function consume(s, u, id) {
   if (item?.kind !== 'use' || !canUseMedicine(s, u) || !(s.stock[id] > 0)) return false;
   const k = item.hp ? 'hp' : 'mp',
     cap = k === 'hp' ? 'maxHp' : 'maxMp',
-    n = Math.min(item[k], u[cap] - u[k]);
+    n = Math.min(k === 'hp' ? healAmount(u, item.hp) : item.mp, u[cap] - u[k]);
   if (n <= 0) return false;
   u[k] += n;
   s.stock[id]--;
@@ -1658,7 +1842,10 @@ function check(s) {
 }
 function restOnHerbs(s, units) {
   for (const u of units.filter(living)) {
-    const healed = Math.min(u.maxHp - u.hp, tileInfo(u.x, u.y, s.mapIndex).heal || 0);
+    const healed = Math.min(
+      u.maxHp - u.hp,
+      healAmount(u, tileInfo(u.x, u.y, s.mapIndex).heal || 0)
+    );
     if (healed <= 0) continue;
     u.hp += healed;
     if (ally(u)) s.stats.healed += healed;
@@ -1671,7 +1858,7 @@ function startEnemy(s) {
   for (const u of party(s).filter(living)) {
     holdObjective(s, u);
     commitSteps(u);
-    const recovery = Math.min(u.maxHp - u.hp, commandBonus(s, u, 'renew'));
+    const recovery = Math.min(u.maxHp - u.hp, healAmount(u, commandBonus(s, u, 'renew')));
     if (recovery) {
       u.hp += recovery;
       s.stats.healed += recovery;
@@ -1691,6 +1878,7 @@ function startEnemy(s) {
 }
 function enemyAct(s, u) {
   if (s.phase !== 'enemy' || s.result || ally(u) || !living(u) || u.acted) return [];
+  if (u.conditions?.daze) return loseAction(s, u); // 失神: the action is lost, not the reflexes
   const friends = party(s).filter(living);
   const field = availableField(s, u);
   const cells = [
@@ -1786,6 +1974,7 @@ function enemyAct(s, u) {
     log(s, 'combat', '還擊，造成 ' + hit + ' 點傷害。', unitDetails(t).name);
     exp(s, t, living(u) ? 12 : 35);
   }
+  woundSelfLoss(s, u, effects); // 內傷: the attacker pays once the exchange is over
   check(s);
   return effects;
 }
@@ -1810,6 +1999,7 @@ function nextRound(s) {
     for (const [kind, condition] of Object.entries(u.conditions || {}))
       if (condition.through <= s.round) delete u.conditions[kind];
   }
+  expireZones(s); // 布陣 ends with the enemy phase after the one it was laid before
   check(s);
   if (s.result) return false;
   restOnHerbs(s, enemies(s));
@@ -1831,4 +2021,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

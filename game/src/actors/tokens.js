@@ -3,6 +3,7 @@
 // The base is drawn once per look onto an offscreen canvas and laid on the ground with one
 // drawImage; the gauge is a handful of pixel-snapped rectangles. Nothing here sets a
 // canvas filter or builds a gradient while painting.
+import { CONDITION_NAMES } from '../rules/battle-mastery.js';
 
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const TAU = Math.PI * 2;
@@ -193,7 +194,9 @@ const STATUS_COLOURS = {
   rally: '#ff9274',
   haste: '#8ee3cb',
   weak: '#ec91ae',
-  exposed: '#e8a781'
+  exposed: '#e8a781',
+  wound: '#d9796a',
+  formation: '#ffd98c'
 };
 const STATUS_SIGNS = {
   mark: '隙',
@@ -205,7 +208,9 @@ const STATUS_SIGNS = {
   rally: '振',
   haste: '疾',
   weak: '弱',
-  exposed: '破'
+  exposed: '破',
+  wound: '傷',
+  formation: '陣' // derived: the piece has a 布陣 on the board
 };
 
 // Per layer: what each bar last showed, so a wound can linger as a pale segment and drain.
@@ -312,7 +317,7 @@ function paintGauge(layer, u, g) {
     c.closePath();
     c.fill();
   }
-  const statuses = Object.keys(u.conditions || {});
+  const statuses = [...Object.keys(u.conditions || {}), ...(g.formation ? ['formation'] : [])];
   const size = snap(clamp(g.scale * 0.235, 10, 15));
   let roof = top - one * 2;
   if (statuses.length) {
@@ -323,12 +328,17 @@ function paintGauge(layer, u, g) {
       c.fillRect(sx - one, sy - one, size + one * 2, size + one * 2);
       c.fillStyle = '#1d2f29';
       c.fillRect(sx, sy, size, size);
-      c.fillStyle = STATUS_COLOURS[kind];
+      c.fillStyle = STATUS_COLOURS[kind] || '#e9dcc0';
       c.fillRect(sx, sy + size - one, size, one);
       c.font = 'bold ' + (size - 2) + 'px serif';
       c.textAlign = 'center';
       c.textBaseline = 'middle';
-      c.fillText(STATUS_SIGNS[kind], sx + size / 2, sy + size / 2);
+      // A condition with no sign of its own shows the first character of its name.
+      c.fillText(
+        STATUS_SIGNS[kind] || CONDITION_NAMES[kind]?.[0] || '',
+        sx + size / 2,
+        sy + size / 2
+      );
     }
     c.textBaseline = 'alphabetic';
     roof = sy - one;
