@@ -1004,7 +1004,7 @@ const MASTERY_ARTS = {
     icon: 'sword',
     visual: 'yang',
     basicBonus: 7,
-    desc: '收起花巧，以玄鐵重劍直進。普攻命中時傷害增加 7 點，餘勢穿過主目標。',
+    desc: '收起花巧，依重劍無鋒的劍理直進。普攻命中時傷害增加 7 點，餘勢穿過主目標。',
     source: '楊過斷臂後得玄鐵重劍，隨神鵰在山洪中練劍。'
   },
   jadeFluteCut: {
