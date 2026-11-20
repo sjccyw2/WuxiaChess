@@ -538,6 +538,149 @@ html.polish-ui-chrome #modal:has(.duel, .confirm-copy, .enemy-summary) {
     inset 0 0 0 3px #aca08236;
 }
 
+/* Primary action: a raised seal plate. */
+html.polish-ui-chrome #modal :is(.gold-btn, .run-primary, .mj-march),
+html.polish-ui-chrome .opening-menu .embark {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #ffffff24, #ffffff00 48%),
+    linear-gradient(112deg, #a54f40, #7b382f);
+  box-shadow:
+    inset 0 0 0 2px #81382e,
+    inset 0 0 0 3px #e0ad8566,
+    0 2px 0 #3d1915,
+    0 7px 14px -6px #04090fd9;
+  text-shadow: 0 1px 2px #3a1410;
+}
+html.polish-ui-chrome #modal :is(.gold-btn, .run-primary, .mj-march):disabled {
+  box-shadow:
+    inset 0 0 0 2px #81382e,
+    inset 0 0 0 3px #e0ad8566;
+}
+/* A light that crosses the plate on hover; it rests off to the left. */
+html.polish-ui-chrome #modal :is(.gold-btn, .run-primary, .mj-march)::after,
+html.polish-ui-chrome .opening-menu .embark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, #fff0 30%, #fff3dc47 50%, #fff0 70%);
+  opacity: 0;
+  transform: translateX(-70%);
+  pointer-events: none;
+}
+/* Secondary actions. */
+html.polish-ui-chrome #modal :is(.outline-btn, .mj-action, .fo-filter, .fo-stock) {
+  background-image: linear-gradient(180deg, #ffffff12, #ffffff00 55%);
+  box-shadow: 0 1px 0 #0a121c99;
+}
+html.polish-ui-chrome #modal .square-btn {
+  box-shadow: 0 1px 0 #0a121c99;
+}
+/* Tabs: the open tab is lit like the lit command on the field. */
+html.polish-ui-chrome #modal .mj-tab {
+  position: relative;
+}
+html.polish-ui-chrome #modal .mj-tab[aria-selected='true'] {
+  background: var(--ui-seal-lit);
+  box-shadow:
+    inset 0 1px #ffd9b23d,
+    inset 0 -3px #f4d293;
+  text-shadow: 0 1px 2px #3a1410;
+}
+html.polish-ui-chrome #modal .mj-tab[aria-selected='true'] svg {
+  color: var(--ui-gold-bright);
+}
+/* Cards: the chosen one is framed in gold and lit; its neighbours step back. */
+html.polish-ui-chrome #modal .run-lot.lead-lot {
+  outline: 2px solid #f6d999;
+  outline-offset: -2px;
+  box-shadow:
+    0 0 0 3px #9a4638,
+    0 0 0 4px #f6d99999,
+    0 0 26px #f3c57a80,
+    0 8px 14px #03100f8c,
+    inset 0 0 0 1px #382f24;
+}
+html.polish-ui-chrome #modal .run-lot:not(.lead-lot) .run-lot-image img {
+  filter: saturate(0.72) brightness(0.8);
+}
+html.polish-ui-chrome #modal :is(.fo-seat.inspected, .fo-seat.picked, .fo-item.picked, .lk-lot.won) {
+  box-shadow:
+    0 0 0 2px #a75c45,
+    0 0 0 3px #f6d99980,
+    0 0 20px #f3c57a66,
+    inset 0 0 0 1px #f4d198;
+}
+html.polish-ui-chrome #modal .switch.on {
+  background: linear-gradient(180deg, #2f6a55, #3f7f66);
+  border-color: #9fd2b4;
+}
+html.polish-ui-chrome #modal .switch.on i {
+  background: #e9f5df;
+  box-shadow: 0 0 6px #b7f0cf99;
+}
+@media (hover: hover) {
+  html.polish-ui-chrome #modal :is(.outline-btn, .mj-action, .fo-filter, .fo-stock):enabled:hover {
+    color: #fff5dc;
+    background-color: #3a4c63;
+    border-color: #e7c98f;
+  }
+  html.polish-ui-chrome #modal .square-btn:enabled:hover {
+    color: #fff5dc;
+    border-color: #e7c98f;
+  }
+  html.polish-ui-chrome #modal .mj-tab:not([aria-selected='true']):enabled:hover {
+    color: #fff0cf;
+    background: #3a4c63;
+  }
+  html.polish-ui-chrome #modal :is(.gold-btn, .run-primary, .mj-march):enabled:hover,
+  html.polish-ui-chrome .opening-menu .embark:enabled:hover {
+    background:
+      linear-gradient(180deg, #ffffff2e, #ffffff00 48%),
+      linear-gradient(112deg, #b85a48, #8a4035);
+    box-shadow:
+      inset 0 0 0 2px #8f4034,
+      inset 0 0 0 3px #f5c99b80,
+      0 2px 0 #3d1915,
+      0 9px 18px -6px #04090fe6,
+      0 0 18px #f0a8684d;
+  }
+  html.polish-ui-chrome #modal .run-lot:not(.lead-lot):has(.lot-choice:hover) .run-lot-image img {
+    filter: none;
+  }
+  html.polish-ui-chrome #modal .run-lot:not(.lead-lot):has(.lot-choice:hover) {
+    box-shadow:
+      0 0 0 1px #f6d99999,
+      0 10px 18px #03100f99,
+      inset 0 0 0 1px #382f24;
+  }
+  html.polish-ui-chrome #modal:not(.fo-dragging) .fo-seat:not(.empty, .inspected, .picked):hover {
+    border-color: #e7c98f;
+    box-shadow: 0 8px 16px -6px #04090fd9;
+  }
+}
+
+/* --------------------------------------------------------- 7  Title screen */
+html.polish-ui-chrome .opening-tools button,
+html.polish-ui-chrome .panorama-controls button {
+  border-radius: 3px;
+}
+@media (hover: hover) {
+  html.polish-ui-chrome .opening-tools button:hover {
+    background: #16242e80;
+    box-shadow: inset 0 0 0 1px #f1d9a359;
+  }
+  html.polish-ui-chrome .opening-menu :is(.codex-link, .embark-new):enabled:hover {
+    box-shadow: inset 0 -1px #f1d9a3;
+  }
+  html.polish-ui-chrome .panorama-controls button:hover {
+    color: #fff5dc;
+    border-color: #f1d9a3;
+    background: #223246db;
+  }
+}
+
 /* --------------------------------------------------------------- 10  Sizes */
 /* Desktop and tablet: everything the two phone sheets (08, 09) do not claim. The dock grows a
    little; --dock-height grows with it, so the framed board is fitted above the taller dock and
