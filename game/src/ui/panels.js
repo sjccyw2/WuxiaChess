@@ -13,6 +13,8 @@ import {
   unitDetails,
   enemyTechnique,
   enemyTraitLines,
+  signatureLines,
+  traitsOf,
   coverer,
   taunters,
   reach,
@@ -44,6 +46,7 @@ import {
   party,
   unclaimedObjectiveTile,
   wardEscorts,
+  wardShare,
   stat
 } from '../rules/game.js';
 import { icon } from './icons.js';
@@ -283,11 +286,13 @@ function goalRows(s) {
       '<p class="goal-detail">副手 · ' +
       unitDetails(s.units.find((u) => u.encounterId?.startsWith('lieutenant-')))?.name +
       '</p>' +
-      (target.id === 'murong'
+      (wardEscorts(s).length || s.units.some((v) => unitDetails(v)?.traits?.ward)
         ? '<p class="goal-detail">星索護陣・' +
           wardEscorts(s).length +
-          ' / 2 名護陣者，減傷 ' +
-          wardEscorts(s).length * 35 +
+          ' / ' +
+          s.units.filter((v) => unitDetails(v)?.traits?.ward).length +
+          ' 名護陣者，減傷 ' +
+          wardShare(s, target) +
           '%</p>'
         : '') +
       '</div></div>' +
@@ -946,6 +951,13 @@ function endPage(s) {
     '</div>'
   );
 }
+// What a charged signature means for whoever strikes next, for signatures that answer a blow
+// (or wait for a wounded companion) rather than make one.
+const CHARGED = {
+  mirror: '蓄勢已成 · 第一下直接攻擊將被反震',
+  mend: '蓄勢已成 · 同夥傷重便替他續命',
+  stance: '蓄勢已成 · 近身打他必遭全力還擊'
+};
 function enemyPage(s, id) {
   const u = find(s, id),
     i = unitDetails(u),
@@ -976,13 +988,13 @@ function enemyPage(s, id) {
           : u.conditions?.daze
             ? '本回合失神，不會出手'
             : turns === 0
-              ? '本回合蓄勢，正是破綻'
+              ? CHARGED[special.style] ||
+                (traitsOf(u).stance ? CHARGED.stance : '本回合蓄勢，正是破綻')
               : '距蓄勢 ' + turns + ' 回合') +
         '</span><p>' +
-        '普攻傷害 × ' +
-        special.factor +
-        '。' +
-        special.note +
+        // A mend or a mirror is no blow, so it has no strength against the normal strike.
+        (special.strikes ? '普攻傷害 × ' + special.factor + '。' : '') +
+        signatureLines(s, u).map(esc).join('') +
         '</p></div>'
       : '') +
     bar('氣血', u.hp, u.maxHp, 'hp', 'heart') +
@@ -1005,14 +1017,19 @@ function enemyPage(s, id) {
         // 挑釁: derived from where the pieces stand now, as its own action will read it.
         taunters(s, u).map((t) => '受挑釁 · 本回合須攻擊' + DETAILS[t.id].name)
       )
-      .map((line) => '<p class="footnote">' + icon('flag', 15) + esc(line) + '</p>')
+      .map(
+        (line) =>
+          '<p class="footnote">' +
+          icon('flag', 15) +
+          // One flowing line: the trait's name in bold, then its words (no column to wrap in).
+          '<span>' +
+          esc(line).replace(/^【(.+?)】/, '<b class="trait-name">$1</b>　') +
+          '</span></p>'
+      )
       .join('') +
     '<p class="footnote">' +
     icon('stone', 15) +
     ('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。' + tileInfo(u.x, u.y, s.mapIndex).note) +
-    (s.mapIndex === 9 && ['murong', 'echoBow', 'echoScout'].includes(id)
-      ? '　每名存活的護陣者替慕容博抵擋 35% 傷害。'
-      : '') +
     '</p>'
   );
 }
@@ -1159,7 +1176,7 @@ function attackPage(s, source, target, skill) {
   // 代受 and 號令 change who the action is for: each gets its own row.
   for (const note of f.notes)
     lines.push(
-      /^(代受|號令) · /.test(note)
+      /^(代受|號令|化功) · /.test(note)
         ? line(note.slice(0, 2), esc(note.slice(5)))
         : line('招式連攜', esc(note))
     );

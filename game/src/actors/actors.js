@@ -511,7 +511,7 @@ class ActorLayer {
   }
   drawWard(s) {
     const guards = G.wardEscorts(s),
-      boss = G.find(s, 'murong');
+      boss = G.find(s, G.commanderId(s));
     if (!guards.length || !G.living(boss)) return;
     const c = this.ctx,
       center = this.location(boss, this.time);

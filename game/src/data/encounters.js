@@ -4,9 +4,13 @@
 //
 // `traits` is how one villain differs from another (SPEC-mechanics §7.1):
 //   mods     { hp: multiplier, atk: added, def: added, step: set, range: set } on the stage numbers
-//   sig      { reach, power, turns, cadence, extra: 'pin' | 'line' | 'wound', heal } for the signature
-//   post, phase, prefers, stance, redirect, contact, cover, banner, glide, basicPoison
-// A villain without traits plays exactly as before the redesign.
+//   sig      { reach, power, turns, cadence, sweep, extra: 'pin' | 'line' | 'wound', heal, note }
+//   post     { tile: 'spawn' | 'master' | {x, y}, tether, wake: true | 'struck' | false, note }
+//   phase    { name, atk, def, step, range, cadence, prefers, brace, holds, flee, log, note }
+//   prefers, stance, redirect, contact, cover, banner, glide, basicPoison { power, turns, name }
+//   ward     the share (percent) a living rank-and-file piece takes off its master's blows
+// A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
+// without traits plays exactly as before the redesign.
 function adversary(name, school, book, basic, skill, style, visual, bio, mini, robe, traits = {}) {
   return { name, school, book, basic, skill, style, visual, bio, mini, robe, traits };
 }
@@ -22,7 +26,15 @@ const ENCOUNTERS = [
       'guard',
       '青城派掌門，為林家的辟邪劍譜結下滿門血仇。他給落在橋頭，心裡只剩一個念頭：誰上橋便打誰。森冷一掌，能壓低對手的攻勢。',
       'chief',
-      ''
+      '',
+    {
+      post: {
+        tile: 'spawn',
+        tether: 0,
+        wake: true,
+        note: '守在橋頭不動；有俠客踏入他的攻擊範圍，或他受到攻擊後，才離位追擊。'
+      }
+    }
     ),
     adversary(
       '木高峰',
@@ -34,7 +46,15 @@ const ENCOUNTERS = [
       'duan',
       '塞北明駝，也在追尋辟邪劍譜。他與余滄海素來不和，此刻卻給同一道劍意按在橋尾，駝杖想收也收不回來。',
       'bandit',
-      'sepia(.22)'
+      'sepia(.22)',
+    {
+      post: {
+        tile: 'spawn',
+        tether: 0,
+        wake: true,
+        note: '守在橋尾不動；有俠客踏入攻擊範圍或受到攻擊後，才離位追擊。'
+      }
+    }
     )
   ],
   [
@@ -48,19 +68,21 @@ const ENCOUNTERS = [
       'hero',
       '天龍門北宗掌門，一生不打沒有把握的仗。這一回由不得他，兩隻腳自己往前走。快劍專破對手的守勢。',
       'hero',
-      'sepia(.38) saturate(.8)'
+      'sepia(.38) saturate(.8)',
+    { mods: { hp: 0.9, def: 2, step: 3, range: 1 } }
     ),
     adversary(
       '閻基',
       '閻府',
       '飛狐外傳',
       '奪手刀',
-      '毒砂掌',
-      'poison',
+      '接骨續筋',
+      'mend',
       'guard',
       '昔日的跌打醫生，靠暗中下藥起家。他搭得出自己沒有中藥，卻說不出心裡那個「戰」字是誰擱的。',
       'bandit',
-      'hue-rotate(15deg) saturate(.7)'
+      'hue-rotate(15deg) saturate(.7)',
+    { mods: { hp: 0.9, atk: -3, step: 2, range: 1 }, sig: { heal: 'stage' } }
     )
   ],
   [
@@ -74,7 +96,8 @@ const ENCOUNTERS = [
       'medic',
       '星宿老怪，向來只有他化旁人的功。他認得出心裡那個念頭不是自己的，偏偏掙不開，化功大法照舊削人內力。',
       'murong',
-      'sepia(.22) hue-rotate(85deg)'
+      'sepia(.22) hue-rotate(85deg)',
+    { mods: { range: 2 }, contact: { mp: 8 } }
     ),
     adversary(
       '摘星子',
@@ -86,7 +109,8 @@ const ENCOUNTERS = [
       'guo',
       '星宿派大弟子，只當師父是自己要大展神威。毒焰順著中空的蘆稈游走。',
       'zhang',
-      'hue-rotate(55deg) saturate(.8)'
+      'hue-rotate(55deg) saturate(.8)',
+    { sig: { reach: 3 } }
     )
   ],
   [
@@ -100,7 +124,17 @@ const ENCOUNTERS = [
       'xiao',
       '血刀門第四代掌門，一生只打划算的架。他試過不理心裡那個念頭，三回都是刀先動，索性放手去砍。一刀掃過棧道兩側。',
       'hu',
-      'sepia(.25) hue-rotate(-30deg) saturate(1.4)'
+      'sepia(.25) hue-rotate(-30deg) saturate(1.4)',
+    {
+      mods: { atk: 2, def: -2, step: 3, range: 1 },
+      sig: { sweep: 0.33 },
+      phase: {
+        name: '遁走',
+        flee: { turns: 3, herbs: 0.08, until: 0.75 },
+        log: '血刀老祖刀勢一收，踏雪往藥草地退去。',
+        note: '氣血過半後退向最近的藥草地，三回合內只打身邊的人；在藥草地每回合回復最大氣血的 8%，回到七成五即止。'
+      }
+    }
     ),
     adversary(
       '寶象',
@@ -112,7 +146,12 @@ const ENCOUNTERS = [
       'hu',
       '血刀門僧。他同來人無冤無仇，刀卻自己出了鞘，借坡下冰雪遮掩刀鋒。',
       'guard',
-      'sepia(.4) saturate(1.15)'
+      'sepia(.4) saturate(1.15)',
+    {
+      mods: { hp: 1.1, step: 3, range: 1 },
+      prefers: 'wounded',
+      post: { tile: 'spawn', tether: 1, wake: false, note: '守在棧口{tile}一格內，不離位。' }
+    }
     )
   ],
   [
@@ -122,11 +161,21 @@ const ENCOUNTERS = [
       '笑傲江湖',
       '嵩山劍法',
       '寒冰真氣',
-      'weak',
+      'pin',
       'duan',
       '嵩山掌門、五嶽盟主，每出一掌都先算過值與不值。這一掌沒有算，寒氣已到掌心，能沿斷絃侵人經脈。',
       'chief',
-      'saturate(.48) hue-rotate(135deg)'
+      'saturate(.48) hue-rotate(135deg)',
+    {
+      mods: { hp: 1.1, def: 2, step: 3, range: 2 },
+      banner: { atk: 1 },
+      post: {
+        tile: 'spawn',
+        tether: 2,
+        wake: 'struck',
+        note: '守在琴臺{tile}兩格內；受到攻擊後才離臺。'
+      }
+    }
     ),
     adversary(
       '費彬',
@@ -138,7 +187,16 @@ const ENCOUNTERS = [
       'guo',
       '大嵩陽手，替盟主守住上臺的石階。催他動手的聲音不是掌門的號令，卻比號令更難違抗。一掌落下，兩旁石座同時作響。',
       'guo',
-      'sepia(.32) hue-rotate(-12deg)'
+      'sepia(.32) hue-rotate(-12deg)',
+    {
+      mods: { hp: 1.2, def: 3, step: 2, range: 1 },
+      post: {
+        tile: 'spawn',
+        tether: 1,
+        wake: false,
+        note: '守在石階{tile}一格內，不離位；被牽離後會走回。'
+      }
+    }
     )
   ],
   [
@@ -152,7 +210,22 @@ const ENCOUNTERS = [
       'guo',
       '西毒贏到了天下第一，卻忘了自己是誰，所以分不出哪個念頭是自己的。他伏在陣心蓄勢；石陣能分開蛇群，緊挨的同伴卻容易被掌風一併震傷。',
       'murong',
-      'sepia(.15) hue-rotate(28deg)'
+      'sepia(.15) hue-rotate(28deg)',
+    {
+      mods: { range: 2 },
+      stance: { while: 'charged', cut: 0, holds: true },
+      phase: {
+        name: '逆練',
+        atk: 6,
+        def: -4,
+        step: 1,
+        cadence: 2,
+        prefers: 'nearest',
+        holds: false,
+        log: '歐陽鋒逆運經脈，狀若瘋狂。',
+        note: '攻擊 ＋6、防禦 −4、移動 ＋1，絕技每兩回合一次，不再原地等待，見人就撲。'
+      }
+    }
     ),
     adversary(
       '歐陽克',
@@ -160,11 +233,12 @@ const ENCOUNTERS = [
       '射鵰英雄傳',
       '靈蛇拳',
       '靈蛇拳法',
-      'poison',
+      'pin',
       'guard',
       '白駝山少主。他明白心裡那個念頭不是自己的主意，摺扇卻照樣指使群蛇。',
       'duan',
-      'sepia(.2) saturate(.6)'
+      'sepia(.2) saturate(.6)',
+    { mods: { atk: -4, range: 2 } }
     )
   ],
   [
@@ -174,11 +248,18 @@ const ENCOUNTERS = [
       '神鵰俠侶',
       '五輪大轉',
       '龍象般若功',
-      'sweep',
+      'line',
       'guo',
       '蒙古國師，立功只肯憑自己的五隻輪子。此刻有一股勁道推著他動手，他不認這是自己的本意。五輪一轉，身旁的人也受波及。',
       'guo',
-      'sepia(.65) saturate(1.3)'
+      'sepia(.65) saturate(1.3)',
+    {
+      mods: { hp: 1.1, def: 2, step: 2, range: 2 },
+      sig: {
+        reach: 3,
+        note: '輪勢穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。'
+      }
+    }
     ),
     adversary(
       '霍都',
@@ -190,7 +271,12 @@ const ENCOUNTERS = [
       'xiao',
       '蒙古王子，拜金輪國師為師，向來見勢不妙便走。今日兩條腿給釘在門洞裡，只好摺扇一指，專挑對手的弱處下手。',
       'duan',
-      'sepia(.25) hue-rotate(-32deg)'
+      'sepia(.25) hue-rotate(-32deg)',
+    {
+      mods: { hp: 0.9, step: 4, range: 2 },
+      prefers: 'isolated',
+      post: { tile: 'spawn', tether: 1, wake: false, note: '守在門洞{tile}一格內，不離位。' }
+    }
     )
   ],
   [
@@ -204,7 +290,12 @@ const ENCOUNTERS = [
       'duan',
       '赤練仙子殺人，向來為的是心裡那個人。這一回連恨都不是她自己的，指間卻仍扣著冰魄銀針。',
       'xiao',
-      'sepia(.4) hue-rotate(-43deg) saturate(1.45)'
+      'sepia(.4) hue-rotate(-43deg) saturate(1.45)',
+    {
+      mods: { def: -2, range: 2 },
+      sig: { reach: 3, extra: 'wound' },
+      prefers: 'healer'
+    }
     ),
     adversary(
       '洪凌波',
@@ -216,7 +307,16 @@ const ENCOUNTERS = [
       'xiao',
       '李莫愁的徒弟，守著寒玉室的出口。她不想動手，心裡的聲音卻催得她放不下拂塵。',
       'medic',
-      'sepia(.32) hue-rotate(26deg)'
+      'sepia(.32) hue-rotate(26deg)',
+    {
+      mods: { def: 2, range: 2 },
+      post: {
+        tile: { x: 5, y: 3 },
+        tether: 1,
+        wake: false,
+        note: '守在石頸北口{tile}一格內，不離位。'
+      }
+    }
     )
   ],
   [
@@ -230,7 +330,19 @@ const ENCOUNTERS = [
       'hero',
       '華山掌門，人稱君子劍，與人動手向來先佔一個「理」字。今日無理可佔，劍已出鞘，專破對手的守勢。',
       'hero',
-      'hue-rotate(-48deg) saturate(.7)'
+      'hue-rotate(-48deg) saturate(.7)',
+    {
+      mods: { range: 1 },
+      glide: 2,
+      phase: {
+        name: '辟邪現形',
+        step: 2,
+        def: -3,
+        cadence: 2,
+        log: '岳不群撕下君子面目，身形快得看不清。',
+        note: '移動 ＋2、防禦 −3，絕技每兩回合一次。'
+      }
+    }
     ),
     adversary(
       '勞德諾',
@@ -242,7 +354,8 @@ const ENCOUNTERS = [
       'hu',
       '埋在華山多年的嵩山耳目，聽慣了兩頭的號令。心裡這一個，兩頭都不是。',
       'bandit',
-      'sepia(.2) hue-rotate(55deg)'
+      'sepia(.2) hue-rotate(55deg)',
+    { mods: { step: 4 }, prefers: 'leader' }
     )
   ],
   [
@@ -252,11 +365,21 @@ const ENCOUNTERS = [
       '天龍八部',
       '參合指',
       '斗轉星移',
-      'sweep',
+      'mirror',
       'duan',
       '姑蘇慕容氏，半生躲在暗處撥弄旁人相鬥，如今自己成了旁人盤上的一枚子。兩股星索從盤外垂下，繫在他身上；兩名守索人各守一股，斷索可卸他的護勁。',
       'murong',
-      ''
+      '',
+    {
+      redirect: { while: 'charged', keep: 0, back: 0.5 },
+      phase: {
+        atk: 5,
+        range: 1,
+        brace: true,
+        log: '斗轉星移倒轉銅漏，攻擊增加 5、防禦增加 4，射程擴至三格。',
+        note: '攻擊 ＋5、防禦 ＋4、射程擴至三格。'
+      }
+    }
     ),
     adversary(
       '鳩摩智',
@@ -268,7 +391,8 @@ const ENCOUNTERS = [
       'guo',
       '吐蕃國師，大輪明王，遍覽天下武學。壓在心頭的那道劍意不在任何一部經上，他身不由己，卻又捨不得它走。一雙手既能翻書，也能催出火焰刀。',
       'zhang',
-      'sepia(.65) hue-rotate(-8deg) saturate(1.25)'
+      'sepia(.65) hue-rotate(-8deg) saturate(1.25)',
+    { sig: { reach: 4 }, prefers: 'mp' }
     )
   ]
 ];
@@ -276,7 +400,206 @@ const ENCOUNTERS = [
 // of a DETAILS entry (name, role, school, mini, basic, bio) and optionally `traits` (only `mods`,
 // `post`, `cover`, `prefers`, `basicPoison` and `glide` apply to them). A board left empty keeps
 // the shared 黑子 pieces.
-const RANKS = Array.from({ length: 10 }, () => ({}));
+const RANKS = [
+  // ── board 0
+  // Board 0: the 青城 archer and scout keep the shared pieces' text.
+  { bow: {}, scout: {} },
+  // ── board 1
+  {
+    bow: {
+      name: '天龍門弟子',
+      role: '弓手',
+      school: '天龍門北宗',
+      mini: 'archer',
+      basic: '天龍連珠箭',
+      bio: '替掌門守住驛道口的弟子，箭隨人走，專射趕路的人。'
+    },
+    scout: {
+      name: '驛站打手',
+      role: '打手',
+      school: '閻府',
+      mini: 'bandit',
+      basic: '短棍',
+      bio: '閻基花錢雇來的打手，搶先堵住岔路。'
+    }
+  },
+  // ── board 2
+  {
+    bow: {
+      name: '星宿弟子',
+      role: '毒鏢',
+      school: '星宿派',
+      mini: 'archer',
+      basic: '星宿毒鏢',
+      bio: '口裡唱著「星宿老仙」，身子總擋在師父前面。',
+      traits: {
+        mods: { atk: -2 },
+        cover: 'master',
+        post: { tile: 'master', tether: 1, wake: false }
+      }
+    },
+    scout: {
+      name: '星宿弟子',
+      role: '護法',
+      school: '星宿派',
+      mini: 'bandit',
+      basic: '抽髓掌',
+      bio: '師父一皺眉，他便搶上一步替師父挨打。',
+      traits: {
+        mods: { atk: -2 },
+        cover: 'master',
+        post: { tile: 'master', tether: 1, wake: false }
+      }
+    }
+  },
+  // ── board 3
+  {
+    bow: {
+      name: '血刀門弓僧',
+      role: '弓手',
+      school: '血刀門',
+      mini: 'archer',
+      basic: '雪坡冷箭',
+      bio: '伏在北面崖棧上，雪樑一動便放箭。',
+      traits: {
+        post: { tile: 'spawn', tether: 1, wake: false, note: '守在崖棧{tile}一格內，不離位。' }
+      }
+    },
+    scout: {
+      name: '血刀門僧',
+      role: '遊僧',
+      school: '血刀門',
+      mini: 'bandit',
+      basic: '血刀',
+      bio: '踏著下層棧道繞到人背後。'
+    }
+  },
+  // ── board 4
+  {
+    bow: {
+      name: '嵩山弟子',
+      role: '弓手',
+      school: '嵩山派',
+      mini: 'archer',
+      basic: '嵩山連弩',
+      bio: '聽盟主號令放箭，盟主一倒，手便慢了。'
+    },
+    scout: {
+      name: '嵩山弟子',
+      role: '劍手',
+      school: '嵩山派',
+      mini: 'bandit',
+      basic: '嵩山快劍',
+      bio: '從兩翼繞上琴臺的嵩山劍手。'
+    }
+  },
+  // ── board 5
+  {
+    bow: {
+      name: '白駝山蛇奴',
+      role: '蛇奴',
+      school: '白駝山',
+      mini: 'archer',
+      basic: '放蛇',
+      bio: '趕著蛇群穿過石陣的奴僕，蛇牙帶毒。',
+      traits: { basicPoison: { power: 2, turns: 2, name: '蛇毒' } }
+    },
+    scout: {
+      name: '白駝山蛇奴',
+      role: '蛇奴',
+      school: '白駝山',
+      mini: 'bandit',
+      basic: '蛇杖',
+      bio: '杖頭盤著活蛇，打中便留下毒牙。',
+      traits: { basicPoison: { power: 2, turns: 2, name: '蛇毒' } }
+    }
+  },
+  // ── board 6
+  {
+    bow: {
+      name: '蒙古箭手',
+      role: '弓手',
+      school: '蒙古軍',
+      mini: 'archer',
+      basic: '強弓',
+      bio: '伏在東牆缺口，射城下奔走的人。',
+      traits: {
+        post: { tile: 'spawn', tether: 1, wake: false, note: '守在東牆{tile}一格內，不離位。' }
+      }
+    },
+    scout: {
+      name: '蒙古鐵騎',
+      role: '遊騎',
+      school: '蒙古軍',
+      mini: 'bandit',
+      basic: '馬刀',
+      bio: '從牆缺直衝陣後的輕騎。',
+      traits: { mods: { step: 5 } }
+    }
+  },
+  // ── board 7
+  {
+    bow: {
+      name: '赤練門下',
+      role: '弓手',
+      school: '赤練門下',
+      mini: 'archer',
+      basic: '赤練針',
+      bio: '守北洞的女弟子，針上也淬了毒。'
+    },
+    scout: {
+      name: '赤練門下',
+      role: '弟子',
+      school: '赤練門下',
+      mini: 'bandit',
+      basic: '拂塵手',
+      bio: '在寒玉壁間來回巡看的弟子。'
+    }
+  },
+  // ── board 8
+  {
+    bow: {
+      name: '華山弟子',
+      role: '弓手',
+      school: '華山派',
+      mini: 'archer',
+      basic: '華山連箭',
+      bio: '守在橋頭的華山弟子，認得每一條水道。',
+      traits: {
+        post: { tile: 'spawn', tether: 1, wake: false, note: '守在橋頭{tile}一格內，不離位。' }
+      }
+    },
+    scout: {
+      name: '嵩山密探',
+      role: '密探',
+      school: '嵩山派',
+      mini: 'bandit',
+      basic: '短刃',
+      bio: '混在街坊裡的嵩山耳目。'
+    }
+  },
+  // ── board 9
+  {
+    bow: {
+      name: '守索人',
+      role: '護陣',
+      school: '姑蘇慕容',
+      mini: 'archer',
+      basic: '星索',
+      bio: '繫住一股星索的人。索不斷，慕容博的護勁不散。',
+      traits: { post: { tile: 'spawn', tether: 1, wake: false, note: '守在索樁一格內，不離位。' }, ward: 35 }
+    },
+    scout: {
+      name: '守索人',
+      role: '護陣',
+      school: '姑蘇慕容',
+      mini: 'bandit',
+      basic: '星索',
+      bio: '繫住另一股星索的人。',
+      traits: { post: { tile: 'spawn', tether: 1, wake: false, note: '守在索樁一格內，不離位。' }, ward: 35 }
+    }
+  }
+];
 // How strong a signature's status is at each stage of the run. At stage 0 these are the numbers
 // every villain used before the redesign.
 const STATUS_POWER = {
@@ -284,39 +607,65 @@ const STATUS_POWER = {
   exposed: (stage) => 3 + Math.floor(stage / 2),
   poison: (stage) => 3 + stage,
   drain: (stage) => 6 + 2 * stage,
-  sweep: () => 0
+  pin: () => 2,
+  sweep: () => 0,
+  line: () => 0,
+  mend: () => 0,
+  mirror: () => 0
 };
 const lasting = (turns) => (turns === 2 ? '持續至下回合。' : '持續 ' + turns + ' 回合。');
+const SHARES = { 2: '二', 3: '三', 4: '四', 5: '五' };
+// What a signature's rider adds to its note (`sig.extra`, or the style itself).
+const EXTRAS = {
+  wound: '，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。',
+  pin: '，並令目標絆足，移動減 2，持續至下回合。',
+  line: '，並穿過目標，以一半威力擊中其後兩格內首名俠客。'
+};
+const riding = (text, extra) => (extra ? text.replace(/。$/, '') + EXTRAS[extra] : text);
+// Each style's note, from the numbers of the stage it is met at.
 const SIGNATURE_RULES = {
-  weak: ({ power, turns }) => '令目標攻擊降低 ' + power + '，' + lasting(turns),
-  exposed: ({ power, turns }) => '令目標防禦降低 ' + power + '，' + lasting(turns),
-  poison: ({ power, turns }) =>
-    '令目標中毒，' + (turns === 2 ? '兩' : turns) + '次毒發各損 ' + power + ' 氣血。',
-  drain: ({ power }) => '另外削去目標 ' + power + ' 點內力。',
-  sweep: () => '相鄰的其他我方俠客也會受到四分之一傷害。'
+  weak: ({ power, turns, extra }) => riding('令目標攻擊降低 ' + power + '，' + lasting(turns), extra),
+  exposed: ({ power, turns, extra }) =>
+    riding('令目標防禦降低 ' + power + '，' + lasting(turns), extra),
+  poison: ({ power, turns, extra }) =>
+    riding('令目標中毒，' + (turns === 2 ? '兩' : turns) + '次毒發各損 ' + power + ' 氣血。', extra),
+  drain: ({ power, extra }) => riding('另外削去目標 ' + power + ' 點內力。', extra),
+  sweep: ({ sweep, extra }) =>
+    riding(
+      '相鄰的其他我方俠客也會受到' + (SHARES[Math.round(1 / sweep)] || '') + '分之一傷害。',
+      extra
+    ),
+  pin: ({ power, turns, extra }) =>
+    riding('令目標絆足，移動減 ' + power + '，' + lasting(turns), extra),
+  line: () => '穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。',
+  mend: ({ heal }) =>
+    '蓄勢時替三格內氣血不足七成的同夥回復 ' +
+    heal +
+    ' 點氣血，此回合不出手；無人受傷時改以普攻出手，蓄勢保留。',
+  mirror: () => '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。'
 };
 
 // Damage is measured against the same foe's normal strike after the target's defenses.
 const VILLAIN_FORMS = {
   摧心掌: [1.16, 'breakPalm'],
   駝峰毒霧: [1.04, 'blackNeedle'],
-  天龍快劍: [1.25, 'breakSword'],
-  毒砂掌: [1.07, 'silkwormPalm'],
-  化功大法: [1.03, 'northernSea'],
+  天龍快劍: [1.2, 'breakSword'],
+  接骨續筋: [0, 'silkwormPalm'], // 續命: no blow, so no strength
+  化功大法: [1.1, 'northernSea'],
   星宿毒焰: [1.09, 'holyFireTurn'],
   血刀奇襲: [1.29, 'bloodAtPass'],
   血刀連斬: [1.18, 'foxTwinChange'],
-  寒冰真氣: [1.12, 'lesserMarsh'],
+  寒冰真氣: [1.15, 'lesserMarsh'],
   大嵩陽神掌: [1.22, 'vacantFist'],
-  蛤蟆功: [1.33, 'toadLunge'],
-  靈蛇拳法: [1.06, 'beggarBind'],
-  龍象般若功: [1.39, 'flyingDragon'],
+  蛤蟆功: [1.4, 'toadLunge'],
+  靈蛇拳法: [1.12, 'beggarBind'],
+  龍象般若功: [1.3, 'flyingDragon'],
   狂風迅雷功: [1.14, 'foxFeint'],
   冰魄銀針: [1.08, 'iceSoulNeedle'],
   赤練掌法: [1.15, 'softPalm'],
   辟邪劍法: [1.32, 'shangYang'],
   嵩山快劍: [1.21, 'snowPursuit'],
-  斗轉星移: [1.43, 'universeCanopy'],
+  斗轉星移: [0, 'universeCanopy'],
   火焰刀: [1.27, 'tideBreaker']
 };
 

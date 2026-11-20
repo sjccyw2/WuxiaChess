@@ -1,6 +1,6 @@
 // Danger zone: every tile an enemy could strike on its coming turn, shaded on the board.
-// Follows what the enemy turn itself does: walk anywhere within reach, then strike within range
-// (a due signature's own range when it has one).
+// Follows what the enemy turn itself does: walk to any tile it may end on (G.standCells), then
+// strike within range (a due signature's own range when it has one).
 import { POLISH } from '../polish.js';
 import * as G from '../rules/game.js';
 
@@ -25,7 +25,11 @@ function dangerTiles(s) {
           u.y,
           G.ally(u) ? 0 : G.strikeReach(s, u),
           G.ally(u) ? 0 : G.stat(u, 'step', s),
-          u.conditions?.daze ? 1 : 0
+          u.conditions?.daze ? 1 : 0,
+          // 坐鎮 and a charged hold clip where it can stand; waking or the charge changes that.
+          G.ally(u) ? '' : JSON.stringify(G.holdOf(s, u)),
+          u.phased ? 1 : 0,
+          u.fleeThrough ?? ''
         ].join(':')
       )
       .join(';') +
@@ -37,7 +41,9 @@ function dangerTiles(s) {
   for (const u of alive) {
     // A dazed enemy will not act this turn, so it threatens nothing.
     if (G.ally(u) || u.conditions?.daze) continue;
-    const stands = [[u.x, u.y], ...Array.from(G.reachable(s, u).keys(), (k) => k.split(',').map(Number))];
+    // Only where it will actually end its action: a posted piece within its tether, a charged
+    // 蓄勢反擊 on its own tile, a fleeing master where its flight takes it.
+    const stands = G.standCells(s, u).map((c) => [c.x, c.y]);
     const range = G.strikeReach(s, u);
     for (const [cx, cy] of stands)
       for (let dx = -range; dx <= range; dx++) {

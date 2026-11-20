@@ -1,4 +1,9 @@
 /* Dialogs share a stationary title and actions, with one independently scrollable reading area. */
+/* The enemy page's trait lines: the trait's name leads its line, in the page's gold. */
+.footnote .trait-name {
+  color: #d7b38d;
+  font-weight: 600;
+}
 #modal:has(.mj-frame) {
   --mj-paper: #eee7d1;
   --mj-brass: #dcc18a;

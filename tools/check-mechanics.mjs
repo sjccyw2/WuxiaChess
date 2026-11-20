@@ -107,17 +107,21 @@ function teach(u, id, slot = 1) {
 }
 // A villain's traits (by DETAILS key: a master's id, 'lieutenant-' + map, 'bow-' + map,
 // 'scout-' + map), in force while `body` runs.
+// The entry is put back whole afterwards, so a check may also rename the piece inside.
 function withTraits(key, traits, body) {
   const had = Object.hasOwn(G.DETAILS, key),
-    prior = G.DETAILS[key]?.traits;
-  G.DETAILS[key] = { ...(G.DETAILS[key] || {}), traits };
+    prior = G.DETAILS[key];
+  G.DETAILS[key] = { ...(prior || {}), traits };
   try {
     return body();
   } finally {
-    if (had) G.DETAILS[key].traits = prior;
+    if (had) G.DETAILS[key] = prior;
     else delete G.DETAILS[key];
   }
 }
+// Board 0's master and lieutenant hold the bridge (坐鎮, SPEC-villains board 0). Checks of other
+// mechanics that need them to walk run them without their traits.
+const loose = (body) => withTraits('chief', {}, () => withTraits('lieutenant-0', {}, body));
 // Run the enemy phase through to the start of the next ally phase.
 function enemyTurn(s) {
   G.startEnemy(s);
@@ -434,7 +438,8 @@ section('villain traits');
   const first = board(),
     second = board();
   const map = first.run.route[1];
-  nextBoard(first);
+  // Measured against the same piece with no traits (its board's data may give it mods of its own).
+  withTraits('bow-' + map, {}, () => nextBoard(first));
   withTraits('bow-' + map, { mods: { hp: 0.5, atk: -3, range: 4 } }, () => nextBoard(second));
   const [p, q] = [unit(first, 'echoBow'), unit(second, 'echoBow')];
   check(
@@ -452,14 +457,18 @@ section('villain traits');
     G.DETAILS['bow-' + map].name = '試射手';
     return G.unitDetails(unit(second, 'echoBow')).name;
   });
-  check('a RANKS entry names the piece; without one the shared piece is used', named === '試射手' && G.unitDetails(unit(second, 'echoBow')).name === G.DETAILS.echoBow.name);
+  const entry = G.DETAILS['bow-' + map];
+  delete G.DETAILS['bow-' + map];
+  const shared = G.unitDetails(unit(second, 'echoBow')).name;
+  G.DETAILS['bow-' + map] = entry;
+  check('a RANKS entry names the piece; without one the shared piece is used', named === '試射手' && shared === G.DETAILS.echoBow.name && G.unitDetails(unit(second, 'echoBow')).name === RANKS[map].bow.name);
 
   // Status strength by stage, only once a villain's traits are written.
   const s = board();
   s.run.stage = 4;
   const chief = unit(s, 'chief');
   const style = G.DETAILS.chief.style;
-  check('without traits a signature keeps the flat stage-0 strength', G.enemyTechnique(chief, s).power === 3);
+  check('without traits a signature keeps the flat stage-0 strength', loose(() => G.enemyTechnique(chief, s).power === 3));
   withTraits('chief', { mods: {} }, () => {
     const art = G.enemyTechnique(chief, s);
     check('with traits weak/exposed scale as 3 + ⌊stage/2⌋', style === 'weak' && art.power === 5, art.power);
@@ -521,19 +530,21 @@ section('villain traits');
     basicPoison: { power: 2, turns: 2 }
   }, () => G.enemyTraitLines(page, unit(page, 'chief')));
   const spawn = mapLayout(0).enemies[0];
+  // In the spec's words (SPEC-villains §0.5): '【name】' and the villain's line. The signature's
+  // reach and rider are told under the signature itself (signatureLines).
   const expected = [
-    '絕技射程 3 格',
-    '絕技絆足 · 中招者移動 −2，2 回合',
-    '坐鎮 · 守在（' + (spawn.x + 1) + '，' + (spawn.y + 1) + '）1 格內；有俠客踏入攻擊範圍才出手，受擊或出手後離位追擊',
-    '專挑傷重者',
-    '化功 · 貼身打中他的俠客損失 8 內力',
-    '盟令 · 存活時其餘敵人攻擊 ＋1',
-    '游擊 · 出手後退開至多 2 步',
-    '毒手 · 普攻令目標中毒，兩次毒發各損 2 氣血'
+    '【盟令】存活時其餘敵人攻擊 ＋1。',
+    '【坐鎮】守在（' + (spawn.x + 1) + '，' + (spawn.y + 1) + '）一格內；有俠客踏入攻擊範圍或受到攻擊後，才離位追擊。',
+    '【化功】貼身打中他的俠客損失 8 點內力（封穴時無效）。',
+    '【游擊】出手後退開至多 2 步，離俠客越遠越好。',
+    '【毒手】普攻令目標中毒，兩次毒發各損 2 氣血。',
+    '【偏好】專挑傷重者。'
   ];
+  const sigLines = withTraits('chief', { sig: { reach: 3, extra: 'pin' } }, () => G.signatureLines(page, unit(page, 'chief')));
+  check('the signature lines carry its rider and its reach', same(sigLines, ['令目標攻擊降低 3，持續至下回合，並令目標絆足，移動減 2，持續至下回合。', '絕技射程 3 格。']), JSON.stringify(sigLines));
   check('the enemy page lists each trait', same(lines, expected), JSON.stringify(lines));
   const html = withTraits('chief', { glide: 2 }, () => P.enemyPage(page, 'chief'));
-  check('the enemy page shows the step and the trait lines', html.includes('移動 <b>') && html.includes('游擊 · 出手後退開至多 2 步'));
+  check('the enemy page shows the step and the trait lines', html.includes('移動 <b>') && html.includes('<b class="trait-name">游擊</b>　出手後退開至多 2 步，離俠客越遠越好。'));
 }
 
 // ── Reach and the counter ratio (§5 disarm, §6 counterRatio) ─────────────
@@ -1054,7 +1065,7 @@ section('cover');
     check('the disciple two tiles off cannot counter', f.counterRaw === 0);
     const page = P.attackPage(s, 'hero', 'chief', false);
     check('the preview shows the disciple opposite, with a 代受 line', page.includes('<strong>' + names[0] + '</strong>') && page.includes('<span>代受</span><b class="">' + names[0] + '代' + names[1] + '受招'));
-    check('the master’s page names who covers him', G.enemyTraitLines(s, chief).includes('代受 · 身旁的' + names[0] + '替他承受直接攻擊'));
+    check('the master’s page names who covers him', G.enemyTraitLines(s, chief).includes('【門人代受】相鄰的' + names[0] + '替他承受俠客的直接攻擊（氣血較多者先上）；波及、穿行、走勁與毒傷仍會落在他身上。'));
     const life = [chief.hp, scout.hp];
     G.resolve(s, hero, chief, false);
     check('the strike lands on the disciple only', chief.hp === life[0] && life[1] - scout.hp === f.amount);
@@ -1301,6 +1312,9 @@ section('taunt');
   // An enemy that starts within two tiles and can reach him must strike him, though another
   // hero is the cheaper target; one that starts farther, or cannot reach him, acts as usual.
   function scene(foeId, foeAt, guardAt, setup) {
+    return loose(() => looseScene(foeId, foeAt, guardAt, setup));
+  }
+  function looseScene(foeId, foeAt, guardAt, setup) {
     const e = board(['guard', 'hero', 'medic']);
     const foe = put(e, foeId, ...foeAt);
     const g = put(e, 'guard', ...guardAt);
@@ -2276,7 +2290,7 @@ section('interactions');
     check('a taunter in a formation still binds an enemy that can step into it', G.taunters(s, foe).length === 1);
     G.startEnemy(s);
     const hp = guard.hp;
-    G.enemyAct(s, foe);
+    loose(() => G.enemyAct(s, foe));
     check('which strikes him from the formation’s edge', guard.hp < hp && G.zoneAt(s, foe));
     // Starting on a formation, it has two steps less to reach him with.
     const slow = scene(false, [5, 7]);
@@ -2325,6 +2339,1014 @@ section('interactions');
     const begun = run({ x: 5, y: 7 }, [5, 7]);
     check('begun in one, its step as the action began (two less, so one) bounds the walk off', begun.x === 6 && begun.y === 7, [begun.x, begun.y]);
   });
+}
+
+// ── 坐鎮 post (§7.3), and a 蓄勢反擊 that holds (§7.6) ─────────────────────
+section('post');
+{
+  // Board 0's open row 3: the post on (5,3); heroes put east of it.
+  const posted = (traits, setup) =>
+    withTraits('chief', traits, () => {
+      const s = board();
+      const chief = put(s, 'chief', 5, 3);
+      setup?.(s, chief);
+      return { s, chief };
+    });
+  const act = (s, u) => {
+    G.startEnemy(s);
+    return G.enemyAct(s, u);
+  };
+  const post = (tether, wake, more = {}) => ({ post: { tile: { x: 5, y: 3 }, tether, wake, ...more } });
+
+  withTraits('chief', post(1, true), () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    const hero = put(s, 'hero', 8, 3);
+    const life = hero.hp;
+    act(s, chief);
+    check('no hero within reach of its ground: it stays on its post', chief.x === 5 && chief.y === 3 && hero.hp === life, [chief.x, chief.y]);
+    check('and it is not woken', !chief.woke);
+    check('it does not claim to close in', !s.logs.some((l) => l.text === '逼近我方陣地。' && l.who === '余滄海'));
+  });
+  withTraits('chief', post(1, true), () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    const hero = put(s, 'hero', 7, 3);
+    const life = hero.hp;
+    act(s, chief);
+    check('a hero strikable from within the tether is struck', hero.hp < life && G.distance(chief, { x: 5, y: 3 }) <= 1, [chief.x, chief.y]);
+    check('wake: true — striking wakes it for good', chief.woke === true && s.logs.some((l) => l.text === '離位追擊。'));
+    const saved = R.restoreRun(copy(s));
+    check('a save keeps the woken post', saved && unit(saved, 'chief').woke === true);
+    put(s, 'hero', 8, 7);
+    for (const id of ['medic', 'guard']) unit(s, id).hp = 0; // only the hero to chase
+    G.nextRound(s);
+    s.phase = 'ally';
+    const from = { x: chief.x, y: chief.y };
+    act(s, chief);
+    check('once woken it is held no more and goes after the hero', !G.holdOf(s, chief) && G.distance(chief, from) > 0, [chief.x, chief.y]);
+    check('its page says it has left', G.enemyTraitLines(s, chief).includes('【坐鎮】已離位追擊。'));
+  });
+  // wake 'struck' and false: striking keeps the post; being struck drops only 'struck'.
+  for (const [wake, after] of [['struck', true], [false, false]])
+    withTraits('chief', post(1, wake), () => {
+      const s = board();
+      const chief = put(s, 'chief', 5, 3);
+      const hero = put(s, 'hero', 7, 3);
+      act(s, chief);
+      check('wake ' + JSON.stringify(wake) + ': its own blow keeps it on post', !chief.woke && hero.hp < hero.maxHp);
+      s.phase = 'ally';
+      hero.acted = hero.moved = false;
+      G.resolve(s, hero, chief, false);
+      check('wake ' + JSON.stringify(wake) + ': struck by a hero, ' + (after ? 'it wakes' : 'it holds'), !!chief.woke === after);
+    });
+  withTraits('chief', post(0, false), () => {
+    const s = board();
+    const chief = put(s, 'chief', 7, 3);
+    put(s, 'hero', 8, 7);
+    act(s, chief);
+    check('pulled off its post, it walks back', chief.x === 5 && chief.y === 3, [chief.x, chief.y]);
+    check('and says so', s.logs.some((l) => l.text === '退回崗位。'));
+  });
+  withTraits('chief', post(0, false), () => {
+    const s = board();
+    const chief = put(s, 'chief', 8, 3);
+    put(s, 'hero', 8, 7);
+    s.zones = [{ owner: 'medic', tiles: [{ x: 7, y: 3 }], through: s.round + 1 }];
+    act(s, chief);
+    check('a formation in front of its post stops the walk back', chief.x === 7 && chief.y === 3, [chief.x, chief.y]);
+  });
+  // The danger zone: what it can strike from its ground, not from anywhere it could walk.
+  {
+    const alone = (s) => G.enemies(s).filter((e) => e.id !== 'chief').forEach((e) => (e.hp = 0));
+    const lone = () => {
+      const s = board();
+      alone(s);
+      return s;
+    };
+    const open = loose(() => {
+      const free = lone();
+      put(free, 'chief', 5, 3);
+      return new Set(dangerTiles(free));
+    });
+    const held = withTraits('chief', post(0, false), () => {
+      const s = lone();
+      put(s, 'chief', 5, 3);
+      return new Set(dangerTiles(s));
+    });
+    check('unposted, the zone reaches three tiles out', open.has(G.key(8, 3)));
+    check('posted with tether 0, only the tiles beside it', held.has(G.key(6, 3)) && held.has(G.key(4, 3)) && !held.has(G.key(7, 3)), [...held].join(' '));
+    const tethered = withTraits('chief', post(1, false), () => {
+      const s = lone();
+      put(s, 'chief', 5, 3);
+      return new Set(dangerTiles(s));
+    });
+    check('with tether 1, two tiles out and no further', tethered.has(G.key(7, 3)) && !tethered.has(G.key(8, 3)));
+    const woken = withTraits('chief', post(0, true), () => {
+      const s = lone();
+      const c = put(s, 'chief', 5, 3);
+      dangerTiles(s);
+      c.woke = true;
+      return dangerTiles(s);
+    });
+    check('a woken post draws its whole walk again (the memo sees the change)', woken.has(G.key(8, 3)));
+  }
+  // 挑釁: a taunter it can strike from its ground binds it; one it cannot is ignored.
+  withTraits('chief', post(1, false), () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    const hero = put(s, 'hero', 4, 3);
+    const guard = put(s, 'guard', 7, 3);
+    guard.conditions = { taunt: { power: 2, through: s.round, source: 'guard' } };
+    act(s, chief);
+    check('a taunt answerable from inside the tether binds it', guard.hp < guard.maxHp && hero.hp === hero.maxHp);
+  });
+  withTraits('chief', post(0, false), () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    const hero = put(s, 'hero', 4, 3);
+    const guard = put(s, 'guard', 7, 3);
+    guard.conditions = { taunt: { power: 2, through: s.round, source: 'guard' } };
+    act(s, chief);
+    check('a taunt it cannot answer from its post is ignored', hero.hp < hero.maxHp && guard.hp === guard.maxHp && chief.x === 5);
+  });
+  // A post on its master: rank and file keep beside him.
+  withTraits('scout-0', { post: { tile: 'master', tether: 1, wake: false } }, () => {
+    Object.assign(G.DETAILS['scout-0'], { ...G.DETAILS.scout, traits: { post: { tile: 'master', tether: 1, wake: false } } });
+    const s = board();
+    put(s, 'chief', 5, 3);
+    const scout = put(s, 'scout', 8, 3);
+    put(s, 'hero', 8, 7);
+    act(s, scout);
+    check('a piece posted on its master walks to his side', G.distance(scout, { x: 5, y: 3 }) === 1, [scout.x, scout.y]);
+    check('its page says so', G.enemyTraitLines(s, scout).includes('【護駕】每回合先回到余滄海身旁。'));
+  });
+  // The page, generic and in the villain's own words.
+  withTraits('chief', post(2, 'struck'), () => {
+    const s = board();
+    check('the generic post line', G.enemyTraitLines(s, unit(s, 'chief'))[0] === '【坐鎮】守在（6，4）兩格內；受到攻擊後才離位。', G.enemyTraitLines(s, unit(s, 'chief'))[0]);
+  });
+  withTraits('chief', post(1, false, { note: '守在石階{tile}一格內，不離位。' }), () => {
+    const s = board();
+    check('a post line in the villain’s words, its tile filled in', G.enemyTraitLines(s, unit(s, 'chief'))[0] === '【坐鎮】守在石階（6，4）一格內，不離位。');
+  });
+
+  // 蓄勢反擊 that holds: while charged it stays and strikes only from where it stands.
+  const crouch = { stance: { while: 'charged', cut: 0, holds: true } };
+  withTraits('chief', crouch, () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    const hero = put(s, 'hero', 7, 3);
+    s.round = 3; // board 0's master is charged from round 3
+    check('charged, it is held', G.signatureDue(s, chief) && !!G.holdOf(s, chief));
+    const zone = dangerTiles(s);
+    check('charged, the danger zone is its own tile’s reach only', zone.has(G.key(6, 3)) && !zone.has(G.key(7, 3)));
+    act(s, chief);
+    check('charged, it does not walk to a hero out of reach', chief.x === 5 && hero.hp === hero.maxHp);
+    const t = board();
+    const c2 = put(t, 'chief', 5, 3);
+    const h2 = put(t, 'hero', 7, 3);
+    t.round = 2;
+    act(t, c2);
+    check('not charged, it walks in and strikes', h2.hp < h2.maxHp && c2.x === 6);
+  });
+}
+
+// ── 偏好 prefers (§7.5) ─────────────────────────────────────────────────
+section('prefers');
+{
+  // Two heroes beside the master on row 3; which one it strikes, with and without its preference.
+  const struck = (prefers, setup, stage = 0) =>
+    withTraits('chief', prefers ? { prefers } : {}, () => {
+      const s = board();
+      s.run.stage = stage;
+      const chief = put(s, 'chief', 5, 3);
+      setup(s);
+      const before = new Map(G.party(s).map((v) => [v.id, v.hp]));
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      return G.party(s).find((v) => v.hp < before.get(v.id))?.id;
+    });
+  const wounded = (s) => {
+    put(s, 'medic', 4, 3);
+    put(s, 'guard', 6, 3).hp = 110;
+  };
+  check('without a preference, the frailer full-health medic is struck', struck(null, wounded) === 'medic');
+  check('wounded: the hero who has lost most is struck', struck('wounded', wounded) === 'guard');
+  check('wounded: the same at a late stage, where the AI weighs differently', struck('wounded', wounded, 7) === 'guard');
+  const lonely = (s) => {
+    put(s, 'medic', 4, 3);
+    put(s, 'hero', 4, 4);
+    put(s, 'guard', 6, 3).hp = 120;
+  };
+  check('without a preference, the medic', struck(null, lonely) === 'medic');
+  check('isolated: the hero with no companion beside him', struck('isolated', lonely) === 'guard');
+  const leading = (s) => {
+    put(s, 'hero', 4, 3);
+    put(s, 'medic', 6, 3);
+  };
+  check('without a preference, not the leader', struck(null, leading) === 'medic');
+  check('leader: the leader', struck('leader', leading) === 'hero');
+  const healing = (s) => {
+    put(s, 'medic', 4, 3);
+    put(s, 'guard', 6, 3).hp = 70;
+  };
+  check('without a preference, the hurt guard', struck(null, healing) === 'guard');
+  check('healer: the hero with a healing art', struck('healer', healing) === 'medic');
+  const deep = (s) => {
+    put(s, 'medic', 4, 3);
+    Object.assign(put(s, 'guard', 6, 3), { hp: 70, mp: 0 });
+  };
+  check('mp: the hero with most 內力', struck(null, deep) === 'guard' && struck('mp', deep) === 'medic');
+  // The terms themselves.
+  withTraits('chief', { prefers: 'nearest' }, () => {
+    const s = board();
+    const c = unit(s, 'chief'),
+      h = unit(s, 'hero');
+    check('nearest: −8 per tile short of 20 to walk', G.preference(s, c, h, [], 3) === -136 && G.preference(s, c, h, [], 40) === 0);
+  });
+  withTraits('chief', { prefers: 'wounded' }, () => {
+    const s = board();
+    const h = unit(s, 'hero');
+    h.hp = h.maxHp / 2;
+    check('wounded: −40 × the share lost', G.preference(s, unit(s, 'chief'), h, []) === -20);
+    check('the page names it', G.enemyTraitLines(s, unit(s, 'chief')).includes('【偏好】專挑傷重者。'));
+  });
+}
+
+// ── 變招 phase (§7.4) ───────────────────────────────────────────────────
+section('phase');
+{
+  const mad = {
+    stance: { while: 'charged', cut: 0, holds: true },
+    prefers: 'wounded',
+    phase: { name: '逆練', atk: 6, def: -4, step: 1, cadence: 2, prefers: 'nearest', holds: false, log: '試變招。', note: '試變招說明。' }
+  };
+  withTraits('chief', mad, () => {
+    const s = board();
+    const chief = unit(s, 'chief');
+    const before = { atk: chief.atk, def: chief.def, step: chief.step, range: chief.range };
+    check('the page shows the phase from the start', G.enemyTraitLines(s, chief).includes('【半血變招 · 逆練】試變招說明。'));
+    chief.hp = Math.floor(chief.maxHp / 2) + 1;
+    G.check(s);
+    check('above half nothing happens', !chief.phased && chief.atk === before.atk);
+    chief.hp = Math.floor(chief.maxHp / 2);
+    G.check(s);
+    check('at half the phase fires', chief.phased === true && s.foreshadow === true);
+    check('its numbers go onto the unit', chief.atk === before.atk + 6 && chief.def === before.def - 4 && chief.step === before.step + 1 && chief.range === before.range);
+    check('its line is logged', s.logs.at(-1).text === '試變招。' && s.logs.at(-1).who === '余滄海');
+    check('cadence and preference are the phase’s now', G.traitsOf(chief).sig.cadence === 2 && G.traitsOf(chief).prefers === 'nearest');
+    s.round = 3;
+    check('holds: false — charged, it is no longer held', G.signatureDue(s, chief) && !G.holdOf(s, chief));
+    check('…but still counters at full force', G.counterRatio(s, chief) === 1);
+    chief.signatureRound = 3;
+    s.round = 5;
+    check('the countdown uses the phase’s cadence', G.roundsToSignature(s, chief) === 0);
+    check('the page says it has changed', G.enemyTraitLines(s, chief).includes('【已變招 · 逆練】試變招說明。') && G.enemyTraitLines(s, chief).includes('【偏好】見人就撲。'));
+    G.check(s);
+    check('it fires once', chief.atk === before.atk + 6);
+    const saved = R.restoreRun(copy(s));
+    const c2 = saved && unit(saved, 'chief');
+    check('a save keeps the change', c2?.phased === true && c2.atk === chief.atk && G.traitsOf(c2).prefers === 'nearest');
+  });
+  {
+    const s = board();
+    const chief = unit(s, 'chief');
+    const atk = chief.atk;
+    chief.hp = Math.floor(chief.maxHp / 2);
+    const lines = s.logs.length;
+    G.check(s);
+    check('a master without a phase changes nothing and logs nothing', !chief.phased && chief.atk === atk && s.logs.length === lines);
+    check('the old false line is gone', !s.logs.some((l) => l.text === '收勢退了半步，重整陣腳。'));
+  }
+  // A multi-hit that crosses half health: the whole action lands before the phase fires.
+  withTraits('chief', { phase: { def: -4, log: '試變招。' } }, () => {
+    const s = board();
+    const hero = put(s, 'hero', 4, 3),
+      chief = put(s, 'chief', 5, 3);
+    teach(hero, defineArt({ hits: [0.5, 0.5], factor: 2 }));
+    hero.mp = 40;
+    chief.hp = Math.floor(chief.maxHp / 2) + 10;
+    const f = G.forecast(hero, chief, true, s);
+    const life = chief.hp;
+    G.resolve(s, hero, chief, true);
+    check('a multi-hit lands as forecast, every hit before the change', life - chief.hp === f.amount && f.hits.length === 2, [life - chief.hp, f.amount]);
+    check('then the phase fires once', chief.phased && s.logs.filter((l) => l.text === '試變招。').length === 1);
+  });
+  // In the enemy phase: a counter that takes the master to half.
+  withTraits('chief', { phase: { atk: 1, log: '試變招。' } }, () => {
+    const s = board();
+    const chief = put(s, 'chief', 5, 3);
+    put(s, 'guard', 4, 3);
+    chief.hp = Math.floor(chief.maxHp / 2) + 1;
+    G.startEnemy(s);
+    G.enemyAct(s, chief);
+    check('a counter that brings it to half fires the phase in the enemy phase', chief.phased === true);
+  });
+}
+
+// ── 化功 contact, 盟令 banner, 蛇毒 basicPoison, signature riders, 星索 wards (§7.2, 7.7, 7.8) ─
+section('contact, banner, riders and wards');
+{
+  // A villain's style for the length of a test (its traits stay as given).
+  function withStyle(key, style, traits, body) {
+    const prior = G.DETAILS[key].style;
+    G.DETAILS[key].style = style;
+    try {
+      return withTraits(key, traits, body);
+    } finally {
+      G.DETAILS[key].style = prior;
+    }
+  }
+  const scoutAs = (traits) => Object.assign(G.DETAILS['scout-0'], { ...G.DETAILS.scout, name: '試弟子', traits });
+
+  withTraits('chief', { contact: { mp: 8 } }, () => {
+    const s = board();
+    s.run.stage = 1;
+    const hero = put(s, 'hero', 4, 3),
+      chief = put(s, 'chief', 5, 3);
+    const f = G.forecast(hero, chief, false, s);
+    check('化功: a blow from beside him costs 8 + stage 內力', f.contact === 9 && f.notes.includes('化功 · 內力 −9'), f.contact);
+    check('the preview gives it its own row', P.attackPage(s, 'hero', 'chief', false).includes('<span>化功</span><b class="">內力 −9'));
+    const mp = hero.mp;
+    G.resolve(s, hero, chief, false);
+    check('and the strike takes it', hero.mp === mp - 9, hero.mp);
+    check('his page says so', G.enemyTraitLines(s, chief).includes('【化功】貼身打中他的俠客損失 9 點內力（封穴時無效）。'));
+    const medic = put(s, 'medic', 7, 3);
+    check('a blow from two tiles off costs nothing', !G.forecast(medic, chief, false, s).contact);
+    chief.conditions = { seal: { power: 1, through: s.round, source: 'hero' } };
+    hero.acted = false;
+    check('sealed, he dissolves nothing', !G.forecast(hero, chief, false, s).contact);
+    delete chief.conditions;
+    teach(hero, defineArt({ safe: true }));
+    hero.mp = 40;
+    check('免受還擊 does not spare the striker', G.forecast(hero, chief, true, s).contact === 9);
+    hero.mp = 3;
+    hero.activeArt = 'signature';
+    check('never more than he has', G.forecast(hero, chief, false, s).contact === 3);
+  });
+  withTraits('scout-0', { cover: 'master' }, () =>
+    withTraits('chief', { contact: { mp: 8 } }, () => {
+      scoutAs({ cover: 'master' });
+      const s = board();
+      const hero = put(s, 'hero', 4, 3);
+      put(s, 'chief', 5, 3);
+      put(s, 'scout', 5, 4);
+      const f = G.forecast(hero, unit(s, 'chief'), false, s);
+      check('a disciple who takes the blow for him has no 化功', f.coveredBy === 'scout' && !f.contact);
+    })
+  );
+
+  withTraits('chief', { banner: { atk: 1 } }, () => {
+    const s = board();
+    s.run.stage = 3;
+    const blade = unit(s, 'blade'),
+      chief = unit(s, 'chief');
+    const base = blade.atk;
+    check('盟令: every other enemy strikes harder by 1 + stage', G.stat(blade, 'atk', s) === base + 4 && G.stat(chief, 'atk', s) === chief.atk);
+    check('and shows a chip', G.standingLines(s, blade).includes('盟令 ＋4') && !G.standingLines(s, chief).length);
+    check('the bearer’s page says so', G.enemyTraitLines(s, chief).includes('【盟令】存活時其餘敵人攻擊 ＋4。'));
+    chief.hp = 0;
+    check('with the bearer fallen it is gone', G.stat(blade, 'atk', s) === base && !G.standingLines(s, blade).length);
+  });
+
+  withTraits('scout-0', { basicPoison: { power: 2, turns: 2, name: '蛇毒' } }, () => {
+    scoutAs({ basicPoison: { power: 2, turns: 2, name: '蛇毒' } });
+    const s = board();
+    s.run.stage = 5;
+    const scout = put(s, 'scout', 5, 3),
+      hero = put(s, 'hero', 4, 3);
+    G.startEnemy(s);
+    G.enemyAct(s, scout);
+    check('蛇毒: its plain strike poisons with 2 + ⌊stage/2⌋', hero.conditions?.poison?.power === 4 && hero.conditions.poison.through === s.round + 1);
+    check('its page says so', G.enemyTraitLines(s, scout).includes('【蛇毒】普攻令目標中毒，兩次毒發各損 4 氣血。'));
+  });
+
+  // Signature styles and riders, struck when due (board 0's master: round 3).
+  // The checks run inside, while the style and traits hold.
+  const due = (style, traits, setup, checks) =>
+    withStyle('chief', style, traits, () => {
+      const s = board();
+      s.round = 3;
+      const chief = put(s, 'chief', 3, 3);
+      // Only the heroes the setup puts are in play.
+      for (const id of ['medic', 'guard']) unit(s, id).hp = 0;
+      setup(s);
+      G.startEnemy(s);
+      const effects = G.enemyAct(s, chief);
+      checks({ s, chief, effects });
+    });
+  due('pin', { mods: {} }, (s) => put(s, 'hero', 4, 3), ({ s }) => {
+    const pin = unit(s, 'hero').conditions?.pin;
+    check('pin: the struck hero is 絆足 2 until his next turn is over', pin?.power === 2 && pin.through === s.round + 1);
+    check('its note', G.enemyTechnique(unit(s, 'chief'), s).note === '令目標絆足，移動減 2，持續至下回合。');
+  });
+  due('poison', { mods: {}, sig: { extra: 'wound' } }, (s) => put(s, 'hero', 4, 3), ({ s }) => {
+    const c = unit(s, 'hero').conditions || {};
+    check('poison with extra wound: poison and 內傷 both', c.poison?.power === 3 && c.wound?.power === 5);
+    check('its note names both', G.enemyTechnique(unit(s, 'chief'), s).note === '令目標中毒，兩次毒發各損 3 氣血，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。');
+  });
+  due(
+    'line',
+    { mods: {} },
+    (s) => {
+      put(s, 'hero', 4, 3);
+      Object.assign(put(s, 'medic', 6, 3), { hp: 94 });
+    },
+    ({ s, effects }) => {
+      const hit = effects.find((e) => e[0] === 'hero'),
+        through = effects.find((e) => e[0] === 'medic');
+      check('line: the hero two behind takes half the blow', !!through && Math.abs(Number(through[1].slice(1)) - Math.round(Number(hit[1].slice(1)) / 2)) <= 2, JSON.stringify(effects));
+      check('line: no condition on the target', !unit(s, 'hero').conditions || !Object.keys(unit(s, 'hero').conditions).length);
+      check('line note says the danger zone does not show it', G.enemyTechnique(unit(s, 'chief'), s).note.includes('（危險範圍不顯示穿透）'));
+      unit(s, 'medic').x = 7;
+      check('three tiles behind is too far', !G.lineVictim(s, { x: 3, y: 3 }, unit(s, 'hero')));
+      unit(s, 'medic').x = 5;
+      check('one behind is in it', G.lineVictim(s, { x: 3, y: 3 }, unit(s, 'hero'))?.id === 'medic');
+      check('a striker off the row sends nothing through', !G.lineVictim(s, { x: 3, y: 4 }, unit(s, 'hero')));
+    }
+  );
+  due(
+    'sweep',
+    { mods: {}, sig: { sweep: 0.33 } },
+    (s) => {
+      put(s, 'hero', 4, 3);
+      Object.assign(put(s, 'medic', 5, 3), { hp: 94 });
+    },
+    ({ s, effects }) => {
+      const hit = Number(effects.find((e) => e[0] === 'hero')[1].slice(1)),
+        chip = Number(effects.find((e) => e[0] === 'medic')[1].slice(1));
+      check('sweep share: chips take the signature’s third', chip >= Math.round(hit * 0.33) - 2 && chip <= Math.round(hit * 0.33) + 2, [hit, chip]);
+      check('its note says a third', G.enemyTechnique(unit(s, 'chief'), s).note === '相鄰的其他我方俠客也會受到三分之一傷害。');
+    }
+  );
+  {
+    const plain = (() => {
+      const s = board();
+      s.round = 2;
+      const chief = put(s, 'chief', 3, 3),
+        hero = put(s, 'hero', 4, 3);
+      for (const id of ['medic', 'guard']) unit(s, id).hp = 0;
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      return hero.maxHp - hero.hp;
+    })();
+    due('mirror', { redirect: { while: 'charged', keep: 0, back: 0.5 } }, (s) => put(s, 'hero', 4, 3), ({ s, chief, effects }) => {
+      const hero = unit(s, 'hero');
+      check('mirror: charged, it strikes with its plain blow', hero.maxHp - hero.hp === plain && !effects.signature, [hero.maxHp - hero.hp, plain]);
+      check('and keeps its charge', chief.signatureRound === undefined && G.signatureDue(s, chief));
+      s.phase = 'ally';
+      const page = P.enemyPage(s, 'chief');
+      check('its page has no strength line, and the mirror’s words', page.includes('蓄勢時，第一次受到的直接攻擊全數不中') && !page.includes('普攻傷害 ×'));
+      check('charged, the page warns of the mirror', page.includes('蓄勢已成 · 第一下直接攻擊將被反震'));
+    });
+  }
+  // 吸勁 against a charged 蓄勢反擊: the blow that delays it is answered at the ordinary share.
+  withTraits('chief', { stance: { while: 'charged', cut: 0, holds: true } }, () => {
+    const s = board();
+    s.round = 3;
+    const hero = put(s, 'hero', 4, 3),
+      chief = put(s, 'chief', 5, 3);
+    const plainCounter = G.forecast(hero, chief, false, s).counterRaw;
+    teach(hero, defineArt({ forms: ['siphon'], factor: 1 }));
+    hero.mp = 40;
+    const f = G.forecast(hero, chief, true, s);
+    check('charged, a plain blow draws the full counter', G.counterRatio(s, chief) === 1 && plainCounter > 0);
+    check('吸勁 un-charges it: the counter is the ordinary share', f.siphon?.delay && f.counterRaw < plainCounter, [f.counterRaw, plainCounter]);
+    G.resolve(s, hero, chief, true);
+    check('…and it is no longer held', !G.signatureDue(s, chief) && !G.holdOf(s, chief));
+  });
+
+  // 星索護陣: the wards are data now.
+  withTraits('scout-0', { ward: 35 }, () => {
+    scoutAs({ ward: 35 });
+    const s = board();
+    const hero = put(s, 'hero', 4, 3),
+      chief = put(s, 'chief', 5, 3),
+      scout = put(s, 'scout', 7, 3);
+    check('a living ward takes 35% off the master', G.forecast(hero, chief, false, s).ward === 35 && G.wardEscorts(s).length === 1);
+    check('and not off anyone else', !G.forecast(hero, scout, false, s).ward);
+    check('the master’s page', G.enemyTraitLines(s, chief).includes('【星索護陣】每名存活的試弟子替他抵擋 35% 傷害。'));
+    check('the ward’s page', G.enemyTraitLines(s, scout).includes('【護陣】存活時替余滄海抵擋 35% 傷害。'));
+    scout.hp = 1;
+    put(s, 'medic', 8, 3);
+    G.resolve(s, unit(s, 'medic'), scout, false);
+    check('felled, its rope breaks and says so', !G.wardEscorts(s).length && s.logs.some((l) => l.text === '星索皆斷，余滄海的護陣已破。'));
+  });
+}
+
+// ── 續命 mend (§7.9) ────────────────────────────────────────────────────
+section('mend');
+{
+  // Board 0's master as the physician, due in round 3; the lieutenant hurt beside him.
+  const physician = (setup, checks, stage = 1) => {
+    const prior = G.DETAILS.chief.style;
+    G.DETAILS.chief.style = 'mend';
+    try {
+      withTraits('chief', { sig: { heal: 'stage' } }, () => {
+        const s = board();
+        s.run.stage = stage;
+        s.round = 3;
+        for (const id of ['medic', 'guard']) unit(s, id).hp = 0;
+        const chief = put(s, 'chief', 5, 3);
+        setup(s, chief);
+        G.startEnemy(s);
+        const effects = G.enemyAct(s, chief);
+        checks(s, chief, effects);
+      });
+    } finally {
+      G.DETAILS.chief.style = prior;
+    }
+  };
+  physician(
+    (s) => {
+      put(s, 'blade', 7, 3).hp = 20;
+      put(s, 'hero', 4, 3);
+    },
+    (s, chief, effects) => {
+      const blade = unit(s, 'blade');
+      check('a hurt companion within reach is restored by 20 + 5 × stage', blade.hp === 45 && same(effects[0], ['blade', '+25']), blade.hp);
+      check('it does not strike', unit(s, 'hero').hp === unit(s, 'hero').maxHp);
+      check('the signature is spent', chief.signatureRound === 3 && !G.signatureDue(s, chief) && effects.signature);
+      check('it says so', s.logs.some((l) => l.text.includes('接骨續筋') && l.who === '余滄海'));
+      check('its page note gives the number, with no strength line', G.signatureLines(s, chief)[0] === '蓄勢時替三格內氣血不足七成的同夥回復 25 點氣血，此回合不出手；無人受傷時改以普攻出手，蓄勢保留。');
+    }
+  );
+  physician(
+    (s) => {
+      const blade = put(s, 'blade', 7, 3);
+      blade.hp = 20;
+      blade.conditions = { wound: { power: 5, through: s.round + 1, source: 'hero' } };
+      put(s, 'hero', 4, 3);
+    },
+    (s) => check('內傷 halves the mend', unit(s, 'blade').hp === 32, unit(s, 'blade').hp)
+  );
+  physician(
+    (s, chief) => {
+      chief.hp = 30;
+      put(s, 'hero', 4, 3);
+    },
+    (s, chief) => check('it mends itself', chief.hp === 55 && unit(s, 'hero').hp === unit(s, 'hero').maxHp)
+  );
+  physician(
+    (s) => {
+      put(s, 'blade', 7, 3).hp = 50; // above seven tenths
+      put(s, 'hero', 4, 3);
+    },
+    (s, chief, effects) => {
+      check('no one hurt enough: it strikes plainly', unit(s, 'hero').hp < unit(s, 'hero').maxHp && !effects.signature);
+      check('…and keeps the charge', G.signatureDue(s, chief));
+    }
+  );
+  physician(
+    (s) => {
+      put(s, 'blade', 1, 9).hp = 10; // far off: no tile within three of him this turn
+      put(s, 'hero', 4, 3);
+    },
+    (s, chief) => check('a companion out of its reach is not mended', unit(s, 'blade').hp === 10 && G.signatureDue(s, chief))
+  );
+  physician(
+    (s) => {
+      put(s, 'blade', 5, 7).hp = 20;
+      put(s, 'hero', 8, 3);
+    },
+    (s, chief) => {
+      const h = unit(s, 'hero');
+      check('it mends from as far from the heroes as it can', G.distance(chief, unit(s, 'blade')) <= 3 && G.distance(chief, h) >= 4, [chief.x, chief.y]);
+    }
+  );
+}
+
+// ── 遁走 flee (§7.4) ────────────────────────────────────────────────────
+section('flee');
+{
+  // Board 0's herbs: (3,2), (1,6), (8,8).
+  const herbs = fieldCellsWithHerbs(0);
+  function fieldCellsWithHerbs(map) {
+    return mapLayout(map).cells.filter((c) => G.terrainInfo(c.x, c.y, map)?.heal).map((c) => c.x + ',' + c.y);
+  }
+  check('board 0 has the herbs these checks use', ['3,2', '1,6', '8,8'].every((k) => herbs.includes(k)), herbs.join(' '));
+  const flight = { phase: { name: '遁走', flee: { turns: 3, herbs: 0.08, until: 0.75 }, log: '試遁走。', note: '試遁走說明。' } };
+  const fled = (setup, checks) =>
+    withTraits('chief', flight, () => {
+      const s = board();
+      for (const id of ['medic', 'guard']) unit(s, id).hp = 0;
+      const chief = put(s, 'chief', 5, 3);
+      setup?.(s, chief);
+      chief.hp = Math.floor(chief.maxHp / 2);
+      G.check(s);
+      checks(s, chief);
+    });
+  fled(null, (s, chief) => {
+    check('the phase starts the flight: its turns from this round', chief.fleeThrough === s.round + 2 && G.fleeing(s, chief));
+    check('the page says so', G.enemyTraitLines(s, chief).includes('【遁走中】至第 3 回合，或氣血回到 ' + Math.round(chief.maxHp * 0.75) + ' 為止。'));
+    put(s, 'hero', 8, 7);
+    const zone = dangerTiles(s);
+    const stand = G.standCells(s, chief);
+    check('the danger zone draws only where its flight ends', stand.length === 1 && zone.has(G.key(stand[0].x, stand[0].y)) && !zone.has(G.key(8, 3)));
+    const turn = () => {
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      for (const e of G.enemies(s)) e.acted = true;
+    };
+    turn();
+    check('it heads for the nearest herbs', G.distance(chief, { x: 3, y: 2 }) < G.distance({ x: 5, y: 3 }, { x: 3, y: 2 }), [chief.x, chief.y]);
+    check('and says so', s.logs.some((l) => l.text === '退向藥草地。'));
+    G.nextRound(s);
+    turn();
+    check('a round later it is on them', chief.x === 3 && chief.y === 2, [chief.x, chief.y]);
+    const life = chief.hp;
+    G.nextRound(s);
+    check('on herbs it recovers 8% of its greatest 氣血, not the tile’s flat 12', chief.hp - life === Math.round(chief.maxHp * 0.08), chief.hp - life);
+    const saved = R.restoreRun(copy(s));
+    check('a save keeps the flight', unit(saved, 'chief').fleeThrough === chief.fleeThrough);
+    chief.hp = Math.ceil(chief.maxHp * 0.75);
+    check('it ends early once back at three quarters', !G.fleeing(s, chief));
+  });
+  fled(
+    (s) => put(s, 'hero', 3, 2),
+    (s, chief) => {
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      check('herbs a hero holds are passed over for the next nearest', G.distance(chief, { x: 3, y: 2 }) > 0 && G.standCells(s, chief).length === 1);
+    }
+  );
+  fled(
+    (s) => {
+      put(s, 'hero', 3, 2);
+      put(s, 'blade', 8, 8); // the archer is parked on (1,6)
+    },
+    (s, chief) => {
+      check('every herb tile taken: it fights where it can, as any piece', G.standCells(s, chief).length > 1);
+      const hero = unit(s, 'hero');
+      put(s, 'hero', 4, 3);
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      check('…striking whoever is in reach', hero.hp < hero.maxHp);
+    }
+  );
+  fled(null, (s, chief) => {
+    put(s, 'chief', 3, 2);
+    chief.conditions = { wound: { power: 5, through: s.round + 1, source: 'hero' } };
+    G.startEnemy(s);
+    chief.acted = true;
+    for (const e of G.enemies(s)) e.acted = true;
+    const life = chief.hp;
+    G.nextRound(s);
+    check('內傷 halves the herbs', chief.hp - life === Math.floor(Math.round(chief.maxHp * 0.08) / 2), chief.hp - life);
+  });
+}
+
+// ── The ten boards, built with the real data on their real maps (SPEC-villains) ──────────────
+// Each block below builds a board as a run reaches it, at a stage it can be met at, and checks
+// that its villains carry the spec's traits and numbers and that what defines them happens there.
+// The run's map `map`, reached at `stage` (a seed whose route puts it there), in the fight with
+// the three original heroes at their spawn tiles.
+function realBoard(map, stage) {
+  for (let n = 1; n < 400; n++) {
+    const s = board(['hero', 'medic', 'guard'], Math.imul(n, 2654435761) >>> 0);
+    if (s.run.route[stage] !== map) continue;
+    for (let i = 0; i < stage; i++) {
+      s.run.scene = 'fight';
+      if (!nextBoard(s)) throw new Error('could not reach board ' + map);
+    }
+    if (stage) {
+      s.run.scene = 'fight';
+      s.run.formationOpen = false;
+    } else {
+      // board() parks every piece; put them back where board 0's layout sets them.
+      const layout = mapLayout(0);
+      foesOf(s).forEach((u, i) => Object.assign(u, layout.enemies[i]));
+      G.party(s).forEach((u, i) => Object.assign(u, layout.allies[i]));
+    }
+    return s;
+  }
+  throw new Error('no route puts board ' + map + ' at stage ' + stage);
+}
+// The board's four enemies by their place in the layout: master, lieutenant, archer, scout.
+const foesOf = (s) => {
+  const ids = s.mapIndex ? [G.commanderId(s), 'echoBlade', 'echoBow', 'echoScout'] : ['chief', 'blade', 'bow', 'scout'];
+  return ids.map((id) => unit(s, id));
+};
+const numbersOf = (u) => [u.maxHp, u.atk, u.def, u.step, u.range];
+// Every post on a board is on walkable ground a hero can walk to from his side's spawn.
+function postsReachable(s) {
+  const from = mapLayout(s.mapIndex).allies[0];
+  return foesOf(s).every((u) => {
+    const post = G.traitsOf(u).post;
+    if (!post || post.tile === 'master') return true;
+    const tile = G.postTile(s, u, post);
+    const ghost = { ...unit(s, s.leader), x: from.x, y: from.y, side: 'ally' };
+    return G.walkable(tile.x, tile.y, s.mapIndex) && G.movementPath({ ...s, units: [] }, ghost, from, tile).length > 0;
+  });
+}
+// The page lines a piece shows now.
+const pageOf = (s, u) => [...G.signatureLines(s, u), ...G.enemyTraitLines(s, u)];
+// One enemy turn with every other enemy standing still; the heroes are where they are.
+function soloTurn(s, u) {
+  G.startEnemy(s);
+  for (const e of G.enemies(s)) if (e !== u) e.acted = true;
+  const effects = G.enemyAct(s, u);
+  return effects;
+}
+// The end of the enemy phase and the start of the next ally phase.
+function closeRound(s) {
+  for (const e of G.enemies(s)) e.acted = true;
+  G.nextRound(s);
+}
+
+section('board 0 青竹渡: the bridge wardens');
+{
+  const s = realBoard(0, 0);
+  const [chief, blade, bow, scout] = foesOf(s);
+  check('余滄海 and 木高峰 have the spec’s numbers', same(numbersOf(chief), [104, 25, 12, 2, 1]) && same(numbersOf(blade), [56, 20, 7, 2, 1]), numbersOf(chief) + ' / ' + numbersOf(blade));
+  check('archer and scout keep the stage curve and their 青城 names', same(numbersOf(bow), [48, 18, 5, 2, 3]) && G.unitDetails(bow).name === '青城弓手' && G.unitDetails(scout).name === '青城斥候', numbersOf(bow) + G.unitDetails(bow).name + G.unitDetails(scout).name);
+  check('both hold their spawn, tether 0, waking', ['chief', 'lieutenant-0'].every((k) => same(G.DETAILS[k].traits.post && { ...G.DETAILS[k].traits.post, note: 0 }, { tile: 'spawn', tether: 0, wake: true, note: 0 })));
+  check('余滄海’s page', same(pageOf(s, chief).slice(1), ['【坐鎮】守在橋頭不動；有俠客踏入他的攻擊範圍，或他受到攻擊後，才離位追擊。']), JSON.stringify(pageOf(s, chief)));
+  check('木高峰’s page', same(pageOf(s, blade).slice(1), ['【坐鎮】守在橋尾不動；有俠客踏入攻擊範圍或受到攻擊後，才離位追擊。']), JSON.stringify(pageOf(s, blade)));
+  check('their posts are ground the heroes can walk to', postsReachable(s));
+  check('the danger zone shows them where they stand only', G.standCells(s, chief).length === 1 && G.standCells(s, blade).length === 1);
+  const at = [chief, blade].map((u) => [u.x, u.y]);
+  G.startEnemy(s);
+  for (const e of G.enemies(s)) G.enemyAct(s, e);
+  check('the heroes far off, neither moves in the first enemy turn', same([chief, blade].map((u) => [u.x, u.y]), at));
+  closeRound(s);
+  // A hero steps beside 余滄海: he strikes and leaves the bridgehead.
+  const p = [chief.x - 1, chief.y];
+  if (!G.walkable(...p, 0) || G.at(s, ...p)) p[0] += 2;
+  const hero = put(s, 'hero', ...p);
+  soloTurn(s, chief);
+  check('a hero beside him is struck, and he wakes', hero.hp < hero.maxHp && chief.woke === true);
+}
+
+section('board 1 紅楓驛: the physician');
+for (const stage of [1, 2]) {
+  const s = realBoard(1, stage);
+  const [tian, yan, bow, scout] = foesOf(s);
+  const want = { 1: [[118, 26, 14, 3, 1], [60, 18, 8, 2, 1]], 2: [[147, 29, 15, 3, 1], [71, 20, 9, 2, 1]] }[stage];
+  check('stage ' + stage + ': 田歸農 and 閻基 have the spec’s numbers', same(numbersOf(tian), want[0]) && same(numbersOf(yan), want[1]), numbersOf(tian) + ' / ' + numbersOf(yan));
+  check('stage ' + stage + ': 閻基 knows 接骨續筋, a mend', G.unitDetails(yan).skill === '接骨續筋' && G.enemyTechnique(yan, s).style === 'mend' && !G.enemyTechnique(yan, s).strikes);
+  const heal = 20 + 5 * stage;
+  check('stage ' + stage + ': his page', same(pageOf(s, yan), ['蓄勢時替三格內氣血不足七成的同夥回復 ' + heal + ' 點氣血，此回合不出手；無人受傷時改以普攻出手，蓄勢保留。']), JSON.stringify(pageOf(s, yan)));
+  check('stage ' + stage + ': 天龍快劍 at 1.20', G.enemyTechnique(tian, s).factor === 1.2);
+  check('stage ' + stage + ': the rank and file are named', G.unitDetails(bow).name === '天龍門弟子' && G.unitDetails(scout).name === '驛站打手' && G.unitDetails(scout).school === '閻府');
+  // His mend is due from round 2; the archer, hurt, stands near enough on the real map.
+  s.round = 2;
+  bow.hp = Math.floor(bow.maxHp / 3);
+  const life = bow.hp;
+  const effects = soloTurn(s, yan);
+  check('stage ' + stage + ': in round 2 he mends the hurt archer on this map', bow.hp === Math.min(bow.maxHp, life + heal) && effects.signature && G.distance(yan, bow) <= 3, [bow.hp, life, yan.x, yan.y]);
+}
+
+section('board 2 蘆花汀: the dissolver and his disciples');
+for (const stage of [1, 2]) {
+  const s = realBoard(2, stage);
+  const [ding, zhai, bow, scout] = foesOf(s);
+  const want = { 1: [[131, 26, 12, 2, 2], [67, 21, 8, 2, 1]], 2: [[163, 29, 13, 2, 2], [79, 23, 9, 2, 1]] }[stage];
+  check('stage ' + stage + ': 丁春秋 and 摘星子 have the spec’s numbers', same(numbersOf(ding), want[0]) && same(numbersOf(zhai), want[1]), numbersOf(ding) + ' / ' + numbersOf(zhai));
+  check('stage ' + stage + ': 化功大法 drains 6 + 2 × stage at 1.10', G.enemyTechnique(ding, s).factor === 1.1 && G.enemyTechnique(ding, s).power === 6 + 2 * stage);
+  check('stage ' + stage + ': 摘星子’s signature reaches 3', G.enemyTechnique(zhai, s).reach === 3 && pageOf(s, zhai).includes('絕技射程 3 格。'));
+  check('stage ' + stage + ': the disciples are on the stage curve less 2 attack', [bow, scout].every((u) => G.unitDetails(u).name === '星宿弟子' && G.unitDetails(u).traits.cover === 'master'));
+  check('stage ' + stage + ': 丁春秋’s page', same(pageOf(s, ding).slice(1), ['【門人代受】相鄰的星宿弟子替他承受俠客的直接攻擊（氣血較多者先上）；波及、穿行、走勁與毒傷仍會落在他身上。', '【化功】貼身打中他的俠客損失 ' + (8 + stage) + ' 點內力（封穴時無效）。']), JSON.stringify(pageOf(s, ding)));
+  check('stage ' + stage + ': a disciple’s page', same(G.enemyTraitLines(s, bow), ['【護駕】每回合先回到丁春秋身旁；與他相鄰時替他受招。']), JSON.stringify(G.enemyTraitLines(s, bow)));
+  // Two enemy turns with the heroes at their spawn: the disciples gather beside him.
+  for (let r = 0; r < 2; r++) {
+    G.startEnemy(s);
+    for (const e of G.enemies(s)) G.enemyAct(s, e);
+    G.nextRound(s);
+  }
+  check('stage ' + stage + ': after two turns both disciples stand beside him', G.distance(bow, ding) === 1 && G.distance(scout, ding) === 1, [ding.x, ding.y, bow.x, bow.y, scout.x, scout.y]);
+  // A hero beside him: the disciple with more 氣血 takes the blow, and 化功 does not touch him.
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: ding.x + dx, y: ding.y + dy })).find((p) => G.walkable(p.x, p.y, s.mapIndex) && !G.at(s, p.x, p.y));
+  if (!spot) {
+    check('stage ' + stage + ': a free tile beside him to strike from', false);
+    continue;
+  }
+  const hero = put(s, 'hero', spot.x, spot.y);
+  bow.hp -= 5;
+  const f = G.forecast(hero, ding, false, s);
+  check('stage ' + stage + ': the blow goes to the disciple with more 氣血, without 化功', f.coveredBy === 'echoScout' && !f.contact && f.notes[0] === '代受 · 星宿弟子代丁春秋受招', JSON.stringify([f.coveredBy, f.contact, f.notes[0]]));
+  // §8: cover first decides the receiver; the master's own 閃身 is untouched.
+  ding.conditions = { evade: { power: 1, through: s.round, source: ding.id } };
+  const life = [ding.hp, scout.hp];
+  G.resolve(s, hero, ding, false);
+  check('stage ' + stage + ': with him evading, the disciple still takes it and his 閃身 stays', ding.hp === life[0] && scout.hp < life[1] && !!ding.conditions.evade);
+}
+
+section('board 3 聽雪棧: the survivor and the scavenger');
+for (const stage of [3, 4]) {
+  const s = realBoard(3, stage);
+  const [xue, bao, bow, scout] = foesOf(s);
+  const want = { 3: [[195, 35, 13, 3, 1], [100, 26, 10, 3, 1]], 4: [[267, 38, 14, 3, 1], [145, 33, 11, 3, 1]] }[stage];
+  check('stage ' + stage + ': 血刀老祖 and 寶象 have the spec’s numbers', same(numbersOf(xue), want[0]) && same(numbersOf(bao), want[1]), numbersOf(xue) + ' / ' + numbersOf(bao));
+  check('stage ' + stage + ': his sweep takes a third', G.enemyTechnique(xue, s).sweep === 0.33 && pageOf(s, xue)[0] === '相鄰的其他我方俠客也會受到三分之一傷害。');
+  check('stage ' + stage + ': 血刀老祖’s page', pageOf(s, xue).includes('【半血變招 · 遁走】氣血過半後退向最近的藥草地，三回合內只打身邊的人；在藥草地每回合回復最大氣血的 8%，回到七成五即止。'), JSON.stringify(pageOf(s, xue)));
+  check('stage ' + stage + ': 寶象 holds the trestle mouth and hunts the wounded (RULINGS F)', same(G.enemyTraitLines(s, bao), ['【坐鎮】守在棧口（7，4）一格內，不離位。', '【偏好】專挑傷重者。']), JSON.stringify(G.enemyTraitLines(s, bao)));
+  check('stage ' + stage + ': the archer-monk holds the north ledge', same(G.enemyTraitLines(s, bow), ['【坐鎮】守在崖棧（9，2）一格內，不離位。']) && G.unitDetails(scout).name === '血刀門僧', JSON.stringify(G.enemyTraitLines(s, bow)));
+  check('stage ' + stage + ': the posts are ground the heroes can walk to', postsReachable(s));
+  // At half health he runs for the herbs nearest him, and gets there.
+  const herbs = mapLayout(3).cells.filter((c) => G.terrainInfo(c.x, c.y, 3)?.heal);
+  check('stage ' + stage + ': the map has herbs', herbs.length >= 2);
+  xue.hp = Math.floor(xue.maxHp / 2);
+  G.check(s);
+  check('stage ' + stage + ': half health starts the flight', xue.phased && G.fleeing(s, xue) && s.logs.at(-1).text === '血刀老祖刀勢一收，踏雪往藥草地退去。');
+  for (let r = 0; r < 2 && !G.terrainInfo(xue.x, xue.y, 3).heal; r++) {
+    soloTurn(s, xue);
+    closeRound(s);
+  }
+  check('stage ' + stage + ': within two turns he stands on herbs', !!G.terrainInfo(xue.x, xue.y, 3).heal, [xue.x, xue.y]);
+  const life = xue.hp;
+  soloTurn(s, xue);
+  closeRound(s);
+  check('stage ' + stage + ': there he recovers 8% a round', xue.hp - life === Math.round(xue.maxHp * 0.08), xue.hp - life);
+  // 寶象 holds the mouth: with no one in reach he does not leave it.
+  const at = [bao.x, bao.y];
+  soloTurn(s, bao);
+  check('stage ' + stage + ': 寶象 stays at the trestle mouth with no one in reach', G.distance(bao, { x: 6, y: 3 }) <= 1 && same([bao.x, bao.y], at));
+}
+
+section('board 4 空山琴臺: the commander behind the gate');
+for (const stage of [3, 4]) {
+  const s = realBoard(4, stage);
+  const [zuo, fei, bow, scout] = foesOf(s);
+  const want = { 3: [[215, 33, 17, 3, 2], [109, 26, 13, 2, 1]], 4: [[294, 36, 18, 3, 2], [158, 33, 14, 2, 1]] }[stage];
+  check('stage ' + stage + ': 左冷禪 and 費彬 have the spec’s numbers', same(numbersOf(zuo), want[0]) && same(numbersOf(fei), want[1]), numbersOf(zuo) + ' / ' + numbersOf(fei));
+  const n = 1 + stage;
+  check('stage ' + stage + ': 盟令 gives every other enemy ＋' + n, [fei, bow, scout].every((u) => G.stat(u, 'atk', s) === u.atk + n && G.standingLines(s, u).includes('盟令 ＋' + n)) && G.stat(zuo, 'atk', s) === zuo.atk);
+  check('stage ' + stage + ': 寒冰真氣 pins, at 1.15', G.enemyTechnique(zuo, s).style === 'pin' && G.enemyTechnique(zuo, s).factor === 1.15);
+  check('stage ' + stage + ': 左冷禪’s page', same(pageOf(s, zuo), ['令目標絆足，移動減 2，持續至下回合。', '【盟令】存活時其餘敵人攻擊 ＋' + n + '。', '【坐鎮】守在琴臺（7，12）兩格內；受到攻擊後才離臺。']), JSON.stringify(pageOf(s, zuo)));
+  check('stage ' + stage + ': 費彬’s page', same(G.enemyTraitLines(s, fei), ['【坐鎮】守在石階（6，7）一格內，不離位；被牽離後會走回。']), JSON.stringify(G.enemyTraitLines(s, fei)));
+  check('stage ' + stage + ': the posts are ground the heroes can walk to', postsReachable(s));
+  // A whole enemy phase with the heroes at their spawn: the two stay on their ground.
+  for (let r = 0; r < 2; r++) {
+    G.startEnemy(s);
+    for (const e of G.enemies(s)) G.enemyAct(s, e);
+    G.nextRound(s);
+  }
+  check('stage ' + stage + ': after two turns 左冷禪 is within two of the terrace and 費彬 on his step', G.distance(zuo, { x: 6, y: 11 }) <= 2 && G.distance(fei, { x: 5, y: 6 }) <= 1, [zuo.x, zuo.y, fei.x, fei.y]);
+  // His own blow keeps him on the terrace; a hero's drops it.
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: zuo.x + dx, y: zuo.y + dy })).find((p) => G.walkable(p.x, p.y, s.mapIndex) && !G.at(s, p.x, p.y));
+  const hero = put(s, 'guard', spot.x, spot.y);
+  soloTurn(s, zuo);
+  check('stage ' + stage + ': striking a hero does not wake him', !zuo.woke && hero.hp < hero.maxHp);
+  closeRound(s);
+  G.resolve(s, hero, zuo, false);
+  check('stage ' + stage + ': struck, he leaves the terrace', zuo.woke === true);
+}
+
+section('board 5 桃花石陣: the coiled beast');
+for (const stage of [5, 6]) {
+  const s = realBoard(5, stage);
+  const [ou, ke, bow, scout] = foesOf(s);
+  const want = { 5: [[339, 47, 18, 3, 2], [173, 40, 12, 3, 2]], 6: [[411, 59, 20, 3, 2], [214, 50, 13, 3, 2]] }[stage];
+  check('stage ' + stage + ': 歐陽鋒 and 歐陽克 have the spec’s numbers', same(numbersOf(ou), want[0]) && same(numbersOf(ke), want[1]), numbersOf(ou) + ' / ' + numbersOf(ke));
+  check('stage ' + stage + ': 蛤蟆功 at 1.40; 靈蛇拳法 pins at 1.12', G.enemyTechnique(ou, s).factor === 1.4 && G.enemyTechnique(ke, s).style === 'pin' && G.enemyTechnique(ke, s).factor === 1.12);
+  check('stage ' + stage + ': 歐陽鋒’s page', same(pageOf(s, ou).slice(1), ['【蓄勢反擊】蓄勢時原地不動，只打兩格內的人；兩格內打他，必遭全力還擊（免受還擊之招與封穴除外）。', '【半血變招 · 逆練】攻擊 ＋6、防禦 −4、移動 ＋1，絕技每兩回合一次，不再原地等待，見人就撲。']), JSON.stringify(pageOf(s, ou)));
+  const venom = 2 + Math.floor(stage / 2);
+  check('stage ' + stage + ': the snake slaves’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【蛇毒】普攻令目標中毒，兩次毒發各損 ' + venom + ' 氣血。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
+  // Charged from round 2: he does not move, and the danger zone is his own tile's diamond.
+  s.round = 2;
+  check('stage ' + stage + ': charged in round 2, he is held to his tile', G.signatureDue(s, ou) && G.standCells(s, ou).length === 1);
+  const at = [ou.x, ou.y];
+  soloTurn(s, ou);
+  check('stage ' + stage + ': with no one within two tiles he waits', same([ou.x, ou.y], at));
+  closeRound(s);
+  // At half: mad.
+  ou.hp = Math.floor(ou.maxHp / 2);
+  G.check(s);
+  check('stage ' + stage + ': at half he goes mad', ou.phased && ou.atk === want[0][1] + 6 && ou.def === want[0][2] - 4 && ou.step === 4 && s.logs.at(-1).text === '歐陽鋒逆運經脈，狀若瘋狂。');
+  check('stage ' + stage + ': mad, he no longer waits while charged', G.signatureDue(s, ou) && !G.holdOf(s, ou) && G.standCells(s, ou).length > 1);
+  check('stage ' + stage + ': …and his signature comes every two rounds', G.enemyTechnique(ou, s).cadence === 2);
+  // A snake slave's bite.
+  const p = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: scout.x + dx, y: scout.y + dy })).find((q) => G.walkable(q.x, q.y, s.mapIndex) && !G.at(s, q.x, q.y));
+  const hero = put(s, 'guard', p.x, p.y);
+  soloTurn(s, scout);
+  check('stage ' + stage + ': a snake slave’s strike poisons', hero.conditions?.poison?.power === venom);
+}
+
+section('board 6 襄陽殘垣: the siege engine and the picker');
+for (const stage of [5, 6]) {
+  const s = realBoard(6, stage);
+  const [jin, huo, bow, scout] = foesOf(s);
+  const want = { 5: [[373, 47, 20, 2, 2], [156, 44, 12, 4, 2]], 6: [[452, 59, 22, 2, 2], [193, 54, 13, 4, 2]] }[stage];
+  check('stage ' + stage + ': 金輪國師 and 霍都 have the spec’s numbers', same(numbersOf(jin), want[0]) && same(numbersOf(huo), want[1]), numbersOf(jin) + ' / ' + numbersOf(huo));
+  check('stage ' + stage + ': 龍象般若功 is a line at 1.30 reaching 3', G.enemyTechnique(jin, s).style === 'line' && G.enemyTechnique(jin, s).factor === 1.3 && G.enemyTechnique(jin, s).reach === 3);
+  check('stage ' + stage + ': 金輪國師’s page', same(pageOf(s, jin), ['輪勢穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。', '絕技射程 3 格。']), JSON.stringify(pageOf(s, jin)));
+  check('stage ' + stage + ': 霍都 holds the gateway (RULINGS F) and picks the lone hero', same(G.enemyTraitLines(s, huo), ['【坐鎮】守在門洞（6，5）一格內，不離位。', '【偏好】專挑落單者。']), JSON.stringify(G.enemyTraitLines(s, huo)));
+  check('stage ' + stage + ': the archer holds the east wall; the horseman rides five', same(G.enemyTraitLines(s, bow), ['【坐鎮】守在東牆（15，6）一格內，不離位。']) && scout.step === 5);
+  check('stage ' + stage + ': the posts are ground the heroes can walk to', postsReachable(s));
+  // 霍都 from his gateway: of two heroes in his reach, the one standing alone.
+  const ring = (c, d) => mapLayout(6).cells.filter((p) => G.distance(p, c) === d && G.walkable(p.x, p.y, 6) && !G.at(s, p.x, p.y));
+  const near = ring(huo, 2);
+  const lone = near[0],
+    pair = near.find((p) => G.distance(p, lone) > 3 && ring(p, 1).some((q) => G.distance(q, huo) >= 2 && G.distance(q, lone) > 1));
+  if (pair) {
+    const friend = ring(pair, 1).find((q) => G.distance(q, huo) >= 2 && G.distance(q, lone) > 1);
+    put(s, 'medic', lone.x, lone.y);
+    put(s, 'guard', pair.x, pair.y).hp = 90;
+    put(s, 'hero', friend.x, friend.y);
+    const before = unit(s, 'medic').hp;
+    soloTurn(s, huo);
+    check('stage ' + stage + ': 霍都 strikes the hero alone, and stays at the gateway', unit(s, 'medic').hp < before && G.distance(huo, { x: 5, y: 4 }) <= 1);
+    closeRound(s);
+  } else check('stage ' + stage + ': room by the gateway for the preference check', false);
+  // The wheels: in line, the hero behind takes half.
+  s.round = 2;
+  const p = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => [1, 2, 3].every((i) => G.walkable(jin.x + dx * i, jin.y + dy * i, 6) && !G.at(s, jin.x + dx * i, jin.y + dy * i)));
+  if (p) {
+    for (const v of G.party(s)) if (['hero', 'medic', 'guard'].includes(v.id)) Object.assign(v, { x: -9, y: -9 }); else v.hp = 0; // the three are put again below; a recruit sits out
+    const front = put(s, 'guard', jin.x + p[0] * 2, jin.y + p[1] * 2);
+    const back = put(s, 'medic', jin.x + p[0] * 3, jin.y + p[1] * 3);
+    put(s, 'hero', mapLayout(6).allies[0].x, mapLayout(6).allies[0].y);
+    const life = back.hp;
+    soloTurn(s, jin);
+    check('stage ' + stage + ': the wheel goes through to the hero behind', back.hp < life, [jin.x, jin.y, front.x, front.y, back.x, back.y]);
+  } else check('stage ' + stage + ': a straight run of ground by 金輪國師', false);
+}
+
+section('board 7 寒玉石室: the venom that stops the healing');
+{
+  const s = realBoard(7, 7);
+  const [li, hong, bow, scout] = foesOf(s);
+  check('李莫愁 and 洪凌波 have the spec’s numbers', same(numbersOf(li), [483, 70, 19, 4, 2]) && same(numbersOf(hong), [255, 65, 16, 3, 2]), numbersOf(li) + ' / ' + numbersOf(hong));
+  check('冰魄銀針: poison 10 and 內傷, reach 3', G.enemyTechnique(li, s).power === 10 && G.enemyTechnique(li, s).extra === 'wound' && G.enemyTechnique(li, s).reach === 3);
+  check('李莫愁’s page', same(pageOf(s, li), ['令目標中毒，兩次毒發各損 10 氣血，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。', '絕技射程 3 格。', '【偏好】專挑療傷者。']), JSON.stringify(pageOf(s, li)));
+  check('洪凌波’s post is (6,4), walkable', G.walkable(5, 3, 7) && same(G.enemyTraitLines(s, hong), ['【坐鎮】守在石頸北口（6，4）一格內，不離位。']), JSON.stringify(G.enemyTraitLines(s, hong)));
+  check('the posts are ground the heroes can walk to', postsReachable(s));
+  check('the rank and file are 赤練門下', G.unitDetails(bow).name === '赤練門下' && G.unitDetails(scout).name === '赤練門下');
+  // Her needles on a healer: poison and 內傷, and the healer's heal is halved.
+  s.round = 2;
+  const ring = mapLayout(7).cells.filter((p) => G.distance(p, li) === 3 && G.walkable(p.x, p.y, 7) && !G.at(s, p.x, p.y));
+  for (const v of G.party(s)) if (['hero', 'medic', 'guard'].includes(v.id)) Object.assign(v, { x: -9, y: -9 }); else v.hp = 0; // the three are put again below; a recruit sits out
+  put(s, 'medic', ring[0].x, ring[0].y);
+  const guardAt = ring.find((p) => G.distance(p, ring[0]) > 2);
+  put(s, 'guard', guardAt.x, guardAt.y).hp = 60;
+  put(s, 'hero', mapLayout(7).allies[0].x, mapLayout(7).allies[0].y);
+  soloTurn(s, li);
+  const medic = unit(s, 'medic');
+  check('she picks the healer over a more hurt hero', medic.conditions?.poison?.power === 10 && medic.conditions?.wound?.power === 5, JSON.stringify(medic.conditions));
+  closeRound(s);
+  const f = G.forecast(medic, medic, true, s);
+  check('wounded, the healer’s own heal is halved', f.notes.includes('內傷 · 療效減半'));
+  // 洪凌波 stays at the neck.
+  soloTurn(s, hong);
+  check('洪凌波 stays within one of the neck', G.distance(hong, { x: 5, y: 3 }) <= 1);
+}
+
+section('board 8 倒影天街: the masked duelist');
+{
+  const s = realBoard(8, 8);
+  const [yue, lao, bow, scout] = foesOf(s);
+  check('岳不群 and 勞德諾 have the spec’s numbers', same(numbersOf(yue), [555, 82, 23, 4, 1]) && same(numbersOf(lao), [296, 76, 15, 4, 2]), numbersOf(yue) + ' / ' + numbersOf(lao));
+  check('岳不群’s page', same(pageOf(s, yue).slice(1), ['【游擊】出手後退開至多 2 步，離俠客越遠越好。', '【半血變招 · 辟邪現形】移動 ＋2、防禦 −3，絕技每兩回合一次。']), JSON.stringify(pageOf(s, yue)));
+  check('勞德諾 hunts the leader', same(G.enemyTraitLines(s, lao), ['【偏好】專挑領隊。']));
+  check('the archer holds the footbridge', same(G.enemyTraitLines(s, bow), ['【坐鎮】守在橋頭（13，5）一格內，不離位。']) && G.unitDetails(scout).name === '嵩山密探');
+  check('the posts are ground the heroes can walk to', postsReachable(s));
+  // Strike, then walk off.
+  for (const v of G.party(s)) if (!['hero', 'medic', 'guard'].includes(v.id)) v.hp = 0;
+  const spot = mapLayout(8).cells.find((p) => G.distance(p, yue) === 3 && G.walkable(p.x, p.y, 8) && !G.at(s, p.x, p.y));
+  const hero = put(s, 'guard', spot.x, spot.y);
+  soloTurn(s, yue);
+  check('he strikes and walks off from the hero', hero.hp < hero.maxHp && G.distance(yue, hero) >= 2, [yue.x, yue.y, hero.x, hero.y]);
+  closeRound(s);
+  yue.hp = Math.floor(yue.maxHp / 2);
+  G.check(s);
+  check('at half the mask comes off', yue.phased && yue.step === 6 && yue.def === 20 && G.enemyTechnique(yue, s).cadence === 2 && s.logs.at(-1).text === '岳不群撕下君子面目，身形快得看不清。');
+}
+
+section('board 9 無刻漏臺: the mirror');
+{
+  const s = realBoard(9, 9);
+  const [mu, jiu, bow, scout] = foesOf(s);
+  check('慕容博 and 鳩摩智 have the spec’s numbers', same(numbersOf(mu), [867, 93, 24, 4, 2]) && same(numbersOf(jiu), [337, 86, 16, 3, 2]), numbersOf(mu) + ' / ' + numbersOf(jiu));
+  check('斗轉星移 is the mirror, no blow', G.enemyTechnique(mu, s).style === 'mirror' && !G.enemyTechnique(mu, s).strikes);
+  check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。', '【星索護陣】每名存活的守索人替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
+  check('鳩摩智’s page', same(pageOf(s, jiu), ['另外削去目標 24 點內力。', '絕技射程 4 格。', '【偏好】專挑內力深厚者。']), JSON.stringify(pageOf(s, jiu)));
+  check('the rope-holders’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【坐鎮】守在索樁一格內，不離位。', '【護陣】存活時替慕容博抵擋 35% 傷害。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
+  check('the posts are ground the heroes can walk to', postsReachable(s));
+  check('two living rope-holders take 70% off him', G.wardShare(s, mu) === 70);
+  // The mirror: charged in round 2, the first direct blow does him nothing and turns half back.
+  for (const v of G.party(s)) if (!['hero', 'medic', 'guard'].includes(v.id)) v.hp = 0;
+  s.round = 2;
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: mu.x + dx, y: mu.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
+  const guard = put(s, 'guard', spot.x, spot.y);
+  guard.acted = guard.moved = false;
+  const f = G.forecast(guard, mu, false, s);
+  const life = [mu.hp, guard.hp];
+  G.resolve(s, guard, mu, false);
+  check('the first blow does him nothing and turns back on the striker', mu.hp === life[0] && guard.hp < life[1] && f.amount === 0 && f.notes.some((n) => n.startsWith('斗轉星移 · 慕容博不受此擊')));
+  check('the charge is spent; he did not counter', mu.signatureRound === 2 && !G.signatureDue(s, mu) && f.counterRaw === 0);
+  mu.hp = Math.floor(mu.maxHp / 2);
+  const atk = mu.atk;
+  G.check(s);
+  check('at half his phase is the data’s', mu.phased && mu.atk === atk + 5 && mu.range === 3 && mu.brace && s.logs.at(-1).text === '斗轉星移倒轉銅漏，攻擊增加 5、防禦增加 4，射程擴至三格。');
+  // A rope breaks.
+  bow.hp = 1;
+  const reach = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: bow.x + dx, y: bow.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
+  const hero = put(s, 'hero', reach.x, reach.y);
+  hero.acted = hero.moved = false;
+  G.resolve(s, hero, bow, false);
+  check('one rope down: the ward is 35% and the log says so', G.wardShare(s, mu) === 35 && s.logs.some((l) => l.text === '一條星索斷了。慕容博的護勁降至三成半。'));
 }
 
 // ─────────────────────────────────────────────────────────────────────────
