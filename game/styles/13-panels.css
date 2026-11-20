@@ -522,6 +522,22 @@ html.polish-ui-chrome .toast {
     inset 0 0 0 3px #c9ad7b38;
 }
 
+/* -------------------------------------------------------------- 6  Dialogs */
+/* The three small dialogs opened in the middle of a turn: the strike forecast, the end-turn
+   confirmation and the enemy report. The player is deciding about the board, so it stays in view. */
+html.polish-ui-chrome #modal:has(.duel, .confirm-copy, .enemy-summary)::backdrop {
+  background: radial-gradient(ellipse 75% 70% at 50% 50%, #0811195c, #08111999);
+  backdrop-filter: none;
+}
+html.polish-ui-chrome #modal:has(.duel, .confirm-copy, .enemy-summary) {
+  box-shadow:
+    0 26px 60px -6px #04090ff2,
+    0 4px 14px #04090f99,
+    0 0 0 2px #0e1722,
+    0 0 0 3px #c7ab7a66,
+    inset 0 0 0 3px #aca08236;
+}
+
 /* --------------------------------------------------------------- 10  Sizes */
 /* Desktop and tablet: everything the two phone sheets (08, 09) do not claim. The dock grows a
    little; --dock-height grows with it, so the framed board is fitted above the taller dock and
