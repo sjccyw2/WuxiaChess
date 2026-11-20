@@ -246,7 +246,7 @@ const DETAILS = {
     mini: 'guo',
     portrait: 'guo',
     epithet: '大漠俠士',
-    bio: '自幼長於漠北，後隨洪七公修習掌法。一聲船家呼救，使他在霧裡改了行程。',
+    bio: '自幼長於漠北，後隨洪七公修習降龍十八掌，鎮守襄陽多年。他應帖的理由很簡單：有人喊救命。',
     basic: '南山掌法',
     skill: '降龍十八掌',
     skillIcon: 'hand',
@@ -276,7 +276,7 @@ const DETAILS = {
     mini: 'duan',
     portrait: 'duan',
     epithet: '大理公子',
-    bio: '大理段氏子弟，擅凌波微步與六脈神劍。聽得江心一線簫聲，便踏上這趟稀奇的渡船。',
+    bio: '大理段氏子弟，擅凌波微步與六脈神劍。他把這趟稀奇的際遇當作又一場白日夢，照樣向人人作揖。',
     basic: '點指截脈',
     skill: '六脈神劍',
     skillIcon: 'spark',
@@ -291,7 +291,7 @@ const DETAILS = {
     mini: 'chief',
     portrait: 'chief',
     epithet: '青城掌門',
-    bio: '青城派掌門，松風劍法陰狠凌厲。為奪辟邪劍譜不擇手段，聽聞洛陽有秘本流傳，親赴渡口截人。',
+    bio: '青城派掌門，松風劍法陰狠凌厲。為奪辟邪劍譜不擇手段，親自封橋截人。',
     basic: '松風劍法'
   },
   blade: { name: '青城劍徒', role: '刀客', school: '青城派', mini: 'bandit', basic: '青城劍式' },
@@ -303,13 +303,13 @@ for (const [index, [boss, second]] of ENCOUNTERS.entries()) {
   DETAILS[id] = {
     ...DETAILS[id],
     ...boss,
-    role: index === 9 ? '終關首領' : '主將',
+    role: index === 9 ? '最後一局・局主' : '局主',
     portraitFile: 'captain-' + index + '.webp',
     rank: 'boss'
   };
   DETAILS['lieutenant-' + index] = {
     ...second,
-    role: '副將',
+    role: '副手',
     portraitFile: 'lieutenant-' + index + '.webp',
     rank: 'mini'
   };
@@ -354,23 +354,23 @@ DETAILS.echoBlade = {
   portraitFile: 'npc-echoBlade.webp',
   name: '執燈刀影',
   role: '近衛',
-  school: '漏中軍',
+  school: '黑子',
   mini: 'bandit',
   basic: '分燈斬'
 };
 DETAILS.echoBow = {
   portraitFile: 'npc-echoBow.webp',
-  name: '巡漏弓影',
+  name: '巡臺弓影',
   role: '弓手',
-  school: '漏中軍',
+  school: '黑子',
   mini: 'archer',
   basic: '逐聲箭'
 };
 DETAILS.echoScout = {
   portraitFile: 'npc-echoScout.webp',
-  name: '逆流斥候',
+  name: '逆風斥候',
   role: '遊騎',
-  school: '漏中軍',
+  school: '黑子',
   mini: 'bandit',
   basic: '掠影刀'
 };
@@ -1092,7 +1092,7 @@ function wound(s, u, n, source) {
           s,
           'combat',
           left ? '一條星索斷了。慕容博的護勁降至三成半。' : '兩條星索皆斷，慕容博的護陣已破。',
-          '星漏護陣'
+          '星索護陣'
         );
       }
     }
@@ -1112,11 +1112,11 @@ function holdObjective(s, u) {
   if (marker && ally(u) && living(u) && distance(u, marker) === 0) {
     s.run.marked = true;
     const discoveries = {
-      beacon: '點亮了迴漏陣的引路燈',
-      herbs: '循燈找到傷者，將他送上渡船',
-      cache: '在燈下尋回一枚落水的姓名籤'
+      beacon: '點亮了引路燈',
+      herbs: '循燈找到傷者，把藥送到他手裡',
+      cache: '在燈下尋回一枚姓名籤'
     };
-    log(s, 'story', discoveries[s.run.goal] + '，船上傳來三聲槳響。', unitDetails(u).name);
+    log(s, 'story', discoveries[s.run.goal] + '。局裡那個影子抬起了頭。', unitDetails(u).name);
   }
 }
 function commitSteps(u) {
@@ -1370,13 +1370,13 @@ function check(s) {
     s.result = 'loss';
     s.reason =
       DETAILS[leader(s)].name +
-      (s.run ? '倒下，船燈熄了。銅漏再度倒轉。' : '負傷倒下，曲譜落入青城弟子手中。');
+      (s.run ? '倒下，這一輪的眼破了。' : '負傷倒下，曲譜落入青城弟子手中。');
   } else if (!living(chief)) {
     s.result = 'win';
     s.reason = s.run ? CHAMBER_TALES[s.mapIndex].victory : '余滄海收劍退開，渡口的船燈再度亮起。';
   } else if (s.round > LIMIT) {
     s.result = 'loss';
-    s.reason = s.run ? '漏水流盡，這一層閉回了昨日。' : '十二回合已過，霧中的末班渡船已經離岸。';
+    s.reason = s.run ? '十二合已過。借來的一念撐不住，散了。' : '十二回合已過，霧中的末班渡船已經離岸。';
     s.round = LIMIT;
   } else if (!s.foreshadow && chief.hp <= chief.maxHp / 2) {
     s.foreshadow = true;
@@ -1384,7 +1384,7 @@ function check(s) {
       chief.atk += 5;
       chief.range += 1;
       chief.brace = true;
-      log(s, 'combat', '斗轉星移逆轉漏水，攻擊增加 5、防禦增加 4，射程擴至三格。', '慕容博');
+      log(s, 'combat', '斗轉星移倒轉銅漏，攻擊增加 5、防禦增加 4，射程擴至三格。', '慕容博');
     } else log(s, 'story', '收勢退了半步，重整陣腳。', DETAILS[chief.id].name);
   }
   if (s.result) {

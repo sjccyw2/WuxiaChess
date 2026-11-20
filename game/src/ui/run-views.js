@@ -4,7 +4,8 @@ import { rollLeaderInfo } from './mastery-views.js';
 import { btn, titleHead, face, esc, bookCitation } from './panels.js';
 import { icon } from './icons.js';
 import { BOOKS, DETAILS } from '../rules/game.js';
-import { MAZE_TALE } from '../data/maze-tale.js';
+import { MAZE_TALE, YOUTH, WEI } from '../data/maze-tale.js';
+import { art } from './artwork.js';
 
 const amount = (value) => Math.max(0, Math.trunc(Number(value) || 0));
 const idAttr = (id) => `data-id="${esc(id)}"`;
@@ -36,25 +37,68 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
   if (best >= 4) benefits.push(`<span>${icon('spark', 15)}起手武學點 <strong>＋1</strong></span>`);
   if (best >= 7) benefits.push(`<span>${icon('bottle', 15)}傷藥 <strong>＋1</strong></span>`);
   if (parcel)
-    benefits.push(`<span>${icon('bag', 15)}上回寄存 <strong>${parcel} 件</strong></span>`);
+    benefits.push(`<span>${icon('bag', 15)}通吃坊寄存 <strong>${parcel} 件</strong></span>`);
   return `<section class="run-view run-roll">
-    ${titleHead('scroll', '銅漏啟籤')}
+    ${titleHead('scroll', '三子應帖')}
     <div class="run-lacquer">
-      <details class="hud-disclosure draw-tale"><summary>渡口籤記</summary><p>${text(MAZE_TALE.draw)}</p></details>
-      <p class="lot-instruction">選擇領隊。領隊倒下即告敗。</p>
-      <ul class="run-lots" aria-label="此次抽出的三位俠客">${ids.map((id) => drawPortrait(id, captain)).join('')}</ul>
+      <details class="hud-disclosure draw-tale"><summary>英雄帖</summary><p>${text(MAZE_TALE.draw)}</p><p>「${text(MAZE_TALE.letter)}」</p></details>
+      <p class="lot-instruction">選一枚先落的子作領隊，是為這一輪的「眼」。領隊倒下，這一輪便結束。</p>
+      <ul class="run-lots" aria-label="這一輪應帖的三位俠客">${ids.map((id) => drawPortrait(id, captain)).join('')}</ul>
     </div>
     ${rollLeaderInfo(captain, COMMANDS[captain].name, commandDescription(captain))}
-    <details class="hud-disclosure draw-records"><summary>渡行紀錄與啟程資源</summary><div class="run-draw-ledger">
-      <dl class="run-records" aria-label="歷次渡行紀錄">
-        ${record('最深通關', best, '關')}${record('全程通過', meta.wins, '次')}${record('累積餘燼', embers, '點')}
+    <details class="hud-disclosure draw-records"><summary>歷輪紀錄與開局資源</summary><div class="run-draw-ledger">
+      <dl class="run-records" aria-label="歷輪紀錄">
+        ${record('最遠走到', best, '局')}${record('走完十局', meta.wins, '次')}${record('累積的悟', embers, '點')}
       </dl>
-      <div class="run-benefits" aria-label="此次啟程資源">${benefits.join('')}</div>
+      <div class="run-benefits" aria-label="這一輪的開局資源">${benefits.join('')}</div>
     </div></details>
     ${wakeJournal(meta, meta.returns ?? meta.wins ?? 0)}
-    ${hasSave ? `<p class="run-save-note">${icon('info', 15)}<span>按下「啟程」時，這次旅程會取代目前的存檔。</span></p>` : ''}
-    <footer class="run-footer run-roll-footer">${btn('close', '返回', 'outline-btn')}${btn('deploy', '啟程', 'gold-btn')}</footer>
+    ${hasSave ? `<p class="run-save-note">${icon('info', 15)}<span>按下「落子」時，這一輪會取代目前的存檔。</span></p>` : ''}
+    <footer class="run-footer run-roll-footer">${btn('close', '返回', 'outline-btn')}${btn('deploy', '落子', 'gold-btn')}</footer>
   </section>`;
 }
 
-export { rollView };
+// The prologue: the youth opens his eyes. He thinks he has just woken; in truth he has
+// just fallen asleep. 韋小寶 asks his name, and the first time the player types it. On later
+// runs the same name comes to him again, as if by chance.
+//   profile  the chronicle (name, returns)
+//   step     which page is showing
+//   name     the name as typed so far (first run only)
+function prologueSteps(profile, name = '') {
+  const tale = MAZE_TALE.prologue,
+    known = profile.name || '',
+    again = (profile.returns ?? 0) > 0,
+    called = known || name || YOUTH.name;
+  const steps = tale.scenes.map((note) => ({ note }));
+  steps.push({ speaker: WEI, text: again ? tale.greeting.again : tale.greeting.first });
+  steps.push({ note: tale.naming, ask: !known });
+  steps.push({ speaker: { ...YOUTH, name: called }, text: '我叫' + called + '。' });
+  steps.push({ note: tale.named });
+  steps.push({ speaker: WEI, text: known && again ? tale.reply.again : tale.reply.first });
+  steps.push({ note: tale.board });
+  steps.push({ note: tale.stones, last: true });
+  return steps;
+}
+function prologuePage(profile, step = 0, name = '') {
+  const steps = prologueSteps(profile, name),
+    at = Math.max(0, Math.min(step, steps.length - 1)),
+    p = steps[at];
+  const portrait = p.speaker
+    ? `<img class="fy-speaker-portrait" alt="" src="${text(art(p.speaker.portrait))}">`
+    : '';
+  const entry = p.ask
+    ? `<label class="youth-name"><span>你的名字</span><input id="youth-name" type="text" maxlength="8" autocomplete="off" spellcheck="false" enterkeyhint="done" value="${text(name)}" placeholder="${text(YOUTH.name)}"></label><p class="footnote">最多八個字。留空便叫「${text(YOUTH.name)}」。這個名字會一直跟著你。</p>`
+    : '';
+  const said = p.speaker
+    ? `<div class="fy-byline"><strong>${text(p.speaker.name)}</strong><small>${text(p.speaker.role)}</small></div><blockquote>${text(p.text)}</blockquote>`
+    : '';
+  return `<section class="mj-view fy-story fy-prologue">
+    <header class="modal-head"><div class="modal-title">${icon('scroll', 20)}<h2>睜眼</h2></div><small>序幕</small></header>
+    <div class="fy-story-body${p.speaker ? '' : ' fy-narration'}">${portrait}<div class="fy-dialogue">
+      ${p.note ? `<p class="fy-stage-note">${text(p.note)}</p>` : ''}${said}${entry}
+    </div></div>
+    <footer class="mj-footer"><div class="fy-reading">${at ? btn('prologue-prev', '上一句', 'mj-action') : ''}<span>${at + 1}／${steps.length}</span></div><aside>${p.last || p.ask ? '' : btn('prologue-skip', '略過', 'mj-action')}${btn('prologue-next', p.last ? '看棋盤' : '下一句', 'gold-btn')}</aside></footer>
+  </section>`;
+}
+
+export { rollView, prologuePage, prologueSteps };

@@ -1,7 +1,7 @@
 // Rows in each layout are tiers. Columns are lanes. Prerequisite ids are the actual edges.
 // 'signature' means the hero's initially known art. The three common passives keep their existing ids.
 const CATALOG_NOTE =
-  '傳承所記為原著人物、武學或器物。招式分支、戰棋效果、武譜流傳與參悟條件為迷津演繹。';
+  '傳承所記為原著人物、武學或器物。招式分支、戰棋效果、武譜流傳與參悟條件為本作演繹。';
 const GATE_LABELS = {
   kills: '親手擊倒敵人',
   casts: '親自施展絕技',
@@ -17,7 +17,7 @@ const HERO_PATHS = {
     boon: '料敵先機',
     signature: '獨孤九劍',
     origin:
-      '風清揚在思過崖授劍。入渡時，令狐冲已懂得循破綻出劍，往後要學的是在變招中仍能掌握先機。',
+      '風清揚在思過崖授劍。入境時，令狐冲已懂得循破綻出劍，往後要學的是在變招中仍能掌握先機。',
     layout: [
       [null, 'mountainOpening', null],
       ['breakSword', null, 'breakArrow'],
@@ -31,7 +31,7 @@ const HERO_PATHS = {
     boon: '綠竹清音',
     signature: '清心普善咒',
     origin:
-      '綠竹巷中，任盈盈以琴曲安定令狐冲的心神。入渡時她已能奏出此曲，後續所修在於照應同舟數人的呼吸。',
+      '綠竹巷中，任盈盈以琴曲安定令狐冲的心神。入境時她已能奏出此曲，後續所修在於照應同行數人的呼吸。',
     layout: [
       ['sheathedDagger', null, 'returningSong'],
       ['blackNeedle', 'bambooWard', null],
@@ -45,7 +45,7 @@ const HERO_PATHS = {
     boon: '肝膽相照',
     signature: '吸功入地小法',
     origin:
-      '向問天戴著鐐銬與追兵周旋，早能把壓來的外力卸入地底。初入迷津會卸一人之力，日後可借此替同伴守住陣腳。',
+      '向問天戴著鐐銬與追兵周旋，早能把壓來的外力卸入地底。初入境時會卸一人之力，日後可借此替同伴守住陣腳。',
     layout: [
       [null, 'ironChainForm', null],
       ['sweepingWhip', 'reverseForce', 'chainShelter'],
@@ -59,7 +59,7 @@ const HERO_PATHS = {
     boon: '襄陽軍聲',
     signature: '降龍十八掌',
     origin:
-      '洪七公教郭靖掌法，周伯通在桃花島教他空明拳。來到渡口的郭靖已練成降龍掌，守城時方能體會剛柔收放的分寸。',
+      '洪七公教郭靖掌法，周伯通在桃花島教他空明拳。入境時的郭靖已練成降龍掌，守城時方能體會剛柔收放的分寸。',
     layout: [
       ['vacantFist', null, 'southernStance'],
       ['fieldDragonWard', null, 'flyingDragon'],
@@ -73,7 +73,7 @@ const HERO_PATHS = {
     boon: '古墓輕身',
     signature: '玉女素心劍法',
     origin:
-      '小龍女曾從周伯通習得雙手互搏，故入渡時便能一人分使全真、玉女兩路劍法。再深一重，在於兩劍收發不留空隙。',
+      '小龍女曾從周伯通習得雙手互搏，故入境時便能一人分使全真、玉女兩路劍法。再深一重，在於兩劍收發不留空隙。',
     layout: [
       [null, 'jadeThread', null],
       ['sparrowSteps', 'jadeNeedle', null],
@@ -87,7 +87,7 @@ const HERO_PATHS = {
     boon: '無量清風',
     signature: '六脈神劍',
     origin:
-      '段譽先在無量山洞習得步法與內功，再於天龍寺記住六脈劍圖。初入渡口可發指劍，待步息相合才能接連運使諸脈。',
+      '段譽先在無量山洞習得步法與內功，再於天龍寺記住六脈劍圖。初入境時可發指劍，待步息相合才能接連運使諸脈。',
     layout: [
       ['fingerPrimer', null, 'northernSea'],
       ['shangYang', null, 'ripplingSteps'],
@@ -101,7 +101,7 @@ const HERO_PATHS = {
     boon: '奇門布陣',
     signature: '打狗棒法',
     origin:
-      '黃蓉自小看黃藥師布陣，又得洪七公親授打狗棒法。在渡口她已能纏住一人的兵刃，再深一層，便可看穿整座陣的活眼。',
+      '黃蓉自小看黃藥師布陣，又得洪七公親授打狗棒法。入境時她已能纏住一人的兵刃，再深一層，便可看穿整座陣的活眼。',
     layout: [
       ['huangPetals', null, 'peachWard'],
       ['orchidPoint', null, 'beggarBind'],
@@ -115,7 +115,7 @@ const HERO_PATHS = {
     boon: '重劍開路',
     signature: '黯然銷魂掌',
     origin:
-      '神鵰帶楊過在激流中練成重劍。他久候小龍女，另創黯然銷魂掌，入渡時已能出掌。迷津更考驗他要把多少氣力留給下一程。',
+      '神鵰帶楊過在激流中練成重劍。他久候小龍女，另創黯然銷魂掌，入境時已能出掌。這十局更考驗他要把多少氣力留給下一程。',
     layout: [
       [null, 'darkIronEdge', null],
       ['jadeFluteCut', 'tideBreaker', null],
@@ -129,7 +129,7 @@ const HERO_PATHS = {
     boon: '九陽護元',
     signature: '乾坤大挪移',
     origin:
-      '張無忌憑九陽內力在光明頂習得乾坤大挪移。入渡時他已能替身旁一人卸勁，日後要試的是在眾人各受一擊時，如何照應周全。',
+      '張無忌憑九陽內力在光明頂習得乾坤大挪移。入境時他已能替身旁一人卸勁，日後要試的是在眾人各受一擊時，如何照應周全。',
     layout: [
       [null, 'taijiGate', null],
       ['valleyPulse', 'taijiSword', 'nineYangMantle'],
@@ -143,7 +143,7 @@ const HERO_PATHS = {
     boon: '雪野追鋒',
     signature: '胡家刀法',
     origin:
-      '胡斐依父傳刀譜練刀，為追究不平之事走遍南北。入渡時兩刀相接已純熟，雪山決鬥中的難處，是看見對方破綻後還能變招。',
+      '胡斐依父傳刀譜練刀，為追究不平之事走遍南北。入境時兩刀相接已純熟，雪山決鬥中的難處，是看見對方破綻後還能變招。',
     layout: [
       ['snowPursuit', null, 'huQuickDraw'],
       [null, 'silkwormPalm', 'foxFeint'],
@@ -272,7 +272,7 @@ const MASTERY_ARTS = {
     visual: 'medic',
     basicBonus: 3,
     desc: '短劍藏在袖側，普攻命中時傷害增加 3 點。',
-    source: '取任盈盈精擅短劍的身手，藏鋒為迷津所擬的招名。'
+    source: '取任盈盈精擅短劍的身手，藏鋒為本作所擬的招名。'
   },
   returningSong: {
     name: '清心普善・回春',
@@ -363,7 +363,7 @@ const MASTERY_ARTS = {
     aura: 1,
     gate: { metric: 'heals', atLeast: 55 },
     desc: '同調數人的呼吸，為目標及相鄰友軍群療，另賦予可維持兩回合的 15 點護盾。',
-    source: '以清心普善咒為根本，合絃是迷津為群療所擬的進境。'
+    source: '以清心普善咒為根本，合絃是本作為群療所擬的進境。'
   },
   ironChainForm: {
     name: '鐵鞭橫江・拖鏈勢',
@@ -395,7 +395,7 @@ const MASTERY_ARTS = {
     target: 'enemy',
     splash: 0.5,
     desc: '鞭梢掃過主目標，相鄰敵人各受主擊一半的餘勁。',
-    source: '取向問天的豪烈身手，破陣鞭路為迷津演繹。'
+    source: '取向問天的豪烈身手，破陣鞭路為本作演繹。'
   },
   reverseForce: {
     factor: 0.87,
@@ -451,7 +451,7 @@ const MASTERY_ARTS = {
     factor: 2.18,
     pierce: 0.55,
     desc: '自耗 18 點氣血重擊一敵，穿透五成半防禦。出招後須留至少 1 點氣血。',
-    source: '捨身截騎為迷津給向問天的搏命招式。'
+    source: '捨身截騎為本作給向問天的搏命招式。'
   },
   earthThroughChain: {
     name: '吸功入地・長橋卸勁',
@@ -558,7 +558,7 @@ const MASTERY_ARTS = {
     rally: { power: 8, turns: 2 },
     aura: 1,
     desc: '調整友軍陣勢，目標及相鄰友軍的攻擊增加 8 點，持續兩回合。',
-    source: '郭靖得武穆遺書而習行軍。合陣為迷津所擬的號令。'
+    source: '郭靖得武穆遺書而習行軍。合陣為本作所擬的號令。'
   },
   dragonReserve: {
     name: '降龍十八掌・掌有餘勁',
@@ -592,7 +592,7 @@ const MASTERY_ARTS = {
     visual: 'xiao',
     basicBonus: 5,
     desc: '劍鋒貼腕而發，普攻命中時傷害增加 5 點。',
-    source: '以古墓派玉女劍法為本，收鋒是迷津所擬的修習名目。'
+    source: '以古墓派玉女劍法為本，收鋒是本作所擬的修習名目。'
   },
   sparrowSteps: {
     name: '天羅地網勢・捕雀步',
@@ -646,7 +646,7 @@ const MASTERY_ARTS = {
     target: 'enemy',
     hits: [0.78, 0.78],
     desc: '左右手各領一劍，在兩格內連擊兩次。',
-    source: '周伯通授小龍女雙手互搏。她入渡已能使雙劍，此節修習分招各擊。'
+    source: '周伯通授小龍女雙手互搏。她入境已能使雙劍，此節修習分招各擊。'
   },
   silkBell: {
     name: '金鈴索',
@@ -698,7 +698,7 @@ const MASTERY_ARTS = {
     visual: 'duan',
     basicBonus: 4,
     desc: '默記指劍所行經脈，普攻命中時傷害增加 4 點。',
-    source: '取天龍寺六脈劍圖的指法意象，認穴是迷津所設的基礎練習。'
+    source: '取天龍寺六脈劍圖的指法意象，認穴是本作所設的基礎練習。'
   },
   northernSea: {
     factor: 0.73,
@@ -790,7 +790,7 @@ const MASTERY_ARTS = {
     pierce: 0.6,
     gate: { metric: 'steps', atLeast: 10 },
     desc: '五格內向同一敵人連發六道劍氣，每一道穿透六成防禦。目標倒下即收勢。',
-    source: '六脈本各有劍路，連發及耗息為迷津中的進階演繹。'
+    source: '六脈本各有劍路，連發及耗息為本作中的進階演繹。'
   },
   huangPetals: {
     name: '落英神劍掌・拂花',
@@ -822,7 +822,7 @@ const MASTERY_ARTS = {
     shield: { power: 16, turns: 2 },
     aura: 1,
     desc: '指引友軍站到陣眼，目標及相鄰友軍各得 16 點護盾，最多保留兩回合。',
-    source: '黃蓉通曉桃花島的奇門陣法。護盾是迷津對陣勢的演繹。'
+    source: '黃蓉通曉桃花島的奇門陣法。護盾是本作對陣勢的演繹。'
   },
   orchidPoint: {
     name: '蘭花拂穴手',
@@ -951,7 +951,7 @@ const MASTERY_ARTS = {
     pierce: 0.55,
     debuff: { stat: 'def', power: 5, turns: 2 },
     desc: '以擊穿水勢的重劍破甲，穿透五成半防禦，再使敵人防禦降低 5 點，持續兩回合。',
-    source: '取神鵰引楊過迎擊激流的練劍情節，擊流為迷津所擬。'
+    source: '取神鵰引楊過迎擊激流的練劍情節，擊流為本作所擬。'
   },
   toadLunge: {
     name: '蛤蟆功',
@@ -988,7 +988,7 @@ const MASTERY_ARTS = {
     factor: 1.88,
     splash: 0.55,
     desc: '自耗 13 點氣血，強擊主敵並以五成半餘勁波及四鄰。出掌後須留至少 1 點氣血。',
-    source: '杞人憂天是黯然銷魂掌中的招式，耗血及波及範圍為迷津演繹。'
+    source: '杞人憂天是黯然銷魂掌中的招式，耗血及波及範圍為本作演繹。'
   },
   solitaryPalm: {
     name: '黯然銷魂・孤形隻影',
@@ -1040,7 +1040,7 @@ const MASTERY_ARTS = {
     target: 'ally',
     heal: 32,
     desc: '為三格內一人診治，基礎回復 32 點氣血，也可為自己施術。',
-    source: '張無忌曾在蝴蝶谷隨胡青牛習醫。理傷是迷津所設的戰場醫術。'
+    source: '張無忌曾在蝴蝶谷隨胡青牛習醫。理傷是本作所設的戰場醫術。'
   },
   taijiSword: {
     factor: 1.5,
@@ -1096,7 +1096,7 @@ const MASTERY_ARTS = {
     safe: true,
     debuff: { stat: 'atk', power: 7, turns: 2 },
     desc: '以奇詭令法引偏來勢，敵人無法還擊，攻擊降低 7 點，持續兩回合。',
-    source: '張無忌曾參悟聖火令上所刻武功，移鋒為迷津所擬的應敵法。'
+    source: '張無忌曾參悟聖火令上所刻武功，移鋒為本作所擬的應敵法。'
   },
   universeCanopy: {
     name: '乾坤大挪移・借力回護',
@@ -1130,7 +1130,7 @@ const MASTERY_ARTS = {
     visual: 'hu',
     basicBonus: 6,
     desc: '藏起起手刀勢，普攻命中時傷害增加 6 點。',
-    source: '以胡家刀譜的精細刀路為本，藏鋒是迷津所擬的修習名。'
+    source: '以胡家刀譜的精細刀路為本，藏鋒是本作所擬的修習名。'
   },
   snowPursuit: {
     name: '雪野追蹤',
@@ -1184,7 +1184,7 @@ const MASTERY_ARTS = {
     factor: 1.15,
     debuff: { stat: 'def', power: 7, turns: 2 },
     desc: '以虛刀引敵出劍，命中後迫其露出破綻，防禦降低 7 點，持續兩回合。',
-    source: '以胡家刀法迎戰苗家劍法的攻防作靈感，招名為迷津演繹。'
+    source: '以胡家刀法迎戰苗家劍法的攻防作靈感，招名為本作演繹。'
   },
   foxWrist: {
     name: '胡家刀・截腕',
@@ -1203,7 +1203,7 @@ const MASTERY_ARTS = {
     pierce: 0.65,
     safe: true,
     desc: '追著對手換手的一瞬出刀，穿透六成半防禦，此擊免受還擊。',
-    source: '取胡斐從刀譜揣摩攻守破綻的經歷，截腕是迷津所擬刀路。'
+    source: '取胡斐從刀譜揣摩攻守破綻的經歷，截腕是本作所擬刀路。'
   },
   foxTwinChange: {
     factor: 1.23,
@@ -1247,7 +1247,7 @@ const TRADE_MANUALS = {
     target: 'enemy',
     pierce: 0.65,
     desc: '屈指彈出石子，四格內穿透六成半防禦。',
-    source: '黃藥師的彈指神通見《射鵰英雄傳》《神鵰俠侶》。借刻鋪的抄本出自迷津。'
+    source: '黃藥師的彈指神通見《射鵰英雄傳》《神鵰俠侶》。通吃坊的抄本出自本作。'
   },
   softPalm: {
     factor: 1.17,
@@ -1307,7 +1307,7 @@ const TRADE_MANUALS = {
     target: 'ally',
     heal: 67,
     desc: '陽和內勁護住心脈，為兩格內一人回復大量氣血。須由已習一陽指的同一位俠客參悟。',
-    source: '據《倚天屠龍記》九陽真經。以一陽指作前置，是借刻鋪編訂這部抄本的研讀次序。'
+    source: '據《倚天屠龍記》九陽真經。以一陽指作前置，是通吃坊編訂這部抄本的研讀次序。'
   },
   iceSoulNeedle: {
     name: '冰魄銀針',
@@ -1386,7 +1386,7 @@ const TRADE_MANUALS = {
     target: 'ground',
     blink: true,
     desc: '提氣掠過阻隔，落在縱橫合計兩格內可站立的空格。施展會用去當次行動。',
-    source: '取《射鵰英雄傳》中裘千仞「鐵掌水上漂」的輕功，迷津抄本將它寫成短渡身法。'
+    source: '取《射鵰英雄傳》中裘千仞「鐵掌水上漂」的輕功，境中抄本將它寫成短渡身法。'
   }
 };
 

@@ -1,72 +1,12 @@
 import { wakeJournal, fatePage } from './wake-views.js';
 import { moveFacts } from '../rules/move-facts.js';
 import { factBadge } from './panels.js';
-import { NEW_VOICES } from '../data/new-heroes.js';
 import * as G from '../rules/game.js';
-import { NUMERALS } from '../rules/journey.js';
-import { mapLayout } from '../data/terrain.js';
-import { MAZE_TALE, CHAMBER_TALES } from '../data/maze-tale.js';
-import { titleHead, btn, face, esc } from './panels.js';
+import { MAZE_TALE } from '../data/maze-tale.js';
+import { WAKES, closingFor } from '../data/wake-tale.js';
+import { titleHead, btn, esc } from './panels.js';
 import { icon } from './icons.js';
 
-function stageScenes(s) {
-  const stage = CHAMBER_TALES[s.mapIndex],
-    voices = [...(NEW_VOICES[s.mapIndex] || []), stage.voice],
-    who = G.party(s)
-      .map((u) => voices.find((v) => v.id === u.id))
-      .find(Boolean);
-  const scenes = [];
-  if (!s.run.stage) {
-    scenes.push({ speaker: '桑婆婆', note: MAZE_TALE.opening[0], text: MAZE_TALE.opening[1] });
-    scenes.push({ speaker: '桑婆婆', note: MAZE_TALE.opening[2], text: MAZE_TALE.deploy });
-  }
-  if (s.mapIndex === 9)
-    scenes.push({
-      speaker: '慕容博・漏中身',
-      face: 'murong',
-      note: stage.arrival,
-      text: MAZE_TALE.boss.line
-    });
-  scenes.push({
-    speaker: who ? G.DETAILS[who.id].name : '桑婆婆',
-    face: who?.id,
-    note: s.mapIndex === 9 ? MAZE_TALE.boss.reply : stage.arrival,
-    text: who?.line || mapLayout(s.mapIndex).tactic
-  });
-  return scenes;
-}
-function stageStory(s, n) {
-  const scenes = stageScenes(s),
-    i = Math.max(0, Math.min(n, scenes.length - 1)),
-    p = scenes[i];
-  return (
-    titleHead('scroll', '江湖異聞') +
-    '<div class="story-paper"><div class="section-kicker">第' +
-    NUMERALS[s.run.stage] +
-    '渡<i></i>' +
-    mapLayout(s.mapIndex).name +
-    '</div><p class="narration">' +
-    p.note +
-    '</p><div class="dialogue">' +
-    (p.face ? '<img alt="" src="' + face(p.face) + '">' : '<span class="ferryman-seal">渡</span>') +
-    '<div><strong>' +
-    p.speaker +
-    '</strong><blockquote>' +
-    p.text +
-    '</blockquote></div></div></div>' +
-    '<div class="modal-foot">' +
-    btn('story-prev', '上一幕', 'outline-btn', i ? '' : 'disabled') +
-    '<div class="page-dots">' +
-    scenes.map((_, j) => '<i class="' + (i === j ? 'on' : '') + '"></i>').join('') +
-    '</div>' +
-    btn(
-      i === scenes.length - 1 ? 'close' : 'story-next',
-      i === scenes.length - 1 ? '踏入陣中' : '下一幕',
-      'gold-btn'
-    ) +
-    '</div>'
-  );
-}
 function equippedMoves(s, u) {
   const moves = ['basic', ...G.equippedArts(u)].map((id) => {
     const normal = id === 'basic';
@@ -111,45 +51,52 @@ function equippedMoves(s, u) {
     moves.push(btn('field-loadout', icon('book', 15) + '招式配置', 'field-loadout'));
   return moves.join('');
 }
+// The end of a run. Won: the heroes have gone home, and the youth climbs the last step,
+// loses in one stroke and is told it is not enough. Lost: the stones go dark. Either way he
+// leaves a mark on the stone, closes his eyes, and half senses the place where he sleeps.
 function journeyEnding(s) {
   const r = s.run,
     won = s.result === 'win',
-    tale = won ? MAZE_TALE.win : MAZE_TALE.loss;
+    wake = WAKES[Math.min(WAKES.length, r.voyage) - 1];
   return (
-    titleHead(won ? 'flag' : 'scroll', won ? '十漏歸時' : '折返青竹渡') +
+    titleHead(won ? 'flag' : 'scroll', won ? '階盡' : '眼破') +
     '<div class="result-banner"><div class="result-seal">' +
-    (won ? '歸' : '渡') +
+    (won ? '階' : '破') +
     '</div><h3>' +
-    (won ? '晨光終至' : '舟燈尚在') +
+    (won ? '還不夠' : '白子俱暗') +
     '</h3><p>' +
-    esc(tale) +
-    '</p></div><div class="result-stats"><span>此行破關<b>' +
+    esc(won ? MAZE_TALE.win : MAZE_TALE.loss) +
+    '</p></div><div class="result-stats"><span>此輪破局<b>' +
     (r.stage + (won ? 1 : 0)) +
     ' / 10</b></span>' +
-    '<span>歷世餘燼<b>' +
+    '<span>累積的悟<b>' +
     r.chronicle.embers +
-    '</b></span><span>最高紀錄<b>' +
+    '</b></span><span>最遠走到<b>' +
     r.chronicle.best +
-    ' 渡</b></span></div>' +
+    ' 局</b></span></div>' +
     '<p class="footnote">' +
-    (won ? MAZE_TALE.winAgain : '船上的寄存與歷次餘燼，會隨新籤再渡。') +
+    (won ? MAZE_TALE.winAgain : '買下的東西寄在通吃坊，下一輪照舊取用。') +
     '</p>' +
-    (won
-      ? '<p class="wake-manifest">此航應聲同行　' +
-        G.company(s)
-          .map((u) => esc(G.unitDetails(u).name))
-          .join('、') +
-        '</p>'
-      : '') +
+    '<p class="wake-manifest">此輪同行　' +
+    G.company(s)
+      .map((u) => esc(G.unitDetails(u).name))
+      .join('、') +
+    '</p>' +
+    '<section class="wake-choice wake-closing"><h3>留痕</h3><p>' +
+    esc(wake.carve) +
+    '</p></section>' +
     fatePage(s) +
+    '<section class="wake-choice wake-closing"><h3>闔眼</h3><p>' +
+    esc(closingFor(r.voyage, won)) +
+    '</p></section>' +
     wakeJournal(r.chronicle, r.voyage) +
     (won && r.voyage >= 5 && !r.last.fate
       ? ''
       : '<div class="modal-foot right">' +
         btn('home', '返回主畫面', 'outline-btn') +
-        btn('title-new', '重投三籤', 'gold-btn') +
+        btn('title-new', '再睜眼', 'gold-btn') +
         '</div>')
   );
 }
 
-export { stageScenes, stageStory, equippedMoves, journeyEnding };
+export { equippedMoves, journeyEnding };
