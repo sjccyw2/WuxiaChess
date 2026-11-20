@@ -70,7 +70,8 @@ tools/
 
 Every visual upgrade layered on the original look has a switch in `game/src/polish.js`: board
 pieces, combat effects, lighting and water, panel finish, the loading veil, and the added
-controls (danger zone, `Tab` to the next hero, the side-docked strike forecast). Set a switch to
+controls (danger zone, `Tab` to the next hero, the side-docked strike forecast, and the
+action flow that replaces the four-button command bar). Set a switch to
 `false` to turn that one feature off; nothing else needs to change.
 
 To compare without editing the file:

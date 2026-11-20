@@ -38,7 +38,8 @@ const SWITCHES = {
   dangerZone: true, // HUD button and the D key: shade every tile the enemy can strike next turn
   nextHeroKey: true, // Tab jumps to the next hero who can still act (Shift+Tab, the previous)
   forecastSide: true, // on wide screens the strike forecast docks to the side, clear of the fighters
-  forecastTrim: true // drop the forecast's target-health row, which the health bar now shows
+  forecastTrim: true, // drop the forecast's target-health row, which the health bar now shows
+  actionFlow: true // no command bar: arts open beside the hero after a move, undo sits there, End turn stands alone
 };
 
 const query = new URLSearchParams(globalThis.location?.search || '');

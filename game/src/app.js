@@ -2,6 +2,8 @@
 import './polish.js';
 // Polish: the owner-approved control additions (danger zone, Tab to the next hero, forecast dock).
 import * as X from './ui/field-extras.js';
+// Polish (actionFlow): the redesigned hero turn, with no command bar.
+import * as F from './ui/action-flow.js';
 import { journalPage } from './ui/wake-views.js';
 import { bowlsPage } from './ui/bowl-views.js';
 import { coverBowls, pickBowl } from './rules/ferry-market.js';
@@ -332,7 +334,7 @@ function paint() {
       '。查看俠客資料'
   );
   $('commander').innerHTML = P.commander(state, mode);
-  $('field-arts').innerHTML = equippedMoves(state, u);
+  $('field-arts').innerHTML = equippedMoves(state, u) + F.undoRow(state, u);
   if (hud.panel === 'arts' && !G.canAct(state, u)) hud.closePanel();
   hud.syncPanelButtons();
   if (priorGroup && !priorGroup.closest('[hidden]')) {
@@ -369,6 +371,15 @@ function choose(id, quiet = false) {
   mode = u.moved && !u.acted ? 'attack' : 'move';
   update();
   if (!quiet) audio('tap');
+  if (F.ON && u.moved && G.canAct(state, u)) openArts();
+}
+// Polish (actionFlow): the arts list, opened without a button and kept beside the hero.
+function openArts(keyboard = false) {
+  if (!F.ON || screen !== 'battle' || dialog.open || !G.canAct(state, selected())) return;
+  if (hud.panel !== 'arts') hud.togglePanel('arts', keyboard);
+  F.followHero($('arts-panel'), board.layers, () =>
+    hud.panel === 'arts' && screen === 'battle' ? { hero: selected(), state } : null
+  );
 }
 function cellClick(x, y) {
   if (screen !== 'battle' || dialog.open || state.run.scene !== 'fight') return;
@@ -401,6 +412,12 @@ function cellClick(x, y) {
       audio('step');
       update();
       mapTip('已移動');
+      if (F.ON) {
+        const version = selectionVersion;
+        board.finished().then(() => {
+          if (version === selectionVersion && state.selected === u.id && u.moved) openArts();
+        });
+      }
     } else
       mapTip(
         u.moved
@@ -417,6 +434,10 @@ function unitClick(id) {
   if ((mode === 'attack' || skill) && G.targetOK(state, u, t, skill)) {
     strikeData = { source: u.id, target: id, skill };
     openPage('attack-preview');
+    return;
+  }
+  if (F.ON && t === u && G.canAct(state, u)) {
+    openArts(document.activeElement?.matches?.('.key-cell:focus-visible'));
     return;
   }
   if (G.ally(t)) {
@@ -674,7 +695,7 @@ function result(afterMotion = false) {
 }
 function autoSelect() {
   if (state.result || state.phase !== 'ally') return;
-  const n = G.party(state).find((u) => G.canAct(state, u));
+  const n = F.ON ? F.nextToAct(state) : G.party(state).find((u) => G.canAct(state, u));
   if (n) {
     state.selected = n.id;
     mode = n.moved ? 'attack' : 'move';
@@ -683,7 +704,7 @@ function autoSelect() {
 function finishAlly() {
   autoSelect();
   update();
-  if (!result() && !G.party(state).some((u) => G.canAct(state, u)))
+  if (!result() && !(F.ON ? F.anyIdle(state) : G.party(state).some((u) => G.canAct(state, u))))
     mapTip('我方已全數行動，可結束回合', 3200);
 }
 function advanceAfterStrike(id) {
@@ -803,6 +824,7 @@ async function runEnemy() {
   }
 }
 function beginEnemy() {
+  F.braceTheRest(state); // Polish (actionFlow): what the wait button did, for whoever is left
   if (!G.startEnemy(state)) return;
   closePage();
   mode = '';
@@ -823,7 +845,8 @@ function askEnd() {
     return;
   }
   if (state.phase !== 'ally') return;
-  if (G.party(state).some((u) => G.canAct(state, u))) openPage('end');
+  if (F.ON ? F.shouldConfirmEnd(state) : G.party(state).some((u) => G.canAct(state, u)))
+    openPage('end');
   else beginEnemy();
 }
 function openFormation() {
@@ -1498,7 +1521,10 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (k === 'escape') {
-    if (hud.panel) hud.closePanel(true);
+    // Polish (actionFlow): Esc takes back the move while the hero has not yet struck.
+    const u = screen === 'battle' && F.ON && state.phase === 'ally' ? selected() : null;
+    if (u?.moved && G.canAct(state, u) && (!hud.panel || hud.panel === 'arts')) doCommand('move');
+    else if (hud.panel) hud.closePanel(true);
     else if (hud.fallback) hud.setFallback(false);
     else {
       mode = 'move';
@@ -1533,6 +1559,15 @@ document.addEventListener('keydown', (e) => {
     if (id) {
       e.preventDefault();
       choose(id);
+    }
+    return;
+  }
+  // Polish (actionFlow): 1 to 4 pick an entry of the selected hero's arts list.
+  if (F.ON) {
+    const entry = '1234'.includes(k) && k ? $('field-arts').querySelectorAll('.field-art')[k - 1] : null;
+    if (entry && !entry.disabled) {
+      e.preventDefault();
+      entry.click();
     }
     return;
   }
