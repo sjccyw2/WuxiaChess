@@ -55,7 +55,11 @@ function stageSky(T, profile) {
     void main(){vec3 n=normalize(dir);float h=max(0.,n.y),s=max(0.,dot(n,normalize(vec3(-.58,.27,-.76))));vec3 c=mix(horizon,zenith,pow(h,.56));
       vec2 uv=n.xz/max(.12,h+.09);float clouds=noise(uv*.95)*.6+noise(uv*2.5)*.26+noise(uv*5.4)*.14;
       c=mix(c,mix(horizon,sunColor,.28),smoothstep(.52,.79,clouds)*.19);c+=sunColor*(pow(s,14.)*.19+smoothstep(.9983,.9990,s)*.74)*glow*smoothstep(0.,.16,h);
-      if(night>.5){vec2 sp=vec2(atan(n.x,n.z)*63.,asin(clamp(n.y,-1.,1.))*62.);vec2 grid=floor(sp);float rad=length(fract(sp)-vec2(hash(grid),hash(grid+4.)));float star=step(.87,hash(grid+17.))*smoothstep(.100,.018,rad);c+=vec3(.54,.64,.81)*star;}
+      if(night>.5){vec2 sp=vec2(atan(n.x,n.z)*63.,asin(clamp(n.y,-1.,1.))*62.);vec2 grid=floor(sp);float rad=length(fract(sp)-vec2(hash(grid),hash(grid+4.)));float pick=hash(grid+17.);float star=step(.87,pick)*smoothstep(.100,.018,rad)*(.5+5.*max(0.,pick-.96));
+        float band=exp(-pow(dot(n,normalize(vec3(.42,.55,-.72)))*4.,2.))*smoothstep(-.05,.25,n.y);float dust=noise(vec2(atan(n.x,n.z)*9.,n.y*14.))*.65+noise(vec2(atan(n.x,n.z)*31.,n.y*40.))*.35;
+        vec2 fine=floor(sp*2.4);float speck=step(.95-.12*band,hash(fine+3.))*smoothstep(.13,.02,length(fract(sp*2.4)-vec2(hash(fine),hash(fine+5.))));
+        c+=vec3(.09,.10,.15)*band*smoothstep(.3,.75,dust)+mix(vec3(.62,.70,.86),vec3(.95,.86,.68),step(.6,hash(grid+23.)))*star+vec3(.45,.5,.64)*speck*(.25+.5*band);
+        c+=vec3(.9,.88,.8)*smoothstep(.99955,.99972,s)+vec3(.16,.18,.25)*pow(s,90.)*.8;}
       gl_FragColor=vec4(c,1.);${post}}`
   });
   const sky = new T.Mesh(new T.SphereGeometry(80, 36, 18), mat);
@@ -137,9 +141,9 @@ function stagePlane(T, p, gpu, scenery = null) {
       vec2 uv=ref.xy/ref.w+vec2(a,b)*.003;vec3 reflectColor=mirrorOn>.5?texture2D(tDiffuse,clamp(uv,.002,.998)).rgb:haze*.80;
       float fres=pow(1.-abs(normalize(cameraPosition-pos).y),2.);c=mix(base*(.78+n*.38),reflectColor,.23+fres*.52);c+=vec3(.11,.13,.11)*pow(max(0.,a*.55+b*.45),14.);}
     else{float vapour=noise(p*.11+time*.017)*.54+noise(p*.21)*.30+noise(p*.60)*.16;c=mix(base,haze,smoothstep(.17,.84,vapour)*.56);
-      if(universe>.5){vec2 sp=p*.67,g=floor(sp);float d=length(fract(sp)-vec2(hash(g),hash(g+9.)));
-        c+=vec3(.59,.63,.69)*step(.74,hash(g+31.))*(1.-smoothstep(.016,.052,d));
-        float belt=exp(-5.*abs(sin(p.x*.055+p.y*.094+vapour*.6)));c+=vec3(.022,.027,.05)*belt*vapour;}}
+      if(universe>.5){float puff=noise(p*.16+vapour)*.55+noise(p*.52)*.3+noise(p*1.7)*.15,sea=smoothstep(.38,.78,puff);
+        c=mix(base*.55,base*1.05+vec3(.02,.03,.05),sea);vec2 sp=p*.67,g=floor(sp);float d=length(fract(sp)-vec2(hash(g),hash(g+9.)));
+        c+=vec3(.59,.63,.69)*step(.8,hash(g+31.))*(1.-smoothstep(.016,.052,d))*(1.-sea)*.5;}}
     gl_FragColor=vec4(mix(c,haze,f*.89),1.);${post}}`;
   let mesh;
   if (water && gpu) {
