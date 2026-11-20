@@ -145,13 +145,17 @@ section('save migration');
   const s = board();
   const plain = R.restoreRun(copy(s));
   check('a save with none of the new fields restores', !!plain);
-  check('the migration tables start empty of removed ids', !Object.keys(R.TECHNIQUES_REMOVED).length);
+  check(
+    'the migration table holds the old trees, the twelve removed nodes among them',
+    Object.keys(R.TECHNIQUES_REMOVED).length === 60 && R.TECHNIQUES_REMOVED.breakPalm?.points === 2
+  );
 
   // A removed art: learned, slotted and active in the save, unknown to the catalogue now.
   const hero = unit(s, 'hero');
   const old = teach(hero, defineArt());
   hero.sp = 3;
   const raw = copy(s);
+  delete raw.run.trees; // a save from before the redesign
   delete TECHNIQUES[old];
   check('without the table, an unknown learned id fails the save', R.restoreRun(copy(raw)) === null);
   const restored = R.restoreRun(R.migrateSave(copy(raw), { [old]: { points: 2 } }));
@@ -164,7 +168,7 @@ section('save migration');
   const lines = restored?.logs.filter((l) => l.text === '武學譜重修：已失傳的招式退還武學點數。');
   check('the refund is logged once, by 武學傳承', lines?.length === 1 && lines[0].who === '武學傳承');
 
-  // nineYang → yijinjing, once the catalogue has made the rename.
+  // nineYang → yijinjing: the manual was replaced, and a save holding the old id follows it.
   const t = board(['medic', 'hero', 'guard']);
   const medic = unit(t, 'medic');
   medic.guides.push('nineYang');
@@ -173,16 +177,9 @@ section('save migration');
   t.run.manuals.push('nineYang');
   t.run.chronicle.parcel.manuals.push('nineYang');
   t.run.shop.push({ id: 'nineYang', price: 48, left: 1 });
-  const kept = R.restoreRun(copy(t));
-  check('while nineYang is in the catalogue it is kept', unit(kept, 'medic').learned.includes('nineYang'));
-  const saved = { art: TECHNIQUES.nineYang, price: MANUAL_PRICES.nineYang };
-  TECHNIQUES.yijinjing = saved.art;
-  MANUAL_PRICES.yijinjing = saved.price;
-  delete TECHNIQUES.nineYang;
-  delete MANUAL_PRICES.nineYang;
   const renamed = R.restoreRun(copy(t));
   const m = renamed && unit(renamed, 'medic');
-  check('once renamed, the save restores', !!renamed);
+  check('a save holding the old manual id restores', !!renamed);
   check(
     'learned, guides and slots carry yijinjing',
     m && m.learned.includes('yijinjing') && m.guides.includes('yijinjing') && m.slots[1] === 'yijinjing'
@@ -196,10 +193,32 @@ section('save migration');
       !JSON.stringify(renamed.run).includes('nineYang')
   );
   check('a rename alone writes no refund line', !renamed?.logs.some((l) => l.text.startsWith('武學譜重修')));
-  TECHNIQUES.nineYang = saved.art;
-  MANUAL_PRICES.nineYang = saved.price;
-  delete TECHNIQUES.yijinjing;
-  delete MANUAL_PRICES.yijinjing;
+
+  // A save from before the redesign: every node of the old trees is given back, kept ids too,
+  // because their prices and prerequisites changed; a save made since keeps what it learned.
+  const before = board(['hero', 'medic', 'guard']);
+  const swordsman = unit(before, 'hero');
+  swordsman.learned.push('mountainOpening', 'breakSword');
+  swordsman.slots = ['signature', 'breakSword', null];
+  swordsman.sp = 0;
+  const since = R.restoreRun(copy(before));
+  check(
+    'a save made under the new trees keeps its learned nodes',
+    since && unit(since, 'hero').learned.includes('breakSword') && unit(since, 'hero').sp === 0
+  );
+  swordsman.learned.push('breakPalm');
+  swordsman.slots[2] = 'breakPalm';
+  swordsman.activeArt = 'breakPalm';
+  delete before.run.trees;
+  const respec = R.restoreRun(copy(before));
+  const sw = respec && unit(respec, 'hero');
+  check('a save from before the redesign restores', !!respec);
+  check('kept and removed nodes alike leave the learned list', sw && sw.learned.length === 0, sw?.learned);
+  check('their slots empty and the active art falls back', sw && same(sw.slots, ['signature', null, null]) && sw.activeArt === 'signature');
+  check('every point paid under the old prices comes back', sw?.sp === 5, sw?.sp);
+  check('the save is marked as migrated', respec?.run.trees === 2);
+  const again = R.restoreRun(copy(respec));
+  check('loading it again refunds nothing more', again && unit(again, 'hero').sp === 5);
 
   // The new bookkeeping: tolerated, tidied on restore, cleared between boards.
   const z = board();
@@ -300,7 +319,11 @@ section('conditions');
     ),
     JSON.stringify(own)
   );
-  check('today’s arts put nothing on their caster', Object.values(TECHNIQUES).every((a) => !BM.selfEffectsOf(a).length));
+  // The redesigned trees: each of these summits leaves its price on the caster.
+  const prices = (id) => BM.selfEffectsOf(TECHNIQUES[id]).map((e) => e.kind).sort().join();
+  check('獨孤九劍 leaves 露空 and 無守 on 令狐冲', prices('ninefoldIntent') === 'recoil,unguarded', prices('ninefoldIntent'));
+  check('涼亭鐵鏈 leaves 立樁 on 向問天', prices('earthThroughChain').includes('rooted'), prices('earthThroughChain'));
+  check('笑傲江湖 leaves 曲終 on 任盈盈', prices('clearHeartCoda').includes('spent'), prices('clearHeartCoda'));
 
   // Life of a caster condition: applied by the art, visible, and gone when the spec says.
   const s = board();

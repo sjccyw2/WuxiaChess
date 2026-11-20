@@ -97,6 +97,7 @@ function initialRun(ids, seed, legacy) {
   chronicle.returns ??= chronicle.wins;
   fillProfile(chronicle);
   const run = {
+    trees: TREES_EDITION,
     voyage: chronicle.returns + 1,
     priorFate: chronicle.lastFate,
     seed,
@@ -200,10 +201,32 @@ function uniqueMembers(ids, allowed) {
 // are brought up to date before it is checked: a renamed id keeps its meaning, and a removed id is
 // forgotten and its points returned (from this table, since the catalogue no longer has it).
 const TECHNIQUES_RENAMED = Object.freeze({ nineYang: 'yijinjing' });
-const TECHNIQUES_REMOVED = Object.freeze({}); // id: { points }
+// The hero trees as they stood before the redesign: every node and the points it cost. Prices,
+// tiers and prerequisites changed throughout, and twelve nodes went, so a save from before it gives
+// all of these back and the player buys again in the new trees. Shop manuals are not in the table.
+const TREES_EDITION = 2;
+const OLD_TREE_POINTS = {
+  mountainOpening: 1, breakSword: 2, breakArrow: 1, breakPalm: 2, breakQi: 2, ninefoldIntent: 3,
+  sheathedDagger: 1, returningSong: 2, blackNeedle: 2, bambooWard: 1, qinXiaoRally: 2,
+  clearHeartCoda: 3, ironChainForm: 1, sweepingWhip: 2, reverseForce: 2, chainShelter: 1,
+  bloodAtPass: 2, earthThroughChain: 3, southernStance: 1, vacantFist: 2, fieldDragonWard: 1,
+  flyingDragon: 3, armyBookRally: 2, dragonReserve: 3, jadeThread: 1, sparrowSteps: 1,
+  jadeNeedle: 2, pairedHands: 3, silkBell: 2, maidenHarmony: 3, fingerPrimer: 1, northernSea: 2,
+  ripplingSteps: 2, shangYang: 2, lesserMarsh: 2, sixMeridians: 3, huangPetals: 1, peachWard: 1,
+  orchidPoint: 2, beggarBind: 2, peachGate: 2, staffWithoutDogs: 3, darkIronEdge: 1,
+  jadeFluteCut: 1, tideBreaker: 2, toadLunge: 2, mournfulCloud: 2, solitaryPalm: 3, taijiGate: 1,
+  valleyPulse: 1, taijiSword: 2, nineYangMantle: 2, holyFireTurn: 2, universeCanopy: 3,
+  huQuickDraw: 1, snowPursuit: 1, silkwormPalm: 2, foxFeint: 1, foxWrist: 2, foxTwinChange: 3
+};
+const TECHNIQUES_REMOVED = Object.freeze(
+  Object.fromEntries(Object.entries(OLD_TREE_POINTS).map(([id, points]) => [id, { points }]))
+);
 function migrateSave(s, removed = TECHNIQUES_REMOVED, renamed = TECHNIQUES_RENAMED) {
   const r = s?.run;
   if (!r || !Array.isArray(s.units)) return s;
+  // A save made under the new trees keeps what it learned; only renames still apply to it.
+  if (r.trees === TREES_EDITION) removed = {};
+  r.trees = TREES_EDITION;
   // A rename applies once the catalogue has the new id in place of the old one.
   const names = new Map(
     Object.entries(renamed).filter(([from, to]) => TECHNIQUES[to] && !TECHNIQUES[from])
