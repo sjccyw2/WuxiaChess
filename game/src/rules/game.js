@@ -504,12 +504,8 @@ function turnBack(s, striker, bearer, blow, effects) {
   if (ally(striker)) n = Math.min(n, (striker.conditions?.shield?.power || 0) + striker.hp - 1);
   const dealt = n > 0 ? wound(s, striker, n, source) : 0;
   effects.push([striker.id, '−' + dealt]);
-  log(
-    s,
-    'combat',
-    (ward.source ? '挪移' : '斗轉星移') + '反震' + unitDetails(striker).name + '，造成 ' + dealt + ' 點傷害。',
-    unitDetails(bearer).name
-  );
+  const verb = (ward.source ? '挪移' : '斗轉星移') + '反震' + unitDetails(striker).name;
+  log(s, 'combat', verb + '，造成 ' + dealt + ' 點傷害。', unitDetails(bearer).name);
 }
 const PREFERS = {
   wounded: '專挑傷重者',
@@ -1476,11 +1472,10 @@ function answerBlow(s, u, t, blow, result) {
   result.rebound = Math.min(left, Math.max(0, u.hp - result.hpCost - 1));
   const name = unitDetails(t).name,
     keep = blow.ward.keep;
-  result.notes.push(
-    blow.ward.source
-      ? '挪移 · ' + name + '受擊減半，反震 ' + blow.back
-      : '斗轉星移 · ' + name + (keep ? '只受' + tenths(keep * 100) : '不受此擊') + '，反震 ' + blow.back
-  );
+  const kept = blow.ward.source
+    ? '挪移 · ' + name + '受擊減半'
+    : '斗轉星移 · ' + name + (keep ? '只受' + tenths(keep * 100) : '不受此擊');
+  result.notes.push(kept + '，反震 ' + blow.back);
 }
 // What using the art costs its caster beyond 內力 and 氣血, as the preview states it.
 function priceNotes(art) {

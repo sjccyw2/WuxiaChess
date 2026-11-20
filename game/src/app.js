@@ -257,7 +257,8 @@ const board = new BattleBoard({
         skill = mode === 'skill';
       if (target && G.targetOK(state, u, target, skill)) {
         const facts = moveFacts(state, u, skill ? u.activeArt || 'signature' : 'basic', target);
-        const guard = !G.ally(target) && G.coverer(state, target); // 代受: the figure is the coverer's
+        // 代受: the figure is for the coverer, so the tip names him.
+        const guard = !G.ally(target) && G.coverer(state, target);
         t.textContent =
           uName(target) +
           (guard ? '（' + uName(guard) + '代受）' : '') +
