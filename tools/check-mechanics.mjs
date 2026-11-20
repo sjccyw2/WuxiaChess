@@ -438,7 +438,8 @@ section('villain traits');
   const first = board(),
     second = board();
   const map = first.run.route[1];
-  nextBoard(first);
+  // Measured against the same piece with no traits (its board's data may give it mods of its own).
+  withTraits('bow-' + map, {}, () => nextBoard(first));
   withTraits('bow-' + map, { mods: { hp: 0.5, atk: -3, range: 4 } }, () => nextBoard(second));
   const [p, q] = [unit(first, 'echoBow'), unit(second, 'echoBow')];
   check(
@@ -456,7 +457,11 @@ section('villain traits');
     G.DETAILS['bow-' + map].name = '試射手';
     return G.unitDetails(unit(second, 'echoBow')).name;
   });
-  check('a RANKS entry names the piece; without one the shared piece is used', named === '試射手' && G.unitDetails(unit(second, 'echoBow')).name === G.DETAILS.echoBow.name);
+  const entry = G.DETAILS['bow-' + map];
+  delete G.DETAILS['bow-' + map];
+  const shared = G.unitDetails(unit(second, 'echoBow')).name;
+  G.DETAILS['bow-' + map] = entry;
+  check('a RANKS entry names the piece; without one the shared piece is used', named === '試射手' && shared === G.DETAILS.echoBow.name && G.unitDetails(unit(second, 'echoBow')).name === RANKS[map].bow.name);
 
   // Status strength by stage, only once a villain's traits are written.
   const s = board();
@@ -3091,6 +3096,73 @@ for (const stage of [1, 2]) {
   const life = bow.hp;
   const effects = soloTurn(s, yan);
   check('stage ' + stage + ': in round 2 he mends the hurt archer on this map', bow.hp === Math.min(bow.maxHp, life + heal) && effects.signature && G.distance(yan, bow) <= 3, [bow.hp, life, yan.x, yan.y]);
+}
+
+section('board 2 蘆花汀: the dissolver and his disciples');
+for (const stage of [1, 2]) {
+  const s = realBoard(2, stage);
+  const [ding, zhai, bow, scout] = foesOf(s);
+  const want = { 1: [[131, 26, 12, 2, 2], [67, 21, 8, 2, 1]], 2: [[163, 29, 13, 2, 2], [79, 23, 9, 2, 1]] }[stage];
+  check('stage ' + stage + ': 丁春秋 and 摘星子 have the spec’s numbers', same(numbersOf(ding), want[0]) && same(numbersOf(zhai), want[1]), numbersOf(ding) + ' / ' + numbersOf(zhai));
+  check('stage ' + stage + ': 化功大法 drains 6 + 2 × stage at 1.10', G.enemyTechnique(ding, s).factor === 1.1 && G.enemyTechnique(ding, s).power === 6 + 2 * stage);
+  check('stage ' + stage + ': 摘星子’s signature reaches 3', G.enemyTechnique(zhai, s).reach === 3 && pageOf(s, zhai).includes('絕技射程 3 格。'));
+  check('stage ' + stage + ': the disciples are on the stage curve less 2 attack', [bow, scout].every((u) => G.unitDetails(u).name === '星宿弟子' && G.unitDetails(u).traits.cover === 'master'));
+  check('stage ' + stage + ': 丁春秋’s page', same(pageOf(s, ding).slice(1), ['【門人代受】相鄰的星宿弟子替他承受俠客的直接攻擊（氣血較多者先上）；波及、穿行、走勁與毒傷仍會落在他身上。', '【化功】貼身打中他的俠客損失 ' + (8 + stage) + ' 點內力（封穴時無效）。']), JSON.stringify(pageOf(s, ding)));
+  check('stage ' + stage + ': a disciple’s page', same(G.enemyTraitLines(s, bow), ['【護駕】每回合先回到丁春秋身旁；與他相鄰時替他受招。']), JSON.stringify(G.enemyTraitLines(s, bow)));
+  // Two enemy turns with the heroes at their spawn: the disciples gather beside him.
+  for (let r = 0; r < 2; r++) {
+    G.startEnemy(s);
+    for (const e of G.enemies(s)) G.enemyAct(s, e);
+    G.nextRound(s);
+  }
+  check('stage ' + stage + ': after two turns both disciples stand beside him', G.distance(bow, ding) === 1 && G.distance(scout, ding) === 1, [ding.x, ding.y, bow.x, bow.y, scout.x, scout.y]);
+  // A hero beside him: the disciple with more 氣血 takes the blow, and 化功 does not touch him.
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: ding.x + dx, y: ding.y + dy })).find((p) => G.walkable(p.x, p.y, s.mapIndex) && !G.at(s, p.x, p.y));
+  if (!spot) {
+    check('stage ' + stage + ': a free tile beside him to strike from', false);
+    continue;
+  }
+  const hero = put(s, 'hero', spot.x, spot.y);
+  bow.hp -= 5;
+  const f = G.forecast(hero, ding, false, s);
+  check('stage ' + stage + ': the blow goes to the disciple with more 氣血, without 化功', f.coveredBy === 'echoScout' && !f.contact && f.notes[0] === '代受 · 星宿弟子代丁春秋受招', JSON.stringify([f.coveredBy, f.contact, f.notes[0]]));
+  // §8: cover first decides the receiver; the master's own 閃身 is untouched.
+  ding.conditions = { evade: { power: 1, through: s.round, source: ding.id } };
+  const life = [ding.hp, scout.hp];
+  G.resolve(s, hero, ding, false);
+  check('stage ' + stage + ': with him evading, the disciple still takes it and his 閃身 stays', ding.hp === life[0] && scout.hp < life[1] && !!ding.conditions.evade);
+}
+
+section('board 3 聽雪棧: the survivor and the scavenger');
+for (const stage of [3, 4]) {
+  const s = realBoard(3, stage);
+  const [xue, bao, bow, scout] = foesOf(s);
+  const want = { 3: [[195, 35, 13, 3, 1], [100, 26, 10, 3, 1]], 4: [[267, 38, 14, 3, 1], [145, 33, 11, 3, 1]] }[stage];
+  check('stage ' + stage + ': 血刀老祖 and 寶象 have the spec’s numbers', same(numbersOf(xue), want[0]) && same(numbersOf(bao), want[1]), numbersOf(xue) + ' / ' + numbersOf(bao));
+  check('stage ' + stage + ': his sweep takes a third', G.enemyTechnique(xue, s).sweep === 0.33 && pageOf(s, xue)[0] === '相鄰的其他我方俠客也會受到三分之一傷害。');
+  check('stage ' + stage + ': 血刀老祖’s page', pageOf(s, xue).includes('【半血變招 · 遁走】氣血過半後退向最近的藥草地，三回合內只打身邊的人；在藥草地每回合回復最大氣血的 8%，回到七成五即止。'), JSON.stringify(pageOf(s, xue)));
+  check('stage ' + stage + ': 寶象 holds the trestle mouth and hunts the wounded (RULINGS F)', same(G.enemyTraitLines(s, bao), ['【坐鎮】守在棧口（7，4）一格內，不離位。', '【偏好】專挑傷重者。']), JSON.stringify(G.enemyTraitLines(s, bao)));
+  check('stage ' + stage + ': the archer-monk holds the north ledge', same(G.enemyTraitLines(s, bow), ['【坐鎮】守在崖棧（9，2）一格內，不離位。']) && G.unitDetails(scout).name === '血刀門僧', JSON.stringify(G.enemyTraitLines(s, bow)));
+  check('stage ' + stage + ': the posts are ground the heroes can walk to', postsReachable(s));
+  // At half health he runs for the herbs nearest him, and gets there.
+  const herbs = mapLayout(3).cells.filter((c) => G.terrainInfo(c.x, c.y, 3)?.heal);
+  check('stage ' + stage + ': the map has herbs', herbs.length >= 2);
+  xue.hp = Math.floor(xue.maxHp / 2);
+  G.check(s);
+  check('stage ' + stage + ': half health starts the flight', xue.phased && G.fleeing(s, xue) && s.logs.at(-1).text === '血刀老祖刀勢一收，踏雪往藥草地退去。');
+  for (let r = 0; r < 2 && !G.terrainInfo(xue.x, xue.y, 3).heal; r++) {
+    soloTurn(s, xue);
+    closeRound(s);
+  }
+  check('stage ' + stage + ': within two turns he stands on herbs', !!G.terrainInfo(xue.x, xue.y, 3).heal, [xue.x, xue.y]);
+  const life = xue.hp;
+  soloTurn(s, xue);
+  closeRound(s);
+  check('stage ' + stage + ': there he recovers 8% a round', xue.hp - life === Math.round(xue.maxHp * 0.08), xue.hp - life);
+  // 寶象 holds the mouth: with no one in reach he does not leave it.
+  const at = [bao.x, bao.y];
+  soloTurn(s, bao);
+  check('stage ' + stage + ': 寶象 stays at the trestle mouth with no one in reach', G.distance(bao, { x: 6, y: 3 }) <= 1 && same([bao.x, bao.y], at));
 }
 
 // ─────────────────────────────────────────────────────────────────────────

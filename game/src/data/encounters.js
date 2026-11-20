@@ -96,7 +96,8 @@ const ENCOUNTERS = [
       'medic',
       '星宿老怪，向來只有他化旁人的功。他認得出心裡那個念頭不是自己的，偏偏掙不開，化功大法照舊削人內力。',
       'murong',
-      'sepia(.22) hue-rotate(85deg)'
+      'sepia(.22) hue-rotate(85deg)',
+    { mods: { range: 2 }, contact: { mp: 8 } }
     ),
     adversary(
       '摘星子',
@@ -108,7 +109,8 @@ const ENCOUNTERS = [
       'guo',
       '星宿派大弟子，只當師父是自己要大展神威。毒焰順著中空的蘆稈游走。',
       'zhang',
-      'hue-rotate(55deg) saturate(.8)'
+      'hue-rotate(55deg) saturate(.8)',
+    { sig: { reach: 3 } }
     )
   ],
   [
@@ -122,7 +124,17 @@ const ENCOUNTERS = [
       'xiao',
       '血刀門第四代掌門，一生只打划算的架。他試過不理心裡那個念頭，三回都是刀先動，索性放手去砍。一刀掃過棧道兩側。',
       'hu',
-      'sepia(.25) hue-rotate(-30deg) saturate(1.4)'
+      'sepia(.25) hue-rotate(-30deg) saturate(1.4)',
+    {
+      mods: { atk: 2, def: -2, step: 3, range: 1 },
+      sig: { sweep: 0.33 },
+      phase: {
+        name: '遁走',
+        flee: { turns: 3, herbs: 0.08, until: 0.75 },
+        log: '血刀老祖刀勢一收，踏雪往藥草地退去。',
+        note: '氣血過半後退向最近的藥草地，三回合內只打身邊的人；在藥草地每回合回復最大氣血的 8%，回到七成五即止。'
+      }
+    }
     ),
     adversary(
       '寶象',
@@ -134,7 +146,12 @@ const ENCOUNTERS = [
       'hu',
       '血刀門僧。他同來人無冤無仇，刀卻自己出了鞘，借坡下冰雪遮掩刀鋒。',
       'guard',
-      'sepia(.4) saturate(1.15)'
+      'sepia(.4) saturate(1.15)',
+    {
+      mods: { hp: 1.1, step: 3, range: 1 },
+      prefers: 'wounded',
+      post: { tile: 'spawn', tether: 1, wake: false, note: '守在棧口{tile}一格內，不離位。' }
+    }
     )
   ],
   [
@@ -322,9 +339,56 @@ const RANKS = [
     }
   },
   // ── board 2
-  {},
+  {
+    bow: {
+      name: '星宿弟子',
+      role: '毒鏢',
+      school: '星宿派',
+      mini: 'archer',
+      basic: '星宿毒鏢',
+      bio: '口裡唱著「星宿老仙」，身子總擋在師父前面。',
+      traits: {
+        mods: { atk: -2 },
+        cover: 'master',
+        post: { tile: 'master', tether: 1, wake: false }
+      }
+    },
+    scout: {
+      name: '星宿弟子',
+      role: '護法',
+      school: '星宿派',
+      mini: 'bandit',
+      basic: '抽髓掌',
+      bio: '師父一皺眉，他便搶上一步替師父挨打。',
+      traits: {
+        mods: { atk: -2 },
+        cover: 'master',
+        post: { tile: 'master', tether: 1, wake: false }
+      }
+    }
+  },
   // ── board 3
-  {},
+  {
+    bow: {
+      name: '血刀門弓僧',
+      role: '弓手',
+      school: '血刀門',
+      mini: 'archer',
+      basic: '雪坡冷箭',
+      bio: '伏在北面崖棧上，雪樑一動便放箭。',
+      traits: {
+        post: { tile: 'spawn', tether: 1, wake: false, note: '守在崖棧{tile}一格內，不離位。' }
+      }
+    },
+    scout: {
+      name: '血刀門僧',
+      role: '遊僧',
+      school: '血刀門',
+      mini: 'bandit',
+      basic: '血刀',
+      bio: '踏著下層棧道繞到人背後。'
+    }
+  },
   // ── board 4
   {},
   // ── board 5
@@ -389,7 +453,7 @@ const VILLAIN_FORMS = {
   駝峰毒霧: [1.04, 'blackNeedle'],
   天龍快劍: [1.2, 'breakSword'],
   接骨續筋: [0, 'silkwormPalm'], // 續命: no blow, so no strength
-  化功大法: [1.03, 'northernSea'],
+  化功大法: [1.1, 'northernSea'],
   星宿毒焰: [1.09, 'holyFireTurn'],
   血刀奇襲: [1.29, 'bloodAtPass'],
   血刀連斬: [1.18, 'foxTwinChange'],
