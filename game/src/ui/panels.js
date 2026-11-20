@@ -159,6 +159,22 @@ function renderParty(s) {
     })
     .join('');
 }
+// What the hero's own last turns have readied, shown while he can still act (SPEC-mechanics §4):
+// 留力, he did not strike last turn, so an equipped art that needs it may be used; 還報, an enemy
+// hurt him in the last enemy phase, so an equipped art that pays it back is stronger.
+function turnPips(s, u) {
+  if (s.phase !== 'ally' || !canAct(s, u)) return '';
+  const arts = equippedArts(u).map((id) => artFor(u, id));
+  const pip = (name, rule) => `<small class="unit-pip" title="${rule}">${name}</small>`;
+  return (
+    (arts.some((a) => a.poised) && u.struckRound !== s.round - 1
+      ? pip('留力', '上一回合未曾出手，留力之招可以施展')
+      : '') +
+    (arts.some((a) => a.avenge) && u.hurtRound === s.round - 1
+      ? pip('還報', '上一個敵方回合曾受敵人攻擊而損血，還報之招威力增加')
+      : '')
+  );
+}
 function activeHero(s) {
   const u = find(s, s.selected);
   const stateMark =
@@ -168,7 +184,7 @@ function activeHero(s) {
   const vitality = (ic, key, v, max) =>
     `<span class="unit-vital ${key}">${icon(ic, 12)}${meter(v, max, key)}<b>${v}</b></span>`;
   return `<span class="unit-face"><img src="${face(u.id)}" alt="">${flag}</span><span class="unit-summary">
-    <span class="unit-name"><strong>${DETAILS[u.id].name}</strong><small>Lv.${u.level}</small>${stateMark}</span>
+    <span class="unit-name"><strong>${DETAILS[u.id].name}</strong><small>Lv.${u.level}</small>${stateMark}${turnPips(s, u)}</span>
     ${vitality('heart', 'hp', u.hp, u.maxHp)}${vitality('drop', 'mp', u.mp, u.maxMp)}</span>`;
 }
 function commander(s, mode) {

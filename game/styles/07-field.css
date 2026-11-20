@@ -267,6 +267,16 @@ body.in-battle {
 .unit-name .unit-spent {
   color: #b7c4b8;
 }
+/* 留力 and 還報: an art readied by the hero's own last turns. Shown whatever the polish
+   switches say: the player needs it to know the art is live. */
+#active-hero .unit-name .unit-pip {
+  align-self: center;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font: 600 11px/1.4 var(--sans);
+  color: #2a1508;
+  background: #f0c46e;
+}
 .unit-vital {
   display: grid;
   grid-template-columns: 12px minmax(28px, 1fr) 21px;
