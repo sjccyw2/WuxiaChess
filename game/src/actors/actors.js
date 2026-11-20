@@ -893,6 +893,10 @@ class ActorLayer {
         continue;
       }
       if (!this.prefs.motion) continue;
+      if (e.kind === 'burst') {
+        this.impact.burst(c, e, now);
+        continue;
+      }
       if (e.tone) {
         this.impact.number(c, e, u);
         continue;

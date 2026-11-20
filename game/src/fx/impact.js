@@ -12,6 +12,9 @@ const easeOut = (t) => 1 - (1 - t) * (1 - t) * (1 - t);
 const STOP = [46, 52, 62, 84, 108];
 // Pixels of camera kick at a 900px-tall view. Light blows do not shake the screen.
 const KICK = [0, 0, 2.5, 6, 9];
+// The original fade of a defeated piece spans the last 200ms before its exit time.
+const FADE = 200;
+const BURST_LIFE = 470;
 
 const TONES = {
   // [top, bottom, outline, size factor]
@@ -183,9 +186,17 @@ class Impact {
     return canvas;
   }
   // Called by ActorLayer.actor() right after it draws a sprite, inside the sprite's own
-  // transform. Paints the white flash.
+  // transform. Paints the white flash, and starts the break-up of a defeated piece.
   sprite(c, u, pos, sheet, frame, row, w, h, flip) {
     if (!this.motion) return;
+    const layer = this.layer;
+    if (POLISH.koBurst && u.hp <= 0) {
+      const track = layer.tracks.get(u.id);
+      if (track?.exit && !track.burst && layer.time >= track.exit - FADE) {
+        track.burst = true;
+        this.breakUp(u, pos, sheet, frame, row, flip, h / (layer.scaleAt(pos.x, pos.y) || h));
+      }
+    }
     const flash = this.flashes.get(u.id);
     if (!flash) return;
     const age = this.clock - flash.born;
@@ -204,6 +215,125 @@ class Impact {
       w,
       h
     );
+    c.restore();
+  }
+
+  // ---- defeat ------------------------------------------------------------------------
+  // Cuts the sprite's last frame into slips, which scatter as ink while the sprite fades.
+  breakUp(u, pos, sheet, frame, row, flip, tall) {
+    const layer = this.layer;
+    this.flashes.set(u.id, { born: this.clock, hold: 60, fade: 150, peak: 1 });
+    const ink = this.silhouette(sheet, frame, row, G.ally(u) ? '#16302b' : '#2a1512');
+    const cols = 6,
+      rows = 9,
+      cw = ink.width / cols,
+      ch = ink.height / rows;
+    // One small read of the alpha channel finds which cells hold any of the figure.
+    let alpha = null;
+    try {
+      alpha = ink.getContext('2d').getImageData(0, 0, ink.width, ink.height).data;
+    } catch {
+      alpha = null;
+    }
+    const covered = (cx, cy) => {
+      if (!alpha) return cx > 1 && cx < cols - 2 && cy > 1;
+      let hits = 0;
+      for (let j = 0; j < 4; j++)
+        for (let i = 0; i < 4; i++) {
+          const px = Math.floor((cx + (i + 0.5) / 4) * cw),
+            py = Math.floor((cy + (j + 0.5) / 4) * ch);
+          if (alpha[(py * ink.width + px) * 4 + 3] > 60) hits++;
+        }
+      return hits >= 4;
+    };
+    const random = scatter(u.id.charCodeAt(0) * 977 + frame * 31 + 7);
+    const pieces = [];
+    for (let cy = 0; cy < rows; cy++)
+      for (let cx = 0; cx < cols; cx++) {
+        if (!covered(cx, cy)) continue;
+        // Position inside the sprite cell, as fractions measured from the foot anchor.
+        const fx = (cx + 0.5) / cols - 0.5,
+          fy = ((cy + 0.5) * ch) / ink.height - FOOT_Y / CELL_HEIGHT;
+        const angle = Math.atan2(fy + 0.42, fx) + (random() - 0.5) * 0.9;
+        const speed = 0.06 + random() * 0.34;
+        pieces.push({
+          sx: cx * cw,
+          sy: cy * ch,
+          fx,
+          fy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 0.22 - random() * 0.2,
+          spin: (random() - 0.5) * 5,
+          // The figure comes apart from the head down.
+          delay: (cy / rows) * 0.24 + random() * 0.08,
+          paper: random() < 0.25
+        });
+      }
+    layer.effects.push({
+      kind: 'burst',
+      target: u.id,
+      x: pos.x,
+      y: pos.y,
+      flip,
+      tall,
+      ink,
+      paper: this.silhouette(sheet, frame, row, '#f4ead2'),
+      ring: G.ally(u) ? '#16302b' : '#2a1512',
+      cw,
+      ch,
+      cols,
+      pieces,
+      start: layer.time,
+      end: layer.time + BURST_LIFE
+    });
+  }
+  // Draws one break-up. `e.x`/`e.y` are board coordinates, so the slips follow the camera.
+  burst(c, e, now) {
+    const layer = this.layer,
+      t = clamp((now - e.start) / (e.end - e.start), 0, 1);
+    const p = layer.point(e.x, e.y),
+      scale = layer.scaleAt(e.x, e.y);
+    if (!scale) return;
+    const h = scale * e.tall,
+      w = (h * e.ink.width) / e.ink.height;
+    const pw = (w / e.cols) * 1.12,
+      ph = ((h * e.ch) / e.ink.height) * 1.12;
+    // An ink ring spreads on the ground where the piece stood.
+    c.save();
+    c.globalAlpha = (1 - t) * 0.55;
+    layer.circle(e.x, e.y, 0.26 + 0.5 * easeOut(t), 0.1);
+    c.strokeStyle = e.ring;
+    c.lineWidth = Math.max(1, scale * 0.045 * (1 - t));
+    c.stroke();
+    c.restore();
+    c.save();
+    c.translate(p.x, p.y);
+    if (e.flip) c.scale(-1, 1);
+    for (const piece of e.pieces) {
+      const k = (t - piece.delay) / (1 - piece.delay);
+      if (k <= 0 || k >= 1) continue;
+      const travel = easeOut(k);
+      const size = 1 - 0.6 * k;
+      c.save();
+      c.globalAlpha = k < 0.12 ? k / 0.12 : Math.min(1, (1 - k) * 2.4);
+      c.translate(
+        (piece.fx + piece.vx * travel) * w,
+        (piece.fy + piece.vy * travel + 0.1 * k * k) * h
+      );
+      c.rotate(piece.spin * travel);
+      c.drawImage(
+        piece.paper ? e.paper : e.ink,
+        piece.sx,
+        piece.sy,
+        e.cw,
+        e.ch,
+        (-pw * size) / 2,
+        (-ph * size) / 2,
+        pw * size,
+        ph * size
+      );
+      c.restore();
+    }
     c.restore();
   }
 
