@@ -12,7 +12,7 @@ import { FieldHud } from './ui/field-hud.js';
 import { icon } from './ui/icons.js';
 import { codexPage } from './ui/gates.js';
 import * as R from './rules/journey.js';
-import { rollView } from './ui/run-views.js';
+import { rollView, prologuePage, prologueSteps } from './ui/run-views.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, journeyEnding } from './ui/journey-pages.js';
 import { mapLayout } from './data/terrain.js';
@@ -34,6 +34,8 @@ let hasSave = !!saved,
 let state = saved || R.startRun(R.drawLots(0));
 let draft = null,
   codexId = 'hero';
+// The prologue shown before the draw: which page it is on, and the name typed so far.
+let prologue = { step: 0, name: '' };
 let prefs = Object.assign(
   {
     sound: false,
@@ -71,7 +73,7 @@ const navItems = [
   ['goals', 'flag', '目標'],
   ['logs', 'scroll', '紀錄'],
   ['story', 'book', '章回'],
-  ['wake', 'scroll', '回水尺'],
+  ['wake', 'scroll', '石刻'],
   ['settings', 'settings', '設定'],
   ['title-help', 'help', '指南']
 ];
@@ -292,7 +294,7 @@ function paint() {
   grid.setAttribute('aria-label', grid.title);
   const path = mapLayout(state.mapIndex);
   $('medicine-button').disabled = !G.canUseMedicine(state, selected());
-  $('chapter-number').textContent = '第' + R.NUMERALS[state.run.stage] + '渡';
+  $('chapter-number').textContent = '第' + R.NUMERALS[state.run.stage] + '局';
   $('map-name').textContent = path.name;
   $('trip-ledger').setAttribute(
     'aria-label',
@@ -445,6 +447,8 @@ function pageHtml() {
   switch (dialogState) {
     case 'wake':
       return journalPage(state);
+    case 'prologue':
+      return prologuePage(state.run.chronicle, prologue.step, prologue.name);
     case 'formation':
       return rollView(
         draft.ids,
@@ -525,7 +529,7 @@ function drawModal(keepScroll = false) {
           ? '返回整備'
           : '返回隊伍'
         : dialogState === 'team' && state.run.scene === 'shop'
-          ? '返回借刻鋪'
+          ? '返回通吃坊'
           : (dialogState === 'team' && state.run.scene === 'prep') ||
               dialogState === 'camp' ||
               dialogState === 'result'
@@ -816,6 +820,16 @@ function openFormation() {
   }
   openPage('formation');
 }
+// A new run starts with the youth opening his eyes, then the draw.
+function openPrologue() {
+  prologue = { step: 0, name: prologue.name };
+  openPage('prologue');
+}
+// Keeps what was typed when the page is redrawn or left.
+function keepName() {
+  const field = $('youth-name');
+  if (field) prologue.name = R.cleanName(field.value);
+}
 function openTitle() {
   ++aiRun;
   closePage();
@@ -828,18 +842,18 @@ function openTitle() {
   $('main').hidden = true;
   $('start-world').prepend($('scene'));
   board.present(true);
-  $('scene').setAttribute('aria-label', '可拖曳旋轉的青竹渡立體場景');
+  $('scene').setAttribute('aria-label', '可拖曳旋轉的立體場景');
   $('start-primary').querySelector('strong').textContent = hasSave
     ? state.run.scene === 'after'
       ? '繼續戰後劇情'
       : state.run.scene === 'prep'
         ? '繼續整備'
         : state.run.status === 'camp'
-          ? '返回借刻鋪'
+          ? '返回通吃坊'
           : state.run.status === 'ended'
             ? '查看本局結局'
-            : '繼續第' + R.NUMERALS[state.run.stage] + '渡'
-    : '抽籤入江湖';
+            : '繼續第' + R.NUMERALS[state.run.stage] + '局'
+    : '睜眼';
   $('title-new').hidden = !hasSave;
   window.scrollTo({ top: 0, behavior: 'instant' });
   paint();
@@ -1018,11 +1032,30 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'start-primary':
       if (hasSave) enterBattle(false);
-      else openFormation();
+      else openPrologue();
       break;
     case 'title-new':
-      openFormation();
+      openPrologue();
       break;
+    case 'prologue-prev':
+    case 'prologue-next':
+    case 'prologue-skip': {
+      if (dialogState !== 'prologue') break;
+      keepName();
+      const steps = prologueSteps(state.run.chronicle, prologue.name),
+        ask = steps.findIndex((step) => step.ask);
+      if (action === 'prologue-prev') prologue.step = Math.max(0, prologue.step - 1);
+      // Skipping still stops at the name the first time, since it has to be given once.
+      else if (action === 'prologue-skip' && ask > prologue.step) prologue.step = ask;
+      else if (action === 'prologue-skip' || prologue.step >= steps.length - 1) {
+        openFormation();
+        break;
+      } else prologue.step++;
+      drawModal();
+      $('youth-name')?.focus({ preventScroll: true });
+      audio('tap');
+      break;
+    }
     case 'title-help':
       openPage('help');
       break;
@@ -1064,7 +1097,8 @@ function command(action, id, data = {}, keyboard = false) {
     case 'deploy':
       if (dialogState !== 'formation' || !draft) break;
       ++aiRun;
-      state = R.startRun(draft, state.run.chronicle);
+      state = R.startRun({ ...draft, name: prologue.name }, state.run.chronicle);
+      prologue = { step: 0, name: '' };
       draft = null;
       try {
         localStorage.removeItem(drawKey);
@@ -1222,9 +1256,9 @@ function command(action, id, data = {}, keyboard = false) {
         audio('tap');
         notice(
           state.run.last.terminal
-            ? '已寄入下次開局的船艙。'
+            ? '已寄在通吃坊，下一輪取用。'
             : G.ITEMS[id]
-              ? '已收入船上行囊。'
+              ? '已收入隊伍行囊。'
               : '抄本已入公庫，可在「隊伍・武譜招式」授予俠客。'
         );
       }
@@ -1393,6 +1427,13 @@ function command(action, id, data = {}, keyboard = false) {
       break;
   }
 }
+// Enter in the name field moves on, except while an input method is still composing.
+dialog.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.id === 'youth-name' && !e.isComposing) {
+    e.preventDefault();
+    command('prologue-next');
+  }
+});
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-do]');
   if (b && !b.disabled) command(b.dataset.do, b.dataset.id, b.dataset, e.detail === 0);

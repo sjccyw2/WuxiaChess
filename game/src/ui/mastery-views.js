@@ -30,7 +30,7 @@ const skillTabs = [
   ['loadout', 'swords', '招式配置']
 ];
 function tabs(group, options, current) {
-  return `<div class="mj-tabs" role="tablist" aria-label="${group === 'skill' ? '武學頁面' : '借刻鋪頁面'}">${options.map(([id, symbol, label]) => btn(`${group}-tab`, glyph(symbol) + `<span>${label}</span>`, 'mj-tab', `${data(id)} id="mj-tab-${id}" role="tab" aria-selected="${id === current}" tabindex="${id === current ? 0 : -1}" aria-controls="mj-panel-${id}"`)).join('')}</div>`;
+  return `<div class="mj-tabs" role="tablist" aria-label="${group === 'skill' ? '武學頁面' : '通吃坊頁面'}">${options.map(([id, symbol, label]) => btn(`${group}-tab`, glyph(symbol) + `<span>${label}</span>`, 'mj-tab', `${data(id)} id="mj-tab-${id}" role="tab" aria-selected="${id === current}" tabindex="${id === current ? 0 : -1}" aria-controls="mj-panel-${id}"`)).join('')}</div>`;
 }
 function tabPanel(id, content, options) {
   return options
@@ -262,7 +262,7 @@ function loadout(model, ui) {
   const studyLinks = [btn('skill-tab', '查看門派武學', 'mj-text-button', data('school'))];
   if (list(model.guides).some((n) => !n.learned))
     studyLinks.push(btn('skill-tab', '修習已授武譜', 'mj-text-button', data('guides')));
-  return `<div class="mj-slot-bar" role="group" aria-label="三格出戰招式">${slotControls}</div><div class="mj-subhead"><div><h4>可用招式</h4><p>${model.fieldStudy ? '可將剛參悟的招式配置一次。' : model.canConfigure === false ? '可於戰前整備、借刻鋪，或全隊尚未行動時換招。' : `選擇招式，裝入${slotName(index)}。`}</p></div>${clear}</div>${entries ? `<ul class="mj-library">${entries}</ul>` : '<p class="mj-empty">尚未習得可配置的招式。</p>'}<div class="mj-study-links">${studyLinks.join('')}</div>`;
+  return `<div class="mj-slot-bar" role="group" aria-label="三格出戰招式">${slotControls}</div><div class="mj-subhead"><div><h4>可用招式</h4><p>${model.fieldStudy ? '可將剛參悟的招式配置一次。' : model.canConfigure === false ? '可於戰前整備、通吃坊，或全隊尚未行動時換招。' : `選擇招式，裝入${slotName(index)}。`}</p></div>${clear}</div>${entries ? `<ul class="mj-library">${entries}</ul>` : '<p class="mj-empty">尚未習得可配置的招式。</p>'}<div class="mj-study-links">${studyLinks.join('')}</div>`;
 }
 
 function personalTraining(model, ui) {
@@ -300,8 +300,8 @@ function campRecap(model) {
         ? `＋${whole(model.reward)} 兩`
         : ''
       : text(model.reward);
-  const provenance = model.lost ? '此關失利' : '此關已過';
-  return `<section class="mj-berth">${illustration('run-merchant.webp')}<img class="fo-shop-face" src="${text(art('npc-sang.webp'))}" alt="渡船掌櫃桑婆婆"><div class="mj-berth-copy"><small>${glyph('pin', 13)}桑婆婆的渡船</small><h3>${text(model.stageName)}</h3><p>${provenance}${reward ? ` · ${reward}` : ''}${model.recruit ? ` · ${text(model.recruit)}入隊` : ''}</p></div></section>${model.objective || model.story ? `<details class="mj-origin mj-recap"><summary>${glyph('scroll', 14)}本關紀錄${glyph('down', 14)}</summary>${model.story ? `<p>${text(model.story)}</p>` : ''}${model.objective ? `<dl><div><dt>支線</dt><dd>${text(model.objective)}</dd></div></dl>` : ''}</details>` : ''}`;
+  const provenance = model.lost ? '此局失利' : '此局已過';
+  return `<section class="mj-berth">${illustration('run-merchant.webp')}<img class="fo-shop-face" src="${text(art('npc-wei.webp'))}" alt="通吃坊掌櫃韋小寶"><div class="mj-berth-copy"><small>${glyph('pin', 13)}韋小寶的通吃坊</small><h3>${text(model.stageName)}</h3><p>${provenance}${reward ? ` · ${reward}` : ''}${model.recruit ? ` · ${text(model.recruit)}入隊` : ''}</p></div></section>${model.objective || model.story ? `<details class="mj-origin mj-recap"><summary>${glyph('scroll', 14)}本局紀錄${glyph('down', 14)}</summary>${model.story ? `<p>${text(model.story)}</p>` : ''}${model.objective ? `<dl><div><dt>局中影</dt><dd>${text(model.objective)}</dd></div></dl>` : ''}</details>` : ''}`;
 }
 function productRow(item, coins) {
   const left = whole(item.left),
@@ -332,7 +332,7 @@ function shop(model) {
 }
 function campView(model) {
   const destination = model.final ? '結束此行' : '前往' + text(model.nextName);
-  return `<section class="mj-view mj-market">${titleHead('bag', '借刻鋪')}<div class="mj-tools fy-shopbar" data-frame-tools><strong>貨架</strong><div class="mj-wallet">${coin}<b>${whole(model.coins)}</b> 兩</div></div>${visitorInvite(model.visit)}${shop(model)}${btn('story', '重讀戰後對話', 'mj-text-button', 'data-id="after"')}<footer class="mj-footer">${model.final ? btn('home', '主畫面', 'mj-action') : btn('team', glyph('people', 16) + ' 整理隊伍', 'mj-action')}${btn('march', destination, 'gold-btn')}</footer></section>`;
+  return `<section class="mj-view mj-market">${titleHead('bag', '通吃坊')}<div class="mj-tools fy-shopbar" data-frame-tools><strong>貨架</strong><div class="mj-wallet">${coin}<b>${whole(model.coins)}</b> 兩</div></div>${visitorInvite(model.visit)}${shop(model)}${btn('story', '重讀戰後對話', 'mj-text-button', 'data-id="after"')}<footer class="mj-footer">${model.final ? btn('home', '主畫面', 'mj-action') : btn('team', glyph('people', 16) + ' 整理隊伍', 'mj-action')}${btn('march', destination, 'gold-btn')}</footer></section>`;
 }
 
 function selectionKeys(container, strip, selector) {

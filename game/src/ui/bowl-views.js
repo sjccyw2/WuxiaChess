@@ -12,14 +12,16 @@ function visitorInvite(v) {
   return (
     '<div class="lk-invite">' +
     picture(VISITOR.portrait) +
-    '<div><small>渡口奇遇</small><h3>' +
+    '<div><small>通吃坊開局</small><h3>' +
     VISITOR.title +
-    '</h3><span>周伯通 · ' +
-    (v.phase === 'claimed' ? '已贈一物' : '免費揭一碗') +
+    '</h3><span>' +
+    VISITOR.name +
+    ' · ' +
+    (v.phase === 'claimed' ? '已得一物' : '免費揭一盅') +
     '</span></div>' +
     btn(
       'meet-zhou',
-      v.phase === 'claimed' ? '查看贈物' : v.phase === 'hidden' ? '返回碗局' : '會會老頑童',
+      v.phase === 'claimed' ? '查看所得' : v.phase === 'hidden' ? '返回盅局' : '同他賭一手',
       'mj-action'
     ) +
     '</div>'
@@ -36,7 +38,7 @@ function bowlsPage(s, mixing) {
     .map((n, i) => {
       const face = shown || (done && i === v.pick);
       const id = shown ? v.cards[i] : face ? chosen : null;
-      const label = face ? lotName(id) : '第' + n + '碗';
+      const label = face ? lotName(id) : '第' + n + '盅';
       const content =
         picture(face ? lotImage(id) : 'bowl-cover.webp') +
         '<strong>' +
@@ -66,7 +68,7 @@ function bowlsPage(s, mixing) {
         'bowl-pick',
         content,
         'lk-lot lk-covered',
-        'data-id="' + i + '" aria-label="揭開第' + n + '碗" ' + style + (mixing ? ' disabled' : '')
+        'data-id="' + i + '" aria-label="揭開第' + n + '盅" ' + style + (mixing ? ' disabled' : '')
       );
     })
     .join('');
@@ -75,11 +77,15 @@ function bowlsPage(s, mixing) {
     titleHead('spark', VISITOR.title) +
     '<div class="lk-guest">' +
     picture(VISITOR.portrait) +
-    '<div><small>老頑童</small><h3>周伯通</h3><blockquote>' +
+    '<div><small>' +
+    VISITOR.alias +
+    '</small><h3>' +
+    VISITOR.name +
+    '</h3><blockquote>' +
     esc(copy) +
     '</blockquote></div></div>' +
     (shown
-      ? '<details class="fo-lore"><summary>船頭掌故</summary><p>' +
+      ? '<details class="fo-lore"><summary>這些東西的來歷</summary><p>' +
         esc(VISITOR.arrival) +
         '</p></details>'
       : '') +
@@ -89,15 +95,15 @@ function bowlsPage(s, mixing) {
     cards +
     '</div><p class="lk-status" role="status">' +
     (done
-      ? (s.run.last.terminal ? '下一航渡資' : '隊伍公庫') + '已收下' + esc(lotName(chosen)) + '。'
+      ? (s.run.last.terminal ? '通吃坊替你寄存了' : '隊伍公庫已收下') + esc(lotName(chosen)) + '。'
       : shown
-        ? '看清三樣贈物後，覆碗洗牌。'
+        ? '看清三樣東西後，扣盅換位。'
         : mixing
-          ? '周伯通正在換碗……'
-          : '選擇一碗，揭開即領取。') +
+          ? '韋小寶正在換盅……'
+          : '選擇一盅，揭開即領取。') +
     '</p><footer class="mj-footer">' +
-    btn('back-shop', '返回借刻鋪', 'mj-action') +
-    (shown ? btn('bowl-shuffle', icon('spark', 16) + ' 覆碗洗牌', 'gold-btn') : '') +
+    btn('back-shop', '返回通吃坊', 'mj-action') +
+    (shown ? btn('bowl-shuffle', icon('spark', 16) + ' 扣盅換位', 'gold-btn') : '') +
     '</footer></section>'
   );
 }

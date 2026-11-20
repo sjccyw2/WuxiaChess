@@ -5,7 +5,7 @@ import { normal, match, paginate, pager } from './search.js';
 import { toggleSection } from './sections.js';
 import { gameArt, wikiArt } from '../catalog/parts.js';
 import { BASELINE_ATTACK } from '../catalog/skills.js';
-import { legacy, loreShelf, featured } from './lore.js';
+import { loreShelf, featured } from './lore.js';
 
 function detailHead(r, g) {
   return (
@@ -93,21 +93,20 @@ export function home() {
     '<div class="home-title"><h2>查閱圖鑑</h2>' +
     anchor('#text', '遊戲原文 ↗') +
     '</div>' +
-    legacy('以下圖鑑') +
     '<div class="home-grid">' +
     [
       ['heroes', 'portraits-shen.webp'],
       ['skills', 'guide-cover.webp'],
       ['items', 'item-ironFan.webp'],
-      ['folk', 'npc-sang.webp'],
+      ['folk', 'npc-wei.webp'],
       ['foes', 'captain-9.webp'],
       ['missions', 'npc-tale-0.webp']
     ]
       .map(([g, f]) => shelf(g, f))
       .join('') +
     '</div>' +
-    '<div class="home-title"><h2>十渡輿圖</h2>' +
-    anchor('#maps', '查看十渡 →') +
+    '<div class="home-title"><h2>十局輿圖</h2>' +
+    anchor('#maps', '查看十局 →') +
     '</div><div class="atlas-strip">' +
     [0, 5, 9].map(artCard).join('') +
     '</div>' +
@@ -164,7 +163,6 @@ export function listPage(g, p) {
   const page = paginate(matched, p, textGroup ? 38 : 36);
   return (
     crumb(g) +
-    legacy('此分類') +
     '<div class="index-head"><h1>' +
     categories[g][0] +
     '</h1><span class="count">' +
@@ -191,7 +189,6 @@ export function entry(g, id) {
   return (
     '<article class="entry">' +
     crumb(g, r.name) +
-    legacy('此條目') +
     detailHead(r, g) +
     (g === 'skills' && r.sections[0]?.title === '招式數值'
       ? '<p class="revision">比較基準採攻擊 ' +
@@ -212,7 +209,6 @@ export function textEntry(id) {
   return (
     '<article class="entry">' +
     crumb('text', r.section) +
-    legacy('此條原文') +
     '<span class="tag">' +
     esc(r.group) +
     ' · ' +

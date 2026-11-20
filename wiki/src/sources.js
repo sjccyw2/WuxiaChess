@@ -22,6 +22,7 @@ export const TEXT_FILES = [
   'src/rules/form-rules.js',
   'src/rules/game.js',
   'src/ui/gates.js',
+  'src/data/hero-voices.js',
   'index.html',
   'src/ui/journey-pages.js',
   'src/rules/journey.js',

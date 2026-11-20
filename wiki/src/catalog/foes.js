@@ -3,7 +3,7 @@ import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, links, link, gameArt } from './parts.js';
 
-export const RANKS = ['守關人', '副將'];
+export const RANKS = ['局主', '副手'];
 export const stageName = (stage) => G.mapLayout(stage).name;
 export const stageLinks = (stage) => [
   link('maps', stage, stageName(stage)),

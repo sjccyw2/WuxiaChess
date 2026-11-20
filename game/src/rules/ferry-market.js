@@ -2,21 +2,23 @@ import * as G from './game.js';
 import { TECHNIQUES, MANUAL_PRICES } from '../data/martial-arts.js';
 import { random, shuffled } from './lots.js';
 
+// 韋小寶 keeps the shop (通吃坊) and runs its game of three cups. He is a living man who
+// wandered in, not a borrowed moment, so he is the one person who remembers every run.
 const VISITOR = {
-  name: '周伯通',
-  alias: '老頑童',
-  title: '三碗借時',
-  portrait: 'npc-zhoubotong.webp',
-  book: '射鵰英雄傳、神鵰俠侶',
-  bio: '周伯通在桃花島水邊練雙手互搏，聽見有人要搭船，兩隻手一齊伸了出去。上了桑婆婆的渡船，連一頓茶的工夫也要拿來玩三個碗。',
+  name: '韋小寶',
+  alias: '通吃坊掌櫃',
+  title: '三盅通吃',
+  portrait: 'npc-wei.webp',
+  book: '鹿鼎記',
+  bio: '他不會武功，沒有人請他，他是自己摸進來的。在谷裡開一爿通吃坊，賣藥、賣兵器，也開賭。人人都把這裡的事忘了，只有他記得每一回。問他，他就賴。',
   arrival:
-    '上一航沒跟人上岸的小東西，有時卡在船舷的縫裡。周伯通趁靠岸摸上一把，排開三隻木碗，說左右手各有一套藏法。',
-  reveal: '眼睛看仔細，我可要扣碗了。左手想教你記住，右手偏想瞧你猜錯，兩個各有各的樂子！',
-  blind: '三隻碗一樣重，我這兩隻手已經爭了一回。輪到你，揭一隻。',
-  win: '成啦，這件你收好。餘下的留我跟自己再賭一把。',
-  rules: '首渡獲勝必遇。其餘戰後有四成機會相逢。每次可免費揭一碗，三個位置機會均等。'
+    '上一輪沒給人帶走的小東西，都落在韋小寶手裡。他排開三隻木盅，說是白送，只看你眼力。',
+  reveal: '看仔細了，我可要扣盅啦。老規矩，三樣東西你揀一樣。……甚麼老規矩？我說了老規矩麼？你聽錯了。',
+  blind: '三隻盅一樣重。別看我的手，看了也沒用，我這雙手是在揚州練出來的。揭一隻。',
+  win: '成，這件歸你。餘下兩件我留著，下回再同你賭。',
+  rules: '第一局獲勝後必定開局。其餘各局戰後有四成機會。每次可免費揭一盅，三個位置機會均等。'
 };
-// Base prices exclude a small, seeded dock premium. Minimum depth is one-based.
+// Base prices exclude a small, seeded premium. Minimum depth is one-based.
 const MARKET_STOCK = {
   travelBlade: [23, 1],
   blueEdge: [33, 1],
@@ -46,7 +48,7 @@ const MARKET_STOCK = {
   greatPill: [18, 1]
 };
 const MARKET_RULES =
-  '每渡重排貨架，各抽兩件兵器、兩件護具、兩種丹藥與兩卷武譜。銀價較底價浮動零至三兩。武譜購回後須授予俠客並花武學點參悟。';
+  '每局重排貨架，各抽兩件兵器、兩件護具、兩種丹藥與兩卷武譜。銀價較底價浮動零至三兩。武譜購回後須授予俠客並花武學點參悟。';
 function pools(s) {
   const depth = s.run.stage + 1,
     roster = G.company(s);
@@ -60,7 +62,7 @@ function pools(s) {
   groups.manual = Object.keys(MANUAL_PRICES).filter((id) => manualStage(id) <= depth);
   return groups;
 }
-// The first ferry stop (counted from 1) whose shelf can carry this manual.
+// The first board (counted from 1) after which the shelf can carry this manual.
 function manualStage(id) {
   const tier = TECHNIQUES[id].tier;
   return tier > 4 ? Infinity : Math.max(1, tier - 1);
@@ -163,9 +165,9 @@ function pickBowl(s, position) {
     'item',
     '揭開第' +
       ['一', '二', '三'][position] +
-      '碗，拾得' +
+      '盅，得了' +
       lotName(id) +
-      (s.run.last.terminal ? '，收入下一航渡資。' : '，收入隊伍公庫。'),
+      (s.run.last.terminal ? '，寄在通吃坊，下一輪取用。' : '，收入隊伍公庫。'),
     VISITOR.name
   );
   return true;

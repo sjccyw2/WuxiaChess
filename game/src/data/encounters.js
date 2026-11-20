@@ -1,4 +1,5 @@
-// Stable actor IDs keep positions and health in earlier voyages intact.
+// Each board's master and lieutenant. A master is called at the moment of his obsession,
+// not of insight. Stable actor IDs keep positions and health in earlier saves intact.
 function adversary(name, school, book, basic, skill, style, visual, bio, mini, robe) {
   return { name, school, book, basic, skill, style, visual, bio, mini, robe };
 }
@@ -12,7 +13,7 @@ const ENCOUNTERS = [
       '摧心掌',
       'weak',
       'guard',
-      '青城掌門當年覬覦林家的辟邪劍譜，封過別人的歸路。青竹渡接住了封路時的舊影，森冷一掌壓得橋鏈咯咯作響。',
+      '青城掌門。為了林家的辟邪劍譜，他封過別人的歸路。他被請來的那一念，正是封路的時候：森冷一掌，壓得橋鏈咯咯作響。',
       'chief',
       ''
     ),
@@ -24,7 +25,7 @@ const ENCOUNTERS = [
       '駝峰毒霧',
       'poison',
       'duan',
-      '塞北明駝也在追尋辟邪劍譜。這道印影偏守橋尾，盯著鞋印，也盯著另一頭的余滄海，誰都休想叫他替自己跑腿。',
+      '塞北明駝也在追尋辟邪劍譜。他偏守橋尾，盯著鞋印，也盯著另一頭的余滄海，誰都休想叫他替自己跑腿。',
       'bandit',
       'sepia(.22)'
     )
@@ -64,7 +65,7 @@ const ENCOUNTERS = [
       '化功大法',
       'drain',
       'medic',
-      '蘆灘留下星宿老怪教眾弟子齊聲奉承時的口氣。幾十叢蘆葦跟著應和，他在喝采裡仍聽得出哪一口氣最弱。',
+      '星宿老怪要眾弟子齊聲奉承。幾十叢蘆葦跟著應和，他在喝采裡仍聽得出哪一口氣最弱。',
       'murong',
       'sepia(.22) hue-rotate(85deg)'
     ),
@@ -90,7 +91,7 @@ const ENCOUNTERS = [
       '血刀奇襲',
       'sweep',
       'xiao',
-      '血刀門第四代掌門熟知雪下伏路，一刀掃過棧道兩側。',
+      '血刀門第四代掌門熟知雪下伏路，一刀掃過棧道兩側。只要自己活得成，旁人的命他不放在心上。',
       'hu',
       'sepia(.25) hue-rotate(-30deg) saturate(1.4)'
     ),
@@ -116,7 +117,7 @@ const ENCOUNTERS = [
       '寒冰真氣',
       'weak',
       'duan',
-      '五嶽盟主聽見琴簫同奏，便想到天下有人寧認朋友也不認盟令。回牒留下他守在琴臺的印影，掌間寒氣仍能沿斷絃侵人經脈。',
+      '五嶽盟主聽見琴簫同奏，便想到天下有人寧認朋友也不認盟令。他守在琴臺，掌間寒氣能沿斷絃侵人經脈。',
       'chief',
       'saturate(.48) hue-rotate(135deg)'
     ),
@@ -142,7 +143,7 @@ const ENCOUNTERS = [
       '蛤蟆功',
       'sweep',
       'guo',
-      '西毒伏在潮線前蓄勢。石陣能分開蛇群，緊挨的同伴卻容易被掌風一併震傷。',
+      '西毒贏到了天下第一，卻忘了自己是誰。他伏在潮線前蓄勢；石陣能分開蛇群，緊挨的同伴卻容易被掌風一併震傷。',
       'murong',
       'sepia(.15) hue-rotate(28deg)'
     ),
@@ -168,7 +169,7 @@ const ENCOUNTERS = [
       '龍象般若功',
       'sweep',
       'guo',
-      '國師親臨襄陽的一段輪影，隨鼓槌停在將落未落之際。城上一聲更鼓，城下就是幾戶人家差半步的生路。',
+      '國師要破襄陽，立不世之功。城上一聲更鼓，城下就是幾戶人家差半步的生路。',
       'guo',
       'sepia(.65) saturate(1.3)'
     ),
@@ -180,7 +181,7 @@ const ENCOUNTERS = [
       '狂風迅雷功',
       'weak',
       'xiao',
-      '蒙古王子霍都拜金輪國師為師。這道印影守住襄陽東門的輪楔，摺扇一指，專挑守城人左右為難的地方下手。',
+      '蒙古王子霍都拜金輪國師為師。他守住襄陽東門的輪楔，摺扇一指，專挑守城人左右為難的地方下手。',
       'duan',
       'sepia(.25) hue-rotate(-32deg)'
     )
@@ -194,7 +195,7 @@ const ENCOUNTERS = [
       '冰魄銀針',
       'poison',
       'duan',
-      '赤練仙子拂塵掠過，玉上霜花便一一碎開。她認得苦候一聲回應的滋味，指間卻仍扣著冰魄銀針。',
+      '赤練仙子拂塵掠過，玉上霜花便一一碎開。她認得苦候一句話的滋味，指間卻仍扣著冰魄銀針。',
       'xiao',
       'sepia(.4) hue-rotate(-43deg) saturate(1.45)'
     ),
@@ -206,7 +207,7 @@ const ENCOUNTERS = [
       '赤練掌法',
       'exposed',
       'xiao',
-      '李莫愁的徒弟守著寒玉室出口，心裡仍記得門後那聲求援。',
+      '李莫愁的徒弟守著寒玉室出口，心裡仍記得霜底下那聲求援。',
       'medic',
       'sepia(.32) hue-rotate(26deg)'
     )
@@ -246,7 +247,7 @@ const ENCOUNTERS = [
       '斗轉星移',
       'sweep',
       'duan',
-      '回牒留下了慕容博尚在籌謀復燕時的印影。他握住歸印，盼再聽一次兒子沒說完的回話。兩名守陣人各繫一股星索，斷索可卸他的護勁。',
+      '慕容博握著燕國的玉璽，一生籌謀復國。他不讓銅漏的最後一滴水落下，只盼再聽一次兒子沒說完的話。兩名守索人各繫一股星索，斷索可卸他的護勁。',
       'murong',
       ''
     ),

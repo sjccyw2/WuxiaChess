@@ -2,14 +2,14 @@
 export const categories = {
   lore: ['世界觀設定', '念', '節'],
   run: ['單輪劇本', '局', '節'],
-  story: ['渡中紀事', '卷', '章'],
+  story: ['局中紀事', '卷', '章'],
   heroes: ['群俠列傳', '俠', '人'],
-  folk: ['江湖人物', '渡', '人'],
+  folk: ['江湖人物', '人', '人'],
   foes: ['群敵錄', '敵', '員'],
   skills: ['武學總譜', '武', '式'],
   items: ['百物譜', '物', '件'],
   missions: ['任務簿', '令', '項'],
-  maps: ['十渡輿圖', '圖', '圖'],
+  maps: ['十局輿圖', '圖', '圖'],
   text: ['遊戲原文', '文', '條']
 };
 export const $ = (id) => document.getElementById(id);

@@ -17,7 +17,7 @@ function stageMission(stage) {
   return {
     id: 'map-' + stage,
     name: stageName(stage) + ' · ' + m.name,
-    tag: '渡口支線',
+    tag: '救局中影',
     summary: m.instruction,
     image: wikiArt('map-' + stage + '.webp'),
     sections: [
@@ -29,7 +29,7 @@ function stageMission(stage) {
         ['通關獎勵', NOTES.clearReward(G.REWARDS)]
       ]),
       speech('支線紀事', G.SIDE_TALES[m.goal]),
-      links('同渡條目', [
+      links('同局條目', [
         link('maps', stage, stageName(stage)),
         link('foes', 'enc-' + stage + '-0', m.boss),
         link('story', 'map-' + stage, stageName(stage) + '對白'),

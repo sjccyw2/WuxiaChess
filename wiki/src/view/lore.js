@@ -1,9 +1,8 @@
-// Pages of the hand-written manuscripts (世界觀設定, 單輪劇本), and the notice shown on
-// entries that still describe the current build.
+// Pages of the hand-written manuscripts (世界觀設定, 單輪劇本).
 import { store } from '../store.js';
 import { categories, esc, href, anchor, crumb, srcText } from './html.js';
 
-// Inside a manuscript's text: **bold**; "第 N 節" links to that section of the same
+// Inside a manuscript's text: **bold** and `code`; "第 N 節" links to that section of the same
 // manuscript and "世界觀第 N 節" to the world view; 《世界觀設定》 and 《單輪劇本》 link to
 // those manuscripts.
 const text = (v, g) =>
@@ -12,6 +11,7 @@ const text = (v, g) =>
       /\*\*(.+?)\*\*( ?)/g,
       (m, t, gap) => '<strong>' + t + '</strong>' + (/[。：；！？）」]$/.test(t) ? '' : gap)
     )
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/(世界觀)?第 (\d+) 節/g, (m, world, n) => {
       const to = world ? 'lore' : g,
         r = store.entries[to]?.find((v) => v.num === +n);
@@ -57,19 +57,6 @@ function blocks(list, g) {
     })
     .join('');
 }
-
-// Everything outside 世界觀設定 is read from the current game, which predates the new
-// world view. This notice says so wherever that content is shown.
-export const legacy = (lead = '此頁') =>
-  store.docs?.lore
-    ? '<p class="legacy">' +
-      lead +
-      '記錄現行遊戲版本《' +
-      esc(store.game) +
-      '》的內容，尚未依新世界觀改寫。' +
-      anchor('#lore', '查看世界觀設定 →') +
-      '</p>'
-    : '';
 
 export function loreIndex(g) {
   const w = store.docs[g],

@@ -1,4 +1,4 @@
-import { WORLD, WAKES, FATES } from '../data/wake-tale.js';
+import { WORLD, WAKES, FATES, FATE_PROMPT } from '../data/wake-tale.js';
 import { art } from './artwork.js';
 import { titleHead, btn, esc } from './panels.js';
 
@@ -12,7 +12,7 @@ function wakeJournal(profile, voyage, expanded = false) {
       '"><span>' +
       '一二三四五'[i] +
       '</span><strong>' +
-      (i < opened ? esc(wake.mark) : '未開') +
+      (i < opened ? esc(wake.mark) : '未刻') +
       '</strong></li>'
   ).join('');
   const history = (profile.fates || [])
@@ -23,35 +23,29 @@ function wakeJournal(profile, voyage, expanded = false) {
       (f) => '<details><summary>' + esc(f.name) + '</summary><p>' + esc(f.ending) + '</p></details>'
     )
     .join('');
-  const known = WAKES.slice(0, Math.min(voyage || 0, 5))
+  // How each mark came to be there. Only marks already on the stone are told.
+  const known = WAKES.slice(0, opened)
     .map(
-      (w) =>
-        '<details><summary>' +
-        esc(w.name) +
-        '</summary><p>' +
-        esc(w.opening.note) +
-        '</p><p>' +
-        esc(w.opening.text) +
-        '</p></details>'
+      (w) => '<details><summary>' + esc(w.name) + '</summary><p>' + esc(w.carve) + '</p></details>'
     )
     .join('');
   return (
     '<details class="hud-disclosure wake-journal"' +
     (expanded ? ' open' : '') +
-    '><summary>五孔回水尺<span>' +
+    '><summary>石上的痕<span>' +
     opened +
-    '／5 孔</span></summary><div class="wake-leaf">' +
+    '／5 道</span></summary><div class="wake-leaf">' +
     '<img src="' +
-    esc(art('wake-gauge.webp')) +
-    '" alt="桐木舵凳乾面上，嵌著五個小孔的舊銅尺">' +
-    '<ol aria-label="回水尺刻痕">' +
+    esc(art('stone-marks.webp')) +
+    '" alt="石臺旁的石壁，上面留著少年每一輪刻下的記號">' +
+    '<ol aria-label="石上的痕">' +
     holes +
     '</ol><p>' +
     esc(WORLD[5].text) +
     '</p>' +
     known +
     outcomes +
-    '<details><summary>渡口的規矩</summary>' +
+    '<details><summary>帖上與石上讀到的事</summary>' +
     WORLD.filter((v, i) => i !== 5)
       .map((v) => '<p><strong>' + esc(v.name) + '</strong>　' + esc(v.text) + '</p>')
       .join('') +
@@ -60,7 +54,7 @@ function wakeJournal(profile, voyage, expanded = false) {
 }
 
 function journalPage(s) {
-  return titleHead('scroll', '渡行手記') + wakeJournal(s.run.chronicle, s.run.voyage, true);
+  return titleHead('scroll', '石上的痕') + wakeJournal(s.run.chronicle, s.run.voyage, true);
 }
 
 function fatePage(s) {
@@ -76,7 +70,9 @@ function fatePage(s) {
       '</p></section>'
     );
   return (
-    '<section class="wake-choice"><h3>歸印交給誰？</h3><div>' +
+    '<section class="wake-choice"><h3>' +
+    esc(FATE_PROMPT) +
+    '</h3><div>' +
     FATES.map((f) =>
       btn(
         'choose-fate',
