@@ -10,6 +10,8 @@
     />
     <title>劍影江湖 · 十漏迷津</title>
     <link rel="icon" type="image/svg+xml" href="assets/seal.svg" />
+    <!-- The title's font, asked for with the page instead of after the stylesheets. -->
+    <link rel="preload" href="assets/river-serif.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="styles/01-base.css" />
     <link rel="stylesheet" href="styles/02-materials.css" />
     <link rel="stylesheet" href="styles/03-lots.css" />
@@ -23,6 +25,15 @@
     <link rel="stylesheet" href="styles/11-extra-fonts.css" />
     <link rel="stylesheet" href="styles/12-combat.css" />
     <link rel="stylesheet" href="styles/13-panels.css" />
+    <!--
+      The three modules most of the import graph hangs off. With them already here the
+      browser finds the rest in fewer round trips. A stale entry costs only that saving.
+    -->
+    <link rel="modulepreload" href="src/scene/board.js" />
+    <link rel="modulepreload" href="src/scene/environment.js" />
+    <link rel="modulepreload" href="src/actors/actors.js" />
+    <!-- The title's fighters: behind the font and the scripts, ahead of the larger sheets. -->
+    <link rel="preload" href="assets/battle-poses.png" as="image" fetchpriority="low" />
   </head>
   <body>
     <section class="opening" id="start-screen" aria-labelledby="game-title">
@@ -143,7 +154,8 @@
       <div class="modal-shell"><div id="modal-content"></div></div>
     </dialog>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="vendor/three.min.js"></script>
+    <!-- defer: still runs first, but no longer holds the parser back from the modules below. -->
+    <script src="vendor/three.min.js" defer></script>
     <script type="module" src="src/app.js"></script>
   </body>
 </html>
