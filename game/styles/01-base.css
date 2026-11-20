@@ -1,6 +1,8 @@
 @font-face {
   font-family: RiverSerif;
-  src: url('../assets/river-serif.woff') format('woff');
+  src:
+    url('../assets/river-serif.woff2') format('woff2'),
+    url('../assets/river-serif.woff') format('woff');
   font-style: normal;
   font-weight: 200 900;
   font-display: swap;

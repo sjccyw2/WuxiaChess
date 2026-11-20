@@ -679,7 +679,9 @@
 
 @font-face {
   font-family: RiverSans;
-  src: url('../assets/river-sans.woff') format('woff');
+  src:
+    url('../assets/river-sans.woff2') format('woff2'),
+    url('../assets/river-sans.woff') format('woff');
   font-weight: 400 600;
   font-display: swap;
 }
