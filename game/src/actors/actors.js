@@ -7,6 +7,7 @@ import { paintTechniqueStroke } from '../fx/technique-strokes.js';
 import { paintTechniqueTier } from '../fx/technique-tiers.js';
 import { paintSkillEffect } from '../fx/skill-effects.js';
 import { Impact } from '../fx/impact.js';
+import { POLISH } from '../polish.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
 import {
   compactImage,
@@ -282,6 +283,7 @@ class ActorLayer {
       full = this.prefs.motion;
     // The last blow against a piece that has fallen is the killing blow.
     const lastBlow = new Map();
+    const lanes = new Map();
     for (const [index, [id, value, reason]] of items.entries())
       if (value.startsWith('−') && reason !== 'sacrifice') lastBlow.set(id, index);
     for (const [index, [id, value, reason]] of items.entries()) {
@@ -346,7 +348,22 @@ class ActorLayer {
           lead: counter || index === 0,
           kill
         });
-      if (full) this.effects.push({ kind: 'number', target: id, value, start, end: start + 800 });
+      if (full) {
+        const number = { kind: 'number', target: id, value, start, end: start + 800 };
+        if (POLISH.damagePop) {
+          number.tone = this.impact.tone(
+            value,
+            reason,
+            hurt ? -amount / struck.maxHp : 0,
+            rank,
+            kill
+          );
+          number.lane = lanes.get(id) || 0;
+          if (number.tone !== 'word') lanes.set(id, number.lane + 1);
+          number.end = start + 1100;
+        }
+        this.effects.push(number);
+      }
     }
     this.exchange = null;
     this.notify();
@@ -876,6 +893,10 @@ class ActorLayer {
         continue;
       }
       if (!this.prefs.motion) continue;
+      if (e.tone) {
+        this.impact.number(c, e, u);
+        continue;
+      }
       const pos = this.location(u, now);
       const to = this.point(pos.x, pos.y, 0.72),
         glow =
@@ -915,7 +936,8 @@ class ActorLayer {
       }
       c.restore();
     }
-    this.effects = this.effects.filter((e) => now < e.end);
+    // A restyled number lives on the unheld clock and says itself when it is done.
+    this.effects = this.effects.filter((e) => (e.tone && e.born != null ? !e.done : now < e.end));
   }
   draw(realTime, title, reach, hover, covered = false) {
     this.advance(realTime, covered);

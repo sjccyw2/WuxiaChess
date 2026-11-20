@@ -13,6 +13,16 @@ const STOP = [46, 52, 62, 84, 108];
 // Pixels of camera kick at a 900px-tall view. Light blows do not shake the screen.
 const KICK = [0, 0, 2.5, 6, 9];
 
+const TONES = {
+  // [top, bottom, outline, size factor]
+  hurt: ['#fffaf0', '#ffd27a', '#2b1410', 1],
+  heavy: ['#fff6d6', '#ff9a3d', '#30110a', 1.18],
+  kill: ['#ffffff', '#ff5a36', '#3a0906', 1.38],
+  heal: ['#f3fff4', '#72e6a0', '#0d3323', 1],
+  cost: ['#f0e9ff', '#b9a3e8', '#231a36', 0.86],
+  word: ['#fff7e2', '#f0cf8d', '#2a1c12', 0.74]
+};
+
 // Deterministic scatter: the same blow always breaks the same way.
 function scatter(seed) {
   let s = seed >>> 0 || 1;
@@ -273,6 +283,101 @@ class Impact {
       c.restore();
     }
     if (!live) this.sparks.length = 0;
+  }
+
+  // ---- damage numbers ----------------------------------------------------------------
+  tone(value, reason, ratio, rank, kill) {
+    if (value.startsWith('+')) return 'heal';
+    if (!value.startsWith('−')) return 'word';
+    if (reason === 'sacrifice') return 'cost';
+    if (kill) return 'kill';
+    return ratio >= 0.3 || rank >= 3 ? 'heavy' : 'hurt';
+  }
+  // Renders a number once into its own small canvas: outline, gradient fill and shadow.
+  label(text, tone) {
+    const layer = this.layer,
+      [top, bottom, outline, factor] = TONES[tone];
+    const ratio = layer.canvas.width / layer.width;
+    const px = clamp(layer.height * 0.042, 19, 30) * factor;
+    const word = tone === 'word';
+    const font =
+      (word ? '700 ' : 'italic 900 ') +
+      px * ratio +
+      'px ' +
+      (word
+        ? 'RiverSerif, "Noto Serif TC", "Songti TC", serif'
+        : 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif');
+    const canvas = document.createElement('canvas');
+    let c = canvas.getContext('2d');
+    c.font = font;
+    const edge = Math.max(2, px * 0.105) * ratio,
+      pad = edge + px * 0.2 * ratio;
+    const metrics = c.measureText(text);
+    canvas.width = Math.ceil(metrics.width + pad * 2 + px * 0.2 * ratio);
+    canvas.height = Math.ceil(px * ratio * 1.2 + pad * 2);
+    c = canvas.getContext('2d');
+    c.font = font;
+    c.textBaseline = 'alphabetic';
+    c.lineJoin = 'round';
+    const x = pad,
+      y = pad + px * ratio * 0.96;
+    // A dark outline with a soft drop shadow, then the lit face.
+    c.shadowColor = 'rgba(8,6,5,.6)';
+    c.shadowBlur = px * 0.12 * ratio;
+    c.shadowOffsetY = px * 0.07 * ratio;
+    c.strokeStyle = outline;
+    c.lineWidth = edge * 2;
+    c.strokeText(text, x, y);
+    c.shadowColor = 'transparent';
+    const face = c.createLinearGradient(0, pad, 0, pad + px * ratio * 1.05);
+    face.addColorStop(0.18, top);
+    face.addColorStop(0.92, bottom);
+    c.fillStyle = face;
+    c.fillText(text, x, y);
+    return { canvas, w: canvas.width / ratio, h: canvas.height / ratio, px };
+  }
+  // Draws one number effect. Its age runs on the unheld clock, so it pops during the hit-stop.
+  number(c, e, unit) {
+    const layer = this.layer;
+    if (e.born == null) {
+      e.born = this.clock;
+      e.label = this.label(e.value, e.tone);
+    }
+    const age = this.clock - e.born,
+      life = e.tone === 'kill' ? 980 : 880;
+    if (age >= life) {
+      e.done = true;
+      e.label = null;
+      return;
+    }
+    const pos = layer.location(unit, layer.time);
+    const anchor = layer.point(pos.x, pos.y, 1.52),
+      { canvas, w, h, px } = e.label;
+    const strong = e.tone === 'kill' || e.tone === 'heavy';
+    const peak = e.tone === 'kill' ? 1.55 : strong ? 1.4 : 1.28;
+    const scale =
+      age < 90
+        ? mix(0.45, peak, easeOut(age / 90))
+        : age < 230
+          ? mix(peak, 1, easeOut((age - 90) / 140))
+          : 1;
+    // A quick hop off the head, then a slow drift. A second number on the same piece
+    // stacks above the first; a status word sits beside the numbers, not on them.
+    const base = px / TONES[e.tone][3];
+    const rise = base * (0.45 * easeOut(Math.min(1, age / 220)) + 0.35 * (age / life));
+    const x = anchor.x + (e.tone === 'word' ? base * 2.3 : 0),
+      y = anchor.y - rise - (e.tone === 'word' ? 0 : (e.lane || 0) * base * 1.15);
+    c.save();
+    c.globalAlpha = Math.min(1, age / 50, (life - age) / 200);
+    c.translate(x, y);
+    if (e.tone === 'kill' && age < 150) {
+      // A killing blow rattles for a moment before it settles.
+      const jolt = (1 - age / 150) * px * 0.09;
+      c.translate(Math.sin(age * 0.21) * jolt, Math.cos(age * 0.27) * jolt);
+    }
+    c.scale(scale, scale);
+    c.drawImage(canvas, -w / 2, -h * 0.62, w, h);
+    c.restore();
   }
 }
 
