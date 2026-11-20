@@ -689,6 +689,8 @@ function field(m, index, cells, p, size) {
     if (index === 7 && k === 'reeds') continue;
     if (k === 'reeds' || k === 'bridge') puddle(m, x, z, index, p, k === 'bridge');
     else if (index !== 4) plain(m, x, z, index, p);
+    // 空山琴臺 dresses its own tiles in landforms/props-4.js.
+    if (index === 4) continue;
     m.frame(x, 0, z, 0, 1, () => {
       if (k === 'cover') cover(m, index, p);
       else if (k === 'bamboo') brush(m, index, p);
@@ -1044,6 +1046,8 @@ function lowerLandscape(m, index, p, layout) {
 function ranges(m, index, p) {
   const r = m.rng,
     style = setting(index);
+  // 空山琴臺 raises its own spires and cloud banks in landforms/peaks-4.js.
+  if (index === 4) return;
   if (index === 9) {
     for (let j = 0; j < 74; j++) {
       const a = (j * circle) / 74 + r.range(-0.11, 0.11),
