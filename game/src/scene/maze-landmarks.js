@@ -718,22 +718,7 @@ function landmarks(index, add) {
     makeTree('聽風松', -6.59, -2.03, 1.14, 'pine', 1.1);
     makeTree('琴臺側柏', 6.71, 0.62, 0.86, 'pine', 2.49);
   } else if (index === 5) {
-    for (const [j, x, z, h, yaw] of [
-      [0, -4.76, -6.69, 1.09, 0.41],
-      [1, -1.42, -7.4, 1.22, 1.9],
-      [2, 3.28, -7.0, 1.21, -0.7],
-      [3, -7.06, -2.53, 1.26, 0.57],
-      [4, -6.91, 3.18, 1.21, 1.84],
-      [5, 6.77, -2.1, 1.0, 0.33]
-    ]) {
-      makeTree('桃林' + j, x, z, h, 'peach', yaw);
-    }
-    add('桃陣三石門', 1.11, -6.18, 0, (m) => {
-      standingStone(m, 2.45, 0.96, 0x71786c, 0xcfb685);
-      m.frame(1.74, 0, 0, 0.16, 1, () => standingStone(m, 2.27, 0.91, 0x818476, 0xc4ae85));
-      m.rock(0.89, 2.03, 0, 1.4, 0.49, 0.42, 0x818477, 0x969783, 8, 0.1);
-    });
-    add('八方陣石', -6.26, 0.16, 1.1, (m) => standingStone(m, 2.14, 0.96, 0x748078, 0xd0ac84));
+    // The peach trees, gates and the formation's eye stone are built in landforms/*-5.js.
   } else if (index === 6) {
     add('襄陽破城牆', -1.25, -6.47, 0, (m) => ruinedWall(m, 7.2, 2.4));
     add('殘垣箭樓', 3.62, -6.77, 0.04, (m) => ruinedWall(m, 2.35, 3.34, true));
