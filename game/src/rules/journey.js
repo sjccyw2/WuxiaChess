@@ -10,7 +10,7 @@ import {
   blankRecord,
   CONDITION_NAMES
 } from './battle-mastery.js';
-import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE } from '../data/mastery-catalog.js';
+import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE, RECALL_NOTE } from '../data/mastery-catalog.js';
 import * as G from './game.js';
 import { mapLayout } from '../data/terrain.js';
 import { TECHNIQUES, MANUAL_PRICES, CAPTAINS } from '../data/martial-arts.js';
@@ -99,6 +99,7 @@ function initialRun(ids, seed, legacy) {
   chronicle.returns ??= chronicle.wins;
   fillProfile(chronicle);
   const run = {
+    trees: TREES_EDITION,
     voyage: chronicle.returns + 1,
     priorFate: chronicle.lastFate,
     seed,
@@ -198,8 +199,132 @@ function uniqueMembers(ids, allowed) {
     ids.every((id) => allowed.includes(id))
   );
 }
+// The skill redesign renamed some arts and removed others. Saves name arts by id, so a save's ids
+// are brought up to date before it is checked: a renamed id keeps its meaning, and a removed id is
+// forgotten and its points returned (from this table, since the catalogue no longer has it).
+const TECHNIQUES_RENAMED = Object.freeze({ nineYang: 'yijinjing' });
+// The hero trees as they stood before the redesign: every node and the points it cost. Prices,
+// tiers and prerequisites changed throughout, and twelve nodes went, so a save from before it gives
+// all of these back and the player buys again in the new trees. Shop manuals are not in the table.
+const TREES_EDITION = 2;
+const OLD_TREE_POINTS = {
+  mountainOpening: 1, breakSword: 2, breakArrow: 1, breakPalm: 2, breakQi: 2, ninefoldIntent: 3,
+  sheathedDagger: 1, returningSong: 2, blackNeedle: 2, bambooWard: 1, qinXiaoRally: 2,
+  clearHeartCoda: 3, ironChainForm: 1, sweepingWhip: 2, reverseForce: 2, chainShelter: 1,
+  bloodAtPass: 2, earthThroughChain: 3, southernStance: 1, vacantFist: 2, fieldDragonWard: 1,
+  flyingDragon: 3, armyBookRally: 2, dragonReserve: 3, jadeThread: 1, sparrowSteps: 1,
+  jadeNeedle: 2, pairedHands: 3, silkBell: 2, maidenHarmony: 3, fingerPrimer: 1, northernSea: 2,
+  ripplingSteps: 2, shangYang: 2, lesserMarsh: 2, sixMeridians: 3, huangPetals: 1, peachWard: 1,
+  orchidPoint: 2, beggarBind: 2, peachGate: 2, staffWithoutDogs: 3, darkIronEdge: 1,
+  jadeFluteCut: 1, tideBreaker: 2, toadLunge: 2, mournfulCloud: 2, solitaryPalm: 3, taijiGate: 1,
+  valleyPulse: 1, taijiSword: 2, nineYangMantle: 2, holyFireTurn: 2, universeCanopy: 3,
+  huQuickDraw: 1, snowPursuit: 1, silkwormPalm: 2, foxFeint: 1, foxWrist: 2, foxTwinChange: 3
+};
+const TECHNIQUES_REMOVED = Object.freeze(
+  Object.fromEntries(Object.entries(OLD_TREE_POINTS).map(([id, points]) => [id, { points }]))
+);
+// 青鋒劍 left the shop when its place went to 楊過's 古墓長劍. A save still holding one gets its
+// price back: the hero who carried it takes up their own weapon, and it leaves shelf and stores.
+const ITEMS_REMOVED = Object.freeze({ blueEdge: 33 });
+function dropRemovedItems(s) {
+  const r = s.run;
+  for (const [id, price] of Object.entries(ITEMS_REMOVED)) {
+    let count = 0;
+    for (const u of [...s.units, ...(Array.isArray(r.bench) ? r.bench : [])]) {
+      if (u?.weapon !== id) continue;
+      const own = G.startingHero(u.id).weapon;
+      if (s.stock?.[own] > 0) s.stock[own]--;
+      u.weapon = own;
+      count++;
+    }
+    for (const stock of [s.stock, r.chronicle?.parcel?.stock])
+      if (stock && id in stock) {
+        count += Number.isInteger(stock[id]) && stock[id] > 0 ? stock[id] : 0;
+        delete stock[id];
+      }
+    if (Array.isArray(r.shop)) r.shop = r.shop.filter((o) => o?.id !== id);
+    if (count && Number.isInteger(r.coins)) r.coins += count * price;
+  }
+}
+function migrateSave(s, removed = TECHNIQUES_REMOVED, renamed = TECHNIQUES_RENAMED) {
+  const r = s?.run;
+  if (!r || !Array.isArray(s.units)) return s;
+  dropRemovedItems(s);
+  // A save made under the new trees keeps what it learned; only renames still apply to it.
+  if (r.trees === TREES_EDITION) removed = {};
+  r.trees = TREES_EDITION;
+  // A rename applies once the catalogue has the new id in place of the old one.
+  const names = new Map(
+    Object.entries(renamed).filter(([from, to]) => TECHNIQUES[to] && !TECHNIQUES[from])
+  );
+  const rename = (list) => (Array.isArray(list) ? list.map((id) => names.get(id) ?? id) : list);
+  const gone = (id) => Object.hasOwn(removed, id);
+  let refunded = false;
+  const bench = Array.isArray(r.bench) ? r.bench : [];
+  for (const u of [...s.units.filter((u) => u?.side === 'ally'), ...bench]) {
+    if (!u) continue;
+    for (const k of ['learned', 'guides', 'slots', 'unplacedArts']) u[k] = rename(u[k]);
+    u.activeArt = names.get(u.activeArt) ?? u.activeArt;
+    const lost = Array.isArray(u.learned) ? u.learned.filter(gone) : [];
+    if (Array.isArray(u.slots)) u.slots = u.slots.map((id) => (gone(id) ? null : id));
+    if (Array.isArray(u.unplacedArts)) u.unplacedArts = u.unplacedArts.filter((id) => !gone(id));
+    if (gone(u.activeArt)) u.activeArt = u.slots?.find(Boolean) || null;
+    if (!lost.length) continue;
+    u.learned = u.learned.filter((id) => !gone(id));
+    u.sp = (u.sp || 0) + lost.reduce((n, id) => n + removed[id].points, 0);
+    refunded = true;
+  }
+  r.manuals = rename(r.manuals);
+  if (r.chronicle?.parcel) r.chronicle.parcel.manuals = rename(r.chronicle.parcel.manuals);
+  if (Array.isArray(r.shop))
+    for (const o of r.shop) if (o && names.has(o.id)) o.id = names.get(o.id);
+  if (refunded && Array.isArray(s.logs))
+    G.log(s, 'system', '武學譜重修：已失傳的招式退還武學點數。', '武學傳承');
+  return s;
+}
+// Per-board bookkeeping kept on a hero; `advance` clears it for the next board.
+const BOARD_MARKS = [
+  'struckRound',
+  'hurtRound',
+  'walked',
+  'glideLeft',
+  'againRound',
+  'orderedRound',
+  'usedOnce',
+  'cooldowns'
+];
+const ROUND_MARKS = [...BOARD_MARKS.slice(0, 6), 'signaturePush', 'lastSiphonRound', 'lastDazeRound'];
+// Older saves have none of these fields; a malformed one is dropped rather than failing the save.
+function tidyMarks(s) {
+  for (const u of [...s.units, ...s.run.bench]) {
+    for (const k of ROUND_MARKS) if (u[k] != null && !Number.isFinite(u[k])) delete u[k];
+    for (const k of ['woke', 'phased']) if (u[k] != null && typeof u[k] !== 'boolean') delete u[k];
+    const once = u.usedOnce,
+      cool = u.cooldowns;
+    if (once != null && !(Array.isArray(once) && once.every((id) => typeof id === 'string')))
+      delete u.usedOnce;
+    if (cool != null && !(typeof cool === 'object' && Object.values(cool).every(Number.isInteger)))
+      delete u.cooldowns;
+  }
+  if (s.zones != null) {
+    const zones = Array.isArray(s.zones)
+      ? s.zones.filter(
+          (z) =>
+            z &&
+            typeof z.owner === 'string' &&
+            Number.isInteger(z.through) &&
+            z.through >= s.round &&
+            Array.isArray(z.tiles) &&
+            z.tiles.every((p) => p && Number.isInteger(p.x) && Number.isInteger(p.y))
+        )
+      : [];
+    if (zones.length) s.zones = zones;
+    else delete s.zones;
+  }
+}
 function restoreRun(raw) {
   if (!raw) return null;
+  if ([4, 5].includes(raw.version)) migrateSave(raw);
   if (![4, 5].includes(raw.version)) {
     const s = G.restoreGame(raw);
     if (!s) return null;
@@ -428,6 +553,7 @@ function restoreRun(raw) {
     !s.units.every(validConditions)
   )
     return null;
+  tidyMarks(s);
   for (const u of members) {
     if (u.id === 'yang' && u.step === 3) u.step = 4;
     G.settleExperience(s, u);
@@ -463,7 +589,7 @@ function dialogue(s, scene = s.run.scene) {
     (before && G.find(s, r.openingCast?.[1])) || G.party(s).find((u) => u !== captain) || captain;
   const cast = {
     boss: G.find(s, G.commanderId(s)),
-    mini: G.enemies(s).find((u) => u.encounterId),
+    mini: G.enemies(s).find((u) => u.encounterId?.startsWith('lieutenant-')),
     leader: captain,
     ally
   };
@@ -517,7 +643,8 @@ function dialogue(s, scene = s.run.scene) {
       info = person && G.unitDetails(person);
     return {
       speaker: off?.name || info?.name || '',
-      role: off?.role || info?.role || '',
+      // A hero's role label is not shown; enemies and off-board people keep theirs.
+      role: off?.role || (person && G.ally(person) ? '' : info?.role) || '',
       person,
       portrait: off?.portrait || '',
       note: beat.note || '',
@@ -783,8 +910,9 @@ function defenders(s) {
       depth >= 7 ? 2 : 1
     ]
   ];
+  const keys = G.encounterKeys(map);
   for (const [i, id] of ids.entries()) {
-    const [hp, atk, def, step, range] = stats[i],
+    const [hp, atk, def, step, range] = G.withMods(stats[i], G.DETAILS[keys[i]]?.traits?.mods),
       p = layout.enemies[i];
     units.push(G.makeUnit(id, 'enemy', p.x, p.y, hp, 0, atk, def, step, range));
   }
@@ -820,7 +948,9 @@ function advance(s) {
     delete u.conditions;
     delete u.blinkSerial;
     delete u.unplacedArts;
+    for (const k of BOARD_MARKS) delete u[k];
   }
+  delete s.zones;
   const line = ids.map((id) =>
     Object.assign(
       all.find((u) => u.id === id),
@@ -1042,6 +1172,7 @@ function treeModel(s, u) {
     pathTitle: path.title,
     origin: path.origin,
     originNote: CATALOG_NOTE,
+    recallNote: RECALL_NOTE,
     sp: u.sp,
     camp: s.run.status === 'camp',
     leaderName: COMMANDS[u.id].name,
@@ -1110,4 +1241,4 @@ function campModel(s) {
   };
 }
 
-export { NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

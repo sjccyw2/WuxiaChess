@@ -20,7 +20,7 @@ const slotName = (i) => ['第一格', '第二格', '第三格'][i];
 const kindNames = {
   root: '根基',
   basic: '基本招式',
-  signature: '成名絕學',
+  signature: '根基',
   active: '主動招式',
   refinement: '絕技精修'
 };
@@ -195,7 +195,8 @@ function schoolContents(model, ui) {
   const nodes = list(model.school),
     current = chooseNode(nodes, ui.node);
   if (!current) return '<p class="mj-empty">此俠客尚無門派武學可供查看。</p>';
-  return `<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
+  const recall = model.recallNote ? `<p class="mj-recall">${text(model.recallNote)}</p>` : '';
+  return `${recall}<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
 }
 function guideContents(model, ui) {
   const nodes = list(model.guides),
@@ -252,7 +253,7 @@ function loadout(model, ui) {
         a.source === 'guides'
           ? '授業武譜'
           : a.source === 'signature' || a.id === 'signature'
-            ? '成名絕學'
+            ? '根基'
             : '門派武學';
       const label = here ? '已配置' : used >= 0 ? '移至此格' : '配置此格';
       return `<li class="mj-library-row"><span class="mj-item-symbol">${glyph(a.icon, 20)}</span><div><small>${what}${used >= 0 ? ` · ${slotName(used)}` : ''}</small><h4>${text(a.name)}</h4>${reach(a.facts)}${factBadge(a.facts)}</div>${btn('slot-set', label, 'mj-action mj-compact', `${data(a.id)} data-slot="${index}" ${here || a.canEquip === false ? 'disabled' : ''} aria-label="${text(a.name)}${here ? '已配置於' : '配置到'}${slotName(index)}"`)}</li>`;

@@ -7,6 +7,55 @@ import { commandBonus, effectsOf, effectDescription } from './battle-mastery.js'
 const percent = (fraction) => Math.round(fraction * 100) + '%';
 const roots = { force: '攻擊 ＋3', guard: '防禦 ＋2', breath: '絕技威力 ＋5、內力消耗 −2' };
 
+const plus = (n) => '＋' + n.toFixed(2);
+const ANSWERED = { close: '近身（射程 1）', ranged: '遠攻（射程 2 以上）', master: '局主或副手' };
+// The conditional bonuses of an art, as rules rather than as this strike's numbers.
+function bonusLines(u, art) {
+  const lines = [];
+  if (art.answer) lines.push('破招 · 目標為' + ANSWERED[art.answer] + '時倍率 ＋0.30');
+  if (art.lone) lines.push('孤行 · 四鄰沒有同伴時倍率 ' + plus(art.lone));
+  if (art.paired) {
+    const partner = G.DETAILS[G.PARTNERS[u.id]]?.name;
+    lines.push(
+      '合璧 · 有同伴相鄰 ' +
+        plus(art.paired.any) +
+        (partner ? '，' + partner + '相鄰 ' + plus(art.paired.partner) : '')
+    );
+  }
+  if (art.pairsSelf) lines.push('左右互搏 · 習得後，合璧之招孤身出手也算有同伴相鄰');
+  if (art.dire) lines.push('黯然 · 自身氣血越少倍率越高，剩四分之一以下時 ' + plus(art.dire));
+  if (art.avenge) lines.push('還報 · 上一個敵方回合曾受敵人攻擊而損血時倍率 ' + plus(art.avenge));
+  if (art.execute) lines.push('斬殘 · 目標氣血不過半時倍率 ' + plus(art.execute));
+  if (art.surge)
+    lines.push(
+      '傾力 · 耗盡內力，每點倍率 ＋' + art.surge.rate + '，最高 ' + art.surge.cap.toFixed(2)
+    );
+  return lines;
+}
+
+// When the art may be used and what it costs beyond 內力 and 氣血.
+function useLines(art) {
+  const lines = [];
+  if (art.poised) lines.push('留力 · 上回合未出手方可施展');
+  if (art.consume === 'shield') lines.push('轉護 · 須自身帶有護盾，施展時護盾轉給受術者');
+  return [...lines, ...G.guardNotes(art), ...G.priceNotes(art)];
+}
+
+// What the conditions stage's fields do, as rules: 反噬, a conditional 失神, 布陣.
+function conditionLines(art) {
+  const lines = [];
+  if (art.backlash) lines.push('反噬 · 每次施展積一層亂氣，第三層時自損兩成最大氣血並清空');
+  if (art.daze === 'setup') lines.push('失神 · 目標兵刃遭纏或站在陣中時，失去下一次行動');
+  if (art.daze) lines.push('局主失神後，下一回合可抵抗');
+  if (art.zone)
+    lines.push(
+      '布陣 · 以' +
+        (G.targetType(art) === 'ground' ? '落點' : '目標腳下') +
+        '為中心布下五格陣勢，至下一敵方回合結束：敵人踏入即須停步，回合開始時站在陣中移動 −2；我方站在陣中防禦 ＋4'
+    );
+  return lines;
+}
+
 function moveFacts(s, u, id = 'basic', target = null) {
   if (Object.hasOwn(roots, id)) {
     return {
@@ -79,10 +128,18 @@ function moveFacts(s, u, id = 'basic', target = null) {
     powerLabel = forecast ? '預估回復' : '療傷威力';
     powerText = (forecast ? forecast.amount : G.healingPower(u, s, art)) + ' 氣血';
     lines.push(art.aura ? '範圍療傷' : '單體療傷');
+  } else if (kind === 'ground' && art.zone) {
+    powerLabel = '布陣距離';
+    powerText = range + ' 格';
+    lines.push('在空地布下陣勢，自身不移動，結束行動');
   } else if (kind === 'ground') {
     powerLabel = '身法距離';
     powerText = range + ' 格';
     lines.push('越障移至可站立的空格，結束行動');
+  } else if (art.order) {
+    powerLabel = '號令';
+    powerText = '再行動一次';
+    lines.push('號令 · 令一位本回合已行動的同伴重新移動並出手一次');
   } else {
     const effect = effectsOf(art)[0];
     const entry = {
@@ -95,6 +152,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
   }
   for (const effect of effectsOf(art))
     lines.push(effectDescription(effect.kind, effect.power, effect.turns));
+  if (art) lines.push(...bonusLines(u, art), ...useLines(art), ...conditionLines(art));
   if (art?.aura) lines.push('目標及周圍 ' + art.aura + ' 格友軍');
   if (hpCost) lines.push('自耗 ' + hpCost + ' 氣血');
   const forms = G.formsFor(u, art, basic ? definition : undefined);

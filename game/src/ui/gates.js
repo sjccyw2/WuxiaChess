@@ -38,8 +38,6 @@ function codexPage(id) {
     h.name +
     '</h3><div class="codex-school">' +
     h.school +
-    ' · ' +
-    h.role +
     '</div><p>' +
     h.bio +
     '</p><h4>' +

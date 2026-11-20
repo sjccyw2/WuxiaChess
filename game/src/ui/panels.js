@@ -12,7 +12,12 @@ import {
   DETAILS,
   unitDetails,
   enemyTechnique,
+  enemyTraitLines,
+  coverer,
+  taunters,
+  reach,
   roundsToSignature,
+  standingLines,
   ITEMS,
   LIMIT,
   PARTY,
@@ -22,6 +27,7 @@ import {
   TALENTS,
   ally,
   canAct,
+  canGlide,
   targetOK,
   canPrepare,
   canUseMedicine,
@@ -112,7 +118,6 @@ const bar = (label, value, max, cls, ic) =>
   ' <small>/ ' +
   max +
   '</small></span></div>';
-const roleTag = (u) => '<span class="role-tag">' + DETAILS[u.id].role + '</span>';
 const lv = (u) => '<span class="lv">Lv. <b>' + String(u.level).padStart(2, '0') + '</b></span>';
 const titleHead = (ic, title, sub = '') =>
   '<div class="modal-head"><div class="modal-title">' +
@@ -206,22 +211,36 @@ function commander(s, mode) {
       )
     );
   }
-  const acts = [
-    ['move', u.moved ? 'undo' : 'move', u.moved ? '撤步' : '移動'],
-    ['skill', 'spark', '招式'],
-    ['wait', 'wait', '待命'],
-    ['end', 'end', '結束回合']
-  ];
+  // 回身: once a glide art has struck, move walks on and wait stays put.
+  const gliding = canGlide(s, u);
+  const acts = gliding
+    ? [
+        ['glide', 'move', '回身'],
+        ['skill', 'spark', '招式'],
+        ['glide-stop', 'wait', '不走了'],
+        ['end', 'end', '結束回合']
+      ]
+    : [
+        ['move', u.moved ? 'undo' : 'move', u.moved ? '撤步' : '移動'],
+        ['skill', 'spark', '招式'],
+        ['wait', 'wait', '待命'],
+        ['end', 'end', '結束回合']
+      ];
   return acts
     .map(([a, ic, label]) => {
-      const current = canAct(s, u) && mode === a;
+      const current = (canAct(s, u) || gliding) && mode === a;
       const attrs =
         a === 'skill'
           ? 'id="arts-toggle" aria-controls="arts-panel" aria-expanded="false"'
-          : ['move', 'attack'].includes(a)
+          : ['move', 'attack', 'glide'].includes(a)
             ? `aria-pressed="${current}"`
             : '';
-      const disabled = a === 'end' ? s.phase !== 'ally' : !canAct(s, u);
+      const disabled =
+        a === 'end'
+          ? s.phase !== 'ally'
+          : gliding
+            ? a === 'skill'
+            : !canAct(s, u) || (a === 'move' && u.moved && !u.origin);
       return btn(
         a,
         icon(ic, 18) + '<span>' + label + '</span>',
@@ -246,7 +265,7 @@ function goalRows(s) {
       unitDetails(target).name +
       '</strong>' +
       '<p class="goal-detail">副手 · ' +
-      unitDetails(s.units.find((u) => u.encounterId))?.name +
+      unitDetails(s.units.find((u) => u.encounterId?.startsWith('lieutenant-')))?.name +
       '</p>' +
       (target.id === 'murong'
         ? '<p class="goal-detail">星索護陣・' +
@@ -316,7 +335,6 @@ function portraitSummary(u) {
     '</div><h3>' +
     i.name +
     '</h3><div class="sheet-meta">' +
-    roleTag(u) +
     '<span>' +
     bookCitation(BOOKS[u.id]) +
     '</span>' +
@@ -344,7 +362,10 @@ function equippedCard(u, id, slot) {
   );
 }
 function conditionChips(s, u) {
-  const labels = activeEffects(u, s.round);
+  const labels = [...activeEffects(u, s.round), ...standingLines(s, u)];
+  // 受護: derived, never stored — a companion beside a hero who covers.
+  const guard = ally(u) && coverer(s, u);
+  if (guard) labels.push('受護 · ' + DETAILS[guard.id].name + '在旁代受直接攻擊');
   return labels.length
     ? '<div class="condition-chips">' +
         labels.map((x) => '<span>' + esc(x) + '</span>').join('') +
@@ -887,7 +908,7 @@ function endPage(s) {
 function enemyPage(s, id) {
   const u = find(s, id),
     i = unitDetails(u),
-    special = enemyTechnique(u),
+    special = enemyTechnique(u, s),
     turns = roundsToSignature(s, u);
   return (
     titleHead('target', '敵情查探') +
@@ -911,9 +932,11 @@ function enemyPage(s, id) {
         '</strong><span>' +
         (u.conditions?.seal
           ? '本回合封穴，無法施展絕技'
-          : turns === 0
-            ? '本回合蓄勢，正是破綻'
-            : '距蓄勢 ' + turns + ' 回合') +
+          : u.conditions?.daze
+            ? '本回合失神，不會出手'
+            : turns === 0
+              ? '本回合蓄勢，正是破綻'
+              : '距蓄勢 ' + turns + ' 回合') +
         '</span><p>' +
         '普攻傷害 × ' +
         special.factor +
@@ -927,11 +950,23 @@ function enemyPage(s, id) {
     stat(u, 'atk', s) +
     '</b></span><span>防禦 <b>' +
     stat(u, 'def', s) +
-    '</b></span><span>招式 <b>' +
+    '</b></span><span>移動 <b>' +
+    stat(u, 'step', s) +
+    ' 步</b></span><span>招式 <b>' +
     i.basic +
     '</b></span><span>射程 <b>' +
-    u.range +
-    ' 格</b></span></div><p class="footnote">' +
+    reach(s, u) +
+    ' 格' +
+    (u.conditions?.disarm ? '（纏械）' : '') +
+    '</b></span></div>' +
+    enemyTraitLines(s, u)
+      .concat(
+        // 挑釁: derived from where the pieces stand now, as its own action will read it.
+        taunters(s, u).map((t) => '受挑釁 · 本回合須攻擊' + DETAILS[t.id].name)
+      )
+      .map((line) => '<p class="footnote">' + icon('flag', 15) + esc(line) + '</p>')
+      .join('') +
+    '<p class="footnote">' +
     icon('stone', 15) +
     ('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。' + tileInfo(u.x, u.y, s.mapIndex).note) +
     (s.mapIndex === 9 && ['murong', 'echoBow', 'echoScout'].includes(id)
@@ -942,12 +977,23 @@ function enemyPage(s, id) {
 }
 function attackPage(s, source, target, skill) {
   const u = find(s, source),
-    t = typeof target === 'string' ? find(s, target) : target;
-  const f = forecast(u, t, skill, s),
+    aimed = typeof target === 'string' ? find(s, target) : target;
+  const f = forecast(u, aimed, skill, s),
     a = skill ? artFor(u) : basicFor(u);
+  // 代受: the piece clicked is not the one struck; the coverer stands opposite (§9.7).
+  const t = f.coveredBy ? find(s, f.coveredBy) : aimed;
   const friendly = f.support,
-    blink = f.type === 'ground';
-  const title = blink ? '輕功落點' : f.heal ? '運功療傷' : friendly ? '護持預覽' : '交鋒預覽';
+    blink = f.type === 'ground',
+    formation = blink && !!a.zone; // 布陣: the caster stays; the tile is the formation's centre
+  const title = formation
+    ? '布陣'
+    : blink
+      ? '輕功落點'
+      : f.heal
+        ? '運功療傷'
+        : friendly
+          ? '護持預覽'
+          : '交鋒預覽';
   const line = (label, value, cls = '') =>
     '<div><span>' + label + '</span><b class="' + cls + '">' + value + '</b></div>';
   const who = (v) => {
@@ -955,7 +1001,9 @@ function attackPage(s, source, target, skill) {
       return (
         '<div class="duelist"><i class="forecast-destination">' +
         icon('move', 29) +
-        '</i><small>落點</small><strong>第 ' +
+        '</i><small>' +
+        (formation ? '陣眼' : '落點') +
+        '</small><strong>第 ' +
         (v.x + 1) +
         ' 列・' +
         (v.y + 1) +
@@ -980,7 +1028,8 @@ function attackPage(s, source, target, skill) {
   // Built only from what forecast() returned: the blow, the reply, and any cost or recovery.
   const forecastBar = (v) => {
     const healed = f.heal ? f.recipients.find((e) => e.id === v.id)?.amount || 0 : 0;
-    const own = v === u ? f.selfHeal - f.hpCost - f.counter : 0;
+    const own =
+      v === u ? f.selfHeal - f.hpCost - f.counter - (f.selfLoss || 0) - (f.rebound || 0) : 0;
     const taken = friendly || blink ? healed : v === t ? -f.amount : 0;
     const after = Math.max(0, Math.min(v.maxHp, v.hp + own + taken));
     const share = (n) => Math.max(0, Math.min(100, (100 * n) / v.maxHp));
@@ -1012,7 +1061,11 @@ function attackPage(s, source, target, skill) {
     );
   };
   const lines = [];
-  if (blink)
+  if (formation)
+    lines.push(
+      line('陣眼', tileInfo(t.x, t.y, s.mapIndex).name + ' · 陣勢 ' + f.zone.length + ' 格')
+    );
+  else if (blink)
     lines.push(
       line(
         '移至',
@@ -1062,11 +1115,17 @@ function attackPage(s, source, target, skill) {
   for (const e of f.effects)
     lines.push(line('附加效果', effectDescription(e.kind, e.power, e.turns)));
   if (f.push) lines.push(line(a.push ? '擊退' : '牽引', '一格'));
-  for (const note of f.notes) lines.push(line('招式連攜', esc(note)));
+  // 代受 and 號令 change who the action is for: each gets its own row.
+  for (const note of f.notes)
+    lines.push(
+      /^(代受|號令) · /.test(note)
+        ? line(note.slice(0, 2), esc(note.slice(5)))
+        : line('招式連攜', esc(note))
+    );
   if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
   if (skill)
     lines.push(
-      line('自身消耗', cost(u, s) + ' 內力' + (f.hpCost ? '、' + f.hpCost + ' 氣血' : ''))
+      line('自身消耗', f.mpCost + ' 內力' + (f.hpCost ? '、' + f.hpCost + ' 氣血' : ''))
     );
   return (
     titleHead(friendly || blink ? 'spark' : 'swords', title) +
@@ -1089,7 +1148,11 @@ function attackPage(s, source, target, skill) {
       : '') +
     '</div><div class="modal-foot right">' +
     btn('close', '重選目標', 'outline-btn') +
-    btn('strike', blink ? '施展輕功' : friendly ? '施展招式' : '確認出招', 'gold-btn') +
+    btn(
+      'strike',
+      formation ? '布下陣勢' : blink ? '施展輕功' : friendly ? '施展招式' : '確認出招',
+      'gold-btn'
+    ) +
     '</div>'
   );
 }

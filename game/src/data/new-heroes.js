@@ -9,11 +9,11 @@ const NEW_HEROES = {
     book: '射鵰英雄傳、神鵰俠侶',
     bio: '桃花島主黃藥師之女，通曉奇門陣法，又得洪七公傳授打狗棒法。她到一個地方，先看的不是人，是地上的石頭：哪一塊是後來擺的，一眼便知。',
     basic: '落英神劍掌',
-    skill: '打狗棒法',
+    skill: '蘭花拂穴手',
     skillIcon: 'target',
-    skillRange: 2,
-    cost: 13,
-    skillDesc: '兩格內以棒訣纏住敵手。此擊免受還擊，目標攻擊降低 4 點，持續兩回合。',
+    skillRange: 1,
+    cost: 9,
+    skillDesc: '拂中相鄰敵人要穴，此擊免受還擊，對方本回合也發不出絕技。',
     voice: '那塊石頭不會走路。換了位置的，是我們腳下這一片地。'
   },
   yang: {
@@ -25,12 +25,12 @@ const NEW_HEROES = {
     epithet: '神鵰大俠',
     book: '神鵰俠侶',
     bio: '斷臂後，楊過在神鵰引領下以玄鐵重劍迎擊激流。與小龍女久別，他將相思之苦化入黯然銷魂掌。眼前縱有百條岔路，他仍記得要找的那個人。',
-    basic: '玄鐵劍法',
-    skill: '黯然銷魂掌',
+    basic: '古墓劍法',
+    skill: '蛤蟆功',
     skillIcon: 'hand',
-    skillRange: 2,
-    cost: 15,
-    skillDesc: '自耗 9 點氣血，在兩格內重擊一名敵人。出掌後須留至少 1 點氣血。',
+    skillRange: 1,
+    cost: 10,
+    skillDesc: '伏身蓄勁，向相鄰敵人猛推一掌。本回合未移動時威力更強。',
     voice: '我等過十六年，再等十局也等得起。走罷。'
   },
   zhang: {
@@ -42,13 +42,13 @@ const NEW_HEROES = {
     epithet: '明教教主',
     book: '倚天屠龍記',
     bio: '張無忌曾在蝴蝶谷習醫，後得九陽真經，於光明頂密道習成乾坤大挪移。聽見有人喊痛，他先蹲下替人把脈，才想起還未問過這是何地。',
-    basic: '太極拳',
-    skill: '乾坤大挪移',
-    skillIcon: 'shield',
-    skillRange: 3,
-    cost: 14,
+    basic: '武當長拳',
+    skill: '蝶谷醫術',
+    skillIcon: 'leaf',
+    skillRange: 2,
+    cost: 9,
     skillDesc:
-      '為三格內一名友軍或自身卸力，施加 32 點護盾。護盾可抵銷總計 32 點傷害，最多保留兩回合。',
+      '以蝶谷醫術替兩格內一人療傷，基礎回復 30 點氣血，也可為自己施術；多出的療量化為護盾。',
     voice: '讓我先看看他的傷。人救得回來，遲一步又有甚麼打緊？'
   },
   hu: {
@@ -62,10 +62,10 @@ const NEW_HEROES = {
     bio: '胡一刀之子，自幼由平阿四撫養，照胡家刀譜練成一身刀法。為了替素不相識的鍾家討回公道，他曾一路追索鳳天南。如今眼前有人喊冤，他照舊追了上去。',
     basic: '胡家快刀',
     skill: '胡家刀法',
-    skillIcon: 'swords',
+    skillIcon: 'sword',
     skillRange: 1,
-    cost: 12,
-    skillDesc: '貼身連出兩刀，每刀按該招單擊傷害的 68% 結算。敵人撐過兩刀才可還擊。',
+    cost: 9,
+    skillDesc: '貼身一刀，留下破綻兩回合，供自己或同伴收隙。',
     voice: '那人把腳印掃乾淨了，倒忘了松枝上還掛著他袖口的雪。'
   }
 };

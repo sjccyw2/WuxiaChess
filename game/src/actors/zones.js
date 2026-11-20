@@ -110,9 +110,11 @@ function plan(layer, reach) {
     skill = layer.mode === 'skill',
     art = cast && skill ? G.artFor(u) : null,
     range = cast ? (art ? art.range : u.range) : 0,
-    heal = !!(art && (G.isSupport(art) || art.blink)),
-    canBlink = art?.blink && G.canPay(s, u),
-    moving = layer.mode === 'move' && can && !u.moved;
+    ground = !!art && G.targetType(art) === 'ground',
+    heal = !!(art && (G.isSupport(art) || ground)),
+    canBlink = ground && G.canPay(s, u),
+    gliding = layer.mode === 'glide' && G.canGlide(s, u), // 回身: tiles for the walk left
+    moving = (layer.mode === 'move' && G.canMove(s, u)) || gliding;
   const cells = fieldCells(s.mapIndex),
     field = new Set(),
     move = new Set(),
@@ -127,7 +129,7 @@ function plan(layer, reach) {
     const stand = new Set(move);
     // A friend's tile cannot be stopped on, but it belongs to the region when the piece
     // has the steps to pass through it, so the outline does not break around companions.
-    const steps = G.stat(u, 'step', s);
+    const steps = gliding ? u.glideLeft : G.stat(u, 'step', s);
     for (const v of s.units) {
       if (!friends.has(cellKey(v.x, v.y)) || !G.living(v) || !G.ally(v)) continue;
       const path = G.movementPath(s, u, u, v);
@@ -135,8 +137,9 @@ function plan(layer, reach) {
       for (const step of path.slice(1)) spent += G.terrainInfo(step.x, step.y, s.mapIndex).cost;
       if (path.length > 1 && spent <= steps) move.add(cellKey(v.x, v.y));
     }
-    // Every tile the basic strike could reach from somewhere the piece can stand.
-    const far = u.range || 0;
+    // Every tile the basic strike could reach from somewhere the piece can stand (none for a
+    // hero who has already struck).
+    const far = gliding ? -1 : u.range || 0;
     for (const { x, y } of cells) {
       if (!stand.has(cellKey(x, y))) continue;
       for (let dy = -far; dy <= far; dy++)
@@ -158,7 +161,7 @@ function plan(layer, reach) {
       if (
         G.distance(u, { x, y }) <= range &&
         G.walkable(x, y, s.mapIndex) &&
-        (!art?.blink || (canBlink && !G.at(s, x, y))) &&
+        (!ground || (canBlink && !G.at(s, x, y))) &&
         (heal || x !== u.x || y !== u.y)
       )
         aim.add(cellKey(x, y));
@@ -425,4 +428,199 @@ function paintReticles(layer, reach, hover, now) {
   }
 }
 
-export { paintField, paintReticles };
+// ---------------------------------------------------------------------------------------
+// 布陣: a formation a hero has laid on the ground. It is a rule the enemy walks by, so it is
+// drawn whatever the presentation switches say: an apricot lattice inside a dashed edge with a
+// 陣 seal on its centre (its owner carries the same 陣 chip), or, with rangeTiles off, a plain
+// wash per tile. Apricot is a colour no other region uses: move is jade, strike vermilion,
+// support green and the danger zone magenta.
+
+const FORMATION = {
+  wash: 'rgba(255,190,92,.2)',
+  lattice: 'rgba(255,232,180,.86)',
+  ink: 'rgba(58,32,6,.7)',
+  line: '#ffd98c',
+  seal: '#6b3d10',
+  glyph: '#ffe7a6'
+};
+
+// A screen path is rebuilt only when what it was drawn from changes: its own mark, the camera
+// or the overlay's size. `view` keeps the numbers it was last built for.
+function viewMoved(layer, cache) {
+  const camera = layer.view.camera,
+    world = camera.matrixWorldInverse.elements,
+    lens = camera.projectionMatrix.elements,
+    view = cache.view;
+  let moved = false;
+  const note = (i, value) => {
+    if (view[i] !== value) {
+      view[i] = value;
+      moved = true;
+    }
+  };
+  for (let i = 0; i < 16; i++) {
+    note(i, world[i]);
+    note(i + 16, lens[i]);
+  }
+  note(32, layer.width);
+  note(33, layer.height);
+  note(34, layer.view.centerX);
+  note(35, layer.view.centerZ);
+  return moved;
+}
+
+// The wash, lattice and edge of a set of tiles, in screen space.
+function formationPaths(layer, list) {
+  const tiles = new Set(list.map((p) => cellKey(p.x, p.y)));
+  const shape = outline(tiles, list, () => false);
+  const corner = (i, j) => layer.point(i - 0.5, j - 0.5);
+  const fill = new Path2D(),
+    edge = new Path2D(),
+    lattice = new Path2D();
+  for (const loop of shape.loops) {
+    for (let i = 0; i < loop.length; i += 2) {
+      const p = corner(loop[i], loop[i + 1]);
+      if (i) fill.lineTo(p.x, p.y);
+      else fill.moveTo(p.x, p.y);
+    }
+    fill.closePath();
+  }
+  for (let i = 0; i < shape.border.length; i += 4) {
+    const a = corner(shape.border[i], shape.border[i + 1]),
+      b = corner(shape.border[i + 2], shape.border[i + 3]);
+    edge.moveTo(a.x, a.y);
+    edge.lineTo(b.x, b.y);
+  }
+  // Two diagonals per tile join across the formation into one lattice; a small diamond at each
+  // crossing reads as the knots of a 桃花陣.
+  for (const { x, y } of list) {
+    const q = [corner(x, y), corner(x + 1, y), corner(x + 1, y + 1), corner(x, y + 1)];
+    lattice.moveTo(q[0].x, q[0].y);
+    lattice.lineTo(q[2].x, q[2].y);
+    lattice.moveTo(q[1].x, q[1].y);
+    lattice.lineTo(q[3].x, q[3].y);
+    const d = [
+      layer.point(x, y - 0.17),
+      layer.point(x + 0.17, y),
+      layer.point(x, y + 0.17),
+      layer.point(x - 0.17, y)
+    ];
+    lattice.moveTo(d[0].x, d[0].y);
+    for (let i = 1; i < 4; i++) lattice.lineTo(d[i].x, d[i].y);
+    lattice.closePath();
+  }
+  return { fill, edge, lattice };
+}
+
+const formationCache = new WeakMap();
+
+// The 陣 seal on a formation's centre tile; its owner's gauge carries the same character.
+function paintSeal(c, at, scale) {
+  const r = clamp(scale * 0.17, 7, 12);
+  c.fillStyle = FORMATION.ink;
+  c.fillRect(at.x - r - 1, at.y - r - 1, r * 2 + 2, r * 2 + 2);
+  c.fillStyle = FORMATION.seal;
+  c.fillRect(at.x - r, at.y - r, r * 2, r * 2);
+  c.fillStyle = FORMATION.glyph;
+  c.font = 'bold ' + Math.round(r * 1.5) + 'px serif';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText('陣', at.x, at.y + 0.5);
+}
+
+function paintFormations(layer, now) {
+  const s = layer.state;
+  if (!s?.zones?.length || (s.run?.scene && s.run.scene !== 'fight')) return;
+  const c = layer.ctx;
+  if (!POLISH.rangeTiles) {
+    // The plain presentation: one wash and one line per tile, and the seal.
+    c.save();
+    for (const zone of s.zones) {
+      for (const { x, y } of zone.tiles) {
+        layer.path(layer.tile(x, y, 0.47));
+        c.fillStyle = 'rgba(255,190,92,.3)';
+        c.fill();
+        c.strokeStyle = FORMATION.line;
+        c.lineWidth = 1.4;
+        c.stroke();
+      }
+      const centre = zone.tiles[0];
+      paintSeal(c, layer.point(centre.x, centre.y, 0.02), layer.scaleAt(centre.x, centre.y));
+    }
+    c.restore();
+    return;
+  }
+  let cache = formationCache.get(layer);
+  if (!cache) formationCache.set(layer, (cache = { view: new Float64Array(36), mark: '' }));
+  const mark = s.zones
+    .map((z) => z.owner + ':' + z.tiles.map((p) => p.x + ',' + p.y).join(' '))
+    .join('/');
+  if (viewMoved(layer, cache) || cache.mark !== mark) {
+    cache.mark = mark;
+    cache.zones = s.zones.map((z) => {
+      const centre = z.tiles[0];
+      return {
+        ...formationPaths(layer, z.tiles),
+        seal: layer.point(centre.x, centre.y, 0.02),
+        scale: layer.scaleAt(centre.x, centre.y)
+      };
+    });
+  }
+  const breath = layer.prefs.motion ? 0.5 + 0.5 * Math.sin(now / 900) : 0.6;
+  c.save();
+  c.lineCap = c.lineJoin = 'round';
+  for (const z of cache.zones) {
+    c.fillStyle = FORMATION.wash;
+    c.fill(z.fill);
+    c.save();
+    c.clip(z.fill);
+    c.globalAlpha *= 0.62 + breath * 0.3;
+    c.strokeStyle = FORMATION.lattice;
+    c.lineWidth = clamp(z.scale * 0.022, 0.9, 1.6);
+    c.stroke(z.lattice);
+    c.restore();
+    c.strokeStyle = FORMATION.ink;
+    c.lineWidth = clamp(z.scale * 0.07, 2.6, 4.2);
+    c.stroke(z.edge);
+    c.setLineDash([clamp(z.scale * 0.16, 4, 9), clamp(z.scale * 0.09, 3, 5)]);
+    c.lineDashOffset = layer.prefs.motion ? -now / 90 : 0;
+    c.strokeStyle = FORMATION.line;
+    c.lineWidth = clamp(z.scale * 0.032, 1.3, 2.1);
+    c.stroke(z.edge);
+    c.setLineDash([]);
+    paintSeal(c, z.seal, z.scale);
+  }
+  c.restore();
+}
+
+// While a formation art is aimed: the tiles it would lay, outlined so the player sees the
+// formation before confirming it.
+const aimCache = new WeakMap();
+function paintFormationAim(layer, list, now) {
+  if (!list?.length) return;
+  const c = layer.ctx;
+  let cache = aimCache.get(layer);
+  if (!cache) aimCache.set(layer, (cache = { view: new Float64Array(36), mark: '' }));
+  const mark = list.map((p) => p.x + ',' + p.y).join(' ');
+  if (viewMoved(layer, cache) || cache.mark !== mark) {
+    cache.mark = mark;
+    cache.paths = formationPaths(layer, list);
+    cache.scale = layer.scaleAt(list[0].x, list[0].y);
+  }
+  const beat = layer.prefs.motion ? 0.5 + 0.5 * Math.sin(now / 260) : 0.7;
+  c.save();
+  c.lineCap = c.lineJoin = 'round';
+  c.fillStyle = 'rgba(255,196,110,' + (0.24 + beat * 0.12).toFixed(3) + ')';
+  c.fill(cache.paths.fill);
+  c.strokeStyle = FORMATION.ink;
+  c.lineWidth = clamp(cache.scale * 0.08, 3, 4.6);
+  c.stroke(cache.paths.edge);
+  c.setLineDash([clamp(cache.scale * 0.16, 4, 9), clamp(cache.scale * 0.09, 3, 5)]);
+  c.lineDashOffset = layer.prefs.motion ? -now / 60 : 0;
+  c.strokeStyle = '#fff4d8';
+  c.lineWidth = clamp(cache.scale * 0.04, 1.6, 2.4);
+  c.stroke(cache.paths.edge);
+  c.restore();
+}
+
+export { paintField, paintReticles, paintFormations, paintFormationAim };

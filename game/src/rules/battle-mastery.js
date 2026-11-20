@@ -86,16 +86,51 @@ const CONDITION_NAMES = {
   mark: '破綻',
   pin: '絆足',
   seal: '封穴',
-  riposte: '借勁'
+  riposte: '借勁',
+  stance: '卸勁',
+  cover: '代受',
+  taunt: '挑釁',
+  evade: '閃身',
+  redirect: '挪移',
+  recoil: '露空',
+  unguarded: '無守',
+  rooted: '立樁',
+  spent: '曲終',
+  backlash: '亂氣',
+  wound: '內傷',
+  daze: '失神',
+  disarm: '纏械'
 };
+// What an art puts on whoever receives it.
 function effectsOf(art) {
   if (!art) return [];
   const effects = [];
-  for (const kind of ['poison', 'shield', 'rally', 'haste']) {
+  for (const kind of ['poison', 'shield', 'rally', 'haste', 'wound', 'disarm']) {
     if (art[kind]) effects.push({ kind, ...art[kind] });
   }
   if (art.debuff)
     effects.push({ kind: art.debuff.stat === 'def' ? 'exposed' : 'weak', ...art.debuff });
+  // `daze: 'setup'` depends on the target at the moment of the strike, so it is decided there.
+  if (art.daze === true) effects.push({ kind: 'daze', power: 1, turns: 1 });
+  if (art.redirect) effects.push({ kind: 'redirect', power: art.redirect.cap, turns: 1 });
+  return effects;
+}
+// What an art puts on its caster once it resolves, whatever it was aimed at. One turn lasts until
+// the caster's next turn; two turns cover that next turn too. 亂氣 lasts the rest of the board, so
+// its `turns` is left for the caller, who knows the round limit.
+function selfEffectsOf(art) {
+  if (!art) return [];
+  const effects = [],
+    put = (kind, power = 1, turns = 1) => effects.push({ kind, power, turns });
+  if (art.stance) put('stance', art.stance);
+  if (art.cover) put('cover');
+  if (art.taunt) put('taunt', art.taunt);
+  if (art.evade) put('evade');
+  if (art.recoil) put('recoil', art.recoil);
+  if (art.openGuard) put('unguarded');
+  if (art.rooted) put('rooted', 1, 2);
+  if (art.spent) put('spent', 1, 2);
+  if (art.backlash) put('backlash', 1, null);
   return effects;
 }
 function effectDescription(kind, power, turns) {
@@ -109,9 +144,24 @@ function effectDescription(kind, power, turns) {
     mark: '可用收隙接招',
     pin: '移動 −' + power,
     seal: '停用還擊及敵方絕技',
-    riposte: '下次受傷震回最多 ' + power
+    riposte: '下次受傷震回最多 ' + power,
+    stance: '受敵傷害減 ' + power + '%，還擊全力',
+    cover: '代相鄰同伴承受直接攻擊',
+    taunt: power + ' 格內可攻到自己的敵人只能攻擊自己',
+    evade: '下一次直接攻擊落空',
+    redirect: '下次受擊減半，反震最多 ' + power,
+    recoil: '防禦 −' + power,
+    unguarded: '不能還擊',
+    rooted: '不能移動',
+    spent: '不能施展絕技',
+    backlash: power + '／3 層',
+    wound: '療傷減半，出手後自損 ' + power,
+    daze: '失去下一次行動',
+    disarm: '攻擊 −' + power + '，只能攻擊相鄰'
   };
-  return CONDITION_NAMES[kind] + ' · ' + effect[kind] + ' · ' + turns + ' 回合';
+  // 亂氣 stays until it bursts or the board ends; a count of rounds would mislead.
+  const span = kind === 'backlash' ? '本局' : turns + ' 回合';
+  return CONDITION_NAMES[kind] + ' · ' + effect[kind] + ' · ' + span;
 }
 function activeEffects(unit, round) {
   return Object.entries(unit.conditions || {}).map(([kind, c]) =>
@@ -125,8 +175,9 @@ function applyCondition(s, target, effect, caster) {
   const extra = (kind === 'haste' || kind === 'rally') && target.acted ? 1 : 0;
   const through = s.round + turns - 1 + extra;
   const owner = old && old.power > power ? old.source : caster.id;
+  // 亂氣 counts casts: each application adds a layer instead of keeping the stronger.
   held[kind] = {
-    power: Math.max(power, old?.power || 0),
+    power: kind === 'backlash' ? (old?.power || 0) + power : Math.max(power, old?.power || 0),
     through: Math.max(through, old?.through || 0),
     source: owner
   };
@@ -138,4 +189,4 @@ function progress(unit, metric, delta) {
   if (unit?.mastery && delta > 0) unit.mastery[metric] += delta;
 }
 
-export { COMMANDS, commandDescription, commandBonus, CONDITION_NAMES, effectsOf, effectDescription, activeEffects, applyCondition, blankRecord, progress };
+export { COMMANDS, commandDescription, commandBonus, CONDITION_NAMES, effectsOf, selfEffectsOf, effectDescription, activeEffects, applyCondition, blankRecord, progress };

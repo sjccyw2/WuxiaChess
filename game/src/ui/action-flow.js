@@ -15,13 +15,34 @@ import { icon } from './icons.js';
 
 const ON = POLISH.actionFlow;
 
-// The undo entry at the foot of the arts list, shown only once the hero has moved.
+// The undo entry at the foot of the arts list, shown only once the hero has moved (and while the
+// move can still be taken back: not after a second action from 連環).
 function undoRow(s, u) {
-  if (!ON || !u?.moved || !G.canAct(s, u)) return '';
+  if (!ON || !u?.moved || !u.origin || !G.canAct(s, u)) return '';
   return (
     '<button class="field-loadout field-undo" data-do="move" title="撤步">' +
     icon('undo', 15) +
     '撤步</button>'
+  );
+}
+
+// 回身: once a hero has struck with a glide art, his list holds only the walk and the choice to
+// stay where he is. There is no undo: the walk, once taken, stands.
+function glideRows(s, u) {
+  if (!ON || !G.canGlide(s, u)) return '';
+  const row = (action, symbol, title, note) =>
+    '<button class="field-art fo-move" data-do="' +
+    action +
+    '"><i>' +
+    icon(symbol, 19) +
+    '</i><span><strong>' +
+    title +
+    '</strong><small>' +
+    note +
+    '</small></span></button>';
+  return (
+    row('glide', 'move', '回身 ' + u.glideLeft + ' 步', '點選青綠色地格，走完餘步') +
+    row('glide-stop', 'wait', '不走了', '留在原地，結束行動')
   );
 }
 
@@ -56,10 +77,12 @@ function shouldConfirmEnd(s) {
   );
 }
 
-// What the wait button did, for every hero who has not struck: brace for the enemy's turn.
+// What the wait button did, for every hero who has not struck: brace for the enemy's turn. A hero
+// given a second turn by 號令 who leaves it unused has made his choice and gets no free brace.
 function braceTheRest(s) {
   if (!ON) return;
-  for (const u of G.party(s).filter(G.living)) if (G.canAct(s, u)) G.waitUnit(s, u);
+  for (const u of G.party(s).filter(G.living))
+    if (G.canAct(s, u) && u.orderedRound !== s.round) G.waitUnit(s, u);
 }
 
 // Keeps the arts list beside the selected hero while it is open (wide screens; on phones the
@@ -113,4 +136,4 @@ function followHero(panel, layer, who) {
 const flowHotkeys =
   '<kbd>1</kbd>–<kbd>4</kbd> 招式 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 撤步・返回 <kbd>?</kbd> 指南';
 
-export { ON, markReady, undoRow, nextToAct, anyIdle, shouldConfirmEnd, braceTheRest, followHero, flowHotkeys };
+export { ON, markReady, undoRow, glideRows, nextToAct, anyIdle, shouldConfirmEnd, braceTheRest, followHero, flowHotkeys };

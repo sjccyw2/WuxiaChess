@@ -191,6 +191,7 @@ export const PLACES = {
   },
   'src/data/mastery-catalog.js': {
     'CATALOG_NOTE': ['武學與效果', '門派武學'],
+    'RECALL_NOTE': ['武學與效果', '門派武學'],
     'GATE_LABELS': ['武學與效果', '歷練門檻'],
     'HERO_PATHS': ['武學與效果', '門派脈絡'],
     'MASTERY_ARTS': ['武學與效果', '門派武學'],

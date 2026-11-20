@@ -4,7 +4,7 @@ const FORM_RULES = {
   exploit: ['收隙', '收去目標已有的破綻，首段威力加 9，該敵無法還擊。'],
   pin: ['絆足', '本回合與下一回合，目標移動減 2，最低仍可走 1 步。'],
   seal: ['封穴', '本回合阻止還擊與敵方絕技。局主受封後，下一回合可抵抗再封。'],
-  cleanse: ['解厄', '先替受術者解除中毒、攻勢受挫、破防、絆足、破綻與封穴。'],
+  cleanse: ['解厄', '先替受術者解除中毒、攻勢受挫、破防、絆足、破綻、封穴、亂氣、內傷、失神與纏械。'],
   channel: ['渡氣', '每位受術同伴各回復 6 內力，施術者自身除外。'],
   overflow: ['餘氣護身', '溢出的療傷量轉成一回合護盾，上限 12。護盾取較強者。'],
   riposte: ['借勁還手', '受術者本回合首次承受敵方直接傷害並存活時，震回所失氣血，最多 9 點。'],
@@ -20,9 +20,28 @@ const FORM_RULES = {
   landing: ['落步成陣', '落地時自己與相鄰同伴得 8 點護盾，持續至本回合結束。'],
   still: ['定勢', '本回合未移動，首段威力加 5。'],
   collision: ['撞關', '牽引或擊退的去路受阻時，首段威力加 7。'],
-  antidote: ['以毒解毒', '擊中已有中毒的敵人時，解去施術者自身中毒。']
+  antidote: ['以毒解毒', '擊中已有中毒的敵人時，解去施術者自身中毒。'],
+  again: ['連環', '此招擊倒主目標時，本回合可再出手一次；每回合限一次。'],
+  glide: ['回身', '出招後仍可走完本回合未用的步數，走後不能撤步。'],
+  siphon: [
+    '吸勁',
+    '命中後回復 8 點內力，並使目標的絕技延後一回合；同一敵人每回合只延一次，局主不能連續兩回合被延。'
+  ]
 };
-const AILMENTS = ['poison', 'weak', 'exposed', 'pin', 'mark', 'seal'];
+// What 解厄 lifts. The prices of a summit (露空, 無守, 立樁, 曲終) are left out on purpose, so a
+// companion cannot erase them.
+const AILMENTS = [
+  'poison',
+  'weak',
+  'exposed',
+  'pin',
+  'mark',
+  'seal',
+  'backlash',
+  'wound',
+  'daze',
+  'disarm'
+];
 const supportForms = new Set(['cleanse', 'channel', 'overflow', 'riposte']);
 function weaponFormText(forms) {
   return forms

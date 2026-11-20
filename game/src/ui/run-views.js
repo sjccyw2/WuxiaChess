@@ -17,7 +17,7 @@ function drawPortrait(id, captain) {
   const hero = DETAILS[id];
   if (!hero) return '';
   return `<li class="run-lot ${id === captain ? 'lead-lot' : ''}">
-    <div class="run-lot-image">${playerImage(id)}<span class="run-lot-role">${id === captain ? '領隊 · ' : ''}${text(hero.role)}</span></div>
+    <div class="run-lot-image">${playerImage(id)}${id === captain ? '<span class="run-lot-role">領隊</span>' : ''}</div>
     <div class="run-lot-name"><small>${bookCitation(BOOKS[id])}</small><h3>${text(hero.name)}</h3>
     <span class="run-lot-skill">${icon(hero.skillIcon, 15)}${text(hero.skill)}</span></div>
   ${btn('lead-lot', '<span class="sr-only">選擇' + text(hero.name) + '為領隊</span>', 'lot-choice', idAttr(id) + ' aria-pressed="' + (id === captain) + '"')}
