@@ -100,7 +100,7 @@ Builds the catalog and the text listing from the game sources and fails if a pag
 
 ## Fonts
 
-The two River fonts in `game/assets/` contain only the characters the game first used. Each exists twice with the same characters: the game loads `river-*.woff2`; the `.woff` files are what the wiki loads, the fallback for browsers without WOFF2, and what `tools/extra-fonts.py` reads. Characters added later, in game text or in the wiki's manuscripts, fall back to a system font unless they are added to the supplements: `game/assets/extra-*.woff2` for characters the game needs, and `wiki/assets/lore-*.woff2` for the rest. One command rebuilds both:
+The two River fonts in `game/assets/` contain only the characters the game first used. Each exists twice with the same characters: the game loads `river-*.woff2`; the `.woff` files are what the wiki loads, the fallback for browsers without WOFF2, and what `tools/extra-fonts.py` reads. The `.woff2` files hold the Traditional Chinese glyphs only: the alternate Japanese, Korean, Simplified and Hong Kong shapes of the same characters are left out, which halves them and changes nothing on a page marked `lang="zh-Hant"`, as the game is. Characters added later, in game text or in the wiki's manuscripts, fall back to a system font unless they are added to the supplements: `game/assets/extra-*.woff2` for characters the game needs, and `wiki/assets/lore-*.woff2` for the rest. One command rebuilds both:
 
 ```bash
 python3 tools/extra-fonts.py
