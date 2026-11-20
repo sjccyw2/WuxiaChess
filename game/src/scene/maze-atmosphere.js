@@ -1,4 +1,6 @@
 import { Reflector } from './water-mirror.js';
+import { POLISH } from '../polish.js';
+import { shoreField, waterShader } from './water-surface.js';
 const styles = [
   ['青竹渡', 0xbac7b6, 0x7fa7ae, 0xffdfaa, 0x41786c, 'water', -0.65, 0.02],
   ['紅楓驛', 0xd0baa0, 0x91a1a2, 0xffcd87, 0x90745d, 'earth', -0.79, 0.02],
@@ -61,7 +63,56 @@ function stageSky(T, profile) {
   sky.renderOrder = -500;
   return sky;
 }
-function stagePlane(T, p, gpu) {
+// A maze water stage with the shared surface: depth from the bank, lapping edge, fine flecks.
+function stageWater(T, p, gpu, scenery) {
+  const base = new T.Color(p.base),
+    haze = new T.Color(p.horizon),
+    cave = p.name === '寒玉石室';
+  const shore = scenery ? shoreField(T, scenery, p.level) : null;
+  const shader = waterShader(T, {
+    name: 'Maze_Mirrored_Water',
+    deep: base.clone().multiplyScalar(cave ? 0.5 : 0.4),
+    shallow: base
+      .clone()
+      .lerp(haze, cave ? 0.2 : 0.14)
+      .multiplyScalar(cave ? 1.15 : 0.86),
+    haze,
+    sky: haze.clone(),
+    foam: haze.clone().lerp(new T.Color(0xffffff), cave ? 0.25 : 0.55),
+    mist: p.fog,
+    sparkle: cave ? 0.3 : 0.4,
+    mirror: gpu,
+    shore
+  });
+  const geom = new T.PlaneGeometry(165, 165);
+  let mesh;
+  if (gpu) {
+    mesh = new Reflector(geom, {
+      clipBias: 0.003,
+      textureWidth: 512,
+      textureHeight: 384,
+      multisample: 0,
+      shader
+    });
+    const reflect = mesh.onBeforeRender;
+    let last = null;
+    mesh.onBeforeRender = function (renderer, scene, cam, ...rest) {
+      if (last === cam.userData.ferryVersion) return;
+      last = cam.userData.ferryVersion;
+      reflect.call(this, renderer, scene, cam, ...rest);
+    };
+  } else mesh = new T.Mesh(geom, new T.ShaderMaterial(shader));
+  if (shore) {
+    mesh.material.uniforms.shoreMap.value = shore.texture;
+    mesh.material.addEventListener('dispose', () => shore.texture.dispose());
+  }
+  mesh.name = p.name + '遠景地平面';
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.y = p.level;
+  return mesh;
+}
+function stagePlane(T, p, gpu, scenery = null) {
+  if (POLISH.water && p.mode === 'water') return stageWater(T, p, gpu, scenery);
   const water = p.mode === 'water',
     cloud = ['mist', 'cloud', 'stars'].includes(p.mode),
     geom = new T.PlaneGeometry(165, 165);
