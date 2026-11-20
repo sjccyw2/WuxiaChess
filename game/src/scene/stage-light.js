@@ -49,7 +49,7 @@ const rigs = [
   { warm: 0.5, key: 3.2, fill: 0.98, cool: 0.3 }, // 襄陽殘垣: dusty sunset
   { warm: 0, key: 2.9, fill: 1.2, cool: 0.2, rim: 1.0, exposure: 1.02, mist: 0.5 }, // 寒玉石室: jade glow in the dark
   { warm: 0.25, key: 2.9, fill: 1.1, cool: 0.55 }, // 倒影天街: lavender dusk
-  { warm: 0.1, key: 2.6, fill: 1.2, cool: 0.3, rim: 1.0, exposure: 0.94, mist: 0.5 } // 無刻漏臺: lamplight under stars
+  { warm: 0.1, key: 3.0, fill: 1.3, cool: 0.3, rim: 1.0, exposure: 0.82, mist: 0.5 } // 無刻漏臺: lamplight under stars
 ];
 function stageRig(index) {
   return { ...base, ...(rigs[index] || rigs[0]) };
