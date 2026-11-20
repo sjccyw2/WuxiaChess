@@ -19,6 +19,7 @@ import {
 import { POLISH } from '../polish.js';
 import { paintFrame } from './sprite-frames.js';
 import { paintBase, paintGauge } from './tokens.js';
+import { spentAmount } from './spent.js';
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const openingActors = [
   { id: 'hero', x: 5.1, y: 5.25, side: 'ally', hp: 1 },
@@ -623,7 +624,15 @@ class ActorLayer {
     // unitTokens: the team base, the outlined sprite and the gauge are painted by tokens.js
     // and sprite-frames.js in place of the plain shadow, disc, sprite and bar below.
     const tokens = POLISH.unitTokens && !title;
-    if (tokens) paintBase(this, u, pos, now, { human, selected });
+    // A hero who has acted and is standing still. actedDim draws it grey for the rest of
+    // the player's turn (`grey` runs 0 to 1 as it fades); without the switch it is faint.
+    const spent =
+      !title && u.acted && human && u.hp > 0 && !tr.clips?.some((clip) => clip.end > now);
+    const grey =
+      POLISH.actedDim && !title
+        ? spentAmount(this, u, spent && this.state.phase === 'ally', now)
+        : 0;
+    if (tokens) paintBase(this, u, pos, now, { human, selected, spent: grey > 0.5 });
     else this.circle(pos.x + 0.055, pos.y + 0.035, title ? 0.25 : 0.33, 0.094);
     c.fillStyle = 'rgba(27,32,25,.32)';
     if (!tokens) c.fill();
@@ -668,18 +677,20 @@ class ActorLayer {
     c.save();
     // The cached copy of a frame already carries the robe tint, so with unitTokens no
     // canvas filter is set while painting.
-    const cached = tokens && sheet;
-    if (details.robe && !tokens) c.filter = details.robe;
+    const cached = sheet && (tokens || grey > 0);
+    if (details.robe && !tokens && !cached) c.filter = details.robe;
     c.translate(p.x, p.y);
     if (flip) c.scale(-1, 1);
     if (this.prefs.motion) {
       if (row === 2) c.translate(scale * drive[frame], 0);
       if (row === 3) c.translate(scale * recoil[frame], 0);
     }
-    if (!title && u.acted && human && u.hp > 0 && !tr.clips?.some((clip) => clip.end > now))
-      c.globalAlpha *= 0.82;
+    if (spent && !POLISH.actedDim) c.globalAlpha *= 0.82;
     if (cached) {
-      paintFrame(this, sheet, row, frame, w, h, { robe: details.robe, team: u.side });
+      const look = { robe: details.robe, team: tokens ? u.side : null };
+      if (grey < 1) paintFrame(this, sheet, row, frame, w, h, look);
+      // The grey copy is laid over the coloured one while the fade runs.
+      if (grey > 0) paintFrame(this, sheet, row, frame, w, h, { ...look, grey: true }, grey);
     } else if (sheet) {
       c.drawImage(
         sheet.image,
@@ -724,6 +735,7 @@ class ActorLayer {
           human,
           selected,
           shown: visibleHP,
+          spent: grey > 0.5,
           rank: details.rank,
           leader: u.id === this.state.leader
         });
