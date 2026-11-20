@@ -369,10 +369,12 @@ function choose(id, quiet = false) {
   selectionVersion++;
   state.selected = id;
   viewId = id;
-  mode = u.moved && !u.acted ? 'attack' : 'move';
+  // A hero held by 立樁 is treated as one who has already moved: straight to his arts.
+  const placed = u.moved || !!u.conditions?.rooted;
+  mode = placed && !u.acted ? 'attack' : 'move';
   update();
   if (!quiet) audio('tap');
-  if (F.ON && u.moved && G.canAct(state, u)) openArts();
+  if (F.ON && placed && G.canAct(state, u)) openArts();
 }
 // Polish (actionFlow): the arts list, opened without a button and kept beside the hero.
 function openArts(keyboard = false) {
@@ -421,9 +423,11 @@ function cellClick(x, y) {
       }
     } else
       mapTip(
-        u.moved
-          ? '本回合已移動，可在出招前撤步'
-          : G.terrain(x, y, state.mapIndex) + ' · 本回合無法抵達。'
+        u.conditions?.rooted
+          ? '立樁 · 本回合不能移動'
+          : u.moved
+            ? '本回合已移動，可在出招前撤步'
+            : G.terrain(x, y, state.mapIndex) + ' · 本回合無法抵達。'
       );
   } else mapTip(mode === 'skill' ? targetHint(G.artFor(u)) : '請選擇範圍內的敵方棋子');
 }
@@ -751,7 +755,7 @@ function doCommand(action, selectedArt = false, keyboard = false) {
     return;
   }
   if (action === 'skill' && !G.canPay(state, u)) {
-    notice('施展此招的氣血或內力不足。');
+    notice(G.artReady(state, u).reason || '施展此招的氣血或內力不足。');
     return;
   }
   mode = action;

@@ -138,6 +138,14 @@ Builds the catalog and the text listing from the game sources and fails if a pag
 
 `check-story.mjs` plays several hundred runs without a browser, with different heroes and board orders, and fails if any scene has a line with no speaker or text, if a hero lacks one of their own lines, if a board's script mentions another board, or if a save made mid-run no longer loads. Run it after changing story text.
 
+### Mechanics
+
+```bash
+node tools/check-mechanics.mjs
+```
+
+Builds small battles with the real rules and checks each mechanic of the skill and villain redesign against its specification: conditions from application to expiry, conditional bonuses on and off, use restrictions and their reasons, villain traits, and old saves loading. One line per check; exits 1 on any failure. Each mechanic is its own block in the file, so a new mechanic adds a block.
+
 ### Skill trees
 
 ```bash

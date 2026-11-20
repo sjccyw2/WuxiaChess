@@ -112,7 +112,7 @@ function plan(layer, reach) {
     range = cast ? (art ? art.range : u.range) : 0,
     heal = !!(art && (G.isSupport(art) || art.blink)),
     canBlink = art?.blink && G.canPay(s, u),
-    moving = layer.mode === 'move' && can && !u.moved;
+    moving = layer.mode === 'move' && G.canMove(s, u);
   const cells = fieldCells(s.mapIndex),
     field = new Set(),
     move = new Set(),

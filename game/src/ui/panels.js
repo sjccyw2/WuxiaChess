@@ -12,6 +12,8 @@ import {
   DETAILS,
   unitDetails,
   enemyTechnique,
+  enemyTraitLines,
+  reach,
   roundsToSignature,
   ITEMS,
   LIMIT,
@@ -246,7 +248,7 @@ function goalRows(s) {
       unitDetails(target).name +
       '</strong>' +
       '<p class="goal-detail">副手 · ' +
-      unitDetails(s.units.find((u) => u.encounterId))?.name +
+      unitDetails(s.units.find((u) => u.encounterId?.startsWith('lieutenant-')))?.name +
       '</p>' +
       (target.id === 'murong'
         ? '<p class="goal-detail">星索護陣・' +
@@ -887,7 +889,7 @@ function endPage(s) {
 function enemyPage(s, id) {
   const u = find(s, id),
     i = unitDetails(u),
-    special = enemyTechnique(u),
+    special = enemyTechnique(u, s),
     turns = roundsToSignature(s, u);
   return (
     titleHead('target', '敵情查探') +
@@ -927,11 +929,19 @@ function enemyPage(s, id) {
     stat(u, 'atk', s) +
     '</b></span><span>防禦 <b>' +
     stat(u, 'def', s) +
-    '</b></span><span>招式 <b>' +
+    '</b></span><span>移動 <b>' +
+    stat(u, 'step', s) +
+    ' 步</b></span><span>招式 <b>' +
     i.basic +
     '</b></span><span>射程 <b>' +
-    u.range +
-    ' 格</b></span></div><p class="footnote">' +
+    reach(s, u) +
+    ' 格' +
+    (u.conditions?.disarm ? '（纏械）' : '') +
+    '</b></span></div>' +
+    enemyTraitLines(s, u)
+      .map((line) => '<p class="footnote">' + icon('flag', 15) + esc(line) + '</p>')
+      .join('') +
+    '<p class="footnote">' +
     icon('stone', 15) +
     ('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。' + tileInfo(u.x, u.y, s.mapIndex).note) +
     (s.mapIndex === 9 && ['murong', 'echoBow', 'echoScout'].includes(id)
@@ -1066,7 +1076,7 @@ function attackPage(s, source, target, skill) {
   if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
   if (skill)
     lines.push(
-      line('自身消耗', cost(u, s) + ' 內力' + (f.hpCost ? '、' + f.hpCost + ' 氣血' : ''))
+      line('自身消耗', f.mpCost + ' 內力' + (f.hpCost ? '、' + f.hpCost + ' 氣血' : ''))
     );
   return (
     titleHead(friendly || blink ? 'spark' : 'swords', title) +

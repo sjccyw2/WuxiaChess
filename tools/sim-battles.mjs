@@ -111,10 +111,11 @@ function threatMap(s) {
     .filter(G.living)
     .map((e) => {
       const stand = [{ x: e.x, y: e.y }, ...[...G.reachable(s, e).keys()].map(unkey)];
-      const hits = new Set();
+      const hits = new Set(),
+        range = G.strikeReach(s, e);
       for (const p of stand)
-        for (let dx = -e.range; dx <= e.range; dx++)
-          for (let dy = -e.range + Math.abs(dx); dy <= e.range - Math.abs(dx); dy++) hits.add(key(p.x + dx, p.y + dy));
+        for (let dx = -range; dx <= range; dx++)
+          for (let dy = -range + Math.abs(dx); dy <= range - Math.abs(dx); dy++) hits.add(key(p.x + dx, p.y + dy));
       const art = s.run && G.roundsToSignature(s, e) === 0 && !e.conditions?.seal ? G.enemyTechnique(e) : null;
       return { e, hits, factor: art ? art.factor : 1 };
     });

@@ -16,6 +16,8 @@ function equippedMoves(s, u) {
       f.kind
     ];
     const cost = normal ? '免內力' : f.mp + ' 內力';
+    // An art the rules hold back says why in place of its kind and range.
+    const ready = normal ? { ok: true } : G.artReady(s, u, id);
     const estimates = normal
       ? G.enemies(s)
           .filter((t) => G.living(t) && G.targetOK(s, u, t, false))
@@ -35,10 +37,8 @@ function equippedMoves(s, u) {
         '</i><span><strong>' +
         esc(f.name) +
         '</strong><small>' +
-        kind +
-        ' · ' +
-        f.range +
-        ' 格</small>' +
+        (ready.ok ? kind + ' · ' + f.range + ' 格' : esc(ready.reason)) +
+        '</small>' +
         factBadge(f) +
         inReach +
         '</span><b>' +

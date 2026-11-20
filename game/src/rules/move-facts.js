@@ -7,6 +7,40 @@ import { commandBonus, effectsOf, effectDescription } from './battle-mastery.js'
 const percent = (fraction) => Math.round(fraction * 100) + '%';
 const roots = { force: '攻擊 ＋3', guard: '防禦 ＋2', breath: '絕技威力 ＋5、內力消耗 −2' };
 
+const plus = (n) => '＋' + n.toFixed(2);
+const ANSWERED = { close: '近身（射程 1）', ranged: '遠攻（射程 2 以上）', master: '局主或副手' };
+// The conditional bonuses of an art, as rules rather than as this strike's numbers.
+function bonusLines(u, art) {
+  const lines = [];
+  if (art.answer) lines.push('破招 · 目標為' + ANSWERED[art.answer] + '時倍率 ＋0.30');
+  if (art.lone) lines.push('孤行 · 四鄰沒有同伴時倍率 ' + plus(art.lone));
+  if (art.paired) {
+    const partner = G.DETAILS[G.PARTNERS[u.id]]?.name;
+    lines.push(
+      '合璧 · 有同伴相鄰 ' +
+        plus(art.paired.any) +
+        (partner ? '，' + partner + '相鄰 ' + plus(art.paired.partner) : '')
+    );
+  }
+  if (art.pairsSelf) lines.push('左右互搏 · 習得後，合璧之招孤身出手也算有同伴相鄰');
+  if (art.dire) lines.push('黯然 · 自身氣血越少倍率越高，剩四分之一以下時 ' + plus(art.dire));
+  if (art.avenge) lines.push('還報 · 上一個敵方回合曾受敵人攻擊而損血時倍率 ' + plus(art.avenge));
+  if (art.execute) lines.push('斬殘 · 目標氣血不過半時倍率 ' + plus(art.execute));
+  if (art.surge)
+    lines.push(
+      '傾力 · 耗盡內力，每點倍率 ＋' + art.surge.rate + '，最高 ' + art.surge.cap.toFixed(2)
+    );
+  return lines;
+}
+
+// When the art may be used and what it costs beyond 內力 and 氣血.
+function useLines(art) {
+  const lines = [];
+  if (art.poised) lines.push('留力 · 上回合未出手方可施展');
+  if (art.consume === 'shield') lines.push('轉護 · 須自身帶有護盾，施展時護盾轉給受術者');
+  return [...lines, ...G.priceNotes(art)];
+}
+
 function moveFacts(s, u, id = 'basic', target = null) {
   if (Object.hasOwn(roots, id)) {
     return {
@@ -95,6 +129,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
   }
   for (const effect of effectsOf(art))
     lines.push(effectDescription(effect.kind, effect.power, effect.turns));
+  if (art) lines.push(...bonusLines(u, art), ...useLines(art));
   if (art?.aura) lines.push('目標及周圍 ' + art.aura + ' 格友軍');
   if (hpCost) lines.push('自耗 ' + hpCost + ' 氣血');
   const forms = G.formsFor(u, art, basic ? definition : undefined);

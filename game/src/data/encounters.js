@@ -1,7 +1,13 @@
 // Each board's master and lieutenant. A master is called at the moment of his obsession,
 // not of insight. Stable actor IDs keep positions and health in earlier saves intact.
-function adversary(name, school, book, basic, skill, style, visual, bio, mini, robe) {
-  return { name, school, book, basic, skill, style, visual, bio, mini, robe };
+//
+// `traits` is how one villain differs from another (SPEC-mechanics §7.1):
+//   mods     { hp: multiplier, atk: added, def: added, step: set, range: set } on the stage numbers
+//   sig      { reach, power, turns, cadence, extra: 'pin' | 'line' | 'wound', heal } for the signature
+//   post, phase, prefers, stance, redirect, contact, cover, banner, glide, basicPoison
+// A villain without traits plays exactly as before the redesign.
+function adversary(name, school, book, basic, skill, style, visual, bio, mini, robe, traits = {}) {
+  return { name, school, book, basic, skill, style, visual, bio, mini, robe, traits };
 }
 const ENCOUNTERS = [
   [
@@ -265,12 +271,28 @@ const ENCOUNTERS = [
     )
   ]
 ];
+// The rank and file of each board, by board: { bow: {...}, scout: {...} }, each with the fields
+// of a DETAILS entry (name, role, school, mini, basic, bio) and optionally `traits` (only `mods`,
+// `post`, `cover`, `prefers`, `basicPoison` and `glide` apply to them). A board left empty keeps
+// the shared 黑子 pieces.
+const RANKS = Array.from({ length: 10 }, () => ({}));
+// How strong a signature's status is at each stage of the run. At stage 0 these are the numbers
+// every villain used before the redesign.
+const STATUS_POWER = {
+  weak: (stage) => 3 + Math.floor(stage / 2),
+  exposed: (stage) => 3 + Math.floor(stage / 2),
+  poison: (stage) => 3 + stage,
+  drain: (stage) => 6 + 2 * stage,
+  sweep: () => 0
+};
+const lasting = (turns) => (turns === 2 ? '持續至下回合。' : '持續 ' + turns + ' 回合。');
 const SIGNATURE_RULES = {
-  weak: '令目標攻擊降低 3，持續至下回合。',
-  exposed: '令目標防禦降低 3，持續至下回合。',
-  poison: '令目標中毒，兩次毒發各損 3 氣血。',
-  drain: '另外削去目標 6 點內力。',
-  sweep: '相鄰的其他我方俠客也會受到四分之一傷害。'
+  weak: ({ power, turns }) => '令目標攻擊降低 ' + power + '，' + lasting(turns),
+  exposed: ({ power, turns }) => '令目標防禦降低 ' + power + '，' + lasting(turns),
+  poison: ({ power, turns }) =>
+    '令目標中毒，' + (turns === 2 ? '兩' : turns) + '次毒發各損 ' + power + ' 氣血。',
+  drain: ({ power }) => '另外削去目標 ' + power + ' 點內力。',
+  sweep: () => '相鄰的其他我方俠客也會受到四分之一傷害。'
 };
 
 // Damage is measured against the same foe's normal strike after the target's defenses.
@@ -297,4 +319,4 @@ const VILLAIN_FORMS = {
   火焰刀: [1.27, 'tideBreaker']
 };
 
-export { ENCOUNTERS, SIGNATURE_RULES, VILLAIN_FORMS };
+export { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS };
