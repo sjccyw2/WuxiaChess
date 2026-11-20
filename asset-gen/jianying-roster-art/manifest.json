@@ -1,0 +1,987 @@
+{
+  "title": "劍影江湖・人物畫集",
+  "version": 1,
+  "groups": {
+    "hero": "俠客",
+    "villain": "反派",
+    "troop": "隨從兵種"
+  },
+  "spriteSheet": {
+    "columns": 8,
+    "rows": 5,
+    "cell": [
+      144,
+      176
+    ],
+    "footY": 162,
+    "motions": [
+      {
+        "id": "idle",
+        "name": "待機",
+        "fps": 8
+      },
+      {
+        "id": "walk",
+        "name": "走位",
+        "fps": 10
+      },
+      {
+        "id": "attack",
+        "name": "普攻",
+        "fps": 11
+      },
+      {
+        "id": "hurt",
+        "name": "受擊",
+        "fps": 10
+      },
+      {
+        "id": "special",
+        "name": "絕技",
+        "fps": 9
+      }
+    ]
+  },
+  "characters": [
+    {
+      "id": "qiaoFeng",
+      "group": "hero",
+      "name": "蕭峰",
+      "book": "天龍八部",
+      "role": "擒敵破陣",
+      "school": "丐幫",
+      "epithet": "塞外豪俠",
+      "technique": "擒龍功",
+      "basic": "太祖長拳",
+      "bio": "蕭峰自幼由喬氏夫婦撫養，以喬峰之名出任丐幫幫主，得知契丹身世後才用回本姓。渡口兩岸各有人指他是敵人，他先伸手把落水的人拉了上來。",
+      "source": "",
+      "groupName": "俠客",
+      "portrait": {
+        "path": "portraits/qiaoFeng.webp",
+        "size": [
+          672,
+          672
+        ],
+        "sha256": "e04d4286f762b0a179c54703976b80643265a5012a3385034cca773beceb6d41"
+      },
+      "sheet": {
+        "path": "sprites/qiaoFeng.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "a53b5534f4e642216a99e62d7e54463ac46e3a00128102e4c2bb6fa5a75ae405"
+      }
+    },
+    {
+      "id": "xuZhu",
+      "group": "hero",
+      "name": "虛竹",
+      "book": "天龍八部",
+      "role": "封穴療傷",
+      "school": "少林・靈鷲宮",
+      "epithet": "靈鷲宮主",
+      "technique": "天山折梅手",
+      "basic": "羅漢拳",
+      "bio": "虛竹本是少林寺的小和尚，誤解珍瓏棋局，受無崖子傳功，又從天山童姥習武。迷津裡有人脅他重施生死符，他先問那人身上是否還疼。",
+      "source": "",
+      "groupName": "俠客",
+      "portrait": {
+        "path": "portraits/xuZhu.webp",
+        "size": [
+          672,
+          672
+        ],
+        "sha256": "3e4fe007567f864599a36cc834757c049dc5cca7343a90bbc422cb533da9388d"
+      },
+      "sheet": {
+        "path": "sprites/xuZhu.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "bf8f2b2e1a770475fea61de7c51c3aeb4604be86701fc2e87a41420f86551b78"
+      }
+    },
+    {
+      "id": "hongQi",
+      "group": "hero",
+      "name": "洪七公",
+      "book": "射鵰英雄傳",
+      "role": "纏足掌勁",
+      "school": "丐幫",
+      "epithet": "北丐",
+      "technique": "打狗棒法・絆字訣",
+      "basic": "逍遙遊拳",
+      "bio": "九指神丐洪七公教過郭靖降龍十八掌，也把幫主的棒訣傳給黃蓉。這回他循一股飯香進了渡口，灶上竟擺著昨天他已吃完的半隻雞。",
+      "source": "",
+      "groupName": "俠客",
+      "portrait": {
+        "path": "portraits/hongQi.webp",
+        "size": [
+          672,
+          672
+        ],
+        "sha256": "0197987d69caa96783af4c7833053d85bffd7fe2215bb2d1cbb23ebc20ed66d3"
+      },
+      "sheet": {
+        "path": "sprites/hongQi.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "f3041565a48f981b9776d190d7fcf75abee88283394f13f487f7bbe4805edfc3"
+      }
+    },
+    {
+      "id": "yaoShi",
+      "group": "hero",
+      "name": "黃藥師",
+      "book": "射鵰英雄傳",
+      "role": "指簫控場",
+      "school": "桃花島",
+      "epithet": "東邪",
+      "technique": "彈指神通・飛石",
+      "basic": "彈石",
+      "bio": "黃藥師精於簫、劍、彈指，也能以花木布陣。渡岸石頭昨日還在水中，今日便高過桃枝，他只管在樹皮上刻下水線，等霧再起。",
+      "source": "",
+      "groupName": "俠客",
+      "portrait": {
+        "path": "portraits/yaoShi.webp",
+        "size": [
+          672,
+          672
+        ],
+        "sha256": "d6e0172c1b5c4a50af497bbedbf73b4683cc1ff1c979fcfaba5c7f4713a76f75"
+      },
+      "sheet": {
+        "path": "sprites/yaoShi.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "84c021711a1d19ade6203e5e87ebf56353f7a4d23445caea9939e9b6ed7f46f3"
+      }
+    },
+    {
+      "id": "sanFeng",
+      "group": "hero",
+      "name": "張三丰",
+      "book": "倚天屠龍記",
+      "role": "借力護陣",
+      "school": "武當派",
+      "epithet": "武當祖師",
+      "technique": "太極拳・雲手",
+      "basic": "武當長拳",
+      "bio": "武當開山祖師張三丰年逾百歲，在強敵之前創示太極拳劍。水邊少年使的都是他識得的拳，同門兄弟名號卻一個都對不上。",
+      "source": "",
+      "groupName": "俠客",
+      "portrait": {
+        "path": "portraits/sanFeng.webp",
+        "size": [
+          672,
+          672
+        ],
+        "sha256": "e2509f00a99864c98d0a2cf0122f1408889177789e1e17c84c2231bb29cbf308"
+      },
+      "sheet": {
+        "path": "sprites/sanFeng.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "c1497d36b37764ffea473650c6509e419d0b837f161a2b4c192c98846ca82a8f"
+      }
+    },
+    {
+      "id": "zhaoMin",
+      "group": "hero",
+      "name": "趙敏",
+      "book": "倚天屠龍記",
+      "role": "捨身奇襲",
+      "school": "汝陽王府",
+      "epithet": "紹敏郡主",
+      "technique": "天地同壽",
+      "basic": "王府快劍",
+      "bio": "敏敏特穆爾，漢名趙敏，曾以智計困住六大派高手。在渡口發現兩張署名相同、筆跡相反的軍令，她把印泥擦掉，只問誰真的見過送信人。",
+      "source": "",
+      "groupName": "俠客",
+      "portrait": {
+        "path": "portraits/zhaoMin.webp",
+        "size": [
+          672,
+          672
+        ],
+        "sha256": "e4b117328d430a64d35525a694aafa3daa94f735f4d5211228020d27d5998db2"
+      },
+      "sheet": {
+        "path": "sprites/zhaoMin.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "b9d869dc6f150f94310559b33f30316986d5cd3cb5f8cae028c6ff107740057a"
+      }
+    },
+    {
+      "id": "lingSu",
+      "group": "hero",
+      "name": "程靈素",
+      "book": "飛狐外傳",
+      "role": "解毒煉毒",
+      "school": "藥王門",
+      "epithet": "藥王傳人",
+      "technique": "藥王方脈・解厄",
+      "basic": "細針探脈",
+      "bio": "程靈素是無嗔大師的弟子。她到渡口時最先看見三碗水，三碗都起同一道油花，偏偏只有一碗浮著死蟲。她在各碗旁各壓了一張藥紙。",
+      "source": "",
+      "groupName": "俠客",
+      "portrait": {
+        "path": "portraits/lingSu.webp",
+        "size": [
+          672,
+          672
+        ],
+        "sha256": "85609b237be76d496934db7663c693f6c379834293fbf7cbc52d3f7daca0be97"
+      },
+      "sheet": {
+        "path": "sprites/lingSu.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "fcc18372fa4975d03d5da47a285a40e5f908f5d89c6c7716338dcd16ebe05148"
+      }
+    },
+    {
+      "id": "diYun",
+      "group": "hero",
+      "name": "狄雲",
+      "book": "連城訣",
+      "role": "血刀續戰",
+      "school": "湘西鄉里",
+      "epithet": "雪谷歸客",
+      "technique": "神照功・接息",
+      "basic": "鄉野劍招",
+      "bio": "狄雲本是鄉下弟子，蒙冤入獄，從丁典習得神照功。雪谷絕境中又讀到血刀經。船上有人讓他在空紙上按手印，他把紙攤開，請對方先把話寫完。",
+      "source": "",
+      "groupName": "俠客",
+      "portrait": {
+        "path": "portraits/diYun.webp",
+        "size": [
+          672,
+          672
+        ],
+        "sha256": "c745ec8e4bb0cfe38796d0c478ce02406c3f56045be8875a60349d635d7e845b"
+      },
+      "sheet": {
+        "path": "sprites/diYun.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "57ea84f8133ddbfa8bb6074b3bbb2a82e95e317ed5a43a5377b196116349cf2f"
+      }
+    },
+    {
+      "id": "chengZhi",
+      "group": "hero",
+      "name": "袁承志",
+      "book": "碧血劍",
+      "role": "劍錐遊擊",
+      "school": "華山派",
+      "epithet": "華山俠士",
+      "technique": "金蛇劍法・游身",
+      "basic": "華山長劍",
+      "bio": "袁崇煥之子袁承志在華山從穆人清習武，曾於石洞獲金蛇郎君遺下的劍與祕笈。見渡口石壁也有蛇痕，他伸手一摸，才發覺這條痕比手中劍還新。",
+      "source": "",
+      "groupName": "俠客",
+      "portrait": {
+        "path": "portraits/chengZhi.webp",
+        "size": [
+          672,
+          672
+        ],
+        "sha256": "09e34693f4deb39edde411abc0bd0b708c099899a3904840bc3b1bf6e16a7962"
+      },
+      "sheet": {
+        "path": "sprites/chengZhi.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "5d8a4646e9f7fffd9873378945537341871dade059c6abe5b5030a7bccf1c61f"
+      }
+    },
+    {
+      "id": "aQing",
+      "group": "hero",
+      "name": "阿青",
+      "book": "越女劍",
+      "role": "快步穿陣",
+      "school": "越地牧野",
+      "epithet": "越國牧羊女",
+      "technique": "越女劍・青枝穿陣",
+      "basic": "青竹一點",
+      "bio": "越地牧羊女阿青與白猿拿竹枝對打，越國劍士想從她手裏學劍，卻連一招也看不真。渡船靠岸時，她認得蘆叢間的蹄印，只是那些羊還未上岸。",
+      "source": "",
+      "groupName": "俠客",
+      "portrait": {
+        "path": "portraits/aQing.webp",
+        "size": [
+          672,
+          672
+        ],
+        "sha256": "b3c500f696b638ed0c3062e3203497d0d7de576d95e5caa4ed06e67b926d8a8a"
+      },
+      "sheet": {
+        "path": "sprites/aQing.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "c91636cc72f1f3ab88079e5b591c2822ecd803b0431d1e5ba30838ecbef9a2e4"
+      }
+    },
+    {
+      "id": "fengTiannan",
+      "group": "villain",
+      "name": "鳳天南",
+      "book": "飛狐外傳",
+      "role": "副將",
+      "school": "佛山五虎門",
+      "epithet": "南霸天",
+      "technique": "橫棍封橋",
+      "basic": "五虎棍",
+      "bio": "佛山人都知道，鳳家要的東西最好自己交出來。胡斐偏要替鍾阿四一家討公道。到了青竹渡，鳳天南又架起棍子收過路錢，連船都算一戶。",
+      "source": "鳳天南是佛山五虎門掌門，倚勢凌人。「五虎棍」與「橫棍封橋」是本作為他的棍術所取的戰鬥名稱。",
+      "companion": "fiveTiger",
+      "relationship": "鳳天南門下，替掌門守橋徵錢。",
+      "groupName": "反派",
+      "portrait": {
+        "path": "portraits/fengTiannan.webp",
+        "size": [
+          510,
+          510
+        ],
+        "sha256": "5a24251c16368114fbe286fbe9e03d51325290f0ac43822bc4f87b75ad825eb4"
+      },
+      "sheet": {
+        "path": "sprites/fengTiannan.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "b9ad0ff81f0cf1d9c16807c1756c756cac3e531ccafae615faf1e5ea18e8419f"
+      }
+    },
+    {
+      "id": "zhaoZhong",
+      "group": "villain",
+      "name": "張召重",
+      "book": "書劍恩仇錄",
+      "role": "副將",
+      "school": "武當派・清廷",
+      "epithet": "火手判官",
+      "technique": "凝碧截腕",
+      "basic": "武當劍術",
+      "bio": "張召重帶著一身武當功夫入了官門。紅楓驛的一封信上蓋著官印，他明知封泥有假，先問的卻是誰准驛卒拆看。",
+      "source": "張召重出身武當，為清廷效力，佩凝碧劍。「凝碧截腕」是本作依其兵刃設計的劍招。",
+      "companion": "qingShield",
+      "relationship": "同屬清廷陣營，在驛站受張召重調派。",
+      "groupName": "反派",
+      "portrait": {
+        "path": "portraits/zhaoZhong.webp",
+        "size": [
+          510,
+          510
+        ],
+        "sha256": "34e0ef6168b7b69e21ef6ce90f9b8e7cb0275089233842e01ba96d4adf756bf9"
+      },
+      "sheet": {
+        "path": "sprites/zhaoZhong.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "e31257083a770a55ced6397d9d378f78d7805163f231a579e6c77e166d91c0ba"
+      }
+    },
+    {
+      "id": "liQiu",
+      "group": "villain",
+      "name": "李秋水",
+      "book": "天龍八部",
+      "role": "副將",
+      "school": "逍遙派・西夏宮廷",
+      "epithet": "西夏皇太妃",
+      "technique": "白虹掌力",
+      "basic": "逍遙掌",
+      "bio": "李秋水的掌力能繞開面前的阻隔，打到旁人料想不到之處。蘆叢裡千百個聲音一齊喊，她偏聽得出藏在喝采裡的那聲咳。",
+      "source": "李秋水是逍遙派高手，後居西夏宮中。白虹掌力及其能轉折的勁路出自原著；波及鄰格是戰棋演繹。",
+      "companion": "xiaGuard",
+      "relationship": "隨西夏皇太妃入汀的宮廷護衛。",
+      "groupName": "反派",
+      "portrait": {
+        "path": "portraits/liQiu.webp",
+        "size": [
+          510,
+          510
+        ],
+        "sha256": "a3b45fcb36b5b5a3439dc456912f8cac86dd76457accc71c57c019a16b68c941"
+      },
+      "sheet": {
+        "path": "sprites/liQiu.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "e1d5bf1b981522e47428f86a8d8e1472c5786ac15fe078ca3b4b44c344942ef5"
+      }
+    },
+    {
+      "id": "hongAn",
+      "group": "villain",
+      "name": "洪安通",
+      "book": "鹿鼎記",
+      "role": "副將",
+      "school": "神龍教",
+      "epithet": "神龍教主",
+      "technique": "鎖脈擒龍",
+      "basic": "神龍擒拿",
+      "bio": "在神龍島，教眾開口先得祝教主仙福永享。到了雪棧，洪安通叫人一個個應名，卻聽見崖下另有一個聲音答「我還在」。",
+      "source": "洪安通統領神龍教，武功高強。擒拿、抽取內力及招名「鎖脈擒龍」為本作演繹。",
+      "companion": "shenLong",
+      "relationship": "神龍教按五色龍門分屬，青龍門是洪安通教下的一支。",
+      "groupName": "反派",
+      "portrait": {
+        "path": "portraits/hongAn.webp",
+        "size": [
+          510,
+          510
+        ],
+        "sha256": "99835f5046aa65253ad28d4811ca1ed9180b9ceccaea5656ff8f193b575275a5"
+      },
+      "sheet": {
+        "path": "sprites/hongAn.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "16d06aaaa6abfd54b95f4d0310aeb3f617eb5eb0ec4e5d828b0ea0047c973d05"
+      }
+    },
+    {
+      "id": "dongFang",
+      "group": "villain",
+      "name": "東方不敗",
+      "book": "笑傲江湖",
+      "role": "副將",
+      "school": "日月神教",
+      "epithet": "黑木崖教主",
+      "technique": "葵花飛針",
+      "basic": "繡針疾刺",
+      "bio": "一枚尋常繡花針，在東方不敗手裡也能截住名家刀劍。琴臺上，那枚針挑起銅片的一角，山後便少了一拍簫聲。",
+      "source": "東方不敗修習《葵花寶典》，持繡花針迎敵。「葵花飛針」為本作招名，沒有附毒。",
+      "companion": "heiMuGuard",
+      "relationship": "日月神教黑木崖的守衛，隨東方不敗出戰。",
+      "groupName": "反派",
+      "portrait": {
+        "path": "portraits/dongFang.webp",
+        "size": [
+          510,
+          510
+        ],
+        "sha256": "d66f6f8baa51b2213e75cc58774625d7cf978c8a6c8a3bcb5382730a992108b7"
+      },
+      "sheet": {
+        "path": "sprites/dongFang.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "66c8fe3e73c6f70e37414e1bb4a23be2cf43805413006b9e52c66b1dba6fed49"
+      }
+    },
+    {
+      "id": "qiuRen",
+      "group": "villain",
+      "name": "裘千仞",
+      "book": "射鵰英雄傳",
+      "role": "副將",
+      "school": "鐵掌幫",
+      "epithet": "鐵掌水上飄",
+      "technique": "鐵掌",
+      "basic": "鐵掌探手",
+      "bio": "裘千仞腳步極輕，掌力卻足以裂石。桃花牆裡傳來一聲「讓我出去」，他頭一個念頭竟是伸掌抵住那道門。",
+      "source": "此處取裘千仞任鐵掌幫幫主時的身分。鐵掌與輕功出自原著；破防是本作戰技效果。",
+      "companion": "ironPalm",
+      "relationship": "鐵掌幫幫眾，奉裘千仞之命守陣。",
+      "groupName": "反派",
+      "portrait": {
+        "path": "portraits/qiuRen.webp",
+        "size": [
+          510,
+          510
+        ],
+        "sha256": "6717f98ef56fc1a03cb374ca519b8a7710bf4f328493e0b1a3ee5e9bdceb9ae5"
+      },
+      "sheet": {
+        "path": "sprites/qiuRen.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "ca9159c329e8de23f2536e15a209200a24624b11d4b5082d01aa23f2e838475b"
+      }
+    },
+    {
+      "id": "wanYan",
+      "group": "villain",
+      "name": "完顏洪烈",
+      "book": "射鵰英雄傳",
+      "role": "副將",
+      "school": "金國趙王府",
+      "epithet": "大金趙王",
+      "technique": "趙府令旗",
+      "basic": "王府侍從截擊",
+      "bio": "趙王慣在帳中延攬高手。襄陽城下，金國的弓手與蒙古的輪聲撞在一處，他認出自己的趙字旗，仍想叫城門按他的時辰開合。",
+      "source": "完顏洪烈是金國六王爺，受封趙王，延攬江湖客。「趙府令旗」代表他下令齊射，由部眾出手。",
+      "companion": "jinBow",
+      "relationship": "金國趙王府軍士，隨完顏洪烈的旗令出箭。",
+      "groupName": "反派",
+      "portrait": {
+        "path": "portraits/wanYan.webp",
+        "size": [
+          510,
+          510
+        ],
+        "sha256": "fe0db495296ad9d927b680e1c64c330c736a03d2eabfd5f60c7aabdd3c285f21"
+      },
+      "sheet": {
+        "path": "sprites/wanYan.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "6ba095cd73060f9f1fa7d0dc3f8343e58ef50a99b688dc38d97f8a061eb73509"
+      }
+    },
+    {
+      "id": "gongSun",
+      "group": "villain",
+      "name": "公孫止",
+      "book": "神鵰俠侶",
+      "role": "副將",
+      "school": "絕情谷",
+      "epithet": "絕情谷主",
+      "technique": "陰陽倒亂刃法",
+      "basic": "金刀黑劍",
+      "bio": "公孫止左手、右手各有一路刀劍變化，也慣於替別人作主。看著玉裡那個還沒把話說完的孩子，他伸手先收緊了漁網。",
+      "source": "公孫止為絕情谷谷主，持金刀、黑劍施展陰陽倒亂刃法。",
+      "companion": "netHand",
+      "relationship": "谷主麾下的綠衣弟子，擅用谷中漁網。",
+      "groupName": "反派",
+      "portrait": {
+        "path": "portraits/gongSun.webp",
+        "size": [
+          510,
+          510
+        ],
+        "sha256": "897ec97d123cb76fa7f4bb26f64d9ac96aacc2af6db9d9495c9837590c5d45d5"
+      },
+      "sheet": {
+        "path": "sprites/gongSun.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "0413f98a7c21d26826e27f052af5dad6807291c445516d543844155a4d8236b2"
+      }
+    },
+    {
+      "id": "xianYu",
+      "group": "villain",
+      "name": "鮮于通",
+      "book": "倚天屠龍記",
+      "role": "副將",
+      "school": "華山派",
+      "epithet": "神機子",
+      "technique": "金蠶蠱毒",
+      "basic": "摺扇點穴",
+      "bio": "人稱神機子的華山掌門，打過多少如意算盤，最怕有人當面翻舊帳。眼前竟有另一位華山掌門，讓他想起改個落款有多容易。",
+      "source": "鮮于通為《倚天屠龍記》中的華山掌門，扇中暗藏金蠶蠱毒。倒影天街使他與《笑傲江湖》的岳不群相遇。",
+      "companion": "huaBlade",
+      "relationship": "鮮于通治下的華山弟子，隨本門掌門下山。",
+      "groupName": "反派",
+      "portrait": {
+        "path": "portraits/xianYu.webp",
+        "size": [
+          510,
+          510
+        ],
+        "sha256": "c03be3dbe5eaacfd9ca35d89b16a7551cf3e2fabca4e476f9d0b3aff7cbf7b30"
+      },
+      "sheet": {
+        "path": "sprites/xianYu.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "d37a8141c515ab9418ae6fe3fa50a51a73e84b1d0557361203f4b8378dd17af3"
+      }
+    },
+    {
+      "id": "wanZhen",
+      "group": "villain",
+      "name": "萬震山",
+      "book": "連城訣",
+      "role": "副將",
+      "school": "荊州萬門",
+      "epithet": "五雲手",
+      "technique": "唐詩劍法",
+      "basic": "萬門劍式",
+      "bio": "梅念笙座下大弟子為了一部劍訣，連師徒之義也折了進去。走到漏臺，他聽見別人的兒子喊爹，第一個想到的卻是那半句裡藏著甚麼。",
+      "source": "萬震山號五雲手，居荊州，與師門所傳唐詩劍法及連城訣之爭有關。破防是本作效果。",
+      "companion": "wanDisciple",
+      "relationship": "荊州萬府門生，在漏臺替萬震山守索。",
+      "groupName": "反派",
+      "portrait": {
+        "path": "portraits/wanZhen.webp",
+        "size": [
+          510,
+          510
+        ],
+        "sha256": "9a37c89c441ba0f191827ba301b122ee2e1960a1e0a0a9feda25ae04a0de0c50"
+      },
+      "sheet": {
+        "path": "sprites/wanZhen.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "221bd2250fe4dac0dfe7f3122aad83fbc7133009bd1ee878fc3ceaa940e182e5"
+      }
+    },
+    {
+      "id": "fiveTiger",
+      "group": "troop",
+      "name": "五虎門棍徒",
+      "book": "飛狐外傳",
+      "role": "長棍",
+      "school": "佛山五虎門",
+      "epithet": "",
+      "technique": "掃膝",
+      "basic": "隔步掃棍",
+      "bio": "門徒橫棍守著渡頭。棍尖搆得到兩步外的膝彎；貼身時，長棍反倒抖不開。",
+      "source": "五虎門出自原著。渡頭棍徒、守橋差事與戰法是本作編排。",
+      "companion": "fengTiannan",
+      "relationship": "鳳天南門下，替掌門守橋徵錢。",
+      "groupName": "隨從兵種",
+      "portrait": {
+        "path": "portraits/fiveTiger.webp",
+        "size": [
+          508,
+          508
+        ],
+        "sha256": "ceba8ac6558bddbec343ab095d61f9a743ec419833b6eae25b43c9c0d3026017"
+      },
+      "sheet": {
+        "path": "sprites/fiveTiger.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "059725f454d31be2453a972d3495a5de27e347c13e99c86c552f4a7435fc1afb"
+      }
+    },
+    {
+      "id": "qingShield",
+      "group": "troop",
+      "name": "清營刀盾兵",
+      "book": "書劍恩仇錄",
+      "role": "刀盾",
+      "school": "清營",
+      "epithet": "",
+      "technique": "倚盾",
+      "basic": "抵盾短刀",
+      "bio": "驛門只容兩人並行。守兵抵好盾沿，等人自己送到刀口；要他離開門柱追人，盾牆就立不起來。",
+      "source": "清廷武官和官兵是原著勢力。這名刀盾兵是本作虛構的當值士卒。",
+      "companion": "zhaoZhong",
+      "relationship": "同屬清廷陣營，在驛站受張召重調派。",
+      "groupName": "隨從兵種",
+      "portrait": {
+        "path": "portraits/qingShield.webp",
+        "size": [
+          508,
+          508
+        ],
+        "sha256": "126ccd4cc4bb0c5d6e8cee71dd5179a9507600de99f6bc48fd1d4cae0bc2da5f"
+      },
+      "sheet": {
+        "path": "sprites/qingShield.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "b0cf0b72b72b3871c8f7b1b9f43f2662dbe17569c1fe65db317da774d3a16377"
+      }
+    },
+    {
+      "id": "xiaGuard",
+      "group": "troop",
+      "name": "西夏宮禁衛",
+      "book": "天龍八部",
+      "role": "近衛",
+      "school": "西夏宮廷",
+      "epithet": "",
+      "technique": "夾衛",
+      "basic": "護駕短刺",
+      "bio": "禁衛守在蘆隙間，與身旁的人一前一後出戟。兩路人馬一旦分開，他便尋不到借力撥甲的角度。",
+      "source": "西夏宮廷及皇太妃出自原著。此禁衛為本作設計的宮廷兵種。",
+      "companion": "liQiu",
+      "relationship": "隨西夏皇太妃入汀的宮廷護衛。",
+      "groupName": "隨從兵種",
+      "portrait": {
+        "path": "portraits/xiaGuard.webp",
+        "size": [
+          508,
+          508
+        ],
+        "sha256": "d5325a32a2258aab8c12cabe50cde02d7c524f37b33260e899b9c1e892d2819f"
+      },
+      "sheet": {
+        "path": "sprites/xiaGuard.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "5fbd052b6ec9eb82df355021e21a5b9dabee16168d51186a9d20e605de1c2016"
+      }
+    },
+    {
+      "id": "shenLong",
+      "group": "troop",
+      "name": "神龍教青龍門眾",
+      "book": "鹿鼎記",
+      "role": "短刃",
+      "school": "神龍教青龍門",
+      "epithet": "",
+      "technique": "步裡藏毒",
+      "basic": "青龍短刀",
+      "bio": "雪裡聞得號令，青龍門眾便搶步上前。移步時夾在袖底的藥會抹上刀背，站定接戰反而用不上。",
+      "source": "神龍教、青龍使與五色門眾出自原著；此人的短刀淬藥是本作戰法。",
+      "companion": "hongAn",
+      "relationship": "神龍教按五色龍門分屬，青龍門是洪安通教下的一支。",
+      "groupName": "隨從兵種",
+      "portrait": {
+        "path": "portraits/shenLong.webp",
+        "size": [
+          508,
+          508
+        ],
+        "sha256": "624f5c18af8bd6c82f5dd0bdfb06ea380df5a1c20241ad91d0a23a979bc3e7ef"
+      },
+      "sheet": {
+        "path": "sprites/shenLong.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "fac2d2c64ff1e9aaaa4650965f491a7c26d8ad37406bbc06ee2099a6aab3b450"
+      }
+    },
+    {
+      "id": "heiMuGuard",
+      "group": "troop",
+      "name": "黑木崖侍衛",
+      "book": "笑傲江湖",
+      "role": "游衛",
+      "school": "日月神教",
+      "epithet": "",
+      "technique": "獨行切腕",
+      "basic": "窄刀切腕",
+      "bio": "侍衛獨自繞走琴臺側邊，專切對手持兵器的手腕。有同伴擠到身旁，他就得收窄刀路。",
+      "source": "黑木崖是原著中日月神教總壇。此侍衛及其單人刀路為本作設計。",
+      "companion": "dongFang",
+      "relationship": "日月神教黑木崖的守衛，隨東方不敗出戰。",
+      "groupName": "隨從兵種",
+      "portrait": {
+        "path": "portraits/heiMuGuard.webp",
+        "size": [
+          508,
+          508
+        ],
+        "sha256": "a2b9754e54d5796756d87ac547721d8077462731c813d4d445cb7fd53009e3f4"
+      },
+      "sheet": {
+        "path": "sprites/heiMuGuard.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "9c511bd184a12e5728e6498f22573c87eb0ac25035a1046c644f6fa4febef53f"
+      }
+    },
+    {
+      "id": "ironPalm",
+      "group": "troop",
+      "name": "鐵掌幫拳手",
+      "book": "射鵰英雄傳",
+      "role": "拳手",
+      "school": "鐵掌幫",
+      "epithet": "",
+      "technique": "沉樁護身",
+      "basic": "踏樁掌",
+      "bio": "拳手守著石閂，用石門練出一手沉掌。氣血所剩不多時，他把最後一口勁留在胸前，好挺過對手還來的一招。",
+      "source": "鐵掌幫是原著幫派。石門守衛、踏樁掌及護勁屬本作演繹。",
+      "companion": "qiuRen",
+      "relationship": "鐵掌幫幫眾，奉裘千仞之命守陣。",
+      "groupName": "隨從兵種",
+      "portrait": {
+        "path": "portraits/ironPalm.webp",
+        "size": [
+          508,
+          508
+        ],
+        "sha256": "61482fad6e2d6057e41a7d8370d69ee3da78d560e657f8672c90d185b36235d0"
+      },
+      "sheet": {
+        "path": "sprites/ironPalm.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "f3321e24994f1c48a18a0b360a55858660d095493facf724c1bf2159bfc8635c"
+      }
+    },
+    {
+      "id": "jinBow",
+      "group": "troop",
+      "name": "趙王府弓手",
+      "book": "射鵰英雄傳",
+      "role": "弓手",
+      "school": "金國趙王府",
+      "epithet": "",
+      "technique": "三步穿甲",
+      "basic": "城外勁箭",
+      "bio": "趙王旗落，弓手就從車轅之間尋縫發箭。需要三格距離才能看準甲縫；追到近處，這一箭便失了準頭。",
+      "source": "趙王府是原著勢力。這支弓隊為本作編制；與襄陽蒙古軍相遇源於回牒牽來不同年代。",
+      "companion": "wanYan",
+      "relationship": "金國趙王府軍士，隨完顏洪烈的旗令出箭。",
+      "groupName": "隨從兵種",
+      "portrait": {
+        "path": "portraits/jinBow.webp",
+        "size": [
+          508,
+          508
+        ],
+        "sha256": "efd8c2404fa80fa1d0daecb6baf996c754c0fe993acb1a350e7379b144db214b"
+      },
+      "sheet": {
+        "path": "sprites/jinBow.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "a3ee1419dd27f98e4370b4608e5321624a919d303af1aa0c6b3628137a743b88"
+      }
+    },
+    {
+      "id": "netHand",
+      "group": "troop",
+      "name": "絕情谷網手",
+      "book": "神鵰俠侶",
+      "role": "漁網",
+      "school": "絕情谷",
+      "epithet": "",
+      "technique": "墜網纏足",
+      "basic": "張網罩身",
+      "bio": "一撒網，拴在四角的鉛墜就貼地分開。網手走不快，能在兩格內困人；叫他自己走出石室，就是解圍的機會。",
+      "source": "絕情谷弟子的漁網陣出自原著。這名網手及其單人擲網是戰棋化設計。",
+      "companion": "gongSun",
+      "relationship": "谷主麾下的綠衣弟子，擅用谷中漁網。",
+      "groupName": "隨從兵種",
+      "portrait": {
+        "path": "portraits/netHand.webp",
+        "size": [
+          508,
+          508
+        ],
+        "sha256": "42e273fd121d276a91cbca60bcc8c35fbaaf896365d953d4d1cd7a7dfc59aa69"
+      },
+      "sheet": {
+        "path": "sprites/netHand.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "a8c7af82c4e277e675740b39211e56c5e8e68503cfcf3d04dda62366d7ea7683"
+      }
+    },
+    {
+      "id": "huaBlade",
+      "group": "troop",
+      "name": "華山刀陣弟子",
+      "book": "倚天屠龍記",
+      "role": "陣刀",
+      "school": "華山派",
+      "epithet": "",
+      "technique": "合步護門",
+      "basic": "合步斜刀",
+      "bio": "斜刀劈落，同伴恰好補住空門。華山的刀陣講究一進一退，打散兩人並肩的站位，他便少一重護持。",
+      "source": "《倚天屠龍記》華山派有反兩儀刀法。刀陣弟子的身分與合步護勁是本作編排。",
+      "companion": "xianYu",
+      "relationship": "鮮于通治下的華山弟子，隨本門掌門下山。",
+      "groupName": "隨從兵種",
+      "portrait": {
+        "path": "portraits/huaBlade.webp",
+        "size": [
+          508,
+          508
+        ],
+        "sha256": "23a6e017f9f12eb91b13da9c4c7d19015a7e4a27bb35096a3a22b1ff00f04fd9"
+      },
+      "sheet": {
+        "path": "sprites/huaBlade.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "7a76eccf11860cffc2ba867f777edc79e5ad1515183ce1ce6aeb7ffee865b110"
+      }
+    },
+    {
+      "id": "wanDisciple",
+      "group": "troop",
+      "name": "萬門劍徒",
+      "book": "連城訣",
+      "role": "追劍",
+      "school": "荊州萬門",
+      "epithet": "",
+      "technique": "趁隙卸劍",
+      "basic": "連步遞劍",
+      "bio": "在萬府學藝久了，這名弟子最會看誰露了怯。對手氣血過半時他只用起手式；一旦跌到半數以下，他便加一劍封住反攻的路。",
+      "source": "原著寫到萬震山在荊州收徒。此劍徒為本作虛構門生，沒有冒用已具姓名的弟子。",
+      "companion": "wanZhen",
+      "relationship": "荊州萬府門生，在漏臺替萬震山守索。",
+      "groupName": "隨從兵種",
+      "portrait": {
+        "path": "portraits/wanDisciple.webp",
+        "size": [
+          508,
+          508
+        ],
+        "sha256": "752ef97e7694cf55d9e458ba9d9317f0c0d701ff51b371a3502344076c08e01e"
+      },
+      "sheet": {
+        "path": "sprites/wanDisciple.png",
+        "size": [
+          1152,
+          880
+        ],
+        "sha256": "e3dc53eb21735fd2d2cc917763b20b2e4e429d340ba9728a92aa5501078f46e0"
+      }
+    }
+  ]
+}

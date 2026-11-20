@@ -44,6 +44,7 @@ game/
     scene/            3D battlefield, camera, scenery, landforms
     actors/           sprites and movement on the board
     fx/               technique and skill effects
+    audio/            sound, synthesised in code: instruments, each event's sound, ambience
     ui/               panels, dialogs and views
 wiki/
   index.html          page shell
@@ -64,6 +65,9 @@ tools/
   check-wiki.mjs      builds the wiki outside a browser and checks its links
   check-story.mjs     plays hundreds of shuffled runs and checks the story holds
   extra-fonts.py      regenerates the extra font characters for the game and the wiki
+  map-preview.html    draws one battlefield with the game's own board, camera and lighting
+  shoot-map.mjs       photographs a battlefield from a set of camera angles
+  sound-check.mjs     renders every sound and fails if one clips or is out of balance
 ```
 
 ## Presentation switches
@@ -166,6 +170,17 @@ node tools/sim-battles.mjs --runs 1 --trace            # the battle log of one r
 ```
 
 A fixed, deterministic headless player fights whole runs with the real rules and enemy code: it draws heroes, starts the run, spends points (cheapest node toward the summit, spare points into talents), equips its three strongest arts with distinct jobs, buys medicine and gear, and on every turn scores each legal move-and-action with `forecast` (kills, damage minus counter, cover, the enemy reach it ends in, the leader's safety, the board's marker or time limit). Per board it reports win rate, rounds to win, health left, heroes downed, side objectives and how often the basic attack, the starting art and each tier were used; per hero, damage dealt and taken, share of kills and damage, and level and points at each board. `--compare` prints what moved between two saved runs and flags boards whose win rate changed by more than ten points. The same seed always gives the same result, so compare runs made with the same `--runs` and `--seed`.
+
+### Scenery and sound
+
+Two more tools help when the scenery or the sound changes. Both need Playwright with Chromium, and neither needs a web server:
+
+```bash
+node tools/shoot-map.mjs 3 pictures/     # map 3 from nine camera angles, with draw calls and triangles
+node tools/sound-check.mjs               # every sound: no clipping, clean start and end, balanced loudness
+```
+
+The ten map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
 
 ## Fonts
 

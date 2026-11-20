@@ -53,6 +53,7 @@ class BattleBoard {
     onHover,
     onCamera,
     onTechnique,
+    onCue,
     covered = () => false
   }) {
     this.T = globalThis.THREE;
@@ -76,6 +77,7 @@ class BattleBoard {
     this.pointers = new Map();
 
     this.layers = new ActorLayer(tactics, this.view, () => this.draw(), onTechnique);
+    this.layers.onCue = onCue; // sound: timed board events (see actors.js releaseCues)
     this.layers.warm(['hero', 'xiao', 'guo']);
     this.addInput();
     this.buildKeys();

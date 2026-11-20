@@ -103,6 +103,7 @@ class ActorLayer {
     this.latestMoves.clear();
     this.effects = [];
     this.boxes = [];
+    this.cues = [];
     this.impact.reset();
     this.settle();
   }
@@ -192,6 +193,19 @@ class ActorLayer {
           const { legs, duration } = planFootwork(path, prefs.motion, state.mapIndex);
           const walk = this.addClip(u.id, { row: 1, start, end: start + duration, path, legs });
           this.latestMoves.set(u.id, walk);
+          // Sound: a footfall on each half of every leg, on the square underfoot.
+          for (const leg of legs)
+            for (const [foot, at, tile] of [
+              [0, 0.08, leg.from],
+              [1, 0.58, leg.to]
+            ])
+              this.cue(start + leg.start + leg.travel * at, {
+                type: 'step',
+                id: u.id,
+                foot,
+                ground: this.ground(tile),
+                walk
+              });
         }
       }
       if (old && old.hp > 0 && u.hp <= 0) {
@@ -229,6 +243,7 @@ class ActorLayer {
       this.addClip(target.id, { row: 3, start: hit, end: hurtEnd });
       end = Math.max(end, hurtEnd);
       if (pushed) {
+        this.cue(hit, { type: 'skid', id: target.id });
         pushed.knockback = true;
         pushed.start = hit;
         pushed.end = hit + (full ? 265 : 105);
@@ -241,6 +256,7 @@ class ActorLayer {
     }
     this.exchange = { actor: actor.id, target: target.id, start, hit, end, rank };
     if (rank >= 3) this.impact.prepare(actor);
+    if (!special) this.cue(hit - (full ? 150 : 110), { type: 'swing', id: actor.id });
     if (special) {
       const flourish = art.blink
         ? 'blink'
@@ -312,6 +328,7 @@ class ActorLayer {
           direction
         });
         start = reply + (full ? 345 : 220);
+        this.cue(start - (full ? 150 : 110), { type: 'swing', id: initiator.id });
         const end = start + (full ? 504 : 400);
         this.addClip(id, { row: 3, start, end });
         if (recipient.hp <= 0) {
@@ -347,6 +364,26 @@ class ActorLayer {
         hurt = !!struck && amount < 0 && reason !== 'sacrifice',
         kill = hurt && struck.hp <= 0 && lastBlow.get(id) === index,
         rank = counter ? 0 : exchange?.rank || 0;
+      // Sound: what this number sounds like, when it lands.
+      if (hurt)
+        this.cue(start, {
+          type: 'blow',
+          id,
+          ratio: -amount / struck.maxHp,
+          rank,
+          kill,
+          counter,
+          lead: counter || index === 0
+        });
+      else if (value.startsWith('−'))
+        this.cue(start, { type: reason === 'sacrifice' ? 'cost' : 'block', id });
+      else if (value.startsWith('+')) this.cue(start, { type: 'mend', id });
+      else if (struck)
+        this.cue(start, {
+          type: 'status',
+          id,
+          friendly: struck.side === G.find(this.state, exchange?.actor)?.side
+        });
       // Hit-stop, flash and shake are released when the action clock reaches this blow.
       if (hurt)
         this.impact.blow({
@@ -929,12 +966,12 @@ class ActorLayer {
       if (e.kind === 'technique') {
         if (!e.announced && visible && f >= 0.035) {
           e.announced = true;
-          this.onTechnique?.(e.skill, 'gather', e.name, e.visual, e.rank);
+          this.onTechnique?.(e.skill, 'gather', e.name, e.visual, e.rank, e.flourish);
           this.impact.herald(e);
         }
         if (!e.struck && visible && f >= 0.52) {
           e.struck = true;
-          this.onTechnique?.(e.skill, 'impact', e.name, e.visual, e.rank);
+          this.onTechnique?.(e.skill, 'impact', e.name, e.visual, e.rank, e.flourish);
           this.impact.conclude(e, 250);
         }
         const from = this.point(e.from.x, e.from.y, 0.78);
@@ -1036,7 +1073,10 @@ class ActorLayer {
   }
   draw(realTime, title, reach, hover, covered = false) {
     this.advance(realTime, covered);
-    if (!title && this.state && !covered && !this.waitingForArt) this.impact.land(this.time);
+    if (!title && this.state && !covered && !this.waitingForArt) {
+      this.impact.land(this.time);
+      this.releaseCues();
+    }
     const time = this.time;
     const c = this.ctx;
     c.clearRect(0, 0, this.width, this.height);
@@ -1057,6 +1097,39 @@ class ActorLayer {
       tr.impacts = tr.impacts.filter((impact) => impact.at > time);
     }
     if (!this.playing) this.settle();
+  }
+  // ---- sound cues: timed events handed to onCue when the action clock reaches them ----
+  cue(at, data) {
+    if (this.onCue) this.cues.push({ at, ...data });
+  }
+  ground(tile) {
+    return fieldCells(this.state.mapIndex).find((c) => c.x === tile.x && c.y === tile.y)?.kind;
+  }
+  releaseCues() {
+    if (!this.onCue) return;
+    const now = this.time,
+      due = this.cues.filter((c) => c.at <= now);
+    if (due.length) this.cues = this.cues.filter((c) => c.at > now);
+    // A piece is defeated when its ink starts to scatter (see fx/impact.js).
+    for (const [id, track] of this.tracks)
+      if (track.exit && !track.fell && now >= track.exit - 200) {
+        const u = G.find(this.state, id);
+        if (u && u.hp <= 0) {
+          track.fell = true;
+          due.push({ type: 'fall', id, ally: u.side === 'ally' });
+        }
+      }
+    for (const c of due) {
+      // A walk turned into a knockback has no footfalls; a cue far behind is dropped.
+      if (c.walk?.knockback || now - (c.at ?? now) > 600) continue;
+      const u = G.find(this.state, c.id),
+        at = u && this.location(u, now),
+        p = at && this.point(at.x, at.y);
+      const pan = p ? clamp((p.x / this.width) * 2 - 1, -1, 1) * 0.55 : 0;
+      try {
+        this.onCue({ ...c, walk: undefined, pan });
+      } catch {}
+    }
   }
   body(px, py) {
     return [...this.boxes]

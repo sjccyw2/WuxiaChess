@@ -1,4 +1,6 @@
 import { Model } from '../scenery-kit.js';
+import { pines3 } from './pines-3.js';
+import { crag, crags3 } from './crags-3.js';
 
 // The trail is a cut into one massif. The service walks and the bell pavilion
 // sit on secondary spurs, while the snowmelt channel leaves the trail to the west.
@@ -118,21 +120,49 @@ function measureLand(layout) {
   };
 }
 
+// A cheap repeatable hash of an integer block, 0 to 1.
+function hash(i, j, salt = 0) {
+  const n = Math.sin(i * 127.1 + j * 311.7 + salt * 74.7) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+// Granite breaks along two sets of joints into blocks. Each block steps down in
+// its own rhythm, so neighbouring blocks leave short vertical faces between them
+// and the benches never line up into clean contour rings.
+function jointed(x, z, descent) {
+  const u = x * 0.89 + z * 0.45,
+    v = -x * 0.45 + z * 0.89;
+  const i = Math.floor(u / 2.1),
+    j = Math.floor(v / 1.45);
+  const phase = hash(i, j),
+    step = 0.85 + 0.5 * hash(i, j, 1);
+  const s = descent / step + phase,
+    k = Math.floor(s),
+    f = s - k;
+  // A narrow, slightly tilted bench, then a steep riser of bare rock.
+  const g = f < 0.5 ? 0.08 * (f / 0.5) : 0.08 + 0.92 * ((f - 0.5) / 0.5) ** 0.85;
+  const stepped = step * (k + g - phase);
+  const t = Math.min(1, Math.max(0, (descent - 0.28) / 0.6));
+  return descent + (stepped - descent) * t * t * (3 - 2 * t);
+}
+
 function mountainProfile(landDistance, x, z) {
   const shore = landDistance(x, z);
   const grain =
     0.51 * Math.sin(x * 1.21 + z * 0.83) +
     0.29 * Math.sin(z * 2.6 - x * 0.68) +
     0.2 * Math.cos(x * 3.5 - z * 1.93);
-  const apron = 0.18 + 0.085 * grain;
   const snow = 0.064 + 0.006 * grain;
-  const d = Math.max(0, shore - apron);
-  let height = snow - 8.36 * (1 - Math.exp(-d * (0.71 + 0.18 * grain)));
+  // The shelf was hewn out of the rock: its dressed face stands a couple of metres
+  // proud before the natural cliff takes over below it.
+  const foot = -1.75 + 0.4 * grain;
+  let height = foot - (8.36 + foot) * (1 - Math.exp(-shore * (0.78 + 0.18 * grain)));
   for (const [a, b, radius, crest] of spurs) {
     const t = segmentDistance(x, z, a, b) / radius;
     const ledge = crest + 0.22 * grain - 1.12 * Math.max(0, t - 0.6) ** 1.58;
     height = Math.max(height, ledge);
   }
+  height = snow - jointed(x, z, snow - height);
   // A hanging stream has cut through the thinner ridge. Keep clear air under the
   // wooden deck, including its centreline; meltwater is visible through its slats.
   const channel = pathDistance(x, z, springChannel);
@@ -152,7 +182,7 @@ function mountainProfile(landDistance, x, z) {
 
 function axis(inner, low, high) {
   const points = [low, low + 2.65, -inner - 2, -inner - 1];
-  for (let i = -inner * 2; i <= inner * 2; i++) points.push(i * 0.5);
+  for (let i = -inner * 4; i <= inner * 4; i++) points.push(i * 0.25);
   points.push(inner + 1, inner + 2, high - 2.65, high);
   return points;
 }
@@ -165,9 +195,10 @@ function interval(values, p) {
 
 function massif(m, layout) {
   const land = measureLand(layout);
+  const profile = (x, z) => mountainProfile(land, x, z);
   const xs = axis(10, -17, 17),
     zs = axis(12, -19, 19);
-  const nodes = zs.map((z) => xs.map((x) => [x, mountainProfile(land, x, z), z]));
+  const nodes = zs.map((z) => xs.map((x) => [x, profile(x, z), z]));
   const surface = (x, z) => {
     const i = interval(xs, x),
       j = interval(zs, z);
@@ -191,14 +222,24 @@ function massif(m, layout) {
       const wind = Math.cos(x * 1.54 - z * 0.93 + Math.sin(z * 0.88)) * 0.5 + 0.5;
       const track = pathDistance(x, z, packTrail);
       const traffic = Math.max(0, 1 - track / 0.65);
-      const packed = m.mix(0x9bafb5, 0x7c8880, 0.18 + 0.21 * wind);
-      const snow = m.mix(0xd9e3e1, 0xc9d7db, 0.58 * wind);
-      const rock = m.mix(
-        0x536773,
-        0x87959b,
-        0.26 + 0.21 * Math.cos(x + y * 4.4 - z * 0.64) + 0.13 * wind
-      );
-      return { snow: m.mix(snow, packed, traffic * 0.95), rock };
+      const packed = m.mix(0xa9b4b4, 0x8f9790, 0.18 + 0.21 * wind);
+      const snow = m.mix(0xf1f4f3, 0xdbe5ea, 0.62 * wind);
+      // Grey granite, warmer where iron weathers out, cold where meltwater stains it.
+      const i = Math.floor((x * 0.89 + z * 0.45) / 2.1),
+        j = Math.floor((-x * 0.45 + z * 0.89) / 1.45);
+      const block = hash(i, j, 2),
+        streak = 0.5 + 0.5 * Math.sin(x * 5.3 + z * 1.7 + y * 0.9);
+      let rock = m.mix(0x434b51, 0x6c7274, 0.2 + 0.55 * block * (0.6 + 0.4 * streak));
+      if (hash(i, j, 3) > 0.78) rock = m.mix(rock, 0x6d6255, 0.45);
+      // Deep in the gorge the rock takes the cold of the mist.
+      rock = m.mix(rock, 0x7e8f9c, Math.min(0.55, Math.max(0, (-y - 4.2) / 6)));
+      // How level the ground is around this node, so snow patches follow the
+      // benches rather than flickering from one triangle to the next.
+      const e = 0.2,
+        gx = (profile(x + e, z) - profile(x - e, z)) / (2 * e),
+        gz = (profile(x, z + e) - profile(x, z - e)) / (2 * e);
+      const level = 1 / Math.hypot(gx, 1, gz);
+      return { snow: m.mix(snow, packed, traffic * 0.95), rock, level, lee: gx * 0.55 + gz * 0.83 };
     })
   );
   function facet(points, palette) {
@@ -209,12 +250,18 @@ function massif(m, layout) {
     const nx = ab[1] * ac[2] - ab[2] * ac[1];
     const ny = ab[2] * ac[0] - ab[0] * ac[2];
     const nz = ab[0] * ac[1] - ab[1] * ac[0];
-    const normalY = ny / Math.hypot(nx, ny, nz);
-    const y = (a[1] + b[1] + c[1]) / 3;
-    const cover = Math.min(1, Math.max(0, (normalY - 0.32) / 0.49)) * Math.min(1, (y + 8.5) / 2.8);
+    const normalY = Math.abs(ny) / Math.hypot(nx, ny, nz);
+    // Snow holds on benches and drifts in on the lee of each step; anything
+    // steeper than about fifty degrees sheds it and shows the rock.
     m.face(
       points,
-      palette.map((p) => m.mix(p.rock, p.snow, cover))
+      palette.map((p, k) => {
+        const level = 0.72 * p.level + 0.28 * normalY,
+          hold = 0.7 + 0.06 * Math.max(-1, Math.min(1, p.lee));
+        const t = Math.min(1, Math.max(0, (level - hold) / 0.14));
+        const cover = t * t * (3 - 2 * t) * Math.min(1, (points[k][1] + 8.5) / 2.8);
+        return m.mix(p.rock, p.snow, cover);
+      })
     );
   }
   for (let j = 0; j < zs.length - 1; j++) {
@@ -353,27 +400,25 @@ function snowCornices(m, layout, floor) {
         );
         const vein = Math.sin(x * 1.8 + z * 0.82) * 0.51 + Math.sin(x * 3.1 - z * 1.77) * 0.32;
         const channel = pathDistance(x, z, springChannel) < 0.64 && x > -1.1 && z < 0.89;
-        const width = (channel ? 0.09 : facing ? 0.18 : 0.51) * (1 + 0.34 * vein);
+        const width = (channel ? 0.07 : facing ? 0.12 : 0.2) * (1 + 0.34 * vein);
+        // A wind-rounded lip of snow that curls back under itself onto the rock.
         samples.push(
           [
             [0, 0.068],
-            [0.49, 0.047],
-            [0.83, -0.02 - 0.034 * vein],
-            [1, -0.2 - 0.094 * vein],
-            [1.075, 0]
-          ].map(([fraction, y], k) => {
-            const u = x + nx * width * fraction,
-              v = z + nz * width * fraction;
-            return [u, k === 4 ? Math.min(y - 0.27, floor(u, v) - 0.12) : y, v];
-          })
+            [0.55, 0.05],
+            [0.9, 0.0 - 0.02 * vein],
+            [1, -0.08 - 0.04 * vein],
+            [0.62, -0.15 - 0.05 * vein],
+            [0.05, -0.17 - 0.04 * vein]
+          ].map(([fraction, y]) => [x + nx * width * fraction, y, z + nz * width * fraction])
         );
       }
     }
-    const colors = [0xcbd8d9, 0xbbcbce, 0x98adb7, 0x788995];
+    const colors = [0xf0f4f3, 0xe6eeef, 0xd4e1e6, 0xb3c8d2, 0x9fb5c1];
     for (let i = 0; i < samples.length; i++) {
       const a = samples[i],
         b = samples[(i + 1) % samples.length];
-      for (let j = 0; j < 4; j++) m.face([a[j], b[j], b[j + 1], a[j + 1]], colors[j]);
+      for (let j = 0; j < 5; j++) m.face([a[j], b[j], b[j + 1], a[j + 1]], colors[j]);
     }
   }
 }
@@ -442,57 +487,6 @@ function packedTrail(m, layout, floor) {
   }
 }
 
-// An irregular layered block penetrates its host slope at every foot. Its light band
-// follows the same dipping bedding as the adjacent blocks; snow sits on the top face.
-function ledge(m, surface, x, z, rx, rz, top, angle) {
-  const base = surface(x, z);
-  const roof = Math.max(base + 0.08, top);
-  const ring = [],
-    n = 8;
-  for (let k = 0; k < n; k++) {
-    const a = (Math.PI * 2 * k) / n + m.rng.range(-0.084, 0.084);
-    const u = Math.cos(a) * rx * m.rng.range(0.87, 1.12);
-    const v = Math.sin(a) * rz * m.rng.range(0.85, 1.12);
-    ring.push([
-      u * Math.cos(angle) - v * Math.sin(angle),
-      u * Math.sin(angle) + v * Math.cos(angle)
-    ]);
-  }
-  const tonal = [0x576b78, 0x819098, 0x647884, 0x9badae, 0x778a94, 0xbdcace];
-  const layers = [
-    [0, 1.14],
-    [0.39, 0.98],
-    [0.49, 1.01],
-    [0.69, 0.95],
-    [0.74, 0.965],
-    [0.93, 0.85],
-    [1, 0.72]
-  ];
-  let prev;
-  for (let level = 0; level < layers.length; level++) {
-    const [h, s] = layers[level];
-    const curr = ring.map(([u, v]) => {
-      const xx = x + u * s + h * 0.025,
-        zz = z + v * s - h * 0.045;
-      const bed = Math.min(base - 0.36, surface(xx, zz) - 0.2);
-      return [xx, bed + h * (roof - bed) + h * (u * 0.055 - v * 0.034), zz];
-    });
-    if (prev)
-      for (let k = 0; k < n; k++) {
-        const q = (k + 1) % n;
-        m.face(
-          [prev[k], curr[k], curr[q], prev[q]],
-          tonal[level - 1],
-          0.97 - 0.06 * Math.sin(k * 1.31)
-        );
-      }
-    prev = curr;
-  }
-  for (let k = 0; k < n; k++) {
-    m.face([[x + 0.025, roof + 0.014, z - 0.045], prev[(k + 1) % n], prev[k]], 0xd1dcd8);
-  }
-}
-
 function mountainWalks(m, ground) {
   // Abutments meet the actual ends of the two off-field timber galleries.
   for (const [angle, bearings] of [
@@ -514,7 +508,10 @@ function mountainWalks(m, ground) {
       ]
     ]
   ]) {
-    for (const [x, z, rx, rz, y] of bearings) ledge(m, ground, x, z, rx, rz, y, angle);
+    for (const [x, z, rx, rz, y] of bearings) {
+      const base = ground(x, z);
+      crag(m, x, z, Math.min(base - 0.5, y - 1), Math.max(base + 0.08, y), rx, rz);
+    }
   }
   const timber = 0x695649,
     endGrain = 0x8e7964,
@@ -671,9 +668,11 @@ function landform3(T, layout) {
   group.add(
     ground.finish('冰蝕崖身與踏雪馬道'),
     stream.finish('西流雪水與坡積石'),
-    trestles.finish('落岩懸棧與雪溝支架', { occluder: true })
+    trestles.finish('落岩懸棧與雪溝支架', { occluder: true }),
+    ...pines3(T, surface),
+    ...crags3(T)
   );
   return group;
 }
 
-export { landform3 };
+export { landform3, packTrail, pathDistance };

@@ -10,6 +10,7 @@ import {
   banners,
   cargo
 } from './maze-models.js';
+import { walkDressing } from './landforms/walk-3.js';
 const wood = 0x70513c,
   oak = 0x9c7953,
   rope = 0xa99b75,
@@ -202,6 +203,9 @@ function belfry(m) {
       8
     );
 }
+// The master's dais, at the scale of the fighters: a dressed octagonal
+// platform, a lacquered qin table with a seven-string qin, the rush cushion
+// he sits on, a bronze censer with its thread of smoke and a potted orchid.
 function qin(m) {
   m.lathe(
     0,
@@ -216,66 +220,279 @@ function qin(m) {
     0x889085,
     10
   );
-  for (const x of [-0.95, 0.95]) m.box(x, 0.55, 0, 0.27, 0.55, 0.72, 0x737b71);
-  m.box(0, 0.85, 0, 3.03, 0.15, 0.91, 0x9aa18b);
-  const profile = [
-    [-1.27, 0.25],
-    [-1.18, 0.29],
-    [-0.82, 0.22],
-    [-0.53, 0.25],
-    [-0.34, 0.3],
-    [0.15, 0.24],
-    [0.82, 0.18],
-    [1.25, 0.16]
-  ];
-  for (let j = 0; j < profile.length - 1; j++) {
-    const [x, w] = profile[j],
-      [xx, ww] = profile[j + 1],
-      a = [x, 1.04, -w],
-      b = [xx, 1.04, -ww],
-      c = [xx, 1.04, ww],
-      d = [x, 1.04, w];
-    m.face([a, d, c, b], j % 3 ? 0x6c4032 : 0x724536);
-    for (const [p, q] of [
-      [a, b],
-      [d, c]
+  m.hoop(0, 0.13, 0, 1.86, 0.018, 0x737b70, 10);
+  m.hoop(0, 0.288, 0, 1.66, 0.022, 0xa3a68f, 10);
+  // Radial paving on the dais top.
+  const at = (radius, a) => [radius * Math.cos(a), 0.292, radius * Math.sin(a)];
+  for (const [inner, outer, count, shift] of [
+    [0.02, 0.62, 6, 0.2],
+    [0.64, 1.14, 10, -0.1],
+    [1.16, 1.6, 14, 0.12]
+  ])
+    for (let i = 0; i < count; i++) {
+      const a = (i * Math.PI * 2) / count + shift + 0.008,
+        b = ((i + 1) * Math.PI * 2) / count + shift - 0.008;
+      m.face(
+        [at(inner, a), at(inner, b), at(outer, b), at(outer, a)],
+        m.mix(0x9ba08c, 0xb4b39c, m.rng.range(0, 1))
+      );
+    }
+  const lacquer = 0x4b2f26,
+    top = 0x5c392c,
+    floor = 0.295;
+  // A low stone balustrade round the rim, open to the front step and the stair.
+  const open = (a) =>
+    [Math.PI / 2, -1.07].some((g) => Math.abs(Math.atan2(Math.sin(a - g), Math.cos(a - g))) < 0.45);
+  for (let i = 0; i < 22; i++) {
+    const a0 = (i * Math.PI * 2) / 22,
+      a1 = ((i + 1) * Math.PI * 2) / 22;
+    if (open((a0 + a1) / 2)) continue;
+    const p0 = [Math.cos(a0) * 1.54, Math.sin(a0) * 1.54],
+      p1 = [Math.cos(a1) * 1.54, Math.sin(a1) * 1.54];
+    for (const [p, a] of [
+      [p0, a0],
+      [p1, a1]
     ])
-      m.face([p, q, [q[0], 0.94, q[2]], [p[0], 0.94, p[2]]], 0x4a362e);
+      m.frame(p[0], floor, p[1], -a, 1, () => {
+        m.box(0, 0.17, 0, 0.08, 0.34, 0.08, 0x8f9583);
+        m.box(0, 0.35, 0, 0.1, 0.03, 0.1, 0xa2a691);
+      });
+    for (const [y, r] of [
+      [0.29, 0.024],
+      [0.09, 0.018]
+    ])
+      m.tube([p0[0], floor + y, p0[1]], [p1[0], floor + y, p1[1]], r, r, 0x9aa08c, 5);
   }
-  for (let j = 0; j < 7; j++)
-    m.tube(
-      [-1.15, 1.075, -0.15 + j * 0.048],
-      [1.19, 1.065, -0.11 + j * 0.034],
-      0.0055,
-      0.0055,
-      0xd1bf8c,
-      4
-    );
-  for (let j = 0; j < 13; j++)
-    m.lathe(
-      -1.1 + j * 0.174,
-      1.05,
-      0.21 - (j > 8 ? 0.052 : 0),
-      [
-        [0, 0.02],
-        [0.01, 0.018]
-      ],
-      0xddd4a4,
-      7
-    );
+  // Stone lanterns at the two back corners.
+  for (const a of [-Math.PI / 2 - 0.85, -Math.PI / 2 + 0.85])
+    m.frame(Math.cos(a) * 1.25, floor, Math.sin(a) * 1.25, -a, 1, () => {
+      m.lathe(
+        0,
+        0,
+        0,
+        [
+          [0, 0.13],
+          [0.08, 0.12],
+          [0.1, 0.06]
+        ],
+        0x878d7c,
+        6
+      );
+      m.tube([0, 0.1, 0], [0, 0.42, 0], 0.045, 0.04, 0x8a907f, 6);
+      m.box(0, 0.45, 0, 0.2, 0.04, 0.2, 0x878d7c);
+      m.box(0, 0.55, 0, 0.15, 0.16, 0.15, 0x7c8274);
+      for (const s of [-1, 1]) m.box(0, 0.55, s * 0.076, 0.07, 0.09, 0.006, 0xe6d6a6);
+      m.lathe(
+        0,
+        0.63,
+        0,
+        [
+          [0, 0.17],
+          [0.03, 0.16],
+          [0.11, 0.05],
+          [0.15, 0.02]
+        ],
+        0x737a6c,
+        6
+      );
+    });
+  m.frame(0, floor, -0.1, 0, 1, () => {
+    // Table: top, aprons, four legs with hoof feet.
+    m.box(0, 0.56, 0, 1.12, 0.04, 0.4, top);
+    m.box(0, 0.515, 0.18, 1.0, 0.05, 0.02, lacquer);
+    m.box(0, 0.515, -0.18, 1.0, 0.05, 0.02, lacquer);
+    for (const x of [-0.5, 0.5]) {
+      m.box(x, 0.515, 0, 0.02, 0.05, 0.36, lacquer);
+      for (const z of [-0.16, 0.16]) {
+        m.box(x, 0.27, z, 0.04, 0.54, 0.04, lacquer);
+        m.box(x + Math.sign(x) * 0.012, 0.015, z + Math.sign(z) * 0.012, 0.06, 0.03, 0.06, lacquer);
+      }
+      m.box(x, 0.09, 0, 0.025, 0.025, 0.32, lacquer);
+    }
+    // The qin: tapered lacquer body, bridge, seven strings and the thirteen hui.
+    const profile = [
+      [-0.5, 0.085],
+      [-0.42, 0.095],
+      [-0.3, 0.078],
+      [-0.2, 0.086],
+      [0.1, 0.075],
+      [0.38, 0.064],
+      [0.5, 0.06]
+    ];
+    for (let j = 0; j < profile.length - 1; j++) {
+      const [x, w] = profile[j],
+        [xx, ww] = profile[j + 1],
+        y0 = 0.6 + 0.012 * Math.sin((j / 6) * Math.PI),
+        y1 = 0.6 + 0.012 * Math.sin(((j + 1) / 6) * Math.PI);
+      m.face(
+        [
+          [x, y0 + 0.03, -w],
+          [x, y0 + 0.03, w],
+          [xx, y1 + 0.03, ww],
+          [xx, y1 + 0.03, -ww]
+        ],
+        j % 2 ? 0x2c1f1a : 0x33241d
+      );
+      for (const s of [-1, 1])
+        m.face(
+          [
+            [x, y0 + 0.03, s * w],
+            [xx, y1 + 0.03, s * ww],
+            [xx, 0.582, s * ww * 0.96],
+            [x, 0.582, s * w * 0.96]
+          ],
+          0x241915
+        );
+    }
+    m.box(-0.47, 0.64, 0, 0.012, 0.012, 0.15, 0xb19a69);
+    for (let j = 0; j < 7; j++)
+      m.tube(
+        [-0.47, 0.645, -0.06 + j * 0.02],
+        [0.49, 0.637, -0.045 + j * 0.015],
+        0.0026,
+        0.0026,
+        0xe3d8b2,
+        3
+      );
+    for (let j = 0; j < 13; j++)
+      m.lathe(
+        -0.38 + j * 0.066,
+        0.632,
+        0.07 - j * 0.0012,
+        [
+          [0, 0.007],
+          [0.003, 0.006]
+        ],
+        0xe8dfb0,
+        6
+      );
+    for (let j = 0; j < 7; j++)
+      m.tube(
+        [-0.49, 0.6, -0.05 + j * 0.017],
+        [-0.49, 0.52, -0.05 + j * 0.017],
+        0.004,
+        0.002,
+        0xb33b2c,
+        3
+      );
+  });
+  // Rush cushion behind the table.
   m.lathe(
     0,
-    0,
-    1.03,
+    floor,
+    -0.62,
     [
-      [0, 0.34],
-      [0.15, 0.27],
-      [0.3, 0.3],
-      [0.36, 0.37]
+      [0, 0.2],
+      [0.05, 0.23],
+      [0.1, 0.21],
+      [0.12, 0.12],
+      [0.125, 0]
     ],
-    0x858c7b,
-    10
+    0x9b7f57,
+    12
   );
+  m.hoop(0, floor + 0.06, -0.62, 0.225, 0.008, 0x7d6544, 12);
+  // Bronze censer on a small stand, smoke curling up.
+  m.frame(0.92, floor, -0.15, 0.3, 1, () => {
+    m.box(0, 0.16, 0, 0.26, 0.03, 0.26, lacquer);
+    for (const [x, z] of [
+      [-0.11, -0.11],
+      [0.11, -0.11],
+      [-0.11, 0.11],
+      [0.11, 0.11]
+    ])
+      m.box(x, 0.075, z, 0.025, 0.15, 0.025, lacquer);
+    for (let k = 0; k < 3; k++) {
+      const a = (k * Math.PI * 2) / 3;
+      m.tube(
+        [Math.cos(a) * 0.05, 0.2, Math.sin(a) * 0.05],
+        [Math.cos(a) * 0.075, 0.175, Math.sin(a) * 0.075],
+        0.012,
+        0.009,
+        0x5d5c43,
+        4
+      );
+    }
+    m.lathe(
+      0,
+      0.19,
+      0,
+      [
+        [0, 0.04],
+        [0.03, 0.08],
+        [0.09, 0.085],
+        [0.12, 0.065],
+        [0.13, 0.072]
+      ],
+      0x6b6a4c,
+      12
+    );
+    for (const s of [-1, 1]) m.hoop(s * 0.085, 0.31, 0, 0.025, 0.006, 0xa58f5a, 8, 'xy');
+    m.lathe(
+      0,
+      0.32,
+      0,
+      [
+        [0, 0.07],
+        [0.04, 0.05],
+        [0.07, 0.012]
+      ],
+      0xa58f5a,
+      10
+    );
+    m.line(
+      [
+        [0, 0.39, 0],
+        [0.03, 0.55, 0.01],
+        [-0.02, 0.72, 0.02],
+        [0.04, 0.9, 0.0],
+        [0.0, 1.06, -0.02]
+      ],
+      0.009,
+      0xdfe2da,
+      4
+    );
+  });
+  // A potted orchid on the other side.
+  m.frame(-0.95, floor, -0.25, 0, 1, () => {
+    m.lathe(
+      0,
+      0,
+      0,
+      [
+        [0, 0.07],
+        [0.02, 0.09],
+        [0.14, 0.1],
+        [0.15, 0.11],
+        [0.16, 0.0]
+      ],
+      0x6f8a96,
+      10
+    );
+    for (let k = 0; k < 9; k++) {
+      const a = k * 0.7,
+        l = 0.22 + 0.05 * Math.sin(k * 3);
+      m.leaf(
+        [0, 0.15, 0],
+        [Math.cos(a) * l, 0.15 + l * 0.6, Math.sin(a) * l],
+        0.012,
+        0x3f6a3c,
+        0x6c9257,
+        0.08
+      );
+    }
+    for (let k = 0; k < 3; k++)
+      m.crystal(
+        Math.cos(k * 2.1) * 0.08,
+        0.32 + k * 0.03,
+        Math.sin(k * 2.1) * 0.08,
+        0.018,
+        0.03,
+        0xe9e2c3,
+        0xf8f2dc,
+        5
+      );
+  });
 }
 function standingStone(m, h, w, col, em) {
   m.rock(0, 0, 0, w * 0.67, h * 0.12, w * 0.58, 0x77776a, 0x838778, 8);
@@ -382,139 +599,28 @@ function tomb(m) {
     m.box(s * 1.44, 1.52, 0.47, 0.14, 1.91, 0.07, 0x69817d);
     for (let j = 0; j < 5; j++)
       m.crystal(s * 1.44, 0.66 + j * 0.34, 0.52, 0.042, 0.16, 0x618d85, 0xa2d1bd, 5);
+    // Iron studs in rows on each leaf, iron straps at head and foot, and a
+    // ring knocker hung from a lion-mask boss.
+    for (let j = 0; j < 6; j++)
+      for (const u of [-0.32, 0, 0.32])
+        if (j !== 3 || u === 0)
+          m.box(s * 0.57 + u, 0.32 + j * 0.39, 0.1, 0.06, 0.06, 0.05, 0x2f3638);
+    for (const y of [0.16, 2.58]) m.box(s * 0.57, y, 0.098, 0.98, 0.08, 0.03, 0x384043);
+    m.box(s * 0.1, 1.68, 0.11, 0.13, 0.13, 0.05, 0x3a4244);
+    m.hoop(s * 0.1, 1.53, 0.135, 0.07, 0.012, 0x404a4c, 10, 'xy');
+    // A carved panel of cloud scrolls on each door post.
+    for (let j = 0; j < 4; j++)
+      m.box(s * 1.45, 0.75 + j * 0.5, 0.455, 0.36 - (j % 2) * 0.12, 0.08, 0.04, 0x7c958c);
   }
+  // A threshold of one long stone and a frieze of square bosses on the lintel.
+  m.box(0, 0.05, 0.3, 2.3, 0.1, 0.42, 0x7b8f87);
+  for (let j = 0; j < 9; j++)
+    m.box(-1.6 + j * 0.4, 3.12, 0.55, 0.16, 0.16, 0.06, j % 2 ? 0x9cb2a6 : 0x5e7672);
   steps(m, 0, 1.51, 3.65, 4, 0.1, 0.3, 0x939f91);
-}
-function clock(m) {
-  const dark = 0x655b46,
-    worn = 0xa08c58,
-    edge = 0xd0af6b,
-    green = 0x5a8177;
-  m.lathe(
-    0,
-    0,
-    0,
-    [
-      [0, 2.12],
-      [0.17, 2.12],
-      [0.2, 1.97],
-      [0.4, 1.93],
-      [0.45, 1.76]
-    ],
-    0x666c69,
-    12
-  );
-  m.hoop(0, 0.44, 0, 1.73, 0.026, edge, 48);
-  const bowls = [
-    [-0.33, 0.53, 0.29, 1.17],
-    [0.11, 1.7, -0.14, 0.88],
-    [0.41, 2.82, -0.46, 0.65]
-  ];
-  for (const [x, y, z, r] of bowls) {
-    for (let j = 0; j < 4; j++) {
-      const a = (j * circle) / 4 + 0.55,
-        dx = Math.cos(a) * r * 0.63,
-        dz = Math.sin(a) * r * 0.63;
-      if (y > 0.55)
-        m.tube(
-          [x + dx * 1.1, 0.45, z + dz * 1.14],
-          [x + dx, y + 0.17, z + dz],
-          0.09,
-          0.07,
-          dark,
-          8
-        );
-    }
-    m.lathe(
-      x,
-      y,
-      z,
-      [
-        [0, r * 0.46],
-        [0.07, r * 0.56],
-        [0.14, r * 0.52],
-        [0.25, r * 0.71],
-        [0.43, r * 0.93],
-        [0.53, r],
-        [0.6, r * 0.97],
-        [0.59, r * 0.89],
-        [0.43, r * 0.76]
-      ],
-      worn,
-      28
-    );
-    for (const [h, rr] of [
-      [0.1, 0.55],
-      [0.42, 0.93],
-      [0.54, 1]
-    ])
-      m.hoop(x, y + h, z, r * rr, 0.03, edge, 36);
-    m.lathe(
-      x,
-      y + 0.464,
-      z,
-      [
-        [0, r * 0.76],
-        [0.008, r * 0.77]
-      ],
-      0x648b84,
-      28
-    );
-    m.hoop(x, y + 0.575, z, r * 0.885, 0.029, edge, 36);
-    m.hoop(x, y + 0.598, z, r * 0.98, 0.022, edge, 36);
-    for (let k = 0; k < 12; k++) {
-      const a = (k * circle) / 12,
-        xx = x + Math.cos(a) * r * 0.955,
-        zz = z + Math.sin(a) * r * 0.955;
-      m.lathe(
-        xx,
-        y + 0.559,
-        zz,
-        [
-          [0, 0.035],
-          [0.033, 0.043],
-          [0.047, 0.03]
-        ],
-        green,
-        6
-      );
-    }
-    for (let k = 0; k < 14; k++) {
-      const a = (k * circle) / 14;
-      m.lathe(
-        x + Math.cos(a) * r * 0.89,
-        y + 0.38,
-        z + Math.sin(a) * r * 0.89,
-        [
-          [0, 0.035],
-          [0.055, 0.034]
-        ],
-        green,
-        6
-      );
-    }
-    if (y > 1) {
-      const sp = [x - 0.12, y + 0.48, z + r * 0.88],
-        mouth = [x - 0.29, y + 0.39, z + r * 1.2];
-      m.tube(sp, mouth, 0.082, 0.077, edge, 8);
-      m.glow(() =>
-        m.tube(mouth, [mouth[0] - 0.1, y - 0.54, mouth[2] + 0.07], 0.034, 0.023, 0x81ccc0, 8)
-      );
-    }
-  }
-  m.tube([0.38, 0.42, -0.46], [0.38, 4.79, -0.46], 0.08, 0.068, edge, 9);
-  for (let j = 0; j < 15; j++)
-    m.box(0.49, 1.37 + j * 0.205, -0.46, j % 3 === 0 ? 0.26 : 0.16, 0.027, 0.045, 0xe3c483);
-  m.frame(0.39, 4.24, -0.46, 0.25, 1, () => {
-    m.hoop(0, 0, 0, 0.72, 0.047, edge, 36, 'xy', 0.23);
-    m.hoop(0, 0, 0, 0.68, 0.042, green, 36, 'yz', -0.34);
-    m.hoop(0, 0, 0, 0.71, 0.025, edge, 36, 'xz', 0.18);
-    m.crystal(0, -0.13, 0, 0.17, 0.3, green, 0xd9bd71, 8);
-  });
 }
 function floatingGate(m) {
   for (const s of [-1, 1]) {
-    m.box(s * 1.18, 1.5, 0, 0.23, 3, 0.26, 0x7b6163);
+    m.box(s * 1.18, 1.5, 0, 0.23, 3, 0.26, 0x8a3428);
     m.lathe(
       s * 1.18,
       0,
@@ -531,6 +637,26 @@ function floatingGate(m) {
     lantern(m, s * 1.34, 2.39, 0, 0.74, 0xd18c64);
   }
   m.box(0, 2.82, 0, 2.94, 0.24, 0.32, 0x8a6971);
+  // A lower lintel, a name plaque between the two and bracket sets above.
+  m.box(0, 2.3, 0, 2.2, 0.15, 0.2, 0x6f3a32);
+  for (const z of [-0.105, 0.105]) {
+    m.box(0, 2.82, z * 1.6, 2.8, 0.1, 0.01, 0x3b6d69);
+    m.box(0, 2.3, z, 2.1, 0.07, 0.01, 0x3b6d69);
+  }
+  m.box(0, 2.56, 0, 0.86, 0.3, 0.1, gold);
+  m.box(0, 2.56, 0, 0.78, 0.24, 0.14, 0x2f3442);
+  for (const z of [-0.075, 0.075])
+    for (let k = 0; k < 3; k++) m.box(-0.22 + k * 0.22, 2.56, z, 0.1, 0.1, 0.01, gold);
+  for (let k = 0; k < 5; k++) {
+    const x = -1.1 + k * 0.55;
+    m.box(x, 2.97, 0, 0.12, 0.06, 0.12, 0x6f3a32);
+    m.box(x, 3.02, 0, 0.36, 0.05, 0.08, 0x3b6d69);
+    m.box(x, 3.03, 0, 0.08, 0.05, 0.5, 0x6f3a32);
+  }
+  for (const s of [-1, 1]) {
+    m.box(s * 1.18, 3.0, 0, 0.29, 0.06, 0.31, gold);
+    m.box(s * 0.92, 2.18, 0, 0.3, 0.08, 0.16, 0x6f3a32);
+  }
   roof(m, 3.35, 1.04, 2.96, 0.7, [0x484f69, 0x64748a, 0x969fa9]);
 }
 function alpineWalk(m) {
@@ -564,35 +690,7 @@ function alpineWalk(m) {
       for (const z of [-0.59, 0.59]) m.box(x, 0.78, z, 0.092, 1.56, 0.092, wood);
     roof(m, 1.71, 1.68, 1.6, 0.7, [0x6c7e80, 0xb5c6c9, 0xe5e9dc], true);
   });
-}
-function suspendedHouse(m, width, turn = false) {
-  m.rock(0, -1.1, 0, width * 0.62, 1.15, width * 0.54, 0x797b8f, 0x97979e, 9);
-  m.frame(0, 0, 0, 0, 1, () =>
-    hall(m, width, 1.61, false, {
-      post: 0x846467,
-      plaster: 0xbdb1a1,
-      tile: [0x4a536c, 0x69748c, 0x9296a6]
-    })
-  );
-  if (turn) {
-    m.frame(
-      0,
-      -0.56,
-      0,
-      0,
-      0.81,
-      () =>
-        hall(m, width, 1.57, false, {
-          post: 0x6f747f,
-          plaster: 0x999aab,
-          tile: [0x575976, 0x696f8b, 0x8c8d9e]
-        }),
-      0,
-      Math.PI
-    );
-  } else
-    for (const x of [-0.85, 0, 0.84])
-      m.crystal(x, -1.12, 0.25, 0.18, 0.79, 0x686e85, 0x8f98a0, 6, 0.12);
+  walkDressing(m);
 }
 function landmarks(index, add) {
   const makeTree = (name, x, z, k, type, yaw = 0) => add(name, x, z, yaw, (m) => tree(m, type, k));
@@ -625,128 +723,50 @@ function landmarks(index, add) {
       lantern(m, 0.3, 2.13, -0.12, 0.91);
     });
   } else if (index === 2) {
-    add('罾網與木架', -6.83, 2.41, -0.91, net);
-    add('蘆舍', 2.25, -7.31, 0.09, (m) => {
-      for (const x of [-1.43, 1.43])
-        for (const z of [-0.71, 0.71]) m.tube([x, -0.68, z], [x, 0.45, z], 0.1, 0.082, wood);
-      m.frame(0, 0.36, 0, 0, 1, () => {
-        hall(m, 3.31, 1.74, false, {
-          post: 0x7f704d,
-          plaster: 0xa1855f,
-          tile: [0x746e50, 0x9c9164, 0xc2b482]
-        });
-        for (const side of [-1, 1])
-          for (let j = 0; j < 38; j++) {
-            const x = -1.7 + j * 0.092,
-              h = 1.79 + 0.26 * Math.pow(Math.abs(x) / 1.7, 3);
-            m.tube(
-              [x, h, side * 1.04],
-              [x + 0.017, h - 0.1 - m.rng.next() * 0.13, side * 1.2],
-              0.017,
-              0.009,
-              0xb1a272,
-              5
-            );
-          }
-      });
-    });
-    add('沙洲上的風帆', 5.08, -8.6, -0.48, (m) => boat(m, true), { y: -0.46 });
-    add('漁舟與魚簍', -3.15, 7.02, 0.55, (m) => boat(m, false), { y: -0.43 });
-    for (const [x, z, k] of [
-      [-6.6, 2.4, 1.1],
-      [2.5, 6.65, 0.7],
-      [6.34, -3.12, 0.9],
-      [-4.65, -6.48, 1.0]
-    ]) {
-      add(
-        '白花蘆叢',
-        x,
-        z,
-        0,
-        (m) => {
-          for (let j = 0; j < 18; j++)
-            reeds(
-              m,
-              m.rng.range(-0.97, 0.98),
-              m.rng.range(-0.44, 0.42),
-              m.rng.range(0.58, 1.03) * k,
-              9,
-              true,
-              -0.16
-            );
-        },
-        { fade: false }
-      );
-    }
+    // 蘆花汀's hut, boats and nets stand on its own tidal relief, in landforms/fishers-2.js.
   } else if (index === 3) {
     add('覆雪懸棧', -5.04, -7.23, 0.11, alpineWalk);
     add('峭壁木棧', -7.16, 1.37, 1.42, (m) => {
       m.frame(0, -0.96, 0, 0, 0.82, () => alpineWalk(m));
     });
-    makeTree('雪脊古松', 3.51, -7.14, 1.3, 'snow', 1.3);
-    makeTree('霜崖雙松', -7.02, 2.9, 1.1, 'snow', 2.17);
-    makeTree('棧外小松', 6.49, -3.72, 0.71, 'snow', 0.62);
-    add('冰瀑與岩壁', 6.95, -3.07, 0.31, (m) => {
-      for (let i = 0; i < 7; i++) {
-        const x = m.rng.range(-1.57, 1.58),
-          z = m.rng.range(-0.65, 0.61),
-          h = m.rng.range(0.69, 2.28);
-        m.rock(x, -1.65, z, 0.81, h + 1.4, 0.7, 0x657784, 0xd0dad6, 8);
-        m.frame(
-          x,
-          h - 0.1,
-          z + 0.42,
-          0,
-          1,
-          () => m.crystal(0, 0, 0, 0.19, m.rng.range(0.65, 1.46), 0x7ea6bb, 0xd1ebed),
-          0,
-          Math.PI
-        );
-      }
-    });
+    // The three pines grow from the rock itself: see landforms/pines-3.js.
+    // The frozen fall on the east spur: see landforms/crags-3.js.
   } else if (index === 4) {
     add('空山雙層編鐘', 3.31, -6.89, -0.05, belfry, { scale: 1.18 });
     add('七弦琴臺', -6.91, 2.57, 1.11, qin, { scale: 1.1 });
     add('洗心石門', -1.74, -7.1, -0.22, (m) => {
+      // A stone pailou: chamfered posts braced by drum stones, two beams
+      // framing a name tablet, and a carved stone roof with lifted eaves.
       for (const x of [-1.25, 1.25]) {
-        m.box(x, 1.3, 0, 0.4, 2.6, 0.51, 0x8e9789);
-        m.box(x, 0.19, 0, 0.62, 0.38, 0.65, 0x777f72);
+        m.box(x, 0.12, 0, 0.66, 0.24, 0.72, 0x737b6e);
+        m.box(x, 0.29, 0, 0.5, 0.1, 0.56, 0x80887a);
+        m.box(x, 1.45, 0, 0.34, 2.3, 0.38, 0x8e9789);
+        for (const s of [-1, 1]) m.box(x + s * 0.17, 1.45, 0, 0.03, 2.2, 0.3, 0x7d8678);
+        for (const z of [-0.42, 0.42]) {
+          m.box(x, 0.42, z, 0.28, 0.16, 0.2, 0x7a8275);
+          for (const e of [-0.06, 0.06])
+            m.frame(x, 0.68, z, 0, 1, () => m.tube([0, 0, 0], [e, 0, 0], 0.17, 0.17, 0x858d7f, 12));
+        }
+        m.box(x, 2.62, 0, 0.44, 0.08, 0.46, 0x7c8577);
       }
-      m.box(0, 2.64, 0, 3.27, 0.42, 0.61, 0x8c978a);
-      m.box(0, 2.92, 0, 3.7, 0.14, 0.78, 0xa8ae96);
+      m.box(0, 2.42, 0, 2.86, 0.2, 0.32, 0x8a9487);
+      m.box(0, 3.06, 0, 3.16, 0.18, 0.36, 0x8a9487);
+      m.box(0, 2.74, 0, 1.04, 0.44, 0.16, 0x6f796c);
+      for (const z of [-0.085, 0.085]) {
+        m.box(0, 2.74, z, 0.88, 0.32, 0.012, 0xb2a983);
+        for (let k = 0; k < 4; k++)
+          m.box(-0.3 + k * 0.2, 2.74, z * 1.08, 0.1, 0.17, 0.008, 0x3f463d);
+      }
+      for (const x of [-0.85, 0.85]) m.box(x, 2.74, 0, 0.12, 0.44, 0.24, 0x7f897b);
+      m.frame(0, 3.1, 0, 0, 1, () =>
+        roof(m, 3.7, 0.95, 0.06, 0.42, [0x5d665c, 0x768073, 0x99a08f])
+      );
     });
-    makeTree('聽風松', -6.59, -2.03, 1.14, 'pine', 1.1);
-    makeTree('琴臺側柏', 6.71, 0.62, 0.86, 'pine', 2.49);
+    // Its old pines are drawn with the mountain, in landforms/peaks-4.js.
   } else if (index === 5) {
-    for (const [j, x, z, h, yaw] of [
-      [0, -4.76, -6.69, 1.09, 0.41],
-      [1, -1.42, -7.4, 1.22, 1.9],
-      [2, 3.28, -7.0, 1.21, -0.7],
-      [3, -7.06, -2.53, 1.26, 0.57],
-      [4, -6.91, 3.18, 1.21, 1.84],
-      [5, 6.77, -2.1, 1.0, 0.33]
-    ]) {
-      makeTree('桃林' + j, x, z, h, 'peach', yaw);
-    }
-    add('桃陣三石門', 1.11, -6.18, 0, (m) => {
-      standingStone(m, 2.45, 0.96, 0x71786c, 0xcfb685);
-      m.frame(1.74, 0, 0, 0.16, 1, () => standingStone(m, 2.27, 0.91, 0x818476, 0xc4ae85));
-      m.rock(0.89, 2.03, 0, 1.4, 0.49, 0.42, 0x818477, 0x969783, 8, 0.1);
-    });
-    add('八方陣石', -6.26, 0.16, 1.1, (m) => standingStone(m, 2.14, 0.96, 0x748078, 0xd0ac84));
+    // The peach trees, gates and the formation's eye stone are built in landforms/*-5.js.
   } else if (index === 6) {
-    add('襄陽破城牆', -1.25, -6.47, 0, (m) => ruinedWall(m, 7.2, 2.4));
-    add('殘垣箭樓', 3.62, -6.77, 0.04, (m) => ruinedWall(m, 2.35, 3.34, true));
-    add('西城的雉堞', -6.59, -2.22, 1.58, (m) => ruinedWall(m, 4.77, 1.98));
-    add('霹靂車遺架', -7.11, 2.24, 0.43, siege);
-    add('失守的旌旗', 6.52, -2.69, -0.3, (m) => {
-      banners(m, 0, 0, 3.1, 0x973c34);
-      cargo(m, -0.65, 0.12, 0.81);
-      for (let i = 0; i < 6; i++) {
-        const x = m.rng.range(-0.66, 0.71);
-        m.rock(x, 0, m.rng.range(-0.37, 0.57), 0.29, 0.18, 0.23, 0x736b5e);
-      }
-    });
+    // Xiangyang's walls, engine and standards stand on their own footings in landforms/landform-6.js.
   } else if (index === 7) {
     add(
       '寒玉墓門',
@@ -763,62 +783,9 @@ function landmarks(index, add) {
       },
       { scale: 1.1 }
     );
-    for (const [j, x, z, yaw] of [
-      [0, -5.22, -7.22, 0.1],
-      [1, 4.31, -7.3, 0],
-      [2, -7.13, -2.9, 1.3],
-      [3, 7.23, -3.53, 1.25]
-    ]) {
-      add('洞壁與鐘乳石' + j, x, z, yaw, (m) => {
-        for (let k = 0; k < 6; k++) {
-          const xx = (k - 2.5) * 0.59,
-            h = m.rng.range(2.45, 4.46);
-          m.rock(
-            xx,
-            -0.67,
-            -0.13,
-            m.rng.range(0.58, 0.91),
-            h,
-            m.rng.range(0.72, 1.15),
-            0x45565f,
-            0x6e807e,
-            8
-          );
-          if (k % 2 === 0) {
-            m.frame(
-              xx,
-              h - 0.36,
-              0.36,
-              0,
-              1,
-              () => m.crystal(0, 0, 0, 0.21, m.rng.range(0.5, 1.27), 0x6d8b8b, 0xadccbf),
-              0,
-              Math.PI
-            );
-          }
-        }
-        m.glow(() => {
-          for (let k = 0; k < 8; k++) {
-            const x = m.rng.range(-1.45, 1.46),
-              z = m.rng.range(0.11, 0.96);
-            m.crystal(
-              x,
-              -0.05,
-              z,
-              m.rng.range(0.11, 0.32),
-              m.rng.range(0.53, 1.85),
-              0x477f79,
-              0x9cdec3,
-              6,
-              m.rng.range(-0.26, 0.27)
-            );
-          }
-        });
-      });
-    }
+    // The cave walls and their dripstone are built with the cavern (landforms/cave-7.js).
   } else if (index === 8) {
-    add('懸空街樓', -7.71, 2.84, 1.15, (m) => suspendedHouse(m, 3.16, true), { y: 0.98 });
-    add('倒垂飛殿', 3.54, -7.49, -0.18, (m) => suspendedHouse(m, 2.87, true), { y: 0.77 });
+    // The two shop-houses on piers are drawn by landforms/pavilion-8.js.
     add(
       '空中折角樓',
       7.82,
@@ -834,7 +801,18 @@ function landmarks(index, add) {
           () => {
             roof(m, 3.04, 1.68, 0.76, 0.86, [0x50516c, 0x69748a, 0x9498aa]);
             for (const x of [-0.99, 0, 0.99]) {
-              for (const z of [-0.46, 0.46]) m.box(x, 0.32, z, 0.095, 0.88, 0.092, 0x927274);
+              for (const z of [-0.46, 0.46]) m.box(x, 0.32, z, 0.095, 0.88, 0.092, 0x8a3428);
+            }
+            // Its plank floor, a lattice wall on one side and a rail on the other.
+            m.box(0, 0.05, 0, 2.4, 0.05, 0.86, 0x9a7a5c);
+            for (const x of [-0.5, 0.5]) {
+              m.box(x, 0.4, -0.46, 0.9, 0.62, 0.05, 0xd8cdb9);
+              m.glow(() => m.box(x, 0.44, -0.43, 0.6, 0.34, 0.02, 0xf2cf92));
+              for (let k = 0; k < 6; k++)
+                m.box(x - 0.3 + k * 0.12, 0.44, -0.41, 0.018, 0.34, 0.02, 0x5d3a2c);
+              m.box(x, 0.36, 0.46, 0.9, 0.035, 0.05, 0xc4bcb0);
+              for (let k = 1; k < 6; k++)
+                m.box(x - 0.45 + k * 0.15, 0.22, 0.46, 0.025, 0.28, 0.025, 0x8a3428);
             }
             for (const z of [-0.48, 0.48]) {
               m.box(0, 0.02, z, 2.52, 0.12, 0.13, 0xad8a72);
@@ -895,61 +873,7 @@ function landmarks(index, add) {
         );
     });
   } else if (index === 9) {
-    add(
-      '古銅四時漏刻',
-      -7.31,
-      3.91,
-      0.94,
-      (m) => {
-        m.lathe(
-          0,
-          -1.32,
-          0,
-          [
-            [0, 1.62],
-            [0.38, 1.81],
-            [0.52, 1.73],
-            [0.88, 2.01],
-            [1.27, 2.18],
-            [1.33, 2.1]
-          ],
-          0x575e5c,
-          14
-        );
-        clock(m);
-      },
-      { scale: 1.02 }
-    );
-    for (const [j, x, z] of [
-      [0, -5.37, -6.39],
-      [1, 4.48, -6.62],
-      [2, -6.46, -1.06],
-      [3, 6.38, -2.29]
-    ]) {
-      add('列宿渾儀柱' + j, x, z, j * 0.34, (m) => {
-        m.lathe(
-          0,
-          0,
-          0,
-          [
-            [0, 0.48],
-            [0.18, 0.48],
-            [0.25, 0.34],
-            [0.36, 0.27],
-            [1.68, 0.24],
-            [1.81, 0.34],
-            [2.0, 0.27]
-          ],
-          patina,
-          10
-        );
-        for (let i = 0; i < 4; i++) m.hoop(0, 0.38 + i * 0.38, 0, 0.26, 0.022, gold, 18);
-        m.hoop(0, 2.34, 0, 0.47, 0.034, gold, 24, 'xy', 0.34);
-        m.hoop(0, 2.34, 0, 0.42, 0.031, bronze, 24, 'yz', -0.26);
-        m.glow(() => m.crystal(0, 2.23, 0, 0.11, 0.25, 0xa0a783, 0xe4c272));
-      });
-    }
-    add('觀星石碑', 0.38, -7.11, -0.14, (m) => standingStone(m, 2.82, 0.97, 0x52636a, 0xd1b473));
+    // The clock, instruments and stele stand with the terrace in landforms/instruments-9.js.
   }
 }
 
