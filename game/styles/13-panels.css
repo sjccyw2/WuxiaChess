@@ -1169,3 +1169,10 @@ html.polish-danger-zone .battlefield #danger-toggle[aria-pressed='true'] {
 html.polish-danger-zone .battlefield #danger-toggle[aria-pressed='true'] svg {
   filter: drop-shadow(0 0 5px #e06fd0b0);
 }
+/* On a narrow portrait phone the fourth tool would push the tool box into the map plaque, so the
+   full-screen tool drops its caption there and keeps its icon (and its accessible name). */
+@media (max-width: 480px) {
+  html.polish-danger-zone .battlefield .hud-tools .hud-fullscreen > span:not([data-icon]) {
+    display: none;
+  }
+}
