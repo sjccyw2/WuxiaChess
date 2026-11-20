@@ -1,10 +1,7 @@
-// 江湖人物: those who are never on the board (the youth, the great bird and 韋小寶), and
-// the shadow waiting to be saved on each board.
+// 江湖人物: those who are never on the board (the youth, the great bird and 韋小寶).
 import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, gameArt } from './parts.js';
-import { stageLinks } from './foes.js';
-import { missionLabel } from './missions.js';
 import { YOUTH_NAME, TITLES } from './story.js';
 
 const said = (speaker, text, note) => ({ ...(note ? { note } : {}), speaker, text });
@@ -82,30 +79,6 @@ function shopkeeper() {
   };
 }
 
-function traveller([name, caption], stage) {
-  const script = G.ENCOUNTER_SCRIPT[stage];
-  return {
-    id: 'tale-' + stage,
-    name,
-    tag: '局中影',
-    summary: caption,
-    image: gameArt('npc-tale-' + stage + '.webp'),
-    sections: [
-      speech(
-        '兩種結局',
-        { speaker: '救下', text: script.rescue },
-        { speaker: '錯過', text: script.missed }
-      ),
-      rows('這一局', [['局主的執念', G.CHAMBER_TALES[stage].obsession]]),
-      links('出現地點', [...stageLinks(stage), link('missions', 'map-' + stage, missionLabel(stage))])
-    ],
-    sources: cites(
-      cite(name, 'src/ui/company-views.js'),
-      cite(script.rescue, 'src/data/encounter-script.js')
-    )
-  };
-}
-
 export function folk() {
-  return [youth(), eagle(), shopkeeper(), ...G.taleCaptions.map(traveller)];
+  return [youth(), eagle(), shopkeeper()];
 }
