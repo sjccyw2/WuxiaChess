@@ -1,3 +1,207 @@
 /* Combat presentation: phase banner, technique cut-in, impact effects.
    Every rule here is scoped to a html.polish-… class set by src/polish.js,
    so switching a feature off there also removes its styling. */
+
+/* ---------------------------------------------------------------------------
+   Phase banner (switch: phaseBanner, built by src/ui/phase-banner.js)
+   An ink-brush band sweeps across the field, holds, and sweeps on.
+   The brush shape is the --combat-brush mask painted by src/fx/brush.js.
+   --------------------------------------------------------------------------- */
+html.polish-phase-banner .phase-banner {
+  --pb-a: #0b2526;
+  --pb-b: #1b5a50;
+  --pb-edge: #a9ebcd;
+  --pb-sub: #c9f1df;
+  --pb-text: #fbf3da;
+  --pb-glow: #37b89466;
+  --pb-h: clamp(66px, 15vh, 132px);
+  --pb-y: 43%;
+  --dir: 1;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: none;
+  overflow: hidden;
+  pointer-events: none;
+  contain: layout paint style;
+}
+html.polish-phase-banner .phase-banner[data-side='enemy'] {
+  --pb-a: #2a0908;
+  --pb-b: #8f2318;
+  --pb-edge: #ffb799;
+  --pb-sub: #ffd3c1;
+  --pb-text: #fff1e2;
+  --pb-glow: #e2452a66;
+  --dir: -1;
+}
+html.polish-phase-banner .phase-banner:is(.run, .still) {
+  display: block;
+}
+html.polish-phase-banner .phase-banner > * {
+  position: absolute;
+}
+/* A soft darkening behind the stroke keeps the lettering clear of the scenery. */
+html.polish-phase-banner .pb-shade {
+  left: 0;
+  right: 0;
+  top: calc(var(--pb-y) - var(--pb-h) * 1.5);
+  height: calc(var(--pb-h) * 3);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    #050c0d5c 30%,
+    #050c0d70 50%,
+    #050c0d5c 70%,
+    transparent
+  );
+}
+html.polish-phase-banner .pb-ink {
+  left: -3%;
+  right: -3%;
+  top: calc(var(--pb-y) - var(--pb-h) / 2);
+  height: var(--pb-h);
+  background:
+    linear-gradient(to bottom, #ffffff14, transparent 34%, #00000038),
+    linear-gradient(90deg, var(--pb-a) 4%, var(--pb-b) 34%, var(--pb-b) 66%, var(--pb-a) 96%);
+  -webkit-mask: var(--combat-brush, linear-gradient(#000, #000)) center / 100% 100% no-repeat;
+  mask: var(--combat-brush, linear-gradient(#000, #000)) center / 100% 100% no-repeat;
+  transform: scaleX(var(--dir));
+}
+/* Two hairlines ride just outside the stroke and travel against it. */
+html.polish-phase-banner .pb-rule {
+  left: 0;
+  right: 0;
+  top: calc(var(--pb-y) - var(--pb-h) / 2 - 7px);
+  height: calc(var(--pb-h) + 14px);
+  border-block: 1px solid var(--pb-edge);
+  opacity: 0.75;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
+}
+html.polish-phase-banner .pb-text {
+  left: 0;
+  right: 0;
+  top: var(--pb-y);
+  display: grid;
+  justify-items: center;
+  gap: 0.18em;
+  transform: translateY(-50%);
+  color: var(--pb-text);
+  font-family: var(--serif);
+  line-height: 1.1;
+  white-space: nowrap;
+  text-shadow:
+    0 2px 0 #050909c9,
+    0 0 16px var(--pb-glow);
+}
+html.polish-phase-banner .pb-text small {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  color: var(--pb-sub);
+  font-size: clamp(12px, 2.3vh, 19px);
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+}
+html.polish-phase-banner .pb-text small b {
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+html.polish-phase-banner .pb-text small::before,
+html.polish-phase-banner .pb-text small::after {
+  content: '';
+  width: 2.6em;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+html.polish-phase-banner .pb-text strong {
+  font-size: clamp(30px, 6.8vh, 62px);
+  font-weight: 900;
+  letter-spacing: 0.36em;
+  text-indent: 0.36em;
+}
+html.polish-phase-banner .phase-banner.run .pb-shade {
+  animation: pb-shade 1060ms linear both;
+}
+html.polish-phase-banner .phase-banner.run .pb-ink {
+  animation: pb-ink 1060ms linear both;
+}
+html.polish-phase-banner .phase-banner.run .pb-rule {
+  animation: pb-rule 1060ms linear both;
+}
+html.polish-phase-banner .phase-banner.run .pb-text {
+  animation: pb-text 1060ms linear both;
+}
+@keyframes pb-shade {
+  0% {
+    opacity: 0;
+  }
+  22%,
+  74% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes pb-ink {
+  0% {
+    transform: translateX(calc(var(--dir) * -104%)) scaleX(var(--dir));
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.25, 1);
+  }
+  24% {
+    transform: translateX(calc(var(--dir) * -0.6%)) scaleX(var(--dir));
+    animation-timing-function: linear;
+  }
+  74% {
+    transform: translateX(calc(var(--dir) * 0.8%)) scaleX(var(--dir));
+    animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.35);
+  }
+  100% {
+    transform: translateX(calc(var(--dir) * 105%)) scaleX(var(--dir));
+  }
+}
+@keyframes pb-rule {
+  0% {
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * 30%)) scaleX(0.2);
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.25, 1);
+  }
+  28% {
+    opacity: 0.75;
+    transform: none;
+  }
+  72% {
+    opacity: 0.75;
+    transform: none;
+    animation-timing-function: ease-in;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * -30%)) scaleX(0.2);
+  }
+}
+@keyframes pb-text {
+  0%,
+  9% {
+    opacity: 0;
+    transform: translate(calc(var(--dir) * 84px), -50%);
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.25, 1);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(calc(var(--dir) * 7px), -50%);
+    animation-timing-function: linear;
+  }
+  72% {
+    opacity: 1;
+    transform: translate(calc(var(--dir) * -7px), -50%);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.35);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--dir) * -96px), -50%);
+  }
+}

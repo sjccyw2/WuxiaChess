@@ -16,6 +16,7 @@ import { rollView } from './ui/run-views.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, journeyEnding } from './ui/journey-pages.js';
 import { mapLayout } from './data/terrain.js';
+import { showPhase, phaseLead } from './ui/phase-banner.js';
 
 const $ = (id) => document.getElementById(id);
 const saveKey = 'jianying.qingzhudu.chapter1.v1',
@@ -750,6 +751,7 @@ async function runEnemy() {
   const token = ++aiRun;
   await board.finished();
   await sleep(prefs.motion ? 240 : 60);
+  await phaseLead(); // combat feel: let the phase banner land before the first enemy moves
   while (token === aiRun && screen === 'battle' && state.phase === 'enemy' && !state.result) {
     const e = G.enemies(state).find((u) => G.living(u) && !u.acted);
     if (!e) {
@@ -759,6 +761,7 @@ async function runEnemy() {
       if (!result()) {
         audio('turn');
         mapTip('第 ' + state.round + ' 回合 · 我方行動');
+        showPhase('ally', state.round, prefs.motion);
       }
       return;
     }
@@ -783,6 +786,7 @@ function beginEnemy() {
   mode = '';
   audio('enemy');
   update();
+  showPhase('enemy', state.round, prefs.motion); // combat feel: phase banner
   mapTip('守關敵軍開始行動');
   runEnemy();
 }
@@ -1116,6 +1120,7 @@ function command(action, id, data = {}, keyboard = false) {
         update();
         audio('turn');
         mapTip('我方行動');
+        showPhase('ally', state.round, prefs.motion); // combat feel: phase banner
       }
       break;
     case 'scene-prev':
