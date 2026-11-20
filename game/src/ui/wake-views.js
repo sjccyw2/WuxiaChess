@@ -36,8 +36,10 @@ function wakeJournal(profile, voyage, expanded = false) {
     opened +
     '／5 道</span></summary><div class="wake-leaf">' +
     '<img src="' +
-    esc(art('stone-marks.webp')) +
-    '" alt="石臺旁的石壁，上面留著少年每一輪刻下的記號">' +
+    esc(art('stone-marks-' + opened + '.webp')) +
+    '" alt="石臺旁的石壁，' +
+    (opened ? '上面留著少年刻下的 ' + opened + ' 道記號' : '上面甚麼也沒有') +
+    '">' +
     '<ol aria-label="石上的痕">' +
     holes +
     '</ol><p>' +

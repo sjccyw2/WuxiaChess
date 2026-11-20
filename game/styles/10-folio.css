@@ -585,6 +585,10 @@
   gap: 0.4rem;
   justify-items: center;
   margin: 0.4rem auto 0;
+}
+#modal .fy-story-body:not(.fy-narration) .youth-name {
+  justify-items: start;
+  margin: 0.2rem 0 0;
   color: #6b4f24;
   font-size: 0.9rem;
 }
@@ -606,6 +610,10 @@
   outline: 2px solid #b0803a;
   outline-offset: 2px;
 }
+#modal .fy-dialogue .youth-name + .footnote {
+  margin: 0;
+  color: #6b5a3a;
+}
 #modal .fy-narration .footnote {
   margin: 0.2rem auto 0;
   text-align: center;
@@ -614,4 +622,17 @@
 /* The end of a run: the mark he leaves, and closing his eyes. */
 .wake-closing p {
   margin: 0.5rem 0 0;
+}
+.ending-figure {
+  width: min(42%, 168px);
+  margin: 0.9rem auto 0.2rem;
+}
+.ending-figure img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: 50% 30%;
+  border: 1px solid #8b744c;
+  border-radius: 4px;
 }

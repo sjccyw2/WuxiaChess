@@ -209,7 +209,7 @@ function world() {
     name: TITLES.world,
     tag: '遊戲內的說法',
     summary: G.WORLD[0].text,
-    image: gameArt('stone-marks.webp'),
+    image: gameArt('stone-marks-' + G.WAKES.length + '.webp'),
     sections: [
       ...G.WORLD.map((w) => speech(w.name, w.text)),
       links('石上的五道痕', G.WAKES.map((w, i) => link('story', wakeId(i), w.name))),
@@ -226,7 +226,8 @@ function wake(w, i) {
     name: w.name,
     tag: '第 ' + (i + 1) + ' 輪・石上的痕',
     summary: w.mark,
-    image: gameArt('stone-marks.webp'),
+    // The stone as it stands once this run's mark has been cut.
+    image: gameArt('stone-marks-' + (i + 1) + '.webp'),
     sections: [
       speech(
         '睜眼所見（第一局前）',
@@ -255,7 +256,7 @@ function fate(f) {
     name: f.name,
     tag: '第五輪後・劇透',
     summary: f.desc,
-    image: gameArt('stone-marks.webp'),
+    image: gameArt('stone-marks-' + G.WAKES.length + '.webp'),
     sections: [
       speech(G.FATE_PROMPT, f.desc),
       speech('這樣選了之後', f.ending),
