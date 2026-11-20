@@ -971,6 +971,7 @@ section('wound');
     const shield = board(['zhang', 'hero', 'guard']);
     const z = put(shield, 'zhang', 4, 7),
       ward = put(shield, 'hero', 5, 7);
+    teach(z, defineArt({ target: 'ally', shield: { power: 32, turns: 2 }, range: 3, mp: 2 }));
     hurt(shield, ward);
     G.resolve(shield, z, ward, true);
     check('a shield is not halved', ward.conditions?.shield?.power === 32, ward.conditions?.shield?.power);
