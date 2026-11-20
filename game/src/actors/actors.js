@@ -7,6 +7,7 @@ import { paintTechniqueStroke } from '../fx/technique-strokes.js';
 import { paintTechniqueTier } from '../fx/technique-tiers.js';
 import { paintSkillEffect } from '../fx/skill-effects.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
+import { watchArt } from './sprite-sheets.js';
 import {
   compactImage,
   compactSheetName,
@@ -47,6 +48,7 @@ class ActorLayer {
     if (!this.images.has(filename)) {
       const img = new Image();
       this.images.set(filename, img);
+      watchArt(img); // loading: lets the title wait for its fighters (see sprite-sheets.js)
       img.decoding = 'async';
       if (filename === 'battle-poses') img.fetchPriority = 'high';
       img.onload = () => this.notify();
