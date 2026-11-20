@@ -30,10 +30,12 @@ const goals = [
   'speed',
   'beacon'
 ];
+// Three kinds are done the same way, by ending an action on the marked tile, and the
+// story tells them as one thing: lighting the lamp. The kinds stay apart for saved games.
 const goalNames = {
   beacon: '點亮引路燈',
-  cache: '尋回姓名籤',
-  herbs: '接應傷者',
+  cache: '點亮引路燈',
+  herbs: '點亮引路燈',
   speed: '搶在限時之前',
   safe: '全員生還'
 };
@@ -491,7 +493,7 @@ function dialogue(s, scene = s.run.scene) {
     if (echo) beats.push(echo);
   } else if (s.result === 'win') {
     beats.push(...script.win);
-    beats.push({ who: 'youth', text: r.last?.optional ? script.rescue : script.missed });
+    beats.push({ who: 'youth', text: r.last?.optional ? SIDE_TALES[r.goal] : MAZE_TALE.unlit });
     const who = r.last?.recruit;
     if (who) {
       const arrival = HERO_VOICES[who].arrival;
@@ -1045,6 +1047,7 @@ function treeModel(s, u) {
     leaderName: COMMANDS[u.id].name,
     leaderDesc: commandDescription(u.id),
     basicName: G.basicFor(u).name,
+    basicFacts: moveFacts(s, u, 'basic'),
     school,
     guides,
     library,
@@ -1069,7 +1072,7 @@ function campModel(s) {
     coins: r.coins,
     reward: last.reward,
     recruit: G.DETAILS[last.recruit]?.name || '',
-    objective: last.optional ? SIDE_TALES[r.goal] : '這一局沒有救下局中的影子。',
+    objective: last.optional ? SIDE_TALES[r.goal] : MAZE_TALE.unlit,
     story: !last.won
       ? s.reason + MAZE_TALE.loss
       : r.stage === 9

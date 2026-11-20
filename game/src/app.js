@@ -265,6 +265,7 @@ function paint() {
   );
   $('commander').innerHTML = P.commander(state, mode);
   $('field-arts').innerHTML = equippedMoves(state, u) + F.undoRow(state, u);
+  F.markReady($('field-arts'), state, u, mode);
   if (hud.panel === 'arts' && !G.canAct(state, u)) hud.closePanel();
   hud.syncPanelButtons();
   if (priorGroup && !priorGroup.closest('[hidden]')) {
@@ -662,7 +663,8 @@ function doCommand(action, selectedArt = false, keyboard = false) {
     hud.togglePanel('arts', keyboard);
     return;
   }
-  hud.closePanel();
+  // Polish (actionFlow): picking an art leaves the list open, so another can be picked instead.
+  if (!(F.ON && hud.panel === 'arts' && ['attack', 'skill'].includes(action))) hud.closePanel();
   if (action === 'move' && u.moved) {
     if (G.undo(state, u)) {
       mode = 'move';
@@ -971,6 +973,11 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'hud-panel':
       hud.togglePanel(id, keyboard);
+      break;
+    // Polish (actionFlow): the chip that names the ready art opens and closes the arts list.
+    case 'arts-open':
+      if (hud.panel === 'arts') hud.closePanel(true);
+      else openArts(keyboard);
       break;
     case 'hud-close':
       hud.closePanel(true);
@@ -1315,7 +1322,7 @@ function command(action, id, data = {}, keyboard = false) {
     }
     case 'quick-art':
       if (!dialog.open && G.canPay(state, selected(), id) && R.readyArt(state, selected(), id)) {
-        hud.closePanel(true);
+        if (!F.ON) hud.closePanel(true);
         update();
         doCommand('skill', true);
         if (keyboard) $('arts-toggle')?.focus({ preventScroll: true });

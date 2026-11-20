@@ -179,13 +179,33 @@ function commander(s, mode) {
     );
   // Polish (actionFlow): the bar is reduced to End turn, which lights up once every hero has
   // at least moved.
-  if (actionFlow)
-    return btn(
-      'end',
-      icon('end', 18) + '<span>結束回合</span>',
-      'field-action turn-action' + (s.phase === 'ally' && !anyIdle(s) ? ' ready' : ''),
-      'title="結束回合" ' + (s.phase !== 'ally' ? 'disabled' : '')
+  if (actionFlow) {
+    // The art the hero has ready, as a chip that reopens the list so it can be changed.
+    const armed =
+      canAct(s, u) && ['attack', 'skill'].includes(mode)
+        ? mode === 'attack'
+          ? { name: basicFor(u).name, icon: 'swords' }
+          : artFor(u)
+        : null;
+    return (
+      (armed
+        ? btn(
+            'arts-open',
+            icon(armed.icon || 'spark', 17) + '<span>' + esc(armed.name) + '</span>' + icon('down', 12),
+            'field-action armed-art',
+            'id="arts-toggle" aria-controls="arts-panel" aria-expanded="false" title="' +
+              esc(armed.name) +
+              '・招式"'
+          )
+        : '') +
+      btn(
+        'end',
+        icon('end', 18) + '<span>結束回合</span>',
+        'field-action turn-action' + (s.phase === 'ally' && !anyIdle(s) ? ' ready' : ''),
+        'title="結束回合" ' + (s.phase !== 'ally' ? 'disabled' : '')
+      )
     );
+  }
   const acts = [
     ['move', u.moved ? 'undo' : 'move', u.moved ? '撤步' : '移動'],
     ['skill', 'spark', '招式'],
@@ -627,7 +647,7 @@ function goalsPage(s) {
       ' 兩</span></div>' +
       '<details class="hud-disclosure"><summary>地勢與勝敗條件</summary><p>' +
       esc(mapLayout(s.mapIndex).tactic) +
-      '</p><p>須於第十二回合結束前擊敗局主。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。救下局中的影子並取勝，便有新俠客應帖而來。</p></details>' +
+      '</p><p>須於第十二回合結束前擊敗局主。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。達成支線並取勝，便有新俠客應帖而來。</p></details>' +
       '<details class="hud-disclosure"><summary>十局次序 · ' +
       (s.run.stage + 1) +
       '／10</summary><ol class="journey-route">' +
@@ -755,7 +775,7 @@ function helpPage() {
     [
       'scroll',
       '一念江湖',
-      '每一輪有三位俠客應帖，由你執子。十局各有一位局主與一個待救的影子；救下影子並取勝，便多一位同伴。每局至多五人上盤。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。'
+      '每一輪有三位俠客應帖，由你執子。十局各有一位局主，給一道劍意壓著心神，非戰不可；勝了，他才醒得過來。每局另有一道支線，達成支線並取勝，便多一位同伴。每局至多五人上盤。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。'
     ],
     [
       'bag',

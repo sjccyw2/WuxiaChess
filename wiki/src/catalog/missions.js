@@ -12,12 +12,11 @@ const STAGES = G.MAP_LAYOUTS.map((_, stage) => stage);
 export const missionLabel = (stage) => G.mapMission(stage).name;
 
 function stageMission(stage) {
-  const m = G.mapMission(stage),
-    tale = G.taleCaptions[stage];
+  const m = G.mapMission(stage);
   return {
     id: 'map-' + stage,
     name: stageName(stage) + ' · ' + m.name,
-    tag: '救局中影',
+    tag: '支線',
     summary: m.instruction,
     image: wikiArt('map-' + stage + '.webp'),
     sections: [
@@ -32,8 +31,7 @@ function stageMission(stage) {
       links('同局條目', [
         link('maps', stage, stageName(stage)),
         link('foes', 'enc-' + stage + '-0', m.boss),
-        link('story', 'map-' + stage, stageName(stage) + '對白'),
-        link('folk', 'tale-' + stage, tale[0])
+        link('story', 'map-' + stage, stageName(stage) + '對白')
       ])
     ],
     sources: cites(

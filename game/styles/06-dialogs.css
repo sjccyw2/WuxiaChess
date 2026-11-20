@@ -780,6 +780,45 @@
 .mj-slot.mj-vacant {
   border-style: dashed;
 }
+/* Reach and cost of an art, on the slot boxes and the rows of the loadout tab. */
+.mj-move-cost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  color: #b9c2ad;
+  font: 500 12px/1.4 var(--sans);
+}
+.mj-move-cost b {
+  color: #f0dcae;
+  font: 650 14px/1 var(--serif);
+}
+.mj-library-row .mj-move-cost {
+  margin: 1px 0 3px;
+  font-size: 13px;
+}
+.mj-slot-basic .mj-move-cost {
+  color: #d3b891;
+}
+/* The basic attack: always carried, never swapped. A fixed box in its own colour, left of the
+   three slots. */
+.mj-slot-bar.mj-with-basic {
+  grid-template-columns: minmax(0, 0.92fr) repeat(3, minmax(0, 1fr));
+}
+.mj-slot.mj-slot-basic {
+  border-color: #8d6f4b;
+  background: linear-gradient(180deg, #43302a, #35251f);
+  box-shadow: inset 0 0 0 1px #1c1411;
+  cursor: default;
+}
+.mj-slot-basic .mj-slot-number {
+  color: #e0bd86;
+}
+.mj-slot-basic .mj-slot-title {
+  color: #f1e3c6;
+}
+.mj-slot-basic .mj-slot-title svg {
+  color: #e0bd86;
+}
 .mj-slot[aria-pressed='true'] {
   box-shadow: inset 0 -2px #bd9f69;
 }
