@@ -687,6 +687,8 @@ function field(m, index, cells, p, size) {
     if (index === 7 && k === 'reeds') continue;
     if (k === 'reeds' || k === 'bridge') puddle(m, x, z, index, p, k === 'bridge');
     else if (index !== 4) plain(m, x, z, index, p);
+    // 空山琴臺 dresses its own tiles in landforms/props-4.js.
+    if (index === 4) continue;
     m.frame(x, 0, z, 0, 1, () => {
       if (k === 'cover') cover(m, index, p);
       else if (k === 'bamboo') brush(m, index, p);
@@ -1049,6 +1051,8 @@ function ranges(m, index, p) {
   const r = m.rng,
     style = setting(index);
   if (index === 3) return peaks3(m, style);
+  // 空山琴臺 raises its own spires and cloud banks in landforms/peaks-4.js.
+  if (index === 4) return;
   if (index === 9) {
     // The cloud sea and far peaks are drawn with the terrace in landform-9.js.
     return;
