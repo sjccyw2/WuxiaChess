@@ -133,8 +133,9 @@ function retainingWall(stone, details, at, random, atBridge) {
     0x3d504a
   );
   const courses = [
-    [-0.9, -0.58, 0x546861, 0.077],
-    [-0.58, -0.39, 0x63746b, 0.047],
+    // The two lowest courses stay wet and carry a film of algae at the waterline.
+    [-0.9, -0.58, 0x435a52, 0.077],
+    [-0.58, -0.39, 0x5a6c60, 0.047],
     [-0.39, -0.187, 0x748077, 0.032],
     [-0.187, -0.075, 0x899084, 0.018],
     [-0.075, 0.026, 0x9b9e89, 0.007]
