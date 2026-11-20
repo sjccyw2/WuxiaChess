@@ -5,6 +5,7 @@ A 3D wuxia tactics game, and a wiki (江湖志) that documents it by reading the
 - **Play:** `game/`
 - **Wiki:** `wiki/`
 - **Landing page:** `index.html`
+- **Roadmap and open questions:** `ROADMAP.md`
 
 There is no build step. Everything is plain HTML, CSS and JavaScript modules, served as-is.
 
