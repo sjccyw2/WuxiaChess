@@ -278,11 +278,11 @@ const DETAILS = {
     epithet: '大理公子',
     bio: '大理段氏子弟，擅凌波微步與六脈神劍。他把這趟稀奇的際遇當作又一場白日夢，照樣向人人作揖。',
     basic: '點指截脈',
-    skill: '六脈神劍',
-    skillIcon: 'spark',
-    skillDesc: '以指發出無形劍氣，可攻擊四格內敵人，並穿透一半防禦。',
-    skillRange: 4,
-    cost: 20
+    skill: '北冥神功',
+    skillIcon: 'drop',
+    skillDesc: '貼身以北冥神功化去敵勁，此擊免受還擊；吸取 8 點內力，並使其絕技延後一回合。',
+    skillRange: 1,
+    cost: 6
   },
   chief: {
     name: '余滄海',
@@ -506,7 +506,7 @@ const HERO_STATS = {
   guard: [148, 44, 23, 17, 3, 1, 'pole'],
   guo: [146, 50, 23, 15, 3, 1, 'wraps'],
   xiao: [102, 66, 23, 9, 4, 1, 'twins'],
-  duan: [95, 78, 20, 8, 4, 2, 'fan']
+  duan: [92, 82, 20, 7, 4, 2, 'fan']
 };
 const startingHero = (id) => makeUnit(id, 'ally', 0, 0, ...HERO_STATS[id]);
 function newGame(ids = ORIGINAL_PARTY) {
@@ -675,7 +675,7 @@ const SIGNATURE_RULES_BY_HERO = {
   guard: { factor: 1.15, safe: true, stance: 30 },
   guo: { factor: 1.28, debuff: { stat: 'atk', power: 4, turns: 2 } },
   xiao: { factor: 1.25 },
-  duan: { factor: 1.62, pierce: 0.5 },
+  duan: { factor: 1.1, safe: true },
   huang: { factor: 1.15, visual: 'guard' },
   yang: { factor: 1.32, visual: 'guo' },
   zhang: { visual: 'medic', shield: { power: 32, turns: 2 }, target: 'ally' },

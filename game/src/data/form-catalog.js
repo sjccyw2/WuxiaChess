@@ -49,12 +49,13 @@ const ART_FORMS = {
   maidenHarmony: [],
 
   // 段譽
-  'signature:duan': ['line'],
+  'signature:duan': ['siphon'],
   fingerPrimer: ['pin'],
-  northernSea: ['leech'],
-  ripplingSteps: ['landing'],
   shangYang: ['still'],
+  ripplingSteps: [],
   lesserMarsh: ['mark'],
+  guanChong: ['collision'],
+  shaoShang: ['line'],
   sixMeridians: ['line', 'exploit'],
 
   // 黃蓉

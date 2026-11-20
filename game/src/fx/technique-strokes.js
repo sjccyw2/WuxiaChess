@@ -38,12 +38,13 @@ const RECIPES = {
   pairedHands: ['左右互搏術','jade','twins','crossedHands','double','左右手各走一條劍路，前直後橫，交擊有別。'],
   maidenHarmony: ['玉女素心劍法','pearl','twins','twinHarmony','echo','兩柄長劍成合璧雙弧，白花從交點綻開。'],
 
-  'signature:duan': ['六脈神劍','violet','beams','sixFan','snap','六道不同顏色的指光由一點扇形發出。'],
-  northernSea: ['北冥神功','sea','return','seaFunnel','return','墨藍水渦逐層內收，一束內息流回掌心。'],
-  ripplingSteps: ['凌波微步','violet','steps','baguaStep','glide','足尖交錯踏上八卦斷爻，再從另一端現身。'],
+  'signature:duan': ['北冥神功','sea','return','seaFunnel','return','墨藍水渦逐層內收，一束內息流回掌心。'],
   shangYang: ['商陽劍','violet','beam','narrowPoint','quick','一線食指劍氣如錐直行，穿過菱形氣眼。'],
+  ripplingSteps: ['凌波微步','violet','steps','baguaStep','glide','足尖交錯踏上八卦斷爻，再從另一端現身。'],
   lesserMarsh: ['少澤劍','sea','ripple','marshPoint','snap','細指光撇開蘆葉，三滴水珠向旁迸出。'],
-  sixMeridians: ['六脈神劍・六路迭發','violet','beams','sixLanes','echo','六條平行劍路逐一點亮，末道貼著前五道收束。'],
+  guanChong: ['關衝劍','slate','ripple','marshPoint','heavy','拙重的指光撇開蘆葉，三滴水珠向旁迸出。'],
+  shaoShang: ['少商劍','gold','beams','sixFan','snap','數道金色指光由一點扇形發出。'],
+  sixMeridians: ['六脈神劍・六脈齊發','violet','beams','sixLanes','echo','六條平行劍路逐一點亮，末道貼著前五道收束。'],
 
   'signature:huang': ['蘭花拂穴手','violet','blossom','orchidPoint','quick','三片蘭瓣拂過，細小穴點在瓣根亮起。'],
   peachWard: ['奇門五行・布陣','peach','lattice','peachLattice','gather','桃花落在五角陣眼，格紋在花下鎖合。'],
@@ -85,7 +86,8 @@ const RECIPES = {
   // No hero art uses the strokes below any more; villain signatures still borrow them (VILLAIN_FORMS).
   breakPalm: ['破掌式','bronze','thrust','brokenPalm','snap','薄刃從掌影的指縫穿過。'],
   vacantFist: ['空明拳','jade','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。'],
-  toadLunge: ['蛤蟆功','bronze','leap','toadLeap','heavy','伏地蟾影伸展雙腿，貼著低弧彈起。']
+  toadLunge: ['蛤蟆功','bronze','leap','toadLeap','heavy','伏地蟾影伸展雙腿，貼著低弧彈起。'],
+  northernSea: ['北冥神功','sea','return','seaFunnel','return','墨藍水渦逐層內收，一束內息流回掌心。']
 };
 
 const STROKE_NAMES = Object.freeze(Object.fromEntries(Object.entries(RECIPES).map(([id, row])=>[id,row[0]])));
