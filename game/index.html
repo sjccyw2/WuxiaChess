@@ -10,6 +10,86 @@
     />
     <title>劍影江湖 · 十漏迷津</title>
     <link rel="icon" type="image/svg+xml" href="assets/seal.svg" />
+    <!--
+      Loading veil (presentation switch: loadingVeil).
+      The page used to put itself together in view: the title in a fallback font, an empty
+      scene, then the scenery, then the fighters. This covers it with the seal on ink, and
+      src/loading.js lifts it once the title screen is whole. It is inline so that it is
+      part of the very first paint; the seal is a copy of assets/seal.svg. With the switch
+      off none of this applies and the page loads as before.
+    -->
+    <style>
+      html.veil::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        background:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 52'%3E%3Cpath d='M24 1 43 10v24L24 50 5 37V12Z' fill='%239c4835'/%3E%3Cpath d='m24 4 16 8v21L24 46 8 35V14Z' fill='none' stroke='%23dab778' stroke-width='1.25'/%3E%3Cpath d='m29 9 1 13-7 14-3 3 1-9 6-13z' fill='%23f5deb0'/%3E%3Cpath d='m18 22 14 6M22 34l-6 9M14.5 42l4 2M13 17l5-3M31 36l3-2' fill='none' stroke='%23edd29d' stroke-width='2.2' stroke-linecap='square'/%3E%3C/svg%3E")
+            center / auto clamp(54px, 10vmin, 84px) no-repeat,
+          radial-gradient(ellipse at 50% 50%, #17282a 0, #0d1618 62%);
+      }
+      html.veil-lift::before {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+          opacity 0.6s ease,
+          visibility 0s 0.6s;
+      }
+      /* motion off, in the game's settings or the system's: no fade */
+      html.veil-still::before {
+        transition: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html.veil::before {
+          transition: none;
+        }
+      }
+    </style>
+    <script>
+      (function (doc, root) {
+        // The same two address-bar overrides src/polish.js reads; decided here because the
+        // veil has to be up before any module has loaded.
+        var query = new URLSearchParams(location.search);
+        var off = (query.get('polish-off') || '').split(',');
+        if (query.has('classic') || off.indexOf('loadingVeil') > -1) return;
+        root.classList.add('veil');
+        try {
+          // the game's own motion setting
+          var saved = JSON.parse(localStorage.getItem('jianying.qingzhudu.preferences.v1'));
+          if (saved.motion === false) root.classList.add('veil-still');
+        } catch (e) {}
+        // The veil can never trap the player. src/loading.js lifts it when the title is
+        // whole; failing that it lifts here: at once if a script fails, and after 15 seconds
+        // whatever happens (counted from when the tab is first looked at).
+        function lift() {
+          root.classList.add('veil-lift');
+        }
+        function limit() {
+          if (!doc.hidden) return lift();
+          doc.addEventListener('visibilitychange', function seen() {
+            doc.removeEventListener('visibilitychange', seen);
+            setTimeout(limit, 4000);
+          });
+        }
+        setTimeout(limit, 15000);
+        addEventListener(
+          'error',
+          function (e) {
+            if (e.target === window || (e.target && e.target.tagName === 'SCRIPT')) lift();
+          },
+          true
+        );
+      })(document, document.documentElement);
+    </script>
+    <link rel="modulepreload" href="src/polish.js" />
+    <script type="module" async blocking="render">
+      // Switched off in src/polish.js itself: take the veil away before it is ever painted
+      // (browsers without blocking="render" may show it for a moment first).
+      import { POLISH } from './src/polish.js';
+      if (!POLISH.loadingVeil) document.documentElement.classList.remove('veil');
+    </script>
     <!-- The title's font, asked for with the page instead of after the stylesheets. -->
     <link rel="preload" href="assets/river-serif.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="styles/01-base.css" />
