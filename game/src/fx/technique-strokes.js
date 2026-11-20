@@ -45,10 +45,10 @@ const RECIPES = {
   lesserMarsh: ['少澤劍','sea','ripple','marshPoint','snap','細指光撇開蘆葉，三滴水珠向旁迸出。'],
   sixMeridians: ['六脈神劍・六路迭發','violet','beams','sixLanes','echo','六條平行劍路逐一點亮，末道貼著前五道收束。'],
 
-  'signature:huang': ['打狗棒法','bamboo','lash','bambooStaff','sweep','青竹杖節分明，紅穗在橫掃的杖尾收住。'],
-  peachWard: ['奇門遁甲・護陣','peach','lattice','peachLattice','gather','桃花落在五角陣眼，格紋在花下鎖合。'],
-  orchidPoint: ['蘭花拂穴手','violet','blossom','orchidPoint','quick','三片蘭瓣拂過，細小穴點在瓣根亮起。'],
-  beggarBind: ['打狗棒・纏字訣','bamboo','coil','staffSnare','return','一條繩圈纏住兵刃，竹節反向一攪。'],
+  'signature:huang': ['蘭花拂穴手','violet','blossom','orchidPoint','quick','三片蘭瓣拂過，細小穴點在瓣根亮起。'],
+  peachWard: ['奇門五行・布陣','peach','lattice','peachLattice','gather','桃花落在五角陣眼，格紋在花下鎖合。'],
+  beggarBind: ['打狗棒法・纏字訣','bamboo','coil','staffSnare','return','一條繩圈纏住兵刃，竹節反向一攪。'],
+  beggarTrip: ['打狗棒法・絆字訣','bamboo','lash','bambooStaff','sweep','青竹杖節分明，紅穗在橫掃的杖尾收住。'],
   peachGate: ['桃花陣・開生門','peach','steps','peachGate','glide','兩株桃枝向兩側打開，花下露出生門。'],
   staffWithoutDogs: ['打狗棒法・天下無狗','bamboo','fan','staffFan','echo','五道竹杖扇開，最重的一杖橫掃扇骨。'],
 

@@ -58,13 +58,13 @@ const ART_FORMS = {
   sixMeridians: ['line', 'exploit'],
 
   // 黃蓉
-  'signature:huang': ['pin'],
+  'signature:huang': ['seal'],
   huangPetals: ['mark'],
-  peachWard: ['channel'],
-  orchidPoint: ['seal'],
-  beggarBind: ['pull'],
+  peachWard: [],
+  beggarBind: [],
+  beggarTrip: ['pin'],
   peachGate: ['cleanse'],
-  staffWithoutDogs: ['pin'],
+  staffWithoutDogs: [],
 
   // 楊過
   'signature:yang': ['still'],

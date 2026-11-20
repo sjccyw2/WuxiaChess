@@ -497,7 +497,7 @@ function makeUnit(id, side, x, y, hp, mp, atk, def, step, range, weapon = null) 
   };
 }
 const HERO_STATS = {
-  huang: [99, 70, 21, 9, 4, 2, 'jadeCane'],
+  huang: [96, 74, 20, 8, 4, 2, 'jadeCane'],
   yang: [137, 57, 26, 12, 4, 1, 'darkIron'],
   zhang: [125, 78, 21, 14, 3, 1, 'mingSash'],
   hu: [116, 61, 24, 9, 4, 1, 'foxSaber'],
@@ -676,7 +676,7 @@ const SIGNATURE_RULES_BY_HERO = {
   guo: { factor: 1.28, debuff: { stat: 'atk', power: 4, turns: 2 } },
   xiao: { factor: 1.44, hits: [0.65, 0.65] },
   duan: { factor: 1.62, pierce: 0.5 },
-  huang: { factor: 1.36, visual: 'guard', safe: true, debuff: { stat: 'atk', power: 4, turns: 2 } },
+  huang: { factor: 1.15, visual: 'guard' },
   yang: { factor: 2.04, visual: 'guo', hpCost: 9 },
   zhang: { visual: 'medic', shield: { power: 32, turns: 2 }, target: 'ally' },
   hu: { factor: 1.27, visual: 'xiao', hits: [0.68, 0.68] }
