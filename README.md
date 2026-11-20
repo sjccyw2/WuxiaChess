@@ -37,7 +37,7 @@ game/
   vendor/             three.js
   src/
     app.js            entry point: screens, input, save/load
-    data/             content tables: heroes, arts, foes, maps, story
+    data/             content tables: heroes, arts, foes, maps, story (see below)
     rules/            game logic: combat, journey, shop, formations
     scene/            3D battlefield, camera, scenery, landforms
     actors/           sprites and movement on the board
@@ -56,10 +56,29 @@ wiki/
     catalog/          builds each wiki section from game data
     corpus/           lists every line of in-game text
     view/             draws the pages
+asset-gen/
+  prompts.md          prompts for the art the story still needs
 tools/
   check-wiki.mjs      builds the wiki outside a browser and checks its links
+  check-story.mjs     plays hundreds of shuffled runs and checks the story holds
   extra-fonts.py      regenerates the extra font characters for the game and the wiki
 ```
+
+## How the story is put together
+
+Heroes are drawn at random and the boards come in a different order each run, so the story text is kept in three layers that never refer to one another:
+
+| Layer | File | Tied to |
+| --- | --- | --- |
+| The spine | `game/src/data/maze-tale.js`, `wake-tale.js` | a position in the run: opening his eyes, the first board, the night talk, the end |
+| The boards | `game/src/data/encounter-script.js` | one map: its master's obsession and the shadow to be saved |
+| The heroes | `game/src/data/hero-voices.js` | one hero: arrival, deja vu, night talk, farewell |
+
+To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`.
+
+Three pictures are placeholders until real art is drawn; replace the files in `game/assets/` under the same names: `npc-youth.webp`, `npc-wei.webp`, `stone-marks.webp`.
+
+Prompts for generating these and the other pictures the story still needs are in `asset-gen/prompts.md`, with each file's name, size and where its subject must sit.
 
 ## How the wiki stays in step with the game
 
@@ -71,10 +90,10 @@ The wiki holds no copy of the game's data. When the page opens it imports the ga
 | 武學總譜 | `catalog/skills.js` | every technique; numbers come from the game's own `moveFacts()` |
 | 百物譜 | `catalog/items.js` | items, shop prices, manuals |
 | 群敵錄 | `catalog/foes.js` | encounters and troop types |
-| 江湖人物 | `catalog/folk.js` | the ferrywoman, the visitor, wayside travellers |
+| 江湖人物 | `catalog/folk.js` | the youth, 韋小寶, and the shadow to be saved on each board |
 | 任務簿 | `catalog/missions.js` | side objectives, trials, rewards, growth numbers |
-| 十渡輿圖 | `catalog/maps.js` | map layouts and terrain |
-| 渡中紀事 | `catalog/story.js` | all scripted dialogue and narration |
+| 十局輿圖 | `catalog/maps.js` | map layouts and terrain |
+| 局中紀事 | `catalog/story.js` | all scripted dialogue and narration |
 | 遊戲原文 | `corpus/` | every Chinese string in the game's source, found by parsing the files |
 
 Change a number, a name or a line of dialogue in `game/src/` and the wiki shows it on the next reload.
@@ -94,9 +113,12 @@ When the wiki needs something new from the game, export it from the game module 
 
 ```bash
 node tools/check-wiki.mjs
+node tools/check-story.mjs
 ```
 
 Builds the catalog and the text listing from the game sources and fails if a page links to something that does not exist, a picture is missing, or a fact has no source reference. Run it after changing game data.
+
+`check-story.mjs` plays several hundred runs without a browser, with different heroes and board orders, and fails if any scene has a line with no speaker or text, if a hero lacks one of their own lines, if a board's script mentions another board, or if a save made mid-run no longer loads. Run it after changing story text.
 
 ## Fonts
 

@@ -74,7 +74,7 @@ const WARES = {
     kind: 'weapon',
     atk: 13,
     icon: 'swords',
-    desc: '漏中隕鐵鍛成的寶劍，攻擊增加 13。'
+    desc: '天外隕鐵鍛成的寶劍，攻擊增加 13。'
   },
   cloudCoat: {
     name: '流雲軟甲',

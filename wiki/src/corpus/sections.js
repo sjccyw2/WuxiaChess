@@ -8,7 +8,7 @@
 // Format: file -> { place in the file: [group, heading] }. A place is a top-level
 // function or table name, optionally followed by ' / ' and a nested name for exceptions.
 
-export const GROUPS = ['開場與操作', '戰盤與指令', '整備與陣容', '行裝與商肆', '武學與效果', '圖鑑與人物', '目標與渡行', '戰場紀錄', '劇情、對白與旁白', '系統與提示', '地圖與地形'];
+export const GROUPS = ['開場與操作', '戰盤與指令', '整備與陣容', '行裝與商肆', '武學與效果', '圖鑑與人物', '目標與棋路', '戰場紀錄', '劇情、對白與旁白', '系統與提示', '地圖與地形'];
 
 // The group a file's text falls under when nothing more specific is listed.
 export const FILE_GROUP = {
@@ -26,9 +26,10 @@ export const FILE_GROUP = {
   'src/rules/form-rules.js': '武學與效果',
   'src/rules/game.js': '圖鑑與人物',
   'src/ui/gates.js': '圖鑑與人物',
+  'src/data/hero-voices.js': '劇情、對白與旁白',
   'index.html': '開場與操作',
-  'src/ui/journey-pages.js': '目標與渡行',
-  'src/rules/journey.js': '目標與渡行',
+  'src/ui/journey-pages.js': '目標與棋路',
+  'src/rules/journey.js': '目標與棋路',
   'src/data/martial-arts.js': '行裝與商肆',
   'src/data/mastery-catalog.js': '武學與效果',
   'src/ui/mastery-views.js': '武學與效果',
@@ -82,9 +83,9 @@ export const PLACES = {
     'effectDescription': ['武學與效果', '狀態']
   },
   'src/ui/bowl-views.js': {
-    'places': ['行裝與商肆', '周伯通・三碗借時'],
-    'visitorInvite': ['行裝與商肆', '周伯通・三碗借時'],
-    'bowlsPage': ['行裝與商肆', '周伯通・三碗借時']
+    'places': ['行裝與商肆', '韋小寶・三盅通吃'],
+    'visitorInvite': ['行裝與商肆', '韋小寶・三盅通吃'],
+    'bowlsPage': ['行裝與商肆', '韋小寶・三盅通吃']
   },
   'src/ui/company-views.js': {
     'teamTabs': ['整備與陣容', '隊伍管理'],
@@ -103,12 +104,12 @@ export const PLACES = {
     'SIGNATURE_RULES': ['圖鑑與人物', '守關人與絕技']
   },
   'src/rules/ferry-market.js': {
-    'VISITOR': ['行裝與商肆', '借刻鋪與三碗借時'],
-    'VISITOR.arrival': ['劇情、對白與旁白', '周伯通・三碗借時'],
-    'VISITOR.reveal': ['劇情、對白與旁白', '周伯通・三碗借時'],
-    'VISITOR.blind': ['劇情、對白與旁白', '周伯通・三碗借時'],
-    'VISITOR.win': ['劇情、對白與旁白', '周伯通・三碗借時'],
-    'MARKET_RULES': ['行裝與商肆', '借刻鋪與三碗借時']
+    'VISITOR': ['行裝與商肆', '通吃坊與三盅通吃'],
+    'VISITOR.arrival': ['劇情、對白與旁白', '韋小寶・三盅通吃'],
+    'VISITOR.reveal': ['劇情、對白與旁白', '韋小寶・三盅通吃'],
+    'VISITOR.blind': ['劇情、對白與旁白', '韋小寶・三盅通吃'],
+    'VISITOR.win': ['劇情、對白與旁白', '韋小寶・三盅通吃'],
+    'MARKET_RULES': ['行裝與商肆', '通吃坊與三盅通吃']
   },
   'src/ui/field-hud.js': {
     'FieldHud': ['戰盤與指令', '浮動面板與控制']
@@ -149,7 +150,7 @@ export const PLACES = {
     'equip': ['戰場紀錄', '用物'],
     'transferEquipment': ['戰場紀錄', '用物'],
     'train': ['戰場紀錄', '成長'],
-    'check': ['戰場紀錄', '渡行紀事'],
+    'check': ['戰場紀錄', '局中紀事'],
     'restOnHerbs': ['戰場紀錄', '地形'],
     'startEnemy': ['戰場紀錄', '交鋒'],
     'enemyAct': ['戰場紀錄', '交鋒'],
@@ -162,33 +163,32 @@ export const PLACES = {
     'index': ['開場與操作', '主畫面與戰場']
   },
   'src/ui/journey-pages.js': {
-    'stageScenes': ['劇情、對白與旁白', '行旅手記'],
-    'stageStory': ['劇情、對白與旁白', '行旅手記'],
+    'stageScenes': ['劇情、對白與旁白', '局中紀事'],
     'equippedMoves': ['武學與效果', '戰場出招'],
-    'journeyEnding': ['目標與渡行', '終局']
+    'journeyEnding': ['目標與棋路', '終局']
   },
   'src/rules/journey.js': {
-    'NUMERALS': ['目標與渡行', '渡行與結算'],
-    'goalNames': ['目標與渡行', '任務與達成條件'],
-    'startRun': ['目標與渡行', '渡行與結算'],
-    'restoreRun': ['目標與渡行', '渡行與結算'],
+    'NUMERALS': ['目標與棋路', '棋路與結算'],
+    'goalNames': ['目標與棋路', '任務與達成條件'],
+    'startRun': ['目標與棋路', '棋路與結算'],
+    'restoreRun': ['目標與棋路', '棋路與結算'],
     'dialogue': ['劇情、對白與旁白', '臨陣與戰後'],
-    'dialogue.speaker': ['目標與渡行', '渡行與結算'],
+    'dialogue.speaker': ['目標與棋路', '棋路與結算'],
     'deployLineup': ['戰場紀錄', '回合與整備'],
-    'mapMission': ['目標與渡行', '渡行與結算'],
-    'settle': ['目標與渡行', '渡行與結算'],
-    'chooseFate': ['戰場紀錄', '渡行紀事'],
+    'mapMission': ['目標與棋路', '棋路與結算'],
+    'settle': ['目標與棋路', '棋路與結算'],
+    'chooseFate': ['戰場紀錄', '局中紀事'],
     'buy': ['戰場紀錄', '用物'],
-    'advance': ['目標與渡行', '渡行與結算'],
+    'advance': ['目標與棋路', '棋路與結算'],
     'giveGuide': ['戰場紀錄', '成長'],
     'guideInventory': ['武學與效果', '參悟與解鎖'],
-    'milestone': ['目標與渡行', '任務與達成條件'],
+    'milestone': ['目標與棋路', '任務與達成條件'],
     'studyState': ['武學與效果', '參悟與解鎖'],
-    'campModel': ['目標與渡行', '任務與達成條件']
+    'campModel': ['目標與棋路', '任務與達成條件']
   },
   'src/data/martial-arts.js': {
     'BRANCHES': ['武學與效果', '武學與修為'],
-    'WARES': ['行裝與商肆', '借刻鋪']
+    'WARES': ['行裝與商肆', '通吃坊']
   },
   'src/data/mastery-catalog.js': {
     'CATALOG_NOTE': ['武學與效果', '門派武學'],
@@ -215,71 +215,89 @@ export const PLACES = {
     'loadout': ['武學與效果', '武學面板'],
     'treeView': ['武學與效果', '武學面板'],
     'groups': ['武學與效果', '武學面板'],
-    'campRecap': ['行裝與商肆', '借刻鋪'],
-    'productRow': ['行裝與商肆', '借刻鋪'],
-    'shop': ['行裝與商肆', '借刻鋪'],
-    'campView': ['行裝與商肆', '借刻鋪'],
+    'campRecap': ['行裝與商肆', '通吃坊'],
+    'productRow': ['行裝與商肆', '通吃坊'],
+    'shop': ['行裝與商肆', '通吃坊'],
+    'campView': ['行裝與商肆', '通吃坊'],
     'frameDialog': ['武學與效果', '武學面板']
   },
   'src/data/maze-tale.js': {
-    'MAZE_TALE': ['劇情、對白與旁白', '終關'],
-    'MAZE_TALE.title': ['劇情、對白與旁白', '渡行手記'],
-    'MAZE_TALE.opening[0]': ['劇情、對白與旁白', '序章'],
-    'MAZE_TALE.opening[1]': ['劇情、對白與旁白', '序章'],
-    'MAZE_TALE.opening[2]': ['劇情、對白與旁白', '序章'],
-    'MAZE_TALE.draw': ['劇情、對白與旁白', '抽籤'],
-    'MAZE_TALE.deploy': ['劇情、對白與旁白', '出陣'],
-    'MAZE_TALE.shop': ['劇情、對白與旁白', '借刻鋪'],
-    'MAZE_TALE.win': ['劇情、對白與旁白', '勝後'],
-    'MAZE_TALE.winAgain': ['劇情、對白與旁白', '再渡'],
-    'MAZE_TALE.loss': ['劇情、對白與旁白', '敗後'],
-    'MAZE_TALE.join': ['劇情、對白與旁白', '結伴'],
-    'CHAMBER_TALES': ['劇情、對白與旁白', '青竹渡・渡行手記'],
-    'CHAMBER_TALES[1].name': ['劇情、對白與旁白', '紅楓驛・渡行手記'],
-    'CHAMBER_TALES[1].arrival': ['劇情、對白與旁白', '紅楓驛・渡行手記'],
-    'CHAMBER_TALES[1].victory': ['劇情、對白與旁白', '紅楓驛・渡行手記'],
-    'CHAMBER_TALES[1].voice.line': ['劇情、對白與旁白', '紅楓驛・渡行手記'],
-    'CHAMBER_TALES[2].name': ['劇情、對白與旁白', '蘆花汀・渡行手記'],
-    'CHAMBER_TALES[2].arrival': ['劇情、對白與旁白', '蘆花汀・渡行手記'],
-    'CHAMBER_TALES[2].victory': ['劇情、對白與旁白', '蘆花汀・渡行手記'],
-    'CHAMBER_TALES[2].voice.line': ['劇情、對白與旁白', '蘆花汀・渡行手記'],
-    'CHAMBER_TALES[3].name': ['劇情、對白與旁白', '聽雪棧・渡行手記'],
-    'CHAMBER_TALES[3].arrival': ['劇情、對白與旁白', '聽雪棧・渡行手記'],
-    'CHAMBER_TALES[3].victory': ['劇情、對白與旁白', '聽雪棧・渡行手記'],
-    'CHAMBER_TALES[3].voice.line': ['劇情、對白與旁白', '聽雪棧・渡行手記'],
-    'CHAMBER_TALES[4].name': ['劇情、對白與旁白', '空山琴臺・渡行手記'],
-    'CHAMBER_TALES[4].arrival': ['劇情、對白與旁白', '空山琴臺・渡行手記'],
-    'CHAMBER_TALES[4].victory': ['劇情、對白與旁白', '空山琴臺・渡行手記'],
-    'CHAMBER_TALES[4].voice.line': ['劇情、對白與旁白', '空山琴臺・渡行手記'],
-    'CHAMBER_TALES[5].name': ['劇情、對白與旁白', '桃花石陣・渡行手記'],
-    'CHAMBER_TALES[5].arrival': ['劇情、對白與旁白', '桃花石陣・渡行手記'],
-    'CHAMBER_TALES[5].victory': ['劇情、對白與旁白', '桃花石陣・渡行手記'],
-    'CHAMBER_TALES[5].voice.line': ['劇情、對白與旁白', '桃花石陣・渡行手記'],
-    'CHAMBER_TALES[6].name': ['劇情、對白與旁白', '襄陽殘垣・渡行手記'],
-    'CHAMBER_TALES[6].arrival': ['劇情、對白與旁白', '襄陽殘垣・渡行手記'],
-    'CHAMBER_TALES[6].victory': ['劇情、對白與旁白', '襄陽殘垣・渡行手記'],
-    'CHAMBER_TALES[6].voice.line': ['劇情、對白與旁白', '襄陽殘垣・渡行手記'],
-    'CHAMBER_TALES[7].name': ['劇情、對白與旁白', '寒玉石室・渡行手記'],
-    'CHAMBER_TALES[7].arrival': ['劇情、對白與旁白', '寒玉石室・渡行手記'],
-    'CHAMBER_TALES[7].victory': ['劇情、對白與旁白', '寒玉石室・渡行手記'],
-    'CHAMBER_TALES[7].voice.line': ['劇情、對白與旁白', '寒玉石室・渡行手記'],
-    'CHAMBER_TALES[8].name': ['劇情、對白與旁白', '倒影天街・渡行手記'],
-    'CHAMBER_TALES[8].arrival': ['劇情、對白與旁白', '倒影天街・渡行手記'],
-    'CHAMBER_TALES[8].victory': ['劇情、對白與旁白', '倒影天街・渡行手記'],
-    'CHAMBER_TALES[8].voice.line': ['劇情、對白與旁白', '倒影天街・渡行手記'],
-    'CHAMBER_TALES[9].name': ['劇情、對白與旁白', '無刻漏臺・渡行手記'],
-    'CHAMBER_TALES[9].arrival': ['劇情、對白與旁白', '無刻漏臺・渡行手記'],
-    'CHAMBER_TALES[9].victory': ['劇情、對白與旁白', '無刻漏臺・渡行手記'],
-    'CHAMBER_TALES[9].voice.line': ['劇情、對白與旁白', '無刻漏臺・渡行手記'],
-    'SIDE_TALES': ['劇情、對白與旁白', '支線手記']
+    'YOUTH': ['圖鑑與人物', '少年與韋小寶'],
+    'WEI': ['圖鑑與人物', '少年與韋小寶'],
+    'MAZE_TALE': ['劇情、對白與旁白', '一輪的骨架'],
+    'MAZE_TALE.title': ['開場與操作', '標題'],
+    'MAZE_TALE.prologue': ['劇情、對白與旁白', '睜眼'],
+    'MAZE_TALE.letter': ['劇情、對白與旁白', '英雄帖'],
+    'MAZE_TALE.draw': ['劇情、對白與旁白', '英雄帖'],
+    'MAZE_TALE.command': ['劇情、對白與旁白', '第一局之前'],
+    'MAZE_TALE.deploy': ['劇情、對白與旁白', '第一局之前'],
+    'MAZE_TALE.shop': ['劇情、對白與旁白', '通吃坊開張'],
+    'MAZE_TALE.opened': ['劇情、對白與旁白', '通吃坊開張'],
+    'MAZE_TALE.night': ['劇情、對白與旁白', '夜話'],
+    'MAZE_TALE.scatter': ['劇情、對白與旁白', '眼破'],
+    'MAZE_TALE.win': ['劇情、對白與旁白', '階盡'],
+    'MAZE_TALE.winAgain': ['劇情、對白與旁白', '階盡'],
+    'MAZE_TALE.loss': ['劇情、對白與旁白', '眼破'],
+    'MAZE_TALE.join': ['劇情、對白與旁白', '應帖'],
+    'MAZE_TALE.joined': ['劇情、對白與旁白', '應帖'],
+    'MAZE_TALE.closing': ['劇情、對白與旁白', '闔眼'],
+    'CHAMBER_TALES': ['劇情、對白與旁白', '青竹渡・局的紀事'],
+    'CHAMBER_TALES[1].name': ['劇情、對白與旁白', '紅楓驛・局的紀事'],
+    'CHAMBER_TALES[1].obsession': ['劇情、對白與旁白', '紅楓驛・局的紀事'],
+    'CHAMBER_TALES[1].shade': ['劇情、對白與旁白', '紅楓驛・局的紀事'],
+    'CHAMBER_TALES[1].arrival': ['劇情、對白與旁白', '紅楓驛・局的紀事'],
+    'CHAMBER_TALES[1].victory': ['劇情、對白與旁白', '紅楓驛・局的紀事'],
+    'CHAMBER_TALES[2].name': ['劇情、對白與旁白', '蘆花汀・局的紀事'],
+    'CHAMBER_TALES[2].obsession': ['劇情、對白與旁白', '蘆花汀・局的紀事'],
+    'CHAMBER_TALES[2].shade': ['劇情、對白與旁白', '蘆花汀・局的紀事'],
+    'CHAMBER_TALES[2].arrival': ['劇情、對白與旁白', '蘆花汀・局的紀事'],
+    'CHAMBER_TALES[2].victory': ['劇情、對白與旁白', '蘆花汀・局的紀事'],
+    'CHAMBER_TALES[3].name': ['劇情、對白與旁白', '聽雪棧・局的紀事'],
+    'CHAMBER_TALES[3].obsession': ['劇情、對白與旁白', '聽雪棧・局的紀事'],
+    'CHAMBER_TALES[3].shade': ['劇情、對白與旁白', '聽雪棧・局的紀事'],
+    'CHAMBER_TALES[3].arrival': ['劇情、對白與旁白', '聽雪棧・局的紀事'],
+    'CHAMBER_TALES[3].victory': ['劇情、對白與旁白', '聽雪棧・局的紀事'],
+    'CHAMBER_TALES[4].name': ['劇情、對白與旁白', '空山琴臺・局的紀事'],
+    'CHAMBER_TALES[4].obsession': ['劇情、對白與旁白', '空山琴臺・局的紀事'],
+    'CHAMBER_TALES[4].shade': ['劇情、對白與旁白', '空山琴臺・局的紀事'],
+    'CHAMBER_TALES[4].arrival': ['劇情、對白與旁白', '空山琴臺・局的紀事'],
+    'CHAMBER_TALES[4].victory': ['劇情、對白與旁白', '空山琴臺・局的紀事'],
+    'CHAMBER_TALES[5].name': ['劇情、對白與旁白', '桃花石陣・局的紀事'],
+    'CHAMBER_TALES[5].obsession': ['劇情、對白與旁白', '桃花石陣・局的紀事'],
+    'CHAMBER_TALES[5].shade': ['劇情、對白與旁白', '桃花石陣・局的紀事'],
+    'CHAMBER_TALES[5].arrival': ['劇情、對白與旁白', '桃花石陣・局的紀事'],
+    'CHAMBER_TALES[5].victory': ['劇情、對白與旁白', '桃花石陣・局的紀事'],
+    'CHAMBER_TALES[6].name': ['劇情、對白與旁白', '襄陽殘垣・局的紀事'],
+    'CHAMBER_TALES[6].obsession': ['劇情、對白與旁白', '襄陽殘垣・局的紀事'],
+    'CHAMBER_TALES[6].shade': ['劇情、對白與旁白', '襄陽殘垣・局的紀事'],
+    'CHAMBER_TALES[6].arrival': ['劇情、對白與旁白', '襄陽殘垣・局的紀事'],
+    'CHAMBER_TALES[6].victory': ['劇情、對白與旁白', '襄陽殘垣・局的紀事'],
+    'CHAMBER_TALES[7].name': ['劇情、對白與旁白', '寒玉石室・局的紀事'],
+    'CHAMBER_TALES[7].obsession': ['劇情、對白與旁白', '寒玉石室・局的紀事'],
+    'CHAMBER_TALES[7].shade': ['劇情、對白與旁白', '寒玉石室・局的紀事'],
+    'CHAMBER_TALES[7].arrival': ['劇情、對白與旁白', '寒玉石室・局的紀事'],
+    'CHAMBER_TALES[7].victory': ['劇情、對白與旁白', '寒玉石室・局的紀事'],
+    'CHAMBER_TALES[8].name': ['劇情、對白與旁白', '倒影天街・局的紀事'],
+    'CHAMBER_TALES[8].obsession': ['劇情、對白與旁白', '倒影天街・局的紀事'],
+    'CHAMBER_TALES[8].shade': ['劇情、對白與旁白', '倒影天街・局的紀事'],
+    'CHAMBER_TALES[8].arrival': ['劇情、對白與旁白', '倒影天街・局的紀事'],
+    'CHAMBER_TALES[8].victory': ['劇情、對白與旁白', '倒影天街・局的紀事'],
+    'CHAMBER_TALES[9].name': ['劇情、對白與旁白', '無刻漏臺・局的紀事'],
+    'CHAMBER_TALES[9].obsession': ['劇情、對白與旁白', '無刻漏臺・局的紀事'],
+    'CHAMBER_TALES[9].shade': ['劇情、對白與旁白', '無刻漏臺・局的紀事'],
+    'CHAMBER_TALES[9].arrival': ['劇情、對白與旁白', '無刻漏臺・局的紀事'],
+    'CHAMBER_TALES[9].victory': ['劇情、對白與旁白', '無刻漏臺・局的紀事'],
+    'SIDE_TALES': ['劇情、對白與旁白', '救下局中影']
+  },
+  'src/data/hero-voices.js': {
+    'HERO_VOICES': ['劇情、對白與旁白', '俠客自己的話']
   },
   'src/rules/move-facts.js': {
     'roots': ['武學與效果', '威力與效果'],
     'moveFacts': ['武學與效果', '威力與效果']
   },
   'src/data/new-heroes.js': {
-    'NEW_HEROES': ['圖鑑與人物', '俠客錄'],
-    'NEW_VOICES': ['劇情、對白與旁白', '俠客應答']
+    'NEW_HEROES': ['圖鑑與人物', '俠客錄']
   },
   'src/ui/panels.js': {
     'actionState': ['戰盤與指令', '行動面板'],
@@ -304,7 +322,7 @@ export const PLACES = {
     'storyPage': ['劇情、對白與旁白', '江湖舊事'],
     'logPage': ['戰場紀錄', '紀錄面板'],
     'logPage / filters[4][1]': ['開場與操作', '指南與設定'],
-    'goalsPage': ['目標與渡行', '目標與結算'],
+    'goalsPage': ['目標與棋路', '目標與結算'],
     'terrainPage': ['地圖與地形', '地形說明'],
     'helpPage': ['開場與操作', '指南與設定'],
     'settingsPage': ['開場與操作', '指南與設定'],
@@ -312,11 +330,13 @@ export const PLACES = {
     'enemyPage': ['圖鑑與人物', '人物資料'],
     'attackPage': ['武學與效果', '交鋒與研習'],
     'attackPage / who': ['戰盤與指令', '行動面板'],
-    'resultPage': ['目標與渡行', '目標與結算']
+    'resultPage': ['目標與棋路', '目標與結算']
   },
   'src/ui/run-views.js': {
-    'drawPortrait': ['開場與操作', '抽籤與出陣'],
-    'rollView': ['開場與操作', '抽籤與出陣']
+    'drawPortrait': ['開場與操作', '應帖與落子'],
+    'rollView': ['開場與操作', '應帖與落子'],
+    'prologueSteps': ['開場與操作', '睜眼'],
+    'prologuePage': ['開場與操作', '睜眼']
   },
   'src/fx/technique-strokes.js': {
     'RECIPES': ['系統與提示', '介面用語']
@@ -326,9 +346,12 @@ export const PLACES = {
     'regionalNotes': ['地圖與地形', '地形說明']
   },
   'src/data/wake-tale.js': {
-    'WORLD': ['劇情、對白與旁白', '回牒與回水尺'],
-    'WAKES': ['劇情、對白與旁白', '回牒與回水尺'],
-    'FATES': ['劇情、對白與旁白', '回牒與回水尺']
+    'WORLD': ['劇情、對白與旁白', '帖上與石上讀到的事'],
+    'FRAGMENTS': ['劇情、對白與旁白', '闔眼'],
+    'CLOSING': ['劇情、對白與旁白', '闔眼'],
+    'WAKES': ['劇情、對白與旁白', '石上的痕'],
+    'FATE_PROMPT': ['劇情、對白與旁白', '留名與還名'],
+    'FATES': ['劇情、對白與旁白', '留名與還名']
   },
   'src/ui/wake-views.js': {
     'wakeJournal': ['系統與提示', '介面用語'],

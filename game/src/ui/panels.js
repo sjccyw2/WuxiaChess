@@ -171,7 +171,7 @@ function commander(s, mode) {
       'result',
       icon('flag', 19) +
         '<span>' +
-        (s.run?.status === 'camp' ? '返回借刻鋪' : '查看戰果') +
+        (s.run?.status === 'camp' ? '返回通吃坊' : '查看戰果') +
         '</span>',
       'field-action turn-action'
     );
@@ -214,11 +214,11 @@ function goalRows(s) {
       '</span><div><small>主要目標</small><strong>擊敗' +
       unitDetails(target).name +
       '</strong>' +
-      '<p class="goal-detail">副將 · ' +
+      '<p class="goal-detail">副手 · ' +
       unitDetails(s.units.find((u) => u.encounterId))?.name +
       '</p>' +
       (target.id === 'murong'
-        ? '<p class="goal-detail">星漏護陣・' +
+        ? '<p class="goal-detail">星索護陣・' +
           wardEscorts(s).length +
           ' / 2 名護陣者，減傷 ' +
           wardEscorts(s).length * 35 +
@@ -327,9 +327,9 @@ function profileContents(s, id) {
   const u = find(s, id);
   const location = tileInfo(u.x, u.y, s.mapIndex);
   const footing = !s.units.includes(u)
-    ? '船上候補'
+    ? '盤邊候補'
     : s.run?.status === 'camp'
-      ? '借刻鋪・隨船休整中'
+      ? '通吃坊・歇手中'
       : s.run?.scene === 'prep'
         ? '整備中'
         : location.name + ' · ' + location.note;
@@ -464,7 +464,7 @@ function inventoryPage(s, id, filter) {
         '</div>';
     }
     if (filter === 'guide' && !content)
-      content = '<p class="empty">行囊暫無未授的武譜。可於借刻鋪購買抄本，再選擇受授俠客。</p>';
+      content = '<p class="empty">行囊暫無未授的武譜。可於通吃坊購買抄本，再選擇受授俠客。</p>';
   }
   return (
     titleHead('bag', '隨身行囊') +
@@ -478,11 +478,11 @@ function inventoryPage(s, id, filter) {
     '</div><p class="footnote">' +
     icon('info', 14) +
     (s.run?.status === 'camp'
-      ? '船上可自由服藥、換裝。'
+      ? '兩局之間可自由服藥、換裝。'
       : '各俠客共用行囊。每服一劑消耗一份，可連用且保留行動。') +
     '</p>' +
     (s.run?.status === 'camp'
-      ? '<div class="modal-foot right">' + btn('camp', '返回借刻鋪') + '</div>'
+      ? '<div class="modal-foot right">' + btn('camp', '返回通吃坊') + '</div>'
       : '')
   );
 }
@@ -601,7 +601,7 @@ function logPage(s, filter) {
 function goalsPage(s) {
   if (s.run)
     return (
-      titleHead('flag', '迷津路簿') +
+      titleHead('flag', '十局棋路') +
       '<div class="goals-detail">' +
       goalRows(s) +
       '</div>' +
@@ -616,8 +616,8 @@ function goalsPage(s) {
       ' 兩</span></div>' +
       '<details class="hud-disclosure"><summary>地勢與勝敗條件</summary><p>' +
       esc(mapLayout(s.mapIndex).tactic) +
-      '</p><p>須於第十二回合結束前擊敗守將。領隊倒下即止步。支線達成並取勝可邀新俠客。</p></details>' +
-      '<details class="hud-disclosure"><summary>十渡行程 · ' +
+      '</p><p>須於第十二回合結束前擊敗局主。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。救下局中的影子並取勝，便有新俠客應帖而來。</p></details>' +
+      '<details class="hud-disclosure"><summary>十局次序 · ' +
       (s.run.stage + 1) +
       '／10</summary><ol class="journey-route">' +
       s.run.route
@@ -627,7 +627,7 @@ function goalsPage(s) {
             (i === s.run.stage ? 'current' : i < s.run.stage ? 'cleared' : '') +
             '"><small>第' +
             NUMERALS[i] +
-            '渡</small><strong>' +
+            '局</small><strong>' +
             mapLayout(map).name +
             ' · ' +
             mapLayout(map).shapeName +
@@ -638,9 +638,9 @@ function goalsPage(s) {
             (i === s.run.stage
               ? '目前所在'
               : i < s.run.stage
-                ? '已破關'
+                ? '已破局'
                 : i === 9
-                  ? '終關首領'
+                  ? '最後一局'
                   : '未抵達') +
             '</span></li>'
         )
@@ -743,13 +743,13 @@ function helpPage() {
   const rules = [
     [
       'scroll',
-      '十漏迷津',
-      '每局抽出三位俠客。第十渡的無刻漏臺必遇慕容博。支線可救出同行者，每戰最多五人出陣。'
+      '一念江湖',
+      '每一輪有三位俠客應帖，由你執子。十局各有一位局主與一個待救的影子；救下影子並取勝，便多一位同伴。每局至多五人上盤。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。'
     ],
     [
       'bag',
-      '借刻鋪與武譜',
-      '每戰結束可登船購物。每冊武譜限授一人。受授後在「授業武譜」花點參悟，再裝入三格之一。過關與升級各得一點。戰中剛參悟的絕技可即時裝上一次。'
+      '通吃坊與武譜',
+      '每局結束可到韋小寶的通吃坊購物。每冊武譜限授一人。受授後在「授業武譜」花點參悟，再裝入三格之一。過關與升級各得一點。戰中剛參悟的絕技可即時裝上一次。'
     ],
     [
       'people',
@@ -759,7 +759,7 @@ function helpPage() {
     [
       'move',
       '走位與地形',
-      '十渡各有其形。深水、斷崖與天井沒有地格，須沿橋路繞行。指向青綠地格可預覽路線，點選後，俠客沿縱橫棋路逐格行走。可穿越友軍，遇敵軍、太湖石與茶箱須繞道。淺灘和竹林耗兩步，過木橋只耗一步。按「地形圖」查閱掩體與藥草，出招前按「撤步」可循原路返回。'
+      '十局各有其形。深水、斷崖與天井沒有地格，須沿橋路繞行。指向青綠地格可預覽路線，點選後，俠客沿縱橫棋路逐格行走。可穿越友軍，遇敵軍、太湖石與茶箱須繞道。淺灘和竹林耗兩步，過木橋只耗一步。按「地形圖」查閱掩體與藥草，出招前按「撤步」可循原路返回。'
     ],
     [
       'target',
@@ -827,7 +827,7 @@ function settingsPage(p, inBattle = true) {
     '<div class="save-options">' +
     (inBattle
       ? btn('home', icon('undo', 15) + '返回主畫面', 'outline-btn') +
-        btn('reset-ask', icon('restart', 15) + '另起一渡', 'outline-btn')
+        btn('reset-ask', icon('restart', 15) + '另起一輪', 'outline-btn')
       : '') +
     '</div></div>'
   );
@@ -863,7 +863,7 @@ function enemyPage(s, id) {
     '</small><h3>' +
     i.name +
     '</h3><p>' +
-    (i.bio || '執兵守在迷津的要道。') +
+    (i.bio || '對面落下的一枚黑子，守著這一局的要道。') +
     '</p></div></div>' +
     (special
       ? '<div class="enemy-forecast"><strong>' +
@@ -872,7 +872,7 @@ function enemyPage(s, id) {
         (u.conditions?.seal
           ? '本回合封穴，無法施展絕技'
           : turns === 0
-            ? '本回合蓄勢'
+            ? '本回合蓄勢，正是破綻'
             : '距蓄勢 ' + turns + ' 回合') +
         '</span><p>' +
         '普攻傷害 × ' +
@@ -1021,7 +1021,7 @@ function attackPage(s, source, target, skill) {
     lines.push(line('附加效果', effectDescription(e.kind, e.power, e.turns)));
   if (f.push) lines.push(line(a.push ? '擊退' : '牽引', '一格'));
   for (const note of f.notes) lines.push(line('招式連攜', esc(note)));
-  if (f.ward) lines.push(line('星漏護陣', '已減傷 ' + f.ward + '%'));
+  if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
   if (skill)
     lines.push(
       line('自身消耗', cost(u, s) + ' 內力' + (f.hpCost ? '、' + f.hpCost + ' 氣血' : ''))

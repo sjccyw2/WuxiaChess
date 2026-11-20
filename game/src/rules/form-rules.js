@@ -3,7 +3,7 @@ const FORM_RULES = {
   mark: ['留隙', '命中後留下兩回合破綻。同一擊若已收隙，便不重留。'],
   exploit: ['收隙', '收去目標已有的破綻，首段威力加 9，該敵無法還擊。'],
   pin: ['絆足', '本回合與下一回合，目標移動減 2，最低仍可走 1 步。'],
-  seal: ['封穴', '本回合阻止還擊與敵方絕技。守關人受封後，下一回合可抵抗再封。'],
+  seal: ['封穴', '本回合阻止還擊與敵方絕技。局主受封後，下一回合可抵抗再封。'],
   cleanse: ['解厄', '先替受術者解除中毒、攻勢受挫、破防、絆足、破綻與封穴。'],
   channel: ['渡氣', '每位受術同伴各回復 6 內力，施術者自身除外。'],
   overflow: ['餘氣護身', '溢出的療傷量轉成一回合護盾，上限 12。護盾取較強者。'],
@@ -94,7 +94,7 @@ function contactPlan(s, u, t, art, forms, step, boss) {
   if (has('pin')) effects.push({ kind: 'pin', power: 2, turns: 2 });
   const sealed = has('seal') && !(boss && t.lastSealRound === s?.round - 1);
   if (sealed) effects.push({ kind: 'seal', power: 1, turns: 1 });
-  else if (has('seal')) notes.push('守關人已換氣，本回合抵抗封穴');
+  else if (has('seal')) notes.push('局主已換氣，本回合抵抗封穴');
   return {
     extra,
     partner: partner?.id,

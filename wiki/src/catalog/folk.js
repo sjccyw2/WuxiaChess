@@ -1,33 +1,44 @@
-// 江湖人物: the ferrywoman, the wandering visitor, and the traveller waiting at each stop.
+// 江湖人物: the two who are never on the board (the youth and 韋小寶), and the shadow
+// waiting to be saved on each board.
 import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, gameArt } from './parts.js';
 import { stageLinks } from './foes.js';
 import { missionLabel } from './missions.js';
-import { FERRYWOMAN, TITLES } from './story.js';
+import { YOUTH_NAME, TITLES } from './story.js';
 
-function ferrywoman() {
+const said = (speaker, text, note) => ({ ...(note ? { note } : {}), speaker, text });
+
+function youth() {
   const t = G.MAZE_TALE;
   return {
-    id: 'sang',
-    name: FERRYWOMAN,
-    tag: '渡船人',
-    summary: t.opening[1],
-    image: gameArt('npc-sang.webp'),
+    id: 'youth',
+    name: YOUTH_NAME,
+    tag: G.YOUTH.role,
+    summary: t.prologue.scenes[2],
+    image: gameArt(G.YOUTH.portrait),
     sections: [
-      speech('借刻鋪掌櫃', t.shop),
-      speech('貨架', G.MARKET_RULES),
-      speech('船上的話', t.opening[2], t.deploy),
-      links('渡口紀事', [link('story', 'opening', TITLES.opening), link('story', 'ferry', TITLES.ferry)])
+      rows('人物誌', [
+        ['身分', '玩家所扮的角色。他不上盤，只落子。'],
+        ['名字', '第一輪由玩家輸入，此後每一輪都是同一個。未輸入時叫「' + G.YOUTH.name + '」。']
+      ]),
+      speech('為何由他執子', said(YOUTH_NAME, t.command.text, t.command.note)),
+      speech('石上給他的一行字', t.prologue.board),
+      links('相關', [
+        link('story', 'opening', TITLES.opening),
+        link('story', 'world', TITLES.world),
+        link('story', 'return', TITLES.return)
+      ])
     ],
-    sources: cites(cite(t.shop, 'src/data/maze-tale.js'))
+    sources: cites(cite(t.command.text, 'src/data/maze-tale.js'))
   };
 }
 
-function visitor() {
-  const v = G.VISITOR;
+function shopkeeper() {
+  const v = G.VISITOR,
+    t = G.MAZE_TALE;
   return {
-    id: 'zhou',
+    id: 'wei',
     name: v.name,
     tag: v.alias,
     summary: v.bio,
@@ -35,10 +46,19 @@ function visitor() {
     sections: [
       rows('人物誌', [
         ['原著', v.book],
-        ['奇遇', v.title]
+        ['賭局', v.title]
       ]),
-      speech('出現與贈物', v.rules),
-      links('全部對白', [link('story', 'ferry', TITLES.ferry)])
+      speech('開張', said(v.name, t.opened.text, t.opened.note)),
+      speech('貨架', G.MARKET_RULES),
+      speech('賭局何時出現', v.rules),
+      speech(
+        '只有他記得',
+        said(v.name, t.prologue.greeting.first, '第一輪，少年睜眼時。'),
+        said(v.name, t.prologue.greeting.again, '第二輪起。'),
+        said(v.name, t.prologue.reply.again, '少年又說出同一個名字。'),
+        said(v.name, t.scatter.text, '這一輪落敗時。')
+      ),
+      links('全部對白', [link('story', 'shop', TITLES.shop), link('story', 'opening', TITLES.opening)])
     ],
     sources: cites(cite(v.name, 'src/rules/ferry-market.js'))
   };
@@ -49,15 +69,16 @@ function traveller([name, caption], stage) {
   return {
     id: 'tale-' + stage,
     name,
-    tag: '渡中人',
+    tag: '局中影',
     summary: caption,
     image: gameArt('npc-tale-' + stage + '.webp'),
     sections: [
       speech(
-        '渡客的兩種結局',
-        { speaker: '接應成功', text: script.rescue },
-        { speaker: '錯過接應', text: script.missed }
+        '兩種結局',
+        { speaker: '救下', text: script.rescue },
+        { speaker: '錯過', text: script.missed }
       ),
+      rows('這一局', [['局主的執念', G.CHAMBER_TALES[stage].obsession]]),
       links('出現地點', [...stageLinks(stage), link('missions', 'map-' + stage, missionLabel(stage))])
     ],
     sources: cites(
@@ -68,5 +89,5 @@ function traveller([name, caption], stage) {
 }
 
 export function folk() {
-  return [ferrywoman(), visitor(), ...G.taleCaptions.map(traveller)];
+  return [youth(), shopkeeper(), ...G.taleCaptions.map(traveller)];
 }

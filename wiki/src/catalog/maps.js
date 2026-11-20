@@ -1,4 +1,4 @@
-// 十渡輿圖: each battlefield, drawn from the game's layout tables.
+// 十局輿圖: each battlefield, drawn from the game's layout tables.
 import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, links, link, wikiArt } from './parts.js';
@@ -6,7 +6,7 @@ import { stageName } from './foes.js';
 import { missionLabel } from './missions.js';
 
 const LAST = G.MAP_LAYOUTS.length - 1;
-const orderOf = (stage) => (stage === 0 ? '首渡' : stage === LAST ? '終渡' : '中途渡口');
+const orderOf = (stage) => (stage === 0 ? '第一局' : stage === LAST ? '最後一局' : '中間的局，次序每輪不同');
 const point = ({ x, y }) => ({ x, y });
 
 function map(stage) {
@@ -29,7 +29,7 @@ function map(stage) {
         ['邊界', layout.width + ' × ' + layout.height],
         ['盤內地格', layout.cells.length],
         ['可站立', standable.length],
-        ['航序', orderOf(stage)]
+        ['次序', orderOf(stage)]
       ]),
       {
         title: '地形與位置',

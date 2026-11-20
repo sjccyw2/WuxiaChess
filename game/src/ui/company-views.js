@@ -159,7 +159,7 @@ function memberLine(s, u, ui) {
     '</strong>　' +
     esc(mission.instruction) +
     '<small>勝利時另得 19 兩' +
-    (recruit ? '，可接應一名俠客' : '') +
+    (recruit ? '，並有一位俠客應帖而來' : '') +
     '。</small></dd></div></dl></section>';
   return (
     brief +
@@ -311,7 +311,7 @@ function teamPage(s, u, ui) {
         : arts(s, u, ui);
   const back = prep
     ? btn('home', '主畫面', 'mj-action')
-    : btn('close', s.run.scene === 'shop' ? '返回借刻鋪' : '返回戰盤', 'mj-action');
+    : btn('close', s.run.scene === 'shop' ? '返回通吃坊' : '返回戰盤', 'mj-action');
   const right = prep
     ? btn('field-deploy', icon('flag', 16) + ' 出陣 · ' + s.run.next.length + ' 人', 'gold-btn')
     : '';
@@ -369,11 +369,11 @@ const taleCaptions = [
   ['蘆汀吹哨的傷者', '蘆花間，揹著藥簍的傷者吹起竹哨。'],
   ['解開安全繩的行旅', '聽雪棧旁的行旅將安全繩盤在肩上。'],
   ['隔谷吹簫人', '吹簫人倚著山風，接起琴臺未盡的一音。'],
-  ['花牆後的渡客', '渡客從桃花間推門，衣領邊掛著一片竹籤。'],
+  ['牆後的女子', '女子從桃花間推門，衣領邊掛著一片竹籤。'],
   ['城門守車人', '襄陽門下，守車人身後停著木輪車。'],
   ['寒玉室的傷者', '寒玉壁前，披著衣裳的傷者捧著剛接過的藥。'],
-  ['攥著船資的孩子', '孩子伸出兩手，掌心裡躺著一枚銅錢。'],
-  ['望見家路的渡客', '漏燈亮起，一位白鬚渡客望向遠處的家門。']
+  ['攥著銅錢的孩子', '孩子伸出兩手，掌心裡躺著一枚銅錢。'],
+  ['望見家門的老人', '燈亮起來，一位白鬚老人望向遠處的家門。']
 ];
 function encounterPage(s, scene, beat, archive = false) {
   const map = mapLayout(s.mapIndex),
@@ -383,21 +383,22 @@ function encounterPage(s, scene, beat, archive = false) {
   const opening = scene === 'before',
     last = current === lines.length - 1;
   const label = opening ? '臨陣' : s.result === 'win' ? '戰後 · 勝' : '戰後 · 敗';
-  const dest = opening ? '進入整備' : '前往借刻鋪';
+  const dest = opening ? '進入整備' : '前往通吃坊';
   const next = archive ? (last ? '返回' : '下一句') : last ? dest : '下一句';
   const head =
     '<header class="modal-head"><div class="modal-title">' +
     icon('scroll', 20) +
     '<h2>第' +
     R.NUMERALS[s.run.stage] +
-    '渡 · ' +
+    '局 · ' +
     map.name +
     '</h2></div><small>' +
     label +
     '</small></header>';
+  // The youth and 韋小寶 speak from outside the board, so they have a picture but no unit.
   const portrait = p.person
     ? '<img class="fy-speaker-portrait" alt="" src="' + unitFace(p.person) + '">'
-    : '<img class="fy-speaker-portrait" alt="渡船掌櫃桑婆婆" src="' + art('npc-sang.webp') + '">';
+    : '<img class="fy-speaker-portrait" alt="" src="' + art(p.portrait) + '">';
   return (
     '<section class="mj-view fy-story">' +
     head +

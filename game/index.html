@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#101a1a" />
     <meta
       name="description"
-      content="《十漏迷津》十關立體江湖戰棋。十位俠客中抽三人同行，拜習武學、入鋪整裝，闖過銅漏中的十重江湖。"
+      content="《一念江湖》十局立體江湖戰棋。少年在谷中睜開眼，三位不同年代的俠客應帖而來。由你執子，走完十局。"
     />
-    <title>劍影江湖 · 十漏迷津</title>
+    <title>劍影江湖 · 一念江湖</title>
     <link rel="icon" type="image/svg+xml" href="assets/seal.svg" />
     <link rel="stylesheet" href="styles/01-base.css" />
     <link rel="stylesheet" href="styles/02-materials.css" />
@@ -27,7 +27,7 @@
   <body>
     <section class="opening" id="start-screen" aria-labelledby="game-title">
       <div id="start-world" class="start-world">
-        <div class="scene" id="scene" aria-label="可拖曳旋轉的青竹渡立體場景">
+        <div class="scene" id="scene" aria-label="可拖曳旋轉的立體場景">
           <canvas id="board" aria-hidden="true"></canvas>
           <canvas id="tactics" aria-hidden="true"></canvas>
           <div
@@ -60,13 +60,13 @@
         </div>
       </header>
       <div class="opening-content">
-        <div class="chapter-label"><span>群俠外傳</span><i></i><b>十漏迷津</b></div>
+        <div class="chapter-label"><span>群俠外傳</span><i></i><b>一念江湖</b></div>
         <h1 id="game-title">劍影江湖</h1>
         <div class="title-rule" aria-hidden="true"><i></i><b></b><i></i></div>
-        <p class="opening-description">幾百年前，有人在岸邊喊了一聲。你伸手應了。</p>
+        <p class="opening-description">谷裡有一盤棋，等了你很久。你不記得自己是誰。</p>
         <div class="opening-menu">
           <button class="embark" id="start-primary" data-do="start-primary">
-            <span data-icon="sword"></span><strong>抽籤入江湖</strong>
+            <span data-icon="sword"></span><strong>睜眼</strong>
           </button>
           <button class="embark-new" id="title-new" data-do="title-new" hidden>
             <span data-icon="people"></span>另開新局
@@ -76,11 +76,11 @@
       </div>
       <footer class="opening-foot">
         <div class="chapter-place">
-          <span data-icon="pin"></span><span>河南洛陽</span><i></i><b>青竹渡</b>
+          <span data-icon="pin"></span><span>第一局</span><i></i><b>青竹渡</b>
         </div>
         <a class="opening-wiki" href="../wiki/" target="_blank" rel="noopener">江湖志 ↗</a>
         <div class="panorama-controls">
-          <span class="panorama-hint">拖曳環視渡口</span
+          <span class="panorama-hint">拖曳環視</span
           ><button data-do="orbit-left" aria-label="向左環視" title="向左環視">‹</button
           ><span class="compass" aria-hidden="true"></span
           ><button data-do="orbit-right" aria-label="向右環視" title="向右環視">›</button>
@@ -94,7 +94,7 @@
         <header class="field-heading">
           <button id="trip-ledger" class="hud-box map-plaque" data-do="goals" title="戰役目標與路簿">
             <span class="map-emblem" aria-hidden="true" data-icon="flag"></span>
-            <span class="map-title"><small id="chapter-number">第一渡</small><strong id="map-name">青竹渡</strong></span>
+            <span class="map-title"><small id="chapter-number">第一局</small><strong id="map-name">青竹渡</strong></span>
             <span id="round-badge" class="phase-readout" aria-live="polite"></span>
           </button>
         </header>

@@ -6,8 +6,8 @@ import { NOTES } from './notes.js';
 
 const KINDS = { weapon: '兵器', gear: '護具', use: '丹藥' };
 const shelf = ([price, stage]) => [
-  ['借刻鋪底價', price + ' 兩'],
-  ['最早上架', '第 ' + stage + ' 渡戰後']
+  ['通吃坊底價', price + ' 兩'],
+  ['最早上架', '第 ' + stage + ' 局戰後']
 ];
 
 function item(id) {

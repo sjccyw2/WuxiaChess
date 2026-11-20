@@ -1,27 +1,8 @@
-/* The reading layout for the hand-written manuscripts (世界觀設定, 單輪劇本) and the notice on older entries. */
-.legacy {
-  margin: 0 0 16px;
-  padding: 8px 13px;
-  border: 1px solid #dccfae;
-  border-left: 3px solid #ae6934;
-  border-radius: 4px;
-  background: #f7efd9;
-  color: #5a4a2e;
-  font-size: 13px;
-  line-height: 1.7;
-}
-.legacy a,
+/* The reading layout for the hand-written manuscripts (世界觀設定, 單輪劇本). */
 .prose a,
 .lore-pager a {
   color: var(--jade);
   border-bottom: 1px solid currentColor;
-}
-.legacy a {
-  margin-left: 6px;
-  white-space: nowrap;
-}
-.home-title + .legacy {
-  margin-top: -4px;
 }
 blockquote.text-body {
   margin: 0 0 14px;
@@ -204,3 +185,10 @@ a.minor {
   .toc-num {
     font-size: 21px;
   }
+.prose code {
+  font: 0.9em ui-monospace, monospace;
+  background: #edeadd;
+  padding: 0.05em 0.35em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}

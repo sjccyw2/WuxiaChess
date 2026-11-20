@@ -1,4 +1,4 @@
-import { WAKES, FATES } from '../data/wake-tale.js';
+import { WAKES, FATES, closingFor } from '../data/wake-tale.js';
 import { random, shuffled } from './lots.js';
 import { makeOffers, makeVisit, validVisit, grantLot } from './ferry-market.js';
 import { seatsFor } from './formation.js';
@@ -14,7 +14,8 @@ import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE } from '../data/mastery-catalog.j
 import * as G from './game.js';
 import { mapLayout } from '../data/terrain.js';
 import { TECHNIQUES, MANUAL_PRICES, CAPTAINS } from '../data/martial-arts.js';
-import { MAZE_TALE, CHAMBER_TALES, SIDE_TALES } from '../data/maze-tale.js';
+import { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, YOUTH, WEI } from '../data/maze-tale.js';
+import { HERO_VOICES } from '../data/hero-voices.js';
 
 const NUMERALS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 const goals = [
@@ -33,8 +34,8 @@ const goalNames = {
   beacon: '點亮引路燈',
   cache: '尋回姓名籤',
   herbs: '接應傷者',
-  speed: '趕在霧合前',
-  safe: '同舟生還'
+  speed: '搶在限時之前',
+  safe: '全員生還'
 };
 const mapGoalType = (index) => goals[index];
 const mapGoalName = (index) => goalNames[goals[index]];
@@ -45,8 +46,25 @@ const LEGACY = {
   returns: 0,
   fates: [],
   lastFate: null,
-  parcel: { stock: {}, manuals: [] }
+  parcel: { stock: {}, manuals: [] },
+  // The name the youth gives himself, and what earlier runs left behind for deja vu:
+  // how many runs each hero has walked, and which boards have been reached.
+  name: '',
+  walked: {},
+  seen: []
 };
+const MAPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+// A name typed by the player: no spaces or line breaks, at most eight characters.
+const cleanName = (value) => [...String(value ?? '').replace(/\s+/g, '')].slice(0, 8).join('');
+const youthName = (s) => s.run?.chronicle?.name || YOUTH.name;
+function fillProfile(chronicle) {
+  chronicle.fates ??= [];
+  chronicle.lastFate ??= null;
+  chronicle.name ??= '';
+  chronicle.walked ??= {};
+  chronicle.seen ??= [];
+  return chronicle;
+}
 const copy = (value) => JSON.parse(JSON.stringify(value));
 
 function newSeed() {
@@ -77,8 +95,7 @@ function parcelCount(profile) {
 function initialRun(ids, seed, legacy) {
   const chronicle = copy(legacy);
   chronicle.returns ??= chronicle.wins;
-  chronicle.fates ??= [];
-  chronicle.lastFate ??= null;
+  fillProfile(chronicle);
   const run = {
     voyage: chronicle.returns + 1,
     priorFate: chronicle.lastFate,
@@ -131,6 +148,7 @@ function startRun(draw = drawLots(), legacy = LEGACY) {
   s.version = 5;
   s.mapIndex = 0;
   s.run = initialRun(ids, draw.seed, legacy);
+  if (cleanName(draw.name)) s.run.chronicle.name = cleanName(draw.name);
   s.logs = [];
   s.stock = { remedy: 2 + (legacy.best >= 7 ? 1 : 0), elixir: 2, travelBlade: 1, bracer: 1 };
   s.run.manuals.push('softPalm');
@@ -140,8 +158,8 @@ function startRun(draw = drawLots(), legacy = LEGACY) {
     prepareHero(u);
     u.sp += 2 + (legacy.best >= 4 ? 1 : 0);
   }
-  G.log(s, 'story', MAZE_TALE.draw, '桑婆婆');
-  G.log(s, 'story', ids.map((id) => G.DETAILS[id].name).join('、') + '應籤上船。', '青竹渡');
+  G.log(s, 'story', MAZE_TALE.draw, '英雄帖');
+  G.log(s, 'story', ids.map((id) => G.DETAILS[id].name).join('、') + '應帖而來。', '第一局');
   return s;
 }
 function validProfile(p) {
@@ -156,6 +174,13 @@ function validProfile(p) {
         FATES.map((f) => f.id)
       )) &&
     (p.lastFate == null || p.fates?.includes(p.lastFate)) &&
+    (p.name == null || (typeof p.name === 'string' && p.name === cleanName(p.name))) &&
+    (p.walked == null ||
+      (typeof p.walked === 'object' &&
+        Object.entries(p.walked).every(
+          ([id, n]) => G.PARTY.includes(id) && Number.isSafeInteger(n) && n >= 0
+        ))) &&
+    (p.seen == null || uniqueMembers(p.seen, MAPS)) &&
     p.parcel?.stock &&
     Object.entries(p.parcel.stock).every(
       ([id, n]) => Object.hasOwn(G.ITEMS, id) && Number.isInteger(n) && n >= 0
@@ -188,7 +213,7 @@ function restoreRun(raw) {
       s.phase === 'ally' &&
       s.round === 1 &&
       G.party(s).every((u) => !u.moved && !u.acted);
-    G.log(s, 'story', '青竹渡的漏水忽然倒流，船外又多出九重迷津。', '桑婆婆');
+    G.log(s, 'story', '舊日的棋局接上了這一盤，前面還有九局。', '石臺');
     return s;
   }
   const s = raw,
@@ -309,7 +334,7 @@ function restoreRun(raw) {
     G.log(
       s,
       'system',
-      '昔日所習悉數保留。原已裝備的招式已排入三格，船上舊藏武譜可各授一人。',
+      '昔日所習悉數保留。原已裝備的招式已排入三格，舊藏武譜可各授一人。',
       '武學傳承'
     );
   }
@@ -339,8 +364,7 @@ function restoreRun(raw) {
   };
   const closed = !!r.last?.terminal && r.status !== 'battle';
   r.chronicle.returns ??= r.chronicle.wins + (closed && !r.last.won ? 1 : 0);
-  r.chronicle.fates ??= [];
-  r.chronicle.lastFate ??= null;
+  fillProfile(r.chronicle);
   r.voyage ??= Math.max(1, r.chronicle.returns + (closed ? 0 : 1));
   r.priorFate ??= null;
   if (
@@ -408,49 +432,94 @@ function restoreRun(raw) {
   }
   return s;
 }
+// Deja vu: one line from a fielded hero who has walked an earlier run, on a board that an
+// earlier run reached. Never on the first run, never on a board that is new, and only on
+// some boards, so that it stays rare.
+function echoBeat(s) {
+  const r = s.run,
+    past = r.chronicle;
+  if (r.voyage < 2 || [0, 4, 9].includes(r.stage) || (r.stage + r.voyage) % 2) return null;
+  if (!past.seen?.includes(s.mapIndex)) return null;
+  const hero = G.party(s).find((u) => past.walked?.[u.id] && HERO_VOICES[u.id]);
+  if (!hero) return null;
+  const lines = HERO_VOICES[hero.id].echoes;
+  return { who: hero.id, text: lines[(r.voyage + r.stage) % lines.length] };
+}
+// The lines of one scene: before a battle, or after it.
+//
+// Three layers are put together here, and none of them knows about the others:
+//   the spine   what belongs to this position in the run (first board, night talk, the end)
+//   the board   ENCOUNTER_SCRIPT for the map being played
+//   the heroes  HERO_VOICES for whoever happens to be in the company
 function dialogue(s, scene = s.run.scene) {
   const r = s.run,
     script = ENCOUNTER_SCRIPT[s.mapIndex];
   const before = scene === 'before';
   const wake = WAKES[Math.min(WAKES.length, r.voyage) - 1];
-  const beats = [...(before ? script.before : s.result === 'win' ? script.win : script.loss)];
-  if (before && r.stage === 0) {
-    beats.splice(1, 0, { who: 'boat', ...wake.opening });
-    const prior = FATES.find((f) => f.id === r.priorFate);
-    if (prior) beats.splice(2, 0, { who: 'boat', text: prior.echo });
-  }
-  if (before && r.stage === 4) beats.splice(1, 0, { who: 'boat', ...wake.echo });
-  if (!before && r.last?.terminal)
-    beats.push({ who: 'boat', text: r.last.won ? wake.afterWin : wake.afterLoss });
-  if (!before && s.result === 'win') {
-    const who = r.last?.recruit;
-    beats.push({
-      who: 'boat',
-      text: r.last?.optional ? script.rescue : script.missed,
-      note: who ? G.DETAILS[who].name + '應了三聲槳響，登船同行。' : ''
-    });
-  }
   const captain = G.find(s, (before && r.openingCast?.[0]) || s.leader);
   const ally =
     (before && G.find(s, r.openingCast?.[1])) || G.party(s).find((u) => u !== captain) || captain;
-  const speakers = {
+  const cast = {
     boss: G.find(s, G.commanderId(s)),
     mini: G.enemies(s).find((u) => u.encounterId),
     leader: captain,
     ally
   };
+  const beats = [];
+  if (before) {
+    if (r.stage === 0) {
+      const found = r.voyage > WAKES.length && wake.openingLater ? wake.openingLater : wake.opening;
+      const prior = FATES.find((f) => f.id === r.priorFate);
+      beats.push({ who: 'youth', note: found.note + (prior ? prior.echo : ''), text: found.text });
+      for (const u of G.company(s)) beats.push({ who: u.id, ...HERO_VOICES[u.id].arrival });
+      beats.push({ who: 'youth', ...MAZE_TALE.command });
+      beats.push({ who: captain.id, text: HERO_VOICES[captain.id].obey });
+    }
+    if (r.stage === 4) {
+      beats.push({ who: 'youth', note: MAZE_TALE.night + wake.echo.note, text: wake.echo.text });
+      for (const u of G.party(s).slice(0, 3))
+        beats.push({ who: u.id, text: HERO_VOICES[u.id].night[r.voyage >= 3 ? 1 : 0] });
+    }
+    // A hero from the same series of books as this board's master has a line of their own.
+    for (const beat of script.before)
+      beats.push(
+        ['leader', 'ally'].includes(beat.who)
+          ? { ...beat, text: script.heroLines?.[cast[beat.who]?.id] || beat.text }
+          : beat
+      );
+    const echo = echoBeat(s);
+    if (echo) beats.push(echo);
+  } else if (s.result === 'win') {
+    beats.push(...script.win);
+    beats.push({ who: 'youth', text: r.last?.optional ? script.rescue : script.missed });
+    const who = r.last?.recruit;
+    if (who) {
+      const arrival = HERO_VOICES[who].arrival;
+      beats.push({
+        who,
+        note: G.DETAILS[who].name + MAZE_TALE.joined + arrival.note,
+        text: arrival.text
+      });
+    }
+    if (r.stage === 0) beats.push({ who: 'wei', ...MAZE_TALE.opened });
+    if (r.last?.terminal)
+      for (const u of G.party(s)) beats.push({ who: u.id, text: HERO_VOICES[u.id].farewell });
+  } else {
+    beats.push(...script.loss);
+    beats.push({ who: 'wei', ...MAZE_TALE.scatter });
+  }
+  const offBoard = { youth: { ...YOUTH, name: youthName(s) }, wei: WEI };
   return beats.map((beat) => {
-    const person = speakers[beat.who],
-      info = G.unitDetails(person);
+    const off = offBoard[beat.who],
+      person = off ? null : cast[beat.who] || G.company(s).find((u) => u.id === beat.who),
+      info = person && G.unitDetails(person);
     return {
-      speaker: info?.name || '桑婆婆',
-      role: info?.role || '渡船人',
+      speaker: off?.name || info?.name || '',
+      role: off?.role || info?.role || '',
       person,
+      portrait: off?.portrait || '',
       note: beat.note || '',
-      text:
-        before && ['leader', 'ally'].includes(beat.who)
-          ? script.heroLines?.[person?.id] || beat.text
-          : beat.text
+      text: beat.text
     };
   });
 }
@@ -504,8 +573,8 @@ function mapMission(map, marker) {
       (tile.y + 1) +
       ' 行的燈記結束一名俠客的行動，且該俠客仍須生還。'
     : goal === 'safe'
-      ? '擊敗守關人時，全體出戰俠客仍須生還。'
-      : '在第五回合結束前擊敗守關人。';
+      ? '擊敗局主時，全體出戰俠客仍須生還。'
+      : '在第五回合結束前擊敗局主。';
   const boss = G.DETAILS[CAPTAINS[map][0]].name;
   return {
     goal,
@@ -569,7 +638,13 @@ function settle(s) {
       for (const u of G.party(s).filter(G.living))
         if (!u.mastery.sides.includes(s.mapIndex)) u.mastery.sides.push(s.mapIndex);
   }
-  if (terminal) r.chronicle.returns++;
+  if (terminal) {
+    // The run is over: count it, and note who walked it and which boards it reached.
+    const past = fillProfile(r.chronicle);
+    past.returns++;
+    for (const u of G.company(s)) past.walked[u.id] = (past.walked[u.id] || 0) + 1;
+    past.seen = MAPS.filter((map) => past.seen.includes(map) || r.route.indexOf(map) <= r.stage);
+  }
   const newcomer = optional && !terminal ? recruit(s) : '';
   r.last = {
     won,
@@ -584,8 +659,8 @@ function settle(s) {
   r.status = 'camp';
   r.scene = 'after';
   r.beat = 0;
-  if (won && r.stage === 0) G.log(s, 'story', MAZE_TALE.shop, '桑婆婆');
-  if (won) G.log(s, 'grow', '清點得銀 ' + reward + ' 兩，同行俠客各得 1 武學點。', '借刻鋪');
+  if (won && r.stage === 0) G.log(s, 'story', MAZE_TALE.shop, WEI.name);
+  if (won) G.log(s, 'grow', '分得彩頭 ' + reward + ' 兩，同行俠客各得 1 武學點。', '通吃坊');
   return true;
 }
 function chooseFate(s, id) {
@@ -603,7 +678,7 @@ function chooseFate(s, id) {
   r.last.fate = id;
   if (!r.chronicle.fates.includes(id)) r.chronicle.fates.push(id);
   r.chronicle.lastFate = id;
-  G.log(s, 'story', '歸印落定。' + fate.ending, fate.name);
+  G.log(s, 'story', fate.ending, fate.name);
   return true;
 }
 function buy(s, id) {
@@ -622,7 +697,7 @@ function buy(s, id) {
       ' 兩，購入' +
       (G.ITEMS[id]?.name || '《' + TECHNIQUES[id].name + '》') +
       '。',
-    '借刻鋪'
+    '通吃坊'
   );
   return true;
 }
@@ -773,7 +848,7 @@ function advance(s) {
     s,
     'story',
     CHAMBER_TALES[s.mapIndex].arrival,
-    '第' + NUMERALS[r.stage] + '渡・' + layout.name
+    '第' + NUMERALS[r.stage] + '局・' + layout.name
   );
   return true;
 }
@@ -994,7 +1069,7 @@ function campModel(s) {
     coins: r.coins,
     reward: last.reward,
     recruit: G.DETAILS[last.recruit]?.name || '',
-    objective: last.optional ? SIDE_TALES[r.goal] : '此渡未完成支線。',
+    objective: last.optional ? SIDE_TALES[r.goal] : '這一局沒有救下局中的影子。',
     story: !last.won
       ? s.reason + MAZE_TALE.loss
       : r.stage === 9
@@ -1032,4 +1107,4 @@ function campModel(s) {
   };
 }
 
-export { NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
