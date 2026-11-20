@@ -992,12 +992,14 @@ function attackPage(s, source, target, skill) {
         f.heal ? 'positive' : 'negative'
       )
     );
-    lines.push(
-      line(
-        '目標氣血',
-        t.hp + ' → ' + (f.heal ? Math.min(t.maxHp, t.hp + f.amount) : Math.max(0, t.hp - f.amount))
-      )
-    );
+    // Polish (forecastTrim): the fighter's health bar already shows this change.
+    if (!(POLISH.forecastTrim && POLISH.forecastBars))
+      lines.push(
+        line(
+          '目標氣血',
+          t.hp + ' → ' + (f.heal ? Math.min(t.maxHp, t.hp + f.amount) : Math.max(0, t.hp - f.amount))
+        )
+      );
   }
   if (!blink && !friendly)
     lines.push(line('敵方還擊', f.counterRaw ? '−' + f.counter + ' 氣血' : '無'));
