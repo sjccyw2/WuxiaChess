@@ -14,10 +14,10 @@ const ART_FORMS = {
   // 任盈盈
   'signature:medic': ['cleanse'],
   sheathedDagger: ['distill'],
-  returningSong: ['overflow'],
   blackNeedle: ['mark'],
-  bambooWard: ['cleanse'],
+  returningSong: ['cleanse', 'overflow'],
   qinXiaoRally: ['riposte'],
+  saintessOrder: [],
   clearHeartCoda: ['cleanse'],
 
   // 向問天

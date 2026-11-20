@@ -220,9 +220,9 @@ const DETAILS = {
     basic: '日月短劍',
     skill: '清心普善咒',
     skillIcon: 'leaf',
-    skillDesc: '為三格內一位友軍回復氣血，也可為自己施術。',
+    skillDesc: '奏清心普善咒，為三格內一位友軍回復氣血並解除不良狀態，也可為自己施術。',
     skillRange: 3,
-    cost: 12
+    cost: 10
   },
   guard: {
     name: '向問天',
@@ -502,7 +502,7 @@ const HERO_STATS = {
   zhang: [125, 78, 21, 14, 3, 1, 'mingSash'],
   hu: [116, 61, 24, 9, 4, 1, 'foxSaber'],
   hero: [112, 48, 27, 10, 3, 1, 'pine'],
-  medic: [92, 72, 19, 7, 3, 2, 'staff'],
+  medic: [94, 76, 18, 7, 3, 2, 'staff'],
   guard: [142, 48, 24, 16, 3, 1, 'pole'],
   guo: [136, 56, 26, 13, 3, 1, 'wraps'],
   xiao: [103, 66, 24, 9, 4, 1, 'twins'],
@@ -671,7 +671,7 @@ function stat(u, k, s) {
 }
 const SIGNATURE_RULES_BY_HERO = {
   hero: { factor: 1.35 },
-  medic: { heal: 39 },
+  medic: { heal: 30 },
   guard: { factor: 1.42, splash: 0.45, safe: true },
   guo: { factor: 1.74, push: true },
   xiao: { factor: 1.44, hits: [0.65, 0.65] },

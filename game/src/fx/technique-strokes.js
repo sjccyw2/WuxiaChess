@@ -10,11 +10,11 @@ const RECIPES = {
   ninefoldIntent: ['獨孤九劍','gold','fan','wheelNine','echo','九劍循圓換位，最後一劍斜貫圓心。'],
 
   'signature:medic': ['清心普善咒','jade','strings','quietSong','glide','古琴橫陳，琴面的一道弦波渡到傷處。'],
-  returningSong: ['清心普善・回春','peach','blossom','springTune','glide','一枝春花沿著琴音次第展開。'],
   blackNeedle: ['黑血神針','obsidian','dart','blackQuiver','quick','五枚烏針成束疾出，針尾留下一點暗紅。'],
-  bambooWard: ['綠竹護心調','bamboo','strings','bambooScreen','gather','青竹抽節成屏，竹葉向內合攏。'],
-  qinXiaoRally: ['笑傲江湖・琴簫引','jade','strings','qinXiao','echo','橫琴與斜簫相和，兩道弦波交織。'],
-  clearHeartCoda: ['清心普善咒・合絃','pearl','strings','lotusChord','echo','五絃收於同一朵白蓮，花開後仍留金線。'],
+  returningSong: ['清心普善・回春','peach','blossom','springTune','glide','一枝春花沿著琴音次第展開。'],
+  qinXiaoRally: ['琴簫引','jade','strings','qinXiao','echo','橫琴與斜簫相和，兩道弦波交織。'],
+  saintessOrder: ['聖姑令','violet','banner','warPennant','gather','繫著三枚指令帶的令旗下展，陣線隨旗立起。'],
+  clearHeartCoda: ['笑傲江湖','pearl','strings','lotusChord','echo','五絃收於同一朵白蓮，花開後仍留金線。'],
 
   'signature:guard': ['吸功入地小法','slate','plunge','earthRoot','heavy','下沉的勁線壓入層岩，石脊從兩側隆起。'],
   sweepingWhip: ['長鞭破陣','bronze','lash','whipArc','sweep','鐵索節節甩開，倒鉤掠過一道長弧。'],
