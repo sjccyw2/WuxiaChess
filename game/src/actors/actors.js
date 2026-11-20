@@ -6,6 +6,7 @@ import { art } from '../ui/artwork.js';
 import { paintTechniqueStroke } from '../fx/technique-strokes.js';
 import { paintTechniqueTier } from '../fx/technique-tiers.js';
 import { paintSkillEffect } from '../fx/skill-effects.js';
+import { Impact } from '../fx/impact.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
 import {
   compactImage,
@@ -41,6 +42,7 @@ class ActorLayer {
     this.imageFailures = new Set();
     this.width = this.height = 1;
     this.prefs = { motion: true, grid: true };
+    this.impact = new Impact(this);
     this.reset();
   }
   image(filename) {
@@ -91,6 +93,7 @@ class ActorLayer {
     this.latestMoves.clear();
     this.effects = [];
     this.boxes = [];
+    this.impact.reset();
     this.settle();
   }
   get playing() {
@@ -152,7 +155,9 @@ class ActorLayer {
     if (previous !== null) {
       // A slow scenery render can extend playback, but cannot erase an entire pose.
       const dt = Math.max(0, now - previous);
-      this.time += this.playing ? Math.min(dt, 40) : dt;
+      // A landed blow may hold the action clock for a few frames (hit-stop). Held time is
+      // only postponed: `until`, the health-bar impacts and finished() all still arrive.
+      this.time += this.impact.tick(this.playing ? Math.min(dt, 40) : dt, dt);
     }
   }
   sync(state, mode, prefs) {
@@ -224,7 +229,7 @@ class ActorLayer {
         this.hold(this.track(target.id).exit);
       }
     }
-    this.exchange = { actor: actor.id, target: target.id, start, hit, end };
+    this.exchange = { actor: actor.id, target: target.id, start, hit, end, rank };
     if (special) {
       const flourish = art.blink
         ? 'blink'
@@ -275,9 +280,15 @@ class ActorLayer {
   numbers(items) {
     const exchange = this.exchange,
       full = this.prefs.motion;
+    // The last blow against a piece that has fallen is the killing blow.
+    const lastBlow = new Map();
+    for (const [index, [id, value, reason]] of items.entries())
+      if (value.startsWith('−') && reason !== 'sacrifice') lastBlow.set(id, index);
     for (const [index, [id, value, reason]] of items.entries()) {
       let start = (exchange?.hit ?? this.time) + index * (full ? 105 : 32);
-      if (exchange && id === exchange.actor && value.startsWith('−') && reason !== 'sacrifice') {
+      const counter =
+        exchange && id === exchange.actor && value.startsWith('−') && reason !== 'sacrifice';
+      if (counter) {
         const reply = exchange.end + (full ? 35 : 15);
         const initiator = G.find(this.state, exchange.target),
           recipient = G.find(this.state, id);
@@ -320,6 +331,21 @@ class ActorLayer {
       // the corresponding blow, second sword, counter or healing note lands.
       const amount = Number(value.replace('−', '-'));
       if (Number.isFinite(amount)) this.track(id).impacts.push({ at: start, amount });
+      const struck = G.find(this.state, id),
+        hurt = !!struck && amount < 0 && reason !== 'sacrifice',
+        kill = hurt && struck.hp <= 0 && lastBlow.get(id) === index,
+        rank = counter ? 0 : exchange?.rank || 0;
+      // Hit-stop, flash and shake are released when the action clock reaches this blow.
+      if (hurt)
+        this.impact.blow({
+          at: start,
+          target: id,
+          from: counter ? exchange.target : exchange?.actor,
+          amount: -amount,
+          rank,
+          lead: counter || index === 0,
+          kill
+        });
       if (full) this.effects.push({ kind: 'number', target: id, value, start, end: start + 800 });
     }
     this.exchange = null;
@@ -890,6 +916,7 @@ class ActorLayer {
   }
   draw(realTime, title, reach, hover, covered = false) {
     this.advance(realTime, covered);
+    if (!title && this.state && !covered && !this.waitingForArt) this.impact.land(this.time);
     const time = this.time;
     const c = this.ctx;
     c.clearRect(0, 0, this.width, this.height);
