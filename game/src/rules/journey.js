@@ -89,6 +89,12 @@ function routeFor(seed) {
     9
   ];
 }
+// The stages at which a board can be met, over every route the draw can make.
+function mapStages(map) {
+  const seen = new Set();
+  for (let seed = 0; seed < 64; seed++) seen.add(routeFor(seed * 7919 + 1).indexOf(map));
+  return [...seen].filter((n) => n >= 0).sort((a, b) => a - b);
+}
 function parcelCount(profile) {
   return (
     Object.values(profile.parcel.stock).reduce((n, v) => n + v, 0) + profile.parcel.manuals.length
@@ -1247,4 +1253,4 @@ function campModel(s) {
   };
 }
 
-export { TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

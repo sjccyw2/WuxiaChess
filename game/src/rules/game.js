@@ -641,6 +641,24 @@ function signatureLines(s, u) {
   if (!sig) return [];
   return [sig.note, ...(sig.reach ? ['絕技射程 ' + sig.reach + ' 格。'] : [])].filter(Boolean);
 }
+// The enemy page's lines for a board's piece as the board opens, with no game in progress (the
+// wiki reads these): seat 0 the master, 1 the lieutenant, 2 the archer, 3 the scout.
+function boardLines(map, seat, stage) {
+  const keys = encounterKeys(map),
+    layout = mapLayout(map);
+  const ids = map ? [CAPTAINS[map][0], 'echoBlade', 'echoBow', 'echoScout'] : FOES;
+  const units = keys.map((k, i) => ({
+    id: ids[i],
+    ...(i ? { encounterId: k } : {}),
+    side: 'enemy',
+    hp: 1,
+    maxHp: 1,
+    ...layout.enemies[i],
+    range: DETAILS[k]?.traits?.mods?.range ?? 1
+  }));
+  const s = { mapIndex: map, round: 1, run: { stage }, units };
+  return [...signatureLines(s, units[seat]), ...enemyTraitLines(s, units[seat])];
+}
 // The reach an enemy strikes with once its signature is due.
 function strikeReachWhenDue(s, u) {
   const sig = enemyTechnique(u, s);
@@ -2702,4 +2720,4 @@ function nextRound(s) {
   return true;
 }
 
-export { fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
