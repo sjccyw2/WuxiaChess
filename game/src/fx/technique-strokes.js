@@ -78,7 +78,7 @@ const RECIPES = {
   fingerFlick: ['彈指神通','bamboo','pebble','flickStone','quick','一枚帶稜青石脫指而出，身後拖著三道短波。'],
   softPalm: ['綿掌','pearl','wave','cottonPalm','glide','掌影沉進層疊的棉絮雲，掌邊綿力外散。'],
   yangFinger: ['一陽指','gold','beam','healingPoint','pulse','一束金指線只落在一處穴位，三圈暖暈回應。'],
-  nineYang: ['九陽神功','ember','halo','nineSuns','gather','九枚金陽圍繞心火，光圈由內而外鋪開。'],
+  yijinjing: ['易筋經','ember','halo','nineSuns','gather','金色光點圍繞心火，光圈由內而外鋪開。'],
   iceSoulNeedle: ['冰魄銀針','frost','frost','iceCrystal','quick','單枚冰針直入，六角晶枝向針尖四周裂開。'],
   diamondWard: ['金剛護體圖','gold','lattice','diamondWard','gather','六面金剛晶甲閉合，長菱沿著護甲中央豎起。'],
   sevenInjuries: ['七傷拳','ember','palm','sevenCracks','heavy','朱拳落下，七道不等長的傷勁裂紋放射開來。'],

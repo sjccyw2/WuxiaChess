@@ -1320,7 +1320,7 @@ const MASTERY_ARTS = {
 // A purchased copy belongs to the hero who studies it. The SP price is paid by that reader.
 const TRADE_MANUALS = {
   fingerFlick: {
-    factor: 1.24,
+    factor: 1.0,
     name: '彈指神通',
     root: 'force',
     kind: 'active',
@@ -1335,8 +1335,9 @@ const TRADE_MANUALS = {
     icon: 'target',
     visual: 'duan',
     target: 'enemy',
-    pierce: 0.65,
-    desc: '屈指彈出石子，四格內穿透六成半防禦。',
+    daze: true,
+    cooldown: 2,
+    desc: '屈指彈出石子打中四格內敵人穴道，使其失去下一次行動；局主受過後下一回合可抵抗。施展後須調息兩回合。',
     source: '黃藥師的彈指神通見《射鵰英雄傳》《神鵰俠侶》。通吃坊的抄本出自本作。'
   },
   softPalm: {
@@ -1375,29 +1376,29 @@ const TRADE_MANUALS = {
     icon: 'leaf',
     visual: 'medic',
     target: 'ally',
-    heal: 43,
-    desc: '為三格內一人點穴療傷，基礎回復 43 點氣血，可對自己施術。',
+    heal: 36,
+    desc: '為三格內一人點穴療傷，基礎回復 36 點氣血，同伴另回 6 點內力，可對自己施術。',
     source: '大理段氏一陽指可用於救人，《射鵰英雄傳》中一燈以此療傷。'
   },
-  nineYang: {
-    name: '九陽神功',
+  yijinjing: {
+    name: '易筋經',
     root: 'breath',
     kind: 'active',
     tier: 3,
-    needs: ['yangFinger'],
-    requires: 'yangFinger',
+    needs: ['breath'],
     points: 3,
     price: 48,
     stock: 1,
     manual: true,
-    mp: 15,
+    mp: 8,
     range: 2,
-    icon: 'spark',
+    icon: 'sun',
     visual: 'medic',
     target: 'ally',
-    heal: 67,
-    desc: '陽和內勁護住心脈，為兩格內一人回復大量氣血。須由已習一陽指的同一位俠客參悟。',
-    source: '據《倚天屠龍記》九陽真經。以一陽指作前置，是通吃坊編訂這部抄本的研讀次序。'
+    heal: 58,
+    once: true,
+    desc: '以易筋經疏通經脈，為兩格內一人基礎回復 58 點氣血，並解除不良狀態（含內傷與亂氣）。每局只能施展一次。',
+    source: '少林易筋經能治內傷，《笑傲江湖》中方證以之相許令狐冲而未成。通吃坊的抄本出自本作。'
   },
   iceSoulNeedle: {
     name: '冰魄銀針',
@@ -1434,9 +1435,10 @@ const TRADE_MANUALS = {
     icon: 'shield',
     visual: 'guo',
     target: 'self',
-    shield: { power: 34, turns: 3 },
-    desc: '運氣自護，護盾合計可抵銷 34 點傷害，最多保留三回合。',
-    source: '據《倚天屠龍記》空見神僧所展現的金剛不壞體神功另繪護體圖。'
+    shield: { power: 40, turns: 3 },
+    rooted: true,
+    desc: '運氣自護，護盾合計可抵銷 40 點傷害，最多保留三回合。下一回合不能移動。',
+    source: '據《倚天屠龍記》空見神僧受謝遜十三拳不還手的金剛不壞體神功另繪護體圖。'
   },
   sevenInjuries: {
     name: '七傷拳',
@@ -1453,11 +1455,12 @@ const TRADE_MANUALS = {
     icon: 'hand',
     visual: 'guard',
     target: 'enemy',
-    hpCost: 16,
-    factor: 2.08,
+    factor: 1.9,
     pierce: 0.5,
-    desc: '自耗 16 點氣血重擊相鄰敵人，穿透一半防禦。出招後須留至少 1 點氣血。',
-    source: '七傷拳為《倚天屠龍記》崆峒派武學。氣血消耗用來演繹修習時傷身的風險。'
+    wound: { power: 5, turns: 2 },
+    backlash: true,
+    desc: '重擊相鄰敵人，穿透一半防禦，令其受內傷兩回合：療傷減半，每次出手後自損 5 點氣血。每次施展積一層亂氣，滿三層時反噬自身。',
+    source: '七傷拳為《倚天屠龍記》崆峒派武學，內力不足者先傷己身。'
   },
   waterSkim: {
     name: '水上漂',

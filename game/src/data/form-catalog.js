@@ -96,13 +96,13 @@ const ART_FORMS = {
   cliffCut: ['exploit', 'mark'],
 
   // 可分授給俠客的八部武譜
-  fingerFlick: ['mark'],
+  fingerFlick: [],
   softPalm: ['pin'],
   yangFinger: ['channel'],
-  nineYang: ['cleanse', 'overflow'],
+  yijinjing: ['cleanse'],
   iceSoulNeedle: ['still'],
-  diamondWard: ['cleanse'],
-  sevenInjuries: ['leech'],
+  diamondWard: [],
+  sevenInjuries: [],
   waterSkim: ['landing']
 };
 
