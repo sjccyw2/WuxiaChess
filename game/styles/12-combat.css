@@ -1,0 +1,3 @@
+/* Combat presentation: phase banner, technique cut-in, impact effects.
+   Every rule here is scoped to a html.polish-… class set by src/polish.js,
+   so switching a feature off there also removes its styling. */
