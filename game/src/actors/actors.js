@@ -225,7 +225,10 @@ class ActorLayer {
     const hostile = kind === 'villain-skill';
     const special = hostile || friendly || kind === 'signature-hit';
     const art = special ? (hostile ? G.enemyTechnique(actor) : G.artFor(actor)) : null;
-    const rank = art ? Math.max(1, Math.min(4, art.tier || 2)) : 0;
+    // How grand the cut-in is: 0 for a basic attack, then the art's tier. The starting art is
+    // tier 0, the 根基; it presents as the least of the arts, level with a tier-1 art, so what a
+    // hero begins with never looks grander than what he learns. An art with no tier counts as 2.
+    const rank = art ? clamp(art.tier ?? 2, 1, 4) : 0;
     const duration = full ? [736, 980, 1240, 1540, 1860][rank] : 480;
     const hit = start + duration * 0.52;
     const contact = pushed ? pushed.path[0] : target;
