@@ -161,11 +161,21 @@ const ENCOUNTERS = [
       '笑傲江湖',
       '嵩山劍法',
       '寒冰真氣',
-      'weak',
+      'pin',
       'duan',
       '嵩山掌門、五嶽盟主，每出一掌都先算過值與不值。這一掌沒有算，寒氣已到掌心，能沿斷絃侵人經脈。',
       'chief',
-      'saturate(.48) hue-rotate(135deg)'
+      'saturate(.48) hue-rotate(135deg)',
+    {
+      mods: { hp: 1.1, def: 2, step: 3, range: 2 },
+      banner: { atk: 1 },
+      post: {
+        tile: 'spawn',
+        tether: 2,
+        wake: 'struck',
+        note: '守在琴臺{tile}兩格內；受到攻擊後才離臺。'
+      }
+    }
     ),
     adversary(
       '費彬',
@@ -177,7 +187,16 @@ const ENCOUNTERS = [
       'guo',
       '大嵩陽手，替盟主守住上臺的石階。催他動手的聲音不是掌門的號令，卻比號令更難違抗。一掌落下，兩旁石座同時作響。',
       'guo',
-      'sepia(.32) hue-rotate(-12deg)'
+      'sepia(.32) hue-rotate(-12deg)',
+    {
+      mods: { hp: 1.2, def: 3, step: 2, range: 1 },
+      post: {
+        tile: 'spawn',
+        tether: 1,
+        wake: false,
+        note: '守在石階{tile}一格內，不離位；被牽離後會走回。'
+      }
+    }
     )
   ],
   [
@@ -191,7 +210,22 @@ const ENCOUNTERS = [
       'guo',
       '西毒贏到了天下第一，卻忘了自己是誰，所以分不出哪個念頭是自己的。他伏在陣心蓄勢；石陣能分開蛇群，緊挨的同伴卻容易被掌風一併震傷。',
       'murong',
-      'sepia(.15) hue-rotate(28deg)'
+      'sepia(.15) hue-rotate(28deg)',
+    {
+      mods: { range: 2 },
+      stance: { while: 'charged', cut: 0, holds: true },
+      phase: {
+        name: '逆練',
+        atk: 6,
+        def: -4,
+        step: 1,
+        cadence: 2,
+        prefers: 'nearest',
+        holds: false,
+        log: '歐陽鋒逆運經脈，狀若瘋狂。',
+        note: '攻擊 ＋6、防禦 −4、移動 ＋1，絕技每兩回合一次，不再原地等待，見人就撲。'
+      }
+    }
     ),
     adversary(
       '歐陽克',
@@ -199,11 +233,12 @@ const ENCOUNTERS = [
       '射鵰英雄傳',
       '靈蛇拳',
       '靈蛇拳法',
-      'poison',
+      'pin',
       'guard',
       '白駝山少主。他明白心裡那個念頭不是自己的主意，摺扇卻照樣指使群蛇。',
       'duan',
-      'sepia(.2) saturate(.6)'
+      'sepia(.2) saturate(.6)',
+    { mods: { atk: -4, range: 2 } }
     )
   ],
   [
@@ -390,9 +425,45 @@ const RANKS = [
     }
   },
   // ── board 4
-  {},
+  {
+    bow: {
+      name: '嵩山弟子',
+      role: '弓手',
+      school: '嵩山派',
+      mini: 'archer',
+      basic: '嵩山連弩',
+      bio: '聽盟主號令放箭，盟主一倒，手便慢了。'
+    },
+    scout: {
+      name: '嵩山弟子',
+      role: '劍手',
+      school: '嵩山派',
+      mini: 'bandit',
+      basic: '嵩山快劍',
+      bio: '從兩翼繞上琴臺的嵩山劍手。'
+    }
+  },
   // ── board 5
-  {},
+  {
+    bow: {
+      name: '白駝山蛇奴',
+      role: '蛇奴',
+      school: '白駝山',
+      mini: 'archer',
+      basic: '放蛇',
+      bio: '趕著蛇群穿過石陣的奴僕，蛇牙帶毒。',
+      traits: { basicPoison: { power: 2, turns: 2, name: '蛇毒' } }
+    },
+    scout: {
+      name: '白駝山蛇奴',
+      role: '蛇奴',
+      school: '白駝山',
+      mini: 'bandit',
+      basic: '蛇杖',
+      bio: '杖頭盤著活蛇，打中便留下毒牙。',
+      traits: { basicPoison: { power: 2, turns: 2, name: '蛇毒' } }
+    }
+  },
   // ── board 6
   {},
   // ── board 7
@@ -457,10 +528,10 @@ const VILLAIN_FORMS = {
   星宿毒焰: [1.09, 'holyFireTurn'],
   血刀奇襲: [1.29, 'bloodAtPass'],
   血刀連斬: [1.18, 'foxTwinChange'],
-  寒冰真氣: [1.12, 'lesserMarsh'],
+  寒冰真氣: [1.15, 'lesserMarsh'],
   大嵩陽神掌: [1.22, 'vacantFist'],
-  蛤蟆功: [1.33, 'toadLunge'],
-  靈蛇拳法: [1.06, 'beggarBind'],
+  蛤蟆功: [1.4, 'toadLunge'],
+  靈蛇拳法: [1.12, 'beggarBind'],
   龍象般若功: [1.39, 'flyingDragon'],
   狂風迅雷功: [1.14, 'foxFeint'],
   冰魄銀針: [1.08, 'iceSoulNeedle'],

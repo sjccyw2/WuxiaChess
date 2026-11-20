@@ -3165,6 +3165,65 @@ for (const stage of [3, 4]) {
   check('stage ' + stage + ': 寶象 stays at the trestle mouth with no one in reach', G.distance(bao, { x: 6, y: 3 }) <= 1 && same([bao.x, bao.y], at));
 }
 
+section('board 4 空山琴臺: the commander behind the gate');
+for (const stage of [3, 4]) {
+  const s = realBoard(4, stage);
+  const [zuo, fei, bow, scout] = foesOf(s);
+  const want = { 3: [[215, 33, 17, 3, 2], [109, 26, 13, 2, 1]], 4: [[294, 36, 18, 3, 2], [158, 33, 14, 2, 1]] }[stage];
+  check('stage ' + stage + ': 左冷禪 and 費彬 have the spec’s numbers', same(numbersOf(zuo), want[0]) && same(numbersOf(fei), want[1]), numbersOf(zuo) + ' / ' + numbersOf(fei));
+  const n = 1 + stage;
+  check('stage ' + stage + ': 盟令 gives every other enemy ＋' + n, [fei, bow, scout].every((u) => G.stat(u, 'atk', s) === u.atk + n && G.standingLines(s, u).includes('盟令 ＋' + n)) && G.stat(zuo, 'atk', s) === zuo.atk);
+  check('stage ' + stage + ': 寒冰真氣 pins, at 1.15', G.enemyTechnique(zuo, s).style === 'pin' && G.enemyTechnique(zuo, s).factor === 1.15);
+  check('stage ' + stage + ': 左冷禪’s page', same(pageOf(s, zuo), ['令目標絆足，移動減 2，持續至下回合。', '【盟令】存活時其餘敵人攻擊 ＋' + n + '。', '【坐鎮】守在琴臺（7，12）兩格內；受到攻擊後才離臺。']), JSON.stringify(pageOf(s, zuo)));
+  check('stage ' + stage + ': 費彬’s page', same(G.enemyTraitLines(s, fei), ['【坐鎮】守在石階（6，7）一格內，不離位；被牽離後會走回。']), JSON.stringify(G.enemyTraitLines(s, fei)));
+  check('stage ' + stage + ': the posts are ground the heroes can walk to', postsReachable(s));
+  // A whole enemy phase with the heroes at their spawn: the two stay on their ground.
+  for (let r = 0; r < 2; r++) {
+    G.startEnemy(s);
+    for (const e of G.enemies(s)) G.enemyAct(s, e);
+    G.nextRound(s);
+  }
+  check('stage ' + stage + ': after two turns 左冷禪 is within two of the terrace and 費彬 on his step', G.distance(zuo, { x: 6, y: 11 }) <= 2 && G.distance(fei, { x: 5, y: 6 }) <= 1, [zuo.x, zuo.y, fei.x, fei.y]);
+  // His own blow keeps him on the terrace; a hero's drops it.
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: zuo.x + dx, y: zuo.y + dy })).find((p) => G.walkable(p.x, p.y, s.mapIndex) && !G.at(s, p.x, p.y));
+  const hero = put(s, 'guard', spot.x, spot.y);
+  soloTurn(s, zuo);
+  check('stage ' + stage + ': striking a hero does not wake him', !zuo.woke && hero.hp < hero.maxHp);
+  closeRound(s);
+  G.resolve(s, hero, zuo, false);
+  check('stage ' + stage + ': struck, he leaves the terrace', zuo.woke === true);
+}
+
+section('board 5 桃花石陣: the coiled beast');
+for (const stage of [5, 6]) {
+  const s = realBoard(5, stage);
+  const [ou, ke, bow, scout] = foesOf(s);
+  const want = { 5: [[339, 47, 18, 3, 2], [173, 40, 12, 3, 2]], 6: [[411, 59, 20, 3, 2], [214, 50, 13, 3, 2]] }[stage];
+  check('stage ' + stage + ': 歐陽鋒 and 歐陽克 have the spec’s numbers', same(numbersOf(ou), want[0]) && same(numbersOf(ke), want[1]), numbersOf(ou) + ' / ' + numbersOf(ke));
+  check('stage ' + stage + ': 蛤蟆功 at 1.40; 靈蛇拳法 pins at 1.12', G.enemyTechnique(ou, s).factor === 1.4 && G.enemyTechnique(ke, s).style === 'pin' && G.enemyTechnique(ke, s).factor === 1.12);
+  check('stage ' + stage + ': 歐陽鋒’s page', same(pageOf(s, ou).slice(1), ['【蓄勢反擊】蓄勢時原地不動，只打兩格內的人；兩格內打他，必遭全力還擊（免受還擊之招與封穴除外）。', '【半血變招 · 逆練】攻擊 ＋6、防禦 −4、移動 ＋1，絕技每兩回合一次，不再原地等待，見人就撲。']), JSON.stringify(pageOf(s, ou)));
+  const venom = 2 + Math.floor(stage / 2);
+  check('stage ' + stage + ': the snake slaves’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【蛇毒】普攻令目標中毒，兩次毒發各損 ' + venom + ' 氣血。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
+  // Charged from round 2: he does not move, and the danger zone is his own tile's diamond.
+  s.round = 2;
+  check('stage ' + stage + ': charged in round 2, he is held to his tile', G.signatureDue(s, ou) && G.standCells(s, ou).length === 1);
+  const at = [ou.x, ou.y];
+  soloTurn(s, ou);
+  check('stage ' + stage + ': with no one within two tiles he waits', same([ou.x, ou.y], at));
+  closeRound(s);
+  // At half: mad.
+  ou.hp = Math.floor(ou.maxHp / 2);
+  G.check(s);
+  check('stage ' + stage + ': at half he goes mad', ou.phased && ou.atk === want[0][1] + 6 && ou.def === want[0][2] - 4 && ou.step === 4 && s.logs.at(-1).text === '歐陽鋒逆運經脈，狀若瘋狂。');
+  check('stage ' + stage + ': mad, he no longer waits while charged', G.signatureDue(s, ou) && !G.holdOf(s, ou) && G.standCells(s, ou).length > 1);
+  check('stage ' + stage + ': …and his signature comes every two rounds', G.enemyTechnique(ou, s).cadence === 2);
+  // A snake slave's bite.
+  const p = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: scout.x + dx, y: scout.y + dy })).find((q) => G.walkable(q.x, q.y, s.mapIndex) && !G.at(s, q.x, q.y));
+  const hero = put(s, 'guard', p.x, p.y);
+  soloTurn(s, scout);
+  check('stage ' + stage + ': a snake slave’s strike poisons', hero.conditions?.poison?.power === venom);
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
