@@ -735,18 +735,7 @@ function landmarks(index, add) {
     });
     add('八方陣石', -6.26, 0.16, 1.1, (m) => standingStone(m, 2.14, 0.96, 0x748078, 0xd0ac84));
   } else if (index === 6) {
-    add('襄陽破城牆', -1.25, -6.47, 0, (m) => ruinedWall(m, 7.2, 2.4));
-    add('殘垣箭樓', 3.62, -6.77, 0.04, (m) => ruinedWall(m, 2.35, 3.34, true));
-    add('西城的雉堞', -6.59, -2.22, 1.58, (m) => ruinedWall(m, 4.77, 1.98));
-    add('霹靂車遺架', -7.11, 2.24, 0.43, siege);
-    add('失守的旌旗', 6.52, -2.69, -0.3, (m) => {
-      banners(m, 0, 0, 3.1, 0x973c34);
-      cargo(m, -0.65, 0.12, 0.81);
-      for (let i = 0; i < 6; i++) {
-        const x = m.rng.range(-0.66, 0.71);
-        m.rock(x, 0, m.rng.range(-0.37, 0.57), 0.29, 0.18, 0.23, 0x736b5e);
-      }
-    });
+    // Xiangyang's walls, engine and standards stand on their own footings in landforms/landform-6.js.
   } else if (index === 7) {
     add(
       '寒玉墓門',
