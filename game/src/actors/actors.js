@@ -8,9 +8,10 @@ import { paintTechniqueStroke } from '../fx/technique-strokes.js';
 import { paintTechniqueTier } from '../fx/technique-tiers.js';
 import { paintSkillEffect } from '../fx/skill-effects.js';
 import { Impact } from '../fx/impact.js';
-import { POLISH } from '../polish.js';
+import { paintCursor } from './cursor.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
 import { watchArt } from './sprite-sheets.js';
+import { paintField, paintReticles } from './zones.js';
 import {
   compactImage,
   compactSheetName,
@@ -20,6 +21,10 @@ import {
   CELL_HEIGHT,
   FOOT_Y
 } from './sprite-sheets.js';
+import { POLISH } from '../polish.js';
+import { paintFrame } from './sprite-frames.js';
+import { paintBase, paintGauge } from './tokens.js';
+import { spentAmount } from './spent.js';
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const openingActors = [
   { id: 'hero', x: 5.1, y: 5.25, side: 'ally', hp: 1 },
@@ -521,7 +526,10 @@ class ActorLayer {
     const range = cast ? (art ? art.range : u.range) : 0;
     const heal = art && (G.isSupport(art) || art.blink);
     const canBlink = art?.blink && G.canPay(s, u);
-    for (const { x, y } of fieldCells(s.mapIndex)) {
+    // rangeTiles: zones.js paints the grid and the regions (one outer edge, a strike fringe)
+    // and answers true; the tile-by-tile loop below then has nothing left to do.
+    const zoned = paintField(this, reach, this.time);
+    for (const { x, y } of zoned ? [] : fieldCells(s.mapIndex)) {
       const walk = this.mode === 'move' && can && !u.moved && reach.has(G.key(x, y));
       const aim =
         cast &&
@@ -599,7 +607,8 @@ class ActorLayer {
       c.stroke();
       c.restore();
     }
-    if (hover) {
+    // tileCursor: cursor.js paints animated brackets and answers true.
+    if (hover && !paintCursor(this, hover, this.time)) {
       this.path(this.tile(hover.x, hover.y, 0.47));
       c.fillStyle = 'rgba(250,232,172,.19)';
       c.fill();
@@ -631,6 +640,8 @@ class ActorLayer {
         this.preview = { ...hover, path: G.movementPath(s, u, u, hover) };
       this.drawRoute(this.preview.path, true);
     }
+    // rangeTiles: a reticle on every piece the pending strike or art can be used on.
+    paintReticles(this, reach, hover, this.time);
   }
   location(u, now) {
     const blink = this.tracks.get(u.id)?.clips.find((c) => c.blinkFrom && now < c.blinkAt);
@@ -665,10 +676,22 @@ class ActorLayer {
     if (alpha <= 0) return;
     c.save();
     c.globalAlpha = alpha;
-    this.circle(pos.x + 0.055, pos.y + 0.035, title ? 0.25 : 0.33, 0.094);
+    // unitTokens: the team base, the outlined sprite and the gauge are painted by tokens.js
+    // and sprite-frames.js in place of the plain shadow, disc, sprite and bar below.
+    const tokens = POLISH.unitTokens && !title;
+    // A hero who has acted and is standing still. actedDim draws it grey for the rest of
+    // the player's turn (`grey` runs 0 to 1 as it fades); without the switch it is faint.
+    const spent =
+      !title && u.acted && human && u.hp > 0 && !tr.clips?.some((clip) => clip.end > now);
+    const grey =
+      POLISH.actedDim && !title
+        ? spentAmount(this, u, spent && this.state.phase === 'ally', now)
+        : 0;
+    if (tokens) paintBase(this, u, pos, now, { human, selected, spent: grey > 0.5 });
+    else this.circle(pos.x + 0.055, pos.y + 0.035, title ? 0.25 : 0.33, 0.094);
     c.fillStyle = 'rgba(27,32,25,.32)';
-    c.fill();
-    if (!title) {
+    if (!tokens) c.fill();
+    if (!title && !tokens) {
       this.circle(pos.x, pos.y, 0.308, 0.099);
       c.fillStyle = human ? '#254b41bb' : '#692e25bb';
       c.fill();
@@ -707,16 +730,25 @@ class ActorLayer {
       id = details.mini,
       sheet = this.sheet(id);
     c.save();
-    if (details.robe) c.filter = details.robe;
+    // The cached copy of a frame already carries the robe tint, so with unitTokens no
+    // canvas filter is set while painting.
+    const cached = sheet && (tokens || grey > 0);
+    if (details.robe && !tokens && !cached) c.filter = details.robe;
     c.translate(p.x, p.y);
     if (flip) c.scale(-1, 1);
     if (this.prefs.motion) {
       if (row === 2) c.translate(scale * drive[frame], 0);
       if (row === 3) c.translate(scale * recoil[frame], 0);
     }
-    if (!title && u.acted && human && u.hp > 0 && !tr.clips?.some((clip) => clip.end > now))
-      c.globalAlpha *= 0.82;
-    if (sheet) {
+    if (spent && !POLISH.actedDim) c.globalAlpha *= 0.82;
+    if (cached) {
+      const look = { robe: details.robe, team: tokens ? u.side : null };
+      if (grey < 1) paintFrame(this, sheet, row, frame, w, h, look);
+      // The grey copy is laid over the coloured one while the fade runs.
+      if (grey > 0) paintFrame(this, sheet, row, frame, w, h, { ...look, grey: true }, grey);
+      // Combat feel: the hit flash and the defeat break-up, over the cached frame as well.
+      if (!title) this.impact.sprite(c, u, pos, sheet, frame, row, w, h, flip);
+    } else if (sheet) {
       c.drawImage(
         sheet.image,
         sheet.x + frame * sheet.w,
@@ -753,6 +785,22 @@ class ActorLayer {
           top: top + h * 0.15,
           bottom: p.y
         });
+      if (tokens) {
+        paintGauge(this, u, {
+          x: p.x,
+          y: top + h * 0.135,
+          scale,
+          now,
+          human,
+          selected,
+          shown: visibleHP,
+          spent: grey > 0.5,
+          rank: details.rank,
+          leader: u.id === this.state.leader
+        });
+        c.restore();
+        return;
+      }
       const len = clamp(scale * 0.49, 15, 34),
         y = top + h * 0.135;
       c.fillStyle = '#17241fe8';
