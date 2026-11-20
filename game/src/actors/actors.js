@@ -231,6 +231,7 @@ class ActorLayer {
       }
     }
     this.exchange = { actor: actor.id, target: target.id, start, hit, end, rank };
+    if (rank >= 3) this.impact.prepare(actor);
     if (special) {
       const flourish = art.blink
         ? 'blink'

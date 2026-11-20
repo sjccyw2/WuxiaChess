@@ -205,3 +205,345 @@ html.polish-phase-banner .phase-banner.run .pb-text {
     transform: translate(calc(var(--dir) * -96px), -50%);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Technique caption and portrait cut-in (switch: skillCutIn)
+   The caption is the game's existing #technique-caption, restyled so every
+   technique announces itself; the cut-in is built by src/ui/cut-in.js.
+   --------------------------------------------------------------------------- */
+html.polish-skill-cut-in .battlefield > .technique-caption {
+  top: calc(var(--top) + 58px);
+  left: 50%;
+  translate: -50% 0;
+  justify-items: center;
+  gap: 1px;
+  box-sizing: border-box;
+  min-width: min(300px, 74vw);
+  max-width: 92vw;
+  padding: 9px clamp(30px, 8vw, 60px) 14px;
+  border: 0;
+  background: none;
+  text-align: center;
+  white-space: nowrap;
+  isolation: isolate;
+  animation: tc-in 300ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+html.polish-skill-cut-in .battlefield > .technique-caption::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 -3%;
+  background:
+    linear-gradient(to bottom, #ffffff12, transparent 40%, #0000003d),
+    linear-gradient(90deg, #081315 4%, #173532 50%, #081315 96%);
+  -webkit-mask: var(--combat-brush, linear-gradient(#000, #000)) center / 100% 100% no-repeat;
+  mask: var(--combat-brush, linear-gradient(#000, #000)) center / 100% 100% no-repeat;
+  opacity: 0.95;
+}
+html.polish-skill-cut-in .battlefield > .technique-caption::after {
+  content: '';
+  position: absolute;
+  right: 24%;
+  bottom: 8px;
+  left: 24%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--qi), transparent);
+  opacity: 0.7;
+}
+html.polish-skill-cut-in .battlefield > .technique-caption span {
+  color: var(--qi);
+  font-size: 0.76rem;
+  letter-spacing: 0.38em;
+  text-indent: 0.38em;
+  opacity: 0.92;
+}
+html.polish-skill-cut-in .battlefield > .technique-caption strong {
+  color: #fff5d9;
+  font-size: clamp(1.3rem, min(3.7vh, 7vw), 2.05rem);
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  text-indent: 0.24em;
+  text-shadow:
+    0 2px 0 #040a0acc,
+    0 0 14px color-mix(in srgb, var(--qi) 45%, transparent);
+}
+html.polish-skill-cut-in .battlefield > .technique-caption[data-tier='1'] strong {
+  font-size: clamp(1.15rem, min(3.1vh, 6.4vw), 1.7rem);
+}
+html.polish-skill-cut-in .battlefield > .technique-caption:is([data-tier='3'], [data-tier='4']) {
+  padding-inline: clamp(30px, 9vw, 72px);
+}
+html.polish-skill-cut-in
+  .battlefield
+  > .technique-caption:is([data-tier='3'], [data-tier='4'])::before {
+  background:
+    linear-gradient(to bottom, #ffffff1a, transparent 40%, #00000047),
+    linear-gradient(90deg, #0a1113 4%, #3b2a14 30%, #5a3d18 50%, #3b2a14 70%, #0a1113 96%);
+}
+html.polish-skill-cut-in
+  .battlefield
+  > .technique-caption:is([data-tier='3'], [data-tier='4'])
+  strong {
+  color: #ffe9b0;
+  font-size: clamp(1.4rem, min(4.2vh, 7.4vw), 2.3rem);
+  text-shadow:
+    0 2px 0 #1a0f05d9,
+    0 0 16px #e9a54a8c;
+}
+html.polish-skill-cut-in .battlefield > .technique-caption[data-side='enemy'] {
+  --qi: #ffb696;
+}
+html.polish-skill-cut-in .battlefield > .technique-caption[data-side='enemy']::before {
+  background:
+    linear-gradient(to bottom, #ffffff14, transparent 40%, #00000047),
+    linear-gradient(90deg, #120606 4%, #4a130f 30%, #74201a 50%, #4a130f 70%, #120606 96%);
+}
+html.polish-skill-cut-in .battlefield > .technique-caption[data-side='enemy'] strong {
+  color: #ffe6d6;
+  text-shadow:
+    0 2px 0 #1c0504d9,
+    0 0 16px #e2452a8c;
+}
+@media (min-width: 800px) {
+  /* Wide enough to sit in the top row, between the map plaque and the tools. */
+  html.polish-skill-cut-in .battlefield > .technique-caption {
+    top: calc(var(--top) - 2px);
+  }
+}
+@keyframes tc-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(1.14);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+html.polish-skill-cut-in .cut-in {
+  --ci-a: #07161c;
+  --ci-b: #16483f;
+  --ci-edge: #f3d291;
+  --ci-glow: #63d9b3;
+  --ci-h: clamp(96px, min(30vh, 26vw), 264px);
+  --ci-y: 45%;
+  --ci-tilt: -4deg;
+  --ci-ms: 620ms;
+  --dir: 1;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: none;
+  overflow: hidden;
+  pointer-events: none;
+  contain: layout paint style;
+}
+html.polish-skill-cut-in .cut-in[data-side='enemy'] {
+  --ci-a: #150505;
+  --ci-b: #6b1a13;
+  --ci-edge: #ffb490;
+  --ci-glow: #ff6b45;
+  --dir: -1;
+}
+html.polish-skill-cut-in .cut-in[data-tier='4'] {
+  --ci-h: clamp(108px, min(34vh, 29vw), 300px);
+}
+html.polish-skill-cut-in .cut-in.run {
+  display: block;
+}
+/* The band is wider than the field so its tilted ends stay off screen. */
+html.polish-skill-cut-in .ci-band {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: calc(var(--ci-y) - var(--ci-h) / 2);
+  height: var(--ci-h);
+  overflow: hidden;
+  border-block: 2px solid var(--ci-edge);
+  background: linear-gradient(90deg, var(--ci-a), var(--ci-b) 50%, var(--ci-a));
+  box-shadow:
+    0 0 0 1px #000000a6,
+    0 0 38px #000000b3;
+  transform: rotate(var(--ci-tilt));
+  animation: ci-band var(--ci-ms) linear both;
+}
+html.polish-skill-cut-in .ci-band > * {
+  position: absolute;
+}
+/* The band opens on a white flash. */
+html.polish-skill-cut-in .ci-band::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  animation: ci-flash var(--ci-ms) linear both;
+}
+html.polish-skill-cut-in .ci-streaks {
+  inset: 0 -40%;
+  background:
+    linear-gradient(90deg, transparent, #ffffff59 50%, transparent) 0 12% / 420px 2px repeat-x,
+    linear-gradient(90deg, transparent, #ffffff33 50%, transparent) 130px 27% / 300px 1px repeat-x,
+    linear-gradient(90deg, transparent, #ffffff40 50%, transparent) 60px 41% / 520px 3px repeat-x,
+    linear-gradient(90deg, transparent, #ffffff2e 50%, transparent) 210px 58% / 360px 1px repeat-x,
+    linear-gradient(90deg, transparent, #ffffff4d 50%, transparent) 20px 73% / 460px 2px repeat-x,
+    linear-gradient(90deg, transparent, #ffffff33 50%, transparent) 170px 88% / 340px 1px repeat-x;
+  animation: ci-streaks var(--ci-ms) linear both;
+}
+html.polish-skill-cut-in .ci-face {
+  top: -16%;
+  bottom: -16%;
+  left: 10.5%;
+  width: calc(var(--ci-h) * 2.05);
+  -webkit-mask: linear-gradient(90deg, transparent, #000 20%, #000 76%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 20%, #000 76%, transparent);
+  animation: ci-face var(--ci-ms) linear both;
+}
+html.polish-skill-cut-in .cut-in[data-side='enemy'] .ci-face {
+  right: 10.5%;
+  left: auto;
+}
+html.polish-skill-cut-in .ci-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 21%;
+  /* Counter the band's tilt so the face stays upright. */
+  transform: rotate(calc(var(--ci-tilt) * -1)) scale(1.1);
+}
+html.polish-skill-cut-in .ci-glint {
+  top: -30%;
+  bottom: -30%;
+  left: 0;
+  width: 16%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #ffffff4d 40%,
+    #ffffffa6 50%,
+    #ffffff4d 60%,
+    transparent
+  );
+  animation: ci-glint var(--ci-ms) linear both;
+}
+html.polish-skill-cut-in .ci-title {
+  top: 50%;
+  left: calc(10.5% + var(--ci-h) * 1.92);
+  display: grid;
+  gap: 0.12em;
+  margin: 0;
+  transform: translateY(-50%);
+  color: #fff6dc;
+  font-family: var(--serif);
+  line-height: 1.12;
+  white-space: nowrap;
+  animation: ci-title var(--ci-ms) linear both;
+}
+html.polish-skill-cut-in .cut-in[data-side='enemy'] .ci-title {
+  right: calc(10.5% + var(--ci-h) * 1.92);
+  left: auto;
+  justify-items: end;
+  text-align: right;
+}
+html.polish-skill-cut-in .ci-title span {
+  color: var(--ci-edge);
+  font-size: clamp(12px, min(2.7vh, 2.4vw), 23px);
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  text-shadow: 0 1px 0 #000000cc;
+}
+html.polish-skill-cut-in .ci-title strong {
+  font-size: clamp(24px, min(8.6vh, 6.4vw), 78px);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 0.09em #0d0806;
+  text-shadow:
+    0 0.05em 0 #000000d9,
+    0 0 0.4em var(--ci-glow);
+}
+html.polish-skill-cut-in .cut-in[data-tier='4'] .ci-title strong {
+  color: #ffe9ad;
+}
+@keyframes ci-band {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--ci-tilt)) scaleY(0.02);
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+  17% {
+    transform: rotate(var(--ci-tilt)) scaleY(1.05);
+  }
+  25%,
+  84% {
+    opacity: 1;
+    transform: rotate(var(--ci-tilt)) scaleY(1);
+    animation-timing-function: ease-in;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--ci-tilt)) scaleY(0.02);
+  }
+}
+@keyframes ci-flash {
+  0% {
+    opacity: 0.95;
+  }
+  24%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes ci-streaks {
+  0% {
+    transform: translateX(calc(var(--dir) * 26%));
+  }
+  100% {
+    transform: translateX(calc(var(--dir) * -26%));
+  }
+}
+@keyframes ci-face {
+  0% {
+    transform: translateX(calc(var(--dir) * -34%));
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.25, 1);
+  }
+  27% {
+    transform: translateX(calc(var(--dir) * -2%));
+    animation-timing-function: linear;
+  }
+  100% {
+    transform: translateX(calc(var(--dir) * 4%));
+  }
+}
+@keyframes ci-glint {
+  0%,
+  22% {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  70%,
+  100% {
+    transform: translateX(760%) skewX(-18deg);
+  }
+}
+@keyframes ci-title {
+  0%,
+  8% {
+    opacity: 0;
+    transform: translate(calc(var(--dir) * 90px), -50%);
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.25, 1);
+  }
+  29% {
+    opacity: 1;
+    transform: translate(calc(var(--dir) * 8px), -50%);
+    animation-timing-function: linear;
+  }
+  84% {
+    opacity: 1;
+    transform: translate(calc(var(--dir) * -6px), -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--dir) * -30px), -50%);
+  }
+}

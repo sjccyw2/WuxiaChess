@@ -225,6 +225,7 @@ const board = new BattleBoard({
     if (phase === 'gather') {
       caption.dataset.artist = id;
       caption.dataset.tier = rank || 1;
+      caption.dataset.side = G.find(state, id)?.side || ''; // combat feel: enemy tint
       caption.querySelector('span').textContent =
         G.unitDetails(G.find(state, id))?.name || G.DETAILS[id].name;
       caption.querySelector('strong').textContent = name || G.DETAILS[id].skill;

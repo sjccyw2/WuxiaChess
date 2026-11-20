@@ -3,6 +3,7 @@
 import { POLISH } from '../polish.js';
 import * as G from '../rules/game.js';
 import { CELL_HEIGHT, FOOT_Y } from '../actors/sprite-sheets.js';
+import { showCutIn, warmCutIn } from '../ui/cut-in.js';
 
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const mix = (a, b, t) => a + (b - a) * t;
@@ -12,6 +13,8 @@ const easeOut = (t) => 1 - (1 - t) * (1 - t) * (1 - t);
 const STOP = [46, 52, 62, 84, 108];
 // Pixels of camera kick at a 900px-tall view. Light blows do not shake the screen.
 const KICK = [0, 0, 2.5, 6, 9];
+// Milliseconds the action waits behind the portrait cut-in, by technique rank.
+const CUT_IN_STALL = { 3: 320, 4: 440 };
 // The original fade of a defeated piece spans the last 200ms before its exit time.
 const FADE = 200;
 const BURST_LIFE = 470;
@@ -71,10 +74,21 @@ class Impact {
   }
 
   // ---- high-tier techniques ----------------------------------------------------------
+  // A rank 3 or 4 technique is on its way: fetch the portrait before it is needed.
+  prepare(actor) {
+    if (POLISH.skillCutIn && this.motion) warmCutIn(actor);
+  }
   // A rank 3 or 4 technique announces itself.
   herald(e) {
     if (!this.motion || e.rank < 3) return;
     const layer = this.layer;
+    // The action waits a beat behind the portrait cut-in.
+    const unit = G.find(layer.state, e.actor);
+    if (POLISH.skillCutIn && unit) {
+      const stall = CUT_IN_STALL[e.rank];
+      this.hold(stall);
+      showCutIn(unit, e.name, e.rank, stall + 280);
+    }
     // The camera leans toward the blow.
     if (POLISH.cameraFollow)
       e.leaned = layer.view.lean?.(
