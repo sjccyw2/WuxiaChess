@@ -8,8 +8,8 @@ import { fileURLToPath } from 'node:url';
 const root = new URL('../', import.meta.url);
 const { loadSources, TEXT_FILES } = await import(new URL('wiki/src/sources.js', root));
 await loadSources(async (file) => fs.readFileSync(new URL('game/' + file, root), 'utf8'));
-const { loadLore } = await import(new URL('wiki/src/catalog/lore.js', root));
-await loadLore(async (file) => fs.readFileSync(new URL(file, root), 'utf8'));
+const { loadManuscripts } = await import(new URL('wiki/src/catalog/lore.js', root));
+await loadManuscripts(async (file) => fs.readFileSync(new URL(file, root), 'utf8'));
 const { buildCatalog } = await import(new URL('wiki/src/catalog/index.js', root));
 const { buildCorpus } = await import(new URL('wiki/src/corpus/index.js', root));
 
@@ -23,7 +23,7 @@ for (const [group, list] of Object.entries(catalog.groups)) {
   for (const entry of list) {
     const at = group + '/' + entry.id;
     if (!entry.name || !entry.tag) problems.push(at + ': missing name or tag');
-    if (group === 'lore') continue;
+    if (catalog.manuscripts[group]) continue;
     if (!entry.sources.length) problems.push(at + ': no source reference found');
     if (entry.image) {
       const file = new URL('wiki/' + entry.image, root);

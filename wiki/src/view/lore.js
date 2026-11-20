@@ -1,21 +1,29 @@
-// 世界觀設定 pages, and the notice shown on entries that still describe the current build.
+// Pages of the hand-written manuscripts (世界觀設定, 單輪劇本), and the notice shown on
+// entries that still describe the current build.
 import { store } from '../store.js';
 import { categories, esc, href, anchor, crumb, srcText } from './html.js';
-import { FEATURED } from '../catalog/lore.js';
 
-// **bold** and "第 N 節" cross-references inside the manuscript's text.
-const inline = (v) =>
+// Inside a manuscript's text: **bold**; "第 N 節" links to that section of the same
+// manuscript and "世界觀第 N 節" to the world view; 《世界觀設定》 and 《單輪劇本》 link to
+// those manuscripts.
+const text = (v, g) =>
   esc(v)
     .replace(
       /\*\*(.+?)\*\*( ?)/g,
       (m, t, gap) => '<strong>' + t + '</strong>' + (/[。：；！？）」]$/.test(t) ? '' : gap)
     )
-    .replace(/第 (\d+) 節/g, (m, n) => {
-      const r = store.entries.lore?.find((v) => v.num === +n);
-      return r ? '<a href="' + href('lore', r.id) + '">' + m + '</a>' : m;
+    .replace(/(世界觀)?第 (\d+) 節/g, (m, world, n) => {
+      const to = world ? 'lore' : g,
+        r = store.entries[to]?.find((v) => v.num === +n);
+      return r ? '<a href="' + href(to, r.id) + '">' + m + '</a>' : m;
+    })
+    .replace(/《([^《》]+)》/g, (m, name) => {
+      const to = Object.keys(store.docs).find((k) => k !== g && categories[k][0] === name);
+      return to ? '<a href="' + href(to) + '">' + m + '</a>' : m;
     });
 
-function blocks(list) {
+function blocks(list, g) {
+  const inline = (v) => text(v, g);
   return list
     .map((b) => {
       if (b.p) return '<p>' + inline(b.p) + '</p>';
@@ -53,7 +61,7 @@ function blocks(list) {
 // Everything outside 世界觀設定 is read from the current game, which predates the new
 // world view. This notice says so wherever that content is shown.
 export const legacy = (lead = '此頁') =>
-  store.worldview
+  store.docs?.lore
     ? '<p class="legacy">' +
       lead +
       '記錄現行遊戲版本《' +
@@ -63,20 +71,22 @@ export const legacy = (lead = '此頁') =>
       '</p>'
     : '';
 
-export function loreIndex() {
-  const w = store.worldview,
-    rows = store.entries.lore;
+export function loreIndex(g) {
+  const w = store.docs[g],
+    rows = store.entries[g];
   return (
-    crumb('lore') +
+    crumb(g) +
     '<div class="index-head"><h1>' +
-    categories.lore[0] +
+    categories[g][0] +
     '</h1><span class="count">' +
     rows.length +
     ' ' +
-    categories.lore[2] +
+    categories[g][2] +
     '</span></div><p class="revision" style="margin:0 0 14px">' +
     esc(w.title) +
-    '。本分類揭露全部主線真相與結局。</p><blockquote class="text-body">' +
+    '。' +
+    esc(w.note) +
+    '</p><blockquote class="text-body">' +
     esc(w.logline) +
     '</blockquote><ol class="toc">' +
     rows
@@ -84,7 +94,7 @@ export function loreIndex() {
         (r) =>
           '<li>' +
           anchor(
-            href('lore', r.id),
+            href(g, r.id),
             '<span class="toc-num" aria-hidden="true">' +
               r.num +
               '</span><span><strong>' +
@@ -111,9 +121,9 @@ export function loreIndex() {
     '</dl></div></div><div class="entry-foot"><span class="sources">原稿 ' +
     esc(w.source) +
     '</span>' +
-    (store.loreFile
+    (store.docFiles[g]
       ? '<a class="minor" href="' +
-        store.loreFile +
+        store.docFiles[g] +
         '" download="' +
         esc(w.source) +
         '">下載 Markdown 原稿 ↓</a>'
@@ -122,29 +132,29 @@ export function loreIndex() {
   );
 }
 
-export function loreEntry(id, lost) {
-  const rows = store.entries.lore,
+export function loreEntry(g, id, lost) {
+  const rows = store.entries[g],
     at = rows.findIndex((r) => r.id === id),
     r = rows[at];
   if (!r) return lost();
-  const step = (t, label) => (t ? anchor(href('lore', t.id), label) : '<span></span>');
+  const step = (t, label) => (t ? anchor(href(g, t.id), label) : '<span></span>');
   const body =
-    r.id === 'logline'
-      ? '<blockquote class="text-body">' + esc(store.worldview.logline) + '</blockquote>'
+    g === 'lore' && r.id === 'logline'
+      ? '<blockquote class="text-body">' + esc(store.docs.lore.logline) + '</blockquote>'
       : r.sections
           .map((s) =>
             s.title
               ? '<details open><summary>' +
                 esc(s.title) +
                 '</summary><div class="box-body prose">' +
-                blocks(s.blocks) +
+                blocks(s.blocks, g) +
                 '</div></details>'
-              : '<div class="lore-box"><div class="box-body prose">' + blocks(s.blocks) + '</div></div>'
+              : '<div class="lore-box"><div class="box-body prose">' + blocks(s.blocks, g) + '</div></div>'
           )
           .join('');
   return (
     '<article class="entry">' +
-    crumb('lore', r.name) +
+    crumb(g, r.name) +
     '<div class="detail-head"><span class="lore-num" aria-hidden="true">' +
     r.num +
     '</span><div><span class="tag">' +
@@ -163,15 +173,15 @@ export function loreEntry(id, lost) {
     '</nav><div class="entry-foot"><span></span><button class="minor" data-copy="link">複製條目連結</button></div><div class="sources">來源 ' +
     r.sources.map((s) => esc(srcText(s))).join(' · ') +
     ' · ' +
-    esc(store.worldview.meta[0] ?? '') +
+    esc(store.docs[g].meta[0] ?? '') +
     '</div></article>'
   );
 }
 
 // A home-page tile for one section.
-export const loreShelf = (r) =>
+export const loreShelf = (g, r) =>
   anchor(
-    href('lore', r.id),
+    href(g, r.id),
     '<span class="shelf-mark" aria-hidden="true">' +
       r.num +
       '</span><span><strong>' +
@@ -181,4 +191,5 @@ export const loreShelf = (r) =>
       '</small></span><i aria-hidden="true">›</i>',
     'shelf'
   );
-export const featuredLore = () => FEATURED.map((id) => store.tables.lore?.get(id)).filter(Boolean);
+export const featured = (g) =>
+  (store.docs[g]?.featured ?? []).map((id) => store.tables[g]?.get(id)).filter(Boolean);

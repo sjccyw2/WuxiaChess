@@ -45,7 +45,7 @@ game/
     ui/               panels, dialogs and views
 wiki/
   index.html          page shell
-  content/            hand-written pages (世界觀設定.md)
+  content/            hand-written pages (世界觀設定.md, 單輪劇本.md)
   assets/             pictures only the wiki uses
   styles/
   vendor/             acorn (JavaScript parser)
@@ -58,7 +58,7 @@ wiki/
     view/             draws the pages
 tools/
   check-wiki.mjs      builds the wiki outside a browser and checks its links
-  lore-fonts.py       regenerates the wiki's extra font characters
+  extra-fonts.py      regenerates the extra font characters for the game and the wiki
 ```
 
 ## How the wiki stays in step with the game
@@ -82,6 +82,7 @@ Change a number, a name or a line of dialogue in `game/src/` and the wiki shows 
 What is written by hand in the wiki:
 
 - `wiki/content/世界觀設定.md` — the world view. Edit the Markdown and reload; each `## N. 標題` becomes a page.
+- `wiki/content/單輪劇本.md` — the story of a single run, mapped to the existing mechanics. Same format. To add another manuscript, list it in `MANUSCRIPTS` in `wiki/src/catalog/lore.js` and give it a category in `wiki/src/view/html.js`.
 - `wiki/src/catalog/notes.js` — a few sentences explaining rules that exist only as code (how medicine is used, when a boss charges its signature art, late-stage enemy behaviour). Revisit this file if those rules change.
 - Page titles and section headings in `wiki/src/catalog/`.
 - `wiki/src/corpus/sections.js` — which heading each line of game text is filed under. New game code that is not listed still appears, under its function name.
@@ -99,10 +100,10 @@ Builds the catalog and the text listing from the game sources and fails if a pag
 
 ## Fonts
 
-The two fonts in `game/assets/` contain only the characters the game uses. Characters added later (for example by the world view text) fall back to a system font unless they are added to the supplement:
+The two River fonts in `game/assets/` contain only the characters the game first used. Characters added later, in game text or in the wiki's manuscripts, fall back to a system font unless they are added to the supplements: `game/assets/extra-*.woff2` for characters the game needs, and `wiki/assets/lore-*.woff2` for the rest. One command rebuilds both:
 
 ```bash
-python3 tools/lore-fonts.py
+python3 tools/extra-fonts.py
 ```
 
 This needs `fonttools`, `brotli` and the Noto CJK fonts; the script's header has the details. `--check` lists the missing characters without writing anything.

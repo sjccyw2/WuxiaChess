@@ -2,7 +2,7 @@
 import { store } from './store.js';
 import { loadSources } from './sources.js';
 import { buildCatalog } from './catalog/index.js';
-import { loadLore } from './catalog/lore.js';
+import { loadManuscripts } from './catalog/lore.js';
 import { buildCorpus } from './corpus/index.js';
 import { $, content, srcText } from './view/html.js';
 import { normal, searchable } from './view/search.js';
@@ -16,16 +16,18 @@ function offerDownload(id, value) {
 
 async function start() {
   try {
-    await Promise.all([loadSources(), loadLore()]);
+    await Promise.all([loadSources(), loadManuscripts()]);
     const catalog = buildCatalog(),
       corpus = buildCorpus();
     store.corpus = corpus;
     store.game = catalog.game;
-    store.worldview = catalog.worldview;
-    if (catalog.worldview)
-      store.loreFile = URL.createObjectURL(
-        new Blob([catalog.worldview.markdown], { type: 'text/markdown;charset=utf-8' })
-      );
+    store.docs = catalog.manuscripts;
+    store.docFiles = Object.fromEntries(
+      Object.entries(catalog.manuscripts).map(([g, d]) => [
+        g,
+        URL.createObjectURL(new Blob([d.markdown], { type: 'text/markdown;charset=utf-8' }))
+      ])
+    );
     store.entries = catalog.groups;
     store.tables = Object.fromEntries(
       Object.entries(store.entries).map(([k, v]) => [k, new Map(v.map((r) => [r.id, r]))])

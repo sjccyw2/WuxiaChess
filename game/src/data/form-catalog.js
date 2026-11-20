@@ -1,7 +1,7 @@
 // Keys match the combat and mastery catalogues. A weapon's offensive forms belong
 // to deliberate normal attacks. Its support forms belong to support skills.
 const ART_FORMS = {
-  // 令狐沖
+  // 令狐冲
   'signature:hero': ['exploit'],
   mountainOpening: ['line'],
   breakSword: ['flank'],
@@ -126,7 +126,7 @@ const COMBINATIONS = [
     name: '拂花遞劍',
     skills: ['huangPetals', 'signature:hero'],
     weapons: ['jadeCane'],
-    text: '黃蓉與敵人之間留一空格，持青竹棒使拂花，把人拉近，逼他露出破綻。令狐沖進到兩格內接獨孤九劍，抓住破綻，多打 9 點原始傷害，這次交鋒也免受還擊。'
+    text: '黃蓉與敵人之間留一空格，持青竹棒使拂花，把人拉近，逼他露出破綻。令狐冲進到兩格內接獨孤九劍，抓住破綻，多打 9 點原始傷害，這次交鋒也免受還擊。'
   },
   {
     name: '前掌後刀',
@@ -138,7 +138,7 @@ const COMBINATIONS = [
     name: '飛針催毒',
     skills: ['blackNeedle', 'pairedHands'],
     weapons: ['frost'],
-    text: '任盈盈用黑血神針下毒。小龍女接左右互搏術，或由持寒潭短劍的令狐沖普攻，均可將未發的毒傷一次催出。當回合接上可多打 14 點原始傷害，雙劍也只催毒一次。'
+    text: '任盈盈用黑血神針下毒。小龍女接左右互搏術，或由持寒潭短劍的令狐冲普攻，均可將未發的毒傷一次催出。當回合接上可多打 14 點原始傷害，雙劍也只催毒一次。'
   },
   {
     name: '牽敵成列',
