@@ -403,6 +403,20 @@ function counterRatio(s, defender) {
   if (c.stance || (unitDetails(defender)?.traits?.stance && signatureDue(s, defender))) return 1;
   return basicFor(defender).retort || 0.55;
 }
+// 卸勁's cut, in percent, on the damage a unit takes from its foes' blows and counters: a hero's
+// stance condition; a villain's 蓄勢反擊 cuts by its own `cut` while charged.
+function stanceCut(s, v) {
+  if (v.conditions?.stance) return v.conditions.stance.power;
+  const stance = unitDetails(v)?.traits?.stance;
+  return stance && signatureDue(s, v) ? stance.cut || 0 : 0;
+}
+const afterCut = (n, cut) => (cut ? Math.round((n * (100 - cut)) / 100) : n);
+// What a direct blow does to the unit that receives it, hit by hit, before shields (§6 steps
+// 2–4). Poison, 亂氣 and reflected damage never come through here.
+function received(s, v, raws) {
+  const cut = stanceCut(s, v);
+  return { hits: raws.map((n) => afterCut(n, cut)) };
+}
 const PREFERS = {
   wounded: '專挑傷重者',
   isolated: '專挑落單者',
@@ -1156,7 +1170,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
           ' 得 8 護盾'
       );
     }
-    result.notes.push(...priceNotes(art));
+    result.notes.push(...guardNotes(art), ...priceNotes(art));
     return result;
   }
   if (support) {
@@ -1180,7 +1194,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
         '轉護 · 移出自身護盾 ' + u.conditions.shield.power + '，各人得 ' + result.passed + ' 護盾'
       );
     }
-    result.notes.push(...priceNotes(art));
+    result.notes.push(...guardNotes(art), ...priceNotes(art));
     return result;
   }
   const single = damage(u, t, skill, s?.mapIndex, s, art, basic);
@@ -1194,6 +1208,9 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     (part, i) => Math.round(single * part) + (i === 0 ? plan.extra : 0)
   );
   result.rawHits = baseHits.map((hit) => afterWard(hit, ward));
+  // The receiver's own defences, before its shield.
+  const blow = received(s, t, result.rawHits);
+  result.rawHits = blow.hits;
   let shield = t.conditions?.shield?.power || 0;
   result.hits = result.rawHits.map((hit) => {
     const stopped = Math.min(hit, shield);
@@ -1231,7 +1248,10 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
             }
           }
         : t;
-    result.counterRaw = Math.max(2, Math.round(damage(reply, u, false, s?.mapIndex, s) * share));
+    result.counterRaw = afterCut(
+      Math.max(2, Math.round(damage(reply, u, false, s?.mapIndex, s) * share)),
+      stanceCut(s, u)
+    );
     result.counter = Math.max(0, result.counterRaw - (u.conditions?.shield?.power || 0));
     if (share === 1 && !t.conditions?.stance) result.notes.push('蓄勢反擊 · 還擊全力');
   }
@@ -1265,7 +1285,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
     result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
   }
-  result.notes.push(...priceNotes(art));
+  result.notes.push(...guardNotes(art), ...priceNotes(art));
   return result;
 }
 // What using the art costs its caster beyond 內力 and 氣血, as the preview states it.
@@ -1278,6 +1298,13 @@ function priceNotes(art) {
   if (art?.spent) notes.push('曲終 · 下回合不能施展絕技');
   if (art?.once) notes.push('壓箱 · 每局一次');
   if (art?.cooldown) notes.push('調息 · 施展後隔 ' + art.cooldown + ' 回合');
+  return notes;
+}
+const tenths = (n) => (n % 10 ? n + '%' : '一二三四五六七八九'[n / 10 - 1] + '成');
+// The guard an art leaves on its caster until his next turn, as the preview states it.
+function guardNotes(art) {
+  const notes = [];
+  if (art?.stance) notes.push('卸勁 · 至下回合受擊減' + tenths(art.stance) + '，還擊全力');
   return notes;
 }
 // Experience and level numbers. The wiki's rules page reads these.
@@ -1686,6 +1713,17 @@ function startEnemy(s) {
   log(s, 'system', '守關敵軍開始行動。', '敵方回合');
   return true;
 }
+// How little an enemy wants to strike hero t: lower is the better target. A hero under 卸勁 counts
+// his 氣血 as the cut makes it last.
+function aimCost(s, u, t, friends) {
+  const hp = t.hp / (1 - stanceCut(s, t) / 100);
+  if (!(s.run?.stage >= 6)) return hp * 0.6;
+  const protectedByAlly = friends.some((v) => v !== t && distance(v, t) === 1);
+  const cover = tileInfo(t.x, t.y, s.mapIndex).defense > 0;
+  const exposedLeader = t.id === s.leader && !protectedByAlly && !cover;
+  const vitality = hp + (t.conditions?.shield?.power || 0);
+  return vitality * 0.28 + (35 * vitality) / t.maxHp - (exposedLeader ? 28 : 0);
+}
 function enemyAct(s, u) {
   if (s.phase !== 'enemy' || s.result || ally(u) || !living(u) || u.acted) return [];
   const friends = party(s).filter(living);
@@ -1712,16 +1750,7 @@ function enemyAct(s, u) {
       return [target.id, movementField(s, u, positions, Infinity, true).costs];
     })
   );
-  const targetCost = new Map(
-    friends.map((t) => {
-      if (!(s.run?.stage >= 6)) return [t.id, t.hp * 0.6];
-      const protectedByAlly = friends.some((v) => v !== t && distance(v, t) === 1);
-      const cover = tileInfo(t.x, t.y, s.mapIndex).defense > 0;
-      const exposedLeader = t.id === s.leader && !protectedByAlly && !cover;
-      const vitality = t.hp + (t.conditions?.shield?.power || 0);
-      return [t.id, vitality * 0.28 + (35 * vitality) / t.maxHp - (exposedLeader ? 28 : 0)];
-    })
-  );
+  const targetCost = new Map(friends.map((t) => [t.id, aimCost(s, u, t, friends)]));
   for (const c of cells)
     for (const t of friends) {
       const d = distance(c, t),
@@ -1746,7 +1775,8 @@ function enemyAct(s, u) {
   const art = signatureDue(s, u) ? enemyTechnique(u, s) : null;
   const raw = damage(u, t, false, s.mapIndex, s);
   const strikePower = art ? Math.round(raw * art.factor) : raw;
-  const n = wound(s, t, strikePower, u);
+  const blow = received(s, t, [strikePower]);
+  const n = wound(s, t, blow.hits[0], u);
   // 還報 counts only 氣血 an enemy's own action took, never what a shield caught.
   if (n) t.hurtRound = s.round;
   const effects = [[t.id, '−' + n]];
@@ -1762,7 +1792,12 @@ function enemyAct(s, u) {
     if (u.signaturePush) u.signaturePush = 0;
     if (art.style === 'sweep') {
       for (const other of friends.filter((v) => v !== t && living(v) && distance(v, t) === 1)) {
-        const chip = wound(s, other, Math.max(1, Math.round(strikePower / 4)), u);
+        const chip = wound(
+          s,
+          other,
+          afterCut(Math.max(1, Math.round(strikePower / 4)), stanceCut(s, other)),
+          u
+        );
         if (chip) other.hurtRound = s.round;
         effects.push([other.id, '−' + chip]);
         log(s, 'combat', '被餘勁掃中，損失 ' + chip + ' 點氣血。', unitDetails(other).name);
@@ -1778,7 +1813,7 @@ function enemyAct(s, u) {
   if (!living(t)) log(s, 'combat', '負傷退場。', unitDetails(t).name);
   else if (living(u) && !t.conditions?.seal && distance(u, t) <= reach(s, t) && share) {
     const power = Math.max(2, Math.round(damage(t, u, false, s.mapIndex, s) * share));
-    const hit = wound(s, u, afterWard(power, wardPercent(s, u)), t);
+    const hit = wound(s, u, afterCut(afterWard(power, wardPercent(s, u)), stanceCut(s, u)), t);
     effects.push([u.id, '−' + hit]);
     log(s, 'combat', '還擊，造成 ' + hit + ' 點傷害。', unitDetails(t).name);
     exp(s, t, living(u) ? 12 : 35);
@@ -1828,4 +1863,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, stanceCut, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

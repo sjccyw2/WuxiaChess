@@ -38,7 +38,7 @@ function useLines(art) {
   const lines = [];
   if (art.poised) lines.push('留力 · 上回合未出手方可施展');
   if (art.consume === 'shield') lines.push('轉護 · 須自身帶有護盾，施展時護盾轉給受術者');
-  return [...lines, ...G.priceNotes(art)];
+  return [...lines, ...G.guardNotes(art), ...G.priceNotes(art)];
 }
 
 function moveFacts(s, u, id = 'basic', target = null) {

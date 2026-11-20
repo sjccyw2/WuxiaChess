@@ -807,6 +807,121 @@ section('use restrictions');
   }
 }
 
+// One enemy blow at a hero in the enemy phase: the 氣血 it took, and the blow's size before any
+// defence of the hero's own (his def, tile and brace are in it).
+function blowAt(s, foeId, heroId) {
+  const foe = unit(s, foeId),
+    hero = unit(s, heroId);
+  if (s.phase === 'ally') G.startEnemy(s);
+  const raw = G.damage(foe, hero, false, s.mapIndex, s);
+  const life = hero.hp;
+  G.enemyAct(s, foe);
+  return { taken: life - hero.hp, raw };
+}
+
+// ── 卸勁 stance: the cut (§6) ────────────────────────────────────────────
+section('stance');
+{
+  const stance = (u, s) => BM.applyCondition(s, u, { kind: 'stance', power: 30, turns: 1 }, u);
+  // The art: the guard lands on the caster, and the preview and the art's facts say so.
+  const s = board(['guard', 'hero', 'medic']);
+  const guard = put(s, 'guard', 4, 7);
+  const foe = put(s, 'blade', 5, 7);
+  const art = teach(guard, defineArt({ stance: 30, safe: true, mp: 2 }));
+  const MF = await load('rules/move-facts.js');
+  check('the preview names the guard', G.forecast(guard, foe, true, s).notes.includes('卸勁 · 至下回合受擊減三成，還擊全力'));
+  check('the art’s facts name it too', MF.moveFacts(s, guard, art).effectLines.includes('卸勁 · 至下回合受擊減三成，還擊全力'));
+  G.resolve(s, guard, foe, true);
+  check('卸勁 lands on the caster until his next turn', guard.conditions?.stance?.power === 30 && guard.conditions.stance.through === 1);
+  check('a save with it restores', unit(R.restoreRun(copy(s)), 'guard').conditions?.stance?.power === 30);
+  check('G.stanceCut reads it', G.stanceCut(s, guard) === 30);
+  const hit = blowAt(s, 'blade', 'guard');
+  check('an enemy blow is cut by three tenths, rounded half up', hit.taken === Math.round(hit.raw * 0.7), hit.taken + ' of ' + hit.raw);
+  check('the counter is at full ratio', foe.hp < foe.maxHp);
+
+  // Plain, then with a shield: the cut comes first, the shield takes what is left.
+  const plain = board(['guard', 'hero', 'medic']);
+  put(plain, 'guard', 4, 7);
+  put(plain, 'blade', 5, 7);
+  const bare = blowAt(plain, 'blade', 'guard');
+  check('without it the blow is whole', bare.taken === bare.raw, bare.taken + ' of ' + bare.raw);
+  const sh = board(['guard', 'hero', 'medic']);
+  const wall = put(sh, 'guard', 4, 7);
+  put(sh, 'blade', 5, 7);
+  stance(wall, sh);
+  BM.applyCondition(sh, wall, { kind: 'shield', power: 2, turns: 1 }, wall);
+  const shielded = blowAt(sh, 'blade', 'guard');
+  check('the shield absorbs after the cut', shielded.taken === Math.round(shielded.raw * 0.7) - 2, shielded.taken + ' of ' + shielded.raw);
+
+  // A counter in the ally phase is enemy damage too: the preview and the strike both cut it.
+  const c = board(['guard', 'hero', 'medic']);
+  const striker = put(c, 'guard', 4, 7);
+  const target = put(c, 'blade', 5, 7);
+  const whole = G.forecast(striker, target, false, c).counterRaw;
+  stance(striker, c);
+  const f = G.forecast(striker, target, false, c);
+  check('the preview cuts the counter it shows', f.counterRaw === Math.round(whole * 0.7) && f.counterRaw < whole, f.counterRaw + ' / ' + whole);
+  const life = striker.hp;
+  G.resolve(c, striker, target, false);
+  check('and the strike takes what the preview showed', life - striker.hp === f.counter);
+
+  // Poison is no blow: the tick is whole.
+  const p = board(['guard', 'hero', 'medic']);
+  const sick = unit(p, 'guard');
+  stance(sick, p);
+  BM.applyCondition(p, sick, { kind: 'poison', power: 10, turns: 2 }, sick);
+  const before = sick.hp;
+  quietTurn(p);
+  check('poison is not cut', before - sick.hp === 10, before - sick.hp);
+
+  // A sweep's chip on a stanced neighbour is cut.
+  const w = board(['guard', 'hero', 'medic']);
+  put(w, 'chief', 4, 7);
+  put(w, 'hero', 5, 7);
+  const side = put(w, 'guard', 5, 6);
+  stance(side, w);
+  w.round = 3;
+  const styled = G.DETAILS.chief.style;
+  G.DETAILS.chief.style = 'sweep';
+  try {
+    for (const v of G.party(w)) if (v !== unit(w, 'hero')) v.hp = v.maxHp;
+    unit(w, 'hero').hp = 30; // the cheapest target, so the sweep centres on him
+    G.startEnemy(w);
+    const raw = Math.round(G.damage(unit(w, 'chief'), unit(w, 'hero'), false, w.mapIndex, w) * G.enemyTechnique(unit(w, 'chief'), w).factor);
+    const was = side.hp;
+    G.enemyAct(w, unit(w, 'chief'));
+    check('a sweep chip on a stanced hero is cut', was - side.hp === Math.round(Math.max(1, Math.round(raw / 4)) * 0.7), was - side.hp);
+  } finally {
+    G.DETAILS.chief.style = styled;
+  }
+
+  // The enemy weighs the cut: a stanced hero counts as sturdier than he is.
+  const ai = (stanced) => {
+    const a = board(['guard', 'hero', 'medic']);
+    put(a, 'blade', 5, 7);
+    Object.assign(put(a, 'hero', 4, 7), { hp: 100 });
+    const g = Object.assign(put(a, 'guard', 6, 7), { hp: 80 });
+    if (stanced) stance(g, a);
+    G.startEnemy(a);
+    G.enemyAct(a, unit(a, 'blade'));
+    return g.hp < 80 ? 'guard' : unit(a, 'hero').hp < 100 ? 'hero' : 'none';
+  };
+  check('without the guard the enemy strikes the weaker hero', ai(false) === 'guard');
+  check('with it, 80 under 卸勁 weighs more than 100, and the other is struck', ai(true) === 'hero');
+
+  // A villain's 蓄勢反擊 with a written cut, while charged.
+  const v = board();
+  const hero = put(v, 'hero', 4, 7);
+  const boss = put(v, 'chief', 5, 7);
+  const open = G.forecast(hero, boss, false, v).amount;
+  v.round = 3;
+  withTraits('chief', { stance: { while: 'charged', cut: 50, holds: true } }, () => {
+    check('a charged villain’s cut halves the blow', G.forecast(hero, boss, false, v).amount === Math.round(open * 0.5));
+    v.round = 2;
+    check('and does nothing while not charged', G.forecast(hero, boss, false, v).amount === open);
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
