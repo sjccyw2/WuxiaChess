@@ -1,12 +1,13 @@
 import { Model, circle, midway } from './scenery-kit.js';
 import { banners, cargo, lantern, rail, reeds, roof } from './maze-models.js';
 import { landmarks } from './maze-landmarks.js';
+import { mapleScrub } from './landforms/country-1.js';
 import { setting } from './maze-atmosphere.js';
 import { mapLayout } from '../data/terrain.js';
 
 const stonework = [
   null,
-  [0x977e64, 0xc0a183, 0x766c56, 0x8d7254, 0xab935e, 0x79856f],
+  [0x8c8478, 0xb0a593, 0x6b665c, 0x80786b, 0xa69a7c, 0x79856f],
   [0x788669, 0xa5aa82, 0x606d59, 0x748366, 0xb9b28b, 0x54857b],
   [0xb8c7ca, 0xe4e5d7, 0x657b88, 0x829398, 0xd0dcd7, 0x7fa2ae],
   [0x929c91, 0xb5bca3, 0x6c7a70, 0x86937f, 0xbba679, 0x819a93],
@@ -560,6 +561,8 @@ function herbs(m, index, p) {
 }
 function brush(m, index, p) {
   const r = m.rng;
+  // 紅楓驛 grows maple saplings of its own (landforms/country-1.js).
+  if (index === 1) return mapleScrub(m);
   if ([1, 2, 5].includes(index)) {
     const col = index === 1 ? 0xc66a38 : index === 5 ? 0xdba0a5 : 0x94a76b;
     for (let j = 0; j < 5; j++) {
@@ -917,6 +920,8 @@ function cutRing(m, index, p, layout) {
     }
 }
 function lowerLandscape(m, index, p, layout) {
+  // 紅楓驛's own relief covers this low ground (landforms/landform-1.js).
+  if (index === 1) return;
   const water = index === 2,
     dry = [1, 5, 6].includes(index);
   if (!water && !dry) return;
@@ -1042,6 +1047,8 @@ function lowerLandscape(m, index, p, layout) {
 }
 
 function ranges(m, index, p) {
+  // 紅楓驛 is closed by its own wooded hills (landforms/landform-1.js).
+  if (index === 1) return;
   const r = m.rng,
     style = setting(index);
   if (index === 9) {
