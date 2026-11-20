@@ -2,6 +2,10 @@
 // 'signature' means the hero's initially known art. The three common passives keep their existing ids.
 const CATALOG_NOTE =
   '傳承所記為原著人物、武學或器物。招式分支、戰棋效果、武譜流傳與參悟條件為本作演繹。';
+// Why a famous hero arrives holding only an early art, said once above every tree: what answers
+// the summons is a single thought of them, and buying a node is that hero remembering.
+const RECALL_NOTE =
+  '應帖而來的只是一念。入門的功夫還在手上；後來所學，要在局中一招一招想起來。';
 const GATE_LABELS = {
   kills: '親手擊倒敵人',
   casts: '親自施展絕技',
@@ -1483,4 +1487,4 @@ const TRADE_MANUALS = {
   }
 };
 
-export { CATALOG_NOTE, GATE_LABELS, HERO_PATHS, MASTERY_ARTS, TRADE_MANUALS };
+export { CATALOG_NOTE, RECALL_NOTE, GATE_LABELS, HERO_PATHS, MASTERY_ARTS, TRADE_MANUALS };

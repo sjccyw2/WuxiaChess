@@ -114,7 +114,6 @@ const bar = (label, value, max, cls, ic) =>
   ' <small>/ ' +
   max +
   '</small></span></div>';
-const roleTag = (u) => '<span class="role-tag">' + DETAILS[u.id].role + '</span>';
 const lv = (u) => '<span class="lv">Lv. <b>' + String(u.level).padStart(2, '0') + '</b></span>';
 const titleHead = (ic, title, sub = '') =>
   '<div class="modal-head"><div class="modal-title">' +
@@ -318,7 +317,6 @@ function portraitSummary(u) {
     '</div><h3>' +
     i.name +
     '</h3><div class="sheet-meta">' +
-    roleTag(u) +
     '<span>' +
     bookCitation(BOOKS[u.id]) +
     '</span>' +

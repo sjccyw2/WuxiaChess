@@ -10,7 +10,7 @@ import {
   blankRecord,
   CONDITION_NAMES
 } from './battle-mastery.js';
-import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE } from '../data/mastery-catalog.js';
+import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE, RECALL_NOTE } from '../data/mastery-catalog.js';
 import * as G from './game.js';
 import { mapLayout } from '../data/terrain.js';
 import { TECHNIQUES, MANUAL_PRICES, CAPTAINS } from '../data/martial-arts.js';
@@ -635,7 +635,8 @@ function dialogue(s, scene = s.run.scene) {
       info = person && G.unitDetails(person);
     return {
       speaker: off?.name || info?.name || '',
-      role: off?.role || info?.role || '',
+      // A hero's role label is not shown; enemies and off-board people keep theirs.
+      role: off?.role || (person && G.ally(person) ? '' : info?.role) || '',
       person,
       portrait: off?.portrait || '',
       note: beat.note || '',
@@ -1163,6 +1164,7 @@ function treeModel(s, u) {
     pathTitle: path.title,
     origin: path.origin,
     originNote: CATALOG_NOTE,
+    recallNote: RECALL_NOTE,
     sp: u.sp,
     camp: s.run.status === 'camp',
     leaderName: COMMANDS[u.id].name,

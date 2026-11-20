@@ -408,9 +408,9 @@ function encounterPage(s, scene, beat, archive = false) {
     (p.note ? '<p class="fy-stage-note">' + esc(p.note) + '</p>' : '') +
     '<div class="fy-byline"><strong>' +
     esc(p.speaker) +
-    '</strong><small>' +
-    esc(p.role) +
-    '</small></div><blockquote>' +
+    '</strong>' +
+    (p.role ? '<small>' + esc(p.role) + '</small>' : '') +
+    '</div><blockquote>' +
     esc(p.text) +
     '</blockquote>' +
     (!opening && last && s.run.last?.optional

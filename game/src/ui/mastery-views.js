@@ -195,7 +195,8 @@ function schoolContents(model, ui) {
   const nodes = list(model.school),
     current = chooseNode(nodes, ui.node);
   if (!current) return '<p class="mj-empty">此俠客尚無門派武學可供查看。</p>';
-  return `<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
+  const recall = model.recallNote ? `<p class="mj-recall">${text(model.recallNote)}</p>` : '';
+  return `${recall}<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
 }
 function guideContents(model, ui) {
   const nodes = list(model.guides),
