@@ -81,6 +81,55 @@ function batchStructure(T, original) {
   }
   return group;
 }
+// The ferry's banks, rocks and plants are some thirty small meshes with one kind of
+// material. Baked into world space and joined by how they take shadow, they draw in
+// three calls a pass instead of thirty, in the main view, the mirror and the shadow map.
+function joinLandscape(T, scenery) {
+  const sets = new Map(),
+    point = new T.Vector3(),
+    normal = new T.Vector3(),
+    turn = new T.Matrix3();
+  scenery.updateMatrixWorld(true);
+  for (const mesh of [...scenery.children]) {
+    const u = mesh.userData,
+      g = mesh.geometry;
+    if (!mesh.isMesh || !u.environment || u.occluder) continue;
+    if (!mesh.material.isMeshLambertMaterial || g.index || !g.attributes.normal || !g.attributes.color)
+      continue;
+    const key = [mesh.castShadow, mesh.receiveShadow, Boolean(u.distant)].join();
+    if (!sets.has(key)) sets.set(key, { first: mesh, pos: [], norm: [], col: [], parts: [] });
+    const set = sets.get(key),
+      a = g.attributes;
+    turn.getNormalMatrix(mesh.matrixWorld);
+    for (let i = 0; i < a.position.count; i++) {
+      point.fromBufferAttribute(a.position, i).applyMatrix4(mesh.matrixWorld);
+      normal.fromBufferAttribute(a.normal, i).applyMatrix3(turn).normalize();
+      set.pos.push(point.x, point.y, point.z);
+      set.norm.push(normal.x, normal.y, normal.z);
+      set.col.push(a.color.getX(i), a.color.getY(i), a.color.getZ(i));
+    }
+    set.parts.push(mesh);
+  }
+  for (const { first, pos, norm, col, parts } of sets.values()) {
+    if (parts.length < 2) continue;
+    const geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('normal', new T.Float32BufferAttribute(norm, 3));
+    geo.setAttribute('color', new T.Float32BufferAttribute(col, 3));
+    geo.computeBoundingSphere();
+    const joined = new T.Mesh(geo, first.material);
+    joined.name = first.name;
+    joined.castShadow = first.castShadow;
+    joined.receiveShadow = first.receiveShadow;
+    joined.userData = { ...first.userData, fadeable: false };
+    for (const part of parts) {
+      scenery.remove(part);
+      part.geometry.dispose();
+      if (part !== first) part.material.dispose();
+    }
+    scenery.add(joined);
+  }
+}
 const reliefs = [
   landform0,
   landform1,
@@ -127,6 +176,7 @@ function makeScenery(T, index = 0) {
   }
   const ferry = fieldCells(0);
   cutFerryLandscape(T, scenery, ferry, FIELD_CENTER);
+  if (POLISH.lighting) joinLandscape(T, scenery);
   scenery.add(
     buildCourtyard(T, ferry, FIELD_CENTER),
     buildFieldProps(
