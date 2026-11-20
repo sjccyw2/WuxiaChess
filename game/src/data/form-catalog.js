@@ -1,0 +1,163 @@
+// Keys match the combat and mastery catalogues. A weapon's offensive forms belong
+// to deliberate normal attacks. Its support forms belong to support skills.
+const ART_FORMS = {
+  // 令狐沖
+  'signature:hero': ['exploit'],
+  mountainOpening: ['line'],
+  breakSword: ['flank'],
+  breakArrow: ['pin'],
+  breakPalm: ['mark'],
+  breakQi: ['seal'],
+  ninefoldIntent: ['line', 'still'],
+
+  // 任盈盈
+  'signature:medic': ['cleanse'],
+  sheathedDagger: ['distill'],
+  returningSong: ['overflow'],
+  blackNeedle: ['mark'],
+  bambooWard: ['cleanse'],
+  qinXiaoRally: ['riposte'],
+  clearHeartCoda: ['cleanse'],
+
+  // 向問天
+  'signature:guard': ['leech'],
+  ironChainForm: ['mark'],
+  sweepingWhip: ['pull'],
+  reverseForce: ['antidote'],
+  chainShelter: ['channel'],
+  bloodAtPass: ['leech'],
+  earthThroughChain: ['pin'],
+
+  // 郭靖
+  'signature:guo': ['collision'],
+  southernStance: ['still'],
+  vacantFist: ['mark'],
+  fieldDragonWard: ['cleanse'],
+  flyingDragon: ['flank'],
+  armyBookRally: ['channel'],
+  dragonReserve: ['collision', 'mark'],
+
+  // 小龍女
+  'signature:xiao': ['flank'],
+  jadeThread: ['exploit'],
+  sparrowSteps: ['riposte'],
+  jadeNeedle: ['pin'],
+  pairedHands: ['distill'],
+  silkBell: ['pull', 'collision'],
+  maidenHarmony: ['flank', 'arc'],
+
+  // 段譽
+  'signature:duan': ['line'],
+  fingerPrimer: ['pin'],
+  northernSea: ['leech'],
+  ripplingSteps: ['landing'],
+  shangYang: ['still'],
+  lesserMarsh: ['mark'],
+  sixMeridians: ['line', 'exploit'],
+
+  // 黃蓉
+  'signature:huang': ['pin'],
+  huangPetals: ['mark'],
+  peachWard: ['channel'],
+  orchidPoint: ['seal'],
+  beggarBind: ['pull'],
+  peachGate: ['cleanse'],
+  staffWithoutDogs: ['pin'],
+
+  // 楊過
+  'signature:yang': ['still'],
+  darkIronEdge: ['line'],
+  jadeFluteCut: ['mark'],
+  tideBreaker: ['exploit'],
+  toadLunge: ['collision'],
+  mournfulCloud: ['mark'],
+  solitaryPalm: ['still', 'leech'],
+
+  // 張無忌
+  'signature:zhang': ['channel'],
+  taijiGate: ['flank'],
+  valleyPulse: ['overflow'],
+  taijiSword: ['arc'],
+  nineYangMantle: ['cleanse'],
+  holyFireTurn: ['pull'],
+  universeCanopy: ['cleanse', 'channel'],
+
+  // 胡斐
+  'signature:hu': ['mark'],
+  huQuickDraw: ['exploit'],
+  snowPursuit: ['cleanse'],
+  silkwormPalm: ['pin'],
+  foxFeint: ['mark'],
+  foxWrist: ['seal'],
+  foxTwinChange: ['exploit', 'flank'],
+
+  // 可分授給俠客的八部武譜
+  fingerFlick: ['mark'],
+  softPalm: ['pin'],
+  yangFinger: ['channel'],
+  nineYang: ['cleanse', 'overflow'],
+  iceSoulNeedle: ['still'],
+  diamondWard: ['cleanse'],
+  sevenInjuries: ['leech'],
+  waterSkim: ['landing']
+};
+
+const WEAPON_FORMS = {
+  pine: ['mark'],
+  staff: ['channel'],
+  pole: ['pin'],
+  wraps: ['flank', 'riposte'],
+  twins: ['arc', 'antidote'],
+  fan: ['mark', 'channel'],
+  jadeCane: ['pull'],
+  darkIron: ['still'],
+  mingSash: ['antidote', 'riposte'],
+  foxSaber: ['flank'],
+  frost: ['distill'],
+  blueEdge: ['exploit'],
+  ironFan: ['mark', 'overflow'],
+  silkWhip: ['pull', 'pin'],
+  travelBlade: ['arc'],
+  starSteel: ['line']
+};
+
+const COMBINATIONS = [
+  {
+    name: '拂花遞劍',
+    skills: ['huangPetals', 'signature:hero'],
+    weapons: ['jadeCane'],
+    text: '黃蓉與敵人之間留一空格，持青竹棒使拂花，把人拉近，逼他露出破綻。令狐沖進到兩格內接獨孤九劍，抓住破綻，多打 9 點原始傷害，這次交鋒也免受還擊。'
+  },
+  {
+    name: '前掌後刀',
+    skills: ['signature:guo'],
+    weapons: ['foxSaber'],
+    text: '郭靖和胡斐各站在敵人南北相鄰的一格。胡斐持胡家單刀先攻，夾擊多打 7 點，郭靖回 4 點內力。郭靖再出降龍十八掌，敵人的退路正被胡斐佔住，掌力再添 7 點。'
+  },
+  {
+    name: '飛針催毒',
+    skills: ['blackNeedle', 'pairedHands'],
+    weapons: ['frost'],
+    text: '任盈盈用黑血神針下毒。小龍女接左右互搏術，或由持寒潭短劍的令狐沖普攻，均可將未發的毒傷一次催出。當回合接上可多打 14 點原始傷害，雙劍也只催毒一次。'
+  },
+  {
+    name: '牽敵成列',
+    skills: ['sweepingWhip', 'signature:duan'],
+    weapons: ['silkWhip'],
+    text: '向問天隔一空格用長鞭破陣，將敵人拉進段譽與另一敵人所在的直線。任盈盈換錦紋軟鞭，也能普攻牽敵。段譽再出六脈神劍，主敵後兩格內若有敵人且通路無阻，劍氣便以四成半威力穿中一人。'
+  },
+  {
+    name: '一指續孤掌',
+    skills: ['signature:yang', 'yangFinger'],
+    weapons: ['ironFan'],
+    text: '楊過先出黯然銷魂掌，自耗 9 點氣血。讓已習一陽指的張無忌持鐵骨折扇，在三格內替他療傷兼回 6 點內力。多出的療量最多有 12 點化為一回合護盾，可留待敵方出招。'
+  },
+  {
+    name: '踏浪回陣',
+    skills: ['waterSkim', 'armyBookRally'],
+    weapons: ['wraps'],
+    text: '讓同伴施水上漂，落在郭靖旁的空格，兩人各得 8 點護盾。郭靖戴布纏護手，接武穆遺書・合陣。同伴受令後攻擊上升，並回 6 點內力。下一次受敵人直接攻擊而損血時，可按損血數返勁，最多 9 點。'
+  }
+];
+
+export { ART_FORMS, WEAPON_FORMS, COMBINATIONS };

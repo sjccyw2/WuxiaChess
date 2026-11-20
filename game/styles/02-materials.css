@@ -1,0 +1,99 @@
+/* Shared lacquer, paper and metalwork for the ferry, sealed lots and martial manual. */
+dialog:has(.run-view) {
+  width: min(960px, calc(100% - 32px));
+  max-height: min(91dvh, 920px);
+  border-color: #947b50;
+  background: linear-gradient(137deg, #1a2c2b 0%, #132423 48%, #111e20 100%);
+}
+dialog:has(.run-roll) {
+  width: min(767px, calc(100% - 32px));
+}
+.run-view {
+  --run-paper: #eee5ce;
+  --run-bronze: #d8b779;
+  --run-soft: #aebeb0;
+  --run-line: #3b5048;
+  color: #dde4d7;
+  overflow-wrap: anywhere;
+}
+.run-view h3,
+.run-view h4,
+.run-view h5 {
+  font-family: var(--serif);
+}
+.run-view h5 {
+  margin: 0;
+  font-weight: 700;
+}
+.run-view ul,
+.run-view ol,
+.run-view dl {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.run-view dd {
+  margin: 0;
+}
+.run-view button {
+  min-width: 0;
+}
+.run-view .modal-head {
+  margin-bottom: 15px;
+}
+.run-view .modal-title {
+  color: #d6b478;
+}
+.run-view .modal-title h2 {
+  color: var(--run-paper);
+}
+.run-view .gold-btn,
+.run-view .outline-btn {
+  min-height: 40px;
+}
+.run-view button:disabled {
+  opacity: 0.72;
+}
+.run-view .gold-btn:disabled {
+  opacity: 0.56;
+}
+.run-view .run-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  line-height: 1.45;
+  letter-spacing: 0.095em;
+  color: #dbc18d;
+}
+.run-coin {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  border: 1px solid #ddbd7f;
+  border-radius: 50%;
+  background: radial-gradient(circle, #b39560 0 52%, #755c3b 54% 69%, #c29e61 71%);
+  box-shadow: inset 0 0 0 1px #bfa16d;
+}
+.run-coin::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: #3e3c2f;
+  border: 1px solid #8c7243;
+}
+.run-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #5e6551;
+}
+.run-footer .gold-btn {
+  gap: 12px;
+  white-space: nowrap;
+}

@@ -1,0 +1,84 @@
+/* Upright phones keep all commands within thumb reach, under the unit strip. */
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  .battlefield {
+    --margin: 8px;
+    --dock-height: 119px;
+  }
+  .map-plaque {
+    min-height: 47px;
+    gap: 7px;
+    padding: 5px 8px;
+  }
+  .map-emblem {
+    display: none;
+  }
+  .map-title strong {
+    font-size: 17px;
+  }
+  .phase-readout {
+    padding-inline-start: 7px;
+  }
+  .hud-tools {
+    padding: 1px;
+  }
+  .hud-icon {
+    padding: 0 6px;
+  }
+  .field-dock {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+  }
+  .unit-dock {
+    justify-content: space-between;
+  }
+  .unit-card {
+    min-height: 54px;
+    padding: 3px 8px 3px 3px;
+    grid-template-columns: 40px minmax(102px, 1fr);
+    gap: 8px;
+  }
+  .unit-face {
+    width: 40px;
+    height: 45px;
+  }
+  .unit-name strong {
+    font-size: 16px;
+  }
+  .unit-summary {
+    gap: 2px;
+  }
+  .hud-tool {
+    min-width: 44px;
+    min-height: 45px;
+    font-size: 13px;
+  }
+  .command-dock {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(68px, 1.22fr);
+    padding: 3px;
+  }
+  .command-dock:has(> :only-child) {
+    grid-template-columns: 1fr;
+  }
+  .field-action {
+    min-width: 0;
+    min-height: 47px;
+    gap: 3px;
+    padding: 3px 2px;
+    font-size: 14px;
+  }
+  .field-action.turn-action {
+    min-width: 0;
+  }
+  .hud-flyout {
+    max-height: calc(100% - var(--top) - var(--bottom) - var(--dock-height) - 12px);
+  }
+  .menu-flyout {
+    max-height: calc(100% - var(--top) - var(--bottom) - 56px);
+  }
+  .view-flyout {
+    left: auto;
+    right: var(--right);
+  }
+}

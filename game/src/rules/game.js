@@ -1,0 +1,1552 @@
+import { ART_FORMS, WEAPON_FORMS } from '../data/form-catalog.js';
+import {
+  actionForms,
+  contactPlan,
+  forcedStep,
+  secondaryTargets,
+  supportEntry,
+  weaponFormText
+} from './form-rules.js';
+import { ENCOUNTERS, SIGNATURE_RULES, VILLAIN_FORMS } from '../data/encounters.js';
+import { NEW_HEROES } from '../data/new-heroes.js';
+import {
+  commandBonus,
+  effectsOf,
+  applyCondition,
+  CONDITION_NAMES,
+  progress
+} from './battle-mastery.js';
+import { FIELD_SIZE, fieldCells, mapLayout, validTile, tileInfo } from '../data/terrain.js';
+import { TECHNIQUES, WARES, CAPTAINS } from '../data/martial-arts.js';
+import { CHAMBER_TALES } from '../data/maze-tale.js';
+const SIZE = FIELD_SIZE;
+const FIELD_EDITION = 1;
+const LIMIT = 12;
+const ORIGINAL_PARTY = ['hero', 'medic', 'guard'];
+const PARTY = [...ORIGINAL_PARTY, 'guo', 'xiao', 'duan', ...Object.keys(NEW_HEROES)];
+const BOOKS = {
+  ...Object.fromEntries(Object.entries(NEW_HEROES).map(([id, h]) => [id, h.book])),
+  hero: '笑傲江湖',
+  medic: '笑傲江湖',
+  guard: '笑傲江湖',
+  guo: '射鵰英雄傳、神鵰俠侶',
+  xiao: '神鵰俠侶',
+  duan: '天龍八部'
+};
+const leader = (s) => s.leader || 'hero';
+const key = (x, y) => x + ',' + y;
+const distance = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+const living = (u) => u.hp > 0;
+const ally = (u) => u.side === 'ally';
+const at = (s, x, y) => s.units.find((u) => living(u) && u.x === x && u.y === y);
+const find = (s, id) =>
+  s.units.find((u) => u.id === id) || s.run?.bench?.find((u) => u.id === id);
+const party = (s) => s.units.filter(ally);
+const company = (s) => [...party(s), ...(s.run?.bench || [])];
+const commanderId = (s) => (s.run ? CAPTAINS[s.mapIndex][0] : 'chief');
+const enemies = (s) => s.units.filter((u) => !ally(u));
+const canAct = (s, u) =>
+  !!u &&
+  (!s.run?.scene || s.run.scene === 'fight') &&
+  s.phase === 'ally' &&
+  !s.result &&
+  ally(u) &&
+  living(u) &&
+  !u.acted &&
+  s.units.includes(u);
+const canPrepare = (s, u) =>
+  canAct(s, u) || (!!u && managesCompany(s) && ally(u) && company(s).includes(u));
+const managesCompany = (s) =>
+  s.run?.scene === 'prep' || (s.run?.scene === 'shop' && !s.run.last?.terminal);
+const valid = validTile;
+const terrainInfo = tileInfo;
+const terrain = (x, y, map = 0) => tileInfo(x, y, map)?.name;
+const cover = (x, y, map = 0) => (tileInfo(x, y, map)?.defense || 0) > 0;
+const walkable = (x, y, map = 0) => Number.isFinite(tileInfo(x, y, map)?.cost);
+
+const ITEMS = {
+  jadeCane: {
+    name: '青竹棒',
+    kind: 'weapon',
+    owner: 'huang',
+    atk: 5,
+    icon: 'sword',
+    desc: '竹節勻直，棒頭輕靈。'
+  },
+  darkIron: {
+    name: '玄鐵重劍',
+    kind: 'weapon',
+    owner: 'yang',
+    atk: 8,
+    icon: 'sword',
+    desc: '獨臂也能揮動的玄鐵劍，威勢沉雄。'
+  },
+  mingSash: {
+    name: '明教護腕',
+    kind: 'weapon',
+    owner: 'zhang',
+    atk: 4,
+    icon: 'hand',
+    desc: '厚布束腕，便於運轉掌力。'
+  },
+  foxSaber: {
+    name: '胡家單刀',
+    kind: 'weapon',
+    owner: 'hu',
+    atk: 6,
+    icon: 'sword',
+    desc: '關外長刀，利於翻腕連斬。'
+  },
+  ...WARES,
+  pine: {
+    name: '華山長劍',
+    kind: 'weapon',
+    icon: 'sword',
+    owner: 'hero',
+    atk: 4,
+    desc: '華山弟子所佩的長劍，劍鍔已被手掌磨亮。'
+  },
+  staff: {
+    name: '綠竹短簫',
+    kind: 'weapon',
+    icon: 'leaf',
+    owner: 'medic',
+    atk: 3,
+    desc: '盈盈珍藏的短簫，簫聲清越，適合調息。'
+  },
+  pole: {
+    name: '精鋼軟鞭',
+    kind: 'weapon',
+    icon: 'sword',
+    owner: 'guard',
+    atk: 4,
+    desc: '向問天的防身軟鞭，收放之間變化難測。'
+  },
+  wraps: {
+    name: '布纏護手',
+    kind: 'weapon',
+    icon: 'hand',
+    owner: 'guo',
+    atk: 3,
+    desc: '一雙護住指節的舊布纏，隨郭靖走過草原與中原。'
+  },
+  twins: {
+    name: '古墓雙劍',
+    kind: 'weapon',
+    icon: 'swords',
+    owner: 'xiao',
+    atk: 4,
+    desc: '輕靈的兩口長劍，可分使兩路劍招。'
+  },
+  fan: {
+    name: '大理摺扇',
+    kind: 'weapon',
+    icon: 'feather',
+    owner: 'duan',
+    atk: 2,
+    desc: '扇骨刻著山茶，持扇點指，進退從容。'
+  },
+  frost: {
+    name: '寒潭短劍',
+    kind: 'weapon',
+    icon: 'sword',
+    owner: 'hero',
+    atk: 7,
+    desc: '劍短而輕，鋒口泛著一線寒青。'
+  },
+  bracer: {
+    name: '玄鐵護腕',
+    kind: 'gear',
+    icon: 'shield',
+    def: 3,
+    desc: '皮革內縫有薄鐵片，能替佩者卸勁。'
+  },
+  jade: {
+    name: '青玉佩',
+    kind: 'gear',
+    icon: 'diamond',
+    power: 7,
+    desc: '溫玉貼身，能助運氣行功。'
+  },
+  remedy: {
+    name: '金創藥',
+    kind: 'use',
+    icon: 'bottle',
+    hp: 48,
+    desc: '為使用者回復 48 點氣血。每次用去一份。'
+  },
+  elixir: {
+    name: '回氣丹',
+    kind: 'use',
+    icon: 'drop',
+    mp: 30,
+    desc: '為使用者回復 30 點內力。每次用去一份。'
+  }
+};
+for (const [id, forms] of Object.entries(WEAPON_FORMS)) {
+  const item = ITEMS[id];
+  ITEMS[id] = { ...item, forms, desc: item.desc + ' ' + weaponFormText(forms) };
+}
+const TALENTS = {
+  force: { name: '淬鋒', icon: 'sword', desc: '每重提升 3 點攻擊。' },
+  guard: { name: '固本', icon: 'shield', desc: '每重提升 2 點防禦。' },
+  breath: { name: '凝氣', icon: 'drop', desc: '每重提升 5 點絕技威力，並減少 2 點內力消耗。' }
+};
+const DETAILS = {
+  ...NEW_HEROES,
+  hero: {
+    name: '令狐沖',
+    role: '劍客',
+    school: '華山派',
+    mini: 'hero',
+    portrait: 'hero',
+    epithet: '華山浪子',
+    bio: '華山派大弟子，生性灑脫而重情義。思過崖上得風清揚指點，以獨孤九劍擇人劍勢中的破綻。',
+    basic: '華山劍法',
+    skill: '獨孤九劍',
+    skillIcon: 'sword',
+    skillDesc: '看破劍勢，搶步直取破綻，可攻擊兩格內的一名敵人。',
+    skillRange: 2,
+    cost: 14
+  },
+  medic: {
+    name: '任盈盈',
+    role: '琴師',
+    school: '日月神教',
+    mini: 'medic',
+    portrait: 'medic',
+    epithet: '綠竹知音',
+    bio: '日月神教聖姑，精於琴簫。她在洛陽綠竹巷以琴音為令狐沖療傷，兩人由一卷曲譜結緣。',
+    basic: '日月短劍',
+    skill: '清心普善咒',
+    skillIcon: 'leaf',
+    skillDesc: '為三格內一位友軍回復氣血，也可為自己施術。',
+    skillRange: 3,
+    cost: 12
+  },
+  guard: {
+    name: '向問天',
+    role: '豪俠',
+    school: '日月神教',
+    mini: 'guard',
+    portrait: 'guard',
+    epithet: '天王老子',
+    bio: '人稱「天王老子」，是任我行的親信。他使鞭剛猛，曾與令狐沖並肩脫險，兩人從此肝膽相照。',
+    basic: '鐵鞭橫江',
+    skill: '吸功入地小法',
+    skillIcon: 'spark',
+    skillDesc: '借力卸勁，重擊相鄰敵人。餘勁波及目標身旁敵軍，本次交鋒免受反擊。',
+    skillRange: 1,
+    cost: 16
+  },
+  guo: {
+    name: '郭靖',
+    role: '掌俠',
+    school: '江南七怪門下',
+    mini: 'guo',
+    portrait: 'guo',
+    epithet: '大漠俠士',
+    bio: '自幼長於漠北，後隨洪七公修習掌法。一聲船家呼救，使他在霧裡改了行程。',
+    basic: '南山掌法',
+    skill: '降龍十八掌',
+    skillIcon: 'hand',
+    skillDesc: '使一招亢龍有悔。擊中兩格內敵人後，若身後地格空置，將其擊退一格再判定還擊。',
+    skillRange: 2,
+    cost: 17
+  },
+  xiao: {
+    name: '小龍女',
+    role: '雙劍',
+    school: '古墓派',
+    mini: 'xiao',
+    portrait: 'xiao',
+    epithet: '古墓清影',
+    bio: '古墓派傳人。習得左右互搏後，她能以雙手合使玉女素心劍法，一人分擔兩條劍路。',
+    basic: '玉女劍法',
+    skill: '玉女素心劍法',
+    skillIcon: 'swords',
+    skillDesc: '以雙劍各擊一次，每劍獨立扣除氣血。目標撐過兩劍才有機會還擊。',
+    skillRange: 1,
+    cost: 15
+  },
+  duan: {
+    name: '段譽',
+    role: '劍氣',
+    school: '大理段氏',
+    mini: 'duan',
+    portrait: 'duan',
+    epithet: '大理公子',
+    bio: '大理段氏子弟，擅凌波微步與六脈神劍。聽得江心一線簫聲，便踏上這趟稀奇的渡船。',
+    basic: '點指截脈',
+    skill: '六脈神劍',
+    skillIcon: 'spark',
+    skillDesc: '以指發出無形劍氣，可攻擊四格內敵人，並穿透一半防禦。',
+    skillRange: 4,
+    cost: 20
+  },
+  chief: {
+    name: '余滄海',
+    role: '掌門',
+    school: '青城派',
+    mini: 'chief',
+    portrait: 'chief',
+    epithet: '青城掌門',
+    bio: '青城派掌門，松風劍法陰狠凌厲。為奪辟邪劍譜不擇手段，聽聞洛陽有秘本流傳，親赴渡口截人。',
+    basic: '松風劍法'
+  },
+  blade: { name: '青城劍徒', role: '刀客', school: '青城派', mini: 'bandit', basic: '青城劍式' },
+  bow: { name: '青城弓手', role: '弓手', school: '青城派', mini: 'archer', basic: '穿林箭' },
+  scout: { name: '青城斥候', role: '弟子', school: '青城派', mini: 'bandit', basic: '快刀' }
+};
+for (const [index, [boss, second]] of ENCOUNTERS.entries()) {
+  const id = CAPTAINS[index][0];
+  DETAILS[id] = {
+    ...DETAILS[id],
+    ...boss,
+    role: index === 9 ? '終關首領' : '主將',
+    portraitFile: 'captain-' + index + '.webp',
+    rank: 'boss'
+  };
+  DETAILS['lieutenant-' + index] = {
+    ...second,
+    role: '副將',
+    portraitFile: 'lieutenant-' + index + '.webp',
+    rank: 'mini'
+  };
+}
+function identifyEncounter(s) {
+  if (!s.run) return;
+  const second = s.units.find((u) => u.id === 'blade' || u.id === 'echoBlade');
+  if (second) second.encounterId = 'lieutenant-' + s.mapIndex;
+}
+for (const id of ['blade', 'bow', 'scout']) DETAILS[id].portraitFile = 'npc-' + id + '.webp';
+function unitDetails(u) {
+  return DETAILS[u?.encounterId] || DETAILS[u?.id];
+}
+function enemyTechnique(u) {
+  const info = unitDetails(u);
+  if (!info?.rank) return null;
+  return {
+    name: info.skill,
+    factor: VILLAIN_FORMS[info.skill][0],
+    stroke: VILLAIN_FORMS[info.skill][1],
+    visual: info.visual,
+    tier: info.rank === 'boss' ? 4 : 3,
+    style: info.style,
+    family:
+      info.style === 'poison'
+        ? 'poison'
+        : info.style === 'weak' || info.style === 'exposed'
+          ? 'debuff'
+          : null,
+    note: SIGNATURE_RULES[info.style],
+    offset: info.rank === 'boss' ? 0 : 1
+  };
+}
+function roundsToSignature(s, u) {
+  const art = enemyTechnique(u);
+  if (!art) return null;
+  const first = art.offset > 0 || s.run?.stage >= 5 ? 2 : 3;
+  const next = Number.isInteger(u.signatureRound) ? u.signatureRound + 3 : first;
+  return Math.max(0, next - s.round);
+}
+DETAILS.echoBlade = {
+  portraitFile: 'npc-echoBlade.webp',
+  name: '執燈刀影',
+  role: '近衛',
+  school: '漏中軍',
+  mini: 'bandit',
+  basic: '分燈斬'
+};
+DETAILS.echoBow = {
+  portraitFile: 'npc-echoBow.webp',
+  name: '巡漏弓影',
+  role: '弓手',
+  school: '漏中軍',
+  mini: 'archer',
+  basic: '逐聲箭'
+};
+DETAILS.echoScout = {
+  portraitFile: 'npc-echoScout.webp',
+  name: '逆流斥候',
+  role: '遊騎',
+  school: '漏中軍',
+  mini: 'bandit',
+  basic: '掠影刀'
+};
+const STORIES = [
+  {
+    place: '洛陽 · 綠竹巷',
+    speaker: '令狐沖',
+    face: 'hero',
+    text: '我只道琴譜該由懂琴的人來看。偏偏這江湖上，看不懂的人，比誰都想搶到手。',
+    note: '令狐沖曾受曲洋、劉正風臨終所託，攜《笑傲江湖》曲譜尋覓知音。這一夕，綠竹巷外又來了不速之客。'
+  },
+  {
+    place: '竹渡 · 琴聲',
+    speaker: '任盈盈',
+    face: 'medic',
+    text: '你聽，渡口少了兩聲船篙，倒多了四個人的腳步。向叔叔，勞你把船家請到亭後。',
+    note: '秋雨剛停，任盈盈收起竹簫。向問天一拂衣袖，把纜繩從一名青城弟子的劍下奪了回來。'
+  },
+  {
+    place: '古亭 · 攔江',
+    speaker: '余滄海',
+    face: 'chief',
+    text: '琴譜也好，劍譜也罷。讓我翻過一遍，你們要往哪裡去，余某絕不攔阻。',
+    note: '余滄海認定譜中藏有辟邪劍法。令狐沖橫劍一笑，與兩名知己並肩立在石坪上。'
+  },
+  {
+    place: '渡口 · 曲終',
+    speaker: '任盈盈',
+    face: 'medic',
+    text: '這一頁，你方才連拿都拿反了。余掌門，天下若真有這般倒著練的劍法，又有誰敢教你呢？',
+    note: '風將末頁吹到余滄海腳邊。紙上只有工尺譜字，他盯了良久，終於拂袖領著弟子退去。'
+  },
+  {
+    place: '洛水 · 歸舟',
+    speaker: '令狐沖',
+    face: 'hero',
+    text: '盈盈，你來吹簫，我來划船。這回咱們走慢些，好好聽完這一支曲子。',
+    note: '向問天解纜，一葉小舟離開青竹渡。岸上的劍痕漸被雨水填平，江心那縷簫聲卻傳了很遠。'
+  }
+];
+
+const VOICES = {
+  ...Object.fromEntries(Object.entries(NEW_HEROES).map(([id, h]) => [id, h.voice])),
+  hero: '琴譜不是劍譜。想聽曲子，余掌門大可到船頭坐下；想搜身，還得問我這柄劍。',
+  medic: '這一頁寫的是吹簫的氣口。余掌門只知奪譜，連曲子從哪裡起都沒看清。',
+  guard: '一張紙，值得你把船家的活路都截了？今日這條纜繩，我偏要解。',
+  guo: '我不懂琴譜，卻看得出誰在欺負船家。想帶走這封譜，先叫你的弟子把劍收起來。',
+  xiao: '我只來聽簫。你們的劍太響，把曲子遮住了。',
+  duan: '若是劍譜，自該寫招式；這裡卻是工尺。余先生莫非還打算用松風劍法來奏曲？'
+};
+function chapterScenes(s) {
+  if (party(s).every((u) => ORIGINAL_PARTY.includes(u.id))) return STORIES;
+  const [a, b, c] = party(s);
+  return [
+    {
+      place: '洛水 · 霧合',
+      speaker: '任盈盈',
+      face: 'medic',
+      note: '一夜江霧，把不同年代的渡口接在了一起。綠竹巷失散的曲譜，偏偏落進這一葉小船。',
+      text: party(s).some((u) => u.id === 'medic')
+        ? '這是曲洋與劉正風留下的譜子。船家只管解纜，船頭由我們三人守著。'
+        : '這是曲洋與劉正風留下的譜子。勞三位護住船頭，我去扶船家解纜。'
+    },
+    {
+      place: '青竹渡 · 群俠',
+      speaker: DETAILS[b.id].name,
+      face: b.id,
+      note:
+        DETAILS[a.id].name +
+        '、' +
+        DETAILS[b.id].name +
+        '與' +
+        DETAILS[c.id].name +
+        '沿不同的江路踏上同一方石坪。霧外傳來青城派的喝聲。',
+      text: VOICES[b.id]
+    },
+    {
+      place: '古亭 · 攔江',
+      speaker: '余滄海',
+      face: 'chief',
+      note: '余滄海按劍而出。他只知有人攜著秘譜過江，這回連船舫都封了。',
+      text: '曲譜也好，劍譜也罷。留下讓我翻過一遍，這條水路便還給你們。'
+    },
+    {
+      place: '渡口 · 曲終',
+      speaker: DETAILS[c.id].name,
+      face: c.id,
+      note: '風將譜頁送到余滄海跟前。滿紙工尺字，他看了半晌，終究領著弟子退去。',
+      text: '劍已收了，這裡的事，就交還給江水吧。'
+    },
+    {
+      place: '洛水 · 分津',
+      speaker: DETAILS[a.id].name,
+      face: a.id,
+      note: '簫聲落定，四方的水路各自顯出。三位俠客記住了彼此的姓名，船燈一盞盞隱入晨霧。',
+      text: '同船一程，也算相識。青竹渡的這支曲子，來日再聽。'
+    }
+  ];
+}
+function makeUnit(id, side, x, y, hp, mp, atk, def, step, range, weapon = null) {
+  return {
+    id,
+    side,
+    x,
+    y,
+    hp,
+    maxHp: hp,
+    mp,
+    maxMp: mp,
+    atk,
+    def,
+    step,
+    range,
+    weapon,
+    gear: null,
+    level: 1,
+    xp: side === 'ally' ? 20 : 0,
+    sp: side === 'ally' ? 1 : 0,
+    talents: { force: 0, guard: 0, breath: 0 },
+    moved: false,
+    acted: false,
+    origin: null,
+    brace: false
+  };
+}
+const HERO_STATS = {
+  huang: [99, 70, 21, 9, 4, 2, 'jadeCane'],
+  yang: [137, 57, 26, 12, 4, 1, 'darkIron'],
+  zhang: [125, 78, 21, 14, 3, 1, 'mingSash'],
+  hu: [116, 61, 24, 9, 4, 1, 'foxSaber'],
+  hero: [120, 60, 25, 11, 3, 1, 'pine'],
+  medic: [92, 72, 19, 7, 3, 2, 'staff'],
+  guard: [142, 48, 24, 16, 3, 1, 'pole'],
+  guo: [136, 56, 26, 13, 3, 1, 'wraps'],
+  xiao: [103, 66, 24, 9, 4, 1, 'twins'],
+  duan: [95, 78, 20, 8, 4, 2, 'fan']
+};
+const startingHero = (id) => makeUnit(id, 'ally', 0, 0, ...HERO_STATS[id]);
+function newGame(ids = ORIGINAL_PARTY) {
+  if (ids.length !== 3 || new Set(ids).size !== 3 || !ids.every((id) => PARTY.includes(id)))
+    throw new Error('請選擇三位不同的俠客。');
+  const layout = mapLayout(0),
+    posts = layout.allies.map(({ x, y }) => [x, y]);
+  const foes = layout.enemies.map(({ x, y }) => [x, y]);
+  const s = {
+    version: 3,
+    fieldEdition: FIELD_EDITION,
+    leader: ids[0],
+    round: 1,
+    phase: 'ally',
+    result: null,
+    reason: '',
+    selected: ids[0],
+    foreshadow: false,
+    stock: { frost: 1, bracer: 1, jade: 1, remedy: 3, elixir: 2, pine: 0, staff: 0, pole: 0 },
+    logs: [],
+    stats: { damage: 0, healed: 0, kills: 0 },
+    units: [
+      ...ids.map((id, index) => makeUnit(id, 'ally', ...posts[index], ...HERO_STATS[id])),
+      makeUnit('chief', 'enemy', ...foes[0], 104, 0, 25, 12, 2, 1),
+      makeUnit('blade', 'enemy', ...foes[1], 56, 0, 20, 7, 2, 1),
+      makeUnit('bow', 'enemy', ...foes[2], 48, 0, 18, 5, 2, 3),
+      makeUnit('scout', 'enemy', ...foes[3], 56, 0, 19, 8, 3, 1)
+    ]
+  };
+  log(s, 'story', '與同伴會合，接下護譜之託。', DETAILS[ids[0]].name);
+  log(s, 'story', '率青城門人封鎖了渡口。', '余滄海');
+  log(s, 'system', '三位俠客已就位。', '我方回合');
+  return s;
+}
+// Reserve all legal positions before moving anyone off a former stretch of shore.
+function fitFormation(units, map = 0, inset = 0) {
+  const shift = (p) => ({ x: p.x + inset, y: p.y + inset });
+  const placed = units.map((u) => ({
+    ...u,
+    ...shift(u),
+    origin: u.origin ? shift(u.origin) : null
+  }));
+  const legal = (p) => walkable(p.x, p.y, map);
+  const occupied = new Set(placed.filter((u) => living(u) && legal(u)).map((u) => key(u.x, u.y)));
+  for (const u of placed)
+    if (living(u) && u.origin && legal(u.origin)) occupied.add(key(u.origin.x, u.origin.y));
+  function nearest(p) {
+    let best = null;
+    for (const tile of fieldCells(map)) {
+      if (!legal(tile) || occupied.has(key(tile.x, tile.y))) continue;
+      if (!best || distance(tile, p) < distance(best, p)) best = tile;
+    }
+    return { x: best.x, y: best.y };
+  }
+  for (const u of placed) {
+    if (!legal(u)) {
+      Object.assign(u, nearest(u));
+      if (living(u)) occupied.add(key(u.x, u.y));
+    }
+    if (u.route?.some((p) => !legal(p))) delete u.route;
+  }
+  for (const u of placed)
+    if (u.origin && !legal(u.origin)) {
+      u.origin = nearest(u.origin);
+      occupied.add(key(u.origin.x, u.origin.y));
+      delete u.route;
+    }
+  return placed;
+}
+function restoreGame(s) {
+  if (
+    !s ||
+    ![1, 2, 3].includes(s.version) ||
+    !Number.isInteger(s.round) ||
+    s.round < 1 ||
+    s.round > LIMIT ||
+    !['ally', 'enemy', 'done'].includes(s.phase) ||
+    !Array.isArray(s.units) ||
+    s.units.length !== 7 ||
+    !s.units.every((u) => u && typeof u === 'object') ||
+    !s.stock ||
+    !s.stats ||
+    !Array.isArray(s.logs)
+  )
+    return null;
+  const ids = party(s).map((u) => u.id);
+  if (
+    ids.length !== 3 ||
+    new Set(ids).size !== 3 ||
+    !ids.every((id) => PARTY.includes(id)) ||
+    !ids.includes(s.selected) ||
+    !ids.includes(leader(s)) ||
+    !['chief', 'blade', 'bow', 'scout'].every((id) => find(s, id)?.side === 'enemy')
+  )
+    return null;
+  const legacyWidth = s.version < 3 ? 7 : SIZE;
+  const legalPosition = (p) =>
+    Number.isInteger(p.x) &&
+    Number.isInteger(p.y) &&
+    p.x >= 0 &&
+    p.y >= 0 &&
+    p.x < legacyWidth &&
+    p.y < legacyWidth &&
+    (s.version < 3 || walkable(p.x, p.y) || (!s.fieldEdition && !valid(p.x, p.y)));
+  if (
+    !s.units.every(
+      (u) =>
+        DETAILS[u.id] &&
+        legalPosition(u) &&
+        (!u.origin || legalPosition(u.origin)) &&
+        Number.isFinite(u.hp) &&
+        u.maxHp > 0 &&
+        u.talents &&
+        Number.isSafeInteger(u.xp) &&
+        u.xp >= 0
+    )
+  )
+    return null;
+  for (const u of party(s)) settleExperience(s, u);
+  return {
+    ...s,
+    version: 3,
+    leader: leader(s),
+    fieldEdition: FIELD_EDITION,
+    units:
+      s.version < 3 || !s.fieldEdition
+        ? fitFormation(s.units, 0, s.version < 3 ? (SIZE - 7) / 2 : 0)
+        : s.units
+  };
+}
+function log(s, type, text, who = '') {
+  s.logs.push({ round: s.round, phase: s.phase, type, text, who });
+  if (s.logs.length > 250) s.logs.shift();
+}
+function stat(u, k, s) {
+  const items = [ITEMS[u.weapon], ITEMS[u.gear]].filter(Boolean);
+  const talent =
+    k === 'atk'
+      ? u.talents.force * 3
+      : k === 'def'
+        ? u.talents.guard * 2
+        : k === 'power'
+          ? u.talents.breath * 5
+          : 0;
+  const c = u.conditions || {};
+  const modifier =
+    k === 'atk'
+      ? (c.rally?.power || 0) - (c.weak?.power || 0)
+      : k === 'def'
+        ? -(c.exposed?.power || 0)
+        : k === 'step'
+          ? (c.haste?.power || 0) - (c.pin?.power || 0)
+          : 0;
+  return Math.max(
+    k === 'step' && c.pin ? 1 : 0,
+    (u[k] || 0) +
+      talent +
+      items.reduce((sum, item) => sum + (item[k] || 0), 0) +
+      modifier +
+      commandBonus(s, u, k)
+  );
+}
+const SIGNATURE_RULES_BY_HERO = {
+  hero: { factor: 1.82 },
+  medic: { heal: 39 },
+  guard: { factor: 1.42, splash: 0.45, safe: true },
+  guo: { factor: 1.74, push: true },
+  xiao: { factor: 1.44, hits: [0.65, 0.65] },
+  duan: { factor: 1.62, pierce: 0.5 },
+  huang: { factor: 1.36, visual: 'guard', safe: true, debuff: { stat: 'atk', power: 4, turns: 2 } },
+  yang: { factor: 2.04, visual: 'guo', hpCost: 9 },
+  zhang: { visual: 'medic', shield: { power: 32, turns: 2 }, target: 'ally' },
+  hu: { factor: 1.27, visual: 'xiao', hits: [0.68, 0.68] }
+};
+function artFor(u, key = u.activeArt || 'signature') {
+  if (u.learned?.includes(key) && TECHNIQUES[key]) return TECHNIQUES[key];
+  const info = unitDetails(u);
+  return {
+    name: info.skill,
+    tier: 3,
+    desc: info.skillDesc,
+    icon: info.skillIcon,
+    range: info.skillRange,
+    mp: info.cost,
+    visual: u.id,
+    forms: ART_FORMS['signature:' + u.id] || [],
+    ...SIGNATURE_RULES_BY_HERO[u.id]
+  };
+}
+function rangeFor(u, skill) {
+  return skill ? artFor(u).range : u.range;
+}
+const commandDiscount = (s, u) => commandBonus(s, u, 'economy');
+function cost(u, s, id = u.activeArt || 'signature') {
+  return artCost(s, u, artFor(u, id));
+}
+function artCost(s, u, art) {
+  return Math.max(2, (art.mp || 0) - 2 * u.talents.breath - commandDiscount(s, u));
+}
+function basicFor(u) {
+  const upgrade = u.learned?.map((id) => TECHNIQUES[id]).find((a) => a?.kind === 'basic');
+  return upgrade || { name: unitDetails(u).basic, basicBonus: 0 };
+}
+function equippedArts(u) {
+  return u.slots ? u.slots.filter(Boolean) : [u.activeArt || 'signature'];
+}
+function targetType(art) {
+  return art.target || (art.heal ? 'ally' : 'enemy');
+}
+function canPay(s, u, id = u.activeArt || 'signature') {
+  return (
+    equippedArts(u).includes(id) && u.mp >= cost(u, s, id) && u.hp > (artFor(u, id).hpCost || 0)
+  );
+}
+const isSupport = (art) => ['ally', 'self'].includes(targetType(art));
+function canConfigure(s, u) {
+  return !s.run
+    ? canAct(s, u)
+    : (managesCompany(s) && company(s).includes(u)) ||
+        (s.run.status === 'battle' && s.run.formationOpen && canAct(s, u));
+}
+
+const adjacent = [
+  [1, 0],
+  [0, 1],
+  [-1, 0],
+  [0, -1]
+];
+// Shortest paths are weighted by the terrain entered. A reverse search from
+// attack positions also lets the enemy approach around an obstruction.
+function movementField(s, u, origins, limit = Infinity, reverse = false) {
+  const costs = new Map(),
+    parents = new Map(),
+    queue = [];
+  for (const p of origins) {
+    costs.set(key(p.x, p.y), 0);
+    queue.push({ x: p.x, y: p.y, n: 0 });
+  }
+  for (const p of queue) {
+    if (p.n !== costs.get(key(p.x, p.y))) continue;
+    for (const [dx, dy] of adjacent) {
+      const x = p.x + dx,
+        y = p.y + dy,
+        k = key(x, y);
+      if (!walkable(x, y, s.mapIndex)) continue;
+      const n =
+        p.n + (reverse ? tileInfo(p.x, p.y, s.mapIndex).cost : tileInfo(x, y, s.mapIndex).cost);
+      if (n > limit || n >= (costs.get(k) ?? Infinity)) continue;
+      const occupant = at(s, x, y);
+      if (occupant && occupant.side !== u.side) continue;
+      costs.set(k, n);
+      parents.set(k, { x: p.x, y: p.y });
+      queue.push({ x, y, n });
+    }
+  }
+  return { costs, parents };
+}
+function availableField(s, u) {
+  const field = movementField(s, u, [u], stat(u, 'step', s));
+  for (const v of s.units.filter(living)) field.costs.delete(key(v.x, v.y));
+  return field;
+}
+function reachable(s, u) {
+  return availableField(s, u).costs;
+}
+function tracePath({ parents, costs }, to) {
+  if (!costs.has(key(to.x, to.y))) return [];
+  const path = [];
+  for (let p = { x: to.x, y: to.y }; p; p = parents.get(key(p.x, p.y))) path.push(p);
+  return path.reverse();
+}
+function movementPath(s, u, from, to) {
+  return tracePath(movementField(s, u, [from]), to);
+}
+function routeConnects(path, from, to, map = 0) {
+  return (
+    Array.isArray(path) &&
+    path.length >= 2 &&
+    path.length <= fieldCells(map).length &&
+    path.every((p, i) => p && walkable(p.x, p.y, map) && (!i || distance(path[i - 1], p) === 1)) &&
+    distance(path[0], from) === 0 &&
+    distance(path.at(-1), to) === 0
+  );
+}
+function followRoute(u, path) {
+  // Keep the committed route for playback and for an exact retreat, even after a save.
+  u.route = path;
+  const end = path.at(-1);
+  u.x = end.x;
+  u.y = end.y;
+}
+function move(s, u, x, y) {
+  if (!canAct(s, u) || u.moved || !valid(x, y, s.mapIndex)) return false;
+  const path = tracePath(availableField(s, u), { x, y });
+  if (path.length < 2) return false;
+  if (s.run) s.run.formationOpen = false;
+  u.origin = { x: u.x, y: u.y };
+  followRoute(u, path);
+  u.moved = true;
+  log(
+    s,
+    'move',
+    '移至' + terrain(x, y, s.mapIndex) + '（' + (x + 1) + '，' + (y + 1) + '）。',
+    unitDetails(u).name
+  );
+  return true;
+}
+function undo(s, u) {
+  if (!canAct(s, u) || !u.moved || !u.origin || at(s, u.origin.x, u.origin.y)) return false;
+  // A companion's palm strike can push an enemy into a previously clear retreat.
+  const clear =
+    routeConnects(u.route, u.origin, u, s.mapIndex) &&
+    u.route.every((p) => {
+      const occupant = at(s, p.x, p.y);
+      return !occupant || occupant.side === u.side;
+    });
+  const path = clear ? u.route.slice().reverse() : movementPath(s, u, u, u.origin);
+  if (path.length < 2) return false;
+  followRoute(u, path);
+  u.origin = null;
+  u.moved = false;
+  if (s.run && s.round === 1 && party(s).every((v) => !v.moved && !v.acted))
+    s.run.formationOpen = true;
+  log(s, 'move', '撤回移動，重整步法。', unitDetails(u).name);
+  return true;
+}
+function affectedFriends(s, caster, target, art) {
+  if (!art.aura) return [target];
+  return party(s).filter((v) => living(v) && distance(v, target) <= art.aura);
+}
+function targetOK(s, u, t, skill) {
+  if (!canAct(s, u) || !t || !valid(t.x, t.y, s.mapIndex) || distance(u, t) > rangeFor(u, skill))
+    return false;
+  if (t.id && !s.units.includes(t)) return false;
+  if (!skill) return !!t.id && living(t) && !ally(t);
+  if (!canPay(s, u)) return false;
+  const art = artFor(u),
+    type = targetType(art);
+  if (type === 'ground') return !t.id && walkable(t.x, t.y, s.mapIndex) && !at(s, t.x, t.y);
+  if (!t.id || !living(t)) return false;
+  if (type === 'enemy') return !ally(t);
+  if (!ally(t) || (type === 'self' && t.id !== u.id)) return false;
+  if (effectsOf(art).length) return true;
+  const forms = formsFor(u, art);
+  if (forms.includes('riposte')) return true;
+  const power = art.heal ? healingPower(u, s, art) : 0;
+  return affectedFriends(s, u, t, art).some((v) => {
+    const entry = supportEntry(forms, u, v, power);
+    return entry.amount || entry.mp || entry.clean.length || entry.overflow;
+  });
+}
+function attackPower(s, u, art, basic = basicFor(u), target = null) {
+  const base = art
+    ? stat(u, 'power', s) + 4
+    : (basic.basicBonus || 0) + commandBonus(s, u, 'basic');
+  const pursuit = target && target.hp <= target.maxHp / 2 ? commandBonus(s, u, 'pursuit') : 0;
+  return stat(u, 'atk', s) * (art ? (art.factor ?? 1.5) : 1) + base + pursuit;
+}
+function damage(
+  u,
+  t,
+  skill = false,
+  map = 0,
+  s,
+  art = skill ? artFor(u) : null,
+  basic = basicFor(u)
+) {
+  const protection = stat(t, 'def', s) + tileInfo(t.x, t.y, map).defense + (t.brace ? 4 : 0);
+  const pierce = art ? art.pierce || 0 : commandBonus(s, u, 'pierce') / 100;
+  return Math.max(
+    3,
+    Math.round(attackPower(s, u, art, basic, t) - protection * 0.65 * (1 - pierce))
+  );
+}
+function healingPower(u, s, art) {
+  return (art.heal || 35) + stat(u, 'power', s) + (u.level - 1) * 4;
+}
+function healing(u, t, s, art = artFor(u)) {
+  return Math.min(t.maxHp - t.hp, healingPower(u, s, art));
+}
+function formsFor(u, art, basic = basicFor(u)) {
+  return actionForms(ITEMS[u.weapon], art, basic);
+}
+function pushCell(s, u, t, art = artFor(u)) {
+  return forcedStep(s, u, t, art, formsFor(u, art), walkable);
+}
+function wardEscorts(s) {
+  if (s?.mapIndex !== 9) return [];
+  return s.units.filter((u) => (u.id === 'echoBow' || u.id === 'echoScout') && living(u));
+}
+const wardPercent = (s, target) => (target.id === 'murong' ? wardEscorts(s).length * 35 : 0);
+const afterWard = (power, percent) =>
+  percent ? Math.max(1, Math.round((power * (100 - percent)) / 100)) : power;
+function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicFor(u)) {
+  const type = art ? targetType(art) : 'enemy';
+  const support = type === 'self' || type === 'ally',
+    heal = support && !!art.heal;
+  const ward = t.id ? wardPercent(s, t) : 0;
+  const result = {
+    type,
+    support,
+    heal,
+    ward,
+    amount: 0,
+    counter: 0,
+    counterRaw: 0,
+    hits: [],
+    rawHits: [],
+    push: null,
+    shielded: 0,
+    recipients: [],
+    splash: [],
+    effects: effectsOf(art),
+    hpCost: art?.hpCost || 0,
+    forms: formsFor(u, art, basic),
+    notes: [],
+    landing: [],
+    selfHeal: 0,
+    reflected: 0
+  };
+  if (type === 'ground') {
+    if (s && result.forms.includes('landing')) {
+      result.landing = party(s)
+        .filter((v) => living(v) && (v === u || distance(t, v) <= 1))
+        .map((v) => v.id);
+      result.notes.push(
+        '落步成陣 · ' +
+          result.landing.map((id) => unitDetails(find(s, id)).name).join('、') +
+          ' 得 8 護盾'
+      );
+    }
+    return result;
+  }
+  if (support) {
+    const friends = s ? affectedFriends(s, u, t, art) : [t];
+    const power = heal ? healingPower(u, s, art) : 0;
+    result.recipients = friends.map((v) => supportEntry(result.forms, u, v, power));
+    if (result.forms.includes('riposte'))
+      result.effects.push({ kind: 'riposte', power: 9, turns: 1 });
+    for (const entry of result.recipients) {
+      const name = unitDetails(friends.find((v) => v.id === entry.id)).name;
+      if (entry.clean.length)
+        result.notes.push(name + '解去' + entry.clean.map((k) => CONDITION_NAMES[k]).join('、'));
+      if (entry.mp) result.notes.push(name + '內力 ＋' + entry.mp);
+      if (entry.overflow) result.notes.push(name + '餘氣護盾 ' + entry.overflow);
+    }
+    result.amount = result.recipients.find((entry) => entry.id === t.id)?.amount || 0;
+    return result;
+  }
+  const single = damage(u, t, skill, s?.mapIndex, s, art, basic);
+  const step = forcedStep(s, u, t, art, result.forms, walkable);
+  const plan = contactPlan(s, u, t, art, result.forms, step, unitDetails(t)?.rank === 'boss');
+  result.plan = plan;
+  result.notes = plan.notes;
+  result.effects.push(...plan.effects);
+  const baseHits = (art?.hits || [1]).map(
+    (part, i) => Math.round(single * part) + (i === 0 ? plan.extra : 0)
+  );
+  result.rawHits = baseHits.map((hit) => afterWard(hit, ward));
+  let shield = t.conditions?.shield?.power || 0;
+  result.hits = result.rawHits.map((hit) => {
+    const stopped = Math.min(hit, shield);
+    shield -= stopped;
+    result.shielded += stopped;
+    return hit - stopped;
+  });
+  result.amount = result.hits.reduce((sum, n) => sum + n, 0);
+  result.push = t.hp > result.amount ? step : null;
+  if (plan.partnerMp)
+    result.notes.push(unitDetails(find(s, plan.partner)).name + '內力 ＋' + plan.partnerMp);
+  if (plan.clearPoison) result.notes.push('以毒解毒 · 解除自身中毒');
+  if (result.forms.includes('leech')) {
+    result.selfHeal = Math.min(
+      9,
+      Math.floor(Math.min(t.hp, result.amount) / 4),
+      u.maxHp - u.hp + result.hpCost
+    );
+    if (result.selfHeal) result.notes.push('回生 · 自身氣血 ＋' + result.selfHeal);
+  }
+  if (!plan.safe && t.hp > result.amount && distance(u, result.push || t) <= t.range) {
+    const reply =
+      art?.debuff?.stat === 'atk'
+        ? {
+            ...t,
+            conditions: {
+              ...t.conditions,
+              weak: { power: Math.max(t.conditions?.weak?.power || 0, art.debuff.power) }
+            }
+          }
+        : t;
+    result.counterRaw = Math.max(2, Math.round(damage(reply, u, false, s?.mapIndex, s) * 0.55));
+    result.counter = Math.max(0, result.counterRaw - (u.conditions?.shield?.power || 0));
+  }
+  if (s && (art?.splash || result.forms.includes('line') || result.forms.includes('arc'))) {
+    const targets = secondaryTargets(s, u, t, result.push || t, art, result.forms, walkable);
+    const guards = new Set(wardEscorts(s).map((v) => v.id));
+    if (result.amount >= t.hp) guards.delete(t.id);
+    const power = baseHits.reduce((a, b) => a + b, 0);
+    for (const [v, ratio] of targets) {
+      const raw = afterWard(
+        Math.max(4, Math.round(power * ratio)),
+        v.id === 'murong' ? guards.size * 35 : 0
+      );
+      const amount = Math.min(v.hp, Math.max(0, raw - (v.conditions?.shield?.power || 0)));
+      if (amount >= v.hp) guards.delete(v.id);
+      result.splash.push({ id: v.id, raw, amount });
+    }
+  }
+  if (
+    u.conditions?.riposte &&
+    result.counter > 0 &&
+    u.hp - result.hpCost + result.selfHeal > result.counter
+  ) {
+    const guards = wardEscorts(s).filter(
+      (g) => !result.splash.some((hit) => hit.id === g.id && hit.amount >= g.hp)
+    );
+    const raw = afterWard(
+      Math.min(u.conditions.riposte.power, result.counter),
+      t.id === 'murong' ? guards.length * 35 : 0
+    );
+    result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
+    result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
+  }
+  return result;
+}
+function raiseLevel(u, levels) {
+  const novice = Math.min(levels, Math.max(0, 3 - u.level));
+  const veteran = levels - novice;
+  const vitality = 12 * novice + 8 * veteran;
+  u.level += levels;
+  u.atk += 3 * novice + 2 * veteran;
+  u.def += 2 * novice + veteran;
+  u.maxHp += vitality;
+  if (living(u)) u.hp = Math.min(u.maxHp, u.hp + vitality);
+  u.maxMp += 6 * levels;
+  u.mp = Math.min(u.maxMp, u.mp + 6 * levels);
+}
+function settleExperience(s, u) {
+  if (!Number.isSafeInteger(u.xp) || u.xp < 100) return false;
+  const levels = Math.floor(u.xp / 100);
+  u.xp %= 100;
+  u.sp += levels;
+  raiseLevel(u, levels);
+  log(s, 'grow', '升至等級 ' + u.level + '，獲得 ' + levels + ' 點武學點數。', unitDetails(u).name);
+  return true;
+}
+function exp(s, u, n) {
+  if (!Number.isSafeInteger(n) || n < 0) return false;
+  n = Math.round((n * 100) / (100 + 38 * Math.max(0, u.level - 3)));
+  u.xp += n;
+  log(s, 'grow', '獲得 ' + n + ' 點歷練。', unitDetails(u).name);
+  return settleExperience(s, u);
+}
+function wound(s, u, n, source) {
+  if (!living(u)) return 0;
+  const shield = u.conditions?.shield;
+  if (shield) {
+    const absorbed = Math.min(shield.power, n);
+    n -= absorbed;
+    shield.power -= absorbed;
+    if (!shield.power) delete u.conditions.shield;
+  }
+  const d = Math.min(n, u.hp);
+  u.hp -= d;
+  if (!living(u)) delete u.conditions;
+  if (!ally(u)) {
+    s.stats.damage += d;
+    if (!living(u)) {
+      s.stats.kills++;
+      progress(source, 'kills', 1);
+      if (s.mapIndex === 9 && (u.id === 'echoBow' || u.id === 'echoScout')) {
+        const left = wardEscorts(s).length;
+        log(
+          s,
+          'combat',
+          left ? '一條星索斷了。慕容博的護勁降至三成半。' : '兩條星索皆斷，慕容博的護陣已破。',
+          '星漏護陣'
+        );
+      }
+    }
+  }
+  return d;
+}
+function objectiveTile(s) {
+  return ['beacon', 'cache', 'herbs'].includes(s.run?.goal)
+    ? s.run.objectivePos || mapLayout(s.mapIndex).objective
+    : null;
+}
+function unclaimedObjectiveTile(s) {
+  return s.run?.status === 'battle' && !s.run.marked ? objectiveTile(s) : null;
+}
+function holdObjective(s, u) {
+  const marker = unclaimedObjectiveTile(s);
+  if (marker && ally(u) && living(u) && distance(u, marker) === 0) {
+    s.run.marked = true;
+    const discoveries = {
+      beacon: '點亮了迴漏陣的引路燈',
+      herbs: '循燈找到傷者，將他送上渡船',
+      cache: '在燈下尋回一枚落水的姓名籤'
+    };
+    log(s, 'story', discoveries[s.run.goal] + '，船上傳來三聲槳響。', unitDetails(u).name);
+  }
+}
+function commitSteps(u) {
+  if (u.moved && u.origin && u.route?.length) progress(u, 'steps', u.route.length - 1);
+  u.origin = null;
+}
+function finishAction(s, u) {
+  if (s.run) s.run.formationOpen = false;
+  holdObjective(s, u);
+  commitSteps(u);
+  u.acted = true;
+}
+function putEffects(s, caster, target, specs, effects) {
+  for (const effect of specs) {
+    applyCondition(s, target, effect, caster);
+    effects.push([target.id, CONDITION_NAMES[effect.kind], 'status']);
+    log(
+      s,
+      'combat',
+      '獲得「' + CONDITION_NAMES[effect.kind] + '」' + effect.turns + ' 回合。',
+      unitDetails(target).name
+    );
+  }
+}
+function reflectStrike(s, victim, attacker, dealt, effects) {
+  const stance = victim.conditions?.riposte;
+  if (!stance || !dealt || !living(victim) || !living(attacker)) return;
+  delete victim.conditions.riposte;
+  const source = find(s, stance.source) || victim;
+  const amount = wound(
+    s,
+    attacker,
+    afterWard(Math.min(stance.power, dealt), wardPercent(s, attacker)),
+    source
+  );
+  effects.push([attacker.id, '−' + amount]);
+  log(
+    s,
+    'combat',
+    '借勁反震' + unitDetails(attacker).name + '，造成 ' + amount + ' 點傷害。',
+    unitDetails(victim).name
+  );
+}
+function restoreHealth(s, caster, target, n, effects) {
+  if (!n) return;
+  target.hp += n;
+  s.stats.healed += n;
+  progress(caster, 'heals', n);
+  effects.push([target.id, '+' + n]);
+  log(s, 'combat', '回復 ' + n + ' 點氣血。', unitDetails(target).name);
+}
+function resolve(s, u, t, skill) {
+  if (!targetOK(s, u, t, skill)) return null;
+  const f = forecast(u, t, skill, s),
+    art = skill ? artFor(u) : null;
+  const verb = art?.name || basicFor(u).name,
+    who = unitDetails(u).name;
+  const effects = [],
+    oldKills = s.stats.kills,
+    from = { x: u.x, y: u.y };
+  if (skill) {
+    u.mp -= cost(u, s);
+    progress(u, 'casts', 1);
+  }
+  if (f.hpCost) {
+    u.hp -= f.hpCost;
+    effects.push([u.id, '−' + f.hpCost, 'sacrifice']);
+  }
+  // Ordinary movement is counted once when confirmed. Lightness skills move instantaneously.
+  if (f.type === 'ground') {
+    commitSteps(u);
+    u.x = t.x;
+    u.y = t.y;
+    u.moved = true;
+    delete u.route;
+    u.blinkSerial = (u.blinkSerial || 0) + 1;
+    log(
+      s,
+      'move',
+      '施展「' + verb + '」移至第 ' + (t.x + 1) + ' 列、第 ' + (t.y + 1) + ' 行。',
+      who
+    );
+  }
+  for (const id of f.landing) {
+    putEffects(s, u, find(s, id), [{ kind: 'shield', power: 8, turns: 1 }], effects);
+    progress(u, 'protects', 1);
+  }
+  if (f.support) {
+    log(s, 'combat', '施展「' + verb + '」。', who);
+    for (const entry of f.recipients) {
+      const v = find(s, entry.id);
+      for (const k of entry.clean) delete v.conditions[k];
+      v.mp += entry.mp;
+      restoreHealth(s, u, v, entry.amount, effects);
+      if (entry.overflow)
+        putEffects(s, u, v, [{ kind: 'shield', power: entry.overflow, turns: 1 }], effects);
+      const shields = entry.overflow || f.effects.some((e) => e.kind === 'shield');
+      if (shields || (v !== u && (f.effects.length || entry.clean.length)))
+        progress(u, 'protects', 1);
+      putEffects(s, u, v, f.effects, effects);
+    }
+  } else if (f.type === 'enemy') {
+    let total = 0;
+    for (const power of f.rawHits) {
+      if (!living(t)) break;
+      const dealt = wound(s, t, power, u);
+      total += dealt;
+      effects.push([t.id, '−' + dealt]);
+    }
+    log(
+      s,
+      'combat',
+      '以「' + verb + '」擊中' + unitDetails(t).name + '，造成 ' + total + ' 點傷害。',
+      who
+    );
+    if (living(t)) {
+      if (f.plan.spentMark) delete t.conditions.mark;
+      if (f.plan.spentPoison) delete t.conditions.poison;
+      if (f.effects.some((e) => e.kind === 'seal')) t.lastSealRound = s.round;
+      putEffects(s, u, t, f.effects, effects);
+    } else log(s, 'combat', '失去戰力。', unitDetails(t).name);
+    if (f.plan.partnerMp) find(s, f.plan.partner).mp += f.plan.partnerMp;
+    if (f.plan.clearPoison) delete u.conditions.poison;
+    restoreHealth(s, u, u, f.selfHeal, effects);
+    if (f.push) {
+      followRoute(t, [{ x: t.x, y: t.y }, f.push]);
+      log(s, 'move', art?.push ? '被掌力震退一格。' : '被牽近一格。', unitDetails(t).name);
+    }
+    if (art?.recover) u.mp = Math.min(u.maxMp, u.mp + art.recover);
+    for (const other of f.splash) {
+      const v = find(s, other.id),
+        dealt = wound(s, v, other.raw, u);
+      effects.push([v.id, '−' + dealt]);
+      log(s, 'combat', '受到氣勁波及，損失 ' + dealt + ' 點氣血。', unitDetails(v).name);
+    }
+    if (f.counterRaw) {
+      const dealt = wound(s, u, f.counterRaw, t);
+      effects.push([u.id, '−' + dealt, 'counter']);
+      log(s, 'combat', '還擊' + who + '，造成 ' + dealt + ' 點傷害。', unitDetails(t).name);
+      reflectStrike(s, u, t, dealt, effects);
+    }
+  }
+  finishAction(s, u);
+  if (f.notes.length) log(s, 'combat', '氣勁變化。' + f.notes.join('。'), who);
+  const leveled = living(u) && exp(s, u, (skill ? 44 : 36) + (s.stats.kills - oldKills) * 30);
+  check(s);
+  return { effects, leveled, counter: f.counterRaw > 0, hits: f.hits.length, from };
+}
+function waitUnit(s, u) {
+  if (!canAct(s, u)) return false;
+  u.brace = true;
+  finishAction(s, u);
+  log(s, 'combat', '凝神待命，防禦暫時提升 4 點。', unitDetails(u).name);
+  return true;
+}
+function canUseMedicine(s, u) {
+  if (!u || !ally(u)) return false;
+  if (managesCompany(s)) return company(s).includes(u);
+  return (
+    (!s.run?.scene || s.run.scene === 'fight') &&
+    !s.result &&
+    s.phase === 'ally' &&
+    living(u) &&
+    s.units.includes(u)
+  );
+}
+function consume(s, u, id) {
+  const item = ITEMS[id];
+  if (item?.kind !== 'use' || !canUseMedicine(s, u) || !(s.stock[id] > 0)) return false;
+  const k = item.hp ? 'hp' : 'mp',
+    cap = k === 'hp' ? 'maxHp' : 'maxMp',
+    n = Math.min(item[k], u[cap] - u[k]);
+  if (n <= 0) return false;
+  u[k] += n;
+  s.stock[id]--;
+  if (k === 'hp') s.stats.healed += n;
+  log(
+    s,
+    'item',
+    '服用' + item.name + '，回復 ' + n + ' 點' + (k === 'hp' ? '氣血' : '內力') + '。',
+    unitDetails(u).name
+  );
+  return true;
+}
+function equip(s, u, id) {
+  const item = ITEMS[id];
+  if (!canPrepare(s, u) || !item || item.kind === 'use' || (item.owner && item.owner !== u.id))
+    return false;
+  const slot = item.kind === 'weapon' ? 'weapon' : 'gear',
+    old = u[slot];
+  if (old === id) {
+    s.stock[id] = (s.stock[id] || 0) + 1;
+    u[slot] = null;
+    log(s, 'item', '卸下' + item.name + '。', unitDetails(u).name);
+    return true;
+  }
+  if (!s.stock[id]) return false;
+  if (old) s.stock[old] = (s.stock[old] || 0) + 1;
+  s.stock[id]--;
+  u[slot] = id;
+  log(s, 'item', '裝備' + item.name + '。', unitDetails(u).name);
+  return true;
+}
+function transferEquipment(s, recipient, holder, id) {
+  const item = ITEMS[id],
+    slot = item?.kind;
+  if (
+    !managesCompany(s) ||
+    !canConfigure(s, recipient) ||
+    !company(s).includes(holder) ||
+    recipient === holder ||
+    !['weapon', 'gear'].includes(slot) ||
+    holder[slot] !== id ||
+    recipient[slot] === id ||
+    (item.owner && item.owner !== recipient.id)
+  )
+    return false;
+  const old = recipient[slot];
+  if (old) s.stock[old] = (s.stock[old] || 0) + 1;
+  holder[slot] = null;
+  recipient[slot] = id;
+  log(
+    s,
+    'item',
+    unitDetails(holder).name + '移交了' + item.name + '。',
+    unitDetails(recipient).name
+  );
+  return true;
+}
+function train(s, u, k) {
+  if (!canPrepare(s, u) || !Object.hasOwn(TALENTS, k) || u.sp < 1 || u.talents[k] >= 3)
+    return false;
+  u.sp--;
+  u.talents[k]++;
+  log(
+    s,
+    'grow',
+    '將「' + TALENTS[k].name + '」修習至第 ' + u.talents[k] + ' 重。',
+    unitDetails(u).name
+  );
+  return true;
+}
+function check(s) {
+  if (s.result) return;
+  const chief = find(s, commanderId(s));
+  if (!living(find(s, leader(s)))) {
+    s.result = 'loss';
+    s.reason =
+      DETAILS[leader(s)].name +
+      (s.run ? '倒下，船燈熄了。銅漏再度倒轉。' : '負傷倒下，曲譜落入青城弟子手中。');
+  } else if (!living(chief)) {
+    s.result = 'win';
+    s.reason = s.run ? CHAMBER_TALES[s.mapIndex].victory : '余滄海收劍退開，渡口的船燈再度亮起。';
+  } else if (s.round > LIMIT) {
+    s.result = 'loss';
+    s.reason = s.run ? '漏水流盡，這一層閉回了昨日。' : '十二回合已過，霧中的末班渡船已經離岸。';
+    s.round = LIMIT;
+  } else if (!s.foreshadow && chief.hp <= chief.maxHp / 2) {
+    s.foreshadow = true;
+    if (chief.id === 'murong') {
+      chief.atk += 5;
+      chief.range += 1;
+      chief.brace = true;
+      log(s, 'combat', '斗轉星移逆轉漏水，攻擊增加 5、防禦增加 4，射程擴至三格。', '慕容博');
+    } else log(s, 'story', '收勢退了半步，重整陣腳。', DETAILS[chief.id].name);
+  }
+  if (s.result) {
+    s.phase = 'done';
+    log(s, 'story', s.reason, s.result === 'win' ? '破關' : '敗退');
+  }
+}
+function restOnHerbs(s, units) {
+  for (const u of units.filter(living)) {
+    const healed = Math.min(u.maxHp - u.hp, tileInfo(u.x, u.y, s.mapIndex).heal || 0);
+    if (healed <= 0) continue;
+    u.hp += healed;
+    if (ally(u)) s.stats.healed += healed;
+    log(s, 'terrain', '在藥草地調息，回復 ' + healed + ' 點氣血。', unitDetails(u).name);
+  }
+}
+function startEnemy(s) {
+  if (s.phase !== 'ally' || s.result || (s.run?.scene && s.run.scene !== 'fight')) return false;
+  if (s.run) s.run.formationOpen = false;
+  for (const u of party(s).filter(living)) {
+    holdObjective(s, u);
+    commitSteps(u);
+    const recovery = Math.min(u.maxHp - u.hp, commandBonus(s, u, 'renew'));
+    if (recovery) {
+      u.hp += recovery;
+      s.stats.healed += recovery;
+      progress(find(s, s.leader), 'heals', recovery);
+      log(s, 'combat', '綠竹清音回復 ' + recovery + ' 點氣血。', unitDetails(u).name);
+    }
+  }
+  restOnHerbs(s, party(s));
+  s.phase = 'enemy';
+  for (const e of enemies(s)) {
+    e.acted = false;
+    e.moved = false;
+  }
+  for (const u of party(s)) u.origin = null;
+  log(s, 'system', '守關敵軍開始行動。', '敵方回合');
+  return true;
+}
+function enemyAct(s, u) {
+  if (s.phase !== 'enemy' || s.result || ally(u) || !living(u) || u.acted) return [];
+  const friends = party(s).filter(living);
+  const field = availableField(s, u);
+  const cells = [
+    { x: u.x, y: u.y, n: 0 },
+    ...Array.from(field.costs, ([k, n]) => {
+      const [x, y] = k.split(',').map(Number);
+      return { x, y, n };
+    })
+  ];
+  let best = null;
+  const approach = new Map(
+    friends.map((target) => {
+      const positions = fieldCells(s.mapIndex).filter((cell) => {
+        const occ = at(s, cell.x, cell.y);
+        return (
+          walkable(cell.x, cell.y, s.mapIndex) &&
+          (!occ || occ === u) &&
+          distance(cell, target) <= u.range
+        );
+      });
+      return [target.id, movementField(s, u, positions, Infinity, true).costs];
+    })
+  );
+  const targetCost = new Map(
+    friends.map((t) => {
+      if (!(s.run?.stage >= 6)) return [t.id, t.hp * 0.6];
+      const protectedByAlly = friends.some((v) => v !== t && distance(v, t) === 1);
+      const cover = tileInfo(t.x, t.y, s.mapIndex).defense > 0;
+      const exposedLeader = t.id === s.leader && !protectedByAlly && !cover;
+      const vitality = t.hp + (t.conditions?.shield?.power || 0);
+      return [t.id, vitality * 0.28 + (35 * vitality) / t.maxHp - (exposedLeader ? 28 : 0)];
+    })
+  );
+  for (const c of cells)
+    for (const t of friends) {
+      const d = distance(c, t),
+        can = d <= u.range,
+        score =
+          (can ? 1000 - targetCost.get(t.id) : 0) -
+          (can ? 0 : (approach.get(t.id).get(key(c.x, c.y)) ?? fieldCells(s.mapIndex).length + d)) *
+            40 -
+          c.n * 2 +
+          tileInfo(c.x, c.y, s.mapIndex).defense * 0.4;
+      if (!best || score > best.score) best = { c, t, can, score };
+    }
+  u.acted = true;
+  if (!best) return [];
+  u.moved = distance(u, best.c) > 0;
+  if (u.moved) followRoute(u, tracePath(field, best.c));
+  if (!best.can) {
+    log(s, 'move', '逼近我方陣地。', unitDetails(u).name);
+    return [];
+  }
+  const t = best.t;
+  const art =
+    s.run && !u.conditions?.seal && roundsToSignature(s, u) === 0 ? enemyTechnique(u) : null;
+  const raw = damage(u, t, false, s.mapIndex, s);
+  const strikePower = art ? Math.round(raw * art.factor) : raw;
+  const n = wound(s, t, strikePower, u);
+  const effects = [[t.id, '−' + n]];
+  const attack = art?.name || basicFor(u).name;
+  log(
+    s,
+    'combat',
+    '以「' + attack + '」擊中' + unitDetails(t).name + '，造成 ' + n + ' 點傷害。',
+    unitDetails(u).name
+  );
+  if (art) {
+    u.signatureRound = s.round;
+    if (art.style === 'sweep') {
+      for (const other of friends.filter((v) => v !== t && living(v) && distance(v, t) === 1)) {
+        const chip = wound(s, other, Math.max(1, Math.round(strikePower / 4)), u);
+        effects.push([other.id, '−' + chip]);
+        log(s, 'combat', '被餘勁掃中，損失 ' + chip + ' 點氣血。', unitDetails(other).name);
+      }
+    } else if (living(t)) {
+      if (art.style === 'drain') t.mp = Math.max(0, t.mp - 6);
+      else applyCondition(s, t, { kind: art.style, power: 3, turns: 2 }, u);
+      log(s, 'combat', art.note, unitDetails(u).name);
+    }
+  }
+  reflectStrike(s, t, u, n, effects);
+  if (!living(t)) log(s, 'combat', '負傷退場。', unitDetails(t).name);
+  else if (living(u) && !t.conditions?.seal && distance(u, t) <= t.range) {
+    const power = Math.max(2, Math.round(damage(t, u, false, s.mapIndex, s) * 0.55));
+    const hit = wound(s, u, afterWard(power, wardPercent(s, u)), t);
+    effects.push([u.id, '−' + hit]);
+    log(s, 'combat', '還擊，造成 ' + hit + ' 點傷害。', unitDetails(t).name);
+    exp(s, t, living(u) ? 12 : 35);
+  }
+  check(s);
+  return effects;
+}
+function nextRound(s) {
+  if (s.result || s.phase !== 'enemy' || enemies(s).some((e) => living(e) && !e.acted))
+    return false;
+  for (const u of s.units) {
+    if (!living(u)) {
+      delete u.conditions;
+      continue;
+    }
+    const poison = u.conditions?.poison;
+    if (poison) {
+      const amount = wound(
+        s,
+        u,
+        afterWard(poison.power, wardPercent(s, u)),
+        find(s, poison.source)
+      );
+      log(s, 'combat', '毒發，損失 ' + amount + ' 點氣血。', unitDetails(u).name);
+    }
+    for (const [kind, condition] of Object.entries(u.conditions || {}))
+      if (condition.through <= s.round) delete u.conditions[kind];
+  }
+  check(s);
+  if (s.result) return false;
+  restOnHerbs(s, enemies(s));
+  s.round++;
+  s.phase = 'ally';
+  check(s);
+  if (s.result) return false;
+  for (const u of party(s).filter(living)) {
+    u.moved = false;
+    u.acted = false;
+    u.origin = null;
+    u.brace = false;
+    u.mp = Math.min(u.maxMp, u.mp + 6 + commandBonus(s, u, 'restoreMp'));
+  }
+  s.selected = leader(s);
+  log(s, 'system', '俠客重整步法，內力各回復 6 點。', '我方回合');
+  if (s.leader === 'zhang' && s.run?.status === 'battle')
+    log(s, 'combat', '九陽護元：領隊與兩格內友軍額外回復 5 點內力。', DETAILS.zhang.name);
+  return true;
+}
+
+export { SIZE, FIELD_EDITION, LIMIT, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, identifyEncounter, unitDetails, enemyTechnique, roundsToSignature, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, move, undo, affectedFriends, targetOK, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
