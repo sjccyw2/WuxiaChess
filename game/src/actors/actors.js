@@ -16,6 +16,9 @@ import {
   CELL_HEIGHT,
   FOOT_Y
 } from './sprite-sheets.js';
+import { POLISH } from '../polish.js';
+import { paintFrame } from './sprite-frames.js';
+import { paintBase, paintGauge } from './tokens.js';
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const openingActors = [
   { id: 'hero', x: 5.1, y: 5.25, side: 'ally', hp: 1 },
@@ -617,10 +620,14 @@ class ActorLayer {
     if (alpha <= 0) return;
     c.save();
     c.globalAlpha = alpha;
-    this.circle(pos.x + 0.055, pos.y + 0.035, title ? 0.25 : 0.33, 0.094);
+    // unitTokens: the team base, the outlined sprite and the gauge are painted by tokens.js
+    // and sprite-frames.js in place of the plain shadow, disc, sprite and bar below.
+    const tokens = POLISH.unitTokens && !title;
+    if (tokens) paintBase(this, u, pos, now, { human, selected });
+    else this.circle(pos.x + 0.055, pos.y + 0.035, title ? 0.25 : 0.33, 0.094);
     c.fillStyle = 'rgba(27,32,25,.32)';
-    c.fill();
-    if (!title) {
+    if (!tokens) c.fill();
+    if (!title && !tokens) {
       this.circle(pos.x, pos.y, 0.308, 0.099);
       c.fillStyle = human ? '#254b41bb' : '#692e25bb';
       c.fill();
@@ -659,7 +666,10 @@ class ActorLayer {
       id = details.mini,
       sheet = this.sheet(id);
     c.save();
-    if (details.robe) c.filter = details.robe;
+    // The cached copy of a frame already carries the robe tint, so with unitTokens no
+    // canvas filter is set while painting.
+    const cached = tokens && sheet;
+    if (details.robe && !tokens) c.filter = details.robe;
     c.translate(p.x, p.y);
     if (flip) c.scale(-1, 1);
     if (this.prefs.motion) {
@@ -668,7 +678,9 @@ class ActorLayer {
     }
     if (!title && u.acted && human && u.hp > 0 && !tr.clips?.some((clip) => clip.end > now))
       c.globalAlpha *= 0.82;
-    if (sheet) {
+    if (cached) {
+      paintFrame(this, sheet, row, frame, w, h, { robe: details.robe, team: u.side });
+    } else if (sheet) {
       c.drawImage(
         sheet.image,
         sheet.x + frame * sheet.w,
@@ -703,6 +715,21 @@ class ActorLayer {
           top: top + h * 0.15,
           bottom: p.y
         });
+      if (tokens) {
+        paintGauge(this, u, {
+          x: p.x,
+          y: top + h * 0.135,
+          scale,
+          now,
+          human,
+          selected,
+          shown: visibleHP,
+          rank: details.rank,
+          leader: u.id === this.state.leader
+        });
+        c.restore();
+        return;
+      }
       const len = clamp(scale * 0.49, 15, 34),
         y = top + h * 0.135;
       c.fillStyle = '#17241fe8';
