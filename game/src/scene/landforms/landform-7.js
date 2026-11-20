@@ -1,4 +1,5 @@
 import { Model, circle } from '../scenery-kit.js';
+import { paving, caveWalls, caveFeatures, caveFloor, lightField, tileProps } from './cave-7.js';
 
 // A shallow spring has dissolved a neck through the floor of two chambers.
 // The same limestone bed also carries the west tomb and the four wall groups.
@@ -102,7 +103,7 @@ function coordinates(from, to, extra = []) {
   }
   return a.sort((u, v) => u - v).filter((v, i, s) => i === 0 || v - s[i - 1] > 0.035);
 }
-function limestone(T, ground) {
+function limestone(T, ground, lit) {
   const m = new Model(T, 170721);
   const xs = coordinates(
     -15.1,
@@ -129,8 +130,14 @@ function limestone(T, ground) {
       let stone = m.mix(0x687b72, 0xa8b8a6, 0.34 + 0.29 * folia + 0.18 * warm);
       stone = m.mix(stone, 0x41665f, 0.31 * damp + 0.13 * (1 - folia));
       if (y < -0.47) stone = m.mix(stone, 0x364d53, smooth(0.46, 1.88, -y) * 0.76);
+      // Away from the walkway the rock sinks into the cave's gloom, so the
+      // paved floor reads as the lit heart of the chamber.
+      const grain =
+        0.5 + 0.5 * Math.sin(x * 4.1 + Math.sin(z * 2.3) * 2) * Math.sin(z * 3.7 - x * 1.3);
+      stone = m.mix(stone, 0x2a3d40, 0.22 * grain);
+      stone = m.mix(stone, 0x1c2c30, 0.62 * smooth(0.12, 2.4, d));
       points.push(x, y, z);
-      colors.push(...stone);
+      colors.push(...lit(x, y, z, stone));
       if (i && j) {
         const d0 = j * xs.length + i,
           a = d0 - xs.length - 1,
@@ -439,7 +446,9 @@ function wornPaths(m, ground) {
     0x9a865e,
     10
   );
-  m.glow(() => m.crystal(lx, base + 0.202, lz, 0.037, 0.129, 0xdfa359, 0xffdf91, 6, 0.012));
+  // The flame goes with the warm lamps of caveFeatures, so that this group's
+  // glow stays the jade of the outcrops.
+  return [lx, base + 0.202, lz];
 }
 function terrace(m, ground) {
   const basins = [
@@ -564,8 +573,11 @@ function landform7(T, layout) {
   const group = new T.Group(),
     ground = cavern(layout);
   group.name = '寒泉共生石窟';
-  group.add(limestone(T, ground));
+  const lit = lightField(layout);
+  group.add(limestone(T, ground, lit));
   const m = new Model(T, 718319);
+  paving(m, layout, ground, lit, streamCenter);
+  caveFloor(m, ground, lit);
   spring(m);
   for (const cell of layout.cells.filter((c) => c.kind === 'bridge'))
     stoneSpan(m, ground, cell.y - (layout.height - 1) / 2);
@@ -582,8 +594,10 @@ function landform7(T, layout) {
   ])
     limestoneRib(m, ground, a, b, h, w, n);
   terrace(m, ground);
-  wornPaths(m, ground);
+  const flame = wornPaths(m, ground);
+  tileProps(m, layout);
   group.add(m.finish('石樑、泉眼與藥池'));
+  group.add(caveWalls(T, ground, layout), caveFeatures(T, ground, layout, flame));
   return group;
 }
 

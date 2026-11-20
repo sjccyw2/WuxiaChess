@@ -382,7 +382,23 @@ function tomb(m) {
     m.box(s * 1.44, 1.52, 0.47, 0.14, 1.91, 0.07, 0x69817d);
     for (let j = 0; j < 5; j++)
       m.crystal(s * 1.44, 0.66 + j * 0.34, 0.52, 0.042, 0.16, 0x618d85, 0xa2d1bd, 5);
+    // Iron studs in rows on each leaf, iron straps at head and foot, and a
+    // ring knocker hung from a lion-mask boss.
+    for (let j = 0; j < 6; j++)
+      for (const u of [-0.32, 0, 0.32])
+        if (j !== 3 || u === 0)
+          m.box(s * 0.57 + u, 0.32 + j * 0.39, 0.1, 0.06, 0.06, 0.05, 0x2f3638);
+    for (const y of [0.16, 2.58]) m.box(s * 0.57, y, 0.098, 0.98, 0.08, 0.03, 0x384043);
+    m.box(s * 0.1, 1.68, 0.11, 0.13, 0.13, 0.05, 0x3a4244);
+    m.hoop(s * 0.1, 1.53, 0.135, 0.07, 0.012, 0x404a4c, 10, 'xy');
+    // A carved panel of cloud scrolls on each door post.
+    for (let j = 0; j < 4; j++)
+      m.box(s * 1.45, 0.75 + j * 0.5, 0.455, 0.36 - (j % 2) * 0.12, 0.08, 0.04, 0x7c958c);
   }
+  // A threshold of one long stone and a frieze of square bosses on the lintel.
+  m.box(0, 0.05, 0.3, 2.3, 0.1, 0.42, 0x7b8f87);
+  for (let j = 0; j < 9; j++)
+    m.box(-1.6 + j * 0.4, 3.12, 0.55, 0.16, 0.16, 0.06, j % 2 ? 0x9cb2a6 : 0x5e7672);
   steps(m, 0, 1.51, 3.65, 4, 0.1, 0.3, 0x939f91);
 }
 function clock(m) {
@@ -763,59 +779,7 @@ function landmarks(index, add) {
       },
       { scale: 1.1 }
     );
-    for (const [j, x, z, yaw] of [
-      [0, -5.22, -7.22, 0.1],
-      [1, 4.31, -7.3, 0],
-      [2, -7.13, -2.9, 1.3],
-      [3, 7.23, -3.53, 1.25]
-    ]) {
-      add('洞壁與鐘乳石' + j, x, z, yaw, (m) => {
-        for (let k = 0; k < 6; k++) {
-          const xx = (k - 2.5) * 0.59,
-            h = m.rng.range(2.45, 4.46);
-          m.rock(
-            xx,
-            -0.67,
-            -0.13,
-            m.rng.range(0.58, 0.91),
-            h,
-            m.rng.range(0.72, 1.15),
-            0x45565f,
-            0x6e807e,
-            8
-          );
-          if (k % 2 === 0) {
-            m.frame(
-              xx,
-              h - 0.36,
-              0.36,
-              0,
-              1,
-              () => m.crystal(0, 0, 0, 0.21, m.rng.range(0.5, 1.27), 0x6d8b8b, 0xadccbf),
-              0,
-              Math.PI
-            );
-          }
-        }
-        m.glow(() => {
-          for (let k = 0; k < 8; k++) {
-            const x = m.rng.range(-1.45, 1.46),
-              z = m.rng.range(0.11, 0.96);
-            m.crystal(
-              x,
-              -0.05,
-              z,
-              m.rng.range(0.11, 0.32),
-              m.rng.range(0.53, 1.85),
-              0x477f79,
-              0x9cdec3,
-              6,
-              m.rng.range(-0.26, 0.27)
-            );
-          }
-        });
-      });
-    }
+    // The cave walls and their dripstone are built with the cavern (landforms/cave-7.js).
   } else if (index === 8) {
     add('懸空街樓', -7.71, 2.84, 1.15, (m) => suspendedHouse(m, 3.16, true), { y: 0.98 });
     add('倒垂飛殿', 3.54, -7.49, -0.18, (m) => suspendedHouse(m, 2.87, true), { y: 0.77 });

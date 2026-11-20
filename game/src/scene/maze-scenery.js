@@ -496,6 +496,8 @@ function plain(m, x, z, index, p) {
 }
 function cover(m, index, p) {
   const r = m.rng;
+  // Map 7's broken jade seats are drawn with its cave, in landforms/cave-7.js.
+  if (index === 7) return;
   if ([4, 6, 8, 9].includes(index)) {
     for (let i = 0; i < 3; i++) {
       const x = -0.28 + 0.25 * i,
@@ -560,6 +562,8 @@ function herbs(m, index, p) {
 }
 function brush(m, index, p) {
   const r = m.rng;
+  // Map 7's frosted stone curtains are drawn with its cave, in landforms/cave-7.js.
+  if (index === 7) return;
   if ([1, 2, 5].includes(index)) {
     const col = index === 1 ? 0xc66a38 : index === 5 ? 0xdba0a5 : 0x94a76b;
     for (let j = 0; j < 5; j++) {
@@ -617,23 +621,8 @@ function obstacle(m, index, p, crate) {
     m.frame(0.18, 0.59, 0.02, 0.17, 0.57, () => cargo(m, 0, 0, 0.68));
     return;
   }
-  if (index === 7) {
-    for (let i = 0; i < (crate ? 4 : 6); i++)
-      m.glow(() =>
-        m.crystal(
-          r.range(-0.23, 0.24),
-          0.043,
-          r.range(-0.23, 0.22),
-          r.range(0.1, 0.2),
-          r.range(0.44, 0.95),
-          0x588e86,
-          0xa1cbb1,
-          6,
-          r.range(-0.16, 0.16)
-        )
-      );
-    return;
-  }
+  // Map 7's jade outcrops are drawn with its cave, in landforms/cave-7.js.
+  if (index === 7) return;
   if (index === 8 || index === 9) {
     if (crate) {
       m.lathe(
@@ -1089,21 +1078,8 @@ function ranges(m, index, p) {
           });
         continue;
       }
-      if (index === 7) {
-        for (let k = 0; k < 3; k++)
-          m.rock(
-            x + Math.cos(a + 1.5) * k * 1.03,
-            -1.0,
-            z + Math.sin(a + 1.5) * k * 1.03,
-            s * 0.78,
-            r.range(3.5, 7.8),
-            s * 0.7,
-            0x485c66,
-            0x657a79,
-            9
-          );
-        continue;
-      }
+      // Map 7 is closed in by its own cave wall (landforms/cave-7.js).
+      if (index === 7) continue;
       const base = style.level - 0.65,
         w = index === 2 ? s * 1.24 : s;
       const H =
