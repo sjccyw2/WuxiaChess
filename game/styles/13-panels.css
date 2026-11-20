@@ -1176,3 +1176,209 @@ html.polish-danger-zone .battlefield #danger-toggle[aria-pressed='true'] svg {
     display: none;
   }
 }
+
+/* ------------------------------------------------------ 13  Action flow */
+/* actionFlow: the command bar is reduced to End turn alone; the arts list opens by itself and,
+   on wide screens, sits beside the hero (app sets --ax and --ay while it follows the piece). */
+html.polish-action-flow .battlefield .field-action.turn-action {
+  margin-inline-start: 0;
+}
+@media (min-width: 900px) and (min-height: 560px) {
+  html.polish-action-flow .battlefield .arts-flyout.at-unit {
+    left: var(--ax);
+    top: var(--ay);
+    right: auto;
+    bottom: auto;
+    max-height: min(70%, calc(100% - var(--top) - var(--bottom) - 150px));
+  }
+  html.polish-action-flow .battlefield .field-action.turn-action {
+    min-width: 132px;
+  }
+}
+/* Undo, at the foot of the arts list once the hero has moved. */
+html.polish-action-flow .battlefield .field-undo {
+  width: 100%;
+  margin-top: 6px;
+  color: #f3dfb4;
+  border: 1px solid #c9aa7655;
+  background: linear-gradient(180deg, #4a2c2e, #33201f);
+}
+html.polish-action-flow .battlefield .field-undo svg {
+  color: #f0cf90;
+}
+@media (hover: hover) {
+  html.polish-action-flow .battlefield .field-undo:hover {
+    color: #fff8e3;
+    border-color: #ffdfad;
+  }
+}
+/* End turn lights up once every hero has at least moved. */
+html.polish-action-flow .battlefield .field-action.turn-action.ready:enabled {
+  color: #fff8e3;
+  border-color: #ffdfad;
+  background: var(--ui-seal-lit, linear-gradient(180deg, #b4513f, #7d3029));
+  box-shadow:
+    inset 0 0 0 2px #7a342b,
+    inset 0 0 0 3px #f0c79a80,
+    0 0 16px #f0a8684d;
+}
+html.polish-action-flow body:not(.no-motion) .battlefield .field-action.turn-action.ready:enabled {
+  animation: flow-ready 1.8s ease-in-out infinite;
+}
+@keyframes flow-ready {
+  50% {
+    box-shadow:
+      inset 0 0 0 2px #7a342b,
+      inset 0 0 0 3px #f0c79a80,
+      0 0 26px #ffbd7a99;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.polish-action-flow .battlefield .field-action.turn-action.ready:enabled {
+    animation: none;
+  }
+}
+
+/* Phones: the list opens by itself after every move, so it is kept small and clear of the hero.
+   Each art is one compact entry (name, reach, power, cost); the full wording stays in the
+   hero's arts page. */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 480px),
+  (orientation: portrait) and (max-width: 800px),
+  (max-width: 540px) {
+  html.polish-action-flow .battlefield #arts-panel .flyout-head {
+    display: none;
+  }
+  html.polish-action-flow .battlefield #arts-panel {
+    padding: 5px;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art {
+    min-height: 46px;
+    padding: 4px 7px;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    column-gap: 7px;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art > span {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 7px;
+    row-gap: 0;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art strong {
+    flex: 1 0 100%;
+    font-size: 15px;
+    line-height: 1.25;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art :is(.fo-effects, .fo-nearby, .fo-power small) {
+    display: none;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art .fo-facts {
+    display: contents;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art .fo-power b {
+    font-size: 15px;
+    line-height: 1.2;
+  }
+  html.polish-action-flow .battlefield #arts-panel :is(.field-undo, .field-loadout) {
+    min-height: 40px;
+    margin-top: 4px;
+  }
+}
+/* Phone, landscape: the right-hand rail of commands is gone, so the board takes its width back.
+   End turn keeps the bottom-right corner; the list docks at the edge away from the hero. */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 480px) {
+  html.polish-action-flow .battlefield {
+    --rail: 0px;
+  }
+  html.polish-action-flow .battlefield .command-dock {
+    width: 86px;
+  }
+  html.polish-action-flow .battlefield .field-action.turn-action {
+    margin: 0;
+    min-height: 46px;
+  }
+  html.polish-action-flow .battlefield .arts-flyout {
+    width: 232px;
+    left: auto;
+    right: var(--right);
+    bottom: calc(var(--bottom) + 60px);
+    max-height: calc(100% - var(--top) - var(--bottom) - 116px);
+  }
+  html.polish-action-flow .battlefield .arts-flyout[data-side='left'] {
+    left: var(--left);
+    right: auto;
+  }
+}
+/* Phone, portrait: End turn is a button at the right, not a bar; the list is a low sheet above
+   the dock with the arts two abreast. */
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  html.polish-action-flow .battlefield .command-dock {
+    align-self: flex-end;
+    width: auto;
+    min-width: 138px;
+  }
+  html.polish-action-flow .battlefield .arts-flyout {
+    left: var(--left);
+    right: var(--right);
+    width: auto;
+  }
+  html.polish-action-flow .battlefield #field-arts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+  html.polish-action-flow .battlefield #field-arts .field-art + .field-art {
+    margin-top: 0;
+  }
+  html.polish-action-flow .battlefield #field-arts :is(.field-undo, .field-loadout) {
+    grid-column: 1 / -1;
+    margin-top: 0;
+  }
+  /* Two abreast leaves little width, so each entry is laid out as its own small grid: the name
+     has the first line to itself; reach, power and cost share the second. */
+  html.polish-action-flow .battlefield #arts-panel .field-art {
+    grid-template-columns: 24px auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 6px;
+    row-gap: 1px;
+    align-items: center;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art > i {
+    grid-row: 1 / 3;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art > span,
+  html.polish-action-flow .battlefield #arts-panel .field-art .fo-power {
+    display: contents;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art strong {
+    grid-column: 2 / 5;
+    grid-row: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art > span > small {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art .fo-power b {
+    grid-column: 3;
+    grid-row: 2;
+  }
+  html.polish-action-flow .battlefield #arts-panel .field-art > b {
+    grid-column: 4;
+    grid-row: 2;
+    justify-self: end;
+    font-size: 12px;
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+}
+/* Too narrow for two abreast. */
+@media (max-width: 379px) {
+  html.polish-action-flow .battlefield #field-arts {
+    grid-template-columns: 1fr;
+  }
+}

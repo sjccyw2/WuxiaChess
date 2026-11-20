@@ -43,6 +43,7 @@ import {
 import { icon } from './icons.js';
 import { POLISH } from '../polish.js';
 import { extraHotkeys } from './field-extras.js';
+import { ON as actionFlow, anyIdle, flowHotkeys } from './action-flow.js';
 const portraits = {
   huang: 'huang',
   yang: 'yang',
@@ -175,6 +176,15 @@ function commander(s, mode) {
         (s.run?.status === 'camp' ? '返回通吃坊' : '查看戰果') +
         '</span>',
       'field-action turn-action'
+    );
+  // Polish (actionFlow): the bar is reduced to End turn, which lights up once every hero has
+  // at least moved.
+  if (actionFlow)
+    return btn(
+      'end',
+      icon('end', 18) + '<span>結束回合</span>',
+      'field-action turn-action' + (s.phase === 'ally' && !anyIdle(s) ? ' ready' : ''),
+      'title="結束回合" ' + (s.phase !== 'ally' ? 'disabled' : '')
     );
   const acts = [
     ['move', u.moved ? 'undo' : 'move', u.moved ? '撤步' : '移動'],
@@ -770,12 +780,16 @@ function helpPage() {
     [
       'swords',
       '攻擊與絕技',
-      '打開「招式」，選普攻或已攜帶的武學，再點目標可預覽實際傷害。射程內的敵人若仍存活便會還擊，清心普善咒與一陽指則可治療受傷的友軍。'
+      (actionFlow ? '移動後，或再點一次俠客，' : '打開「招式」，') +
+        '選普攻或已攜帶的武學，再點目標可預覽實際傷害。射程內的敵人若仍存活便會還擊，清心普善咒與一陽指則可治療受傷的友軍。'
     ],
     [
       'end',
       '回合與養成',
-      '每人每回合可移動一次，並出招或待命一次。服藥每次扣一份，可連用並保留移動與行動。領隊陣法作用於自身與兩格內的友軍。結束回合後敵方會行動。每滿 100 歷練升一級，獲 1 點武學點數。三級後出招所得歷練逐級遞減。'
+      (actionFlow
+        ? '每人每回合可移動一次，並出招一次。未出招的俠客在回合結束時自動待命，防禦暫時提升 4 點。'
+        : '每人每回合可移動一次，並出招或待命一次。') +
+        '服藥每次扣一份，可連用並保留移動與行動。領隊陣法作用於自身與兩格內的友軍。結束回合後敵方會行動。每滿 100 歷練升一級，獲 1 點武學點數。三級後出招所得歷練逐級遞減。'
     ]
   ];
   return (
@@ -794,7 +808,10 @@ function helpPage() {
           `<details class="hud-disclosure"><summary>${icon(ic, 17)} ${title}</summary><p>${body}</p></details>`
       )
       .join('') +
-    '</div><div class="hotkeys"><kbd>1</kbd> 移動 <kbd>2</kbd> 招式 <kbd>3</kbd> 待命 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 返回 <kbd>?</kbd> 指南' +
+    '</div><div class="hotkeys">' +
+    (actionFlow
+      ? flowHotkeys
+      : '<kbd>1</kbd> 移動 <kbd>2</kbd> 招式 <kbd>3</kbd> 待命 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 返回 <kbd>?</kbd> 指南') +
     extraHotkeys() +
     '</div>'
   );

@@ -244,14 +244,14 @@ function bake(atlas, sheet, look, row, frame) {
     // A dark line outside the coloured one keeps the rim clear of pale stone and water.
     s.fillStyle = INK;
     s.fillRect(0, 0, w, h);
-    ring(o, shape.canvas, edge * 1.5);
-    a.globalAlpha = look.grey ? 0.42 : 0.5;
+    ring(o, shape.canvas, edge * 1.4);
+    a.globalAlpha = look.grey ? 0.34 : 0.4;
     a.drawImage(halo.canvas, x, y);
     s.fillStyle = OUTLINES[look.grey ? 'spent' : look.team];
     s.fillRect(0, 0, w, h);
     o.clearRect(0, 0, w, h);
     ring(o, shape.canvas, edge);
-    a.globalAlpha = look.grey ? 0.8 : 1;
+    a.globalAlpha = look.grey ? 0.7 : 0.86;
     a.drawImage(halo.canvas, x, y);
     a.globalAlpha = 1;
   }
@@ -276,9 +276,9 @@ function paintFrame(layer, sheet, row, frame, w, h, look, alpha = 1) {
     // on dense screens, where a full pixel swamps a phone-sized figure). It is rounded
     // coarsely so pieces at slightly different depths share one copy.
     step = ratio >= 2 ? 1 : 0.5,
-    least = clamp(1.45 - 0.35 * ratio, 0.75, 1.1),
+    least = clamp(1.15 - 0.3 * ratio, 0.6, 0.85),
     edge = look.team
-      ? Math.round(Math.max(cell * 0.0165, (least * ratio * cell) / shown) / step) * step
+      ? Math.round(Math.max(cell * 0.012, (least * ratio * cell) / shown) / step) * step
       : 0,
     atlas = atlasFor(sheet, look, cell, Math.min(edge, 8));
   if (!atlas.ready[row * FRAMES + frame]) bake(atlas, sheet, look, row, frame);
