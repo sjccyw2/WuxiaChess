@@ -3293,6 +3293,62 @@ section('board 7 寒玉石室: the venom that stops the healing');
   check('洪凌波 stays within one of the neck', G.distance(hong, { x: 5, y: 3 }) <= 1);
 }
 
+section('board 8 倒影天街: the masked duelist');
+{
+  const s = realBoard(8, 8);
+  const [yue, lao, bow, scout] = foesOf(s);
+  check('岳不群 and 勞德諾 have the spec’s numbers', same(numbersOf(yue), [555, 82, 23, 4, 1]) && same(numbersOf(lao), [296, 76, 15, 4, 2]), numbersOf(yue) + ' / ' + numbersOf(lao));
+  check('岳不群’s page', same(pageOf(s, yue).slice(1), ['【游擊】出手後退開至多 2 步，離俠客越遠越好。', '【半血變招 · 辟邪現形】移動 ＋2、防禦 −3，絕技每兩回合一次。']), JSON.stringify(pageOf(s, yue)));
+  check('勞德諾 hunts the leader', same(G.enemyTraitLines(s, lao), ['【偏好】專挑領隊。']));
+  check('the archer holds the footbridge', same(G.enemyTraitLines(s, bow), ['【坐鎮】守在橋頭（13，5）一格內，不離位。']) && G.unitDetails(scout).name === '嵩山密探');
+  check('the posts are ground the heroes can walk to', postsReachable(s));
+  // Strike, then walk off.
+  for (const v of G.party(s)) if (!['hero', 'medic', 'guard'].includes(v.id)) v.hp = 0;
+  const spot = mapLayout(8).cells.find((p) => G.distance(p, yue) === 3 && G.walkable(p.x, p.y, 8) && !G.at(s, p.x, p.y));
+  const hero = put(s, 'guard', spot.x, spot.y);
+  soloTurn(s, yue);
+  check('he strikes and walks off from the hero', hero.hp < hero.maxHp && G.distance(yue, hero) >= 2, [yue.x, yue.y, hero.x, hero.y]);
+  closeRound(s);
+  yue.hp = Math.floor(yue.maxHp / 2);
+  G.check(s);
+  check('at half the mask comes off', yue.phased && yue.step === 6 && yue.def === 20 && G.enemyTechnique(yue, s).cadence === 2 && s.logs.at(-1).text === '岳不群撕下君子面目，身形快得看不清。');
+}
+
+section('board 9 無刻漏臺: the mirror');
+{
+  const s = realBoard(9, 9);
+  const [mu, jiu, bow, scout] = foesOf(s);
+  check('慕容博 and 鳩摩智 have the spec’s numbers', same(numbersOf(mu), [867, 93, 24, 4, 2]) && same(numbersOf(jiu), [337, 86, 16, 3, 2]), numbersOf(mu) + ' / ' + numbersOf(jiu));
+  check('斗轉星移 is the mirror, no blow', G.enemyTechnique(mu, s).style === 'mirror' && !G.enemyTechnique(mu, s).strikes);
+  check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。', '【星索護陣】每名存活的守索人替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
+  check('鳩摩智’s page', same(pageOf(s, jiu), ['另外削去目標 24 點內力。', '絕技射程 4 格。', '【偏好】專挑內力深厚者。']), JSON.stringify(pageOf(s, jiu)));
+  check('the rope-holders’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【坐鎮】守在索樁一格內，不離位。', '【護陣】存活時替慕容博抵擋 35% 傷害。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
+  check('the posts are ground the heroes can walk to', postsReachable(s));
+  check('two living rope-holders take 70% off him', G.wardShare(s, mu) === 70);
+  // The mirror: charged in round 2, the first direct blow does him nothing and turns half back.
+  for (const v of G.party(s)) if (!['hero', 'medic', 'guard'].includes(v.id)) v.hp = 0;
+  s.round = 2;
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: mu.x + dx, y: mu.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
+  const guard = put(s, 'guard', spot.x, spot.y);
+  guard.acted = guard.moved = false;
+  const f = G.forecast(guard, mu, false, s);
+  const life = [mu.hp, guard.hp];
+  G.resolve(s, guard, mu, false);
+  check('the first blow does him nothing and turns back on the striker', mu.hp === life[0] && guard.hp < life[1] && f.amount === 0 && f.notes.some((n) => n.startsWith('斗轉星移 · 慕容博不受此擊')));
+  check('the charge is spent; he did not counter', mu.signatureRound === 2 && !G.signatureDue(s, mu) && f.counterRaw === 0);
+  mu.hp = Math.floor(mu.maxHp / 2);
+  const atk = mu.atk;
+  G.check(s);
+  check('at half his phase is the data’s', mu.phased && mu.atk === atk + 5 && mu.range === 3 && mu.brace && s.logs.at(-1).text === '斗轉星移倒轉銅漏，攻擊增加 5、防禦增加 4，射程擴至三格。');
+  // A rope breaks.
+  bow.hp = 1;
+  const reach = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: bow.x + dx, y: bow.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
+  const hero = put(s, 'hero', reach.x, reach.y);
+  hero.acted = hero.moved = false;
+  G.resolve(s, hero, bow, false);
+  check('one rope down: the ward is 35% and the log says so', G.wardShare(s, mu) === 35 && s.logs.some((l) => l.text === '一條星索斷了。慕容博的護勁降至三成半。'));
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

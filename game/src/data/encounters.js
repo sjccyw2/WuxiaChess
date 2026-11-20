@@ -330,7 +330,19 @@ const ENCOUNTERS = [
       'hero',
       '華山掌門，人稱君子劍，與人動手向來先佔一個「理」字。今日無理可佔，劍已出鞘，專破對手的守勢。',
       'hero',
-      'hue-rotate(-48deg) saturate(.7)'
+      'hue-rotate(-48deg) saturate(.7)',
+    {
+      mods: { range: 1 },
+      glide: 2,
+      phase: {
+        name: '辟邪現形',
+        step: 2,
+        def: -3,
+        cadence: 2,
+        log: '岳不群撕下君子面目，身形快得看不清。',
+        note: '移動 ＋2、防禦 −3，絕技每兩回合一次。'
+      }
+    }
     ),
     adversary(
       '勞德諾',
@@ -342,7 +354,8 @@ const ENCOUNTERS = [
       'hu',
       '埋在華山多年的嵩山耳目，聽慣了兩頭的號令。心裡這一個，兩頭都不是。',
       'bandit',
-      'sepia(.2) hue-rotate(55deg)'
+      'sepia(.2) hue-rotate(55deg)',
+    { mods: { step: 4 }, prefers: 'leader' }
     )
   ],
   [
@@ -352,11 +365,21 @@ const ENCOUNTERS = [
       '天龍八部',
       '參合指',
       '斗轉星移',
-      'sweep',
+      'mirror',
       'duan',
       '姑蘇慕容氏，半生躲在暗處撥弄旁人相鬥，如今自己成了旁人盤上的一枚子。兩股星索從盤外垂下，繫在他身上；兩名守索人各守一股，斷索可卸他的護勁。',
       'murong',
-      ''
+      '',
+    {
+      redirect: { while: 'charged', keep: 0, back: 0.5 },
+      phase: {
+        atk: 5,
+        range: 1,
+        brace: true,
+        log: '斗轉星移倒轉銅漏，攻擊增加 5、防禦增加 4，射程擴至三格。',
+        note: '攻擊 ＋5、防禦 ＋4、射程擴至三格。'
+      }
+    }
     ),
     adversary(
       '鳩摩智',
@@ -368,7 +391,8 @@ const ENCOUNTERS = [
       'guo',
       '吐蕃國師，大輪明王，遍覽天下武學。壓在心頭的那道劍意不在任何一部經上，他身不由己，卻又捨不得它走。一雙手既能翻書，也能催出火焰刀。',
       'zhang',
-      'sepia(.65) hue-rotate(-8deg) saturate(1.25)'
+      'sepia(.65) hue-rotate(-8deg) saturate(1.25)',
+    { sig: { reach: 4 }, prefers: 'mp' }
     )
   ]
 ];
@@ -533,9 +557,48 @@ const RANKS = [
     }
   },
   // ── board 8
-  {},
+  {
+    bow: {
+      name: '華山弟子',
+      role: '弓手',
+      school: '華山派',
+      mini: 'archer',
+      basic: '華山連箭',
+      bio: '守在橋頭的華山弟子，認得每一條水道。',
+      traits: {
+        post: { tile: 'spawn', tether: 1, wake: false, note: '守在橋頭{tile}一格內，不離位。' }
+      }
+    },
+    scout: {
+      name: '嵩山密探',
+      role: '密探',
+      school: '嵩山派',
+      mini: 'bandit',
+      basic: '短刃',
+      bio: '混在街坊裡的嵩山耳目。'
+    }
+  },
   // ── board 9
-  {}
+  {
+    bow: {
+      name: '守索人',
+      role: '護陣',
+      school: '姑蘇慕容',
+      mini: 'archer',
+      basic: '星索',
+      bio: '繫住一股星索的人。索不斷，慕容博的護勁不散。',
+      traits: { post: { tile: 'spawn', tether: 1, wake: false, note: '守在索樁一格內，不離位。' }, ward: 35 }
+    },
+    scout: {
+      name: '守索人',
+      role: '護陣',
+      school: '姑蘇慕容',
+      mini: 'bandit',
+      basic: '星索',
+      bio: '繫住另一股星索的人。',
+      traits: { post: { tile: 'spawn', tether: 1, wake: false, note: '守在索樁一格內，不離位。' }, ward: 35 }
+    }
+  }
 ];
 // How strong a signature's status is at each stage of the run. At stage 0 these are the numbers
 // every villain used before the redesign.
@@ -602,7 +665,7 @@ const VILLAIN_FORMS = {
   赤練掌法: [1.15, 'softPalm'],
   辟邪劍法: [1.32, 'shangYang'],
   嵩山快劍: [1.21, 'snowPursuit'],
-  斗轉星移: [1.43, 'universeCanopy'],
+  斗轉星移: [0, 'universeCanopy'],
   火焰刀: [1.27, 'tideBreaker']
 };
 
