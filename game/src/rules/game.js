@@ -1044,7 +1044,7 @@ function targetOK(s, u, t, skill) {
   if (forms.includes('riposte')) return true;
   const power = art.heal ? healingPower(u, s, art) : 0;
   return affectedFriends(s, u, t, art).some((v) => {
-    const entry = supportEntry(forms, u, v, power);
+    const entry = supportEntry(forms, u, v, healAmount(v, power));
     return entry.amount || entry.mp || entry.clean.length || entry.overflow;
   });
 }
@@ -1122,11 +1122,45 @@ function damage(
     Math.round(attackPower(s, u, art, basic, t) - protection * 0.65 * (1 - pierce))
   );
 }
+// 內傷 (§5): a wounded unit gets half of every heal, rounded down, before the cap at its missing
+// 氣血. Shields are not heals and are not halved.
+const healAmount = (v, n) => (v?.conditions?.wound ? Math.floor(n / 2) : n);
+// 內傷: after each direct attack it makes (never a counter), its bearer loses the condition's
+// power in 氣血, not below 1 and not through a shield.
+function woundSelfLoss(s, u, effects) {
+  const hurt = living(u) && u.conditions?.wound;
+  const n = hurt ? Math.min(hurt.power, u.hp - 1) : 0;
+  if (n <= 0) return;
+  u.hp -= n;
+  effects.push([u.id, '−' + n, 'sacrifice']);
+  log(s, 'combat', '內傷發作，損失 ' + n + ' 點氣血。', unitDetails(u).name);
+}
+// The heal preview's amounts are already halved; it says so for whoever is wounded.
+function woundedHealNotes(t, friends, result) {
+  const hurt = friends.filter((v) => v.conditions?.wound);
+  if (!hurt.length) return;
+  if (hurt.length === 1 && hurt[0] === t) result.notes.push('內傷 · 療效減半');
+  else result.notes.push('內傷 · ' + hurt.map((v) => unitDetails(v).name).join('、') + '療效減半');
+}
+// What an action goes on to cost its own caster's 氣血 once it is over (內傷 after an attack),
+// counted from where the preview leaves him; the preview shows it on his bar as `selfLoss`.
+function selfLoss(s, u, art, result, attack) {
+  let left = u.hp - result.hpCost + result.selfHeal - result.counter;
+  result.selfLoss = 0;
+  const hurt = attack && u.conditions?.wound;
+  if (hurt && left > 1) {
+    const n = Math.min(hurt.power, left - 1);
+    result.selfLoss += n;
+    left -= n;
+    result.notes.push('內傷 · 出手後自損 ' + n + ' 氣血');
+  }
+  return left;
+}
 function healingPower(u, s, art) {
   return (art.heal || 35) + stat(u, 'power', s) + (u.level - 1) * 4;
 }
 function healing(u, t, s, art = artFor(u)) {
-  return Math.min(t.maxHp - t.hp, healingPower(u, s, art));
+  return Math.min(t.maxHp - t.hp, healAmount(t, healingPower(u, s, art)));
 }
 function formsFor(u, art, basic = basicFor(u)) {
   return actionForms(ITEMS[u.weapon], art, basic);
@@ -1181,13 +1215,15 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
           ' 得 8 護盾'
       );
     }
+    selfLoss(s, u, art, result, false);
     result.notes.push(...priceNotes(art));
     return result;
   }
   if (support) {
     const friends = s ? affectedFriends(s, u, t, art) : [t];
     const power = heal ? healingPower(u, s, art) : 0;
-    result.recipients = friends.map((v) => supportEntry(result.forms, u, v, power));
+    result.recipients = friends.map((v) => supportEntry(result.forms, u, v, healAmount(v, power)));
+    if (heal) woundedHealNotes(t, friends, result);
     if (result.forms.includes('riposte'))
       result.effects.push({ kind: 'riposte', power: 9, turns: 1 });
     for (const entry of result.recipients) {
@@ -1205,6 +1241,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
         '轉護 · 移出自身護盾 ' + u.conditions.shield.power + '，各人得 ' + result.passed + ' 護盾'
       );
     }
+    selfLoss(s, u, art, result, false);
     result.notes.push(...priceNotes(art));
     return result;
   }
@@ -1233,8 +1270,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   if (plan.clearPoison) result.notes.push('以毒解毒 · 解除自身中毒');
   if (result.forms.includes('leech')) {
     result.selfHeal = Math.min(
-      9,
-      Math.floor(Math.min(t.hp, result.amount) / 4),
+      healAmount(u, Math.min(9, Math.floor(Math.min(t.hp, result.amount) / 4))),
       u.maxHp - u.hp + result.hpCost
     );
     if (result.selfHeal) result.notes.push('回生 · 自身氣血 ＋' + result.selfHeal);
@@ -1293,6 +1329,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
     result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
   }
+  selfLoss(s, u, art, result, true); // 內傷 and 反噬: what the strike costs its caster after
   result.notes.push(...priceNotes(art));
   return result;
 }
@@ -1541,6 +1578,7 @@ function resolve(s, u, t, skill) {
       log(s, 'combat', '還擊' + who + '，造成 ' + dealt + ' 點傷害。', unitDetails(t).name);
       reflectStrike(s, u, t, dealt, effects);
     }
+    woundSelfLoss(s, u, effects); // 內傷: the attacker pays once the exchange is over
   }
   if (art?.once) (u.usedOnce ??= []).push(id);
   if (art?.cooldown) (u.cooldowns ??= {})[id] = s.round + art.cooldown + 1;
@@ -1583,7 +1621,7 @@ function consume(s, u, id) {
   if (item?.kind !== 'use' || !canUseMedicine(s, u) || !(s.stock[id] > 0)) return false;
   const k = item.hp ? 'hp' : 'mp',
     cap = k === 'hp' ? 'maxHp' : 'maxMp',
-    n = Math.min(item[k], u[cap] - u[k]);
+    n = Math.min(k === 'hp' ? healAmount(u, item.hp) : item.mp, u[cap] - u[k]);
   if (n <= 0) return false;
   u[k] += n;
   s.stock[id]--;
@@ -1685,7 +1723,10 @@ function check(s) {
 }
 function restOnHerbs(s, units) {
   for (const u of units.filter(living)) {
-    const healed = Math.min(u.maxHp - u.hp, tileInfo(u.x, u.y, s.mapIndex).heal || 0);
+    const healed = Math.min(
+      u.maxHp - u.hp,
+      healAmount(u, tileInfo(u.x, u.y, s.mapIndex).heal || 0)
+    );
     if (healed <= 0) continue;
     u.hp += healed;
     if (ally(u)) s.stats.healed += healed;
@@ -1698,7 +1739,7 @@ function startEnemy(s) {
   for (const u of party(s).filter(living)) {
     holdObjective(s, u);
     commitSteps(u);
-    const recovery = Math.min(u.maxHp - u.hp, commandBonus(s, u, 'renew'));
+    const recovery = Math.min(u.maxHp - u.hp, healAmount(u, commandBonus(s, u, 'renew')));
     if (recovery) {
       u.hp += recovery;
       s.stats.healed += recovery;
@@ -1813,6 +1854,7 @@ function enemyAct(s, u) {
     log(s, 'combat', '還擊，造成 ' + hit + ' 點傷害。', unitDetails(t).name);
     exp(s, t, living(u) ? 12 : 35);
   }
+  woundSelfLoss(s, u, effects); // 內傷: the attacker pays once the exchange is over
   check(s);
   return effects;
 }
@@ -1858,4 +1900,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

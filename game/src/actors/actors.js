@@ -25,6 +25,7 @@ import { POLISH } from '../polish.js';
 import { paintFrame } from './sprite-frames.js';
 import { paintBase, paintGauge } from './tokens.js';
 import { spentAmount } from './spent.js';
+import { CONDITION_NAMES } from '../rules/battle-mastery.js';
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const openingActors = [
   { id: 'hero', x: 5.1, y: 5.25, side: 'ally', hp: 1 },
@@ -849,7 +850,8 @@ class ActorLayer {
         rally: '#ff9274',
         haste: '#8ee3cb',
         weak: '#ec91ae',
-        exposed: '#e8a781'
+        exposed: '#e8a781',
+        wound: '#d9796a'
       };
       const signs = {
         mark: '隙',
@@ -861,7 +863,8 @@ class ActorLayer {
         rally: '振',
         haste: '疾',
         weak: '弱',
-        exposed: '破'
+        exposed: '破',
+        wound: '傷'
       };
       const statuses = Object.keys(u.conditions || {});
       const size = clamp(scale * 0.235, 10, 15);
@@ -869,11 +872,11 @@ class ActorLayer {
         const px = p.x + (i - (statuses.length - 1) / 2) * (size + 1);
         c.fillStyle = '#243830';
         c.fillRect(px - size / 2, y - size - 3, size, size);
-        c.fillStyle = colors[kind];
+        c.fillStyle = colors[kind] || '#e9dcc0';
         c.font = 'bold ' + (size - 1) + 'px serif';
         c.textAlign = 'center';
         c.textBaseline = 'middle';
-        c.fillText(signs[kind], px, y - size / 2 - 2);
+        c.fillText(signs[kind] || CONDITION_NAMES[kind]?.[0] || '', px, y - size / 2 - 2);
       }
     }
     c.restore();

@@ -900,6 +900,143 @@ section('siphon');
   }
 }
 
+// ── 內傷 wound (§5) ──────────────────────────────────────────────────────
+section('wound');
+{
+  const hurt = (s, u, power = 5) => BM.applyCondition(s, u, { kind: 'wound', power, turns: 2 }, u);
+  // Heals of every kind are halved, rounded down, before the cap at missing 氣血.
+  {
+    const s = board(['medic', 'hero', 'guard']);
+    const medic = put(s, 'medic', 4, 7),
+      patient = put(s, 'guard', 5, 7);
+    const art = teach(medic, defineArt({ target: 'ally', heal: 30, range: 2, mp: 2, factor: undefined }));
+    patient.hp = 20;
+    const full = G.forecast(medic, patient, true, s).amount;
+    hurt(s, patient);
+    const f = G.forecast(medic, patient, true, s);
+    check('a heal on a wounded ally is halved, rounded down', f.amount === Math.floor(full / 2) && full > 1, f.amount + ' of ' + full);
+    check('the preview says so', f.notes.includes('內傷 · 療效減半'), f.notes);
+    G.resolve(s, medic, patient, true);
+    check('and the heal itself is halved', patient.hp === 20 + Math.floor(full / 2), patient.hp);
+    const power = G.healingPower(medic, s, TECHNIQUES[art]);
+    patient.hp = patient.maxHp - 5;
+    check('halved before the cap at missing 氣血', FR.supportEntry([], medic, patient, G.healAmount(patient, power)).amount === 5);
+    const over = FR.supportEntry(['overflow'], medic, patient, G.healAmount(patient, power));
+    check('餘氣護身 is the halved power less the heal, still at most 12', over.overflow === Math.min(12, Math.floor(power / 2) - 5), over.overflow);
+    const aura = board(['medic', 'hero', 'guard']);
+    const caster = put(aura, 'medic', 4, 7),
+      a = put(aura, 'hero', 5, 7),
+      b = put(aura, 'guard', 5, 6);
+    teach(caster, defineArt({ target: 'ally', heal: 30, range: 2, aura: 1, mp: 2 }));
+    a.hp = b.hp = 20;
+    hurt(aura, b);
+    const g = G.forecast(caster, a, true, aura);
+    check('an aura names the wounded companion', g.notes.includes('內傷 · 向問天療效減半'), g.notes);
+    const shield = board(['zhang', 'hero', 'guard']);
+    const z = put(shield, 'zhang', 4, 7),
+      ward = put(shield, 'hero', 5, 7);
+    hurt(shield, ward);
+    G.resolve(shield, z, ward, true);
+    check('a shield is not halved', ward.conditions?.shield?.power === 32, ward.conditions?.shield?.power);
+  }
+  {
+    const s = board(['medic', 'hero', 'guard']);
+    const hero = put(s, 'hero', 8, 8),
+      guard = put(s, 'guard', 4, 3);
+    s.run.leader = s.leader = 'medic';
+    put(s, 'medic', 4, 4);
+    hero.hp = guard.hp = 40;
+    hurt(s, hero);
+    hurt(s, guard);
+    const herb = G.terrainInfo(8, 8, s.mapIndex).heal;
+    G.startEnemy(s);
+    check('herbs heal a wounded hero by half', hero.hp === 40 + Math.floor(herb / 2), hero.hp);
+    check('so does the leader’s renew', guard.hp === 40 + Math.floor(BM.COMMANDS.medic.power / 2), guard.hp);
+    const e = board();
+    const foe = put(e, 'scout', 3, 2);
+    foe.hp = 20;
+    hurt(e, foe);
+    quietTurn(e);
+    check('herbs heal a wounded enemy by half', foe.hp === 20 + Math.floor(G.terrainInfo(3, 2, 0).heal / 2), foe.hp);
+    const m = board();
+    const h = unit(m, 'hero');
+    h.hp = 20;
+    hurt(m, h);
+    G.consume(m, h, 'remedy');
+    check('金創藥 heals a wounded hero by half', h.hp === 20 + Math.floor(G.ITEMS.remedy.hp / 2), h.hp);
+  }
+  {
+    // 回生 is a heal too.
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, 'chief', 5, 7);
+    teach(u, defineArt({ forms: ['leech'], factor: 2, mp: 2, safe: true }));
+    u.hp = 50;
+    const full = G.forecast(u, t, true, s).selfHeal;
+    hurt(s, u);
+    check('回生 is halved on a wounded caster', G.forecast(u, t, true, s).selfHeal === Math.floor(full / 2) && full > 1);
+  }
+  // After each attack it makes, the bearer loses the power in 氣血: heroes and enemies alike.
+  {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, 'chief', 5, 7);
+    teach(u, defineArt({ mp: 2, safe: true }));
+    hurt(s, u, 5);
+    const f = G.forecast(u, t, true, s);
+    check('the preview tells a wounded striker what he will lose', f.selfLoss === 5 && f.notes.includes('內傷 · 出手後自損 5 氣血'), f.notes);
+    const shield = 30;
+    BM.applyCondition(s, u, { kind: 'shield', power: shield, turns: 2 }, u);
+    const hp = u.hp;
+    G.resolve(s, u, t, true);
+    check('a wounded hero loses 5 after his art, through no shield', u.hp === hp - 5 && u.conditions.shield.power === shield, u.hp + ' / ' + hp);
+    const b = board();
+    const v = put(b, 'hero', 4, 7);
+    const foe = put(b, 'blade', 5, 7);
+    hurt(b, v, 5);
+    BM.applyCondition(b, foe, { kind: 'seal', power: 1, turns: 1 }, v);
+    v.hp = 3;
+    const g = G.forecast(v, foe, false, b);
+    G.resolve(b, v, foe, false);
+    check('after a basic attack too, never below 1', v.hp === 1 && g.selfLoss === 2 && !g.counterRaw, v.hp + ' ' + g.selfLoss);
+    const sup = board(['medic', 'hero', 'guard']);
+    const medic = put(sup, 'medic', 4, 7);
+    const friend = put(sup, 'guard', 5, 7);
+    friend.hp -= 30;
+    hurt(sup, medic);
+    const life = medic.hp;
+    G.resolve(sup, medic, friend, true);
+    check('a support art is no attack', medic.hp === life);
+  }
+  {
+    const s = board();
+    const foe = put(s, 'blade', 4, 7),
+      tank = put(s, 'guard', 5, 7);
+    hurt(s, foe, 5);
+    G.startEnemy(s);
+    const before = foe.hp;
+    G.enemyAct(s, foe);
+    const counter = Math.max(2, Math.round(G.damage(tank, foe, false, s.mapIndex, s) * 0.55));
+    check('a wounded enemy loses 5 after it strikes, on top of the counter', before - foe.hp === counter + 5 && s.logs.some((l) => l.text === '內傷發作，損失 5 點氣血。'), before - foe.hp);
+    const quiet = board();
+    const walker = put(quiet, 'blade', 3, 7);
+    put(quiet, 'guard', 8, 3);
+    hurt(quiet, walker);
+    G.startEnemy(quiet);
+    const hp = walker.hp;
+    G.enemyAct(quiet, walker);
+    check('one that only walks loses nothing', walker.hp === hp);
+    const c = board();
+    const h = put(c, 'hero', 4, 7),
+      target = put(c, 'chief', 5, 7);
+    hurt(c, target);
+    const life = target.hp;
+    const f = G.forecast(h, target, false, c);
+    G.resolve(c, h, target, false);
+    check('a counter is no attack', target.hp === life - f.amount, target.hp + ' vs ' + (life - f.amount));
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

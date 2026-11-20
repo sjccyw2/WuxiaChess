@@ -990,7 +990,7 @@ function attackPage(s, source, target, skill) {
   // Built only from what forecast() returned: the blow, the reply, and any cost or recovery.
   const forecastBar = (v) => {
     const healed = f.heal ? f.recipients.find((e) => e.id === v.id)?.amount || 0 : 0;
-    const own = v === u ? f.selfHeal - f.hpCost - f.counter : 0;
+    const own = v === u ? f.selfHeal - f.hpCost - f.counter - (f.selfLoss || 0) : 0;
     const taken = friendly || blink ? healed : v === t ? -f.amount : 0;
     const after = Math.max(0, Math.min(v.maxHp, v.hp + own + taken));
     const share = (n) => Math.max(0, Math.min(100, (100 * n) / v.maxHp));
