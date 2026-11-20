@@ -830,7 +830,10 @@ class ActorLayer {
     this.impact.paintSparks(c);
     for (const e of this.effects) {
       if (now >= e.end) {
-        if (e.kind === 'technique' && e.announced) this.onTechnique?.(e.skill, 'end');
+        if (e.kind === 'technique' && e.announced) {
+          this.onTechnique?.(e.skill, 'end');
+          this.impact.conclude(e);
+        }
         continue;
       }
       if (now < e.start) continue;
@@ -841,10 +844,12 @@ class ActorLayer {
         if (!e.announced && visible && f >= 0.035) {
           e.announced = true;
           this.onTechnique?.(e.skill, 'gather', e.name, e.visual, e.rank);
+          this.impact.herald(e);
         }
         if (!e.struck && visible && f >= 0.52) {
           e.struck = true;
           this.onTechnique?.(e.skill, 'impact', e.name, e.visual, e.rank);
+          this.impact.conclude(e, 250);
         }
         const from = this.point(e.from.x, e.from.y, 0.78);
         const to = this.point(e.to.x, e.to.y, 0.76);

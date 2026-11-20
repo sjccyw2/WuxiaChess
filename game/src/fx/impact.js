@@ -70,6 +70,27 @@ class Impact {
     if (this.motion) this.stop = Math.max(this.stop, ms);
   }
 
+  // ---- high-tier techniques ----------------------------------------------------------
+  // A rank 3 or 4 technique announces itself.
+  herald(e) {
+    if (!this.motion || e.rank < 3) return;
+    const layer = this.layer;
+    // The camera leans toward the blow.
+    if (POLISH.cameraFollow)
+      e.leaned = layer.view.lean?.(
+        (e.from.x + e.to.x) / 2,
+        (e.from.y + e.to.y) / 2,
+        e.rank === 4 ? 1.1 : 1.06,
+        420
+      );
+  }
+  // The blow has landed (or the technique is over): let the camera settle back.
+  conclude(e, delay = 0) {
+    if (!e.leaned) return;
+    e.leaned = false;
+    this.layer.view.settle(360, delay);
+  }
+
   // ---- blows -------------------------------------------------------------------------
   // Called when the rules have already resolved a blow; `at` is the action-clock time it lands.
   blow(event) {

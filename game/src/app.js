@@ -758,6 +758,7 @@ async function runEnemy() {
       G.nextRound(state);
       mode = 'move';
       update();
+      board.watch(false); // combat feel: hand the camera back
       if (!result()) {
         audio('turn');
         mapTip('第 ' + state.round + ' 回合 · 我方行動');
@@ -768,6 +769,7 @@ async function runEnemy() {
     const effects = G.enemyAct(state, e);
     audio(effects.length ? 'strike' : 'step');
     update();
+    board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
     if (effects[0])
       board.strikeEffect(
         e,
@@ -787,6 +789,7 @@ function beginEnemy() {
   audio('enemy');
   update();
   showPhase('enemy', state.round, prefs.motion); // combat feel: phase banner
+  board.watch(true); // combat feel: the camera may follow enemy actions
   mapTip('守關敵軍開始行動');
   runEnemy();
 }
