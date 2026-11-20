@@ -75,14 +75,14 @@ function stageWater(T, p, gpu, scenery) {
   const shore = scenery ? shoreField(T, scenery, p.level) : null;
   const shader = waterShader(T, {
     name: 'Maze_Mirrored_Water',
-    deep: base.clone().multiplyScalar(cave ? 0.5 : 0.4),
+    deep: base.clone().multiplyScalar(cave ? 0.26 : 0.4),
     shallow: base
       .clone()
       .lerp(haze, cave ? 0.2 : 0.14)
-      .multiplyScalar(cave ? 1.15 : 0.86),
+      .multiplyScalar(cave ? 0.66 : 0.86),
     haze,
     sky: haze.clone(),
-    foam: haze.clone().lerp(new T.Color(0xffffff), cave ? 0.25 : 0.55),
+    foam: haze.clone().lerp(new T.Color(0xffffff), cave ? 0.08 : 0.55),
     mist: p.fog,
     sparkle: cave ? 0.3 : 0.4,
     mirror: gpu,
