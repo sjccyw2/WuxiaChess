@@ -1,0 +1,3 @@
+/* Panel finish: HUD and dialog materials, transitions and button states.
+   Every rule here is scoped to html.polish-ui-chrome (or polish-forecast-bars),
+   set by src/polish.js, so the original look returns when the switch is off. */
