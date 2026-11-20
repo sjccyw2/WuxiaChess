@@ -44,6 +44,7 @@ game/
     scene/            3D battlefield, camera, scenery, landforms
     actors/           sprites and movement on the board
     fx/               technique and skill effects
+    audio/            sound, synthesised in code: instruments, each event's sound, ambience
     ui/               panels, dialogs and views
 wiki/
   index.html          page shell
@@ -64,6 +65,9 @@ tools/
   check-wiki.mjs      builds the wiki outside a browser and checks its links
   check-story.mjs     plays hundreds of shuffled runs and checks the story holds
   extra-fonts.py      regenerates the extra font characters for the game and the wiki
+  map-preview.html    draws one battlefield with the game's own board, camera and lighting
+  shoot-map.mjs       photographs a battlefield from a set of camera angles
+  sound-check.mjs     renders every sound and fails if one clips or is out of balance
 ```
 
 ## Presentation switches
@@ -137,6 +141,15 @@ node tools/check-story.mjs
 Builds the catalog and the text listing from the game sources and fails if a page links to something that does not exist, a picture is missing, or a fact has no source reference. Run it after changing game data.
 
 `check-story.mjs` plays several hundred runs without a browser, with different heroes and board orders, and fails if any scene has a line with no speaker or text, if a hero lacks one of their own lines, if a board's script mentions another board, or if a save made mid-run no longer loads. Run it after changing story text.
+
+Two more tools help when the scenery or the sound changes. Both need Playwright with Chromium, and neither needs a web server:
+
+```bash
+node tools/shoot-map.mjs 3 pictures/     # map 3 from nine camera angles, with draw calls and triangles
+node tools/sound-check.mjs               # every sound: no clipping, clean start and end, balanced loudness
+```
+
+The ten map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
 
 ## Fonts
 
