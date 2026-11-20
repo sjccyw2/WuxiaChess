@@ -193,7 +193,7 @@ function decorateWorld(T, scene, scenery, gpu) {
   scene.background = new T.Color(index ? profile.horizon : 0xb7c4b6);
   scene.fog = new T.FogExp2(index ? profile.horizon : 0xbcc7b9, index ? profile.fog : 0.025);
   scene.add(scenery, index ? stageSky(T, profile) : buildSky(T));
-  const water = index ? stagePlane(T, profile, gpu) : buildRiver(T, gpu);
+  const water = index ? stagePlane(T, profile, gpu, scenery) : buildRiver(T, gpu, scenery);
   scene.add(water);
   if (POLISH.lighting) {
     lightStage(T, scene, index, SUN);

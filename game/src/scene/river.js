@@ -1,5 +1,53 @@
 import { Reflector } from './water-mirror.js';
-function buildRiver(T, useMirror) {
+import { POLISH } from '../polish.js';
+import { shoreField, waterShader } from './water-surface.js';
+// The ferry river with depth, a lapping bank and a restrained mirror.
+function buildDeepRiver(T, useMirror, scenery) {
+  const level = -0.65,
+    shore = scenery ? shoreField(T, scenery, level) : null;
+  const shader = waterShader(T, {
+    name: 'FerryRiver',
+    deep: new T.Color(0.017, 0.082, 0.082),
+    shallow: new T.Color(0.06, 0.195, 0.155),
+    haze: new T.Color(0.49, 0.56, 0.51),
+    sky: new T.Color(0.58, 0.66, 0.62),
+    foam: new T.Color(0.74, 0.8, 0.7),
+    mist: 0.0257,
+    sparkle: 0.42,
+    mirror: useMirror,
+    shore
+  });
+  const geom = new T.PlaneGeometry(160, 160);
+  let surface;
+  if (useMirror) {
+    surface = new Reflector(geom, {
+      clipBias: 0.003,
+      textureWidth: 512,
+      textureHeight: 384,
+      multisample: 0,
+      shader
+    });
+    const reflect = surface.onBeforeRender;
+    let lastKey = '';
+    surface.onBeforeRender = function (renderer, scene, camera, ...rest) {
+      if (camera.userData.ferryVersion === lastKey) return;
+      lastKey = camera.userData.ferryVersion;
+      reflect.call(this, renderer, scene, camera, ...rest);
+    };
+  } else surface = new T.Mesh(geom, new T.ShaderMaterial(shader));
+  if (shore) {
+    // The mirror clones its uniforms; hand it the one shore texture and free it with the material.
+    surface.material.uniforms.shoreMap.value = shore.texture;
+    surface.material.addEventListener('dispose', () => shore.texture.dispose());
+  }
+  surface.name = '洛水';
+  surface.rotation.x = -Math.PI / 2;
+  surface.position.y = level;
+  surface.userData.kind = 'water';
+  return surface;
+}
+function buildRiver(T, useMirror, scenery = null) {
+  if (POLISH.water) return buildDeepRiver(T, useMirror, scenery);
   const vertexShader = `
     uniform mat4 textureMatrix; varying vec4 reflectionUv; varying vec3 wpos;
     void main(){wpos=(modelMatrix*vec4(position,1.)).xyz;reflectionUv=textureMatrix*vec4(position,1.);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}
