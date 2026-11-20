@@ -410,6 +410,29 @@ function stanceCut(s, v) {
   const stance = unitDetails(v)?.traits?.stance;
   return stance && signatureDue(s, v) ? stance.cut || 0 : 0;
 }
+// 代受: who would take a direct blow aimed at t, if not t. A hero under the cover condition takes
+// it for any companion beside him; a piece with `cover: 'master'`, for its board's master. Of
+// several, the one with most 氣血, then the earlier in the unit list. A coverer is never covered.
+function coverer(s, t) {
+  if (!s?.units || !t?.id) return null;
+  let best = null;
+  for (const v of s.units) {
+    if (v === t || !living(v) || v.side !== t.side || distance(v, t) !== 1) continue;
+    const covers = ally(v)
+      ? !!v.conditions?.cover
+      : unitDetails(v)?.traits?.cover === 'master' && t.id === commanderId(s);
+    if (covers && (!best || v.hp > best.hp)) best = v;
+  }
+  return best;
+}
+// The blow aimed at t lands on its coverer, if it has one; a hero who covers counts it.
+function takeCover(s, t) {
+  const v = coverer(s, t);
+  if (!v) return t;
+  if (ally(v)) progress(v, 'protects', 1);
+  log(s, 'combat', '挺身代' + unitDetails(t).name + '受招。', unitDetails(v).name);
+  return v;
+}
 const afterCut = (n, cut) => (cut ? Math.round((n * (100 - cut)) / 100) : n);
 // What a direct blow does to the unit that receives it, hit by hit, before shields (§6 steps
 // 2–4). Poison, 亂氣 and reflected damage never come through here.
@@ -1134,6 +1157,10 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   const type = art ? targetType(art) : 'enemy';
   const support = type === 'self' || type === 'ally',
     heal = support && !!art.heal;
+  // 代受: a blow at a covered piece is worked out on its coverer from here on (§6).
+  const aimed = t,
+    guard = type === 'enemy' ? coverer(s, t) : null;
+  if (guard) t = guard;
   const ward = t.id ? wardPercent(s, t) : 0;
   const result = {
     type,
@@ -1202,6 +1229,10 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   const plan = contactPlan(s, u, t, art, result.forms, step, unitDetails(t)?.rank === 'boss');
   result.plan = plan;
   result.notes = plan.notes;
+  if (guard) {
+    result.coveredBy = guard.id;
+    result.notes.unshift('代受 · ' + unitDetails(guard).name + '代' + unitDetails(aimed).name + '受招');
+  }
   if (art) result.notes.push(...strikeFactor(s, u, art, t).notes);
   result.effects.push(...plan.effects);
   const baseHits = (art?.hits || [1]).map(
@@ -1305,6 +1336,7 @@ const tenths = (n) => (n % 10 ? n + '%' : '一二三四五六七八九'[n / 10 -
 function guardNotes(art) {
   const notes = [];
   if (art?.stance) notes.push('卸勁 · 至下回合受擊減' + tenths(art.stance) + '，還擊全力');
+  if (art?.cover) notes.push('代受 · 至下回合，敵人對相鄰同伴的直接攻擊改由自己承受');
   return notes;
 }
 // Experience and level numbers. The wiki's rules page reads these.
@@ -1448,6 +1480,8 @@ function resolve(s, u, t, skill) {
   const f = forecast(u, t, skill, s),
     id = u.activeArt || 'signature',
     art = skill ? artFor(u, id) : null;
+  // 代受: from here on the strike is on the coverer the forecast found.
+  if (f.coveredBy) t = takeCover(s, t);
   const verb = art?.name || basicFor(u).name,
     who = unitDetails(u).name;
   const effects = [],
@@ -1714,8 +1748,9 @@ function startEnemy(s) {
   return true;
 }
 // How little an enemy wants to strike hero t: lower is the better target. A hero under 卸勁 counts
-// his 氣血 as the cut makes it last.
+// his 氣血 as the cut makes it last. A covered hero is scored as the one who would take the blow.
 function aimCost(s, u, t, friends) {
+  t = coverer(s, t) || t;
   const hp = t.hp / (1 - stanceCut(s, t) / 100);
   if (!(s.run?.stage >= 6)) return hp * 0.6;
   const protectedByAlly = friends.some((v) => v !== t && distance(v, t) === 1);
@@ -1771,7 +1806,8 @@ function enemyAct(s, u) {
     log(s, 'move', '逼近我方陣地。', unitDetails(u).name);
     return [];
   }
-  const t = best.t;
+  // 代受: the piece it chose may have someone beside it who takes the blow instead.
+  const t = takeCover(s, best.t);
   const art = signatureDue(s, u) ? enemyTechnique(u, s) : null;
   const raw = damage(u, t, false, s.mapIndex, s);
   const strikePower = art ? Math.round(raw * art.factor) : raw;
@@ -1863,4 +1899,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, stanceCut, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, stanceCut, coverer, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

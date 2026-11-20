@@ -849,7 +849,9 @@ class ActorLayer {
         rally: '#ff9274',
         haste: '#8ee3cb',
         weak: '#ec91ae',
-        exposed: '#e8a781'
+        exposed: '#e8a781',
+        stance: '#e0c48a',
+        cover: '#9fc6e8'
       };
       const signs = {
         mark: '隙',
@@ -861,7 +863,9 @@ class ActorLayer {
         rally: '振',
         haste: '疾',
         weak: '弱',
-        exposed: '破'
+        exposed: '破',
+        stance: '卸',
+        cover: '代'
       };
       const statuses = Object.keys(u.conditions || {});
       const size = clamp(scale * 0.235, 10, 15);

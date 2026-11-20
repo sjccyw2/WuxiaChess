@@ -193,7 +193,9 @@ const STATUS_COLOURS = {
   rally: '#ff9274',
   haste: '#8ee3cb',
   weak: '#ec91ae',
-  exposed: '#e8a781'
+  exposed: '#e8a781',
+  stance: '#e0c48a',
+  cover: '#9fc6e8'
 };
 const STATUS_SIGNS = {
   mark: '隙',
@@ -205,7 +207,9 @@ const STATUS_SIGNS = {
   rally: '振',
   haste: '疾',
   weak: '弱',
-  exposed: '破'
+  exposed: '破',
+  stance: '卸',
+  cover: '代'
 };
 
 // Per layer: what each bar last showed, so a wound can linger as a pale segment and drain.

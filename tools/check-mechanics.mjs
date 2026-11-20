@@ -922,6 +922,134 @@ section('stance');
   });
 }
 
+// ── 代受 cover (§6, §8) ──────────────────────────────────────────────────
+section('cover');
+{
+  const cover = (u, s) => BM.applyCondition(s, u, { kind: 'cover', power: 1, turns: 1 }, u);
+  // 郭靖's art: the condition is his, and its facts say what it does.
+  const a = board(['guo', 'medic', 'hero']);
+  const guo = put(a, 'guo', 4, 7);
+  put(a, 'blade', 5, 7);
+  const art = teach(guo, defineArt({ cover: true, safe: true, mp: 2 }));
+  const note = '代受 · 至下回合，敵人對相鄰同伴的直接攻擊改由自己承受';
+  check('the preview names the guard', G.forecast(guo, unit(a, 'blade'), true, a).notes.includes(note));
+  G.resolve(a, guo, unit(a, 'blade'), true);
+  check('代受 lands on the caster until his next turn', guo.conditions?.cover?.through === 1);
+  check('a save with it restores', !!unit(R.restoreRun(copy(a)), 'guo').conditions?.cover);
+  quietTurn(a);
+  check('it is gone when his next turn begins', !guo.conditions?.cover);
+
+  // In the enemy phase: a blow at a companion beside him lands on him, worked out on him.
+  // The attacker has reach 2 and stands still, so both heroes are in reach and the companion,
+  // first in the line and scored as her coverer, is the one it picks.
+  function guarded(setup) {
+    const s = board(['medic', 'guo', 'hero']);
+    const foe = Object.assign(put(s, 'blade', 6, 7), { step: 0, range: 2 });
+    const medic = put(s, 'medic', 4, 7),
+      guo = put(s, 'guo', 5, 7);
+    setup?.(s);
+    G.startEnemy(s);
+    const raw = G.damage(foe, guo, false, s.mapIndex, s);
+    const life = { medic: medic.hp, guo: guo.hp, foe: foe.hp, protects: guo.mastery.protects };
+    G.enemyAct(s, foe);
+    return { s, foe, medic, guo, raw, life };
+  }
+  const g = guarded((s) => cover(unit(s, 'guo'), s));
+  check('the companion is untouched', g.medic.hp === g.life.medic);
+  check('he takes the blow, at his own defence', g.life.guo - g.guo.hp === g.raw, g.life.guo - g.guo.hp + ' of ' + g.raw);
+  check('he counters, the attacker being in his reach', g.foe.hp < g.life.foe);
+  check('the blow counts as protecting', g.guo.mastery.protects === g.life.protects + 1);
+  check('the log says who took it', g.s.logs.some((l) => l.text === '挺身代任盈盈受招。' && l.who === '郭靖'));
+  const open = guarded(null);
+  check('without it the companion is struck', open.medic.hp < open.life.medic && open.guo.hp === open.life.guo);
+  const apart = guarded((s) => {
+    cover(unit(s, 'guo'), s);
+    put(s, 'guo', 5, 6);
+  });
+  check('he covers only a companion beside him', apart.medic.hp < apart.life.medic && apart.guo.hp === apart.life.guo);
+  check('a companion beside him shows the derived chip', P.profileContents(g.s, 'medic').includes('受護 · 郭靖在旁代受直接攻擊'));
+  check('one apart does not', !P.profileContents(apart.s, 'medic').includes('受護'));
+
+  // Of two coverers the one with more 氣血; on a tie the earlier; no chains.
+  const two = board(['medic', 'guo', 'guard']);
+  const m = put(two, 'medic', 4, 7);
+  const c1 = Object.assign(put(two, 'guo', 4, 6), { hp: 100 }),
+    c2 = Object.assign(put(two, 'guard', 4, 8), { hp: 120 });
+  cover(c1, two);
+  cover(c2, two);
+  check('the coverer with more 氣血 is chosen', G.coverer(two, m) === c2);
+  c2.hp = 100;
+  check('on a tie, the earlier in the unit list', G.coverer(two, m) === c1);
+  check('a coverer is not covered in turn', G.coverer(two, c1) === null);
+  c1.hp = 0;
+  check('a fallen coverer covers no one', G.coverer(two, m) === c2);
+
+  // The enemy scores a covered hero as his coverer, and goes for someone else.
+  const pick = (covered) => {
+    const s = board(['medic', 'guo', 'hero']);
+    const foe = Object.assign(put(s, 'blade', 6, 7), { step: 0, range: 2 });
+    const weak = Object.assign(put(s, 'medic', 4, 7), { hp: 30 });
+    const g = put(s, 'guo', 4, 6);
+    const other = Object.assign(put(s, 'hero', 8, 7), { hp: 80 });
+    if (covered) cover(g, s);
+    G.startEnemy(s);
+    G.enemyAct(s, foe);
+    return weak.hp < 30 || g.hp < g.maxHp ? 'medic' : other.hp < 80 ? 'hero' : 'none';
+  };
+  check('uncovered, the weakest is struck', pick(false) === 'medic');
+  check('covered, she weighs as 郭靖 and another is struck', pick(true) === 'hero');
+
+  // Disciples covering their master (`cover: 'master'`), when a hero strikes him.
+  const scoutKey = 'scout-0';
+  withTraits(scoutKey, { cover: 'master' }, () => {
+    // Board 0 has no RANKS entry yet: give the key the scout's details under a disciple's name.
+    Object.assign(G.DETAILS[scoutKey], { ...G.DETAILS.scout, name: '星宿弟子', traits: { cover: 'master' } });
+    const s = board();
+    const hero = put(s, 'hero', 4, 7),
+      chief = put(s, 'chief', 5, 7),
+      scout = put(s, 'scout', 6, 7);
+    const plain = G.forecast(hero, scout, false, s);
+    const f = G.forecast(hero, chief, false, s);
+    check('the forecast substitutes the disciple', f.coveredBy === 'scout' && f.amount === plain.amount);
+    const names = [G.unitDetails(scout).name, G.unitDetails(chief).name];
+    check('and says so', f.notes[0] === '代受 · ' + names[0] + '代' + names[1] + '受招', f.notes[0]);
+    check('reach is the master’s, so the strike is legal', G.targetOK(s, hero, chief, false));
+    check('the disciple two tiles off cannot counter', f.counterRaw === 0);
+    const page = P.attackPage(s, 'hero', 'chief', false);
+    check('the preview shows the disciple opposite, with a 代受 line', page.includes('<strong>' + names[0] + '</strong>') && page.includes('<span>代受</span><b class="">' + names[0] + '代' + names[1] + '受招'));
+    check('the master’s page names who covers him', G.enemyTraitLines(s, chief).includes('代受 · 身旁的' + names[0] + '替他承受直接攻擊'));
+    const life = [chief.hp, scout.hp];
+    G.resolve(s, hero, chief, false);
+    check('the strike lands on the disciple only', chief.hp === life[0] && life[1] - scout.hp === f.amount);
+
+    // Its effects and push land on the coverer; splash centres on him.
+    const t = board();
+    const h = put(t, 'hero', 4, 7),
+      boss = put(t, 'chief', 5, 7),
+      d = put(t, 'scout', 6, 7);
+    teach(h, defineArt({ splash: 0.5, safe: true, mp: 2 }));
+    check('the splash centres on him and reaches the master', G.forecast(h, boss, true, t).splash.some((v) => v.id === 'chief'));
+    teach(h, defineArt({ push: true, debuff: { stat: 'atk', power: 3, turns: 2 }, safe: true, mp: 2 }), 2);
+    d.hp = d.maxHp = 200;
+    const pf = G.forecast(h, boss, true, t);
+    check('the coverer is pushed along the line from the striker', pf.coveredBy === 'scout' && pf.push?.x === 7 && pf.push?.y === 7, JSON.stringify(pf.push));
+    G.resolve(t, h, boss, true);
+    check('the debuff lands on the coverer', !!d.conditions?.weak && !boss.conditions?.weak);
+    check('and he is pushed', d.x === 7 && d.y === 7);
+
+    // Sealed or dazed, a disciple still covers; he covers the master only.
+    const q = board();
+    const sc = put(q, 'scout', 5, 8);
+    put(q, 'chief', 5, 7);
+    BM.applyCondition(q, sc, { kind: 'seal', power: 1, turns: 1 }, sc);
+    BM.applyCondition(q, sc, { kind: 'daze', power: 1, turns: 1 }, sc);
+    check('a sealed, dazed disciple still covers', G.coverer(q, unit(q, 'chief')) === sc);
+    put(q, 'chief', 0, 4);
+    put(q, 'blade', 5, 7);
+    check('he does not cover the lieutenant', G.coverer(q, unit(q, 'blade')) === null);
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

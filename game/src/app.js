@@ -257,7 +257,14 @@ const board = new BattleBoard({
         skill = mode === 'skill';
       if (target && G.targetOK(state, u, target, skill)) {
         const facts = moveFacts(state, u, skill ? u.activeArt || 'signature' : 'basic', target);
-        t.textContent = uName(target) + ' · ' + facts.powerLabel + ' ' + facts.powerText;
+        const guard = !G.ally(target) && G.coverer(state, target); // 代受: the figure is the coverer's
+        t.textContent =
+          uName(target) +
+          (guard ? '（' + uName(guard) + '代受）' : '') +
+          ' · ' +
+          facts.powerLabel +
+          ' ' +
+          facts.powerText;
         t.classList.add('show');
         return;
       }

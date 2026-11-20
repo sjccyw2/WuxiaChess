@@ -13,6 +13,7 @@ import {
   unitDetails,
   enemyTechnique,
   enemyTraitLines,
+  coverer,
   reach,
   roundsToSignature,
   ITEMS,
@@ -347,6 +348,9 @@ function equippedCard(u, id, slot) {
 }
 function conditionChips(s, u) {
   const labels = activeEffects(u, s.round);
+  // 受護: derived, never stored — a companion beside a hero who covers.
+  const guard = ally(u) && coverer(s, u);
+  if (guard) labels.push('受護 · ' + DETAILS[guard.id].name + '在旁代受直接攻擊');
   return labels.length
     ? '<div class="condition-chips">' +
         labels.map((x) => '<span>' + esc(x) + '</span>').join('') +
@@ -952,9 +956,11 @@ function enemyPage(s, id) {
 }
 function attackPage(s, source, target, skill) {
   const u = find(s, source),
-    t = typeof target === 'string' ? find(s, target) : target;
-  const f = forecast(u, t, skill, s),
+    aimed = typeof target === 'string' ? find(s, target) : target;
+  const f = forecast(u, aimed, skill, s),
     a = skill ? artFor(u) : basicFor(u);
+  // 代受: the piece clicked is not the one struck; the coverer stands opposite (§9.7).
+  const t = f.coveredBy ? find(s, f.coveredBy) : aimed;
   const friendly = f.support,
     blink = f.type === 'ground';
   const title = blink ? '輕功落點' : f.heal ? '運功療傷' : friendly ? '護持預覽' : '交鋒預覽';
@@ -1072,7 +1078,10 @@ function attackPage(s, source, target, skill) {
   for (const e of f.effects)
     lines.push(line('附加效果', effectDescription(e.kind, e.power, e.turns)));
   if (f.push) lines.push(line(a.push ? '擊退' : '牽引', '一格'));
-  for (const note of f.notes) lines.push(line('招式連攜', esc(note)));
+  for (const note of f.notes)
+    lines.push(
+      note.startsWith('代受 · ') ? line('代受', esc(note.slice(5))) : line('招式連攜', esc(note))
+    );
   if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
   if (skill)
     lines.push(
