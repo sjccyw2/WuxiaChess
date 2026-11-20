@@ -46,4 +46,27 @@ function compactImage(img, onFailure) {
   img.src = art('battle-poses.png');
 }
 
-export { FRAMES, CELL_WIDTH, CELL_HEIGHT, FOOT_Y, compactSheetName, spriteSheet, compactImage };
+// Fighter art that has been asked for and has neither arrived nor failed. The loading
+// sequence (src/loading.js) reads the count so the title is not shown before its fighters.
+const arriving = new Set();
+function watchArt(img) {
+  arriving.add(img);
+  const settled = () => arriving.delete(img);
+  img.addEventListener('load', settled);
+  img.addEventListener('error', settled);
+}
+function artArriving() {
+  return arriving.size;
+}
+
+export {
+  FRAMES,
+  CELL_WIDTH,
+  CELL_HEIGHT,
+  FOOT_Y,
+  compactSheetName,
+  spriteSheet,
+  compactImage,
+  watchArt,
+  artArriving
+};
