@@ -1102,6 +1102,177 @@ section('backlash');
   check('moveFacts states the rule', MF.moveFacts(s, u, u.activeArt).effectLines.includes('反噬 · 每次施展積一層亂氣，第三層時自損兩成最大氣血並清空'), MF.moveFacts(s, u, u.activeArt).effectLines);
 }
 
+// ── 布陣 zone (§6) ───────────────────────────────────────────────────────
+section('zone');
+{
+  const MF = await load('rules/move-facts.js');
+  const tiles = (list) => list.map((p) => p.x + ',' + p.y).sort().join(' ');
+  const inZone = (s, p) => !!G.zoneAt(s, p);
+  // 任盈盈 with a ground art that lays a formation three tiles off.
+  function setup() {
+    const s = board(['medic', 'hero', 'guard']);
+    const u = put(s, 'medic', 3, 7);
+    const art = teach(u, defineArt({ target: 'ground', zone: true, range: 3, mp: 2, factor: undefined }));
+    return { s, u, art };
+  }
+  {
+    const { s, u, art } = setup();
+    check('a formation is aimed at an empty walkable tile', G.targetOK(s, u, { x: 5, y: 7 }, true));
+    put(s, 'hero', 6, 7);
+    check('not at an occupied one', !G.targetOK(s, u, { x: 6, y: 7 }, true));
+    check('nor at one that cannot be stood on', !G.targetOK(s, u, { x: 4, y: 5 }, true) && !G.walkable(4, 5, 0));
+    const f = G.forecast(u, { x: 5, y: 7 }, true, s);
+    check('the preview gives the five tiles', tiles(f.zone) === '4,7 5,6 5,7 5,8 6,7', tiles(f.zone));
+    check('and the line', f.notes.includes('布陣 · 五格，至下一敵方回合結束'), f.notes);
+    const page = P.attackPage(s, 'medic', { x: 5, y: 7 }, true);
+    check('the preview page is titled 布陣 with its own button', page.includes('布陣') && page.includes('布下陣勢') && page.includes('陣眼') && !page.includes('輕功落點'));
+    check('moveFacts states the rule', MF.moveFacts(s, u, art).effectLines.some((l) => l.startsWith('布陣 · 以落點為中心布下五格陣勢')));
+    G.resolve(s, u, { x: 5, y: 7 }, true);
+    check('laying it does not move the caster', u.x === 3 && u.y === 7 && !u.moved && u.acted);
+    check('the formation is on the game: owner, tiles, through the next enemy phase', s.zones.length === 1 && s.zones[0].owner === 'medic' && tiles(s.zones[0].tiles) === tiles(f.zone) && s.zones[0].through === 2);
+    check('only walkable neighbours count', G.zoneTiles(s, { x: 6, y: 7 }).length === 3);
+  }
+  {
+    // One formation per owner; another hero's stands beside it.
+    const { s, u } = setup();
+    G.resolve(s, u, { x: 5, y: 7 }, true);
+    const guard = put(s, 'guard', 4, 3);
+    teach(guard, defineArt({ target: 'ground', zone: true, range: 3, mp: 2 }));
+    G.resolve(s, guard, { x: 5, y: 3 }, true);
+    check('a second owner’s formation stands beside the first', s.zones.length === 2);
+    quietTurn(s);
+    const f = G.forecast(u, { x: 3, y: 6 }, true, s);
+    check('casting again says the old one goes', f.notes.includes('布陣 · 五格，至下一敵方回合結束（舊陣撤去）'), f.notes);
+    G.resolve(s, u, { x: 3, y: 6 }, true);
+    const mine = s.zones.filter((z) => z.owner === 'medic');
+    check('and replaces it', mine.length === 1 && inZone(s, { x: 3, y: 6 }) && !inZone(s, { x: 5, y: 7 }) && mine[0].through === 3);
+    check('the other stays', s.zones.some((z) => z.owner === 'guard'));
+  }
+  {
+    // Expiry: laid in ally phase 1, it holds through enemy phase 2.
+    const { s, u } = setup();
+    G.resolve(s, u, { x: 5, y: 7 }, true);
+    G.startEnemy(s);
+    check('it holds in the enemy phase it was laid before', inZone(s, { x: 5, y: 7 }));
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    check('and through the next ally phase', inZone(s, { x: 5, y: 7 }));
+    const back = R.restoreRun(copy(s));
+    check('a save keeps it', back && tiles(back.zones[0].tiles) === tiles(s.zones[0].tiles));
+    G.startEnemy(s);
+    check('and the enemy phase after', inZone(s, { x: 5, y: 7 }));
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    check('it is gone when ally phase 3 begins', !s.zones);
+    const bad = copy(back);
+    bad.zones.push({ owner: 'guard', tiles: [{ x: 'a' }], through: 9 });
+    check('a malformed formation in a save is dropped, the save kept', same(R.restoreRun(bad)?.zones.map((z) => z.owner), ['medic']));
+  }
+  {
+    // As a rider on a strike: centred where the target stood, before it is pushed.
+    const s = board(['medic', 'hero', 'guard']);
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, 'chief', 5, 7);
+    teach(u, defineArt({ zone: true, push: true, mp: 2, factor: 0.3 }));
+    const f = G.forecast(u, t, true, s);
+    check('the strike’s preview gives the tiles round the target', tiles(f.zone) === tiles(G.zoneTiles(s, { x: 5, y: 7 })) && f.notes.includes('布陣 · 五格，至下一敵方回合結束') && !!f.push);
+    G.resolve(s, u, t, true);
+    check('laid round the tile it was struck on', inZone(s, { x: 5, y: 7 }) && t.x === 6 && s.zones[0].owner === 'hero');
+    check('moveFacts says it is laid at the target’s feet', MF.moveFacts(s, u, u.activeArt).effectLines.some((l) => l.startsWith('布陣 · 以目標腳下為中心')));
+    const k = board();
+    const h = put(k, 'hero', 4, 7);
+    const v = put(k, 'scout', 5, 7);
+    teach(h, defineArt({ zone: true, mp: 2 }));
+    v.hp = 1;
+    G.resolve(k, h, v, true);
+    check('laid even when the target falls', inZone(k, { x: 5, y: 7 }));
+  }
+  {
+    // Enemy walking: onto a formation tile, never on from one; a start on one is 2 steps short.
+    const s = board();
+    const scout = put(s, 'scout', 3, 7);
+    const open = G.reachable(s, scout);
+    s.zones = [{ owner: 'medic', tiles: G.zoneTiles(s, { x: 5, y: 7 }), through: 2 }];
+    const field = G.reachable(s, scout);
+    check('without it the scout could pass along the row', open.has('6,7'));
+    check('with it he may step onto it', field.has('4,7'));
+    check('but not beyond it', !field.has('6,7') && !field.has('5,7'));
+    const through = [...field.keys()].every((k) => {
+      const [x, y] = k.split(',').map(Number);
+      return G.movementPath(s, scout, scout, { x, y }).slice(1, -1).every((p) => !inZone(s, p));
+    });
+    check('no path he can take crosses a formation tile', through);
+    check('a hero walks through freely', G.reachable(s, put(s, 'hero', 4, 6)).has('6,7'));
+    check('and can move across it', G.move(s, unit(s, 'hero'), 6, 7));
+    put(s, 'scout', 4, 7);
+    check('a scout starting on it moves 2 less', G.stat(scout, 'step', s) === scout.step - 2);
+    BM.applyCondition(s, scout, { kind: 'pin', power: 2, turns: 2 }, scout);
+    check('with 絆足 as well, still at least 1', G.stat(scout, 'step', s) === 1);
+    const blade = put(s, 'blade', 5, 7);
+    check('a two-step blade on it keeps one step', G.stat(blade, 'step', s) === 1);
+    check('the enemy page says so', P.enemyPage(s, 'blade').includes('陣中 · 移動 −2'));
+    check('a hero on it is shown its defence', G.standingLines(s, unit(s, 'hero')).includes('陣中 · 防禦 ＋4（任盈盈布陣）'));
+    check('off it nothing is shown', !G.standingLines(s, put(s, 'guard', 8, 3)).length);
+  }
+  {
+    // In the enemy phase: the scout walks in and stops.
+    const s = board(['guard', 'hero', 'medic']);
+    unit(s, 'hero').hp = unit(s, 'medic').hp = 0;
+    const scout = put(s, 'scout', 3, 7);
+    put(s, 'guard', 8, 7);
+    s.zones = [{ owner: 'medic', tiles: G.zoneTiles(s, { x: 5, y: 7 }), through: 2 }];
+    G.startEnemy(s);
+    G.enemyAct(s, scout);
+    check('an enemy whose only way runs through it stops on it', inZone(s, scout), scout.x + ',' + scout.y);
+    check('its route enters no formation tile before the last', (scout.route || []).slice(1, -1).every((p) => !inZone(s, p)));
+  }
+  {
+    // The approach search (board 1, an open plain): a formation ahead is walked round when a way
+    // round is shorter than stopping in it, and walked into when it closes the only way.
+    function plain(zone) {
+      const s = board(['guard', 'hero', 'medic']);
+      s.mapIndex = 1;
+      unit(s, 'chief').id = G.commanderId(s);
+      const spots = [[10, 8], [11, 8], [12, 8], [13, 8], [11, 9], [12, 9], [11, 10]];
+      s.units.forEach((u, i) => Object.assign(u, { x: spots[i][0], y: spots[i][1] }));
+      unit(s, 'hero').hp = unit(s, 'medic').hp = 0;
+      const scout = put(s, 'scout', 6, 5);
+      put(s, 'guard', 12, 5);
+      if (zone) s.zones = [{ owner: 'medic', tiles: G.zoneTiles(s, zone), through: 9 }];
+      G.startEnemy(s);
+      G.enemyAct(s, scout);
+      return { s, scout };
+    }
+    const straight = plain(null).scout;
+    check('on open ground the scout comes straight along the row', straight.x === 9 && straight.y === 5);
+    const round = plain({ x: 10, y: 5 });
+    check('with a formation ahead it takes the way round', round.scout.y !== 5 && !inZone(round.s, round.scout), round.scout.x + ',' + round.scout.y);
+    const shut = plain({ x: 7, y: 5 });
+    check('where the formation shuts the way it walks into it and stops', inZone(shut.s, shut.scout) && shut.scout.x === 7, shut.scout.x + ',' + shut.scout.y);
+  }
+  {
+    // The danger zone with a formation in the way.
+    const s = board();
+    put(s, 'scout', 3, 7);
+    const before = dangerTiles(s);
+    s.zones = [{ owner: 'medic', tiles: G.zoneTiles(s, { x: 4, y: 7 }), through: 2 }];
+    const after = dangerTiles(s);
+    check('the danger zone redraws for a formation', before !== after && after.size < before.size);
+    check('it reaches no tile past the formation the scout cannot get to', before.has('7,7') && !after.has('7,7'));
+    // Exact: every tile drawn is in reach of somewhere an enemy can stand this turn, and back.
+    const stands = G.enemies(s).flatMap((e) =>
+      [{ x: e.x, y: e.y }, ...[...G.reachable(s, e).keys()].map((k) => ({ x: +k.split(',')[0], y: +k.split(',')[1] }))].map((p) => ({ ...p, e }))
+    );
+    const exact = [...after].every((k) => {
+      const [x, y] = k.split(',').map(Number);
+      return stands.some((p) => G.distance(p, { x, y }) <= G.strikeReach(s, p.e));
+    }) && stands.every((p) => after.has(p.x + ',' + p.y));
+    check('and every tile it draws is one an enemy can strike', exact);
+    s.zones = null;
+    check('it forgets the formation once it is gone', dangerTiles(s).size === before.size);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

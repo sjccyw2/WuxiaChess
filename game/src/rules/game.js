@@ -790,12 +790,53 @@ function log(s, type, text, who = '') {
   s.logs.push({ round: s.round, phase: s.phase, type, text, who });
   if (s.logs.length > 250) s.logs.shift();
 }
+// The 布陣 laid over a tile, if any.
+function zoneAt(s, p) {
+  if (!s?.zones?.length) return null;
+  return s.zones.find((z) => z.tiles.some((q) => q.x === p.x && q.y === p.y)) || null;
+}
 // A hero standing in a companion's 布陣 is harder to hit; enemies only find it harder to walk.
 function onZone(s, u) {
-  return (
-    !!s?.zones?.length &&
-    ally(u) &&
-    s.zones.some((z) => z.tiles.some((p) => p.x === u.x && p.y === u.y))
+  return ally(u) && !!zoneAt(s, u);
+}
+// 布陣 (§6): an enemy that starts its action on a formation tile moves 2 less (never below 1)...
+const zoneSlows = (s, u) => !ally(u) && !!zoneAt(s, u);
+// ...and an enemy walking onto one must stop there. Heroes walk through freely.
+const zoneHalts = (s, u, p) => !ally(u) && !!zoneAt(s, p);
+// The tiles of a formation: its centre and the centre's walkable orthogonal neighbours.
+function zoneTiles(s, centre) {
+  return [[0, 0], ...adjacent]
+    .map(([dx, dy]) => ({ x: centre.x + dx, y: centre.y + dy }))
+    .filter((p) => walkable(p.x, p.y, s.mapIndex));
+}
+// One formation per owner: laying another replaces hers. Laid in ally phase r, it holds until
+// the end of enemy phase r + 1.
+function layZone(s, u, centre) {
+  const zones = (s.zones || []).filter((z) => z.owner !== u.id);
+  zones.push({ owner: u.id, tiles: zoneTiles(s, centre), through: s.round + 1 });
+  s.zones = zones;
+  log(s, 'combat', '於' + tileName(centre) + '布下陣勢。', unitDetails(u).name);
+}
+function expireZones(s) {
+  if (!s.zones) return;
+  s.zones = s.zones.filter((z) => z.through > s.round);
+  if (!s.zones.length) delete s.zones;
+}
+// Chips the panels derive from where a piece stands, not stored as conditions.
+function standingLines(s, u) {
+  const zone = living(u) && zoneAt(s, u);
+  if (!zone) return [];
+  const owner = unitDetails(find(s, zone.owner))?.name || '';
+  return [ally(u) ? '陣中 · 防禦 ＋4（' + owner + '布陣）' : '陣中 · 移動 −2'];
+}
+const COUNTS = ['', '一', '兩', '三', '四', '五'];
+// The preview's line for an art that lays a formation where it is aimed.
+function zoneNote(s, u, art, t, result) {
+  if (!art?.zone || !s) return;
+  result.zone = zoneTiles(s, t);
+  const old = s.zones?.some((z) => z.owner === u.id);
+  result.notes.push(
+    '布陣 · ' + COUNTS[result.zone.length] + '格，至下一敵方回合結束' + (old ? '（舊陣撤去）' : '')
   );
 }
 // 盟令: while its bearer lives, every other enemy strikes harder. Derived, never stored.
@@ -825,10 +866,11 @@ function stat(u, k, s) {
       : k === 'def'
         ? -(c.exposed?.power || 0) - (c.recoil?.power || 0) + (onZone(s, u) ? 4 : 0)
         : k === 'step'
-          ? (c.haste?.power || 0) - (c.pin?.power || 0)
+          ? (c.haste?.power || 0) - (c.pin?.power || 0) - (zoneSlows(s, u) ? 2 : 0)
           : 0;
+  // 絆足 and 布陣 never hold a piece below one step, alone or together.
   return Math.max(
-    k === 'step' && c.pin ? 1 : 0,
+    k === 'step' && (c.pin || zoneSlows(s, u)) ? 1 : 0,
     (u[k] || 0) +
       talent +
       items.reduce((sum, item) => sum + (item[k] || 0), 0) +
@@ -931,15 +973,24 @@ function movementField(s, u, origins, limit = Infinity, reverse = false) {
     costs.set(key(p.x, p.y), 0);
     queue.push({ x: p.x, y: p.y, n: 0 });
   }
+  // 布陣: an enemy's walk may end on a formation tile but never goes on from one. The reverse
+  // search measures how far a tile is from striking over several turns: to it, going on through
+  // a formation costs a turn (the walk stops there), and a turn begun on one starts 2 short.
+  const pause = reverse && s.zones?.length ? stat(u, 'step', s) : 0;
   for (const p of queue) {
     if (p.n !== costs.get(key(p.x, p.y))) continue;
+    const halted = p.n > 0 && zoneHalts(s, u, p);
+    if (halted && !reverse) continue;
     for (const [dx, dy] of adjacent) {
       const x = p.x + dx,
         y = p.y + dy,
         k = key(x, y);
       if (!walkable(x, y, s.mapIndex)) continue;
       const n =
-        p.n + (reverse ? tileInfo(p.x, p.y, s.mapIndex).cost : tileInfo(x, y, s.mapIndex).cost);
+        p.n +
+        (halted ? pause : 0) +
+        (pause && zoneHalts(s, u, { x, y }) ? 2 : 0) +
+        (reverse ? tileInfo(p.x, p.y, s.mapIndex).cost : tileInfo(x, y, s.mapIndex).cost);
       if (n > limit || n >= (costs.get(k) ?? Infinity)) continue;
       const occupant = at(s, x, y);
       if (occupant && occupant.side !== u.side) continue;
@@ -1241,6 +1292,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
           ' 得 8 護盾'
       );
     }
+    zoneNote(s, u, art, t, result); // 布陣 on a ground art: its tiles and its line
     selfLoss(s, u, art, result, false);
     result.notes.push(...priceNotes(art));
     return result;
@@ -1355,6 +1407,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
     result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
   }
+  zoneNote(s, u, art, t, result); // 布陣 rider: the tiles round the target's feet
   selfLoss(s, u, art, result, true); // 內傷 and 反噬: what the strike costs its caster after
   result.notes.push(...priceNotes(art));
   return result;
@@ -1526,7 +1579,9 @@ function resolve(s, u, t, skill) {
     effects.push([u.id, '−' + f.hpCost, 'sacrifice']);
   }
   // Ordinary movement is counted once when confirmed. Lightness skills move instantaneously.
-  if (f.type === 'ground') {
+  // 布陣 is laid where it is aimed; its caster stays where she is.
+  if (f.type === 'ground' && art.zone) layZone(s, u, t);
+  else if (f.type === 'ground') {
     commitSteps(u);
     u.x = t.x;
     u.y = t.y;
@@ -1576,6 +1631,7 @@ function resolve(s, u, t, skill) {
       '以「' + verb + '」擊中' + unitDetails(t).name + '，造成 ' + total + ' 點傷害。',
       who
     );
+    if (art?.zone) layZone(s, u, t); // 布陣 rider: centred where the target stood when struck
     if (living(t)) {
       if (f.plan.spentMark) delete t.conditions.mark;
       if (f.plan.spentPoison) delete t.conditions.poison;
@@ -1905,6 +1961,7 @@ function nextRound(s) {
     for (const [kind, condition] of Object.entries(u.conditions || {}))
       if (condition.through <= s.round) delete u.conditions[kind];
   }
+  expireZones(s); // 布陣 ends with the enemy phase after the one it was laid before
   check(s);
   if (s.result) return false;
   restOnHerbs(s, enemies(s));
@@ -1926,4 +1983,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

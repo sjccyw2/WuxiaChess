@@ -15,6 +15,7 @@ import {
   enemyTraitLines,
   reach,
   roundsToSignature,
+  standingLines,
   ITEMS,
   LIMIT,
   PARTY,
@@ -346,7 +347,7 @@ function equippedCard(u, id, slot) {
   );
 }
 function conditionChips(s, u) {
-  const labels = activeEffects(u, s.round);
+  const labels = [...activeEffects(u, s.round), ...standingLines(s, u)];
   return labels.length
     ? '<div class="condition-chips">' +
         labels.map((x) => '<span>' + esc(x) + '</span>').join('') +
@@ -956,8 +957,17 @@ function attackPage(s, source, target, skill) {
   const f = forecast(u, t, skill, s),
     a = skill ? artFor(u) : basicFor(u);
   const friendly = f.support,
-    blink = f.type === 'ground';
-  const title = blink ? '輕功落點' : f.heal ? '運功療傷' : friendly ? '護持預覽' : '交鋒預覽';
+    blink = f.type === 'ground',
+    formation = blink && !!a.zone; // 布陣: the caster stays; the tile is the formation's centre
+  const title = formation
+    ? '布陣'
+    : blink
+      ? '輕功落點'
+      : f.heal
+        ? '運功療傷'
+        : friendly
+          ? '護持預覽'
+          : '交鋒預覽';
   const line = (label, value, cls = '') =>
     '<div><span>' + label + '</span><b class="' + cls + '">' + value + '</b></div>';
   const who = (v) => {
@@ -965,7 +975,9 @@ function attackPage(s, source, target, skill) {
       return (
         '<div class="duelist"><i class="forecast-destination">' +
         icon('move', 29) +
-        '</i><small>落點</small><strong>第 ' +
+        '</i><small>' +
+        (formation ? '陣眼' : '落點') +
+        '</small><strong>第 ' +
         (v.x + 1) +
         ' 列・' +
         (v.y + 1) +
@@ -1022,7 +1034,11 @@ function attackPage(s, source, target, skill) {
     );
   };
   const lines = [];
-  if (blink)
+  if (formation)
+    lines.push(
+      line('陣眼', tileInfo(t.x, t.y, s.mapIndex).name + ' · 陣勢 ' + f.zone.length + ' 格')
+    );
+  else if (blink)
     lines.push(
       line(
         '移至',
@@ -1099,7 +1115,11 @@ function attackPage(s, source, target, skill) {
       : '') +
     '</div><div class="modal-foot right">' +
     btn('close', '重選目標', 'outline-btn') +
-    btn('strike', blink ? '施展輕功' : friendly ? '施展招式' : '確認出招', 'gold-btn') +
+    btn(
+      'strike',
+      formation ? '布下陣勢' : blink ? '施展輕功' : friendly ? '施展招式' : '確認出招',
+      'gold-btn'
+    ) +
     '</div>'
   );
 }

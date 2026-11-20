@@ -11,7 +11,7 @@ import { Impact } from '../fx/impact.js';
 import { paintCursor } from './cursor.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
 import { watchArt } from './sprite-sheets.js';
-import { paintField, paintReticles } from './zones.js';
+import { paintField, paintReticles, paintFormations, paintFormationAim } from './zones.js';
 import {
   compactImage,
   compactSheetName,
@@ -525,8 +525,9 @@ class ActorLayer {
     drawDanger(this); // Polish (dangerZone): the enemy's strike zone, under everything else
     const art = cast && this.mode === 'skill' ? G.artFor(u) : null;
     const range = cast ? (art ? art.range : u.range) : 0;
-    const heal = art && (G.isSupport(art) || art.blink);
-    const canBlink = art?.blink && G.canPay(s, u);
+    const ground = !!art && G.targetType(art) === 'ground';
+    const heal = art && (G.isSupport(art) || ground);
+    const canBlink = ground && G.canPay(s, u);
     // rangeTiles: zones.js paints the grid and the regions (one outer edge, a strike fringe)
     // and answers true; the tile-by-tile loop below then has nothing left to do.
     const zoned = paintField(this, reach, this.time);
@@ -536,7 +537,7 @@ class ActorLayer {
         cast &&
         G.distance(u, { x, y }) <= range &&
         G.walkable(x, y, s.mapIndex) &&
-        (!art?.blink || (canBlink && !G.at(s, x, y)));
+        (!ground || (canBlink && !G.at(s, x, y)));
       if (!this.prefs.grid && !walk && !aim) continue;
       this.path(this.tile(x, y));
       c.lineJoin = 'round';
@@ -561,6 +562,10 @@ class ActorLayer {
         c.fillText('◇', p.x, p.y);
       }
     }
+    // 布陣: the formations laid on the board, over the regions and under the pieces; while a
+    // formation art is aimed, the tiles it would cover.
+    paintFormations(this, this.time);
+    paintFormationAim(this, this.formationAim(s, u, art, hover), this.time);
     const mark = hover && this.mode === 'skill' && G.at(s, hover.x, hover.y);
     if (mark && G.targetOK(s, u, mark, true)) {
       const f = G.forecast(u, mark, true, s);
@@ -643,6 +648,15 @@ class ActorLayer {
     }
     // rangeTiles: a reticle on every piece the pending strike or art can be used on.
     paintReticles(this, reach, hover, this.time);
+  }
+  // Where a 布陣 art being aimed would lay its formation: the tile under the pointer, or the
+  // target of the preview the player has open (`aim`, set by the app).
+  formationAim(s, u, art, hover) {
+    if (!art?.zone) return null;
+    const aim = this.aim ? (this.aim.id ? G.find(s, this.aim.id) : this.aim) : hover;
+    if (!aim) return null;
+    const spot = G.targetType(art) === 'ground' ? { x: aim.x, y: aim.y } : G.at(s, aim.x, aim.y);
+    return spot && G.targetOK(s, u, spot, true) ? G.zoneTiles(s, spot) : null;
   }
   location(u, now) {
     const blink = this.tracks.get(u.id)?.clips.find((c) => c.blinkFrom && now < c.blinkAt);
@@ -797,7 +811,8 @@ class ActorLayer {
           shown: visibleHP,
           spent: grey > 0.5,
           rank: details.rank,
-          leader: u.id === this.state.leader
+          leader: u.id === this.state.leader,
+          formation: !!this.state.zones?.some((z) => z.owner === u.id)
         });
         c.restore();
         return;
@@ -851,7 +866,8 @@ class ActorLayer {
         haste: '#8ee3cb',
         weak: '#ec91ae',
         exposed: '#e8a781',
-        wound: '#d9796a'
+        wound: '#d9796a',
+        formation: '#ffd98c'
       };
       const signs = {
         mark: '隙',
@@ -864,9 +880,13 @@ class ActorLayer {
         haste: '疾',
         weak: '弱',
         exposed: '破',
-        wound: '傷'
+        wound: '傷',
+        formation: '陣'
       };
-      const statuses = Object.keys(u.conditions || {});
+      const statuses = [
+        ...Object.keys(u.conditions || {}),
+        ...(this.state.zones?.some((z) => z.owner === u.id) ? ['formation'] : [])
+      ];
       const size = clamp(scale * 0.235, 10, 15);
       for (const [i, kind] of statuses.entries()) {
         const px = p.x + (i - (statuses.length - 1) / 2) * (size + 1);

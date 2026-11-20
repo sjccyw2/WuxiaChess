@@ -260,7 +260,13 @@ function tidyMarks(s) {
   if (s.zones != null) {
     const zones = Array.isArray(s.zones)
       ? s.zones.filter(
-          (z) => z && Number.isInteger(z.through) && z.through >= s.round && Array.isArray(z.tiles)
+          (z) =>
+            z &&
+            typeof z.owner === 'string' &&
+            Number.isInteger(z.through) &&
+            z.through >= s.round &&
+            Array.isArray(z.tiles) &&
+            z.tiles.every((p) => p && Number.isInteger(p.x) && Number.isInteger(p.y))
         )
       : [];
     if (zones.length) s.zones = zones;

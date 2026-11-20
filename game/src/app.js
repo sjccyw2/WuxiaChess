@@ -399,10 +399,11 @@ function cellClick(x, y) {
   }
   const u = selected();
   if (!G.canAct(state, u)) {
-    mapTip('請選擇一位尚可行動的俠客');
+    mapTip(zoneTip(x, y) || '請選擇一位尚可行動的俠客');
     return;
   }
-  if (mode === 'skill' && G.artFor(u).blink) {
+  // A ground art (輕功 or 布陣) is aimed at an empty tile.
+  if (mode === 'skill' && G.targetType(G.artFor(u)) === 'ground') {
     if (G.targetOK(state, u, { x, y }, true)) {
       strikeData = { source: u.id, target: { x, y }, skill: true };
       openPage('attack-preview');
@@ -429,7 +430,19 @@ function cellClick(x, y) {
             ? '本回合已移動，可在出招前撤步'
             : G.terrain(x, y, state.mapIndex) + ' · 本回合無法抵達。'
       );
-  } else mapTip(mode === 'skill' ? targetHint(G.artFor(u)) : '請選擇範圍內的敵方棋子');
+  } else
+    mapTip(mode === 'skill' ? targetHint(G.artFor(u)) : zoneTip(x, y) || '請選擇範圍內的敵方棋子');
+}
+// 布陣: what a formation tile is, whose, and until when.
+function zoneTip(x, y) {
+  const zone = G.zoneAt(state, { x, y });
+  if (!zone) return '';
+  return (
+    uName(G.find(state, zone.owner)) +
+    '的陣勢 · 敵人踏入即須停步，至第 ' +
+    zone.through +
+    ' 回合敵方行動結束'
+  );
 }
 function unitClick(id) {
   if (screen !== 'battle' || dialog.open || state.run.scene !== 'fight') return;
@@ -446,14 +459,14 @@ function unitClick(id) {
     return;
   }
   if (G.ally(t)) {
-    if (skill && (G.isSupport(G.artFor(u)) || G.artFor(u).blink) && G.canAct(state, u)) {
+    if (skill && (G.isSupport(G.artFor(u)) || groundArt(u)) && G.canAct(state, u)) {
       mapTip(targetHint(G.artFor(u)));
       return;
     }
     choose(id);
     return;
   }
-  if (skill && (G.isSupport(G.artFor(u)) || G.artFor(u).blink)) {
+  if (skill && (G.isSupport(G.artFor(u)) || groundArt(u))) {
     mapTip(targetHint(G.artFor(u)));
     return;
   }
@@ -465,9 +478,10 @@ function unitClick(id) {
   subjectId = id;
   openPage('enemy-info');
 }
+const groundArt = (u) => G.targetType(G.artFor(u)) === 'ground';
 function targetHint(art) {
   return {
-    ground: '點選射程內的空地，可越過阻礙',
+    ground: art.zone ? '點選射程內的空地布陣' : '點選射程內的空地，可越過阻礙',
     self: '選擇施術者自身',
     ally:
       art.heal && !(art.shield || art.rally || art.haste)
@@ -588,6 +602,14 @@ function drawModal(keepScroll = false) {
     dialog.dataset.shown = shown;
   }
   X.dockForecast(dialog, board?.layers, state, strikeData, dialogState);
+  // 布陣: the board outlines the formation the open preview would lay.
+  if (board?.layers)
+    board.layers.aim =
+      dialogState === 'attack-preview' && strikeData
+        ? typeof strikeData.target === 'string'
+          ? { id: strikeData.target }
+          : strikeData.target
+        : null;
 }
 function openPage(name, heroId) {
   if (!dialog.open) {
@@ -668,6 +690,7 @@ dialog.addEventListener('cancel', (e) => {
 dialog.addEventListener('close', () => {
   if (dialog.open) return;
   dialogState = null;
+  if (board?.layers) board.layers.aim = null;
   board.uncover();
   (screen === 'battle' ? $('field') : document.body).append($('toast'));
   const opener = returnControl && $(returnControl);
@@ -1461,14 +1484,16 @@ function command(action, id, data = {}, keyboard = false) {
       update();
       board.strikeEffect(
         u,
-        skill && G.artFor(u).blink ? u : t,
+        skill && groundArt(u) ? u : t,
         skill && G.artFor(u).blink
           ? 'blink'
-          : skill && G.isSupport(G.artFor(u))
-            ? 'healing'
-            : skill
-              ? 'signature-hit'
-              : 'basic-hit',
+          : skill && groundArt(u)
+            ? 'support' // 布陣 is cast where she stands
+            : skill && G.isSupport(G.artFor(u))
+              ? 'healing'
+              : skill
+                ? 'signature-hit'
+                : 'basic-hit',
         hit.from
       );
       board.showEffects(hit.effects);

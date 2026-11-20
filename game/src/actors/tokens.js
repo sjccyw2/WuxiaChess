@@ -195,7 +195,8 @@ const STATUS_COLOURS = {
   haste: '#8ee3cb',
   weak: '#ec91ae',
   exposed: '#e8a781',
-  wound: '#d9796a'
+  wound: '#d9796a',
+  formation: '#ffd98c'
 };
 const STATUS_SIGNS = {
   mark: '隙',
@@ -208,7 +209,8 @@ const STATUS_SIGNS = {
   haste: '疾',
   weak: '弱',
   exposed: '破',
-  wound: '傷'
+  wound: '傷',
+  formation: '陣' // derived: the piece has a 布陣 on the board
 };
 
 // Per layer: what each bar last showed, so a wound can linger as a pale segment and drain.
@@ -315,7 +317,7 @@ function paintGauge(layer, u, g) {
     c.closePath();
     c.fill();
   }
-  const statuses = Object.keys(u.conditions || {});
+  const statuses = [...Object.keys(u.conditions || {}), ...(g.formation ? ['formation'] : [])];
   const size = snap(clamp(g.scale * 0.235, 10, 15));
   let roof = top - one * 2;
   if (statuses.length) {

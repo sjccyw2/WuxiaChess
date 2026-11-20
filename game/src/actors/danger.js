@@ -21,7 +21,10 @@ function dangerTiles(s) {
       .map((u) =>
         [u.id, u.x, u.y, G.ally(u) ? 0 : G.strikeReach(s, u), G.ally(u) ? 0 : G.stat(u, 'step', s)].join(':')
       )
-      .join(';');
+      .join(';') +
+    // 布陣 stops an enemy's walk, so where formations lie changes where it can get to.
+    '|' +
+    (s.zones || []).map((z) => z.tiles.map((p) => p.x + ',' + p.y).join(' ')).join('/');
   if (mark === memo.mark) return memo.tiles;
   const tiles = new Set();
   for (const u of alive) {
