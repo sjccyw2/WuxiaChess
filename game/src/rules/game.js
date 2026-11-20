@@ -1440,6 +1440,10 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   }
   if (result.forms.includes('glide') && art && glideSteps(s, u) > 0)
     result.notes.push('回身 · 出招後尚可走 ' + glideSteps(s, u) + ' 步');
+  if (result.forms.includes('again') && u.againRound !== s?.round)
+    result.notes.push(
+      result.amount >= t.hp ? '連環 · 此擊可擊倒，本回合可再出手' : '連環 · 擊倒則可再出手'
+    );
   result.notes.push(...guardNotes(art), ...priceNotes(art));
   return result;
 }
@@ -1647,6 +1651,7 @@ function resolve(s, u, t, skill) {
   const effects = [],
     oldKills = s.stats.kills,
     from = { x: u.x, y: u.y };
+  let felled = false; // the main target, by the blow itself (not its splash)
   if (skill) {
     u.mp -= f.mpCost;
     progress(u, 'casts', 1);
@@ -1700,6 +1705,7 @@ function resolve(s, u, t, skill) {
       total += dealt;
       effects.push([t.id, '−' + dealt]);
     }
+    felled = !living(t);
     log(
       s,
       'combat',
@@ -1748,6 +1754,8 @@ function resolve(s, u, t, skill) {
   // 回身: the steps left to walk after the strike.
   if (art && f.forms.includes('glide') && living(u) && glideSteps(s, u) > 0)
     u.glideLeft = glideSteps(s, u);
+  // 連環: felling the main target gives one more action this round.
+  const again = f.forms.includes('again') && felled && chainAgain(s, u);
   if (f.notes.length) log(s, 'combat', '氣勁變化。' + f.notes.join('。'), who);
   const leveled = living(u) && exp(
       s,
@@ -1761,8 +1769,18 @@ function resolve(s, u, t, skill) {
     counter: f.counterRaw > 0,
     hits: f.hits.length,
     from,
-    glide: canGlide(s, u) ? u.glideLeft : 0
+    glide: canGlide(s, u) ? u.glideLeft : 0,
+    again
   };
+}
+// 連環: once per hero per round, whatever triggered it. He acts again from where he stands (or
+// moves first, if he had not); the move already made is committed, so it cannot be taken back.
+function chainAgain(s, u) {
+  if (!living(u) || u.againRound === s.round) return false;
+  u.acted = false;
+  u.againRound = s.round;
+  log(s, 'combat', '連環 · 擊倒對手，本回合可再出手一次。', unitDetails(u).name);
+  return true;
 }
 function waitUnit(s, u) {
   if (!canAct(s, u)) return false;

@@ -735,8 +735,8 @@ function finishAlly() {
   if (!result() && !(F.ON ? F.anyIdle(state) : G.party(state).some((u) => G.canAct(state, u))))
     mapTip('我方已全數行動，可結束回合', 3200);
 }
-// What the turn offers once a strike has played out: the next hero, or, after 回身, the walk
-// still open to this one.
+// What the turn offers once a strike has played out: the next hero, or, after 連環, a second
+// action for this one, or, after 回身, the walk still open to him.
 function advanceAfterStrike(id, hit = {}) {
   if (state.result) {
     result(true);
@@ -755,7 +755,12 @@ function advanceAfterStrike(id, hit = {}) {
       )
     )
       return;
-    if (hit.glide && G.canGlide(state, selected())) {
+    // 連環: the same hero again, his arts list open for the second action.
+    if (hit.again && G.canAct(state, selected())) {
+      choose(id, true);
+      openArts();
+      mapTip('連環 · 擊倒敵人，可再出手一次', 3200);
+    } else if (hit.glide && G.canGlide(state, selected())) {
       mode = 'glide';
       update();
       openArts();

@@ -1402,6 +1402,72 @@ section('glide');
   });
 }
 
+// ── 連環 again (§2, §8, §9.2) ────────────────────────────────────────────
+section('again');
+{
+  const F = await load('ui/action-flow.js');
+  const MF = await load('rules/move-facts.js');
+  check('連環 is a form with the spec’s rule', same(FR.FORM_RULES.again, ['連環', '此招擊倒主目標時，本回合可再出手一次；每回合限一次。']));
+  function setup(fields = {}, hp = 5) {
+    const s = board(['hu', 'hero', 'medic']);
+    const hu = put(s, 'hu', 3, 7);
+    const prey = Object.assign(put(s, 'blade', 5, 7), { hp });
+    const art = teach(hu, defineArt({ forms: ['again'], mp: 2, ...fields }));
+    hu.mp = hu.maxMp;
+    return { s, hu, prey, art };
+  }
+  // Felling the main target after a move: he acts again from where he stands.
+  const { s, hu, prey, art } = setup();
+  G.move(s, hu, 4, 7);
+  const f = G.forecast(hu, prey, true, s);
+  check('the preview says this blow fells and frees another action', f.notes.includes('連環 · 此擊可擊倒，本回合可再出手'));
+  check('the art’s facts name the form', MF.moveFacts(s, hu, art).effectLines.includes('連環'));
+  const hit = G.resolve(s, hu, prey, true);
+  check('felling the target gives another action', hit.again === true && G.canAct(s, hu) && hu.againRound === 1);
+  check('he stays moved, and cannot move or take the move back', hu.moved && !G.canMove(s, hu) && !G.undo(s, hu) && !F.undoRow(s, hu));
+  check('he can strike again', G.targetOK(s, hu, put(s, 'scout', 4, 6), false));
+  const back = R.restoreRun(copy(s));
+  check('a save keeps the second action', G.canAct(back, unit(back, 'hu')) && unit(back, 'hu').againRound === 1);
+  const kill2 = Object.assign(unit(s, 'scout'), { hp: 1 });
+  const second = G.resolve(s, hu, kill2, true);
+  check('a second felling the same round gives nothing more', !second.again && !G.canAct(s, hu));
+  // The note when the blow will not fell.
+  const tough = setup({}, 200);
+  put(tough.s, 'hu', 4, 7);
+  check('when it will not fell, the preview says what would', G.forecast(tough.hu, tough.prey, true, tough.s).notes.includes('連環 · 擊倒則可再出手'));
+  check('and no second action comes', !G.resolve(tough.s, tough.hu, tough.prey, true).again && !G.canAct(tough.s, tough.hu));
+  // Not moved first: he may still move.
+  const still = setup();
+  put(still.s, 'hu', 4, 7);
+  G.resolve(still.s, still.hu, still.prey, true);
+  check('one who had not moved may still move', G.canMove(still.s, still.hu) && G.move(still.s, still.hu, 3, 6));
+  // A splash kill does not count; any hit of a multi-hit does.
+  const sp = setup({ splash: 0.9 }, 200);
+  put(sp.s, 'hu', 4, 7);
+  const side = Object.assign(put(sp.s, 'scout', 5, 6), { hp: 1 });
+  G.resolve(sp.s, sp.hu, sp.prey, true);
+  check('a splash kill does not count', side.hp === 0 && !G.canAct(sp.s, sp.hu));
+  const multi = setup({ hits: [0.6, 0.6] }, 3);
+  put(multi.s, 'hu', 4, 7);
+  check('the first of two hits felling counts', G.resolve(multi.s, multi.hu, multi.prey, true).again);
+  // Restrictions apply to the second action: a once-a-board art cannot go twice.
+  const once = setup({ once: true });
+  put(once.s, 'hu', 4, 7);
+  G.resolve(once.s, once.hu, once.prey, true);
+  check('the second action obeys 壓箱', G.canAct(once.s, once.hu) && G.artReady(once.s, once.hu, once.art).reason === '壓箱 · 本局已用');
+  // Once per round, and back the next round; the end-of-turn brace takes a hero who declines.
+  const r = setup();
+  put(r.s, 'hu', 4, 7);
+  G.resolve(r.s, r.hu, r.prey, true);
+  check('used, the note no longer offers it this round', !G.forecast(r.hu, put(r.s, 'scout', 5, 7), true, r.s).notes.some((n) => n.startsWith('連環')));
+  F.braceTheRest(r.s);
+  check('a hero who declines the second action is braced', r.hu.brace && r.hu.acted);
+  quietTurn(r.s);
+  r.hu.mp = r.hu.maxMp;
+  const fresh = Object.assign(put(r.s, 'chief', 3, 7), { hp: 1 });
+  check('next round it is offered again', G.resolve(r.s, r.hu, fresh, true)?.again === true);
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
