@@ -615,3 +615,16 @@
 .wake-closing p {
   margin: 0.5rem 0 0;
 }
+.ending-figure {
+  width: min(42%, 168px);
+  margin: 0.9rem auto 0.2rem;
+}
+.ending-figure img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: 50% 30%;
+  border: 1px solid #8b744c;
+  border-radius: 4px;
+}

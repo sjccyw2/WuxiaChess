@@ -142,7 +142,9 @@ Use the **Objects** house style.
 
 These file names are reserved. Each needs a small change in the game before it shows; say when the art is ready.
 
-### B1. The eagle: `game/assets/npc-eagle.webp`
+### B1. The eagle: `game/assets/npc-eagle.webp` (done)
+
+In the game: beside the prologue line where the youth first sees it, and on the screen after a lost run. Cropped from a full-body picture to the head and upper body.
 
 - **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
 - **For:** the prologue and the screen after a lost run. It never speaks.
@@ -297,7 +299,7 @@ Use the **Scenes** house style. Avoid also: `boat, river, ferry, bright sky`
 | `run-merchant.webp` (done) | `game/assets/` | 1000 × 500 | A |
 | `stone-marks-0.webp` to `-5.webp` (done) | `game/assets/` | 1000 × 360 | A |
 | `bowl-cover.webp` (done) | `game/assets/` | 360 × 360 | A |
-| `npc-eagle.webp` | `game/assets/` | 480 × 480 | B |
+| `npc-eagle.webp` (done) | `game/assets/` | 480 × 480 | B |
 | `scene-open-eyes.webp` | `game/assets/` | 1000 × 500 | B |
 | `scene-board.webp` | `game/assets/` | 1000 × 500 | B |
 | `scene-summit.webp` | `game/assets/` | 1000 × 500 | B |

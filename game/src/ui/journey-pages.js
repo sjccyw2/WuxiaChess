@@ -2,7 +2,8 @@ import { wakeJournal, fatePage } from './wake-views.js';
 import { moveFacts } from '../rules/move-facts.js';
 import { factBadge } from './panels.js';
 import * as G from '../rules/game.js';
-import { MAZE_TALE } from '../data/maze-tale.js';
+import { MAZE_TALE, EAGLE } from '../data/maze-tale.js';
+import { art } from './artwork.js';
 import { WAKES, closingFor } from '../data/wake-tale.js';
 import { titleHead, btn, esc } from './panels.js';
 import { icon } from './icons.js';
@@ -66,7 +67,16 @@ function journeyEnding(s) {
     (won ? '還不夠' : '白子俱暗') +
     '</h3><p>' +
     esc(won ? MAZE_TALE.win : MAZE_TALE.loss) +
-    '</p></div><div class="result-stats"><span>此輪破局<b>' +
+    '</p></div>' +
+    // After a lost run only the youth and the great bird are left by the table.
+    (won
+      ? ''
+      : '<figure class="ending-figure"><img src="' +
+        esc(art(EAGLE.portrait)) +
+        '" alt="' +
+        esc(EAGLE.name) +
+        '"></figure>') +
+    '<div class="result-stats"><span>此輪破局<b>' +
     (r.stage + (won ? 1 : 0)) +
     ' / 10</b></span>' +
     '<span>累積的悟<b>' +

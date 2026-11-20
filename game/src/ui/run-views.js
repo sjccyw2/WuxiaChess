@@ -69,7 +69,7 @@ function prologueSteps(profile, name = '') {
     known = profile.name || '',
     again = (profile.returns ?? 0) > 0,
     called = known || name || YOUTH.name;
-  const steps = tale.scenes.map((note) => ({ note }));
+  const steps = tale.scenes.map((note, i) => ({ note, picture: tale.pictures?.[i] || '' }));
   steps.push({ speaker: WEI, text: again ? tale.greeting.again : tale.greeting.first });
   steps.push({ note: tale.naming, ask: !known });
   steps.push({ speaker: { ...YOUTH, name: called }, text: '我叫' + called + '。' });
@@ -83,8 +83,10 @@ function prologuePage(profile, step = 0, name = '') {
   const steps = prologueSteps(profile, name),
     at = Math.max(0, Math.min(step, steps.length - 1)),
     p = steps[at];
-  const portrait = p.speaker
-    ? `<img class="fy-speaker-portrait" alt="" src="${text(art(p.speaker.portrait))}">`
+  // A page has a picture when someone speaks, or when the narration comes with one.
+  const picture = p.speaker?.portrait || p.picture;
+  const portrait = picture
+    ? `<img class="fy-speaker-portrait" alt="" src="${text(art(picture))}">`
     : '';
   const entry = p.ask
     ? `<label class="youth-name"><span>你的名字</span><input id="youth-name" type="text" maxlength="8" autocomplete="off" spellcheck="false" enterkeyhint="done" value="${text(name)}" placeholder="${text(YOUTH.name)}"></label><p class="footnote">最多八個字。留空便叫「${text(YOUTH.name)}」。這個名字會一直跟著你。</p>`
@@ -94,8 +96,8 @@ function prologuePage(profile, step = 0, name = '') {
     : '';
   return `<section class="mj-view fy-story fy-prologue">
     <header class="modal-head"><div class="modal-title">${icon('scroll', 20)}<h2>睜眼</h2></div><small>序幕</small></header>
-    <div class="fy-story-body${p.speaker ? '' : ' fy-narration'}">${portrait}<div class="fy-dialogue">
-      ${p.note ? `<p class="fy-stage-note">${text(p.note)}</p>` : ''}${said}${entry}
+    <div class="fy-story-body${picture ? '' : ' fy-narration'}">${portrait}<div class="fy-dialogue">
+      ${p.note ? (p.picture ? `<blockquote>${text(p.note)}</blockquote>` : `<p class="fy-stage-note">${text(p.note)}</p>`) : ''}${said}${entry}
     </div></div>
     <footer class="mj-footer"><div class="fy-reading">${at ? btn('prologue-prev', '上一句', 'mj-action') : ''}<span>${at + 1}／${steps.length}</span></div><aside>${p.last || p.ask ? '' : btn('prologue-skip', '略過', 'mj-action')}${btn('prologue-next', p.last ? '看棋盤' : '下一句', 'gold-btn')}</aside></footer>
   </section>`;

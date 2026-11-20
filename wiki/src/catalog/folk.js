@@ -1,5 +1,5 @@
-// 江湖人物: the two who are never on the board (the youth and 韋小寶), and the shadow
-// waiting to be saved on each board.
+// 江湖人物: those who are never on the board (the youth, the great bird and 韋小寶), and
+// the shadow waiting to be saved on each board.
 import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, gameArt } from './parts.js';
@@ -31,6 +31,24 @@ function youth() {
       ])
     ],
     sources: cites(cite(t.command.text, 'src/data/maze-tale.js'))
+  };
+}
+
+function eagle() {
+  const t = G.MAZE_TALE;
+  return {
+    id: 'eagle',
+    name: G.EAGLE.name,
+    tag: G.EAGLE.role,
+    summary: t.prologue.scenes[1],
+    image: gameArt(G.EAGLE.portrait),
+    sections: [
+      rows('人物誌', [['身分', '守在石臺旁的一隻大鳥。牠不說話，遊戲裡也不給牠別的名字。']]),
+      speech('少年睜眼所見', t.prologue.scenes[1]),
+      speech('一輪落敗之後', t.loss),
+      links('相關', [link('story', 'opening', TITLES.opening), link('story', 'return', TITLES.return)])
+    ],
+    sources: cites(cite(G.EAGLE.name, 'src/data/maze-tale.js'))
   };
 }
 
@@ -89,5 +107,5 @@ function traveller([name, caption], stage) {
 }
 
 export function folk() {
-  return [youth(), shopkeeper(), ...G.taleCaptions.map(traveller)];
+  return [youth(), eagle(), shopkeeper(), ...G.taleCaptions.map(traveller)];
 }

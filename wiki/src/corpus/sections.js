@@ -224,6 +224,7 @@ export const PLACES = {
   'src/data/maze-tale.js': {
     'YOUTH': ['圖鑑與人物', '少年與韋小寶'],
     'WEI': ['圖鑑與人物', '少年與韋小寶'],
+    'EAGLE': ['圖鑑與人物', '少年與韋小寶'],
     'MAZE_TALE': ['劇情、對白與旁白', '一輪的骨架'],
     'MAZE_TALE.title': ['開場與操作', '標題'],
     'MAZE_TALE.prologue': ['劇情、對白與旁白', '睜眼'],
