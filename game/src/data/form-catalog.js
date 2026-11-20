@@ -68,12 +68,12 @@ const ART_FORMS = {
 
   // 楊過
   'signature:yang': ['still'],
+  quanzhenSword: [],
   darkIronEdge: ['line'],
-  jadeFluteCut: ['mark'],
-  tideBreaker: ['exploit'],
-  toadLunge: ['collision'],
-  mournfulCloud: ['mark'],
-  solitaryPalm: ['still', 'leech'],
+  jadeFluteCut: [],
+  tideBreaker: [],
+  mournfulCloud: [],
+  solitaryPalm: [],
 
   // 張無忌
   'signature:zhang': ['channel'],

@@ -25,12 +25,12 @@ const NEW_HEROES = {
     epithet: '神鵰大俠',
     book: '神鵰俠侶',
     bio: '斷臂後，楊過在神鵰引領下以玄鐵重劍迎擊激流。與小龍女久別，他將相思之苦化入黯然銷魂掌。眼前縱有百條岔路，他仍記得要找的那個人。',
-    basic: '玄鐵劍法',
-    skill: '黯然銷魂掌',
+    basic: '古墓劍法',
+    skill: '蛤蟆功',
     skillIcon: 'hand',
-    skillRange: 2,
-    cost: 15,
-    skillDesc: '自耗 9 點氣血，在兩格內重擊一名敵人。出掌後須留至少 1 點氣血。',
+    skillRange: 1,
+    cost: 10,
+    skillDesc: '伏身蓄勁，向相鄰敵人猛推一掌。本回合未移動時威力更強。',
     voice: '我等過十六年，再等十局也等得起。走罷。'
   },
   zhang: {

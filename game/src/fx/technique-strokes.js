@@ -52,12 +52,12 @@ const RECIPES = {
   peachGate: ['桃花陣・開生門','peach','steps','peachGate','glide','兩株桃枝向兩側打開，花下露出生門。'],
   staffWithoutDogs: ['打狗棒法・天下無狗','bamboo','fan','staffFan','echo','五道竹杖扇開，最重的一杖橫掃扇骨。'],
 
-  'signature:yang': ['黯然銷魂掌','cinnabar','palm','lonelyPalm','heavy','一枚朱掌獨落，指尖帶出飄散的墨灰。'],
+  'signature:yang': ['蛤蟆功','bronze','leap','toadLeap','heavy','伏地蟾影伸展雙腿，貼著低弧彈起。'],
+  quanzhenSword: ['全真劍法','steel','coil','taijiBlade','sweep','一輪墨痕圓弧留有缺口，實劍從缺口出鋒。'],
   jadeFluteCut: ['玉簫劍法','jade','beam','fluteSword','snap','碧玉橫簫越過斜出的細劍，孔眼一線分明。'],
   tideBreaker: ['玄鐵重劍・擊流','slate','wave','ironTide','heavy','厚重玄鐵劍切開浪頭，碎浪朝兩旁翻起。'],
-  toadLunge: ['蛤蟆功','bronze','leap','toadLeap','heavy','伏地蟾影伸展雙腿，貼著低弧彈起。'],
-  mournfulCloud: ['黯然銷魂・杞人憂天','cinnabar','mist','grievingCloud','sweep','兩層暗雲裂開，朱紅落掌從縫隙墜下。'],
-  solitaryPalm: ['黯然銷魂・孤形隻影','cinnabar','palm','solitaryShadow','echo','單掌拉出長墨影，虛影先散，掌根最後落定。'],
+  mournfulCloud: ['黯然銷魂掌・杞人憂天','cinnabar','mist','grievingCloud','sweep','兩層暗雲裂開，朱紅落掌從縫隙墜下。'],
+  solitaryPalm: ['黯然銷魂掌','cinnabar','palm','lonelyPalm','heavy','一枚朱掌獨落，指尖帶出飄散的墨灰。'],
 
   'signature:zhang': ['乾坤大挪移','jade','coil','shiftCircle','glide','一陰一陽兩股墨弧在掌前互換位置。'],
   valleyPulse: ['蝶谷醫術・理傷','bamboo','pulse','valleyPulse','pulse','雙葉之間的一段脈線由紊亂轉為平緩。'],
@@ -84,7 +84,8 @@ const RECIPES = {
 
   // No hero art uses the strokes below any more; villain signatures still borrow them (VILLAIN_FORMS).
   breakPalm: ['破掌式','bronze','thrust','brokenPalm','snap','薄刃從掌影的指縫穿過。'],
-  vacantFist: ['空明拳','jade','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。']
+  vacantFist: ['空明拳','jade','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。'],
+  toadLunge: ['蛤蟆功','bronze','leap','toadLeap','heavy','伏地蟾影伸展雙腿，貼著低弧彈起。']
 };
 
 const STROKE_NAMES = Object.freeze(Object.fromEntries(Object.entries(RECIPES).map(([id, row])=>[id,row[0]])));
