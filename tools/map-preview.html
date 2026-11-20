@@ -76,10 +76,9 @@
       state.mapIndex = map;
       const heroes = G.party(state),
         foes = state.units.filter((u) => !heroes.includes(u));
-      heroes.forEach((u, i) => Object.assign(u, { x: layout.allies[i][0], y: layout.allies[i][1] }));
+      heroes.forEach((u, i) => Object.assign(u, layout.allies[i]));
       foes.forEach((u, i) => {
-        const seat = layout.enemies[i];
-        if (seat) Object.assign(u, { x: seat[0], y: seat[1] });
+        if (layout.enemies[i]) Object.assign(u, layout.enemies[i]);
       });
       state.units = bare ? [] : [...heroes, ...foes.slice(0, layout.enemies.length)];
       if (bare) state.selected = null;

@@ -1,0 +1,170 @@
+# WuxiaChess Roadmap
+
+> Started 2026-11-20. Owner: the producer (repository owner). Maintained by every agent that works here.
+> The design documents stay the source of truth for story and rules: `wiki/content/世界觀設定.md` (world view, v0.7) and `wiki/content/單輪劇本.md` (single-run script, v0.4). This file tracks **what to build next, in what order, and what is waiting on the producer**.
+
+## How to use this file
+
+- **Agents: read this file before starting work**, and update it in the same commit as your work: tick items, add items you discover, and record decisions.
+- **Questions for the producer go in [Open questions](#open-questions).** Ask in the session first. If the producer has not answered by the time you finish, add the question there (next free ID, your workstream, the options and your recommendation) instead of leaving it only in chat, a PR body or a design document. Build on your recommended default only where the work can be undone easily, and say so in the entry.
+- When the producer answers, move the entry to [Decisions](#decisions), and carry the answer into the design document it affects.
+- Do not remove a question because you think it is resolved. Only the producer resolves questions.
+
+## Where the game stands
+
+- **Playable:** prologue (the youth opens his eyes, names himself), ten boards in shuffled order, ten heroes (令狐冲, 任盈盈, 向問天, 郭靖, 黃蓉, 小龍女, 楊過, 段譽, 張無忌, 胡斐), twenty adversaries (a master and a lieutenant per board), 韋小寶's shop and dice cups, the marked stone, night talk, endings. Only Volume 1 (〈英雄帖〉) of the five-volume arc exists.
+- **Story is three layers that never refer to each other** (spine, boards, heroes; see README). Any new text must keep that rule, and `node tools/check-story.mjs` must pass.
+- **Same-book lines exist in one form only:** a hero from the same series as a board's master gets one line on that board (23 lines, `ENCOUNTER_SCRIPT[].heroLines`, matched by `sameSeries` in `game/src/data/hero-voices.js`). Hero-to-hero lines do not exist yet.
+- **New art has arrived but is not in the game:** `asset-gen/jianying-roster-art/` holds 30 portraits and sprite sheets: 10 heroes, 10 villains (marked 副將, lieutenant) and the 10 troop types that follow them. Each villain's troop link is in `manifest.json`.
+
+---
+
+## 1. Story refinement
+
+Goal: each board, each hero and the run as a whole carry a story of their own, not only the shared premise that a force compels the masters to fight.
+
+- [ ] **1.1 A story for each board.** Today all ten boards share one premise (run script §4.3, §7). Write, per board: why this master was chosen, which hero they have history with, and whether the side objective has its own reason. Waiting on Q-R8.
+- [ ] **1.2 Volumes 2 to 5.** Only Volume 1 exists. Design how each volume unlocks and what it reveals (world view §8): 〈一念〉 after the first full run, 〈劍解〉 when 楊過 or 令狐冲 reaches the master, 〈無名〉, 〈求敗〉. The night talk and the endings should change with the volume.
+- [ ] **1.3 Each hero's 心結 quest and 了緣 condition** (world view §9 item 4). Today any side objective plus a win brings the next hero. Waiting on Q-W4.
+- [ ] **1.4 The 階盡 scene** (the meeting with the one who set the boards, after the tenth board). Text-only today. Waiting on Q-R7; this merges into the finale (2.4).
+- [ ] **1.5 Review existing text against the producer's answers** to Q-R2, Q-R3, Q-R4 and Q-R5 once they come in.
+- [ ] **1.6 Bring the design documents to new versions** (world view v0.8, run script v0.5) as decisions land, and keep §0 of each in step.
+- [ ] **1.7 Bring the text in line with the skill and enemy-behaviour redesign.** Heroes now start with an early art and climb to the famous one, and each adversary has its own behaviour. Text that no longer matches: the hero bios that say the famous art is already held (`DETAILS` in `game/src/rules/game.js`, `game/src/data/new-heroes.js`); the ten tree origin paragraphs (`HERO_PATHS[].origin`, 「入境時…」); and four adversary texts in `encounters.js` and `encounter-script.js` (霍都 is written as pinned in the gateway but now roams; 寶象 is told to guard the walkway but now hunts the wounded; 閻基 now mends his master and his bio has no hint of bone-setting; 歐陽克's snakes are now foot soldiers). Waiting on Q-N7 for the hero text; the adversary lines can be done now.
+
+Checks: `node tools/check-story.mjs`, `node tools/check-wiki.mjs`, `python3 tools/extra-fonts.py --check` for new characters.
+
+## 2. The eleventh board, the youth's sprite sheet and the grand finale
+
+Goal: the final board of the full arc (world view §8.3, §8.4). The youth steps onto the board himself as the sixth piece, breaking the five-seat limit. The moment the rule breaks is the sword immortal's defeat.
+
+- [ ] **2.1 Design the eleventh board.** Setting, terrain, size, objective and opponents. Waiting on Q-N1, Q-N2.
+- [ ] **2.2 Build the map.** A `terrain.js` entry, a landform module in `game/src/scene/landforms/` in the style of the reworked ten, ambience and sound, and a wiki picture taken with `tools/shoot-map.mjs` (`--bare --only opening --size 1560x992`, halved).
+- [ ] **2.3 The youth's sprite sheet.** He has a portrait (`npc-youth.webp`) but no board piece. A sheet in the game's format: 8 frames per row, 144 × 176 cells, foot at y 162. Today the game reads 4 rows (idle, walk, attack, hurt); the new art pack adds a 5th row (絕技, special). Decide whether the game reads the 5th row (see 3.6). Needs a prompt in `asset-gen/prompts.md` if the producer will paint it. Waiting on Q-N3.
+- [ ] **2.4 The finale rules.**
+  - The sixth seat: the youth placed as a piece that can be lost.
+  - His skill tree is 獨孤九劍: 總訣式, 破劍式, 破刀式, 破槍式, 破鞭式, 破索式, 破掌式, 破箭式, 破氣式. Each form is unlocked across runs (for example 破劍式 after enough sword-using foes defeated). Needs a cross-run counter in the save, and must pass `node tools/check-skills.mjs`.
+  - The three things the immortal lacks decide the fight: companions (情), the dice (運, 韋小寶), and the youth's resolve not to forget.
+  - Endings: 歸去 (the true ending) and 留下 (endless mode).
+- [ ] **2.5 Gating.** In the full arc the eleventh board opens in Volume 5. Waiting on Q-N4, which decides whether it can be built and tested before Volumes 2 to 4 exist.
+- [ ] **2.6 Places that assume ten boards.** The wiki's 十局輿圖 section and its ten map pictures, the save format, the board shuffle, the 0–9 asset names (`captain-N`, `lieutenant-N`), the battle simulator's `--boards` range, and the README all assume ten. Change each one as the board is added.
+
+## 3. More heroes and enemies
+
+Goal: bring the uploaded roster into the game, and grow the pool so runs vary more.
+
+From `asset-gen/jianying-roster-art/`:
+
+| Heroes (book) | Villains, troop type (book) |
+| --- | --- |
+| 蕭峰, 虛竹 (天龍八部) | 鳳天南, 五虎門棍徒 (飛狐外傳) |
+| 洪七公, 黃藥師 (射鵰英雄傳) | 張召重, 清營刀盾兵 (書劍恩仇錄) |
+| 張三丰, 趙敏 (倚天屠龍記) | 李秋水, 西夏宮禁衛 (天龍八部) |
+| 程靈素 (飛狐外傳) | 洪安通, 神龍教青龍門眾 (鹿鼎記) |
+| 狄雲 (連城訣) | 東方不敗, 黑木崖侍衛 (笑傲江湖) |
+| 袁承志 (碧血劍) | 裘千仞, 鐵掌幫拳手 (射鵰英雄傳) |
+| 阿青 (越女劍) | 完顏洪烈, 趙王府弓手 (射鵰英雄傳) |
+| | 公孫止, 絕情谷網手 (神鵰俠侶) |
+| | 鮮于通, 華山刀陣弟子 (倚天屠龍記) |
+| | 萬震山, 萬門劍徒 (連城訣) |
+
+- [ ] **3.1 Decide how the new villains enter.** The pack marks all ten as lieutenants with their own troops, and several of their descriptions name a place (驛站, 汀, 漏臺) that matches an existing board. Waiting on Q-N5.
+- [ ] **3.2 Review the pack's text against the current world view.** Some bios still use the old ferry framing (蕭峰's mentions 渡口兩岸). Every bio must fit v0.7: invited heroes, black stones compelled by the force. No names that reveal the board-setter before Volume 3.
+- [ ] **3.3 Add each new hero.** For each: a data entry like `game/src/data/new-heroes.js`, a skill tree in `mastery-catalog.js` that passes `check-skills.mjs`, the five voice entries in `hero-voices.js` (arrival, obey, echoes, night, farewell), an arrival moment from their book (run script §6 table; waiting on Q-W3 for who and when), portrait, mini and sprite sheet in `game/assets/`, and fonts regenerated.
+- [ ] **3.4 Add each new villain and troop type** according to the answer to Q-N5: combat data, AI style, art, and a board script entry.
+- [ ] **3.5 Balance.** Run `node tools/sim-battles.mjs --runs 200 --seed 1` before and after, and `--compare` the two. Flag boards whose win rate moves by more than ten points.
+- [ ] **3.6 Sprite format.** The new sheets are 1152 × 880 (8 × 5 cells of 144 × 176); the game expects 8 × 4. Either teach `game/src/actors/sprite-sheets.js` to read the 5th row and play it for 絕技, or crop it. Recommendation: read it. The special pose then also serves the existing rank 3 and 4 cut-ins.
+- [ ] **3.7 Later candidates** (world view §9 items 3, 5 and 8): 周伯通 as a hero (run script §11 keeps him for this), villains who can be turned and recruited (鳩摩智, 裘千仞), characters by other authors. Waiting on Q-W5, Q-W8.
+- [ ] **3.8 Wiki.** 群俠列傳, 群敵錄 and the corpus read game data, so they follow once the data is in. Run `check-wiki.mjs`.
+
+## 4. Connections: dialogue when characters from the same book meet
+
+Goal: when two characters with a history in the same book meet in a run, hero and hero or hero and villain, they speak to each other. These lines are collectible and are the main way the world reveals itself (world view §8.2 跨代對話).
+
+Design, keeping the layer rule:
+
+- [ ] **4.1 A fourth story layer: pairs.** A new file, for example `game/src/data/bonds.js`, keyed by an unordered pair of character IDs. Each entry gives the relationship (師徒, 夫妻, 情人, 結義, 父女, 同門, 宿敵, 仇人, 跨代) and lines for one or more moments. A pair's lines may refer only to the two characters in it. They may never name a board, a position in the run, or a third character, so any shuffle still reads.
+- [ ] **4.2 Moments where a pair can speak:**
+  - hero and hero: when the second joins the party (arrival), at the night talk, at the farewell, and in battle when one is downed beside the other (optional);
+  - hero and villain: at the board's opening when the villain is its master or lieutenant (this replaces today's same-book line for that hero), and when one defeats the other;
+  - later runs: a deja vu variant (run script §8.1 already reserves 「面善」 lines between heroes for this).
+- [ ] **4.3 Fallback.** If no pair line exists, today's same-series line plays. Same-series lines stay as the general case; pair lines are the specific case.
+- [ ] **4.4 Saved and collected.** Record which pair lines the player has heard, and show them in the wiki's 局中紀事 and in an in-game collection if the producer wants one. Waiting on Q-N6.
+- [ ] **4.5 Extend `check-story.mjs`.** Every pair entry names two real characters; no pair line names a board or a third person; every scene that can hold a pair line still has a speaker and text for every line.
+- [ ] **4.6 Write the first set.** Starting list, to be checked against the books before writing:
+
+  | Pair | Relationship |
+  | --- | --- |
+  | 令狐冲 – 任盈盈 | lovers; she is carrying a dying 令狐冲 when she is called (run script §6) |
+  | 令狐冲 – 向問天 | sworn friends |
+  | 郭靖 – 黃蓉 | husband and wife |
+  | 楊過 – 小龍女 | the same cliff sixteen years apart (run script §6; marked as the key scene) |
+  | 郭靖 / 黃蓉 – 楊過 | guardians and the boy they raised |
+  | 黃蓉 – 黃藥師 * | father and daughter |
+  | 郭靖 / 黃蓉 – 洪七公 * | master and disciples |
+  | 張無忌 – 張三丰 * | his father's master, the 武當 founder |
+  | 張無忌 – 趙敏 * | lovers |
+  | 胡斐 – 程靈素 * | sworn siblings; she loves him |
+  | 段譽 – 蕭峰 * – 虛竹 * | sworn brothers |
+  | 楊過 – 令狐冲 | both heirs of the sword immortal's art (world view §8.2; only after Volume 3) |
+  | 張三丰 * – 郭襄 | cross-generation (郭襄 is not in the roster) |
+  | 胡斐 – 鳳天南 * | his sworn enemy (胡斐's bio already mentions him) |
+  | 胡斐 – 田歸農 | enemy of his father |
+  | 郭靖 – 完顏洪烈 *, 歐陽鋒 | the man behind his father's death; a long-time foe |
+  | 黃蓉 – 裘千仞 * | the 鐵掌 that nearly killed her |
+  | 楊過 / 小龍女 – 公孫止 *, 李莫愁 | the master of 絕情谷; 小龍女's elder fellow disciple, who hunted them both |
+  | 令狐冲 / 任盈盈 / 向問天 – 東方不敗 *, 岳不群, 左冷禪 | 笑傲江湖's main enmities |
+  | 張無忌 – 鮮于通 * | the 華山 head he exposed |
+  | 狄雲 * – 萬震山 *, 血刀老祖 | his master's brother and his betrayer; the man whose blade he carries |
+  | 蕭峰 * – 慕容博 | the man behind the ambush that killed his mother |
+  | 虛竹 * – 李秋水 *, 丁春秋 | 逍遙派 elders and a traitor |
+  | 韋小寶 (NPC) – 洪安通 * | his old cult master; a shop-side line |
+
+  \* not yet in the game; the line waits on 3.3 or 3.4.
+
+## 5. Open questions
+
+All questions waiting on the producer. IDs are stable; do not renumber. Prefix: **W** from the world view §9, **R** from the run script §13, **N** new from this roadmap or later work.
+
+| ID | Area | Question | Options and recommendation | Source | Asked |
+| --- | --- | --- | --- | --- | --- |
+| Q-W1 | Story | The game's title. | 《一念江湖》 (in use as a working subtitle), 《求敗》, 《劍解》. Also the run script's §13 item 9. | world view §9.1, run script §13.9 | 2026-11-20 |
+| Q-W2 | Story | Which villain, scene from the book and hero history belongs to each board. | Today all ten share one premise. Recommendation: write one board at a time, pairing each with the pair lines in workstream 4. Same as Q-R8. | world view §9.2 | 2026-11-20 |
+| Q-W3 | Heroes | The final hero list, the moment each is called from, and whether one character can come in two versions (young 郭靖 and 郭靖 of Xiangyang). | Ten moments are written (run script §6). The ten new heroes need theirs. | world view §9.3 | 2026-11-20 |
+| Q-W4 | Story | Each hero's 心結 quest and 了緣 condition. | Today any side objective plus a win brings the next hero. | world view §9.4 | 2026-11-20 |
+| Q-W5 | Enemies | Can villains be reconciled and recruited (鳩摩智, 裘千仞 repent in the books)? | Recommendation: yes, as a later reward, after the base roster is in. | world view §9.5 | 2026-11-20 |
+| Q-W6 | Story | How 韋小寶 entered the realm. | Left blank on purpose; could be a side mystery. | world view §9.6 | 2026-11-20 |
+| Q-W7 | Rules | Which rule each of the five 劍塚 difficulty tiers (利劍, 軟劍, 重劍, 木劍, 無劍) changes. | Not designed. | world view §9.7 | 2026-11-20 |
+| Q-W8 | Heroes | Characters by authors other than 金庸 (古龍, 梁羽生) as "another board". | Not started. Note the licensing reminder in world view §10. | world view §9.8 | 2026-11-20 |
+| Q-R1 | Story | 桑婆婆 and 周伯通 have left the game; their roles went to the youth, 韋小寶 and the stone. Keep either? | Recommendation: 周伯通 returns later as a hero (3.7). | run script §13.1 | 2026-11-20 |
+| Q-R2 | Story | Are the five closing-eyes fragments right (a dog, his mother cooking, his name being called, a cock crowing, a hand held)? Add or remove any? | | run script §13.2 | 2026-11-20 |
+| Q-R3 | Story | Why the youth has no name: the board-setter forgot his own; the youth says the same name every run. Accept? | | run script §13.3 | 2026-11-20 |
+| Q-R4 | Story | The ten heroes' arrival moments, especially 楊過 and 小龍女 at the same cliff sixteen years apart, and 胡斐's raised blade. | | run script §13.4 | 2026-11-20 |
+| Q-R5 | Maps | Place names (青竹渡, 無刻漏臺 and others) carry the old world view. Rename? Renaming means changing scenery too. | | run script §13.5 | 2026-11-20 |
+| Q-R6 | Rules | Should deja vu carry a numeric benefit, for example cheaper relearning for a hero who has travelled with the youth before? | None today. | run script §13.6 | 2026-11-20 |
+| Q-R7 | Finale | The 階盡 move: keep it as text, or make it a playable fight that cannot be won? | Recommendation: playable and unwinnable before Volume 5, then the real eleventh board. It ties into Q-N1. | run script §13.7 | 2026-11-20 |
+| Q-R8 | Story | Each board's own story (why its master was chosen, which hero they have history with, whether the side objective has a reason). | Same as Q-W2. | run script §13.8 | 2026-11-20 |
+| Q-N1 | Finale | Where is the eleventh board, and who is on the far side? The design says the immortal is only ever seen from behind, with no face. On a board he would be a piece. | (a) 劍塚 or the valley stone table, the immortal as the master, drawn only from behind; (b) the master is an echo made from the ten masters; (c) no master: the board itself is the opponent and the win is placing the sixth piece. Recommendation: (a). | this roadmap, 2.1 | 2026-11-20 |
+| Q-N2 | Finale | How the eleventh board is won: defeat the master, survive, or something tied to 情, 運 and resolve (a 韋小寶 dice event, every companion alive)? | Recommendation: the youth must take the field and the party must hold until his turn; the dice and companions shape the last round. | this roadmap, 2.4 | 2026-11-20 |
+| Q-N3 | Art | Will you paint the youth's sprite sheet as you did the roster pack, or should an agent write a prompt in `asset-gen/prompts.md`? | Recommendation: an agent writes the prompt in the pack's 8 × 5 format; you paint it. | this roadmap, 2.3 | 2026-11-20 |
+| Q-N4 | Finale | Can the eleventh board be built and playtested before Volumes 2 to 4 exist (for example as a test-only start), or must the volumes come first? | Recommendation: build it now behind a test entry, then wire it to Volume 5. | this roadmap, 2.5 | 2026-11-20 |
+| Q-N5 | Enemies | How do the ten new villains enter? | (a) a random lieutenant pool per board, so a board's lieutenant changes from run to run; (b) new boards built around them; (c) replace current lieutenants. Recommendation: (a) now, (b) as new maps are made. Their bios name places that match current boards (驛站, 汀, 漏臺), which suggests (a) or (c). | this roadmap, 3.1 | 2026-11-20 |
+| Q-N6 | Connections | Should a pair's history carry a gameplay effect (a small bonus when adjacent, like a support bond), or stay dialogue only? And do you want an in-game collection of heard lines? | Recommendation: dialogue and a collection first; effects later if wanted. | this roadmap, 4.4 | 2026-11-20 |
+| Q-N7 | Story | Heroes arrive without their later arts. What is the one shared line that explains it? | Recommendation: use the forgetting the story already has (念不帶痕, 功不隨念): the art is forgotten with everything else, and the hands relearn it. Lines that already point this way: 任盈盈's 「指頭認得，心裡卻沒有譜」 and 段譽's 「這指劍時靈時不靈」. Then rewrite the bios and origins (1.7). | skill redesign (PR #15) | 2026-11-20 |
+| Q-N8 | Rules | `check-skills` failed five times on R4: a starting art out-damaged a later strike. Raise the later art, or lower the starting art? | Went ahead on the default: raised five later arts just far enough to tie (吸星大法 1.35, 打狗棒法・絆字訣 1.2, 全真劍法 1.32, 玉簫劍法 1.32, 春蠶掌法 1.33). Sixty simulated runs moved no board by more than three points. Easy to undo: five `factor` values in `mastery-catalog.js`. | PR #15 | 2026-11-20 |
+| Q-N9 | Art | The ten pictures of the bystanders who used to be saved (`game/assets/npc-tale-0.webp` to `npc-tale-9.webp`) are no longer used. Delete them, or keep them for 1.1? | Recommendation: keep until 1.1 decides whether side objectives get their own story. | story rewrite (PR #12) | 2026-11-20 |
+
+## 6. Decisions
+
+Answers from the producer, newest first. Earlier decisions are listed in §0 of each design document.
+
+| Date | ID | Decision |
+| --- | --- | --- |
+| 2026-11-20 | — | Roadmap started. Workstreams: story refinement, the eleventh board and finale, more characters, connections between characters from the same book, and this question register. |
+
+## Suggested order
+
+1. Q-N5, then 3.1 to 3.6: bring the roster pack in. Its art is ready, and workstream 4 needs the characters.
+2. 4.1 to 4.5: the pair layer and its check, written first for the pairs among the current ten heroes and twenty adversaries.
+3. 4.6 for the new characters, alongside 1.1 (each board's story, which the hero-and-villain pairs feed).
+4. Q-N1 to Q-N4, then workstream 2. Its rules work (the sixth seat, 獨孤九劍) can start once Q-N1 and Q-N4 are answered.
+5. 1.2 to 1.4: the volumes, 心結 and 階盡, which lead into the finale.

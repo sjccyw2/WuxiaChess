@@ -89,6 +89,14 @@ for (const [name, view] of views) {
   if (bare) query.set('bare', '');
   await page.goto(`${origin}/tools/map-preview.html?${query}`);
   await page.waitForFunction(() => window.preview?.ready, null, { timeout: 60000 });
+  // The fighters' sprite sheets arrive after the page is ready.
+  await page
+    .waitForFunction(
+      () => [...window.preview.board.layers.images.values()].every((image) => image.complete),
+      null,
+      { timeout: 30000 }
+    )
+    .catch(() => {});
   await page.evaluate(
     () =>
       new Promise((done) => {

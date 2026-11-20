@@ -23,6 +23,7 @@ import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, journeyEnding } from './ui/journey-pages.js';
 import { mapLayout } from './data/terrain.js';
 import { showPhase, phaseLead } from './ui/phase-banner.js';
+import * as S from './audio/index.js';
 
 const $ = (id) => document.getElementById(id);
 const saveKey = 'jianying.qingzhudu.chapter1.v1',
@@ -68,7 +69,6 @@ const personalPages = ['sheet', 'skills', 'inventory'];
 let bowlUntil = 0;
 let selectionVersion = 0;
 let aiRun = 0,
-  soundCtx = null,
   toastTimer = 0,
   terrainTimer = 0,
   transientTip = false;
@@ -106,84 +106,10 @@ function savePrefs() {
     localStorage.setItem(prefKey, JSON.stringify(prefs));
   } catch {}
 }
-function tone(wave, startHz, endHz, offset, duration, volume) {
-  const start = soundCtx.currentTime + offset;
-  const oscillator = soundCtx.createOscillator(),
-    envelope = soundCtx.createGain();
-  oscillator.type = wave;
-  oscillator.frequency.setValueAtTime(startHz, start);
-  oscillator.frequency.exponentialRampToValueAtTime(endHz, start + duration);
-  envelope.gain.setValueAtTime(0.0001, start);
-  envelope.gain.exponentialRampToValueAtTime(volume, start + 0.013);
-  envelope.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-  oscillator.connect(envelope).connect(soundCtx.destination);
-  oscillator.start(start);
-  oscillator.stop(start + duration + 0.015);
-}
-// The impact is triggered by the painted hit, independently of the opening melody.
-const impactVoices = {
-  hero: [
-    ['triangle', 1250, 470, 0, 0.31, 0.085],
-    ['sine', 1760, 1318, 0.03, 0.55, 0.056]
-  ],
-  guo: [
-    ['sine', 150, 45, 0, 0.5, 0.23],
-    ['triangle', 240, 82, 0.055, 0.42, 0.13],
-    ['sine', 76, 42, 0.16, 0.48, 0.12]
-  ],
-  xiao: [
-    ['sine', 1175, 988, 0, 0.44, 0.11],
-    ['triangle', 1568, 1319, 0.11, 0.44, 0.065]
-  ],
-  duan: [
-    ['triangle', 740, 392, 0, 0.25, 0.09],
-    ['sine', 988, 587, 0.045, 0.3, 0.09],
-    ['sine', 1480, 988, 0.095, 0.48, 0.065]
-  ],
-  medic: [
-    ['sine', 392, 391, 0, 0.68, 0.09],
-    ['sine', 587, 586, 0.05, 0.8, 0.075],
-    ['sine', 988, 987, 0.12, 0.75, 0.06]
-  ],
-  guard: [
-    ['triangle', 132, 43, 0, 0.48, 0.19],
-    ['sine', 174, 61, 0.09, 0.37, 0.13],
-    ['triangle', 86, 44, 0.17, 0.49, 0.09]
-  ]
-};
-function audio(kind = 'tap', impact = false) {
-  if (!prefs.sound) return;
-  try {
-    soundCtx ??= new (window.AudioContext || window.webkitAudioContext)();
-    if (soundCtx.state === 'suspended') soundCtx.resume().catch(() => {});
-    if (impact) {
-      for (const voice of impactVoices[kind]) tone(...voice);
-      return;
-    }
-    const motifs = {
-      tap: [392],
-      step: [294, 392],
-      strike: [196, 147],
-      heal: [392, 494, 587],
-      hero: [587, 784, 880, 1175],
-      guo: [110, 147, 220, 294],
-      xiao: [659, 988, 880, 1319],
-      duan: [392, 494, 587, 659, 784, 988],
-      medic: [330, 392, 494, 587, 494],
-      guard: [220, 196, 147, 98],
-      turn: [262, 330, 392],
-      enemy: [196, 165],
-      grow: [392, 494, 587, 784],
-      win: [330, 392, 494, 587],
-      loss: [294, 247, 196]
-    };
-    const notes = motifs[kind] || motifs.tap;
-    const technique = G.PARTY.includes(kind);
-    const pace = kind === 'duan' ? 0.053 : kind === 'medic' ? 0.132 : 0.105;
-    const wave = ['strike', 'hero', 'guo', 'guard'].includes(kind) ? 'triangle' : 'sine';
-    for (const [i, hz] of notes.entries())
-      tone(wave, hz, hz * 0.997, i * pace, 0.42, kind === 'tap' || technique ? 0.075 : 0.13);
-  } catch {}
+// Sound: everything is synthesised in audio/; these are the game's thin calls into it.
+function audio(kind = 'tap', details) {
+  S.setEnabled(prefs.sound);
+  if (prefs.sound) S.play(kind, details);
 }
 function notice(msg) {
   const t = $('toast');
@@ -215,6 +141,8 @@ function refreshSound() {
   button.title = label;
   button.setAttribute('aria-label', label);
   button.setAttribute('aria-pressed', String(prefs.sound));
+  S.setEnabled(prefs.sound);
+  S.scene(screen === 'battle' ? state.mapIndex : null); // the battlefield's quiet ambience
   document.body.classList.toggle('no-motion', !prefs.motion);
 }
 const board = new BattleBoard({
@@ -224,7 +152,7 @@ const board = new BattleBoard({
   scene: $('scene'),
   frame: $('board-frame'),
   onCamera: syncZoom,
-  onTechnique(id, phase, name, visual, rank) {
+  onTechnique(id, phase, name, visual, rank, flourish) {
     const caption = $('technique-caption');
     if (phase === 'end') {
       if (caption.dataset.artist === id) caption.hidden = true;
@@ -239,12 +167,14 @@ const board = new BattleBoard({
       caption.querySelector('strong').textContent = name || G.DETAILS[id].skill;
       caption.hidden = false;
     }
-    audio(visual || id, phase === 'impact');
-    if (prefs.sound && phase === 'impact' && rank >= 3 && soundCtx) {
-      tone('sine', rank === 4 ? 176 : 264, 110, 0.03, 0.32, 0.07);
-      if (rank === 4) tone('sine', 880, 660, 0.16, 0.38, 0.045);
-    }
+    if (prefs.sound)
+      S.technique(phase, visual || id, rank, {
+        flourish,
+        foe: G.find(state, id)?.side === 'enemy'
+      });
   },
+  // Footfalls, blows, defeats and the rest, timed to the board's action clock.
+  onCue: (cue) => prefs.sound && S.cue(cue),
   covered: () => dialog.open,
   onCell: cellClick,
   onUnit: unitClick,
@@ -386,7 +316,7 @@ function choose(id, quiet = false) {
   const gliding = G.canGlide(state, u);
   mode = gliding ? 'glide' : placed && !u.acted ? 'attack' : 'move';
   update();
-  if (!quiet) audio('tap');
+  if (!quiet) audio('select');
   if (F.ON && ((placed && G.canAct(state, u)) || gliding)) openArts();
 }
 // Polish (actionFlow): the arts list, opened without a button and kept beside the hero.
@@ -416,7 +346,7 @@ function cellClick(x, y) {
   // 回身: the one walk left to a hero who has struck; it cannot be taken back.
   if (mode === 'glide' && G.canGlide(state, u)) {
     if (G.glideMove(state, u, x, y)) {
-      audio('step');
+      audio('move');
       mapTip('已回身');
       finishAlly();
     } else mapTip(G.terrain(x, y, state.mapIndex) + ' · 回身走不到這裡。');
@@ -437,7 +367,7 @@ function cellClick(x, y) {
   if (mode === 'move') {
     if (G.move(state, u, x, y)) {
       mode = 'attack';
-      audio('step');
+      audio('move');
       update();
       mapTip('已移動');
       if (F.ON) {
@@ -809,7 +739,7 @@ function doCommand(action, selectedArt = false, keyboard = false) {
       mapTip('回身 · 點選青綠色地格，尚可走 ' + u.glideLeft + ' 步');
     } else if (['glide-stop', 'wait'].includes(action)) {
       G.stopGlide(state, u);
-      audio('tap');
+      audio('wait');
       finishAlly();
     }
     return;
@@ -824,25 +754,29 @@ function doCommand(action, selectedArt = false, keyboard = false) {
   if (action === 'move' && u.moved) {
     if (G.undo(state, u)) {
       mode = 'move';
-      audio('step');
+      audio('undo');
       update();
       mapTip('移動已撤回');
-    } else notice('退路受阻，暫時無法撤步。');
+    } else {
+      audio('deny');
+      notice('退路受阻，暫時無法撤步。');
+    }
     return;
   }
   if (action === 'wait') {
     G.waitUnit(state, u);
-    audio('tap');
+    audio('wait');
     finishAlly();
     return;
   }
   if (action === 'skill' && !G.canPay(state, u)) {
+    audio('deny');
     notice(G.artReady(state, u).reason || '施展此招的氣血或內力不足。');
     return;
   }
   mode = action;
   paint();
-  audio('tap');
+  audio(action === 'move' ? 'tap' : 'ready');
   mapTip(
     action === 'move'
       ? '點選青綠色地格移動'
@@ -862,10 +796,11 @@ function useItem(id) {
   const used = item.kind === 'use',
     ok = used ? G.consume(state, u, id) : G.equip(state, u, id);
   if (!ok) {
+    audio('deny');
     notice('此刻無法使用這件物品。');
     return;
   }
-  audio(used ? 'heal' : 'tap');
+  audio(used ? 'heal' : 'equip');
   update();
   drawModal(true);
   notice(
@@ -897,7 +832,7 @@ async function runEnemy() {
     }
     const dazed = !!e.conditions?.daze; // 失神: the piece loses its action, and says so
     const effects = G.enemyAct(state, e);
-    audio(effects.length && !dazed ? 'strike' : 'step');
+    audio(effects.length && !dazed ? 'ready' : 'move'); // footfalls and blows follow as board cues
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
     if (dazed) mapTip(uName(e) + ' 失神，錯過了這一手');
@@ -1029,7 +964,7 @@ function toggleSound() {
   prefs.sound = !prefs.sound;
   savePrefs();
   refreshSound();
-  audio('turn');
+  audio('chime');
   notice(prefs.sound ? '遊戲音效已開啟' : '遊戲音效已關閉');
 }
 function armState() {
@@ -1067,7 +1002,7 @@ function panelPlacement(source, destination) {
     viewId = hero.id;
     Object.assign(armState(), { item: source.id, owner: slot === 'stock' ? 'stock' : hero.id });
   }
-  audio('tap');
+  audio('equip');
   update();
   drawModal(true);
   return true;
@@ -1208,7 +1143,7 @@ function command(action, id, data = {}, keyboard = false) {
       } else prologue.step++;
       drawModal();
       $('youth-name')?.focus({ preventScroll: true });
-      audio('tap');
+      audio('page');
       break;
     }
     case 'title-help':
@@ -1224,7 +1159,7 @@ function command(action, id, data = {}, keyboard = false) {
       if (G.PARTY.includes(id)) {
         codexId = id;
         drawModal(true);
-        audio('tap');
+        audio('select');
       }
       break;
     case 'sound-toggle':
@@ -1246,7 +1181,7 @@ function command(action, id, data = {}, keyboard = false) {
           );
         } catch {}
         drawModal(true);
-        audio('tap');
+        audio('select');
       }
       break;
     case 'deploy':
@@ -1324,7 +1259,7 @@ function command(action, id, data = {}, keyboard = false) {
       if (dialogState === 'encounter' && R.turnPage(state, action === 'scene-skip')) {
         save();
         showScene();
-        audio('tap');
+        audio('page');
       } else if (dialogState === 'story') {
         if (storyIndex < R.dialogue(state, archiveScene).length - 1) {
           storyIndex++;
@@ -1350,7 +1285,7 @@ function command(action, id, data = {}, keyboard = false) {
       if (changed) {
         update();
         drawModal(true);
-        audio('tap');
+        audio('equip');
       }
       break;
     }
@@ -1358,14 +1293,14 @@ function command(action, id, data = {}, keyboard = false) {
       if (dialogState === 'team' && R.toggleSeat(state, id)) {
         update();
         drawModal(true);
-        audio('step');
+        audio('seat');
       }
       break;
     case 'appoint':
       if (dialogState === 'team' && R.appointLeader(state, id)) {
         update();
         drawModal(true);
-        audio('step');
+        audio('seat');
       }
       break;
     case 'meet-zhou':
@@ -1382,7 +1317,7 @@ function command(action, id, data = {}, keyboard = false) {
       const visit = state.run.last.visit;
       update();
       drawModal(true);
-      audio('step');
+      audio('bowl');
       const ready = () => {
         if (
           dialogState === 'bowls' &&
@@ -1409,7 +1344,7 @@ function command(action, id, data = {}, keyboard = false) {
       if (dialogState === 'camp' && R.buy(state, id)) {
         update();
         drawModal(true);
-        audio('tap');
+        audio('buy');
         notice(
           state.run.last.terminal
             ? '已寄在通吃坊，下一輪取用。'
@@ -1475,7 +1410,7 @@ function command(action, id, data = {}, keyboard = false) {
       ) {
         update();
         drawModal(true);
-        audio('step');
+        audio('seat');
         notice(action === 'slot-clear' ? '已卸下此格招式。' : '招式配置已更新。');
       }
       break;
@@ -1547,7 +1482,6 @@ function command(action, id, data = {}, keyboard = false) {
       if (!hit) return;
       strikeData = null;
       closePage();
-      if (!skill) audio('strike');
       mode = '';
       update();
       board.strikeEffect(
@@ -1567,7 +1501,7 @@ function command(action, id, data = {}, keyboard = false) {
       board.showEffects(hit.effects);
       advanceAfterStrike(u.id, hit);
       if (hit.leveled) {
-        audio('grow');
+        audio('level');
         notice(uName(u) + '升至等級 ' + u.level + '，武學點數 +1');
       } else if (!state.result && !skill) notice(uName(u) + '施展「' + G.basicFor(u).name + '」');
       break;

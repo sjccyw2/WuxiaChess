@@ -1,7 +1,12 @@
-import { Model, circle } from '../scenery-kit.js';
+import { Model } from '../scenery-kit.js';
+import { cloudSteps, cloudTone } from './cloud-8.js';
+import { streetHouse } from './pavilion-8.js';
+import { brokenStreet } from './fragment-8.js';
+import { lantern } from '../maze-models.js';
 
-// Water laps at the feet of the city. The three shallow headraces up on
-// the shopping street feed this lower river through carved stone outlets.
+// The city stands on banks of cloud that step down to a mirror of still
+// water. The three shallow headraces up on the shopping street spill into
+// it through carved stone outlets.
 const river = -2.18;
 const facing = 0x81828b;
 const mortar = 0x565963;
@@ -10,6 +15,7 @@ const wetStone = 0x586469;
 const wood = 0x736255;
 const rope = 0xad9872;
 const basinFloor = -9.75;
+const deepWater = 0x8c90b0;
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const topOfQuay = -0.04;
 
@@ -97,12 +103,9 @@ function basin(T, surface) {
       const z = z0 + (regular ? 0 : m.rng.range(-0.068, 0.068));
       const y = surface(x, z);
       pos.push(x, y, z);
-      const gravel =
-        0.43 + 0.32 * Math.sin(4 * y + x * 0.91 + z * 0.21) + 0.12 * Math.sin(z * 3 - x * 2.17);
-      const shale = m.mix(0x38484e, 0x7f8380, gravel);
-      const damp = m.mix(0x384f51, 0x64776b, 0.45 + 0.31 * Math.cos(x * 1.9 + z));
-      const nearWater = 1 - clamp(Math.abs(y - river - 0.18) / 1.26, 0, 1);
-      col.push(...m.mix(shale, damp, nearWater * 0.76));
+      // The bed is the shaded heart of the cloud bank, seen between billows.
+      const v = clamp((y - river) / 1.98, 0, 1);
+      col.push(...m.mix(cloudTone(m, v * 0.8, 0.25), deepWater, clamp(-0.4 - v * 3, 0, 1)));
       if (i && j) {
         const d = j * nc + i,
           a = d - nc - 1,
@@ -121,9 +124,9 @@ function basin(T, surface) {
   geometry.computeBoundingSphere();
   const mesh = new T.Mesh(
     geometry,
-    new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.93 })
+    new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 })
   );
-  mesh.name = '江岸礫洲與沉積河床';
+  mesh.name = '雲階深處';
   mesh.receiveShadow = true;
   return mesh;
 }
@@ -137,6 +140,29 @@ function flat(m, x0, x1, z0, z1, h, color) {
     ],
     color
   );
+}
+// A flagstone with a narrow chamfer, so each slab catches light on its rim.
+function slab(m, x0, x1, z0, z1, h, color) {
+  const c = 0.014,
+    low = 0.049,
+    rim = m.mix(color, 0x40464c, 0.28);
+  const top = [
+      [x0 + c, h, z0 + c],
+      [x0 + c, h, z1 - c],
+      [x1 - c, h, z1 - c],
+      [x1 - c, h, z0 + c]
+    ],
+    foot = [
+      [x0, low, z0],
+      [x0, low, z1],
+      [x1, low, z1],
+      [x1, low, z0]
+    ];
+  m.face(top, color);
+  for (let i = 0; i < 4; i++) {
+    const k = (i + 1) % 4;
+    m.face([foot[i], foot[k], top[k], top[i]], rim);
+  }
 }
 function surfaceStreets(m, layout) {
   const cx = (layout.width - 1) / 2,
@@ -162,12 +188,38 @@ function surfaceStreets(m, layout) {
             right,
             x + (x === left ? m.rng.range(0.24, 0.85) : m.rng.range(0.72, 1.45))
           );
-          const color = m.mix(
+          const roll = m.rng.next();
+          let color = m.mix(
             0x74828a,
             0xa49b87,
             0.35 + 0.17 * Math.sin(j * 0.88 + l) + m.rng.range(0, 0.26)
           );
-          flat(m, x + 0.008, edge - 0.005, z, z + 0.318, 0.053 + m.rng.range(0.001, 0.003), color);
+          // A few slabs were relaid in pale stone; others are dark and worn.
+          if (roll < 0.11) color = m.mix(color, 0xc4bcaa, 0.62);
+          else if (roll < 0.2) color = m.mix(color, 0x5f676d, 0.45);
+          const mid = (x + edge) / 2,
+            ix = Math.round(mid + cx),
+            outside = (dj) => {
+              const k = cells.get(ix + ',' + (j + dj))?.kind;
+              return !k || k === 'reeds' || k === 'bridge';
+            };
+          slab(m, x + 0.008, edge - 0.005, z, z + 0.318, 0.053 + m.rng.range(0.001, 0.004), color);
+          // Moss creeps into the joints along the street's outer edges.
+          const verge = (l === 0 && outside(-1)) || (l === 2 && outside(1));
+          if (verge || m.rng.next() < 0.06) {
+            const zz = l === 2 && verge ? z + 0.3 : z + 0.004,
+              a = x + m.rng.range(0.02, 0.25) * (edge - x),
+              b = Math.min(edge - 0.02, a + m.rng.range(0.25, 0.6));
+            flat(
+              m,
+              a,
+              b,
+              zz,
+              zz + m.rng.range(0.018, 0.034),
+              0.0575,
+              m.mix(0x56704b, 0x84955f, m.rng.next())
+            );
+          }
           x = edge;
         }
       }
@@ -687,47 +739,6 @@ function lowerLanding(m, surface) {
   );
 }
 
-function plantedBanks(m, surface, bed, T) {
-  // Anchor every clump to the actual triangulated bank. A few sedges and
-  // water willows collect in silt pockets above the running water.
-  const ray = new T.Raycaster(),
-    down = new T.Vector3(0, -1, 0);
-  const edges = [
-    [-6.5, -6.1, -1, -0.8],
-    [-7, -4.5, -1, 0],
-    [-8.3, -2.9, -0.9, -0.7],
-    [-8.6, 3.9, -0.4, 1],
-    [-3.8, 2.8, -0.4, 1],
-    [1.5, 4.2, -0.65, 1],
-    [7.2, 5.3, 0.4, 1],
-    [8.4, 3.1, 1, 0],
-    [6.8, -1.3, 0.4, -1],
-    [4.7, -7.9, 0.5, -1],
-    [2.2, -4, 0, -1],
-    [-0.8, -5.7, 0, -1]
-  ];
-  for (const [ax, az, dx, dz] of edges) {
-    for (let h = 0; h < 6.5; h += 0.17) {
-      const x = ax + h * dx,
-        z = az + h * dz,
-        guess = surface(x, z);
-      if (guess < river - 0.26 || guess > river + 0.19) continue;
-      ray.set(new T.Vector3(x, 1, z), down);
-      const y = ray.intersectObject(bed)[0]?.point.y;
-      if (y == null || y < river - 0.22 || y > river + 0.42) continue;
-      for (let j = 0; j < 9; j++) {
-        const a = m.rng.range(0, circle),
-          w = m.rng.range(0.17, 0.35),
-          lift = m.rng.range(0.23, 0.59);
-        const root = [x + Math.cos(a) * 0.038, y - 0.038, z + Math.sin(a) * 0.033];
-        const tip = [x + Math.cos(a) * w, y + lift, z + Math.sin(a) * w];
-        m.leaf(root, tip, m.rng.range(0.017, 0.034), 0x5c745c, 0x81976e, 0.12);
-      }
-      m.rock(x + 0.06, y - 0.095, z - 0.07, 0.15, 0.15, 0.11, 0x63746b, 0x899582, 6);
-      break;
-    }
-  }
-}
 function ticketCounter(m, surface) {
   // The child with the copper fare waits beside the northwest gate.
   const x = -5.68,
@@ -787,6 +798,24 @@ function ticketCounter(m, surface) {
   });
 }
 
+function festoon(m, a, b, sag, count) {
+  const at = (t) => [
+    a[0] + (b[0] - a[0]) * t,
+    a[1] + (b[1] - a[1]) * t - sag * 4 * t * (1 - t),
+    a[2] + (b[2] - a[2]) * t
+  ];
+  m.line(
+    Array.from({ length: 11 }, (_, i) => at(i / 10)),
+    0.012,
+    rope,
+    4
+  );
+  for (let k = 1; k <= count; k++) {
+    const p = at(k / (count + 1));
+    lantern(m, p[0], p[1] - 0.19, p[2], 0.42, k % 2 ? 0xd2643f : 0xdc9a52);
+  }
+}
+
 function landform8(T, layout) {
   const group = new T.Group();
   group.name = '倒影天街・拱渠與水坊';
@@ -841,11 +870,52 @@ function landform8(T, layout) {
   slopingStair(stone, T);
   for (const [x, z] of outlets) drain(stone, x, z, surface);
   group.add(stone.finish('三渠街基、通水拱巷與樓座'));
+  const cloud = cloudSteps(
+    T,
+    layout,
+    surface,
+    [
+      [9.72, 5.49, 8.76, 3.82, 0.75],
+      [8.32, -1.43, 7.28, -1.53, 0.65],
+      [8.24, -1.37, 9.2, -5.09, 0.8],
+      ...outlets.map(([x, z]) => [x, z, x, z + 2.6, 0.42])
+    ],
+    [
+      [-5.15, -0.42, 5.75, 1.05, 0.52],
+      [-4.45, -0.5, 5.15, 0.75, 0.42],
+      [-5.85, -0.62, 6.1, 0.8, 0.45],
+      [-5.3, -1.05, 6.0, 0.7, 0.4],
+      [-2.5, -0.25, -7.95, 0.8, 0.42],
+      [-1.95, -0.4, -8.35, 0.6, 0.36],
+      [-2.7, -0.7, -8.3, 0.55, 0.34]
+    ]
+  );
+  group.add(cloud);
   const life = new Model(T, 81339);
   plumWineShop(life);
   lowerLanding(life, surface);
-  plantedBanks(life, surface, bed, T);
   group.add(life.finish('雙色店幡、茶肆與烏篷渡船'));
+  // The two storeyed shop-houses stand on the paired piers above.
+  const houses = new Model(T, 81723);
+  houses.frame(-9.71, 0.98, 3.098, 1.15, 1, () => streetHouse(houses, 3.16, 1.61, 'red'));
+  houses.frame(4.827, 0.77, -7.99, -0.18, 1, () => streetHouse(houses, 2.87, 1.57, 'green'));
+  // A festoon of paper lanterns hangs from the street gate to the red house.
+  festoon(houses, [-8.86, 2.62, -1.2], [-8.36, 2.32, 1.92], 0.42, 5);
+  group.add(houses.finish('兩坊重樓', { occluder: true }));
+  // Two stretches of street have broken loose and drift beside the ward.
+  const adrift = new Model(T, 81877);
+  adrift.frame(-4.7, 0.35, 5.3, 0.8, 1, () => brokenStreet(adrift, 2.8, 1.3), 0.06, -0.05);
+  adrift.frame(
+    -2.2,
+    0.6,
+    -7.75,
+    -1.27,
+    1,
+    () => brokenStreet(adrift, 1.9, 1.0, false),
+    -0.05,
+    0.07
+  );
+  group.add(adrift.finish('斷街浮段', { occluder: true }));
   const stall = new Model(T, 81533);
   ticketCounter(stall, surface);
   group.add(stall.finish('西北坊船資攤', { occluder: true }));

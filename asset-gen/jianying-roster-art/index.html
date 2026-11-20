@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#192f2a">
+  <title>人物畫集 · 劍影江湖</title>
+  <style>
+    @font-face{font-family:RiverSerif;src:url(fonts/river-serif.woff) format('woff');font-display:swap;font-weight:650 900}
+    @font-face{font-family:RiverSans;src:url(fonts/river-sans.woff) format('woff');font-display:swap;font-weight:100 900}
+    :root{--ink:#203932;--jade:#254f42;--paper:#f5f1e7;--line:#cfc5b0;--muted:#59665b;--rust:#893f31;--serif:RiverSerif,'Songti TC','Noto Serif TC',PMingLiU,serif;--sans:RiverSans,'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;color-scheme:light}
+    *{box-sizing:border-box}
+    [hidden]{display:none!important}
+    body{margin:0;color:var(--ink);background:var(--paper);font:16px/1.55 var(--sans);background-image:radial-gradient(ellipse at 95% 0%,#e8e3d680,transparent 52%)}
+    button,a{font:inherit;touch-action:manipulation}
+    button{cursor:pointer;color:inherit}
+    a{color:var(--jade);text-decoration-thickness:1px;text-underline-offset:4px}
+    button:focus-visible,a:focus-visible{outline:3px solid #b2762e;outline-offset:3px}
+    header{background:#1a302b;color:#faf3e3;border-bottom:3px solid #b79b66}
+    .bar,.wrap{width:min(1380px,100%);margin:auto;padding-inline:clamp(16px,4vw,64px)}
+    .bar{min-height:68px;display:flex;align-items:center;gap:18px}
+    .brand{display:flex;align-items:center;gap:12px;white-space:nowrap;font:720 24px/1 var(--serif);letter-spacing:.07em}
+    .seal{width:33px;height:37px;display:grid;place-items:center;border:1px solid #e4a98f;outline:2px solid #873e30;outline-offset:1px;background:#914738;box-shadow:inset 0 0 0 2px #914738,inset 0 0 0 3px #d6a88f;color:#fbecda;font:800 23px var(--serif);letter-spacing:0;transform:rotate(-3deg)}
+    .back{margin-left:auto;color:#e7e0d0;font-size:13px;text-decoration:none;display:flex;align-items:center;gap:5px}
+
+    .back:hover{text-decoration:underline}
+    .download{display:inline-flex;align-items:center;justify-content:center;gap:9px;white-space:nowrap;border:1px solid #9d8258;border-radius:4px;padding:8px 14px;background:#efe3c6;color:#26382e;text-decoration:none;font-weight:720;min-height:40px}
+    .download:hover{background:#fff0ce}
+    .download[aria-disabled="true"]{opacity:.75}
+    .download svg,.file-link svg{width:17px;height:17px;flex:none}
+    .wrap{padding-block:clamp(20px,3vw,40px) 26px}
+    .title-line{display:flex;align-items:baseline;gap:18px;margin-bottom:24px}
+    h1,h2,p,figure{margin:0}
+    h1{font:750 clamp(34px,4.5vw,60px)/1.12 var(--serif);letter-spacing:.07em}
+    .total{font-size:13px;color:var(--muted);white-space:nowrap}
+    .title-rule{height:1px;flex:1;min-width:12px;background:var(--line);align-self:center;margin-left:2px}
+    .layout{display:grid;grid-template-columns:minmax(245px,29%) minmax(0,1fr);gap:clamp(20px,3.1vw,48px);align-items:start}
+    aside{min-width:0}
+    .group-tabs{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line);gap:3px;margin:0 0 14px}
+    .tab{border:0;border-bottom:3px solid transparent;padding:10px 4px;font-weight:700;background:transparent;letter-spacing:.03em;white-space:nowrap}
+    .tab[aria-pressed="true"]{color:var(--rust);border-bottom-color:var(--rust)}
+    .tab:hover,.move:hover,.cycle:hover,.card:hover{background-color:#e8e7d9}
+    .roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .card{border:1px solid var(--line);border-radius:4px;background:#fcf9f0;display:flex;align-items:center;text-align:left;gap:8px;padding:5px;min-height:58px;overflow:hidden}
+    .card[aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--jade);border-color:var(--jade);background:#e4e9dc}
+    .card img{width:40px;height:46px;border-radius:2px;object-fit:cover;object-position:50% 33%;flex:none;background:#c5bba2}
+    .card span{font:720 clamp(13px,1.2vw,16px)/1.3 var(--serif);overflow-wrap:anywhere}
+    .detail{min-width:0}
+    .unit-head{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:11px;margin-bottom:13px}
+    .book{display:block;color:var(--rust);font-weight:650;font-size:13px;margin:0 0 3px}
+    h2{font:750 clamp(30px,3.5vw,48px)/1.18 var(--serif);letter-spacing:.05em;overflow-wrap:anywhere}
+    .pager{display:flex;gap:6px}
+    .cycle{min-height:36px;padding:4px 10px;border:1px solid var(--line);border-radius:3px;background:transparent;font-size:14px;white-space:nowrap}
+    .cycle svg{width:17px;height:17px}
+    .art-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .art-slot{min-width:0}
+    .viewport{aspect-ratio:1/1;width:100%;position:relative;display:grid;place-items:center;overflow:hidden;border:1px solid var(--line);border-radius:4px}
+    .portrait{background:#c4b9a3}
+    .portrait img{width:100%;height:100%;object-fit:contain;display:block}
+    .stage{isolation:isolate;border-color:#4b6559;background:radial-gradient(ellipse at 50% 27%,#506b5c,#304a40 53%,#203830 92%)}
+    .stage:before,.stage:after{content:'';position:absolute;z-index:-1;pointer-events:none}
+    .stage:before{inset:18%;border-radius:50%;border:1px solid #c4cf9f27;box-shadow:0 0 0 9px #d0c49a07,inset 0 0 0 8px #d0c49a07}
+    .stage:after{width:57%;height:7%;bottom:11%;border-radius:50%;border:1px solid #a9bb8f38;background:radial-gradient(ellipse,#08161150,transparent 70%)}
+    #scene{height:95%;max-width:95%;aspect-ratio:144/176;display:block;width:auto}
+    .file-link{display:inline-flex;align-items:center;gap:6px;padding:7px 0;min-height:36px;text-decoration:none;font-size:13px;color:var(--jade);font-weight:650}
+    .file-link:hover{text-decoration:underline}
+    .file-link[aria-disabled="true"]{opacity:.65}
+    .file-link svg{width:14px;height:14px}
+    .controls{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:9px 0}
+    .motions{display:flex;gap:4px;flex-wrap:wrap}
+    .move,.play{min-height:36px;border-radius:3px}
+    .move{background:transparent;border:1px solid transparent;padding:4px 9px;font-size:14px;font-weight:650}
+    .move[aria-pressed="true"]{background:var(--jade);border-color:var(--jade);color:white}
+    .play{background:none;border:1px solid var(--line);padding:4px 10px;font-size:13px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+    .play svg{width:14px;height:14px}
+    .details{display:flex;flex-wrap:wrap;align-items:center;gap:7px 16px;padding:13px 0 3px;font-size:14px}
+    .detail-item{display:inline-flex;align-items:baseline;gap:6px}
+    .detail-label{color:var(--muted);font-size:12px;white-space:nowrap}
+    .related{border:0;border-bottom:1px solid #9aaa98;background:none;padding:0;color:var(--jade);font-weight:700}
+    .related:hover{color:var(--rust)}
+    footer{margin-top:26px;border-top:1px solid var(--line);padding-top:11px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+    footer p{max-width:85ch}
+    .manifest-links{display:flex;gap:12px;white-space:nowrap}
+    .bio{margin-top:8px;font-size:14px;color:var(--muted)}.bio summary{width:fit-content;cursor:pointer;color:var(--jade);font-weight:650}.bio p{margin-top:5px}.status{margin:9px 0 0;font-size:13px;color:var(--rust)}
+    .status:empty{display:none}
+    @media(max-width:1120px) and (min-width:761px){.layout{grid-template-columns:221px minmax(0,1fr);gap:24px}.roster{grid-template-columns:1fr 1fr;gap:6px}.card{display:grid;grid-template-columns:31px 1fr;gap:5px;min-height:47px}.card img{width:31px;height:37px}.card span{font-size:13px}}
+    @media(max-width:760px){.wrap{padding-block:19px}.bar{min-height:57px;gap:12px}.brand{font-size:20px}.seal{width:26px;height:30px;font-size:18px}.back{font-size:12px}.download{padding:5px 9px;font-size:13px;gap:5px;min-height:35px}.title-line{gap:12px;margin-bottom:10px}.layout{display:block}.group-tabs{margin:0 0 7px;width:min(100%,370px)}.tab{padding:6px 2px}.roster{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#b6b8a7 transparent;padding:2px 1px 7px}.card{flex:0 0 65px;min-height:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px;text-align:center}.card img{width:54px;height:45px}.card span{font-size:12px;line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}.detail{margin-top:12px}.unit-head{margin-bottom:9px;padding-bottom:8px}.book{margin:0;font-size:12px}.cycle{min-height:34px;padding:3px 7px}.art-grid{gap:8px}.controls{padding:7px 0}.details{padding-top:10px;gap:5px 12px}.total{font-size:12px}footer{margin-top:18px}}
+    @media(max-width:420px){.bar,.wrap{padding-inline:12px}.bar{gap:8px}.brand{gap:8px}.back{font-size:12px;gap:0}.move{padding:4px 7px;font-size:13px}.motions{gap:1px}.play{padding:4px 6px}.details{font-size:13px}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" hidden>
+    <symbol id="download-icon" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></g></symbol>
+    <symbol id="pause-icon" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+    <symbol id="play-icon" viewBox="0 0 24 24"><path d="m7 4 12 8-12 8z" fill="currentColor"/></symbol>
+  </svg>
+  <header><div class="bar">
+    <div class="brand"><span class="seal" aria-hidden="true">劍</span>劍影江湖</div>
+    
+    <a id="whole" class="download" hidden><svg aria-hidden="true"><use href="#download-icon"/></svg><span>下載整套素材</span></a>
+  </div></header>
+  <main class="wrap">
+    <div class="title-line"><h1>人物畫集</h1><span class="title-rule" aria-hidden="true"></span><span class="total">三十人 · 肖像與身法</span></div>
+    <div class="layout">
+      <aside aria-label="選擇人物">
+        <nav class="group-tabs" id="groups" aria-label="人物分類"></nav>
+        <div class="roster" id="roster" role="group" aria-label="人物名冊"></div>
+      </aside>
+      <section class="detail" aria-labelledby="name">
+        <div class="unit-head"><div><div id="book" class="book"></div><h2 id="name"></h2></div>
+          <div class="pager">
+            <button id="prev" class="cycle" type="button" aria-label="上一位人物">上一位</button>
+            <button id="next" class="cycle" type="button" aria-label="下一位人物">下一位</button>
+          </div>
+        </div>
+        <div class="art-grid">
+          <figure class="art-slot"><div class="viewport portrait"><img id="portrait" alt=""></div>
+            <figcaption><a id="portrait-dl" class="file-link"><svg aria-hidden="true"><use href="#download-icon"/></svg>下載肖像</a></figcaption>
+          </figure>
+          <figure class="art-slot"><div class="viewport stage"><canvas width="288" height="352" id="scene" role="img" aria-label="戰鬥身法預覽">戰鬥身法預覽</canvas></div>
+            <figcaption><a id="sheet-dl" class="file-link"><svg aria-hidden="true"><use href="#download-icon"/></svg>下載動作原圖</a></figcaption>
+          </figure>
+        </div>
+        <div class="controls"><div class="motions" id="motions" role="group" aria-label="切換身法"></div>
+          <button id="play" class="play" type="button"><svg aria-hidden="true"><use id="play-glyph" href="#pause-icon"/></svg><span id="play-label">暫停</span></button>
+        </div>
+        <div id="facts" class="details"></div>
+        <details id="bio" class="bio"><summary>人物出處</summary><p id="biography"></p><p id="source-note"></p></details>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+    <footer><p>動作原圖為透明 PNG，每式八格，每格 144 × 176 像素。</p><div class="manifest-links"><a id="csv" download>角色清單 CSV</a><a id="json" download>資料 JSON</a></div></footer>
+  </main>
+  <script id="gallery-data" type="application/json">{"characters":[{"id":"qiaoFeng","group":"hero","name":"蕭峰","book":"天龍八部","role":"擒敵破陣","school":"丐幫","epithet":"塞外豪俠","technique":"擒龍功","basic":"太祖長拳","bio":"蕭峰自幼由喬氏夫婦撫養，以喬峰之名出任丐幫幫主，得知契丹身世後才用回本姓。渡口兩岸各有人指他是敵人，他先伸手把落水的人拉了上來。","source":"","portrait":"portraits/qiaoFeng.webp","sheet":"sprites/qiaoFeng.png"},{"id":"xuZhu","group":"hero","name":"虛竹","book":"天龍八部","role":"封穴療傷","school":"少林・靈鷲宮","epithet":"靈鷲宮主","technique":"天山折梅手","basic":"羅漢拳","bio":"虛竹本是少林寺的小和尚，誤解珍瓏棋局，受無崖子傳功，又從天山童姥習武。迷津裡有人脅他重施生死符，他先問那人身上是否還疼。","source":"","portrait":"portraits/xuZhu.webp","sheet":"sprites/xuZhu.png"},{"id":"hongQi","group":"hero","name":"洪七公","book":"射鵰英雄傳","role":"纏足掌勁","school":"丐幫","epithet":"北丐","technique":"打狗棒法・絆字訣","basic":"逍遙遊拳","bio":"九指神丐洪七公教過郭靖降龍十八掌，也把幫主的棒訣傳給黃蓉。這回他循一股飯香進了渡口，灶上竟擺著昨天他已吃完的半隻雞。","source":"","portrait":"portraits/hongQi.webp","sheet":"sprites/hongQi.png"},{"id":"yaoShi","group":"hero","name":"黃藥師","book":"射鵰英雄傳","role":"指簫控場","school":"桃花島","epithet":"東邪","technique":"彈指神通・飛石","basic":"彈石","bio":"黃藥師精於簫、劍、彈指，也能以花木布陣。渡岸石頭昨日還在水中，今日便高過桃枝，他只管在樹皮上刻下水線，等霧再起。","source":"","portrait":"portraits/yaoShi.webp","sheet":"sprites/yaoShi.png"},{"id":"sanFeng","group":"hero","name":"張三丰","book":"倚天屠龍記","role":"借力護陣","school":"武當派","epithet":"武當祖師","technique":"太極拳・雲手","basic":"武當長拳","bio":"武當開山祖師張三丰年逾百歲，在強敵之前創示太極拳劍。水邊少年使的都是他識得的拳，同門兄弟名號卻一個都對不上。","source":"","portrait":"portraits/sanFeng.webp","sheet":"sprites/sanFeng.png"},{"id":"zhaoMin","group":"hero","name":"趙敏","book":"倚天屠龍記","role":"捨身奇襲","school":"汝陽王府","epithet":"紹敏郡主","technique":"天地同壽","basic":"王府快劍","bio":"敏敏特穆爾，漢名趙敏，曾以智計困住六大派高手。在渡口發現兩張署名相同、筆跡相反的軍令，她把印泥擦掉，只問誰真的見過送信人。","source":"","portrait":"portraits/zhaoMin.webp","sheet":"sprites/zhaoMin.png"},{"id":"lingSu","group":"hero","name":"程靈素","book":"飛狐外傳","role":"解毒煉毒","school":"藥王門","epithet":"藥王傳人","technique":"藥王方脈・解厄","basic":"細針探脈","bio":"程靈素是無嗔大師的弟子。她到渡口時最先看見三碗水，三碗都起同一道油花，偏偏只有一碗浮著死蟲。她在各碗旁各壓了一張藥紙。","source":"","portrait":"portraits/lingSu.webp","sheet":"sprites/lingSu.png"},{"id":"diYun","group":"hero","name":"狄雲","book":"連城訣","role":"血刀續戰","school":"湘西鄉里","epithet":"雪谷歸客","technique":"神照功・接息","basic":"鄉野劍招","bio":"狄雲本是鄉下弟子，蒙冤入獄，從丁典習得神照功。雪谷絕境中又讀到血刀經。船上有人讓他在空紙上按手印，他把紙攤開，請對方先把話寫完。","source":"","portrait":"portraits/diYun.webp","sheet":"sprites/diYun.png"},{"id":"chengZhi","group":"hero","name":"袁承志","book":"碧血劍","role":"劍錐遊擊","school":"華山派","epithet":"華山俠士","technique":"金蛇劍法・游身","basic":"華山長劍","bio":"袁崇煥之子袁承志在華山從穆人清習武，曾於石洞獲金蛇郎君遺下的劍與祕笈。見渡口石壁也有蛇痕，他伸手一摸，才發覺這條痕比手中劍還新。","source":"","portrait":"portraits/chengZhi.webp","sheet":"sprites/chengZhi.png"},{"id":"aQing","group":"hero","name":"阿青","book":"越女劍","role":"快步穿陣","school":"越地牧野","epithet":"越國牧羊女","technique":"越女劍・青枝穿陣","basic":"青竹一點","bio":"越地牧羊女阿青與白猿拿竹枝對打，越國劍士想從她手裏學劍，卻連一招也看不真。渡船靠岸時，她認得蘆叢間的蹄印，只是那些羊還未上岸。","source":"","portrait":"portraits/aQing.webp","sheet":"sprites/aQing.png"},{"id":"fengTiannan","group":"villain","name":"鳳天南","book":"飛狐外傳","role":"副將","school":"佛山五虎門","epithet":"南霸天","technique":"橫棍封橋","basic":"五虎棍","bio":"佛山人都知道，鳳家要的東西最好自己交出來。胡斐偏要替鍾阿四一家討公道。到了青竹渡，鳳天南又架起棍子收過路錢，連船都算一戶。","source":"鳳天南是佛山五虎門掌門，倚勢凌人。「五虎棍」與「橫棍封橋」是本作為他的棍術所取的戰鬥名稱。","companion":"fiveTiger","relationship":"鳳天南門下，替掌門守橋徵錢。","portrait":"portraits/fengTiannan.webp","sheet":"sprites/fengTiannan.png"},{"id":"zhaoZhong","group":"villain","name":"張召重","book":"書劍恩仇錄","role":"副將","school":"武當派・清廷","epithet":"火手判官","technique":"凝碧截腕","basic":"武當劍術","bio":"張召重帶著一身武當功夫入了官門。紅楓驛的一封信上蓋著官印，他明知封泥有假，先問的卻是誰准驛卒拆看。","source":"張召重出身武當，為清廷效力，佩凝碧劍。「凝碧截腕」是本作依其兵刃設計的劍招。","companion":"qingShield","relationship":"同屬清廷陣營，在驛站受張召重調派。","portrait":"portraits/zhaoZhong.webp","sheet":"sprites/zhaoZhong.png"},{"id":"liQiu","group":"villain","name":"李秋水","book":"天龍八部","role":"副將","school":"逍遙派・西夏宮廷","epithet":"西夏皇太妃","technique":"白虹掌力","basic":"逍遙掌","bio":"李秋水的掌力能繞開面前的阻隔，打到旁人料想不到之處。蘆叢裡千百個聲音一齊喊，她偏聽得出藏在喝采裡的那聲咳。","source":"李秋水是逍遙派高手，後居西夏宮中。白虹掌力及其能轉折的勁路出自原著；波及鄰格是戰棋演繹。","companion":"xiaGuard","relationship":"隨西夏皇太妃入汀的宮廷護衛。","portrait":"portraits/liQiu.webp","sheet":"sprites/liQiu.png"},{"id":"hongAn","group":"villain","name":"洪安通","book":"鹿鼎記","role":"副將","school":"神龍教","epithet":"神龍教主","technique":"鎖脈擒龍","basic":"神龍擒拿","bio":"在神龍島，教眾開口先得祝教主仙福永享。到了雪棧，洪安通叫人一個個應名，卻聽見崖下另有一個聲音答「我還在」。","source":"洪安通統領神龍教，武功高強。擒拿、抽取內力及招名「鎖脈擒龍」為本作演繹。","companion":"shenLong","relationship":"神龍教按五色龍門分屬，青龍門是洪安通教下的一支。","portrait":"portraits/hongAn.webp","sheet":"sprites/hongAn.png"},{"id":"dongFang","group":"villain","name":"東方不敗","book":"笑傲江湖","role":"副將","school":"日月神教","epithet":"黑木崖教主","technique":"葵花飛針","basic":"繡針疾刺","bio":"一枚尋常繡花針，在東方不敗手裡也能截住名家刀劍。琴臺上，那枚針挑起銅片的一角，山後便少了一拍簫聲。","source":"東方不敗修習《葵花寶典》，持繡花針迎敵。「葵花飛針」為本作招名，沒有附毒。","companion":"heiMuGuard","relationship":"日月神教黑木崖的守衛，隨東方不敗出戰。","portrait":"portraits/dongFang.webp","sheet":"sprites/dongFang.png"},{"id":"qiuRen","group":"villain","name":"裘千仞","book":"射鵰英雄傳","role":"副將","school":"鐵掌幫","epithet":"鐵掌水上飄","technique":"鐵掌","basic":"鐵掌探手","bio":"裘千仞腳步極輕，掌力卻足以裂石。桃花牆裡傳來一聲「讓我出去」，他頭一個念頭竟是伸掌抵住那道門。","source":"此處取裘千仞任鐵掌幫幫主時的身分。鐵掌與輕功出自原著；破防是本作戰技效果。","companion":"ironPalm","relationship":"鐵掌幫幫眾，奉裘千仞之命守陣。","portrait":"portraits/qiuRen.webp","sheet":"sprites/qiuRen.png"},{"id":"wanYan","group":"villain","name":"完顏洪烈","book":"射鵰英雄傳","role":"副將","school":"金國趙王府","epithet":"大金趙王","technique":"趙府令旗","basic":"王府侍從截擊","bio":"趙王慣在帳中延攬高手。襄陽城下，金國的弓手與蒙古的輪聲撞在一處，他認出自己的趙字旗，仍想叫城門按他的時辰開合。","source":"完顏洪烈是金國六王爺，受封趙王，延攬江湖客。「趙府令旗」代表他下令齊射，由部眾出手。","companion":"jinBow","relationship":"金國趙王府軍士，隨完顏洪烈的旗令出箭。","portrait":"portraits/wanYan.webp","sheet":"sprites/wanYan.png"},{"id":"gongSun","group":"villain","name":"公孫止","book":"神鵰俠侶","role":"副將","school":"絕情谷","epithet":"絕情谷主","technique":"陰陽倒亂刃法","basic":"金刀黑劍","bio":"公孫止左手、右手各有一路刀劍變化，也慣於替別人作主。看著玉裡那個還沒把話說完的孩子，他伸手先收緊了漁網。","source":"公孫止為絕情谷谷主，持金刀、黑劍施展陰陽倒亂刃法。","companion":"netHand","relationship":"谷主麾下的綠衣弟子，擅用谷中漁網。","portrait":"portraits/gongSun.webp","sheet":"sprites/gongSun.png"},{"id":"xianYu","group":"villain","name":"鮮于通","book":"倚天屠龍記","role":"副將","school":"華山派","epithet":"神機子","technique":"金蠶蠱毒","basic":"摺扇點穴","bio":"人稱神機子的華山掌門，打過多少如意算盤，最怕有人當面翻舊帳。眼前竟有另一位華山掌門，讓他想起改個落款有多容易。","source":"鮮于通為《倚天屠龍記》中的華山掌門，扇中暗藏金蠶蠱毒。倒影天街使他與《笑傲江湖》的岳不群相遇。","companion":"huaBlade","relationship":"鮮于通治下的華山弟子，隨本門掌門下山。","portrait":"portraits/xianYu.webp","sheet":"sprites/xianYu.png"},{"id":"wanZhen","group":"villain","name":"萬震山","book":"連城訣","role":"副將","school":"荊州萬門","epithet":"五雲手","technique":"唐詩劍法","basic":"萬門劍式","bio":"梅念笙座下大弟子為了一部劍訣，連師徒之義也折了進去。走到漏臺，他聽見別人的兒子喊爹，第一個想到的卻是那半句裡藏著甚麼。","source":"萬震山號五雲手，居荊州，與師門所傳唐詩劍法及連城訣之爭有關。破防是本作效果。","companion":"wanDisciple","relationship":"荊州萬府門生，在漏臺替萬震山守索。","portrait":"portraits/wanZhen.webp","sheet":"sprites/wanZhen.png"},{"id":"fiveTiger","group":"troop","name":"五虎門棍徒","book":"飛狐外傳","role":"長棍","school":"佛山五虎門","epithet":"","technique":"掃膝","basic":"隔步掃棍","bio":"門徒橫棍守著渡頭。棍尖搆得到兩步外的膝彎；貼身時，長棍反倒抖不開。","source":"五虎門出自原著。渡頭棍徒、守橋差事與戰法是本作編排。","companion":"fengTiannan","relationship":"鳳天南門下，替掌門守橋徵錢。","portrait":"portraits/fiveTiger.webp","sheet":"sprites/fiveTiger.png"},{"id":"qingShield","group":"troop","name":"清營刀盾兵","book":"書劍恩仇錄","role":"刀盾","school":"清營","epithet":"","technique":"倚盾","basic":"抵盾短刀","bio":"驛門只容兩人並行。守兵抵好盾沿，等人自己送到刀口；要他離開門柱追人，盾牆就立不起來。","source":"清廷武官和官兵是原著勢力。這名刀盾兵是本作虛構的當值士卒。","companion":"zhaoZhong","relationship":"同屬清廷陣營，在驛站受張召重調派。","portrait":"portraits/qingShield.webp","sheet":"sprites/qingShield.png"},{"id":"xiaGuard","group":"troop","name":"西夏宮禁衛","book":"天龍八部","role":"近衛","school":"西夏宮廷","epithet":"","technique":"夾衛","basic":"護駕短刺","bio":"禁衛守在蘆隙間，與身旁的人一前一後出戟。兩路人馬一旦分開，他便尋不到借力撥甲的角度。","source":"西夏宮廷及皇太妃出自原著。此禁衛為本作設計的宮廷兵種。","companion":"liQiu","relationship":"隨西夏皇太妃入汀的宮廷護衛。","portrait":"portraits/xiaGuard.webp","sheet":"sprites/xiaGuard.png"},{"id":"shenLong","group":"troop","name":"神龍教青龍門眾","book":"鹿鼎記","role":"短刃","school":"神龍教青龍門","epithet":"","technique":"步裡藏毒","basic":"青龍短刀","bio":"雪裡聞得號令，青龍門眾便搶步上前。移步時夾在袖底的藥會抹上刀背，站定接戰反而用不上。","source":"神龍教、青龍使與五色門眾出自原著；此人的短刀淬藥是本作戰法。","companion":"hongAn","relationship":"神龍教按五色龍門分屬，青龍門是洪安通教下的一支。","portrait":"portraits/shenLong.webp","sheet":"sprites/shenLong.png"},{"id":"heiMuGuard","group":"troop","name":"黑木崖侍衛","book":"笑傲江湖","role":"游衛","school":"日月神教","epithet":"","technique":"獨行切腕","basic":"窄刀切腕","bio":"侍衛獨自繞走琴臺側邊，專切對手持兵器的手腕。有同伴擠到身旁，他就得收窄刀路。","source":"黑木崖是原著中日月神教總壇。此侍衛及其單人刀路為本作設計。","companion":"dongFang","relationship":"日月神教黑木崖的守衛，隨東方不敗出戰。","portrait":"portraits/heiMuGuard.webp","sheet":"sprites/heiMuGuard.png"},{"id":"ironPalm","group":"troop","name":"鐵掌幫拳手","book":"射鵰英雄傳","role":"拳手","school":"鐵掌幫","epithet":"","technique":"沉樁護身","basic":"踏樁掌","bio":"拳手守著石閂，用石門練出一手沉掌。氣血所剩不多時，他把最後一口勁留在胸前，好挺過對手還來的一招。","source":"鐵掌幫是原著幫派。石門守衛、踏樁掌及護勁屬本作演繹。","companion":"qiuRen","relationship":"鐵掌幫幫眾，奉裘千仞之命守陣。","portrait":"portraits/ironPalm.webp","sheet":"sprites/ironPalm.png"},{"id":"jinBow","group":"troop","name":"趙王府弓手","book":"射鵰英雄傳","role":"弓手","school":"金國趙王府","epithet":"","technique":"三步穿甲","basic":"城外勁箭","bio":"趙王旗落，弓手就從車轅之間尋縫發箭。需要三格距離才能看準甲縫；追到近處，這一箭便失了準頭。","source":"趙王府是原著勢力。這支弓隊為本作編制；與襄陽蒙古軍相遇源於回牒牽來不同年代。","companion":"wanYan","relationship":"金國趙王府軍士，隨完顏洪烈的旗令出箭。","portrait":"portraits/jinBow.webp","sheet":"sprites/jinBow.png"},{"id":"netHand","group":"troop","name":"絕情谷網手","book":"神鵰俠侶","role":"漁網","school":"絕情谷","epithet":"","technique":"墜網纏足","basic":"張網罩身","bio":"一撒網，拴在四角的鉛墜就貼地分開。網手走不快，能在兩格內困人；叫他自己走出石室，就是解圍的機會。","source":"絕情谷弟子的漁網陣出自原著。這名網手及其單人擲網是戰棋化設計。","companion":"gongSun","relationship":"谷主麾下的綠衣弟子，擅用谷中漁網。","portrait":"portraits/netHand.webp","sheet":"sprites/netHand.png"},{"id":"huaBlade","group":"troop","name":"華山刀陣弟子","book":"倚天屠龍記","role":"陣刀","school":"華山派","epithet":"","technique":"合步護門","basic":"合步斜刀","bio":"斜刀劈落，同伴恰好補住空門。華山的刀陣講究一進一退，打散兩人並肩的站位，他便少一重護持。","source":"《倚天屠龍記》華山派有反兩儀刀法。刀陣弟子的身分與合步護勁是本作編排。","companion":"xianYu","relationship":"鮮于通治下的華山弟子，隨本門掌門下山。","portrait":"portraits/huaBlade.webp","sheet":"sprites/huaBlade.png"},{"id":"wanDisciple","group":"troop","name":"萬門劍徒","book":"連城訣","role":"追劍","school":"荊州萬門","epithet":"","technique":"趁隙卸劍","basic":"連步遞劍","bio":"在萬府學藝久了，這名弟子最會看誰露了怯。對手氣血過半時他只用起手式；一旦跌到半數以下，他便加一劍封住反攻的路。","source":"原著寫到萬震山在荊州收徒。此劍徒為本作虛構門生，沒有冒用已具姓名的弟子。","companion":"wanZhen","relationship":"荊州萬府門生，在漏臺替萬震山守索。","portrait":"portraits/wanDisciple.webp","sheet":"sprites/wanDisciple.png"}],"motions":[{"id":"idle","name":"待機","fps":8},{"id":"walk","name":"走位","fps":10},{"id":"attack","name":"普攻","fps":11},{"id":"hurt","name":"受擊","fps":10},{"id":"special","name":"絕技","fps":9}],"groups":{"hero":"俠客","villain":"反派","troop":"隨從兵種"},"delivery":null,"csv":"manifest.csv","manifest":"manifest.json"}</script>
+  <script>
+  (() => {
+    'use strict';
+    const data = JSON.parse(document.getElementById('gallery-data').textContent);
+    const units = new Map(data.characters.map(row => [row.id, row]));
+    const $ = id => document.getElementById(id);
+    const ctx = $('scene').getContext('2d');
+    const [initialId, initialMotion] = location.hash.slice(1).split('/');
+    let unit;
+    let activeGroup = '';
+    let choices = [];
+    let motion = Math.max(0, data.motions.findIndex(value => value.id === initialMotion));
+    let playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let sheet;
+    let frame = 0;
+    let frameAt = performance.now();
+    let tickId = 0;
+    const deliveries = data.delivery?.parts || [];
+    let wholeBusy = false;
+    let sheetBusy = false;
+
+    function button(text, className, action) {
+      const node = document.createElement('button');
+      node.type = 'button'; node.className = className;
+      node.textContent = text; node.addEventListener('click', action);
+      return node;
+    }
+    function pressed(node, selected) { node.setAttribute('aria-pressed', String(selected)); }
+    function draw() {
+      if (!ctx) return;
+      const canvas = $('scene');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.dataset.frame = String(frame); canvas.dataset.motion = data.motions[motion].id;
+      if (!sheet) return;
+      const width = sheet.naturalWidth / 8, height = sheet.naturalHeight / 5;
+      ctx.drawImage(sheet, frame * width, motion * height, width, height, 0, 0, canvas.width, canvas.height);
+    }
+    function updateClock() {
+      cancelAnimationFrame(tickId);
+      if (!playing || !sheet || document.hidden) return;
+      frameAt = performance.now();
+      tickId = requestAnimationFrame(t => advance(t));
+    }
+    function advance(now) {
+      const delay = 1000 / data.motions[motion].fps;
+      const steps = Math.floor((now - frameAt) / delay);
+      if (steps > 0) { frame = (frame + steps) % 8; frameAt += steps * delay; draw(); }
+      if (playing && sheet && !document.hidden) tickId = requestAnimationFrame(advance);
+    }
+    function updateHash() {
+      const hash = '#' + unit.id + '/' + data.motions[motion].id;
+      if (location.hash !== hash) {
+        try { history.replaceState(null, '', location.pathname + location.search + hash); }
+        catch { location.hash = hash; }
+      }
+    }
+    function changeMotion(index) {
+      motion = index; frame = 0;
+      [...$('motions').children].forEach((b, i) => pressed(b, i === motion));
+      $('scene').setAttribute('aria-label', unit.name + ' · ' + data.motions[motion].name);
+      draw(); updateHash(); updateClock();
+    }
+    function updatePlay() {
+      $('play-label').textContent = playing ? '暫停' : '播放';
+      $('play').setAttribute('aria-label', playing ? '暫停動作' : '播放動作');
+      $('play-glyph').setAttribute('href', playing ? '#pause-icon' : '#play-icon');
+    }
+    function renderGroup(group) {
+      activeGroup = group;
+      choices = data.characters.filter(r => r.group === group);
+      [...$('groups').children].forEach(b => pressed(b, b.dataset.group === group));
+      const cards = choices.map(row => {
+        const b = button('', 'card', () => select(row.id, false));
+        b.dataset.id = row.id; b.setAttribute('aria-label', row.name);
+        const img = document.createElement('img'); img.alt = ''; img.decoding = 'async'; img.src = row.portrait;
+        const label = document.createElement('span'); label.textContent = row.name;
+        b.append(img, label);
+        return b;
+      });
+      $('roster').replaceChildren(...cards);
+    }
+    function fact(label, value) {
+      const node = document.createElement('span'); node.className = 'detail-item';
+      const key = document.createElement('span'); key.className = 'detail-label'; key.textContent = label;
+      node.append(key, value); return node;
+    }
+    function select(id, reveal) {
+      const target = units.get(id);
+      if (!target) return;
+      unit = target;
+      if (activeGroup !== unit.group) renderGroup(unit.group);
+      for (const b of $('roster').children) {
+        pressed(b, b.dataset.id === id);
+        if (b.dataset.id === id && reveal && matchMedia('(max-width: 760px)').matches) {
+          const ribbon = $('roster');
+          const left = b.offsetLeft - ribbon.offsetLeft;
+          if (left < ribbon.scrollLeft || left + b.offsetWidth > ribbon.scrollLeft + ribbon.clientWidth)
+            ribbon.scrollLeft = left - (ribbon.clientWidth - b.offsetWidth) / 2;
+        }
+      }
+      $('name').textContent = unit.name;
+      $('book').textContent = '《' + unit.book + '》' + (unit.epithet ? ' · ' + unit.epithet : '');
+      $('portrait').src = unit.portrait;
+      $('portrait').alt = unit.name + '肖像';
+      $('portrait-dl').href = unit.portrait;
+      $('portrait-dl').download = 'portrait-' + unit.id + '.webp';
+      $('sheet-dl').href = data.delivery ? '#sprite-' + unit.id : unit.sheet;
+      $('sheet-dl').download = unit.id + '.png';
+      const facts = [fact('門派', unit.school), fact('定位', unit.role), fact('招式', unit.technique)];
+      if (unit.companion) {
+        const relative = units.get(unit.companion);
+        facts.push(fact(unit.group === 'troop' ? '跟隨' : '隨從', button(relative.name, 'related', () => select(relative.id, true))));
+      }
+      $('facts').replaceChildren(...facts);
+      $('biography').textContent = unit.bio;
+      $('source-note').textContent = unit.source || '';
+      $('source-note').hidden = !unit.source;
+      $('status').textContent = '';
+      sheet = null; frame = 0; draw();
+      const image = new Image();
+      image.onload = () => {
+        if (unit.id !== id) return;
+        sheet = image; frame = 0; draw(); updateClock();
+      };
+      image.onerror = () => { if (unit.id === id) $('status').textContent = '未能讀取動作圖，請重新開啟畫集。'; };
+      image.src = unit.sheet;
+      changeMotion(motion);
+    }
+    function cycle(delta) {
+      const i = choices.findIndex(r => r.id === unit.id);
+      select(choices[(i + delta + choices.length) % choices.length].id, true);
+    }
+    function saveBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename;
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+    async function loadPart(part, from, to) {
+      const entire = from === 0 && to === part.size;
+      const headers = entire ? {} : {Range: 'bytes=' + from + '-' + (to - 1)};
+      const response = await fetch(part.url, {headers});
+      if (!response.ok) throw Error('download');
+      const bytes = await response.blob();
+      const needed = to - from;
+      // Some static hosts ignore Range and return the entire physical part.
+      if (bytes.size === needed) return bytes;
+      if (response.status === 200 && bytes.size === part.size) return bytes.slice(from, to);
+      throw Error('length');
+    }
+    async function loadInterval(offset, size, type, progress) {
+      const end = offset + size;
+      let cursor = 0, loaded = 0;
+      const chunks = [];
+      for (const part of deliveries) {
+        const start = Math.max(offset, cursor);
+        const stop = Math.min(end, cursor + part.size);
+        if (start < stop) {
+          const chunk = await loadPart(part, start - cursor, stop - cursor);
+          chunks.push(chunk); loaded += chunk.size;
+          if (progress) progress(loaded);
+        }
+        cursor += part.size;
+      }
+      if (loaded !== size) throw Error('incomplete');
+      return new Blob(chunks, {type});
+    }
+    Object.entries(data.groups).forEach(([key, name]) => {
+      const first = data.characters.find(row => row.group === key);
+      const b = button(name, 'tab', () => { if (activeGroup !== key) select(first.id, true); });
+      b.dataset.group = key; $('groups').append(b);
+    });
+    data.motions.forEach((m, i) => $('motions').append(button(m.name, 'move', () => changeMotion(i))));
+    $('prev').onclick = () => cycle(-1); $('next').onclick = () => cycle(1);
+    $('play').onclick = () => { playing = !playing; updatePlay(); updateClock(); };
+    document.addEventListener('visibilitychange', updateClock);
+    window.addEventListener('hashchange', () => {
+      const [id, m] = location.hash.slice(1).split('/');
+      const i = data.motions.findIndex(t => t.id === m);
+      if (!units.has(id)) return;
+      if (i >= 0) motion = i;
+      select(id, true);
+    });
+    $('csv').href = data.csv; $('json').href = data.manifest;
+    if (data.delivery) {
+      const all = $('whole'); all.hidden = false;
+      const label = all.querySelector('span');
+      label.textContent = '下載整套素材';
+      all.title = 'ZIP · ' + (data.delivery.size / 1048576).toFixed(1) + ' MiB';
+      all.href = deliveries.length === 1 ? deliveries[0].url : '#download';
+      all.download = data.delivery.name;
+      if (deliveries.length > 1) all.onclick = async e => {
+        e.preventDefault(); if (wholeBusy) return;
+        wholeBusy = true; all.setAttribute('aria-disabled', 'true');
+        label.textContent = '下載中…'; $('status').textContent = '';
+        try {
+          const zip = await loadInterval(0, data.delivery.size, 'application/zip',
+            bytes => { label.textContent = '下載中 ' + Math.round(100 * bytes / data.delivery.size) + '%'; });
+          saveBlob(zip, data.delivery.name);
+          $('status').textContent = '整套素材已備好下載。解壓縮後開啟 index.html 即可離線看圖。';
+        } catch { $('status').textContent = '下載中斷，請再按一次「下載整套素材」。'; }
+        finally { wholeBusy = false; all.removeAttribute('aria-disabled'); label.textContent = '下載整套素材'; }
+      };
+      $('sheet-dl').onclick = async e => {
+        e.preventDefault(); if (sheetBusy) return;
+        const target = unit;
+        sheetBusy = true; $('sheet-dl').setAttribute('aria-disabled', 'true');
+        $('status').textContent = '正在準備' + target.name + '的動作原圖…';
+        try {
+          const png = await loadInterval(target.png[0], target.png[1], 'image/png');
+          saveBlob(png, target.id + '.png');
+          $('status').textContent = target.name + '的動作原圖已備好下載。';
+        } catch { $('status').textContent = '未能下載動作原圖，請再試一次。'; }
+        finally { sheetBusy = false; $('sheet-dl').removeAttribute('aria-disabled'); }
+      };
+    }
+    updatePlay();
+    select(units.has(initialId) ? initialId : data.characters[0].id, true);
+  })();
+  </script>
+</body>
+</html>
