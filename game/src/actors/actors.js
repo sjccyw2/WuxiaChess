@@ -6,6 +6,7 @@ import { art } from '../ui/artwork.js';
 import { paintTechniqueStroke } from '../fx/technique-strokes.js';
 import { paintTechniqueTier } from '../fx/technique-tiers.js';
 import { paintSkillEffect } from '../fx/skill-effects.js';
+import { paintCursor } from './cursor.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
 import { paintField, paintReticles } from './zones.js';
 import {
@@ -559,7 +560,8 @@ class ActorLayer {
       c.stroke();
       c.restore();
     }
-    if (hover) {
+    // tileCursor: cursor.js paints animated brackets and answers true.
+    if (hover && !paintCursor(this, hover, this.time)) {
       this.path(this.tile(hover.x, hover.y, 0.47));
       c.fillStyle = 'rgba(250,232,172,.19)';
       c.fill();
