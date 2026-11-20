@@ -530,7 +530,9 @@ class ActorLayer {
     // and answers true; the tile-by-tile loop below then has nothing left to do.
     const zoned = paintField(this, reach, this.time);
     for (const { x, y } of zoned ? [] : fieldCells(s.mapIndex)) {
-      const walk = this.mode === 'move' && can && !u.moved && reach.has(G.key(x, y));
+      const walk =
+        ((this.mode === 'move' && can && !u.moved) || (this.mode === 'glide' && G.canGlide(s, u))) &&
+        reach.has(G.key(x, y));
       const aim =
         cast &&
         G.distance(u, { x, y }) <= range &&
@@ -631,9 +633,7 @@ class ActorLayer {
     if (
       hover &&
       !selectedInMotion &&
-      this.mode === 'move' &&
-      can &&
-      !u.moved &&
+      ((this.mode === 'move' && can && !u.moved) || (this.mode === 'glide' && G.canGlide(s, u))) &&
       reach.has(G.key(hover.x, hover.y))
     ) {
       if (this.preview?.x !== hover.x || this.preview?.y !== hover.y)

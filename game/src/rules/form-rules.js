@@ -20,7 +20,8 @@ const FORM_RULES = {
   landing: ['落步成陣', '落地時自己與相鄰同伴得 8 點護盾，持續至本回合結束。'],
   still: ['定勢', '本回合未移動，首段威力加 5。'],
   collision: ['撞關', '牽引或擊退的去路受阻時，首段威力加 7。'],
-  antidote: ['以毒解毒', '擊中已有中毒的敵人時，解去施術者自身中毒。']
+  antidote: ['以毒解毒', '擊中已有中毒的敵人時，解去施術者自身中毒。'],
+  glide: ['回身', '出招後仍可走完本回合未用的步數，走後不能撤步。']
 };
 // What 解厄 lifts. The prices of a summit (露空, 無守, 立樁, 曲終) are left out on purpose, so a
 // companion cannot erase them.

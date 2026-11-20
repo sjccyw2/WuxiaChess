@@ -26,6 +26,7 @@ import {
   TALENTS,
   ally,
   canAct,
+  canGlide,
   targetOK,
   canPrepare,
   canUseMedicine,
@@ -210,22 +211,36 @@ function commander(s, mode) {
       )
     );
   }
-  const acts = [
-    ['move', u.moved ? 'undo' : 'move', u.moved ? '撤步' : '移動'],
-    ['skill', 'spark', '招式'],
-    ['wait', 'wait', '待命'],
-    ['end', 'end', '結束回合']
-  ];
+  // 回身: once a glide art has struck, move walks on and wait stays put.
+  const gliding = canGlide(s, u);
+  const acts = gliding
+    ? [
+        ['glide', 'move', '回身'],
+        ['skill', 'spark', '招式'],
+        ['glide-stop', 'wait', '不走了'],
+        ['end', 'end', '結束回合']
+      ]
+    : [
+        ['move', u.moved ? 'undo' : 'move', u.moved ? '撤步' : '移動'],
+        ['skill', 'spark', '招式'],
+        ['wait', 'wait', '待命'],
+        ['end', 'end', '結束回合']
+      ];
   return acts
     .map(([a, ic, label]) => {
-      const current = canAct(s, u) && mode === a;
+      const current = (canAct(s, u) || gliding) && mode === a;
       const attrs =
         a === 'skill'
           ? 'id="arts-toggle" aria-controls="arts-panel" aria-expanded="false"'
-          : ['move', 'attack'].includes(a)
+          : ['move', 'attack', 'glide'].includes(a)
             ? `aria-pressed="${current}"`
             : '';
-      const disabled = a === 'end' ? s.phase !== 'ally' : !canAct(s, u);
+      const disabled =
+        a === 'end'
+          ? s.phase !== 'ally'
+          : gliding
+            ? a === 'skill'
+            : !canAct(s, u) || (a === 'move' && u.moved && !u.origin);
       return btn(
         a,
         icon(ic, 18) + '<span>' + label + '</span>',

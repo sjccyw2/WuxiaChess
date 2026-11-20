@@ -1073,12 +1073,14 @@ function canMove(s, u) {
 }
 function move(s, u, x, y) {
   if (!canMove(s, u) || !valid(x, y, s.mapIndex)) return false;
-  const path = tracePath(availableField(s, u), { x, y });
+  const field = availableField(s, u),
+    path = tracePath(field, { x, y });
   if (path.length < 2) return false;
   if (s.run) s.run.formationOpen = false;
   u.origin = { x: u.x, y: u.y };
   followRoute(u, path);
   u.moved = true;
+  u.walked = field.costs.get(key(x, y)); // 回身 walks on with the steps this left
   log(
     s,
     'move',
@@ -1101,11 +1103,57 @@ function undo(s, u) {
   followRoute(u, path);
   u.origin = null;
   u.moved = false;
+  delete u.walked;
   if (s.run && s.round === 1 && party(s).every((v) => !v.moved && !v.acted))
     s.run.formationOpen = true;
   log(s, 'move', '撤回移動，重整步法。', unitDetails(u).name);
   return true;
 }
+// 回身: after a glide art a hero may walk on once, with the steps his move this turn left unspent.
+// The walk follows the ordinary rules, cannot be taken back, and is lost when the turn ends.
+function canGlide(s, u) {
+  return (
+    !!u &&
+    (!s.run?.scene || s.run.scene === 'fight') &&
+    s.phase === 'ally' &&
+    !s.result &&
+    ally(u) &&
+    living(u) &&
+    u.acted &&
+    u.glideLeft > 0 &&
+    !u.conditions?.rooted &&
+    s.units.includes(u)
+  );
+}
+function glideField(s, u) {
+  const field = movementField(s, u, [u], u.glideLeft);
+  for (const v of s.units.filter(living)) field.costs.delete(key(v.x, v.y));
+  return field;
+}
+function glideMove(s, u, x, y) {
+  if (!canGlide(s, u) || !valid(x, y, s.mapIndex)) return false;
+  const path = tracePath(glideField(s, u), { x, y });
+  if (path.length < 2) return false;
+  followRoute(u, path);
+  u.glideLeft = 0;
+  holdObjective(s, u);
+  progress(u, 'steps', path.length - 1);
+  log(
+    s,
+    'move',
+    '回身移至' + terrain(x, y, s.mapIndex) + tileName({ x, y }) + '。',
+    unitDetails(u).name
+  );
+  return true;
+}
+// Declining the walk: the hero is done for the turn.
+function stopGlide(s, u) {
+  if (!canGlide(s, u)) return false;
+  u.glideLeft = 0;
+  return true;
+}
+// What a glide art leaves to walk once it has struck (stance, pin and 立樁 already in `step`).
+const glideSteps = (s, u) => (u.conditions?.rooted ? 0 : stat(u, 'step', s) - (u.walked || 0));
 function affectedFriends(s, caster, target, art) {
   if (!art.aura) return [target];
   return party(s).filter((v) => living(v) && distance(v, target) <= art.aura);
@@ -1390,6 +1438,8 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
     result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
   }
+  if (result.forms.includes('glide') && art && glideSteps(s, u) > 0)
+    result.notes.push('回身 · 出招後尚可走 ' + glideSteps(s, u) + ' 步');
   result.notes.push(...guardNotes(art), ...priceNotes(art));
   return result;
 }
@@ -1695,6 +1745,9 @@ function resolve(s, u, t, skill) {
     putEffects(s, u, u, own, effects);
   }
   finishAction(s, u);
+  // 回身: the steps left to walk after the strike.
+  if (art && f.forms.includes('glide') && living(u) && glideSteps(s, u) > 0)
+    u.glideLeft = glideSteps(s, u);
   if (f.notes.length) log(s, 'combat', '氣勁變化。' + f.notes.join('。'), who);
   const leveled = living(u) && exp(
       s,
@@ -1702,7 +1755,14 @@ function resolve(s, u, t, skill) {
       (skill ? GROWTH.skillXp : GROWTH.basicXp) + (s.stats.kills - oldKills) * GROWTH.killXp
     );
   check(s);
-  return { effects, leveled, counter: f.counterRaw > 0, hits: f.hits.length, from };
+  return {
+    effects,
+    leveled,
+    counter: f.counterRaw > 0,
+    hits: f.hits.length,
+    from,
+    glide: canGlide(s, u) ? u.glideLeft : 0
+  };
 }
 function waitUnit(s, u) {
   if (!canAct(s, u)) return false;
@@ -2006,8 +2066,33 @@ function enemyAct(s, u) {
     log(s, 'combat', '還擊，造成 ' + hit + ' 點傷害。', unitDetails(t).name);
     exp(s, t, living(u) ? 12 : 35);
   }
+  // 游擊: having struck, it walks off with what steps it has left.
+  if (unitDetails(u)?.traits?.glide) glideAway(s, u, best.c.n);
   check(s);
   return effects;
+}
+// 游擊: a villain with `glide: n` walks, after its blow, up to n of the steps it has left to the
+// free tile farthest from the nearest hero (then the fewer steps, then the better cover). The
+// walk draws no counter.
+function glideAway(s, u, walked) {
+  const heroes = party(s).filter(living),
+    budget = Math.min(unitDetails(u).traits.glide, stat(u, 'step', s) - walked);
+  if (!living(u) || !heroes.length || budget <= 0) return;
+  const field = movementField(s, u, [u], budget);
+  const gap = (p) => Math.min(...heroes.map((h) => distance(p, h)));
+  const cover = (p) => tileInfo(p.x, p.y, s.mapIndex).defense || 0;
+  let best = { x: u.x, y: u.y, n: 0 };
+  for (const [k, n] of field.costs) {
+    const p = { ...fromKey(k), n };
+    if (at(s, p.x, p.y)) continue;
+    if ((gap(p) - gap(best) || best.n - n || cover(p) - cover(best)) > 0) best = p;
+  }
+  if (!best.n) return;
+  const path = tracePath(field, best);
+  // One route for the turn, so the walk in and the walk off play as one.
+  followRoute(u, u.moved && u.route?.length ? [...u.route, ...path.slice(1)] : path);
+  u.moved = true;
+  log(s, 'move', '出手後退開 ' + best.n + ' 步。', unitDetails(u).name);
 }
 function nextRound(s) {
   if (s.result || s.phase !== 'enemy' || enemies(s).some((e) => living(e) && !e.acted))
@@ -2042,6 +2127,8 @@ function nextRound(s) {
     u.acted = false;
     u.origin = null;
     u.brace = false;
+    delete u.walked;
+    delete u.glideLeft;
     u.mp = Math.min(u.maxMp, u.mp + 6 + commandBonus(s, u, 'restoreMp'));
   }
   s.selected = leader(s);
@@ -2051,4 +2138,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

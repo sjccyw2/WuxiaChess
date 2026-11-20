@@ -1301,6 +1301,107 @@ section('taunt');
   check('a coverer beside the taunter takes the blow', !covered.guard && !covered.weak && unit(covered.e, 'medic').hp < 300);
 }
 
+// ── 回身 glide (§2, §9.4) ────────────────────────────────────────────────
+section('glide');
+{
+  const F = await load('ui/action-flow.js');
+  const MF = await load('rules/move-facts.js');
+  check('回身 is a form with the spec’s rule', same(FR.FORM_RULES.glide, ['回身', '出招後仍可走完本回合未用的步數，走後不能撤步。']));
+  // The steps walked are the terrain cost of the path, cleared by undo.
+  const w = board(['hero', 'xiao', 'medic']);
+  const xiao = put(w, 'xiao', 5, 7);
+  check('xiao walks four', G.stat(xiao, 'step', w) === 4);
+  G.move(w, xiao, 4, 8);
+  check('a move records its terrain cost', xiao.walked === 3, xiao.walked);
+  G.undo(w, xiao);
+  check('undo clears it', !('walked' in xiao));
+
+  // A glide art: struck, then the rest of the steps to walk once.
+  const s = board(['hero', 'xiao', 'medic']);
+  const x = put(s, 'xiao', 3, 7);
+  put(s, 'blade', 6, 7);
+  const art = teach(x, defineArt({ forms: ['glide'], mp: 2 }));
+  G.move(s, x, 5, 7);
+  const f = G.forecast(x, unit(s, 'blade'), true, s);
+  check('the preview says how far he may walk after', f.notes.includes('回身 · 出招後尚可走 2 步'), f.notes);
+  check('the art’s facts name the form', MF.moveFacts(s, x, art).effectLines.includes('回身'));
+  const hit = G.resolve(s, x, unit(s, 'blade'), true);
+  check('resolve reports the steps left', hit.glide === 2 && x.glideLeft === 2);
+  check('he has acted, and may glide', x.acted && !G.canAct(s, x) && G.canGlide(s, x));
+  const field = G.glideField(s, x);
+  check('the glide field is bounded by the steps left', field.costs.has(G.key(5, 6)) && !field.costs.has(G.key(8, 7)) && [...field.costs.values()].every((n) => n <= 2));
+  check('nor ends on another piece', !field.costs.has(G.key(6, 7)));
+  const back = R.restoreRun(copy(s));
+  check('a save mid-glide restores it', G.canGlide(back, unit(back, 'xiao')));
+  const rows = F.glideRows(s, x);
+  check('his list offers only the walk and staying', rows.includes('回身 2 步') && rows.includes('data-do="glide-stop"') && rows.includes('不走了') && !rows.includes('撤步'));
+  check('no other hero’s list does', !F.glideRows(s, unit(s, 'hero')));
+  F.braceTheRest(s);
+  check('the end-of-turn brace leaves a gliding hero alone', !x.brace && G.canGlide(s, x));
+  check('nor is a gliding hero the next to act', F.nextToAct(s) !== x);
+  check('a tile out of reach is refused', !G.glideMove(s, x, 8, 7) && x.glideLeft === 2);
+  const steps = x.mastery.steps;
+  check('the walk is taken', G.glideMove(s, x, 4, 6) && x.x === 4 && x.y === 6);
+  check('it is spent, with no way back', x.glideLeft === 0 && !G.canGlide(s, x) && !x.origin && !G.undo(s, x));
+  check('its steps count', x.mastery.steps === steps + 2);
+  check('only once', !G.glideMove(s, x, 4, 7));
+
+  // Not moving first leaves the whole step; declining ends it; the turn's end loses it.
+  const t = board(['hero', 'xiao', 'medic']);
+  const y = put(t, 'xiao', 5, 7);
+  put(t, 'blade', 6, 7);
+  teach(y, defineArt({ forms: ['glide'], mp: 2 }));
+  check('without a move the whole step is left', G.resolve(t, y, unit(t, 'blade'), true).glide === 4);
+  check('declining the walk ends it', G.stopGlide(t, y) && y.glideLeft === 0 && !G.canGlide(t, y));
+  const lost = board(['hero', 'xiao', 'medic']);
+  const z = put(lost, 'xiao', 5, 7);
+  put(lost, 'blade', 6, 7);
+  teach(z, defineArt({ forms: ['glide'], mp: 2, safe: true }));
+  G.resolve(lost, z, unit(lost, 'blade'), true);
+  quietTurn(lost);
+  check('the turn’s end loses it', !('glideLeft' in z) && !('walked' in z) && !G.canGlide(lost, z));
+
+  // 立樁 forbids it; 絆足 shortens it; a walk that used every step leaves none.
+  const r = board(['hero', 'xiao', 'medic']);
+  const rooted = put(r, 'xiao', 5, 7);
+  put(r, 'blade', 6, 7);
+  teach(rooted, defineArt({ forms: ['glide'], mp: 2, safe: true }));
+  BM.applyCondition(r, rooted, { kind: 'rooted', power: 1, turns: 1 }, rooted);
+  check('under 立樁 the preview offers no walk', !G.forecast(rooted, unit(r, 'blade'), true, r).notes.some((n) => n.startsWith('回身')));
+  check('and the strike leaves none', !G.resolve(r, rooted, unit(r, 'blade'), true).glide && !G.canGlide(r, rooted));
+  const p = board(['hero', 'xiao', 'medic']);
+  const pinned = put(p, 'xiao', 5, 7);
+  put(p, 'blade', 6, 7);
+  teach(pinned, defineArt({ forms: ['glide'], mp: 2, safe: true }));
+  BM.applyCondition(p, pinned, { kind: 'pin', power: 2, turns: 1 }, pinned);
+  check('絆足 shortens it', G.resolve(p, pinned, unit(p, 'blade'), true).glide === 2);
+  const full = board(['hero', 'xiao', 'medic']);
+  const h = put(full, 'hero', 3, 7);
+  put(full, 'blade', 7, 7);
+  teach(h, defineArt({ forms: ['glide'], mp: 2, safe: true }));
+  G.move(full, h, 6, 7);
+  check('a hero who walked every step has none left', !G.resolve(full, h, unit(full, 'blade'), true).glide && !('glideLeft' in h));
+
+  // The villain's 游擊: after its blow it walks off, as far from the heroes as it can.
+  withTraits('chief', { glide: 2 }, () => {
+    const v = board();
+    const boss = put(v, 'chief', 5, 7);
+    const hero = put(v, 'hero', 4, 7);
+    G.startEnemy(v);
+    const life = [hero.hp, boss.hp];
+    G.enemyAct(v, boss);
+    check('it strikes from where it stands', hero.hp < life[0]);
+    check('then walks off two steps, as far from the heroes as it can', boss.x === 7 && boss.y === 7 && same(boss.route, [{ x: 5, y: 7 }, { x: 6, y: 7 }, { x: 7, y: 7 }]), [boss.x, boss.y]);
+    check('the log says so', v.logs.some((l) => l.text === '出手後退開 2 步。'));
+    const tight = board();
+    const b2 = put(tight, 'chief', 6, 7);
+    put(tight, 'hero', 4, 7);
+    G.startEnemy(tight);
+    G.enemyAct(tight, b2);
+    check('steps spent walking in are not walked again', b2.x === 6 && b2.y === 7 && same(tight.units.find((u) => u.id === 'chief').route, [{ x: 6, y: 7 }, { x: 5, y: 7 }, { x: 6, y: 7 }]), JSON.stringify(b2.route));
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

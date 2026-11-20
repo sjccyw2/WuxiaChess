@@ -24,6 +24,14 @@ function resolveBoardPick(s, mode, ground, body, reach) {
     (reach || G.reachable(s, actor)).has(G.key(ground.x, ground.y))
   )
     return ground;
+  if (
+    ground &&
+    mode === 'glide' &&
+    G.canGlide(s, actor) &&
+    !occupant &&
+    (reach || G.glideField(s, actor).costs).has(G.key(ground.x, ground.y))
+  )
+    return ground;
   if (mode === 'skill' && G.artFor(actor).blink && ground) return ground;
   if (mode === 'attack' || mode === 'skill') {
     if (G.targetOK(s, actor, occupant, mode === 'skill')) return { id: occupant.id };
@@ -213,7 +221,12 @@ class BattleBoard {
     this.prefs = prefs;
     this.layers.sync(s, mode, prefs);
     const u = G.find(s, s.selected);
-    this.reach = G.canAct(s, u) && !u.moved ? G.reachable(s, u) : new Map();
+    this.reach =
+      G.canAct(s, u) && !u.moved
+        ? G.reachable(s, u)
+        : mode === 'glide' && G.canGlide(s, u) // 回身: the walk left after the strike
+          ? G.glideField(s, u).costs
+          : new Map();
     this.syncKeys();
     this.draw();
   }
