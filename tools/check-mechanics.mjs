@@ -31,18 +31,23 @@ function section(title) {
 }
 const copy = (value) => JSON.parse(JSON.stringify(value));
 
-// Board 0 of a fresh run, in the fight, with these heroes (the first leads). Every unit starts
-// parked in the far corner, out of everyone's reach; a check puts the pieces it needs on the
-// open ground of rows 3 and 7 (x 3–8) with `put`.
-const PARKING = [
-  [2, 0],
-  [3, 0],
-  [0, 2],
-  [0, 3],
-  [0, 4],
-  [1, 4],
-  [0, 7]
-];
+// Board 0 of a fresh run, in the fight, with three heroes (the first leads). Every piece starts
+// parked on the west edge, no hero beside an enemy; a check puts the pieces it needs on the open
+// ground of rows 3 and 7 (x 3–8) with `put`, and acts only with those, since a parked enemy left
+// to act would walk in.
+const PARKING = {
+  ally: [
+    [2, 0],
+    [3, 0],
+    [0, 2]
+  ],
+  enemy: [
+    [0, 4],
+    [1, 4],
+    [1, 6],
+    [0, 7]
+  ]
+};
 function board(ids = ['hero', 'medic', 'guard'], seed = 7) {
   const s = R.startRun(R.drawLots(seed), R.LEGACY);
   const heroes = ids.map((id) =>
@@ -60,7 +65,10 @@ function board(ids = ['hero', 'medic', 'guard'], seed = 7) {
   s.run.pool = G.PARTY.filter((id) => !ids.includes(id));
   s.run.scene = 'fight';
   s.run.formationOpen = false;
-  s.units.forEach((u, i) => Object.assign(u, { x: PARKING[i][0], y: PARKING[i][1] }));
+  for (const side of ['ally', 'enemy'])
+    s.units
+      .filter((u) => u.side === side)
+      .forEach((u, i) => Object.assign(u, { x: PARKING[side][i][0], y: PARKING[side][i][1] }));
   return s;
 }
 const unit = (s, id) => G.find(s, id);
@@ -72,7 +80,7 @@ function put(s, id, x, y) {
   u.y = y;
   return u;
 }
-// A throwaway art in the catalogue, taught to the hero and made his active art.
+// A throwaway art in the catalogue (fields over a plain one-tile strike); returns its id.
 let artSerial = 0;
 function defineArt(fields = {}) {
   const id = 'testArt' + ++artSerial;
@@ -90,6 +98,7 @@ function defineArt(fields = {}) {
   };
   return id;
 }
+// Learn it, put it in a slot and make it the active art.
 function teach(u, id, slot = 1) {
   u.learned.push(id);
   u.slots[slot] = id;
@@ -694,6 +703,108 @@ section('conditional power');
   check('moveFacts states the rate and cap', surge.facts.effectLines.includes('傾力 · 耗盡內力，每點倍率 ＋0.015，最高 1.55'), surge.facts.effectLines);
   G.resolve(g, duan, unit(g, 'blade'), true);
   check('resolving it leaves no 內力', duan.mp === 0);
+}
+
+// ── Use restrictions and prices: artReady (§2, §3, §9.5) ─────────────────
+section('use restrictions');
+{
+  const J = await load('ui/journey-pages.js');
+  const MF = await load('rules/move-facts.js');
+  // A hero facing an enemy two tiles off, with a test art in slot 2.
+  function setup(fields, id = 'hero') {
+    const s = board([id, 'medic', 'guard']);
+    const u = put(s, id, 4, 7);
+    const foe = put(s, 'chief', 6, 7);
+    const art = teach(u, defineArt({ range: 2, mp: 2, safe: true, ...fields }), 2);
+    u.mp = u.maxMp;
+    return { s, u, foe, art };
+  }
+  const reason = (s, u, art) => G.artReady(s, u, art).reason;
+  const next = (s, u) => {
+    quietTurn(s);
+    u.mp = u.maxMp;
+  };
+
+  // 留力
+  {
+    const { s, u, foe, art } = setup({ poised: true });
+    check('留力 is usable on the board’s first round', G.canPay(s, u, art));
+    put(s, 'chief', 5, 7);
+    check('a basic strike lands', !!G.resolve(s, u, foe, false));
+    u.acted = false;
+    check('a strike earlier the same round does not block it', G.artReady(s, u, art).ok);
+    next(s, u);
+    check('留力 refuses the round after a strike', !G.canPay(s, u, art) && reason(s, u, art) === '留力 · 上回合已出手');
+    check('and the target test refuses with it', !G.targetOK(s, u, foe, true));
+    G.waitUnit(s, u);
+    next(s, u);
+    check('after a turn without striking it is usable again', G.canPay(s, u, art));
+    check('moveFacts states the rule', MF.moveFacts(s, u, art).effectLines.includes('留力 · 上回合未出手方可施展'));
+  }
+  // 壓箱
+  {
+    const { s, u, foe, art } = setup({ once: true });
+    check('壓箱 is noted in the preview', G.forecast(u, foe, true, s).notes.includes('壓箱 · 每局一次'));
+    G.resolve(s, u, foe, true);
+    next(s, u);
+    check('壓箱 refuses after its one use', !G.canPay(s, u, art) && reason(s, u, art) === '壓箱 · 本局已用');
+    check('the arts list shows the reason on a disabled entry', /data-id="testArt\d+" disabled/.test(J.equippedMoves(s, u)) && J.equippedMoves(s, u).includes('壓箱 · 本局已用'));
+    nextBoard(s);
+    check('the next board gives it back', G.artReady(s, u, art).ok && !u.usedOnce);
+  }
+  // 調息
+  {
+    const { s, u, foe, art } = setup({ cooldown: 2 });
+    s.round = 3;
+    G.resolve(s, u, foe, true);
+    check('調息 records the round it is ready', u.cooldowns[art] === 6);
+    next(s, u);
+    check('調息 refuses on round 4 with two to go', reason(s, u, art) === '調息 · 還須 2 回合');
+    next(s, u);
+    check('and on round 5 with one', reason(s, u, art) === '調息 · 還須 1 回合');
+    next(s, u);
+    check('and allows it on round 6', G.canPay(s, u, art));
+    check('moveFacts states the gap', MF.moveFacts(s, u, art).effectLines.includes('調息 · 施展後隔 2 回合'));
+  }
+  // 曲終
+  {
+    const { s, u, foe, art } = setup({ spent: true });
+    G.resolve(s, u, foe, true);
+    next(s, u);
+    check('曲終 refuses every art on the next turn', ['signature', art].every((id) => reason(s, u, id) === '曲終 · 本回合不能施展絕技'));
+    put(s, 'chief', 5, 7);
+    check('the basic attack is still allowed', G.targetOK(s, u, foe, false));
+    next(s, u);
+    check('the turn after, arts are back', G.canPay(s, u, art));
+  }
+  // 立樁
+  {
+    const { s, u, foe, art } = setup({ rooted: true });
+    const blink = defineArt({ target: 'ground', blink: true, range: 3, mp: 2 });
+    G.resolve(s, u, foe, true);
+    u.slots[1] = blink;
+    u.learned.push(blink);
+    next(s, u);
+    check('立樁 forbids moving on the next turn', !G.canMove(s, u) && !G.move(s, u, 3, 7));
+    check('and the 輕功 arts, with the reason', reason(s, u, blink) === '立樁 · 本回合不能移動');
+    check('but not his other arts', G.canPay(s, u, art));
+    const page = J.equippedMoves(s, u);
+    check('the arts list shows it', page.includes('立樁 · 本回合不能移動'));
+    next(s, u);
+    check('the turn after he moves again', G.canMove(s, u) && G.move(s, u, 3, 7));
+  }
+  // 轉護
+  {
+    const { s, u, art } = setup({ consume: 'shield', target: 'ally', range: 3, aura: 1, redirect: { cap: 24 } }, 'zhang');
+    const friend = put(s, 'medic', 4, 6);
+    check('轉護 refuses without a shield', reason(s, u, art) === '轉護 · 自身須有護盾');
+    BM.applyCondition(s, u, { kind: 'shield', power: 30, turns: 2 }, u);
+    const f = G.forecast(u, friend, true, s);
+    check('with one it is usable, and the preview says what passes', G.canPay(s, u, art) && f.notes.includes('轉護 · 移出自身護盾 30，各人得 24 護盾'), f.notes);
+    G.resolve(s, u, friend, true);
+    check('each recipient gets the shield, capped at 24, for two turns', friend.conditions?.shield?.power === 24 && friend.conditions.shield.through === 2);
+    check('the caster, a recipient too, holds 24 in place of 30', u.conditions?.shield?.power === 24);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────

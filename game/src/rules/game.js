@@ -858,9 +858,28 @@ function equippedArts(u) {
 function targetType(art) {
   return art.target || (art.heal ? 'ally' : 'enemy');
 }
+// Whether an equipped art may be used now (§2, §3) and, if not, the reason the arts list shows.
+// 內力 and 氣血 are left to canPay, whose refusal the list already shows its own way.
+function artReady(s, u, id = u.activeArt || 'signature') {
+  const art = artFor(u, id),
+    c = u.conditions || {},
+    ready = u.cooldowns?.[id] || 0;
+  const no = (reason) => ({ ok: false, reason });
+  if (c.spent) return no('曲終 · 本回合不能施展絕技');
+  if (c.rooted && targetType(art) === 'ground' && !art.zone) return no('立樁 · 本回合不能移動');
+  if (art.once && u.usedOnce?.includes(id)) return no('壓箱 · 本局已用');
+  if (s.round < ready) return no('調息 · 還須 ' + (ready - s.round) + ' 回合');
+  // A strike earlier this same round (after 連環 or 號令) does not count against 留力.
+  if (art.poised && u.struckRound === s.round - 1) return no('留力 · 上回合已出手');
+  if (art.consume === 'shield' && !c.shield) return no('轉護 · 自身須有護盾');
+  return { ok: true, reason: '' };
+}
 function canPay(s, u, id = u.activeArt || 'signature') {
   return (
-    equippedArts(u).includes(id) && u.mp >= cost(u, s, id) && u.hp > (artFor(u, id).hpCost || 0)
+    equippedArts(u).includes(id) &&
+    artReady(s, u, id).ok &&
+    u.mp >= cost(u, s, id) &&
+    u.hp > (artFor(u, id).hpCost || 0)
   );
 }
 const isSupport = (art) => ['ally', 'self'].includes(targetType(art));
@@ -940,8 +959,12 @@ function followRoute(u, path) {
   u.x = end.x;
   u.y = end.y;
 }
+// 立樁 holds a hero where he stands for his whole next turn.
+function canMove(s, u) {
+  return canAct(s, u) && !u.moved && !u.conditions?.rooted;
+}
 function move(s, u, x, y) {
-  if (!canAct(s, u) || u.moved || !valid(x, y, s.mapIndex)) return false;
+  if (!canMove(s, u) || !valid(x, y, s.mapIndex)) return false;
   const path = tracePath(availableField(s, u), { x, y });
   if (path.length < 2) return false;
   if (s.run) s.run.formationOpen = false;
@@ -1150,6 +1173,13 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       if (entry.overflow) result.notes.push(name + '餘氣護盾 ' + entry.overflow);
     }
     result.amount = result.recipients.find((entry) => entry.id === t.id)?.amount || 0;
+    // 轉護: the caster's own shield, up to 24, passes to every recipient.
+    if (art.consume === 'shield' && u.conditions?.shield) {
+      result.passed = Math.min(24, u.conditions.shield.power);
+      result.notes.push(
+        '轉護 · 移出自身護盾 ' + u.conditions.shield.power + '，各人得 ' + result.passed + ' 護盾'
+      );
+    }
     result.notes.push(...priceNotes(art));
     return result;
   }
@@ -1238,7 +1268,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   result.notes.push(...priceNotes(art));
   return result;
 }
-// What the caster pays after the art, as the preview states it.
+// What using the art costs its caster beyond 內力 and 氣血, as the preview states it.
 function priceNotes(art) {
   const notes = [];
   if (art?.recoil && art.openGuard) notes.push('有攻無守 · 至下回合不還擊，防禦 −' + art.recoil);
@@ -1246,6 +1276,8 @@ function priceNotes(art) {
   else if (art?.openGuard) notes.push('無守 · 出招後至下回合不還擊');
   if (art?.rooted) notes.push('立樁 · 下回合不能移動');
   if (art?.spent) notes.push('曲終 · 下回合不能施展絕技');
+  if (art?.once) notes.push('壓箱 · 每局一次');
+  if (art?.cooldown) notes.push('調息 · 施展後隔 ' + art.cooldown + ' 回合');
   return notes;
 }
 // Experience and level numbers. The wiki's rules page reads these.
@@ -1387,7 +1419,8 @@ function restoreHealth(s, caster, target, n, effects) {
 function resolve(s, u, t, skill) {
   if (!targetOK(s, u, t, skill)) return null;
   const f = forecast(u, t, skill, s),
-    art = skill ? artFor(u) : null;
+    id = u.activeArt || 'signature',
+    art = skill ? artFor(u, id) : null;
   const verb = art?.name || basicFor(u).name,
     who = unitDetails(u).name;
   const effects = [],
@@ -1422,6 +1455,7 @@ function resolve(s, u, t, skill) {
   }
   if (f.support) {
     log(s, 'combat', '施展「' + verb + '」。', who);
+    if (f.passed) delete u.conditions.shield;
     for (const entry of f.recipients) {
       const v = find(s, entry.id);
       for (const k of entry.clean) delete v.conditions[k];
@@ -1429,7 +1463,8 @@ function resolve(s, u, t, skill) {
       restoreHealth(s, u, v, entry.amount, effects);
       if (entry.overflow)
         putEffects(s, u, v, [{ kind: 'shield', power: entry.overflow, turns: 1 }], effects);
-      const shields = entry.overflow || f.effects.some((e) => e.kind === 'shield');
+      if (f.passed) putEffects(s, u, v, [{ kind: 'shield', power: f.passed, turns: 2 }], effects);
+      const shields = entry.overflow || f.passed || f.effects.some((e) => e.kind === 'shield');
       if (shields || (v !== u && (f.effects.length || entry.clean.length)))
         progress(u, 'protects', 1);
       putEffects(s, u, v, f.effects, effects);
@@ -1477,6 +1512,8 @@ function resolve(s, u, t, skill) {
       reflectStrike(s, u, t, dealt, effects);
     }
   }
+  if (art?.once) (u.usedOnce ??= []).push(id);
+  if (art?.cooldown) (u.cooldowns ??= {})[id] = s.round + art.cooldown + 1;
   if (art && living(u)) {
     const own = selfEffectsOf(art).map((e) =>
       e.kind === 'backlash' ? { ...e, turns: LIMIT - s.round + 1 } : e
@@ -1791,4 +1828,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, reach, strikeReach, counterRatio, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

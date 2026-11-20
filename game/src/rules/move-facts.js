@@ -33,6 +33,14 @@ function bonusLines(u, art) {
   return lines;
 }
 
+// When the art may be used and what it costs beyond 內力 and 氣血.
+function useLines(art) {
+  const lines = [];
+  if (art.poised) lines.push('留力 · 上回合未出手方可施展');
+  if (art.consume === 'shield') lines.push('轉護 · 須自身帶有護盾，施展時護盾轉給受術者');
+  return [...lines, ...G.priceNotes(art)];
+}
+
 function moveFacts(s, u, id = 'basic', target = null) {
   if (Object.hasOwn(roots, id)) {
     return {
@@ -121,7 +129,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
   }
   for (const effect of effectsOf(art))
     lines.push(effectDescription(effect.kind, effect.power, effect.turns));
-  if (art) lines.push(...bonusLines(u, art));
+  if (art) lines.push(...bonusLines(u, art), ...useLines(art));
   if (art?.aura) lines.push('目標及周圍 ' + art.aura + ' 格友軍');
   if (hpCost) lines.push('自耗 ' + hpCost + ' 氣血');
   const forms = G.formsFor(u, art, basic ? definition : undefined);
