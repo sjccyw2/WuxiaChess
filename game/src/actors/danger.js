@@ -1,5 +1,6 @@
 // Danger zone: every tile an enemy could strike on its coming turn, shaded on the board.
-// Follows what the enemy turn itself does: walk anywhere within reach, then strike within range.
+// Follows what the enemy turn itself does: walk anywhere within reach, then strike within range
+// (a due signature's own range when it has one).
 import { POLISH } from '../polish.js';
 import * as G from '../rules/game.js';
 
@@ -16,15 +17,20 @@ function dangerTiles(s) {
   const mark =
     s.mapIndex +
     '|' +
-    alive.map((u) => [u.id, u.x, u.y, u.range, G.ally(u) ? 0 : G.stat(u, 'step', s)].join(':')).join(';');
+    alive
+      .map((u) =>
+        [u.id, u.x, u.y, G.ally(u) ? 0 : G.strikeReach(s, u), G.ally(u) ? 0 : G.stat(u, 'step', s)].join(':')
+      )
+      .join(';');
   if (mark === memo.mark) return memo.tiles;
   const tiles = new Set();
   for (const u of alive) {
     if (G.ally(u)) continue;
     const stands = [[u.x, u.y], ...Array.from(G.reachable(s, u).keys(), (k) => k.split(',').map(Number))];
+    const range = G.strikeReach(s, u);
     for (const [cx, cy] of stands)
-      for (let dx = -u.range; dx <= u.range; dx++) {
-        const span = u.range - Math.abs(dx);
+      for (let dx = -range; dx <= range; dx++) {
+        const span = range - Math.abs(dx);
         for (let dy = -span; dy <= span; dy++) {
           const x = cx + dx,
             y = cy + dy;

@@ -14,6 +14,10 @@ const R = await load('rules/journey.js');
 const BM = await load('rules/battle-mastery.js');
 const FR = await load('rules/form-rules.js');
 const { TECHNIQUES, MANUAL_PRICES } = await load('data/martial-arts.js');
+const { ENCOUNTERS, RANKS, STATUS_POWER } = await load('data/encounters.js');
+const { mapLayout } = await load('data/terrain.js');
+const { dangerTiles } = await load('actors/danger.js');
+const P = await load('ui/panels.js');
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 let failures = 0;
@@ -91,6 +95,19 @@ function teach(u, id, slot = 1) {
   u.slots[slot] = id;
   u.activeArt = id;
   return id;
+}
+// A villain's traits (by DETAILS key: a master's id, 'lieutenant-' + map, 'bow-' + map,
+// 'scout-' + map), in force while `body` runs.
+function withTraits(key, traits, body) {
+  const had = Object.hasOwn(G.DETAILS, key),
+    prior = G.DETAILS[key]?.traits;
+  G.DETAILS[key] = { ...(G.DETAILS[key] || {}), traits };
+  try {
+    return body();
+  } finally {
+    if (had) G.DETAILS[key].traits = prior;
+    else delete G.DETAILS[key];
+  }
 }
 // Run the enemy phase through to the start of the next ally phase.
 function enemyTurn(s) {
@@ -349,6 +366,129 @@ section('conditions');
   foe.hp = 0;
   check('盟令 ends with its bearer', G.stat(blade, 'atk', z) === plain[1]);
   details.traits = prior;
+}
+
+// ── Villain traits (§7.1, §7.2) ──────────────────────────────────────────
+section('villain traits');
+{
+  check('every villain has a traits object', ENCOUNTERS.flat().every((v) => v.traits && typeof v.traits === 'object'));
+  check('RANKS has an entry per board', RANKS.length === 10 && RANKS.every((r) => r && typeof r === 'object'));
+
+  // mods on board 0's hard-coded numbers and on a later board's stage numbers.
+  const plain = G.newGame(['hero', 'medic', 'guard']);
+  const modded = withTraits('chief', { mods: { hp: 1.5, atk: 2, def: -1, step: 4, range: 2 } }, () =>
+    G.newGame(['hero', 'medic', 'guard'])
+  );
+  const a = unit(plain, 'chief'),
+    b = unit(modded, 'chief');
+  check(
+    'board 0 applies its master’s mods',
+    b.maxHp === Math.round(a.maxHp * 1.5) && b.atk === a.atk + 2 && b.def === a.def - 1 && b.step === 4 && b.range === 2,
+    [b.maxHp, b.atk, b.def, b.step, b.range].join(',')
+  );
+  const first = board(),
+    second = board();
+  const map = first.run.route[1];
+  nextBoard(first);
+  withTraits('bow-' + map, { mods: { hp: 0.5, atk: -3, range: 4 } }, () => nextBoard(second));
+  const [p, q] = [unit(first, 'echoBow'), unit(second, 'echoBow')];
+  check(
+    'a later board applies a rank-and-file piece’s mods',
+    q.maxHp === Math.round(p.maxHp * 0.5) && q.atk === p.atk - 3 && q.range === 4 && q.def === p.def,
+    [q.maxHp, q.atk, q.range].join(',')
+  );
+  check('the other pieces keep the stage numbers', ['murong', 'echoBlade', 'echoScout', G.commanderId(second)].every((id) => {
+    const [x, y] = [unit(first, id), unit(second, id)];
+    return !x || (x.maxHp === y.maxHp && x.atk === y.atk && x.range === y.range);
+  }));
+  check('rank and file carry their board’s encounter ids', unit(second, 'echoBow').encounterId === 'bow-' + map && unit(second, 'echoScout').encounterId === 'scout-' + map);
+  check('board 0’s archer is bow-0', unit(board(), 'bow').encounterId === 'bow-0');
+  const named = withTraits('bow-' + map, {}, () => {
+    G.DETAILS['bow-' + map].name = '試射手';
+    return G.unitDetails(unit(second, 'echoBow')).name;
+  });
+  check('a RANKS entry names the piece; without one the shared piece is used', named === '試射手' && G.unitDetails(unit(second, 'echoBow')).name === G.DETAILS.echoBow.name);
+
+  // Status strength by stage, only once a villain's traits are written.
+  const s = board();
+  s.run.stage = 4;
+  const chief = unit(s, 'chief');
+  const style = G.DETAILS.chief.style;
+  check('without traits a signature keeps the flat stage-0 strength', G.enemyTechnique(chief, s).power === 3);
+  withTraits('chief', { mods: {} }, () => {
+    const art = G.enemyTechnique(chief, s);
+    check('with traits weak/exposed scale as 3 + ⌊stage/2⌋', style === 'weak' && art.power === 5, art.power);
+    check('the signature note prints the real number', art.note.includes('降低 5'), art.note);
+  });
+  check('poison scales as 3 + stage, drain as 6 + 2 × stage', STATUS_POWER.poison(4) === 7 && STATUS_POWER.drain(4) === 14 && STATUS_POWER.weak(0) === 3);
+  withTraits('chief', { sig: { power: 9, turns: 3 } }, () => {
+    const art = G.enemyTechnique(chief, s);
+    check('sig.power and sig.turns override', art.power === 9 && art.turns === 3);
+  });
+
+  // Cadence and 吸勁's push in the countdown.
+  const c = board();
+  const boss = unit(c, 'chief');
+  c.round = 4;
+  boss.signatureRound = 2;
+  check('the default cadence is three rounds', G.roundsToSignature(c, boss) === 1);
+  withTraits('chief', { sig: { cadence: 2 } }, () =>
+    check('sig.cadence changes the gap', G.roundsToSignature(c, boss) === 0)
+  );
+  boss.signaturePush = 1;
+  check('signaturePush puts the signature back', G.roundsToSignature(c, boss) === 2);
+  delete boss.signatureRound;
+  c.round = 4;
+  check('the push also delays a first signature', G.roundsToSignature(c, boss) === 0);
+  put(c, 'chief', 4, 7);
+  const target = put(c, 'guard', 5, 7);
+  const hp = target.hp;
+  G.startEnemy(c);
+  G.enemyAct(c, boss);
+  check('the signature fires and clears the push', boss.signatureRound === 4 && boss.signaturePush === 0 && target.hp < hp);
+
+  // The signature's own reach: planned, struck and drawn with when due.
+  const r = board();
+  const far = put(r, 'chief', 3, 7);
+  const mark = put(r, 'guard', 8, 7);
+  r.round = 3;
+  withTraits('chief', { sig: { reach: 4 } }, () => {
+    check('a due signature strikes with its own reach', G.strikeReach(r, far) === 4);
+    const tiles = dangerTiles(r);
+    check('the danger zone draws the due signature’s reach', tiles.has(G.key(8, 7)), [...tiles].length);
+    const life = mark.hp;
+    G.startEnemy(r);
+    G.enemyAct(r, far);
+    check('the master strikes from three tiles away', mark.hp < life && G.distance(far, mark) > 1 && G.distance(far, mark) <= 4, G.distance(far, mark));
+    r.round = 4;
+    check('when not due it strikes with its weapon’s reach', G.strikeReach(r, far) === far.range);
+  });
+
+  // The enemy page: one line per trait.
+  const page = board();
+  const lines = withTraits('chief', {
+    sig: { reach: 3, extra: 'pin' },
+    post: { tile: 'spawn', tether: 1, wake: true },
+    prefers: 'wounded',
+    contact: { mp: 8 },
+    banner: { atk: 1 },
+    glide: 2,
+    basicPoison: { power: 2, turns: 2 }
+  }, () => G.enemyTraitLines(page, unit(page, 'chief')));
+  const spawn = mapLayout(0).enemies[0];
+  const expected = [
+    '絕技射程 3 格',
+    '絕技絆足 · 中招者移動 −2，2 回合',
+    '坐鎮 · 守在（' + (spawn.x + 1) + '，' + (spawn.y + 1) + '）1 格內；有俠客踏入攻擊範圍才出手，受擊或出手後離位追擊',
+    '專挑傷重者',
+    '化功 · 貼身打中他的俠客損失 8 內力',
+    '盟令 · 存活時其餘敵人攻擊 ＋1',
+    '游擊 · 出手後退開至多 2 步',
+    '毒手 · 普攻令目標中毒，兩次毒發各損 2 氣血'
+  ];
+  check('the enemy page lists each trait', same(lines, expected), JSON.stringify(lines));
+  const html = withTraits('chief', { glide: 2 }, () => P.enemyPage(page, 'chief'));
+  check('the enemy page shows the step and the trait lines', html.includes('移動 <b>') && html.includes('游擊 · 出手後退開至多 2 步'));
 }
 
 // ─────────────────────────────────────────────────────────────────────────

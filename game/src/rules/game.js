@@ -7,7 +7,7 @@ import {
   supportEntry,
   weaponFormText
 } from './form-rules.js';
-import { ENCOUNTERS, SIGNATURE_RULES, VILLAIN_FORMS } from '../data/encounters.js';
+import { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS } from '../data/encounters.js';
 import { NEW_HEROES } from '../data/new-heroes.js';
 import {
   commandBonus,
@@ -315,19 +315,50 @@ for (const [index, [boss, second]] of ENCOUNTERS.entries()) {
     rank: 'mini'
   };
 }
+// The DETAILS keys of a board's four enemies, in the order of its layout's spawn tiles.
+function encounterKeys(map) {
+  return [CAPTAINS[map][0], 'lieutenant-' + map, 'bow-' + map, 'scout-' + map];
+}
+// Actor ids never change, so saves stay valid; what each piece is on this board is recomputed.
 function identifyEncounter(s) {
   if (!s.run) return;
-  const second = s.units.find((u) => u.id === 'blade' || u.id === 'echoBlade');
-  if (second) second.encounterId = 'lieutenant-' + s.mapIndex;
+  const keys = encounterKeys(s.mapIndex);
+  for (const u of s.units) {
+    const role = ['blade', 'bow', 'scout'].indexOf(u.id.replace(/^echo/, '').toLowerCase());
+    if (!ally(u) && role >= 0) u.encounterId = keys[role + 1];
+  }
+}
+// A villain's `mods` on the stage numbers: health scaled, attack and defence added, step and
+// range set outright.
+function withMods([hp, atk, def, step, range], mods = {}) {
+  return [
+    Math.round(hp * (mods.hp ?? 1)),
+    atk + (mods.atk || 0),
+    def + (mods.def || 0),
+    mods.step ?? step,
+    mods.range ?? range
+  ];
 }
 for (const id of ['blade', 'bow', 'scout']) DETAILS[id].portraitFile = 'npc-' + id + '.webp';
 function unitDetails(u) {
   return DETAILS[u?.encounterId] || DETAILS[u?.id];
 }
-function enemyTechnique(u) {
+// A villain whose traits are written uses the stage-scaled status strengths; one without plays
+// with the flat numbers of stage 0, as every villain did before the redesign.
+function enemyTechnique(u, s) {
   const info = unitDetails(u);
   if (!info?.rank) return null;
+  const sig = info.traits?.sig || {},
+    stage = Object.keys(info.traits || {}).length ? s?.run?.stage || 0 : 0;
+  const status = {
+    power: sig.power ?? STATUS_POWER[info.style]?.(stage),
+    turns: sig.turns ?? 2
+  };
   return {
+    ...status,
+    reach: sig.reach || 0,
+    cadence: sig.cadence || 3,
+    extra: sig.extra || null,
     name: info.skill,
     factor: VILLAIN_FORMS[info.skill][0],
     stroke: VILLAIN_FORMS[info.skill][1],
@@ -340,16 +371,81 @@ function enemyTechnique(u) {
         : info.style === 'weak' || info.style === 'exposed'
           ? 'debuff'
           : null,
-    note: SIGNATURE_RULES[info.style],
+    note: SIGNATURE_RULES[info.style]?.(status) || '',
     offset: info.rank === 'boss' ? 0 : 1
   };
 }
+// `signaturePush` counts the rounds a hero's 吸勁 has put the signature back since it last fired.
 function roundsToSignature(s, u) {
-  const art = enemyTechnique(u);
+  const art = enemyTechnique(u, s);
   if (!art) return null;
   const first = art.offset > 0 || s.run?.stage >= 5 ? 2 : 3;
-  const next = Number.isInteger(u.signatureRound) ? u.signatureRound + 3 : first;
-  return Math.max(0, next - s.round);
+  const next = Number.isInteger(u.signatureRound) ? u.signatureRound + art.cadence : first;
+  return Math.max(0, next + (u.signaturePush || 0) - s.round);
+}
+const signatureDue = (s, u) =>
+  !!s?.run && !u.conditions?.seal && roundsToSignature(s, u) === 0;
+// How far an enemy strikes this turn: when its signature is due, with the signature's own reach.
+function strikeReach(s, u) {
+  const sig = signatureDue(s, u) ? enemyTechnique(u, s) : null;
+  return Math.max(u.range, sig?.reach || 0);
+}
+const PREFERS = {
+  wounded: '專挑傷重者',
+  isolated: '專挑落單者',
+  leader: '專挑領隊',
+  healer: '專挑療傷者',
+  mp: '專挑內力深厚者',
+  nearest: '見人就撲'
+};
+const tileName = (p) => '（' + (p.x + 1) + '，' + (p.y + 1) + '）';
+// The enemy page's account of how this piece differs from the others: one line per trait.
+function enemyTraitLines(s, u) {
+  const info = unitDetails(u),
+    t = info?.traits || {},
+    stage = s.run?.stage || 0,
+    lines = [];
+  const master = unitDetails(find(s, commanderId(s)))?.name;
+  const sig = enemyTechnique(u, s);
+  if (sig?.reach) lines.push('絕技射程 ' + sig.reach + ' 格');
+  if (sig?.extra === 'pin') lines.push('絕技絆足 · 中招者移動 −2，2 回合');
+  if (sig?.extra === 'wound') lines.push('絕技內傷 · 中招者療傷減半，出手後自損 5，2 回合');
+  if (sig?.extra === 'line') lines.push('絕技穿行 · 目標身後兩格內首名俠客受一半傷害（危險區不顯示）');
+  if (t.post?.tile === 'master') lines.push('護駕 · 每回合先回到' + master + '身旁');
+  else if (t.post && !u.woke) {
+    const index = encounterKeys(s.mapIndex).indexOf(u.encounterId || u.id);
+    const tile = t.post.tile === 'spawn' ? mapLayout(s.mapIndex).enemies[index] : t.post.tile;
+    lines.push(
+      '坐鎮 · 守在' +
+        tileName(tile) +
+        (t.post.tether ? t.post.tether + ' 格內' : '') +
+        '；有俠客踏入攻擊範圍才出手' +
+        (t.post.wake ? '，受擊或出手後離位追擊' : '')
+    );
+  }
+  if (t.phase) lines.push('半血變招 · ' + (t.phase.note || t.phase.log || ''));
+  if (t.prefers) lines.push(PREFERS[t.prefers]);
+  if (t.stance)
+    lines.push('蓄勢反擊 · 蓄勢時兩格內受擊必以全力還擊' + (t.stance.holds ? '，且原地不動' : ''));
+  if (t.redirect) lines.push('斗轉星移 · 蓄勢時第一次受到的直接攻擊全數反震一半給出手者');
+  if (t.contact) lines.push('化功 · 貼身打中他的俠客損失 ' + (t.contact.mp + stage) + ' 內力');
+  if (t.banner) lines.push('盟令 · 存活時其餘敵人攻擊 ＋' + (t.banner.atk + stage));
+  if (t.cover === 'master') lines.push('代受 · 相鄰的' + master + '受到直接攻擊時，由他代受');
+  const guards = enemies(s).filter(
+    (v) => v !== u && living(v) && unitDetails(v)?.traits?.cover === 'master'
+  );
+  if (u.id === commanderId(s) && guards.length)
+    lines.push(
+      '代受 · 身旁的' + [...new Set(guards.map((v) => unitDetails(v).name))].join('、') + '替他承受直接攻擊'
+    );
+  if (t.glide) lines.push('游擊 · 出手後退開至多 ' + t.glide + ' 步');
+  if (t.basicPoison)
+    lines.push(
+      '毒手 · 普攻令目標中毒，兩次毒發各損 ' +
+        (t.basicPoison.power + Math.floor(stage / 2)) +
+        ' 氣血'
+    );
+  return lines;
 }
 DETAILS.echoBlade = {
   portraitFile: 'npc-echoBlade.webp',
@@ -375,6 +471,11 @@ DETAILS.echoScout = {
   mini: 'bandit',
   basic: '掠影刀'
 };
+for (const [map, ranks] of RANKS.entries())
+  for (const [role, info] of Object.entries(ranks)) {
+    const base = map ? 'echo' + role[0].toUpperCase() + role.slice(1) : role;
+    DETAILS[role + '-' + map] = { ...DETAILS[base], ...info };
+  }
 const STORIES = [
   {
     place: '洛陽 · 綠竹巷',
@@ -509,6 +610,7 @@ const HERO_STATS = {
   xiao: [103, 66, 24, 9, 4, 1, 'twins'],
   duan: [95, 78, 20, 8, 4, 2, 'fan']
 };
+const FOES = ['chief', 'blade', 'bow', 'scout'];
 const startingHero = (id) => makeUnit(id, 'ally', 0, 0, ...HERO_STATS[id]);
 function newGame(ids = ORIGINAL_PARTY) {
   if (ids.length !== 3 || new Set(ids).size !== 3 || !ids.every((id) => PARTY.includes(id)))
@@ -531,10 +633,18 @@ function newGame(ids = ORIGINAL_PARTY) {
     stats: { damage: 0, healed: 0, kills: 0 },
     units: [
       ...ids.map((id, index) => makeUnit(id, 'ally', ...posts[index], ...HERO_STATS[id])),
-      makeUnit('chief', 'enemy', ...foes[0], 104, 0, 25, 12, 2, 1),
-      makeUnit('blade', 'enemy', ...foes[1], 56, 0, 20, 7, 2, 1),
-      makeUnit('bow', 'enemy', ...foes[2], 48, 0, 18, 5, 2, 3),
-      makeUnit('scout', 'enemy', ...foes[3], 56, 0, 19, 8, 3, 1)
+      ...[
+        [104, 25, 12, 2, 1],
+        [56, 20, 7, 2, 1],
+        [48, 18, 5, 2, 3],
+        [56, 19, 8, 3, 1]
+      ].map((numbers, i) => {
+        const [hp, atk, def, step, range] = withMods(
+          numbers,
+          DETAILS[encounterKeys(0)[i]]?.traits?.mods
+        );
+        return makeUnit(FOES[i], 'enemy', ...foes[i], hp, 0, atk, def, step, range);
+      })
     ]
   };
   log(s, 'story', '與同伴會合，接下護譜之託。', DETAILS[ids[0]].name);
@@ -1475,6 +1585,7 @@ function enemyAct(s, u) {
     })
   ];
   let best = null;
+  const range = strikeReach(s, u);
   const approach = new Map(
     friends.map((target) => {
       const positions = fieldCells(s.mapIndex).filter((cell) => {
@@ -1482,7 +1593,7 @@ function enemyAct(s, u) {
         return (
           walkable(cell.x, cell.y, s.mapIndex) &&
           (!occ || occ === u) &&
-          distance(cell, target) <= u.range
+          distance(cell, target) <= range
         );
       });
       return [target.id, movementField(s, u, positions, Infinity, true).costs];
@@ -1501,7 +1612,7 @@ function enemyAct(s, u) {
   for (const c of cells)
     for (const t of friends) {
       const d = distance(c, t),
-        can = d <= u.range,
+        can = d <= range,
         score =
           (can ? 1000 - targetCost.get(t.id) : 0) -
           (can ? 0 : (approach.get(t.id).get(key(c.x, c.y)) ?? fieldCells(s.mapIndex).length + d)) *
@@ -1519,8 +1630,7 @@ function enemyAct(s, u) {
     return [];
   }
   const t = best.t;
-  const art =
-    s.run && !u.conditions?.seal && roundsToSignature(s, u) === 0 ? enemyTechnique(u) : null;
+  const art = signatureDue(s, u) ? enemyTechnique(u, s) : null;
   const raw = damage(u, t, false, s.mapIndex, s);
   const strikePower = art ? Math.round(raw * art.factor) : raw;
   const n = wound(s, t, strikePower, u);
@@ -1534,6 +1644,7 @@ function enemyAct(s, u) {
   );
   if (art) {
     u.signatureRound = s.round;
+    if (u.signaturePush) u.signaturePush = 0;
     if (art.style === 'sweep') {
       for (const other of friends.filter((v) => v !== t && living(v) && distance(v, t) === 1)) {
         const chip = wound(s, other, Math.max(1, Math.round(strikePower / 4)), u);
@@ -1541,8 +1652,8 @@ function enemyAct(s, u) {
         log(s, 'combat', '被餘勁掃中，損失 ' + chip + ' 點氣血。', unitDetails(other).name);
       }
     } else if (living(t)) {
-      if (art.style === 'drain') t.mp = Math.max(0, t.mp - 6);
-      else applyCondition(s, t, { kind: art.style, power: 3, turns: 2 }, u);
+      if (art.style === 'drain') t.mp = Math.max(0, t.mp - art.power);
+      else applyCondition(s, t, { kind: art.style, power: art.power, turns: art.turns }, u);
       log(s, 'combat', art.note, unitDetails(u).name);
     }
   }
@@ -1600,4 +1711,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, identifyEncounter, unitDetails, enemyTechnique, roundsToSignature, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, move, undo, affectedFriends, targetOK, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, strikeReach, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, move, undo, affectedFriends, targetOK, attackPower, damage, healingPower, healing, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

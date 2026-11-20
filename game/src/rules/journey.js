@@ -534,7 +534,7 @@ function dialogue(s, scene = s.run.scene) {
     (before && G.find(s, r.openingCast?.[1])) || G.party(s).find((u) => u !== captain) || captain;
   const cast = {
     boss: G.find(s, G.commanderId(s)),
-    mini: G.enemies(s).find((u) => u.encounterId),
+    mini: G.enemies(s).find((u) => u.encounterId?.startsWith('lieutenant-')),
     leader: captain,
     ally
   };
@@ -854,8 +854,9 @@ function defenders(s) {
       depth >= 7 ? 2 : 1
     ]
   ];
+  const keys = G.encounterKeys(map);
   for (const [i, id] of ids.entries()) {
-    const [hp, atk, def, step, range] = stats[i],
+    const [hp, atk, def, step, range] = G.withMods(stats[i], G.DETAILS[keys[i]]?.traits?.mods),
       p = layout.enemies[i];
     units.push(G.makeUnit(id, 'enemy', p.x, p.y, hp, 0, atk, def, step, range));
   }

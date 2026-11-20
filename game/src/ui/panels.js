@@ -12,6 +12,7 @@ import {
   DETAILS,
   unitDetails,
   enemyTechnique,
+  enemyTraitLines,
   roundsToSignature,
   ITEMS,
   LIMIT,
@@ -246,7 +247,7 @@ function goalRows(s) {
       unitDetails(target).name +
       '</strong>' +
       '<p class="goal-detail">副手 · ' +
-      unitDetails(s.units.find((u) => u.encounterId))?.name +
+      unitDetails(s.units.find((u) => u.encounterId?.startsWith('lieutenant-')))?.name +
       '</p>' +
       (target.id === 'murong'
         ? '<p class="goal-detail">星索護陣・' +
@@ -887,7 +888,7 @@ function endPage(s) {
 function enemyPage(s, id) {
   const u = find(s, id),
     i = unitDetails(u),
-    special = enemyTechnique(u),
+    special = enemyTechnique(u, s),
     turns = roundsToSignature(s, u);
   return (
     titleHead('target', '敵情查探') +
@@ -927,11 +928,17 @@ function enemyPage(s, id) {
     stat(u, 'atk', s) +
     '</b></span><span>防禦 <b>' +
     stat(u, 'def', s) +
-    '</b></span><span>招式 <b>' +
+    '</b></span><span>移動 <b>' +
+    stat(u, 'step', s) +
+    ' 步</b></span><span>招式 <b>' +
     i.basic +
     '</b></span><span>射程 <b>' +
     u.range +
-    ' 格</b></span></div><p class="footnote">' +
+    ' 格</b></span></div>' +
+    enemyTraitLines(s, u)
+      .map((line) => '<p class="footnote">' + icon('flag', 15) + esc(line) + '</p>')
+      .join('') +
+    '<p class="footnote">' +
     icon('stone', 15) +
     ('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。' + tileInfo(u.x, u.y, s.mapIndex).note) +
     (s.mapIndex === 9 && ['murong', 'echoBow', 'echoScout'].includes(id)
