@@ -293,7 +293,13 @@ const BOARD_MARKS = [
   'usedOnce',
   'cooldowns'
 ];
-const ROUND_MARKS = [...BOARD_MARKS.slice(0, 6), 'signaturePush', 'lastSiphonRound', 'lastDazeRound'];
+const ROUND_MARKS = [
+  ...BOARD_MARKS.slice(0, 6),
+  'signaturePush',
+  'lastSiphonRound',
+  'lastDazeRound',
+  'fleeThrough'
+];
 // Older saves have none of these fields; a malformed one is dropped rather than failing the save.
 function tidyMarks(s) {
   for (const u of [...s.units, ...s.run.bench]) {

@@ -591,6 +591,8 @@ function walkCells(s, u, field = availableField(s, u)) {
 // enemy turn and the danger zone both read this, so the zone never shows a strike the piece
 // will not make.
 function standCells(s, u, all = walkCells(s, u)) {
+  const flight = fleeStep(s, u, all); // 遁走: the one tile its flight takes it to
+  if (flight) return [flight];
   const hold = holdOf(s, u);
   if (!hold) return all;
   return all.filter((c, i) => !i || distance(c, hold.tile) <= hold.tether);
@@ -724,6 +726,11 @@ function enemyTraitLines(s, u) {
     say(
       (u.phased ? '已變招' : '半血變招') + (phase.name ? ' · ' + phase.name : ''),
       phase.note || phase.log || ''
+    );
+  if (fleeing(s, u))
+    say(
+      '遁走中',
+      '至第 ' + u.fleeThrough + ' 回合，或氣血回到 ' + Math.round(phase.flee.until * u.maxHp) + ' 為止。'
     );
   return lines;
 }
@@ -2270,14 +2277,16 @@ function shiftPhase(s, u) {
   u.phased = true;
   for (const k of ['atk', 'def', 'step', 'range']) u[k] += p[k] || 0;
   if (p.brace) u.brace = true;
+  // 遁走: the flight covers its next `turns` actions, so from this round if it has yet to act.
+  if (p.flee) u.fleeThrough = s.round + p.flee.turns - (s.phase === 'enemy' && u.acted ? 0 : 1);
   log(s, 'combat', p.log || '', unitDetails(u).name);
 }
 function restOnHerbs(s, units) {
   for (const u of units.filter(living)) {
-    const healed = Math.min(
-      u.maxHp - u.hp,
-      healAmount(u, tileInfo(u.x, u.y, s.mapIndex).heal || 0)
-    );
+    const herb = tileInfo(u.x, u.y, s.mapIndex).heal || 0;
+    // 遁走: a fleeing master on herbs recovers its flight's share of its greatest 氣血.
+    const share = herb && fleeing(s, u) ? Math.round(unitDetails(u).traits.phase.flee.herbs * u.maxHp) : 0;
+    const healed = Math.min(u.maxHp - u.hp, healAmount(u, share || herb));
     if (healed <= 0) continue;
     u.hp += healed;
     if (ally(u)) s.stats.healed += healed;
@@ -2382,6 +2391,9 @@ function enemyAct(s, u) {
   const all = walkCells(s, u, field);
   // 坐鎮, and a 蓄勢反擊 that holds: where this piece may end its action.
   const cells = standCells(s, u, all);
+  // 續命: a due mend restores a hurt companion in its reach instead of striking.
+  const mend = mendPlan(s, u, cells);
+  if (mend) return mendAct(s, u, field, mend);
   let best = null;
   const range = strikeReach(s, u);
   const lineDue = !!lineKind(strikingSignature(s, u));
@@ -2429,7 +2441,8 @@ function enemyAct(s, u) {
   u.moved = distance(u, best.c) > 0;
   if (u.moved) followRoute(u, tracePath(field, best.c));
   if (!best.can) {
-    if (!hold) log(s, 'move', '逼近我方陣地。', unitDetails(u).name);
+    if (fleeing(s, u)) log(s, 'move', '退向藥草地。', unitDetails(u).name);
+    else if (!hold) log(s, 'move', '逼近我方陣地。', unitDetails(u).name);
     else if (u.moved) log(s, 'move', '退回崗位。', unitDetails(u).name);
     return [];
   }
@@ -2504,6 +2517,81 @@ function enemyAct(s, u) {
   if (unitDetails(u)?.traits?.glide) glideAway(s, u, best.c.n, step);
   check(s);
   return effects;
+}
+// 續命 (§7.9): when its mend is due, the companion (itself included) it will restore — the lowest
+// share of 氣血 below seven tenths among those it can stand within three tiles of — and the tile
+// it restores from: out of the heroes' reach if it can be, then as far from them as it can, then
+// the fewest steps. Null when no one is hurt enough: it strikes plainly and keeps the charge.
+function mendPlan(s, u, cells) {
+  const sig = signatureDue(s, u) ? enemyTechnique(u, s) : null;
+  if (sig?.style !== 'mend') return null;
+  let best = null;
+  for (const v of enemies(s)) {
+    if (!living(v) || v.hp >= v.maxHp * 0.7) continue;
+    const near = cells.filter((c) => v === u || distance(c, v) <= 3);
+    if (near.length && (!best || v.hp / v.maxHp < best.v.hp / best.v.maxHp)) best = { v, near };
+  }
+  if (!best) return null;
+  const heroes = party(s).filter(living);
+  const threat = (c) => heroes.some((h) => distance(c, h) <= stat(h, 'step', s) + heroReach(h));
+  const gap = (c) => Math.min(99, ...heroes.map((h) => distance(c, h)));
+  const rank = (c) => [threat(c) ? 1 : 0, -gap(c), c.n];
+  const better = (a, b) => {
+    const [x, y] = [rank(a), rank(b)];
+    return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+  };
+  const c = best.near.reduce((a, b) => (better(b, a) < 0 ? b : a));
+  return { patient: best.v, c, heal: sig.heal, name: sig.name };
+}
+// How far a hero can strike from where he stands: his weapon, or his longest enemy-aimed art.
+function heroReach(h) {
+  return Math.max(
+    reach(null, h),
+    ...equippedArts(h)
+      .map((id) => artFor(h, id))
+      .filter((a) => targetType(a) === 'enemy')
+      .map((a) => a.range ?? 1)
+  );
+}
+// The mend itself: it walks to its tile, restores the patient (halved by 內傷) and does not
+// strike; the signature is spent.
+function mendAct(s, u, field, { patient, c, heal, name }) {
+  u.acted = true;
+  u.moved = distance(u, c) > 0;
+  if (u.moved) followRoute(u, tracePath(field, c));
+  const n = Math.min(patient.maxHp - patient.hp, healAmount(patient, heal));
+  patient.hp += n;
+  u.signatureRound = s.round;
+  if (u.signaturePush) u.signaturePush = 0;
+  log(s, 'combat', '施展「' + name + '」，替' + unitDetails(patient).name + '接骨續筋。', unitDetails(u).name);
+  log(s, 'combat', '回復 ' + n + ' 點氣血。', unitDetails(patient).name);
+  const effects = [[patient.id, '+' + n]];
+  effects.signature = true;
+  return effects;
+}
+// 遁走 (§7.4): while a phase's flight lasts (its turns, from the round it fired) and the master
+// is still below `until` of its 氣血, it heads for the nearest herbs no one else stands on.
+function fleeing(s, u) {
+  const flee = unitDetails(u)?.traits?.phase?.flee;
+  return !!flee && u.fleeThrough >= s.round && u.hp < flee.until * u.maxHp;
+}
+// Where a fleeing master's walk this turn ends: the tile it can reach that leaves the least walk
+// to the nearest free herb tile (then the fewest steps). Null if it is not fleeing, or if every
+// herb tile is taken or out of reach: then it fights where it stands as any piece would.
+function fleeStep(s, u, all) {
+  if (!fleeing(s, u)) return null;
+  const route = movementField(s, u, [u]).costs;
+  let herb = null;
+  for (const c of fieldCells(s.mapIndex)) {
+    const occupant = at(s, c.x, c.y);
+    if (!tileInfo(c.x, c.y, s.mapIndex)?.heal || (occupant && occupant !== u)) continue;
+    const n = route.get(key(c.x, c.y)) ?? (c.x === u.x && c.y === u.y ? 0 : Infinity);
+    if (n < Infinity && (!herb || n < herb.n)) herb = { ...c, n };
+  }
+  if (!herb) return null;
+  const back = movementField(s, u, [herb], Infinity, true).costs;
+  const left = (c) => (c.x === herb.x && c.y === herb.y ? 0 : back.get(key(c.x, c.y)) ?? Infinity);
+  return all.reduce((a, c) => (left(c) < left(a) || (left(c) === left(a) && c.n < a.n) ? c : a));
 }
 // The signature an enemy strikes with this turn, if it is due and is a blow at all (a mend or a
 // mirror is not: on its turn such a villain makes its plain strike).
@@ -2614,4 +2702,4 @@ function nextRound(s) {
   return true;
 }
 
-export { lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

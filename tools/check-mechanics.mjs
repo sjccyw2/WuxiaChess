@@ -2821,6 +2821,168 @@ section('contact, banner, riders and wards');
   });
 }
 
+// ── 續命 mend (§7.9) ────────────────────────────────────────────────────
+section('mend');
+{
+  // Board 0's master as the physician, due in round 3; the lieutenant hurt beside him.
+  const physician = (setup, checks, stage = 1) => {
+    const prior = G.DETAILS.chief.style;
+    G.DETAILS.chief.style = 'mend';
+    try {
+      withTraits('chief', { sig: { heal: 'stage' } }, () => {
+        const s = board();
+        s.run.stage = stage;
+        s.round = 3;
+        for (const id of ['medic', 'guard']) unit(s, id).hp = 0;
+        const chief = put(s, 'chief', 5, 3);
+        setup(s, chief);
+        G.startEnemy(s);
+        const effects = G.enemyAct(s, chief);
+        checks(s, chief, effects);
+      });
+    } finally {
+      G.DETAILS.chief.style = prior;
+    }
+  };
+  physician(
+    (s) => {
+      put(s, 'blade', 7, 3).hp = 20;
+      put(s, 'hero', 4, 3);
+    },
+    (s, chief, effects) => {
+      const blade = unit(s, 'blade');
+      check('a hurt companion within reach is restored by 20 + 5 × stage', blade.hp === 45 && same(effects[0], ['blade', '+25']), blade.hp);
+      check('it does not strike', unit(s, 'hero').hp === unit(s, 'hero').maxHp);
+      check('the signature is spent', chief.signatureRound === 3 && !G.signatureDue(s, chief) && effects.signature);
+      check('it says so', s.logs.some((l) => l.text.includes('接骨續筋') && l.who === '余滄海'));
+      check('its page note gives the number, with no strength line', G.signatureLines(s, chief)[0] === '蓄勢時替三格內氣血不足七成的同夥回復 25 點氣血，此回合不出手；無人受傷時改以普攻出手，蓄勢保留。');
+    }
+  );
+  physician(
+    (s) => {
+      const blade = put(s, 'blade', 7, 3);
+      blade.hp = 20;
+      blade.conditions = { wound: { power: 5, through: s.round + 1, source: 'hero' } };
+      put(s, 'hero', 4, 3);
+    },
+    (s) => check('內傷 halves the mend', unit(s, 'blade').hp === 32, unit(s, 'blade').hp)
+  );
+  physician(
+    (s, chief) => {
+      chief.hp = 30;
+      put(s, 'hero', 4, 3);
+    },
+    (s, chief) => check('it mends itself', chief.hp === 55 && unit(s, 'hero').hp === unit(s, 'hero').maxHp)
+  );
+  physician(
+    (s) => {
+      put(s, 'blade', 7, 3).hp = 50; // above seven tenths
+      put(s, 'hero', 4, 3);
+    },
+    (s, chief, effects) => {
+      check('no one hurt enough: it strikes plainly', unit(s, 'hero').hp < unit(s, 'hero').maxHp && !effects.signature);
+      check('…and keeps the charge', G.signatureDue(s, chief));
+    }
+  );
+  physician(
+    (s) => {
+      put(s, 'blade', 1, 9).hp = 10; // far off: no tile within three of him this turn
+      put(s, 'hero', 4, 3);
+    },
+    (s, chief) => check('a companion out of its reach is not mended', unit(s, 'blade').hp === 10 && G.signatureDue(s, chief))
+  );
+  physician(
+    (s) => {
+      put(s, 'blade', 5, 7).hp = 20;
+      put(s, 'hero', 8, 3);
+    },
+    (s, chief) => {
+      const h = unit(s, 'hero');
+      check('it mends from as far from the heroes as it can', G.distance(chief, unit(s, 'blade')) <= 3 && G.distance(chief, h) >= 4, [chief.x, chief.y]);
+    }
+  );
+}
+
+// ── 遁走 flee (§7.4) ────────────────────────────────────────────────────
+section('flee');
+{
+  // Board 0's herbs: (3,2), (1,6), (8,8).
+  const herbs = fieldCellsWithHerbs(0);
+  function fieldCellsWithHerbs(map) {
+    return mapLayout(map).cells.filter((c) => G.terrainInfo(c.x, c.y, map)?.heal).map((c) => c.x + ',' + c.y);
+  }
+  check('board 0 has the herbs these checks use', ['3,2', '1,6', '8,8'].every((k) => herbs.includes(k)), herbs.join(' '));
+  const flight = { phase: { name: '遁走', flee: { turns: 3, herbs: 0.08, until: 0.75 }, log: '試遁走。', note: '試遁走說明。' } };
+  const fled = (setup, checks) =>
+    withTraits('chief', flight, () => {
+      const s = board();
+      for (const id of ['medic', 'guard']) unit(s, id).hp = 0;
+      const chief = put(s, 'chief', 5, 3);
+      setup?.(s, chief);
+      chief.hp = Math.floor(chief.maxHp / 2);
+      G.check(s);
+      checks(s, chief);
+    });
+  fled(null, (s, chief) => {
+    check('the phase starts the flight: its turns from this round', chief.fleeThrough === s.round + 2 && G.fleeing(s, chief));
+    check('the page says so', G.enemyTraitLines(s, chief).includes('【遁走中】至第 3 回合，或氣血回到 ' + Math.round(chief.maxHp * 0.75) + ' 為止。'));
+    put(s, 'hero', 8, 7);
+    const zone = dangerTiles(s);
+    const stand = G.standCells(s, chief);
+    check('the danger zone draws only where its flight ends', stand.length === 1 && zone.has(G.key(stand[0].x, stand[0].y)) && !zone.has(G.key(8, 3)));
+    const turn = () => {
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      for (const e of G.enemies(s)) e.acted = true;
+    };
+    turn();
+    check('it heads for the nearest herbs', G.distance(chief, { x: 3, y: 2 }) < G.distance({ x: 5, y: 3 }, { x: 3, y: 2 }), [chief.x, chief.y]);
+    check('and says so', s.logs.some((l) => l.text === '退向藥草地。'));
+    G.nextRound(s);
+    turn();
+    check('a round later it is on them', chief.x === 3 && chief.y === 2, [chief.x, chief.y]);
+    const life = chief.hp;
+    G.nextRound(s);
+    check('on herbs it recovers 8% of its greatest 氣血, not the tile’s flat 12', chief.hp - life === Math.round(chief.maxHp * 0.08), chief.hp - life);
+    const saved = R.restoreRun(copy(s));
+    check('a save keeps the flight', unit(saved, 'chief').fleeThrough === chief.fleeThrough);
+    chief.hp = Math.ceil(chief.maxHp * 0.75);
+    check('it ends early once back at three quarters', !G.fleeing(s, chief));
+  });
+  fled(
+    (s) => put(s, 'hero', 3, 2),
+    (s, chief) => {
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      check('herbs a hero holds are passed over for the next nearest', G.distance(chief, { x: 3, y: 2 }) > 0 && G.standCells(s, chief).length === 1);
+    }
+  );
+  fled(
+    (s) => {
+      put(s, 'hero', 3, 2);
+      put(s, 'blade', 8, 8); // the archer is parked on (1,6)
+    },
+    (s, chief) => {
+      check('every herb tile taken: it fights where it can, as any piece', G.standCells(s, chief).length > 1);
+      const hero = unit(s, 'hero');
+      put(s, 'hero', 4, 3);
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      check('…striking whoever is in reach', hero.hp < hero.maxHp);
+    }
+  );
+  fled(null, (s, chief) => {
+    put(s, 'chief', 3, 2);
+    chief.conditions = { wound: { power: 5, through: s.round + 1, source: 'hero' } };
+    G.startEnemy(s);
+    chief.acted = true;
+    for (const e of G.enemies(s)) e.acted = true;
+    const life = chief.hp;
+    G.nextRound(s);
+    check('內傷 halves the herbs', chief.hp - life === Math.floor(Math.round(chief.maxHp * 0.08) / 2), chief.hp - life);
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
