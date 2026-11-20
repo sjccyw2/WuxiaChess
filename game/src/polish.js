@@ -31,7 +31,8 @@ const SWITCHES = {
 
   // Panels
   uiChrome: true, // HUD and dialog finish, transitions, button states
-  forecastBars: true // health bars in the strike forecast
+  forecastBars: true, // health bars in the strike forecast
+  loadingVeil: true // title screen fades in once the scene and fonts are ready
 };
 
 const query = new URLSearchParams(globalThis.location?.search || '');
