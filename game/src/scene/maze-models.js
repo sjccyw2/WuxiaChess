@@ -1,4 +1,5 @@
 import { circle, midway } from './scenery-kit.js';
+import { POLISH } from '../polish.js';
 const timber = 0x644637,
   heart = 0x916246,
   lightWood = 0xb18a5c,
@@ -31,21 +32,25 @@ function rail(m, x, z, width, y, height, col = timber) {
 function lantern(m, x, y, z, size = 1, col = 0xd86743) {
   m.frame(x, y, z, 0, size, () => {
     m.tube([0, 0.34, 0], [0, 0.22, 0], 0.014, 0.014, timber, 5);
-    m.lathe(
-      0,
-      0,
-      0,
-      [
-        [-0.22, 0.101],
-        [-0.18, 0.143],
-        [-0.1, 0.188],
-        [0.09, 0.19],
-        [0.17, 0.151],
-        [0.21, 0.103]
-      ],
-      col,
-      12
-    );
+    const paper = () =>
+      m.lathe(
+        0,
+        0,
+        0,
+        [
+          [-0.22, 0.101],
+          [-0.18, 0.143],
+          [-0.1, 0.188],
+          [0.09, 0.19],
+          [0.17, 0.151],
+          [0.21, 0.103]
+        ],
+        col,
+        12
+      );
+    // Lit stages treat the paper shade as a light source, so it glows.
+    if (POLISH.lighting) m.glow(paper);
+    else paper();
     for (let j = 0; j < 8; j++) {
       const a = (j * circle) / 8;
       m.line(

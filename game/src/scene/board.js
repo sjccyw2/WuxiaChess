@@ -4,6 +4,8 @@ import { FerryCamera } from './camera.js';
 import { makeScenery, decorateWorld, Cutaway } from './environment.js';
 import { SoftwareScene } from './software.js';
 import { ActorLayer } from '../actors/actors.js';
+import { POLISH } from '../polish.js';
+import { installGrade } from './stage-light.js';
 
 // A legal destination always owns its entire projected tile, including pixels painted by a sprite.
 function resolveBoardPick(s, mode, ground, body, reach) {
@@ -91,6 +93,8 @@ class BattleBoard {
       renderer.outputColorSpace = T.SRGBColorSpace;
       renderer.toneMapping = T.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.02;
+      // The lit stage folds its colour grade into tone mapping.
+      if (POLISH.lighting) installGrade(T, renderer);
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = T.PCFSoftShadowMap;
       renderer.shadowMap.autoUpdate = false;

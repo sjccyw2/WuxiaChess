@@ -22,6 +22,8 @@ import {
 import { mazeScenery } from './maze-scenery.js';
 import { setting, stagePlane, stageSky } from './maze-atmosphere.js';
 import { buildFieldProps } from './field-props.js';
+import { POLISH } from '../polish.js';
+import { lightStage, anchorMist, kindleGlow } from './stage-light.js';
 
 const SUN = [-8.4, 13, 5.1];
 const sunDirection = () => [...SUN];
@@ -143,6 +145,12 @@ function decorateWorld(T, scene, scenery, gpu) {
   scene.add(scenery, index ? stageSky(T, profile) : buildSky(T));
   const water = index ? stagePlane(T, profile, gpu) : buildRiver(T, gpu);
   scene.add(water);
+  if (POLISH.lighting) {
+    lightStage(T, scene, index, SUN);
+    anchorMist(scene, water);
+    kindleGlow(T, scene, scenery, index);
+    return water;
+  }
   const night = index === 7 || index === 9;
   scene.add(
     new T.HemisphereLight(
