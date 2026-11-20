@@ -10,6 +10,7 @@ import {
   banners,
   cargo
 } from './maze-models.js';
+import { walkDressing } from './landforms/walk-3.js';
 const wood = 0x70513c,
   oak = 0x9c7953,
   rope = 0xa99b75,
@@ -584,6 +585,7 @@ function alpineWalk(m) {
       for (const z of [-0.59, 0.59]) m.box(x, 0.78, z, 0.092, 1.56, 0.092, wood);
     roof(m, 1.71, 1.68, 1.6, 0.7, [0x6c7e80, 0xb5c6c9, 0xe5e9dc], true);
   });
+  walkDressing(m);
 }
 function landmarks(index, add) {
   const makeTree = (name, x, z, k, type, yaw = 0) => add(name, x, z, yaw, (m) => tree(m, type, k));
@@ -674,27 +676,8 @@ function landmarks(index, add) {
     add('峭壁木棧', -7.16, 1.37, 1.42, (m) => {
       m.frame(0, -0.96, 0, 0, 0.82, () => alpineWalk(m));
     });
-    makeTree('雪脊古松', 3.51, -7.14, 1.3, 'snow', 1.3);
-    makeTree('霜崖雙松', -7.02, 2.9, 1.1, 'snow', 2.17);
-    makeTree('棧外小松', 6.49, -3.72, 0.71, 'snow', 0.62);
-    add('冰瀑與岩壁', 6.95, -3.07, 0.31, (m) => {
-      for (let i = 0; i < 7; i++) {
-        const x = m.rng.range(-1.57, 1.58),
-          z = m.rng.range(-0.65, 0.61),
-          h = m.rng.range(0.69, 2.28);
-        m.rock(x, -1.65, z, 0.81, h + 1.4, 0.7, 0x657784, 0xd0dad6, 8);
-        m.frame(
-          x,
-          h - 0.1,
-          z + 0.42,
-          0,
-          1,
-          () => m.crystal(0, 0, 0, 0.19, m.rng.range(0.65, 1.46), 0x7ea6bb, 0xd1ebed),
-          0,
-          Math.PI
-        );
-      }
-    });
+    // The three pines grow from the rock itself: see landforms/pines-3.js.
+    // The frozen fall on the east spur: see landforms/crags-3.js.
   } else if (index === 4) {
     add('空山雙層編鐘', 3.31, -6.89, -0.05, belfry, { scale: 1.18 });
     add('七弦琴臺', -6.91, 2.57, 1.11, qin, { scale: 1.1 });
