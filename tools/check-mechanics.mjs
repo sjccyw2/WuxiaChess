@@ -2143,6 +2143,190 @@ section('daze');
   }
 }
 
+// ── Where the two stages meet (§8) ───────────────────────────────────────
+section('interactions');
+{
+  const cond = (s, u, kind, power = 1, turns = 1) => BM.applyCondition(s, u, { kind, power, turns }, u);
+  const formation = (s, centre, owner = 'medic') =>
+    (s.zones = [{ owner, tiles: G.zoneTiles(s, centre), through: s.round + 1 }]);
+
+  // 代受 with 吸勁 and 失神: the blow, and what rides on it, lands on the coverer.
+  withTraits('scout-0', { cover: 'master' }, () => {
+    Object.assign(G.DETAILS['scout-0'], { ...G.DETAILS.scout, name: '星宿弟子', traits: { cover: 'master' } });
+    const s = board();
+    const hero = put(s, 'hero', 4, 7),
+      chief = put(s, 'chief', 5, 7),
+      scout = put(s, 'scout', 6, 7);
+    scout.hp = scout.maxHp = 300;
+    teach(hero, defineArt({ forms: ['siphon'], daze: true, mp: 4, factor: 0.3 }));
+    hero.mp = 20;
+    const push = chief.signaturePush || 0;
+    const f = G.forecast(hero, chief, true, s);
+    check('a covered blow is planned on the coverer, daze and all', f.coveredBy === 'scout' && f.effects.some((e) => e.kind === 'daze') && f.notes.includes('失神 · 星宿弟子失去下一次行動'), f.notes);
+    G.resolve(s, hero, chief, true);
+    check('the coverer is dazed, not the master', !!scout.conditions?.daze && !chief.conditions?.daze);
+    check('吸勁 draws 內力 from the coverer’s blow', hero.mp === 20 - f.mpCost + 8, hero.mp);
+    check('and does not put back the master’s signature', (chief.signaturePush || 0) === push && chief.lastSiphonRound === undefined);
+    // A dazed disciple still covers, though it will not act; one in reach of a taunter is not bound.
+    G.startEnemy(s);
+    check('dazed, it still covers', G.coverer(s, chief) === scout);
+    cond(s, put(s, 'guard', 7, 7), 'taunt', 2);
+    check('dazed, no taunt binds it', !G.taunters(s, scout).length);
+    const life = unit(s, 'guard').hp;
+    G.enemyAct(s, scout);
+    check('dazed, it does nothing, and the taunter draws no blow', unit(s, 'guard').hp === life && !scout.conditions?.daze);
+  });
+
+  // 挪移 and 閃身 with 吸勁, 內傷 and 反噬: a blow that does not land carries none of its riders,
+  // but the striker still pays what striking costs him.
+  withTraits('chief', { redirect: { while: 'charged', keep: 0, back: 0.5 } }, () => {
+    const s = board();
+    const hero = put(s, 'hero', 4, 7),
+      chief = put(s, 'chief', 5, 7);
+    s.round = 3;
+    teach(hero, defineArt({ forms: ['siphon'], daze: true, backlash: true, mp: 4, factor: 0.3 }));
+    hero.mp = 20;
+    cond(s, hero, 'wound', 5, 2);
+    const f = G.forecast(hero, chief, true, s);
+    check('mirrored, there is no 吸勁 and no 失神', !f.siphon && !f.effects.length && !f.notes.some((n) => n.startsWith('失神') || n.startsWith('吸勁')), f.notes);
+    check('the self bar counts the rebound and then 內傷', f.rebound > 0 && f.selfLoss === 5);
+    const hp = hero.hp;
+    G.resolve(s, hero, chief, true);
+    check('the striker takes the rebound and his 內傷', hp - hero.hp === f.rebound + 5, hp - hero.hp);
+    check('no 內力 came back, the signature was spent by the mirror, not put back', hero.mp === 20 - f.mpCost && chief.signatureRound === 3 && !chief.signaturePush && !chief.conditions?.daze);
+    check('反噬 lays its layer all the same', hero.conditions?.backlash?.power === 1);
+  });
+  {
+    const s = board();
+    const hero = put(s, 'hero', 4, 7),
+      chief = put(s, 'chief', 5, 7);
+    cond(s, chief, 'evade');
+    teach(hero, defineArt({ forms: ['siphon'], daze: true, mp: 4, factor: 0.3 }));
+    hero.mp = 20;
+    cond(s, hero, 'wound', 5, 2);
+    const f = G.forecast(hero, chief, true, s);
+    check('evaded, no 吸勁 and no 失神 are planned', !f.siphon && !f.effects.length && f.selfLoss === 5);
+    const hp = hero.hp;
+    G.resolve(s, hero, chief, true);
+    check('evaded: no 內力, no delay, no daze; the striker still bleeds', hero.mp === 20 - f.mpCost && !chief.signaturePush && !chief.conditions?.daze && !chief.conditions?.evade && hp - hero.hp === 5);
+  }
+  // A hero's ward with an enemy who is wounded: the turned share and its own 內傷 both land.
+  {
+    const s = board(['medic', 'zhang', 'hero']);
+    const foe = put(s, 'blade', 5, 7),
+      bearer = put(s, 'medic', 4, 7);
+    BM.applyCondition(s, bearer, { kind: 'redirect', power: 24, turns: 1 }, unit(s, 'zhang'));
+    cond(s, foe, 'wound', 5, 2);
+    G.startEnemy(s);
+    const raw = G.damage(foe, bearer, false, s.mapIndex, s);
+    const counter = Math.max(2, Math.round(G.damage(bearer, foe, false, s.mapIndex, s) * 0.55));
+    const life = foe.hp;
+    G.enemyAct(s, foe);
+    check('a wounded striker of a ward takes the turned half, the counter and its 內傷', life - foe.hp === Math.round(raw * 0.5) + counter + 5, life - foe.hp);
+  }
+
+  // 卸勁 and 內傷: the cut is on enemy blows, never on what the wound costs.
+  {
+    const s = board(['guard', 'hero', 'medic']);
+    const guard = put(s, 'guard', 4, 7);
+    const foe = put(s, 'blade', 5, 7);
+    cond(s, guard, 'stance', 30);
+    cond(s, guard, 'wound', 5, 2);
+    const f = G.forecast(guard, foe, false, s);
+    check('a stanced, wounded striker’s 內傷 is whole in the preview', f.selfLoss === 5);
+    const hp = guard.hp;
+    G.resolve(s, guard, foe, false);
+    check('and in the strike', hp - guard.hp === f.counter + 5, hp - guard.hp);
+    const e = board(['guard', 'hero', 'medic']);
+    const tank = put(e, 'guard', 4, 7),
+      blade = put(e, 'blade', 5, 7);
+    cond(e, tank, 'stance', 30);
+    cond(e, blade, 'wound', 5, 2);
+    G.startEnemy(e);
+    const raw = G.damage(blade, tank, false, e.mapIndex, e);
+    const [a, b] = [tank.hp, blade.hp];
+    G.enemyAct(e, blade);
+    const counter = Math.max(2, Math.round(G.damage(tank, blade, false, e.mapIndex, e)));
+    check('a wounded enemy’s blow on a stanced hero is cut; its 內傷 is not', a - tank.hp === Math.round(raw * 0.7) && b - blade.hp === counter + 5, [a - tank.hp, b - blade.hp]);
+  }
+
+  // 挑釁 and 布陣: bound only if it can strike the taunter this turn, formations included.
+  {
+    const scene = (zoned, start = [6, 7]) => {
+      const s = board(['guard', 'hero', 'medic']);
+      const scout = put(s, 'scout', ...start);
+      const guard = put(s, 'guard', 2, 7);
+      cond(s, guard, 'taunt', 4);
+      if (zoned) formation(s, { x: 4, y: 7 });
+      return { s, scout, guard };
+    };
+    const open = scene(false);
+    check('with the way clear it is bound', G.taunters(open.s, open.scout).length === 1);
+    const shut = scene(true);
+    check('a formation it must stop in keeps it from him: not bound', !G.taunters(shut.s, shut.scout).length);
+    check('so its page says nothing of it', !P.enemyPage(shut.s, 'scout').includes('受挑釁'));
+    // The taunter himself stands in a formation: tiles beside him are formation tiles, which may
+    // be stepped onto.
+    const s = board(['guard', 'hero', 'medic']);
+    const foe = put(s, 'blade', 5, 7);
+    const guard = put(s, 'guard', 3, 7);
+    Object.assign(put(s, 'hero', 5, 6), { hp: 20 });
+    cond(s, guard, 'taunt', 2);
+    formation(s, { x: 3, y: 7 });
+    check('a taunter in a formation still binds an enemy that can step into it', G.taunters(s, foe).length === 1);
+    G.startEnemy(s);
+    const hp = guard.hp;
+    G.enemyAct(s, foe);
+    check('which strikes him from the formation’s edge', guard.hp < hp && G.zoneAt(s, foe));
+    // Starting on a formation, it has two steps less to reach him with.
+    const slow = scene(false, [5, 7]);
+    formation(slow.s, { x: 5, y: 7 });
+    check('starting in a formation, a taunter three tiles beyond its step is out of reach', !G.taunters(slow.s, slow.scout).length, G.stat(slow.scout, 'step', slow.s));
+  }
+
+  // 回身 through 布陣: heroes walk through freely; a villain stops in one.
+  {
+    const s = board(['hero', 'xiao', 'medic']);
+    const x = put(s, 'xiao', 3, 7);
+    put(s, 'blade', 6, 7);
+    teach(x, defineArt({ forms: ['glide'], mp: 2, safe: true }));
+    G.move(s, x, 5, 7);
+    G.resolve(s, x, unit(s, 'blade'), true);
+    formation(s, { x: 4, y: 7 });
+    check('a hero’s glide walks through a formation', G.glideField(s, x).costs.has(G.key(3, 7)) && G.glideMove(s, x, 3, 7));
+  }
+  withTraits('chief', { glide: 2 }, () => {
+    const run = (zoneAt, start = [5, 7]) => {
+      const v = board();
+      const boss = put(v, 'chief', ...start);
+      put(v, 'hero', 4, 7);
+      if (zoneAt) formation(v, zoneAt);
+      G.startEnemy(v);
+      G.enemyAct(v, boss);
+      return boss;
+    };
+    const free = run(null);
+    check('in the open the villain walks off two steps', free.x === 7 && free.y === 7);
+    const stopped = run({ x: 7, y: 7 });
+    check('its walk off stops on the first formation tile', stopped.x === 6 && stopped.y === 7, [stopped.x, stopped.y]);
+    const caught = run({ x: 5, y: 7 }, [6, 7]);
+    check('having walked into a formation to strike, it does not walk off', caught.x === 5 && caught.y === 7, [caught.x, caught.y]);
+    const walkedIn = withTraits('scout-0', { glide: 2 }, () => {
+      Object.assign(G.DETAILS['scout-0'], { ...G.DETAILS.scout, traits: { glide: 2 } });
+      const v = board();
+      const scout = put(v, 'scout', 7, 7);
+      put(v, 'hero', 4, 7);
+      formation(v, { x: 5, y: 6 });
+      G.startEnemy(v);
+      G.enemyAct(v, scout);
+      return scout;
+    });
+    check('a step left over after walking into a formation is not walked', walkedIn.x === 5 && walkedIn.y === 7, [walkedIn.x, walkedIn.y]);
+    const begun = run({ x: 5, y: 7 }, [5, 7]);
+    check('begun in one, its step as the action began (two less, so one) bounds the walk off', begun.x === 6 && begun.y === 7, [begun.x, begun.y]);
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
