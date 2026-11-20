@@ -1,12 +1,13 @@
 // Ink strokes for the 68 active arts. The action's stable ID owns its paint, even when
 // the same manual is used by different heroes. Coordinates in the recipes are tile units.
 const RECIPES = {
-  'signature:hero': ['獨孤九劍','steel','fan','nineFan','snap','九柄劍影張扇，劍尖同指一處。'],
+  'signature:hero': ['石壁劍招','slate','thrust','swordBind','snap','石壁上刻下的劍招一線穿出，劍鋒從護手旁掠過。'],
+  ninefoldFormula: ['獨孤九劍・總訣式','steel','fan','nineFan','snap','九柄劍影張扇，劍尖同指一處。'],
   breakSword: ['破劍式','steel','thrust','swordBind','snap','劍鋒相交，一線從對方的護手旁穿出。'],
   breakArrow: ['破箭式','pearl','dart','splitFletch','quick','一劍截斷帶羽的箭桿，兩節向外彈開。'],
-  breakPalm: ['破掌式','bronze','thrust','brokenPalm','snap','薄刃從掌影的指縫穿過。'],
+  starSuction: ['吸星大法','obsidian','return','seaFunnel','return','暗色漩渦逐層內收，一束內息流回掌心。'],
   breakQi: ['破氣式','violet','beam','cutVein','pulse','紫白劍線刺破三層斷開的氣環。'],
-  ninefoldIntent: ['獨孤九劍・總訣貫通','gold','fan','wheelNine','echo','九劍循圓換位，最後一劍斜貫圓心。'],
+  ninefoldIntent: ['獨孤九劍','gold','fan','wheelNine','echo','九劍循圓換位，最後一劍斜貫圓心。'],
 
   'signature:medic': ['清心普善咒','jade','strings','quietSong','glide','古琴橫陳，琴面的一道弦波渡到傷處。'],
   returningSong: ['清心普善・回春','peach','blossom','springTune','glide','一枝春花沿著琴音次第展開。'],
@@ -78,7 +79,10 @@ const RECIPES = {
   iceSoulNeedle: ['冰魄銀針','frost','frost','iceCrystal','quick','單枚冰針直入，六角晶枝向針尖四周裂開。'],
   diamondWard: ['金剛護體圖','gold','lattice','diamondWard','gather','六面金剛晶甲閉合，長菱沿著護甲中央豎起。'],
   sevenInjuries: ['七傷拳','ember','palm','sevenCracks','heavy','朱拳落下，七道不等長的傷勁裂紋放射開來。'],
-  waterSkim: ['水上漂','sea','ripple','waterSkim','glide','腳尖只點過三圈低低的水紋，最後一滴向後飛起。']
+  waterSkim: ['水上漂','sea','ripple','waterSkim','glide','腳尖只點過三圈低低的水紋，最後一滴向後飛起。'],
+
+  // No hero art uses the strokes below any more; villain signatures still borrow them (VILLAIN_FORMS).
+  breakPalm: ['破掌式','bronze','thrust','brokenPalm','snap','薄刃從掌影的指縫穿過。']
 };
 
 const STROKE_NAMES = Object.freeze(Object.fromEntries(Object.entries(RECIPES).map(([id, row])=>[id,row[0]])));

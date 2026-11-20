@@ -4,11 +4,12 @@ const ART_FORMS = {
   // 令狐冲
   'signature:hero': ['exploit'],
   mountainOpening: ['line'],
-  breakSword: ['flank'],
-  breakArrow: ['pin'],
-  breakPalm: ['mark'],
+  ninefoldFormula: ['exploit'],
+  breakSword: [],
+  breakArrow: [],
+  starSuction: ['siphon'],
   breakQi: ['seal'],
-  ninefoldIntent: ['line', 'still'],
+  ninefoldIntent: ['exploit'],
 
   // 任盈盈
   'signature:medic': ['cleanse'],

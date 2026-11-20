@@ -203,11 +203,11 @@ const DETAILS = {
     epithet: '華山浪子',
     bio: '華山派大弟子，生性灑脫而重情義。思過崖上得風清揚指點，以獨孤九劍擇人劍勢中的破綻。',
     basic: '華山劍法',
-    skill: '獨孤九劍',
+    skill: '石壁劍招',
     skillIcon: 'sword',
-    skillDesc: '看破劍勢，搶步直取破綻，可攻擊兩格內的一名敵人。',
+    skillDesc: '依思過崖石壁所刻的五嶽劍招出劍，可攻擊兩格內的一名敵人。',
     skillRange: 2,
-    cost: 14
+    cost: 9
   },
   medic: {
     name: '任盈盈',
@@ -501,7 +501,7 @@ const HERO_STATS = {
   yang: [137, 57, 26, 12, 4, 1, 'darkIron'],
   zhang: [125, 78, 21, 14, 3, 1, 'mingSash'],
   hu: [116, 61, 24, 9, 4, 1, 'foxSaber'],
-  hero: [120, 60, 25, 11, 3, 1, 'pine'],
+  hero: [112, 48, 27, 10, 3, 1, 'pine'],
   medic: [92, 72, 19, 7, 3, 2, 'staff'],
   guard: [142, 48, 24, 16, 3, 1, 'pole'],
   guo: [136, 56, 26, 13, 3, 1, 'wraps'],
@@ -670,7 +670,7 @@ function stat(u, k, s) {
   );
 }
 const SIGNATURE_RULES_BY_HERO = {
-  hero: { factor: 1.82 },
+  hero: { factor: 1.35 },
   medic: { heal: 39 },
   guard: { factor: 1.42, splash: 0.45, safe: true },
   guo: { factor: 1.74, push: true },
