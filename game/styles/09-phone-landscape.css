@@ -1317,6 +1317,13 @@
   overflow: hidden;
   background: #ddcfac;
 }
+/* The shelf shows an item a little larger than a slot does, so its painting (and its loop, see
+   ui/item-art.js) can be made out. */
+.mj-product .mj-item-symbol:has(.fo-mini),
+.mj-product .fo-mini {
+  width: 44px;
+  height: 44px;
+}
 .fo-dragging [data-drop] {
   border-color: #88ae88;
 }

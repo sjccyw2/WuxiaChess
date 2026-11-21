@@ -5,6 +5,7 @@ import { mapLayout } from '../data/terrain.js';
 import { art } from './artwork.js';
 import { face, btn, esc } from './panels.js';
 import { icon } from './icons.js';
+import { itemPicture } from './item-art.js';
 
 const slotNames = { weapon: '兵器', gear: '護具' };
 const numerals = ['一', '二', '三', '四', '五'];
@@ -12,9 +13,7 @@ const who = (u) => G.unitDetails(u).name;
 const small = (action, label, attr = '', disabled = false) =>
   btn(action, label, 'mj-action fo-action', attr + (disabled ? ' disabled' : ''));
 const grip = '<i class="fo-grip" aria-hidden="true">⠿</i>';
-const image = (file, cls = '') =>
-  '<img alt="" draggable="false" class="' + cls + '" src="' + esc(art(file)) + '">';
-const itemImage = (id) => image('item-' + id + '.webp', 'fo-item-img');
+const itemImage = (id, live = false) => itemPicture(id, 'fo-item-img', live);
 const dropAttrs = (kind, destination) => 'data-drop="' + kind + '" data-dest="' + destination + '"';
 const dragAttrs = (kind, id, owner) =>
   'data-drag="' + kind + '" data-id="' + id + '" data-owner="' + owner + '" draggable="false"';
@@ -319,7 +318,7 @@ function armory(s, u, ui) {
     }
     return (
       '<section class="fo-inspector">' +
-      itemImage(v.id) +
+      itemImage(v.id, true) +
       '<div><h4>' +
       v.item.name +
       '</h4><b>' +

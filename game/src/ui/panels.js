@@ -50,6 +50,7 @@ import {
   stat
 } from '../rules/game.js';
 import { icon } from './icons.js';
+import { itemPicture } from './item-art.js';
 import { POLISH } from '../polish.js';
 import { extraHotkeys } from './field-extras.js';
 import { ON as actionFlow, anyIdle, flowHotkeys } from './action-flow.js';
@@ -373,7 +374,7 @@ function equippedCard(u, id, slot) {
   return (
     '<div class="equipped-card"><div class="item-icon">' +
     (item
-      ? '<img class="fo-mini" src="' + art('item-' + id + '.webp') + '" alt="">'
+      ? itemPicture(id, 'fo-mini')
       : icon(slot === '兵器' ? 'sword' : 'shield', 22)) +
     '</div><div><small>' +
     slot +
