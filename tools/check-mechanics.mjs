@@ -17,6 +17,7 @@ const FM = await load('rules/ferry-market.js');
 const { TECHNIQUES, MANUAL_PRICES } = await load('data/martial-arts.js');
 const { ENCOUNTERS, RANKS, STATUS_POWER } = await load('data/encounters.js');
 const { mapLayout } = await load('data/terrain.js');
+const { MAZE_TALE } = await load('data/maze-tale.js');
 const { dangerTiles } = await load('actors/danger.js');
 const P = await load('ui/panels.js');
 const { seatsFor } = await load('rules/formation.js');
@@ -3164,7 +3165,7 @@ for (const stage of [3, 4]) {
   check('stage ' + stage + ': the map has herbs', herbs.length >= 2);
   xue.hp = Math.floor(xue.maxHp / 2);
   G.check(s);
-  check('stage ' + stage + ': half health starts the flight', xue.phased && G.fleeing(s, xue) && s.logs.at(-1).text === '血刀老祖刀勢一收，踏雪往藥草地退去。');
+  check('stage ' + stage + ': half health starts the flight', xue.phased && G.fleeing(s, xue) && s.logs.at(-1).text === G.unitDetails(xue).traits.phase.log);
   for (let r = 0; r < 2 && !G.terrainInfo(xue.x, xue.y, 3).heal; r++) {
     soloTurn(s, xue);
     closeRound(s);
@@ -3229,7 +3230,7 @@ for (const stage of [5, 6]) {
   // At half: mad.
   ou.hp = Math.floor(ou.maxHp / 2);
   G.check(s);
-  check('stage ' + stage + ': at half he goes mad', ou.phased && ou.atk === want[0][1] + 6 && ou.def === want[0][2] - 4 && ou.step === 4 && s.logs.at(-1).text === '歐陽鋒逆運經脈，狀若瘋狂。');
+  check('stage ' + stage + ': at half he goes mad', ou.phased && ou.atk === want[0][1] + 6 && ou.def === want[0][2] - 4 && ou.step === 4 && s.logs.at(-1).text === G.unitDetails(ou).traits.phase.log);
   check('stage ' + stage + ': mad, he no longer waits while charged', G.signatureDue(s, ou) && !G.holdOf(s, ou) && G.standCells(s, ou).length > 1);
   check('stage ' + stage + ': …and his signature comes every two rounds', G.enemyTechnique(ou, s).cadence === 2);
   // A snake slave's bite.
@@ -3326,7 +3327,7 @@ section('board 8 倒影天街: the masked duelist');
   closeRound(s);
   yue.hp = Math.floor(yue.maxHp / 2);
   G.check(s);
-  check('at half the mask comes off', yue.phased && yue.step === 6 && yue.def === 20 && G.enemyTechnique(yue, s).cadence === 2 && s.logs.slice(-2).some((l) => l.text === '岳不群撕下君子面目，身形快得看不清。'), JSON.stringify([yue.phased, yue.step, yue.def, s.logs.slice(-2)]));
+  check('at half the mask comes off', yue.phased && yue.step === 6 && yue.def === 20 && G.enemyTechnique(yue, s).cadence === 2 && s.logs.slice(-3).some((l) => l.text === G.unitDetails(yue).traits.phase.log), JSON.stringify([yue.phased, yue.step, yue.def, s.logs.slice(-3)]));
 }
 
 section('board 9 無刻漏臺: the mirror');
@@ -3354,7 +3355,7 @@ section('board 9 無刻漏臺: the mirror');
   mu.hp = Math.floor(mu.maxHp / 2);
   const atk = mu.atk;
   G.check(s);
-  check('at half his phase is the data’s', mu.phased && mu.atk === atk + 5 && mu.range === 3 && mu.brace && s.logs.at(-1).text === '斗轉星移倒轉銅漏，攻擊增加 5、防禦增加 4，射程擴至三格。');
+  check('at half his phase is the data’s', mu.phased && mu.atk === atk + 5 && mu.range === 3 && mu.brace && s.logs.at(-1).text === G.unitDetails(mu).traits.phase.log);
   // A rope breaks.
   bow.hp = 1;
   const reach = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: bow.x + dx, y: bow.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
@@ -4272,7 +4273,7 @@ for (const [map, b] of BATTLES.entries())
   check('蘆花汀: six disciples, all covering their master', piecesOf(realBoard(2, 1)).filter((u) => G.unitDetails(u).traits?.cover === 'master').length === 6);
   // 倒影天街 played forward: both must fall.
   const s8 = realBoard(8, 8);
-  check('倒影天街: the briefing says both must fall', R.briefing(s8).battle === '斬將 · 兩名局主都須倒下。' && R.briefing(s8).win === '在第十二回合結束前擊敗岳不群與鮮于通。');
+  check('倒影天街: the briefing says both must fall', R.briefing(s8).battle === '斬將 · ' + MAZE_TALE.brief.slayTwo && R.briefing(s8).win === '在第十二回合結束前擊敗岳不群與鮮于通。');
   check('倒影天街: the trigger wave line', R.briefing(s8).waves[0].line === '岳不群或鮮于通氣血首次過半，兩回合後，華山刀陣弟子兩名自中街入場。');
   unit(s8, 'xianYu').hp = 0;
   G.check(s8);

@@ -102,11 +102,15 @@ Heroes are drawn at random and the boards come in a different order each run, so
 
 | Layer | File | Tied to |
 | --- | --- | --- |
-| The spine | `game/src/data/maze-tale.js`, `wake-tale.js` | a position in the run: opening his eyes, the first board, the night talk, the end |
-| The boards | `game/src/data/encounter-script.js` | one map: its master's obsession and the shadow to be saved |
-| The heroes | `game/src/data/hero-voices.js` | one hero: arrival, deja vu, night talk, farewell |
+| The spine | `game/src/data/maze-tale.js`, `wake-tale.js` | a position in the run and its 境 (how many runs the youth has won): falling asleep into the valley, the first board, the night talk, what 求敗 says after each board, the end. Everything 求敗 and 韋小寶 say is here |
+| The boards | `game/src/data/encounter-script.js` | one map: its black stones, on whom 求敗 has pressed a 戰意 that makes them fight, and the named stones he sets down beside them |
+| The heroes | `game/src/data/hero-voices.js` | one hero: arrival, deja vu, night talk, the art that made their name coming back, farewell |
 
-To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`.
+To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`, and the world behind it in `wiki/content/世界觀設定.md`.
+
+All story text is written in 金庸's manner: plain classical mixed with vernacular, forms of address that fit each speaker, no modern words. The rules and worked examples are in `wiki/content/單輪劇本.md` §15.
+
+The one who set the boards is 求敗 (`QIUBAI` in `maze-tale.js`), who sits across the table from the first scene. His picture, `game/assets/npc-qiubai.webp`, is a placeholder (a black go stone) until a portrait is painted; the prompt is in `asset-gen/prompts.md`.
 
 Prompts for the pictures the story still needs are in `asset-gen/prompts.md`, with each file's name, size and where its subject must sit. Pictures the game already shows (its group A) are all in place; the rest are new scenes that are text-only today.
 
@@ -159,7 +163,7 @@ node tools/check-story.mjs
 
 Builds the catalog and the text listing from the game sources and fails if a page links to something that does not exist, a picture is missing, or a fact has no source reference. Run it after changing game data.
 
-`check-story.mjs` plays several hundred runs without a browser, with different heroes and board orders, and fails if any scene has a line with no speaker or text, if a hero lacks one of their own lines, if a board's script mentions another board, or if a save made mid-run no longer loads. Run it after changing story text.
+`check-story.mjs` plays several hundred runs without a browser, with different heroes and board orders, through all five 境 and past them, and fails if any scene has a line with no speaker or text, if a hero lacks one of their own lines, if a board's script mentions another board, if a named black stone has no lines or a hero answers one from another series of books, if 求敗 or 韋小寶 misses a line the story promises (after each board, the side bet, 請回吧), or if a save made mid-run no longer loads. Run it after changing story text.
 
 ### Mechanics
 

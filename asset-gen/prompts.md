@@ -10,7 +10,7 @@ The pictures are in three groups:
 | B | New pictures for story moments that are text-only today | The file name is reserved here. The game needs a small change to show each one. |
 | C | Cover art that showed the old ferry | Save over the existing file. |
 
-All three groups are finished: every picture is in the game. Groups B and C were painted on 2026-11-21 with an image model (OpenAI `gpt-image-2.6-flare`) from the prompts below, each with its house style and avoid list. Wherever the eagle appears in a scene, this sentence was added so that it matches B1: *The eagle is enormous, ancient and ugly, taller than a man: sparse rough dark brown feathers with bare patches, a bald wrinkled head with a red fleshy knob on the crown, a heavy chipped hooked beak, short stubby wings on a thick body, a bird too heavy to fly; not a noble bird of prey.* The source pictures are not kept in the repository; regenerate from these prompts.
+Groups B and C are painted; A0 (求敗) is still needed. Groups B and C were painted on 2026-11-21 with an image model (OpenAI `gpt-image-2.6-flare`) from the prompts below, each with its house style and avoid list. Wherever the eagle appears in a scene, this sentence was added so that it matches B1: *The eagle is enormous, ancient and ugly, taller than a man: sparse rough dark brown feathers with bare patches, a bald wrinkled head with a red fleshy knob on the crown, a heavy chipped hooked beak, short stubby wings on a thick body, a bird too heavy to fly; not a noble bird of prey.* The source pictures are not kept in the repository; regenerate from these prompts.
 
 ---
 
@@ -58,7 +58,7 @@ text, letters, Chinese characters, calligraphy, watermark, signature, seal stamp
 ## 2. Rules that apply to every picture
 
 - **No readable writing.** Image models garble Chinese characters. Where the story has an inscription or a letter, ask for worn, illegible marks. The game supplies the words as text.
-- **Never show who set the boards.** The story keeps his identity hidden. He may appear only from behind, with no face, no name, no sword, and nothing that points to a known character.
+- **求敗 is shown.** Since world view v1.0 the one who set the boards sits across the table from the first scene and speaks, so he has a face (A0 below). The older rule that he may be seen only from behind is withdrawn.
 - **The youth belongs to no era.** His clothes must not be recognisably Song, Ming or Qing, and he wears no sect colours or ornaments.
 - **韋小寶 is the opposite.** He is plainly from the Qing dynasty, later than everyone else. His shaved forehead and queue are the visual clue that this place holds people from different centuries.
 - **The eagle is called 大鵰 in the game, not by its famous name.** Draw it as the novels describe it: huge, ugly and old, not a noble bird of prey.
@@ -67,6 +67,20 @@ text, letters, Chinese characters, calligraphy, watermark, signature, seal stamp
 ---
 
 ## Group A: replacements for pictures already in the game
+
+### A0. 求敗: `game/assets/npc-qiubai.webp` (needed)
+
+The file in the game is a placeholder: a black go stone on the stone table. This portrait replaces it.
+
+- **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
+- **Appears in:** the prologue, after every board, and at the end of every run. He is the character the player watches most.
+- **Composition:** same crop as A1: the face in the upper third, the whole head inside the central 60% of the width, nothing important in the bottom quarter. One hand raised near the chest holding a single black go stone between two fingers.
+
+```text
+An old Chinese swordsman seated at a rough stone table in a deep mountain valley, seen from the chest up, facing the viewer. A long white beard to the chest, white hair tied back plainly, a lean weathered face. His expression is stern, stubborn and absorbed, the look of a man who has studied one problem for centuries; not kindly, not cruel. A plain grey hemp robe, worn at the cuffs, no ornaments, no sect colours, clothing of no identifiable dynasty. One hand raised near his chest, holding a single black go stone between the index and middle fingers, about to set it down. He carries no sword. Behind him, out of focus, sheer cliff walls and pale light falling from high above.
+```
+
+Avoid also: `smile, sword in hand, armour, crown, halo, glowing eyes, magic, lightning, monk's robe, Taoist hat`
 
 ### A1. The youth: `game/assets/npc-youth.webp` (done)
 
@@ -158,7 +172,7 @@ Use the **People** house style. Avoid also: `majestic soaring eagle, spread wing
 
 ### B2. Opening his eyes: `game/assets/scene-open-eyes.webp` (done)
 
-In the game: across the top of the prologue's first page. Where the page is shorter than the picture, the top is kept, so the eagle's head stays in view. The first attempt was seen standing rather than lying down; the prompt that worked added *worm's-eye view, looking straight up* and put the eagle's head in the upper right.
+In the game: across the top of the prologue's first page (入夢), on every run. Where the page is shorter than the picture, the top is kept, so the eagle's head stays in view. The first attempt was seen standing rather than lying down; the prompt that worked added *worm's-eye view, looking straight up* and put the eagle's head in the upper right.
 
 - **Final size:** 1000 × 500. **Generate at:** 1536 × 768.
 - **For:** the first page of the prologue.
@@ -172,7 +186,7 @@ Use the **Scenes** house style.
 
 ### B3. The stone table and the board: `game/assets/scene-board.webp` (done)
 
-In the game: across the top of the draw page (三子應帖). On short landscape screens it shrinks to a strip aimed at the three white stones.
+In the game: across the top of the draw page (抓子). On short landscape screens it shrinks to a strip aimed at the three white stones.
 
 - **Final size:** 1000 × 500. **Generate at:** 1536 × 768.
 - **For:** the top of the draw page, where three heroes answer the invitation.
@@ -184,9 +198,9 @@ A weathered stone table in a misty valley with a go board cut into its top. One 
 
 Use the **Scenes** house style. Avoid also: `chess pieces, xiangqi, hands, players`
 
-### B4. The last step: `game/assets/scene-summit.webp` (done)
+### B4. The last step: `scene-summit.webp` (painted; not in the game)
 
-In the game: on the ending after ten boards are won (階盡), under the result banner.
+Painted for the old story, where a won run ended with a climb to the one who set the boards. In the v1.0 story the run ends at the table, so the picture waits in `asset-gen/story-art/`. It shows him from behind with grey hair loose, which no longer matches A0.
 
 - **Final size:** 1000 × 500. **Generate at:** 1536 × 768.
 - **For:** the ending after ten boards are won.
@@ -200,7 +214,7 @@ Use the **Scenes** house style. Avoid also: `face, sword in the old man's hand, 
 
 ### B5. The stones go dark: `game/assets/scene-dark-stones.webp` (done)
 
-In the game: on the ending after a lost run (眼破), under the result banner, where the eagle's portrait used to stand.
+In the game: on the ending after a lost run (眼破), under the result banner, where the eagle's portrait used to stand. The prompt has nobody at the table; in the v1.0 story 求敗 sits there, so a repaint could add him across the table.
 
 - **Final size:** 1000 × 500. **Generate at:** 1536 × 768.
 - **For:** the ending after a lost run.
@@ -213,7 +227,7 @@ Use the **Scenes** house style.
 
 ### B6. Closing his eyes: five fragments (done)
 
-In the game: in the 闔眼 box at the end of each run, above the fragment's words. The picture follows the words (`fragmentArt` in `game/src/data/wake-tale.js`). For fragment-4 the first attempt showed a glass window with hills outside; adding *opaque white paper, not glass, nothing visible through it* fixed it.
+In the game: in the 夢醒 box at the end of each run, above the fragment's words. The picture follows the words, chosen by 境 (`fragmentArt` in `game/src/data/wake-tale.js`). For fragment-4 the first attempt showed a glass window with hills outside; adding *opaque white paper, not glass, nothing visible through it* fixed it.
 
 - **Files:** `game/assets/fragment-1.webp` to `fragment-5.webp`.
 - **Final size:** 720 × 400 each. **Generate at:** 16:9.
@@ -258,9 +272,9 @@ A boy's hand resting on a coarse patched quilt, fingers loosely curled as though
 
 Avoid also, for all five: `faces, readable expressions, swords, martial arts, bright colours`
 
-### B7. The invitation, 英雄帖: `game/assets/letter.webp` (done)
+### B7. The invitation, 英雄帖: `letter.webp` (painted; not in the game)
 
-In the game: inside the 英雄帖 fold of the draw page, beside the invitation's words.
+Painted for the old story. In the v1.0 story there is no invitation: the rule is cut into the edge of the table. The picture waits in `asset-gen/story-art/`.
 
 - **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
 - **For:** the draw page, beside the invitation's text.
@@ -310,6 +324,7 @@ Use the **Scenes** house style. Avoid also: `boat, river, ferry, bright sky`
 
 | File | Folder | Size | Group |
 | --- | --- | --- | --- |
+| `npc-qiubai.webp` (needed; a placeholder is in the game) | `game/assets/` | 480 × 480 | A |
 | `npc-youth.webp` (done) | `game/assets/` | 480 × 480 | A |
 | `npc-wei.webp` (done) | `game/assets/` | 480 × 480 | A |
 | `run-merchant.webp` (done) | `game/assets/` | 1000 × 500 | A |
@@ -318,10 +333,10 @@ Use the **Scenes** house style. Avoid also: `boat, river, ferry, bright sky`
 | `npc-eagle.webp` (done) | `game/assets/` | 480 × 480 | B |
 | `scene-open-eyes.webp` (done) | `game/assets/` | 1000 × 500 | B |
 | `scene-board.webp` (done) | `game/assets/` | 1000 × 500 | B |
-| `scene-summit.webp` (done) | `game/assets/` | 1000 × 500 | B |
+| `scene-summit.webp` (painted, not used in v1.0) | `asset-gen/story-art/` | 1000 × 500 | B |
 | `scene-dark-stones.webp` (done) | `game/assets/` | 1000 × 500 | B |
 | `fragment-1.webp` to `fragment-5.webp` (done) | `game/assets/` | 720 × 400 | B |
-| `letter.webp` (done) | `game/assets/` | 480 × 480 | B |
+| `letter.webp` (painted, not used in v1.0) | `asset-gen/story-art/` | 480 × 480 | B |
 | `jianghu-cover.webp` (done) | `wiki/assets/` | 1550 × 620 | C |
 | `panel-river.webp` (done) | `game/assets/` | 1550 × 620 | C |
 

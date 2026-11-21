@@ -682,9 +682,3 @@
     max-height: 34vh;
   }
 }
-.draw-letter {
-  float: right;
-  width: min(30%, 132px);
-  aspect-ratio: 1;
-  margin: 2px 0 6px 12px;
-}

@@ -7,7 +7,8 @@ planned for each pack and which decisions are waiting on the producer.
 
 | Path | What it holds |
 | --- | --- |
-| `prompts.md` | Prompts for the story's pictures (all painted and in the game): file name, size, where it appears. |
+| `prompts.md` | Prompts for the story's pictures: file name, size, where it appears. |
+| `story-art/` | Story pictures painted for the old story that the v1.0 story has no place for (`prompts.md` B4, B7). |
 | `jianying-roster-art/` | Thirty characters: a portrait and a sprite sheet each. |
 | `jianying-item-art/` | Eight skill effects and thirty-two item pictures, all animated. |
 

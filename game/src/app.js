@@ -467,8 +467,9 @@ function openArts(keyboard = false) {
   );
 }
 // ── The deployment step ─────────────────────────────────────────────────────
+// The stones are still in the youth's hand: 落子無悔 once the battle is begun.
 const DEPLOY_TIP =
-  '起陣 · 點選一位俠客，再點另一位俠客或亮起的空格互換位置；按「開戰」開始第一回合。';
+  '起陣 · 子還在手上，換得：點選一位俠客，再點另一位俠客或亮起的空格互換位置。一按「開戰」，落子無悔。';
 function showDeployTip() {
   deployTip = true;
   mapTip(DEPLOY_TIP, 3600000);
@@ -1196,7 +1197,7 @@ function openTitle() {
           : state.run.status === 'ended'
             ? '查看本局結局'
             : '繼續第' + R.NUMERALS[state.run.stage] + '局'
-    : '睜眼';
+    : '入夢';
   $('title-new').hidden = !hasSave;
   window.scrollTo({ top: 0, behavior: 'instant' });
   paint();
@@ -1377,13 +1378,6 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'wake':
       openPage('wake');
-      break;
-    case 'choose-fate':
-      if (dialogState === 'result' && R.chooseFate(state, id)) {
-        save();
-        drawModal();
-        audio('turn');
-      }
       break;
     case 'field-loadout':
       openPage('skills', state.selected);

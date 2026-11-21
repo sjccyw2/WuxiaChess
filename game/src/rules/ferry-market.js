@@ -2,15 +2,16 @@ import * as G from './game.js';
 import { TECHNIQUES, MANUAL_PRICES } from '../data/martial-arts.js';
 import { random, shuffled } from './lots.js';
 
-// 韋小寶 keeps the shop (通吃坊) and runs its game of three cups. He is a living man who
-// wandered in, not a borrowed moment, so he is the one person who remembers every run.
+// 韋小寶 keeps the shop (通吃坊) and runs its game of three cups. He is a living man who walked
+// in: the wall of the realm stops only those who seek something from martial arts, and he seeks
+// nothing from them. 求敗 cannot see or hear him. He remembers every run.
 const VISITOR = {
   name: '韋小寶',
   alias: '通吃坊掌櫃',
   title: '三盅通吃',
   portrait: 'npc-wei.webp',
   book: '鹿鼎記',
-  bio: '他不會武功，沒有人請他，他是自己摸進來的。在谷裡開一爿通吃坊，賣藥、賣兵器，也開賭。人人都把這裡的事忘了，只有他記得每一回。問他，他就賴。',
+  bio: '他不會武功，也無求於武，劍境的牆攔他不住，來去自如。在谷裡開一爿通吃坊，賣藥、賣兵器，每一局另開盤口。對面那位老者瞧不見他，也聽不見他。問他是怎生來的，他每回說一個不同的大話。',
   arrival:
     '上一輪沒給人帶走的小東西，都落在韋小寶手裡。他排開三隻木盅，說是白送，只看你眼力。',
   reveal: '看仔細了，我可要扣盅啦。老規矩，三樣東西你揀一樣。……甚麼老規矩？我說了老規矩麼？你聽錯了。',
