@@ -1,6 +1,6 @@
 # Art library
 
-Art painted for the game that is not yet in it, and the prompts for art still to be painted.
+The full-size source art painted for the game, and the prompts for art still to be painted.
 Nothing in this folder is loaded by the game: a picture enters the game when it is copied (and
 usually resized) into `game/assets/` and named in the game's data. `ROADMAP.md` says what is
 planned for each pack and which decisions are waiting on the producer.
@@ -29,7 +29,7 @@ Who may be used, by the producer's ruling of 2026-11-21:
 
 | Group | Characters | Status |
 | --- | --- | --- |
-| Villains to join the existing boards now, each with a troop type | 鳳天南 `fengTiannan` + 五虎門棍徒 `fiveTiger` (青竹渡); 張召重 `zhaoZhong` + 清營刀盾兵 `qingShield` (紅楓驛); 完顏洪烈 `wanYan` + 趙王府弓手 `jinBow` (襄陽殘垣); 鮮于通 `xianYu` + 華山刀陣弟子 `huaBlade` (倒影天街); 萬震山 `wanZhen` + 萬門劍徒 `wanDisciple` (無刻漏臺) | Planned, roadmap 0.12. They enter with placeholder text. |
+| Villains to join the existing boards now, each with a troop type | 鳳天南 `fengTiannan` + 五虎門棍徒 `fiveTiger` (青竹渡); 張召重 `zhaoZhong` + 清營刀盾兵 `qingShield` (紅楓驛); 完顏洪烈 `wanYan` + 趙王府弓手 `jinBow` (襄陽殘垣); 鮮于通 `xianYu` + 華山刀陣弟子 `huaBlade` (倒影天街); 萬震山 `wanZhen` + 萬門劍徒 `wanDisciple` (無刻漏臺) | Art is in `game/assets/` (roadmap 0.12). Their places on the boards and placeholder text arrive with the battle variety work (0.11). |
 | Villains kept for new stages, each with a troop type | 東方不敗 `dongFang` + 黑木崖侍衛 `heiMuGuard`; 李秋水 `liQiu` + 西夏宮禁衛 `xiaGuard`; 洪安通 `hongAn` + 神龍教青龍門眾 `shenLong`; 裘千仞 `qiuRen` + 鐵掌幫拳手 `ironPalm`; 公孫止 `gongSun` + 絕情谷網手 `netHand` | Do not use on the existing boards. |
 | New heroes | 蕭峰 `qiaoFeng`, 虛竹 `xuZhu`, 洪七公 `hongQi`, 黃藥師 `yaoShi`, 張三丰 `sanFeng`, 趙敏 `zhaoMin`, 程靈素 `lingSu`, 狄雲 `diYun`, 袁承志 `chengZhi`, 阿青 `aQing` | Do not use. The producer will add them (roadmap 3.3). |
 
@@ -42,11 +42,10 @@ a suggested time for each frame.
 - `effects/`, 1536 × 512 (cells of 384 × 256): 蛤蟆功, 降龍十八掌, 六脈神劍, 獨孤九劍, 彈指神通,
   打狗棒法, 黯然銷魂掌 and 金蛇劍法. The game ids in the manifest predate the skill redesign;
   match by the art's name. 金蛇劍法 belongs to 袁承志, a new hero, and waits for him.
-- `weapons/`, `gear/`, `consumables/`, 1024 × 512 (cells of 256 × 256): one sheet for every item
-  now in the game, plus 青鋒劍 `blueEdge` (which left the game on 2026-11-20 and is to be
-  restored) and six items the game does not have yet: 屠龍刀 `dragonSaber`, 金蛇劍
-  `goldSerpentBlade`, 軟蝟甲 `hedgehogVest`, 烏蠶衣 `silkwormCoat`, 九花玉露丸 `nineFlowerPill`
-  and 玉蜂漿 `beeNectar`. 金蛇劍 and 烏蠶衣 wait for 袁承志 and 狄雲. The producer may later set
-  some powerful weapons aside for quests rather than the shop (roadmap 0.13).
-- The game's present item pictures (`game/assets/item-<id>.webp`, 400 × 400, still) are a
-  different, older set. 古墓長劍 `tombSword` uses the old still picture of 青鋒劍.
+- `weapons/`, `gear/`, `consumables/`, 1024 × 512 (cells of 256 × 256): one sheet for every item.
+  All are in the game except 金蛇劍 `goldSerpentBlade` and 烏蠶衣 `silkwormCoat`, which wait for
+  袁承志 and 狄雲. The producer may later set some powerful weapons aside for quests rather than
+  the shop (roadmap 0.14).
+- In the game: seven effects are `game/assets/fx-<name>.webp` (which art plays which is `ARTS` in
+  `game/src/fx/painted-effects.js`); each item is a still `item-<id>.webp` and a loop
+  `item-<id>-motion.webp`, both cut from these sheets by `tools/item-art.py`.
