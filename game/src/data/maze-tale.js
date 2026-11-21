@@ -70,7 +70,8 @@ const MAZE_TALE = {
   winAgain: '他沒有得到名字。',
   loss: '這一輪的眼破了。盤上的白子一齊暗下去，石臺邊只剩他與那隻大鵰。',
   join: '盤邊多亮了一枚白子。又有人應帖而來。',
-  // Said after a won board whose side objective was not done.
+  // Once said after a won board whose side objective was not done. Unused since every win brings
+  // a hero; kept for the story agent.
   unlit: '這一局贏了。盤邊的白子，沒有多亮一枚。',
   joined: '應帖而來。',
   closing: '他闔上眼。'
@@ -130,15 +131,14 @@ const CHAMBER_TALES = [
   }
 ];
 
-// Said when the side objective was done. One per kind of objective, so it reads true on
-// any board. The three kinds that are done by reaching a marked tile are all the lamp.
+// Said when the secondary objective was done, by its kind (journey.js SIDE_KINDS), so it reads
+// true on any board; a kind without a line of its own takes `done`, the tail the others share.
 const LAMP_TALE = '引路燈亮了。盤外持帖的人，望得見入局的路了。';
 const SIDE_TALES = {
-  speed: '這一局贏得快。盤外持帖觀望的人，看在眼裡。',
-  safe: '點過出戰的人，一個也沒少。盤外持帖觀望的人，看在眼裡。',
-  beacon: LAMP_TALE,
-  cache: LAMP_TALE,
-  herbs: LAMP_TALE
+  lamp: LAMP_TALE,
+  swift: '這一局贏得快。盤外持帖觀望的人，看在眼裡。',
+  intact: '點過出戰的人，一個也沒少。盤外持帖觀望的人，看在眼裡。',
+  done: '盤外持帖觀望的人，看在眼裡。'
 };
 
 export { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, YOUTH, WEI, EAGLE };

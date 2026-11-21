@@ -187,8 +187,9 @@ function stage(i) {
       speech('戰後 · 勝', beats(script.win, i)),
       speech(
         '支線 · 達成 / 未達成',
-        said('達成', G.SIDE_TALES[G.mapGoalType(i)]),
-        said('未達成', G.MAZE_TALE.unlit)
+        ...[...new Set(G.BATTLES[i].sides.map((side) => G.SIDE_TALES[side.kind] || G.SIDE_TALES.done))].map(
+          (tale) => said('達成', tale)
+        )
       ),
       speech('戰後 · 敗', beats(script.loss, i)),
       speech('局的紀事', tale.arrival, tale.victory),

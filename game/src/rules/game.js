@@ -2145,9 +2145,7 @@ function wound(s, u, n, source) {
 }
 // The lamp's tile, when this run's secondary is to light it.
 function objectiveTile(s) {
-  return s.run?.side?.kind === 'lamp' || ['beacon', 'cache', 'herbs'].includes(s.run?.goal)
-    ? s.run.objectivePos || mapLayout(s.mapIndex).objective
-    : null;
+  return s.run?.side?.kind === 'lamp' ? s.run.objectivePos || mapLayout(s.mapIndex).objective : null;
 }
 function unclaimedObjectiveTile(s) {
   return s.run?.status === 'battle' && !s.run.marked ? objectiveTile(s) : null;

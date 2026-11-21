@@ -1,6 +1,6 @@
 import { WAKES, FATES, closingFor } from '../data/wake-tale.js';
 import { random, shuffled } from './lots.js';
-import { makeOffers, makeVisit, validVisit, grantLot } from './ferry-market.js';
+import { makeOffers, makeVisit, validVisit, grantLot, bonusManual } from './ferry-market.js';
 import { seatsFor } from './formation.js';
 import { moveFacts } from './move-facts.js';
 import { ENCOUNTER_SCRIPT } from '../data/encounter-script.js';
@@ -16,31 +16,11 @@ import { NUMERALS } from './game.js';
 import { mapLayout } from '../data/terrain.js';
 import { TECHNIQUES, MANUAL_PRICES, CAPTAINS } from '../data/martial-arts.js';
 import { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, YOUTH, WEI } from '../data/maze-tale.js';
+import { GISTS } from '../data/encounters.js';
+import { BATTLES, SIDE_REWARDS } from '../data/battles.js';
+import { WEAPON_FORMS } from '../data/form-catalog.js';
 import { HERO_VOICES } from '../data/hero-voices.js';
 
-const goals = [
-  'beacon',
-  'speed',
-  'herbs',
-  'safe',
-  'beacon',
-  'cache',
-  'safe',
-  'herbs',
-  'speed',
-  'beacon'
-];
-// Three kinds are done the same way, by ending an action on the marked tile, and the
-// story tells them as one thing: lighting the lamp. The kinds stay apart for saved games.
-const goalNames = {
-  beacon: '點亮引路燈',
-  cache: '點亮引路燈',
-  herbs: '點亮引路燈',
-  speed: '搶在限時之前',
-  safe: '全員生還'
-};
-const mapGoalType = (index) => goals[index];
-const mapGoalName = (index) => goalNames[goals[index]];
 const LEGACY = {
   best: 0,
   wins: 0,
@@ -116,7 +96,6 @@ function initialRun(ids, seed, legacy) {
     scene: 'before',
     openingCast: ids.slice(0, 2),
     beat: 0,
-    goal: goals[0],
     formationOpen: true,
     marked: false,
     coins: 24 + Math.min(12, chronicle.embers) * 4,
@@ -349,6 +328,7 @@ function setUpBoard(s) {
   delete r.legacyBoard;
   G.scheduleWaves(s);
   s.tally = G.blankTally();
+  r.side = drawSide(s);
 }
 // A save from before boards had kinds. A board already in the fight finishes under its old rules
 // (its master, its four); one not yet fought is rebuilt with its new pieces. Nothing is logged:
@@ -358,6 +338,8 @@ function migrateBattles(s) {
   if (r.battles === BATTLES_EDITION) return;
   if (r.status === 'battle' && r.scene === 'fight') {
     r.legacyBoard = true;
+    r.side = { ...(LEGACY_SIDES[r.goal] || LEGACY_SIDES.safe) };
+    r.deploying = false;
     s.arrivals = {};
     s.tally = G.blankTally();
     const commander = G.find(s, G.commanderId(s));
@@ -367,7 +349,10 @@ function migrateBattles(s) {
     G.identifyEncounter(s);
     setUpBoard(s);
   }
+  // A save in camp keeps its settled board; its old objective names the secondary it had.
+  if (!r.side && LEGACY_SIDES[r.goal]) r.side = { ...LEGACY_SIDES[r.goal] };
   r.battles = BATTLES_EDITION;
+  delete r.goal;
 }
 // The board fields of a save, each dropped or reset when malformed rather than failing the save.
 function tidyBoard(s) {
@@ -383,6 +368,8 @@ function tidyBoard(s) {
     if (Number.isInteger(due) && due >= s.round && due <= G.LIMIT && waiting) s.arrivals[w.id] = due;
   }
   if (!validTally(s.tally)) s.tally = G.blankTally();
+  if (r.status === 'battle' && !validSide(s, r.side)) r.side = drawSide(s);
+  if (r.last?.side != null && typeof r.last.side !== 'object') delete r.last.side;
 }
 const count = (n) => Number.isSafeInteger(n) && n >= 0;
 function validTally(t) {
@@ -413,6 +400,7 @@ function restoreRun(raw) {
     s.run.scene = 'fight';
     // The classic board finishes as it began: its master, its four, no reinforcements.
     s.run.legacyBoard = true;
+    s.run.side = { ...LEGACY_SIDES.beacon };
     s.arrivals = {};
     s.tally = G.blankTally();
     G.identifyEncounter(s);
@@ -452,7 +440,6 @@ function restoreRun(raw) {
     r.route.length !== 10 ||
     r.route.some((v, i) => v !== expectedRoute[i]) ||
     s.mapIndex !== r.route[r.stage] ||
-    r.goal !== goals[s.mapIndex] ||
     !['battle', 'camp', 'ended'].includes(r.status) ||
     !Number.isInteger(r.coins) ||
     r.coins < 0 ||
@@ -703,7 +690,9 @@ function dialogue(s, scene = s.run.scene) {
     if (echo) beats.push(echo);
   } else if (s.result === 'win') {
     beats.push(...script.win);
-    beats.push({ who: 'youth', text: r.last?.optional ? SIDE_TALES[r.goal] : MAZE_TALE.unlit });
+    // A met secondary is told by its kind; a hero arrives on every win, so nothing is said of
+    // one not met.
+    if (r.last?.optional) beats.push({ who: 'youth', text: sideTale(r.side) });
     const who = r.last?.recruit;
     if (who) {
       const arrival = HERO_VOICES[who].arrival;
@@ -804,41 +793,446 @@ function beginBattle(s) {
   G.announce(s);
   return true;
 }
-function mapMission(map, marker) {
-  const goal = goals[map],
-    stationed = ['beacon', 'herbs', 'cache'].includes(goal);
-  const tile = stationed ? marker || mapLayout(map).objective : null;
-  const instruction = tile
-    ? '於第 ' +
-      (tile.x + 1) +
-      ' 列、第 ' +
-      (tile.y + 1) +
-      ' 行的燈記結束一名俠客的行動，且該俠客仍須生還。'
-    : goal === 'safe'
-      ? '擊敗局主時，全體出戰俠客仍須生還。'
-      : '在第五回合結束前擊敗局主。';
-  const boss = G.DETAILS[CAPTAINS[map][0]].name;
+// ── Secondary objectives ─────────────────────────────────────────────────
+// One is drawn per board per run from the board's pool (battles.js `sides`). Each kind reads the
+// facts the game records in `s.tally` (game.js). A 'keep' kind fails on an event and is met at
+// the win if it never failed; a 'reach' kind is met on an event and fails once it cannot be.
+// A secondary is done when the board is won with it met.
+const pieceName = (map, ref) => G.DETAILS[G.refId(map, ref).split('#')[0]]?.name || '';
+const heroName = (id) => G.DETAILS[id]?.name || '';
+const fallOf = (s, ref) => s.tally?.falls.find((f) => f.id === G.refId(s.mapIndex, ref));
+const fallIndex = (s, id) => s.tally?.falls.findIndex((f) => f.id === id) ?? -1;
+const masterNames = (map, board) => board.masters.map((ref) => pieceName(map, ref)).join('與');
+// The heroes a secondary may name: the lineup as the board is built.
+const lineup = (s) => s.run.next.map((id) => G.find(s, id)).filter(Boolean);
+// Whether a hero can make a 合招: a form that spends a mark or poison, or strikes with a partner.
+const COMBO_FORMS = ['exploit', 'distill', 'flank'];
+function hasCombo(u) {
+  const arts = ['signature', ...(u.learned || []).filter((id) => TECHNIQUES[id]?.kind !== 'basic')];
+  const forms = [
+    ...arts.flatMap((id) => G.formsFor(u, G.artFor(u, id))),
+    ...G.formsFor(u, null),
+    ...(WEAPON_FORMS[u.weapon] || [])
+  ];
+  return forms.some((f) => COMBO_FORMS.includes(f));
+}
+const SPARE = {
+  mirror: { name: '不觸斗轉星移', detail: '全局不讓{n}的斗轉星移反震任何一擊。', lost: '{n}的斗轉星移已反震' },
+  mend: { name: '不容續命', detail: '全局不讓{n}施展接骨續筋。', lost: '{n}已施展接骨續筋' },
+  herbs: { name: '斷其退路', detail: '全局不讓{n}在遁走時踏上藥草地。', lost: '{n}已踏上藥草地' }
+};
+const named = (text, n) => text.replace('{n}', n);
+const SIDE_KINDS = {
+  lamp: {
+    name: () => '點亮引路燈',
+    sort: 'reach',
+    eligible: () => true,
+    detail: (s, side, map) => {
+      const tile = (s && G.objectiveTile(s)) || mapLayout(map).objective;
+      return '於第 ' + (tile.x + 1) + ' 列、第 ' + (tile.y + 1) + ' 行的燈記結束一名俠客的行動，且該俠客仍須生還。';
+    },
+    state: (s) => (s.run.marked ? 'met' : 'open'),
+    progress: (s) => (s.run.marked ? '燈記已亮' : '燈記未亮'),
+    lost: () => ''
+  },
+  swift: {
+    name: () => '搶在限時之前',
+    sort: 'keep',
+    // On 殲滅 a wave due after the limit would make it impossible.
+    eligible: (s, e) =>
+      G.boardOf(s).kind !== 'rout' || !G.boardOf(s).waves.some((w) => w.when.round > e.by),
+    detail: (s, side) => '在第' + NUMERALS[side.by - 1] + '回合結束前取勝。',
+    state: (s, side) => (s.round > side.by ? 'failed' : 'open'),
+    progress: (s, side) => '第 ' + s.round + '／' + side.by + ' 回合',
+    lost: (s, side) => '已過第' + NUMERALS[side.by - 1] + '回合'
+  },
+  intact: {
+    name: () => '全員生還',
+    sort: 'keep',
+    eligible: () => true,
+    detail: () => '取勝時，全體出陣俠客仍須生還。',
+    state: (s) => (G.party(s).some((u) => !G.living(u)) ? 'failed' : 'open'),
+    progress: (s) => '生還 ' + G.party(s).filter(G.living).length + '／' + G.party(s).length,
+    lost: (s) => heroName(G.party(s).find((u) => !G.living(u))?.id) + '倒下'
+  },
+  lastBlow: {
+    name: () => '親手了斷',
+    sort: 'reach',
+    eligible: (s, e) => (e.hero === '*' ? s.run.next.length > 0 : s.run.next.includes(e.hero)),
+    detail: (s, side, map) =>
+      '由' + heroName(side.hero) + '給' + pieceName(map, side.target) + '最後一擊（招式、普攻、還擊或其所下的毒皆算）。',
+    state: (s, side) => {
+      const fall = fallOf(s, side.target);
+      return !fall ? 'open' : fall.by === side.hero ? 'met' : 'failed';
+    },
+    progress: (s, side) => {
+      const u = G.find(s, G.refId(s.mapIndex, side.target));
+      return u ? pieceName(s.mapIndex, side.target) + '氣血 ' + Math.max(0, u.hp) + '／' + u.maxHp : '';
+    },
+    lost: (s, side) => pieceName(s.mapIndex, side.target) + '由他人擊倒'
+  },
+  order: {
+    name: () => '先折羽翼',
+    sort: 'reach',
+    eligible: () => true,
+    detail: (s, side, map) =>
+      '先擊倒' + pieceName(map, side.first) + '，再擊倒' + masterNames(map, s ? G.boardOf(s) : BATTLES[map]) + '。',
+    state: (s, side) => {
+      const first = fallIndex(s, G.refId(s.mapIndex, side.first));
+      const masters = G.masterIds(s).map((id) => fallIndex(s, id)).filter((i) => i >= 0);
+      if (masters.some((i) => first < 0 || i < first)) return 'failed';
+      return first >= 0 ? 'met' : 'open';
+    },
+    progress: (s, side) => pieceName(s.mapIndex, side.first) + '：' + (fallOf(s, side.first) ? '已倒' : '未倒'),
+    lost: (s, side) => {
+      const first = fallIndex(s, G.refId(s.mapIndex, side.first));
+      const id = G.masterIds(s).find((m) => {
+        const i = fallIndex(s, m);
+        return i >= 0 && (first < 0 || i < first);
+      });
+      return (G.DETAILS[(id || '').split('#')[0]]?.name || '') + '先於' + pieceName(s.mapIndex, side.first) + '倒下';
+    }
+  },
+  double: {
+    name: () => '一回合連下兩人',
+    sort: 'reach',
+    eligible: () => true,
+    detail: () => '在我方同一回合內擊倒兩名敵人。',
+    state: (s) => {
+      const rounds = new Map();
+      for (const f of s.tally?.falls || [])
+        if (f.phase === 'ally') rounds.set(f.round, (rounds.get(f.round) || 0) + 1);
+      return [...rounds.values()].some((n) => n >= 2) ? 'met' : 'open';
+    },
+    progress: (s) =>
+      '本回合已擊倒 ' + (s.tally?.falls || []).filter((f) => f.phase === 'ally' && f.round === s.round).length,
+    lost: () => ''
+  },
+  spare: {
+    name: (side) => SPARE[side.behaviour].name,
+    sort: 'keep',
+    eligible: () => true,
+    detail: (s, side, map) => named(SPARE[side.behaviour].detail, pieceName(map, side.piece)),
+    state: (s, side) => (s.tally?.fired[side.behaviour] > 0 ? 'failed' : 'open'),
+    progress: () => '尚未發生',
+    lost: (s, side) => named(SPARE[side.behaviour].lost, pieceName(s.mapIndex, side.piece))
+  },
+  combo: {
+    name: () => '合招制敵',
+    sort: 'reach',
+    eligible: (s) => lineup(s).some(hasCombo),
+    detail: () => '以合招擊倒一名敵人：催毒、乘破綻或夾擊的一擊。',
+    state: (s) => (s.tally?.falls.some((f) => f.combo) ? 'met' : 'open'),
+    progress: () => '',
+    lost: () => ''
+  },
+  noMedicine: {
+    name: () => '不假丹藥',
+    sort: 'keep',
+    eligible: () => true,
+    detail: () => '全局不服用任何丹藥。',
+    state: (s) => (s.tally?.doses > 0 ? 'failed' : 'open'),
+    progress: (s) => '丹藥 ' + (s.tally?.doses || 0) + ' 次',
+    lost: () => '已服用丹藥'
+  },
+  unhurt: {
+    name: () => '領隊無傷',
+    sort: 'keep',
+    eligible: () => true,
+    detail: () => '全局領隊不因敵人損失氣血（自身招式的消耗不算）。',
+    state: (s) => (s.tally?.leaderHurt > 0 ? 'failed' : 'open'),
+    progress: (s) => (s.tally?.leaderHurt > 0 ? '領隊已受傷' : '領隊未受傷'),
+    lost: () => '領隊受了傷'
+  },
+  holdLine: {
+    name: () => '拒敵於外',
+    sort: 'keep',
+    eligible: (s) => G.boardOf(s).waves.length > 0,
+    detail: (s, side) => '援軍不得踏入' + side.place + '。',
+    state: (s) => (s.tally?.crossed ? 'failed' : 'open'),
+    progress: (s) => (s.tally?.crossed ? '援軍已越線' : '援軍未越線'),
+    lost: (s, side) => '援軍踏入' + side.place
+  },
+  answer: {
+    name: () => '以招破招',
+    sort: 'reach',
+    eligible: (s, e) =>
+      s.run.next.includes(e.hero) && !!G.find(s, e.hero)?.learned?.some((id) => TECHNIQUES[id]?.answer),
+    detail: (s, side) => '由' + heroName(side.hero) + '以破招擊倒一名敵人（招式的破招加成須成立）。',
+    state: (s, side) => (s.tally?.falls.some((f) => f.by === side.hero && f.answered) ? 'met' : 'open'),
+    progress: () => '',
+    lost: () => ''
+  }
+};
+const sideName = (side) => (side ? SIDE_KINDS[side.kind].name(side) : '');
+const sideTale = (side) => SIDE_TALES[side?.kind] || SIDE_TALES.done;
+// Draws the board's secondary: the pool shuffled once by run seed and stage, the first entry the
+// lineup can meet. The same seed, stage and lineup always give the same secondary; a named hero
+// is drawn from the lineup as the board is built.
+function drawSide(s) {
+  const r = s.run,
+    pool = G.boardOf(s).sides;
+  const rand = random((r.seed ^ Math.imul(r.stage + 1, 0x2545f491) ^ 0x5eed51de) >>> 0);
+  for (const i of shuffled(
+    pool.map((_, i) => i),
+    rand
+  )) {
+    const e = pool[i];
+    if (!SIDE_KINDS[e.kind].eligible(s, e)) continue;
+    const side = { ...e };
+    if (e.hero === '*') side.hero = shuffled(r.next, rand)[0];
+    return side;
+  }
+  return { kind: 'intact', reward: 'coins' }; // no pool of battles.js comes here
+}
+// A secondary that names a hero cannot be met without him: out of the lineup before the fight,
+// not on the board in it.
+function sideBenched(s, side = s.run.side) {
+  if (!side?.hero) return false;
+  return s.run.scene === 'fight'
+    ? !G.party(s).some((u) => u.id === side.hero)
+    : !s.run.next.includes(side.hero);
+}
+// 'open', 'met' or 'failed', now; a keep kind still open when the board is won is met.
+function sideState(s, side = s.run.side) {
+  if (!side) return 'open';
+  if (s.run.status !== 'battle') return s.run.last?.optional ? 'met' : 'failed';
+  if (sideBenched(s, side)) return 'failed';
+  const kind = SIDE_KINDS[side.kind],
+    state = kind.state(s, side);
+  return state === 'open' && kind.sort === 'keep' && s.result === 'win' ? 'met' : state;
+}
+const sideDone = (s) => s.result === 'win' && sideState(s) === 'met';
+// Why the secondary failed, as the tip and log say it.
+function sideLost(s, side = s.run.side) {
+  if (!side) return '';
+  if (sideBenched(s, side)) return heroName(side.hero) + '未在出陣名單中';
+  return SIDE_KINDS[side.kind].lost(s, side);
+}
+// The forecast's line when this blow would fell its target and so meet or fail the secondary.
+function sideForecast(s, u, t, f) {
+  const side = s.run?.side;
+  if (!side || !s.tally || !['lastBlow', 'order', 'double', 'combo', 'answer'].includes(side.kind)) return '';
+  const target = f.coveredBy ? G.find(s, f.coveredBy) : t;
+  if (!target || f.type !== 'enemy' || f.amount < target.hp) return '';
+  const art = f.mpCost ? G.artFor(u) : null;
+  const fall = {
+    id: target.id,
+    by: u.id,
+    how: art ? 'art' : 'basic',
+    combo: !!(f.plan?.spentMark || f.plan?.spentPoison || f.plan?.partner),
+    answered: !!art?.answer && G.strikeFactor(s, u, art, target).notes.some((n) => n.startsWith('破招')),
+    round: s.round,
+    phase: s.phase
+  };
+  const before = sideState(s, side),
+    after = sideState({ ...s, tally: { ...s.tally, falls: [...s.tally.falls, fall] } }, side);
+  if (before !== 'open' || after === before) return '';
+  return after === 'met' ? '支線 · 此擊可達成' : '支線 · 此擊將使支線失敗';
+}
+// Old saves' side objectives, as the secondaries that say the same.
+const LEGACY_SIDES = {
+  beacon: { kind: 'lamp', reward: 'coins' },
+  cache: { kind: 'lamp', reward: 'coins' },
+  herbs: { kind: 'lamp', reward: 'coins' },
+  speed: { kind: 'swift', by: 5, reward: 'coins' },
+  safe: { kind: 'intact', reward: 'coins' }
+};
+// A saved secondary is one of the board's pool, with a hero in place of '*'.
+function validSide(s, side) {
+  if (!side || typeof side !== 'object' || !SIDE_KINDS[side.kind] || !SIDE_REWARDS.includes(side.reward))
+    return false;
+  if (side.hero != null && !G.PARTY.includes(side.hero)) return false;
+  const pool = s.run.legacyBoard ? Object.values(LEGACY_SIDES) : G.boardOf(s).sides;
+  return pool.some((e) =>
+    [...new Set([...Object.keys(e), ...Object.keys(side)])].every((k) =>
+      k === 'hero' && e.hero === '*'
+        ? G.PARTY.includes(side.hero)
+        : JSON.stringify(e[k]) === JSON.stringify(side[k])
+    )
+  );
+}
+
+// ── The briefing ─────────────────────────────────────────────────────────
+// How a wave is announced in the briefing: by its round, or by the masters it waits on.
+function waveLine(map, wave) {
+  const list = G.waveList(wave.pieces);
+  if (wave.when.round)
+    return '第' + NUMERALS[wave.when.round - 1] + '回合，' + list + '自' + wave.place + '入場。';
+  const masters = wave.when.halved.map((ref) => pieceName(map, ref)).join('或');
+  return masters + '氣血首次過半，兩回合後，' + list + '自' + wave.place + '入場。';
+}
+const KIND_NAMES = { slay: '斬將', rout: '殲滅' };
+const SIDE_MARKS = { open: '◇', met: '✓', failed: '✕' };
+// Everything the briefing page shows, for a board at a stage. `s` is the run on this board
+// (with its drawn secondary), or null for a look at a board without one (the wiki, the shop's
+// look at the next board), which lists the pool instead. `live` adds the state of the fight.
+function boardModel(map, stage, s = null, live = false) {
+  const board = s ? G.boardOf(s) : BATTLES[map],
+    layout = mapLayout(map),
+    r = s?.run;
+  const masters = board.masters.map((ref) => pieceName(map, ref));
+  const kind = board.kind;
+  const battle =
+    kind === 'rout'
+      ? '殲滅 · 場上敵人須全數擊敗。'
+      : masters.length > 1
+        ? '斬將 · 兩名局主都須倒下。'
+        : '斬將 · 擊敗局主即勝，其餘敵人不必全滅。';
+  const win =
+    kind === 'rout'
+      ? '在第十二回合結束前擊敗全部敵人。' + (board.waves.length ? '援軍亦須擊敗。' : '')
+      : '在第十二回合結束前擊敗' + masters.join('與') + '。';
+  const leader = s ? heroName(r.scene === 'fight' ? s.leader : r.next[0]) : '領隊';
+  // 敵情: each 局主, then each 副手; the board's own first, then the leaders of its waves.
+  const villain = (key) => G.DETAILS[key]?.rank;
+  const row = (key, note = '') => ({
+    key,
+    rank: villain(key) === 'boss' ? '局主' : '副手',
+    name: G.DETAILS[key].name,
+    gist: GISTS[key] || '',
+    note
+  });
+  const starts = [
+    ...G.encounterKeys(map).slice(0, 2),
+    ...board.pieces.map((p) => p.id.split('#')[0]).filter(villain)
+  ];
+  const leads = board.waves.flatMap((w) =>
+    w.pieces
+      .map((p) => p.id.split('#')[0])
+      .filter(villain)
+      .map((key) => [key, w.when.round ? '（第' + NUMERALS[w.when.round - 1] + '回合入場）' : '（援軍）'])
+  );
+  const foes = [];
+  for (const rank of ['boss', 'mini']) {
+    for (const key of starts) if (villain(key) === rank) foes.push(row(key));
+    for (const [key, note] of leads) if (villain(key) === rank) foes.push(row(key, note));
+  }
+  // 兵力: how many open the board and come later, and the rank and file by name.
+  const start = 4 + board.pieces.length,
+    later = board.waves.reduce((n, w) => n + w.pieces.length, 0);
+  const chips = new Map();
+  for (const key of [
+    ...G.encounterKeys(map).slice(2),
+    ...[...board.pieces, ...board.waves.flatMap((w) => w.pieces)].map((p) => p.id.split('#')[0])
+  ]) {
+    if (villain(key)) continue;
+    const n = G.DETAILS[key].name;
+    if (!chips.has(n)) chips.set(n, { name: n, count: 0, gist: GISTS[key] || '' });
+    chips.get(n).count++;
+  }
+  const sideRow = (entry, withState) => {
+    const state = s ? sideState(s, entry) : 'open';
+    const keep = SIDE_KINDS[entry.kind].sort === 'keep';
+    return {
+      kind: entry.kind,
+      hero: entry.hero || null,
+      name: SIDE_KINDS[entry.kind].name(entry),
+      detail: s || entry.hero !== '*' ? SIDE_KINDS[entry.kind].detail(s, entry, map) : '',
+      reward: entry.reward,
+      rewardText: '勝利時另得' + rewardText(entry, stage) + '。',
+      warning: s && entry.hero && sideBenched(s, entry) ? heroName(entry.hero) + '未在出陣名單中，此支線無法達成。' : '',
+      ...(withState
+        ? {
+            state,
+            mark: SIDE_MARKS[state],
+            stateText: state === 'met' ? '已達成，取勝即得' : state === 'failed' ? '已失' : keep ? '保持中' : '未達成',
+            progress: SIDE_KINDS[entry.kind].progress(s, entry),
+            lost: state === 'failed' ? sideLost(s, entry) : ''
+          }
+        : {})
+    };
+  };
+  const recruitId = r && r.stage < 9 ? r.pool[0] : null;
+  const model = {
+    map,
+    stage,
+    mapName: layout.name,
+    heading: '第' + NUMERALS[stage] + '局 · ' + layout.name,
+    kind,
+    kindName: KIND_NAMES[kind],
+    battle,
+    win,
+    loss: leader + '倒下，或第十二回合結束仍未取勝。',
+    side: r?.side ? sideRow(r.side, live) : null,
+    pool: s ? [] : board.sides.map((e) => sideRow(e, false)),
+    sideNote: s ? '' : '支線於入局時抽定。',
+    recruit: recruitId ? '取勝後，' + heroName(recruitId) + '應帖而來。' : '',
+    foes,
+    force: {
+      start,
+      later,
+      line: '開局 ' + start + ' 名，援軍 ' + later + ' 名，共 ' + (start + later) + ' 名。',
+      chips: [...chips.values()]
+    },
+    waves: board.waves.map((w) => ({ id: w.id, line: waveLine(map, w), round: w.when.round || null })),
+    noWaves: board.waves.length ? '' : '本局沒有援軍。',
+    terrain: layout.tactic,
+    live: null
+  };
+  if (live && s) {
+    const left = G.objectiveLeft(s);
+    model.live = {
+      line: '第 ' + s.round + '／' + G.LIMIT + ' 回合　領隊 ' + heroName(s.leader) + '　銀 ' + r.coins + ' 兩',
+      masters: G.masterIds(s).map((id) => {
+        const u = G.find(s, id),
+          name = G.unitDetails(u)?.name || '';
+        const hp = Math.max(0, u?.hp || 0);
+        return { id, name, hp, maxHp: u?.maxHp || 0, fallen: !left.masters.includes(id), line: name + ' 氣血 ' + hp + '／' + (u?.maxHp || 0) };
+      }),
+      remaining: kind === 'rout' ? '尚餘敵人 ' + left.foes + ' 名' : '',
+      waiting: kind === 'rout' && left.waiting ? '援軍未到 ' + left.waiting + ' 名' : ''
+    };
+    for (const w of model.waves) {
+      const wave = board.waves.find((x) => x.id === w.id);
+      w.status = wave.pieces.every((p) => s.units.some((u) => u.id === p.id))
+        ? '已入場'
+        : s.arrivals?.[w.id] === s.round + 1
+          ? '下回合'
+          : '';
+    }
+  }
+  return model;
+}
+// The briefing of the board a run is on, with its drawn secondary; `live` during the fight.
+function briefing(s, { live = false } = {}) {
+  return boardModel(s.mapIndex, s.run.stage, s, live);
+}
+// The same for a board at a stage with no run: the secondary pool instead of a drawn one.
+function boardBrief(map, stage) {
+  return boardModel(map, stage);
+}
+// COMPAT (until the interface reads `briefing` and `boardBrief`): the shapes the 整備 block, the
+// map diagram and the goals page read today. Remove with those readers.
+function mapMission(map, marker = null) {
+  const brief = boardBrief(map, 0);
   return {
-    goal,
-    name: goalNames[goal],
-    boss,
-    tile,
-    instruction,
-    win: '在第 ' + G.LIMIT + ' 回合結束前擊敗' + boss + '。',
-    loss: '領隊倒下，或回合用盡。'
+    name: '支線',
+    instruction: brief.sideNote,
+    win: brief.win,
+    loss: '領隊倒下，或第十二回合結束仍未取勝。',
+    reward: '',
+    tile: marker
   };
 }
 function objective(s) {
-  const r = s.run,
-    mission = mapMission(s.mapIndex, G.objectiveTile(s)),
-    stationed = !!mission.tile;
-  const done =
-    r.status === 'battle'
-      ? stationed
-        ? r.marked
-        : s.result === 'win' && (r.goal === 'safe' ? G.party(s).every(G.living) : s.round <= 5)
-      : r.last.optional;
-  return { ...mission, done };
+  const brief = briefing(s, { live: true }),
+    side = brief.side;
+  return {
+    goal: s.run.side?.kind,
+    name: side?.name || '',
+    primary:
+      '擊敗' +
+      (brief.kind === 'rout'
+        ? '全部敵人'
+        : G.masterIds(s).map((id) => G.unitDetails(G.find(s, id))?.name).join('與')),
+    tile: G.objectiveTile(s),
+    instruction: side ? side.detail + side.warning : '',
+    reward: side ? rewardText(s.run.side, s.run.stage) : '',
+    win: brief.win,
+    loss: brief.loss,
+    done: s.run.status === 'battle' ? sideState(s) === 'met' : !!s.run.last?.optional
+  };
 }
 function recruit(s) {
   const r = s.run,
@@ -853,21 +1247,20 @@ function recruit(s) {
   G.log(s, 'story', MAZE_TALE.join, G.DETAILS[id].name);
   return id;
 }
-// Silver paid after a won battle. The wiki's mission pages read these.
+// Silver paid after a won battle, and for a met secondary. The wiki's mission pages read these.
 const REWARDS = {
   clear: 36, // for winning the first stop
   perStage: 5, // added for each later stop
-  side: 19 // extra when the side objective is also done
+  side: 24, // a secondary that pays silver, on the first stop
+  sidePerStage: 3 // added for each later stop
 };
 function settle(s) {
   const r = s.run;
   if (!s.result || r.status !== 'battle' || r.scene !== 'fight') return false;
   const won = s.result === 'win',
-    optional = won && objective(s).done,
+    optional = won && sideDone(s),
     terminal = !won || r.stage === 9;
-  const reward = won
-    ? REWARDS.clear + REWARDS.perStage * r.stage + (optional ? REWARDS.side : 0)
-    : 0;
+  let reward = won ? REWARDS.clear + REWARDS.perStage * r.stage : 0;
   r.next = G.party(s).map((u) => u.id);
   r.coins += reward;
   // Credits, stock, recruits and the receipt persist in the same saved transaction.
@@ -887,14 +1280,18 @@ function settle(s) {
     for (const u of G.company(s)) past.walked[u.id] = (past.walked[u.id] || 0) + 1;
     past.seen = MAPS.filter((map) => past.seen.includes(map) || r.route.indexOf(map) <= r.stage);
   }
-  const newcomer = optional && !terminal ? recruit(s) : '';
+  const bonus = optional ? paySide(s) : null;
+  if (bonus?.reward === 'coins') reward += bonus.amount;
+  // Every win but the last brings the next hero, whatever the secondary.
+  const newcomer = won && !terminal ? recruit(s) : '';
   r.last = {
     won,
     optional,
     terminal,
     reward,
     recruit: newcomer,
-    survivors: G.party(s).filter(G.living).length
+    survivors: G.party(s).filter(G.living).length,
+    ...(bonus ? { side: bonus } : {})
   };
   r.shop = makeOffers(s);
   r.last.visit = makeVisit(s);
@@ -902,8 +1299,41 @@ function settle(s) {
   r.scene = 'after';
   r.beat = 0;
   if (won && r.stage === 0) G.log(s, 'story', MAZE_TALE.shop, WEI.name);
-  if (won) G.log(s, 'grow', '分得彩頭 ' + reward + ' 兩，同行俠客各得 1 武學點。', '通吃坊');
+  if (won)
+    G.log(s, 'grow', '分得彩頭 ' + (reward - (bonus?.reward === 'coins' ? bonus.amount : 0)) + ' 兩，同行俠客各得 1 武學點。', '通吃坊');
+  if (bonus) G.log(s, 'grow', '支線達成，' + rewardText(r.side, r.stage, bonus.manual) + '。', '支線');
   return true;
+}
+// The secondary's reward, paid as the board is settled: silver, a 武學點 to each fielded hero
+// still standing (silver instead on the last board), or a manual into the store (the parcel for
+// the next run, on the last board).
+function paySide(s) {
+  const r = s.run,
+    kind = payKind(r.side.reward, r.stage);
+  const paid = { kind: r.side.kind, reward: kind, amount: 0, manual: null };
+  if (kind === 'coins') {
+    paid.amount = REWARDS.side + REWARDS.sidePerStage * r.stage;
+    r.coins += paid.amount;
+  } else if (kind === 'points') {
+    const standing = G.party(s).filter(G.living);
+    for (const u of standing) u.sp += 1;
+    paid.amount = standing.length;
+  } else {
+    paid.manual = bonusManual(s);
+    if (paid.manual) {
+      (r.stage === 9 ? r.chronicle.parcel.manuals : r.manuals).push(paid.manual);
+      paid.amount = 1;
+    }
+  }
+  return paid;
+}
+const payKind = (reward, stage) => (reward === 'points' && stage === 9 ? 'coins' : reward);
+// A reward as the text says it; a manual by name once it has been paid.
+function rewardText(side, stage, manual = null) {
+  const kind = payKind(side?.reward, stage);
+  if (kind === 'coins') return '賞銀 ' + (REWARDS.side + REWARDS.sidePerStage * stage) + ' 兩';
+  if (kind === 'points') return '出陣生還的俠客各 1 武學點';
+  return manual ? '《' + TECHNIQUES[manual].name + '》一卷，已入公庫' : '武譜一卷（入公庫）';
 }
 function chooseFate(s, id) {
   const r = s.run,
@@ -1045,7 +1475,6 @@ function advance(s) {
   s.result = null;
   s.reason = '';
   s.foreshadow = false;
-  r.goal = goals[s.mapIndex];
   r.marked = false;
   r.status = 'battle';
   r.scene = 'before';
@@ -1106,11 +1535,10 @@ function milestone(u, gate) {
   let met, label;
   if (gate.metric === 'side') {
     met = u.mastery.sides.includes(gate.map);
+    // The secondary is drawn per run, so the gate names the board's secondary, not one kind.
     label =
       mapLayout(gate.map).name +
-      ' · ' +
-      goalNames[goals[gate.map]] +
-      '（' +
+      ' · 支線（' +
       (met ? '已完成' : '須出戰生還') +
       '）';
   } else {
@@ -1283,7 +1711,11 @@ function campModel(s) {
     coins: r.coins,
     reward: last.reward,
     recruit: G.DETAILS[last.recruit]?.name || '',
-    objective: last.optional ? SIDE_TALES[r.goal] : MAZE_TALE.unlit,
+    objective: !last.won
+      ? ''
+      : last.optional
+        ? '支線達成：' + sideName(r.side) + '。' + rewardText(r.side, r.stage, last.side?.manual) + '。'
+        : '支線未成：' + sideName(r.side) + '。',
     story: !last.won
       ? s.reason + MAZE_TALE.loss
       : r.stage === 9
@@ -1321,4 +1753,4 @@ function campModel(s) {
   };
 }
 
-export { swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

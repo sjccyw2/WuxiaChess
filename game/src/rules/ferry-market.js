@@ -99,6 +99,19 @@ function makeOffers(s) {
   }
   return rows;
 }
+// ── The secondary's manual (journey.js settle) ───────────────────────────
+// A met secondary that pays a manual: one the shelf could carry after this board, preferring one
+// not already in the store and not held by every hero, drawn from the run and stage.
+function bonusManual(s) {
+  const r = s.run,
+    store = r.stage === 9 ? r.chronicle.parcel.manuals : r.manuals;
+  const known = (id) => store.includes(id) || G.company(s).every((u) => u.guides.includes(id));
+  const deck = shuffled(
+    Object.keys(MANUAL_PRICES).filter((id) => manualStage(id) <= r.stage + 1),
+    ferryRandom(r, 0x2c1b3c6d)
+  ).sort((a, b) => Number(known(a)) - Number(known(b)));
+  return deck[0] || null;
+}
 function makeVisit(s) {
   const r = s.run,
     rng = ferryRandom(r, 0x5bd1e995);
@@ -173,4 +186,4 @@ function pickBowl(s, position) {
   return true;
 }
 
-export { VISITOR, MARKET_STOCK, MARKET_RULES, manualStage, makeOffers, makeVisit, validVisit, lotName, lotImage, grantLot, coverBowls, pickBowl };
+export { VISITOR, MARKET_STOCK, MARKET_RULES, manualStage, bonusManual, makeOffers, makeVisit, validVisit, lotName, lotImage, grantLot, coverBowls, pickBowl };
