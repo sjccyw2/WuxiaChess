@@ -267,6 +267,16 @@ body.in-battle {
 .unit-name .unit-spent {
   color: #b7c4b8;
 }
+/* 留力 and 還報: an art readied by the hero's own last turns. Shown whatever the polish
+   switches say: the player needs it to know the art is live. */
+#active-hero .unit-name .unit-pip {
+  align-self: center;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font: 600 11px/1.4 var(--sans);
+  color: #2a1508;
+  background: #f0c46e;
+}
 .unit-vital {
   display: grid;
   grid-template-columns: 12px minmax(28px, 1fr) 21px;
@@ -531,6 +541,22 @@ body.in-battle {
 }
 .field-art b small {
   color: #e6b4a1;
+}
+/* 破招: a form that answers the enemy under the pointer. A rule the player needs, so it is not
+   behind a polish switch. */
+.field-art.answers {
+  box-shadow: inset 3px 0 0 #f0a35e;
+}
+.field-art.answers strong::after {
+  content: '破招';
+  display: inline-block;
+  margin-inline-start: 6px;
+  padding: 0 4px;
+  vertical-align: 2px;
+  font: 600 11px/1.5 var(--sans);
+  color: #2a1508;
+  background: #f0a35e;
+  border-radius: 2px;
 }
 .field-empty {
   padding: 8px;

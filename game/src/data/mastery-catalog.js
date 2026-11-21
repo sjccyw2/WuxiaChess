@@ -241,7 +241,7 @@ const MASTERY_ARTS = {
     icon: 'drop',
     visual: 'hero',
     target: 'enemy',
-    factor: 1.35,
+    factor: 1.25,
     backlash: true,
     desc: '貼身吸取敵人內力，命中回復 8 點內力，並使其絕技延後一回合。每次施展積一層亂氣，滿三層時反噬自身。',
     source: '令狐冲在梅莊湖底鐵板上習得吸星大法，異種真氣幾乎要了他的命。'
@@ -929,7 +929,7 @@ const MASTERY_ARTS = {
     icon: 'target',
     visual: 'huang',
     target: 'enemy',
-    factor: 1.2,
+    factor: 1.1,
     daze: 'setup',
     desc: '棒影絆住兩格內敵人的腳步，絆足兩回合；目標兵刃遭纏或站在陣中時，失去下一次行動。',
     source: '絆是打狗棒法的棒訣之一。失神的條件為本作演繹。'
@@ -988,7 +988,7 @@ const MASTERY_ARTS = {
     icon: 'sword',
     visual: 'yang',
     target: 'enemy',
-    factor: 1.32,
+    factor: 1.25,
     paired: { any: 0.15, partner: 0.4 },
     desc: '以全真劍法刺擊相鄰敵人；有同伴相鄰時威力增加，相鄰的是小龍女時增加更多。',
     source: '楊過在古墓與小龍女同練玉女心經，以全真劍法配玉女劍法。'
@@ -1004,7 +1004,7 @@ const MASTERY_ARTS = {
     icon: 'sword',
     visual: 'yang',
     basicBonus: 7,
-    desc: '收起花巧，以玄鐵重劍直進。普攻命中時傷害增加 7 點，餘勢穿過主目標。',
+    desc: '收起花巧，依重劍無鋒的劍理直進。普攻命中時傷害增加 7 點，餘勢穿過主目標。',
     source: '楊過斷臂後得玄鐵重劍，隨神鵰在山洪中練劍。'
   },
   jadeFluteCut: {

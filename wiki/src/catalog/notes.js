@@ -15,6 +15,11 @@ export const NOTES = {
     '首五局第三回合起蓄勢，後五局從第二回合起。蓄滿後保持，能出擊才施展。施展後相隔三回合可再用。封穴時無法施展。',
   secondSignature:
     '第二回合起蓄勢。蓄滿後保持，能出擊才施展。施展後相隔三回合可再用。封穴時無法施展。',
+  mendSignature:
+    '第二回合起蓄勢。蓄滿後保持，三格內有同夥氣血不足七成才施展，否則以普攻出手。施展後相隔三回合可再用。封穴時無法施展。',
+  mirrorSignature:
+    '首五局第三回合起蓄勢，後五局從第二回合起。蓄滿後保持，直到第一次受到直接攻擊；吸勁可使它延後。封穴時無效。',
+  phaseCadence: (n) => '半血變招後改為相隔' + '一二三四五'[n - 1] + '回合。',
 
   // Sentences built around numbers the game exports (REWARDS, GROWTH, raiseLevel).
   sideReward: (r) => '額外 ' + r.side + ' 兩。不是最後一局、且仍有未應帖的俠客時，另有一人應帖而來。',

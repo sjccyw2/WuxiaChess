@@ -39,6 +39,7 @@ const SWITCHES = {
   nextHeroKey: true, // Tab jumps to the next hero who can still act (Shift+Tab, the previous)
   forecastSide: true, // on wide screens the strike forecast docks to the side, clear of the fighters
   forecastTrim: true, // drop the forecast's target-health row, which the health bar now shows
+  tipClear: true, // phone held sideways: the tip line sits in the top row, clear of the buttons
   actionFlow: true // no command bar: arts open beside the hero after a move, undo sits there, End turn stands alone
 };
 

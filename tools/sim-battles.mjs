@@ -40,6 +40,8 @@ const W = {
   channelMp: 0.4,
   cleanse: 6,
   foeEffect: { seal: 8, mark: 3, weak: 1.5, exposed: 1.2 }, // per power x turns; others default
+  breakCharge: 40, // spending a foe's charged reaction (a mirror) with a blow it turns back
+  delaySignature: 6, // putting a foe's signature back a round
   foeEffectDefault: 1.2,
   allyEffect: { rally: 1.2, haste: 3 },
   allyEffectDefault: 0.8,
@@ -110,13 +112,14 @@ function threatMap(s) {
   return G.enemies(s)
     .filter(G.living)
     .map((e) => {
-      const stand = [{ x: e.x, y: e.y }, ...[...G.reachable(s, e).keys()].map(unkey)];
+      // Where the rules say it may end its action (a posted or charged piece stays put).
+      const stand = G.standCells(s, e);
       const hits = new Set(),
         range = G.strikeReach(s, e);
       for (const p of stand)
         for (let dx = -range; dx <= range; dx++)
           for (let dy = -range + Math.abs(dx); dy <= range - Math.abs(dx); dy++) hits.add(key(p.x + dx, p.y + dy));
-      const art = s.run && G.roundsToSignature(s, e) === 0 && !e.conditions?.seal ? G.enemyTechnique(e) : null;
+      const art = G.signatureDue(s, e) ? G.enemyTechnique(e, s) : null;
       return { e, hits, factor: art ? art.factor : 1 };
     });
 }
@@ -217,7 +220,13 @@ function strikeScore(s, u, t, f, ctx, mp) {
     }
   }
   score += (f.reflected || 0) * 0.8 + (f.selfHeal || 0) * 0.8;
-  const hpAfter = u.hp - f.hpCost - f.counter + (f.selfHeal || 0);
+  // A blow a charged reaction turns back (斗轉星移) does nothing to the foe but spends the charge,
+  // which opens it to the blows after; the share turned back is paid like a counter.
+  if (f.turned && !f.turned.ward.source) score += W.breakCharge * foeValue(s, t, ctx);
+  // 吸勁 putting a foe's signature back is worth something too.
+  if (f.siphon?.delay) score += W.delaySignature * foeValue(s, t, ctx);
+  const hpAfter = u.hp - f.hpCost - f.counter - (f.rebound || 0) + (f.selfHeal || 0);
+  score -= (f.rebound || 0) * W.counter * (leader ? W.leaderCare : 1);
   score -= f.counter * W.counter * (leader ? W.leaderCare : 1);
   if (hpAfter <= 0) score -= leader ? W.leaderLethal * 10 : W.lethal * 3;
   return { score, hpAfter, gone };
@@ -244,7 +253,8 @@ function supportScore(s, u, t, f, ctx, mp) {
 function bestOption(s, u, ctx) {
   const home = { x: u.x, y: u.y, moved: u.moved, route: u.route, activeArt: u.activeArt, brace: u.brace };
   const tiles = [{ x: u.x, y: u.y }];
-  if (!u.moved) for (const k of G.reachable(s, u).keys()) tiles.push(unkey(k));
+  // The rules say whether he may walk (立樁 holds him; a hero who has moved has moved).
+  if (G.canMove(s, u)) for (const k of G.reachable(s, u).keys()) tiles.push(unkey(k));
   const foes = G.enemies(s).filter(G.living),
     friends = G.party(s).filter(G.living);
   let best = null,
@@ -288,6 +298,12 @@ function bestOption(s, u, ctx) {
         if (!G.targetOK(s, u, t, true)) continue;
         const f = G.forecast(u, t, true, s);
         let r;
+        // 布陣 is laid where it is aimed and leaves its caster standing: scored as standing there.
+        if (type === 'ground' && art.zone) {
+          r = { score: -mp * W.mp + (f.zone?.length || 0), hpAfter: u.hp - f.hpCost, gone: new Set() };
+          consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone), P, act: 'art', id, t });
+          continue;
+        }
         if (type === 'ground') {
           const keep = { x: u.x, y: u.y };
           u.x = t.x;
@@ -374,12 +390,30 @@ function execute(s, o, rec) {
   if (ok && o.act === 'basic') ok = !!G.resolve(s, u, o.t, false);
   else if (ok && o.act === 'art') ok = R.readyArt(s, u, o.id) && !!G.resolve(s, u, o.t, true);
   if (ok && o.act === 'wait') ok = G.waitUnit(s, u);
+  if (ok && G.canGlide(s, u)) glide(s, u);
   if (!ok) {
     rec.misfires++;
     if (G.canAct(s, u)) G.waitUnit(s, u);
   }
   rec.usage[ok ? usageKey(u, o) : 'wait']++;
   credit(rec, before, s, u.id);
+}
+// 回身: a hero the rules still let walk after his strike takes the best place within the steps
+// left, or stays where he stands if that is better.
+function glide(s, u) {
+  const ctx = boardContext(s),
+    home = { x: u.x, y: u.y };
+  let best = { score: placeScore(s, u, ctx, u.hp, new Set()), p: null };
+  for (const k of G.glideField(s, u).costs.keys()) {
+    const p = unkey(k);
+    if (G.at(s, p.x, p.y)) continue;
+    Object.assign(u, p);
+    const score = placeScore(s, u, ctx, u.hp, new Set());
+    if (score > best.score) best = { score, p };
+  }
+  Object.assign(u, home);
+  if (best.p) G.glideMove(s, u, best.p.x, best.p.y);
+  else G.stopGlide(s, u);
 }
 function enemyPhase(s, rec) {
   if (!G.startEnemy(s)) return;
@@ -410,12 +444,21 @@ function fight(s) {
   for (const u of G.party(s))
     rec.heroes[u.id] = { dealt: 0, taken: 0, kills: 0, level: u.level, sp: u.sp, spent: spentPoints(u) };
   if (TRACE) s.logs = [];
+  // What the villains did, read from the battle log as it is written (the log keeps only its
+  // last lines): whether each board's defining behaviour shows up at all.
+  rec.events = {};
+  const phaseLines = new Set(G.enemies(s).map((e) => G.unitDetails(e).traits?.phase?.log).filter(Boolean));
+  s.logs.push = function (entry) {
+    for (const [name, test] of EVENTS) if (test(entry, phaseLines)) rec.events[name] = (rec.events[name] || 0) + 1;
+    return Array.prototype.push.call(this, entry);
+  };
   while (!s.result) {
     allyPhase(s, rec);
     if (s.result) break;
     enemyPhase(s, rec);
   }
   const team = G.party(s);
+  delete s.logs.push;
   rec.won = s.result === 'win';
   rec.rounds = s.round;
   rec.hpLeft = team.reduce((n, u) => n + Math.max(0, u.hp), 0) / team.reduce((n, u) => n + u.maxHp, 0);
@@ -429,6 +472,20 @@ function fight(s) {
   return rec;
 }
 
+// Rule events in the battle log, by what the log line says.
+const EVENTS = [
+  ['woke', (e) => e.text === '離位追擊。'],
+  ['walkedBack', (e) => e.text === '退回崗位。'],
+  ['covered', (e) => e.phase === 'ally' && /^挺身代.+受招。$/.test(e.text)],
+  ['dissolved', (e) => e.text.startsWith('被化功大法化去')],
+  ['mended', (e) => e.text.includes('接骨續筋。') && e.text.startsWith('施展')],
+  ['phased', (e, lines) => lines.has(e.text)],
+  ['fled', (e) => e.text === '退向藥草地。'],
+  ['lineHit', (e) => e.text.startsWith('被穿透的勁力擊中')],
+  ['mirrored', (e) => e.text.startsWith('斗轉星移反震')],
+  ['ropeBroke', (e) => e.who === '星索護陣'],
+  ['glidedOff', (e) => /^出手後退開/.test(e.text)]
+];
 // ── Between boards ──────────────────────────────────────────────────────
 function spentPoints(u) {
   return (u.learned || []).reduce((n, id) => n + (TECHNIQUES[id]?.points || 0), 0) + Object.values(u.talents).reduce((a, b) => a + b, 0);
@@ -574,9 +631,20 @@ function aggregate(runs) {
     usage: { basic: 0, start: 0, tier1: 0, tier2: 0, tier3: 0, tier4: 0, manual: 0, wait: 0 }, maps: {}
   }));
   const heroes = {};
+  // The same, by map: each board's villains fight their own way, whichever stage meets them.
+  const maps = Array.from({ length: 10 }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {} }));
   let misfires = 0;
   for (const run of runs)
     for (const b of run.boards) {
+      const M = maps[b.map];
+      M.reached++;
+      for (const [k, n] of Object.entries(b.events || {})) M.events[k] = (M.events[k] || 0) + n;
+      M.stages[b.stage + 1] = (M.stages[b.stage + 1] || 0) + 1;
+      if (b.won) {
+        M.wins++;
+        M.rounds += b.rounds;
+        M.hpLeft += b.hpLeft;
+      }
       const B = boards[b.stage];
       B.reached++;
       B.maps[b.map] = (B.maps[b.map] || 0) + 1;
@@ -626,6 +694,16 @@ function aggregate(runs) {
         usage: Object.fromEntries(Object.entries(B.usage).map(([k, n]) => [k, r2(n / acts)]))
       };
     }),
+    maps: maps.filter((M) => M.reached).map((M) => ({
+      map: M.map,
+      name: mapLayout(M.map).name,
+      stages: M.stages,
+      reached: M.reached,
+      winRate: r2(M.wins / M.reached),
+      avgRounds: M.wins ? r1(M.rounds / M.wins) : null,
+      hpLeft: M.wins ? r2(M.hpLeft / M.wins) : null,
+      events: Object.fromEntries(Object.entries(M.events).map(([k, n]) => [k, r1(n / M.reached)]))
+    })),
     heroes: Object.fromEntries(
       Object.entries(heroes).sort().map(([id, H]) => [
         id,
@@ -659,6 +737,13 @@ function print(out) {
       pad(b.board, 6) + lpad(b.reached, 5) + lpad(pc(b.winRate), 6) + lpad(b.avgRounds, 6) + lpad(pc(b.hpLeft), 6) + lpad(b.downed, 6) + lpad(pc(b.sideRate), 6) + lpad(b.lossLeader, 6) + lpad(b.lossTime, 7) + '          ' +
         ['basic', 'start', 'tier1', 'tier2', 'tier3', 'tier4', 'manual', 'wait'].map((k) => pad(pc(b.usage[k]), 7)).join('')
     );
+  console.log('\nPer map (whichever stage it was met at; stages listed with their counts)');
+  console.log(pad('map', 4) + pad('name', 6) + lpad('runs', 5) + lpad('win', 6) + lpad('rnds', 6) + lpad('hp', 6) + '   stages');
+  for (const m of out.maps || [])
+    console.log(pad(m.map, 4) + pad(m.name, 6) + lpad(m.reached, 5) + lpad(pc(m.winRate), 6) + lpad(m.avgRounds, 6) + lpad(pc(m.hpLeft), 6) + '   ' + Object.entries(m.stages).map(([k, n]) => k + ':' + n).join(' '));
+  console.log('\nVillain behaviour per board fought (log events per board, averaged over its runs)');
+  for (const m of out.maps || [])
+    console.log(pad(m.map, 4) + pad(m.name, 6) + '  ' + (Object.entries(m.events || {}).map(([k, n]) => k + ' ' + n).join(', ') || '-'));
   console.log('\nPer hero (per board fought; shares are of the team on the boards the hero fought)');
   console.log(pad('hero', 7) + pad('name', 5) + lpad('boards', 7) + lpad('dealt', 7) + lpad('taken', 7) + lpad('kills', 7) + lpad('dmg', 6) + '   level at board 1..10  /  points spent at board 1..10');
   for (const [id, h] of Object.entries(out.heroes))

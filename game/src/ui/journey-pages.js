@@ -109,4 +109,16 @@ function journeyEnding(s) {
   );
 }
 
-export { equippedMoves, journeyEnding };
+// 破招 (SPEC-mechanics §4): with the pointer on an enemy, each equipped form that answers that
+// enemy is lit in the arts list, so the player sees which form to bring before picking one.
+// The rules decide: the form answers when its 破招 bonus would be added against this target.
+function markAnswers(list, s, u, t) {
+  const foe = t && G.living(t) && !G.ally(t) && G.canAct(s, u) ? t : null;
+  for (const b of list.querySelectorAll('.field-art[data-id]')) {
+    const art = b.dataset.id !== 'basic' && G.artFor(u, b.dataset.id);
+    const on =
+      !!foe && !!art?.answer && G.strikeFactor(s, u, art, foe).notes.some((n) => n.startsWith('破招'));
+    b.classList.toggle('answers', on);
+  }
+}
+export { equippedMoves, markAnswers, journeyEnding };

@@ -7,7 +7,7 @@ import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, cells, gameArt } from './parts.js';
 import { heroPortrait } from './heroes.js';
-import { stageName, troopIds, RANKS } from './foes.js';
+import { stageName, troopIds, troopSource, RANKS } from './foes.js';
 import { trialOf } from './missions.js';
 import { NOTES } from './notes.js';
 
@@ -125,10 +125,18 @@ function root(id) {
   };
 }
 
+// When a villain's signature comes: the board's ordinary rule, or a mend's or a mirror's own;
+// then a phase that changes how often, and the reach it strikes with.
+function signatureTrigger(art, seat, phase) {
+  const base = art.style === 'mirror' ? NOTES.mirrorSignature : art.style === 'mend' ? NOTES.mendSignature : seat ? NOTES.secondSignature : NOTES.bossSignature;
+  return base + (phase?.cadence ? NOTES.phaseCadence(phase.cadence) : '');
+}
 function opponent(stage, seat) {
   const foe = G.ENCOUNTERS[stage][seat],
     unitId = seat ? 'lieutenant-' + stage : G.CAPTAINS[stage][0],
-    art = G.enemyTechnique({ id: unitId }),
+    // At the first stage the board can be met at; the numbers that grow with the stage are on
+    // the opponent's own page (行事).
+    art = G.enemyTechnique({ id: unitId }, { run: { stage: G.mapStages(stage)[0] } }),
     image = gameArt((seat ? 'lieutenant-' : 'captain-') + stage + '.webp'),
     where = [link('foes', 'enc-' + stage + '-' + seat, foe.name), link('maps', stage, stageName(stage))];
   return [
@@ -142,9 +150,11 @@ function opponent(stage, seat) {
         rows('施展規則', [
           ['使用者', foe.name],
           ['位階', G.NUMERALS[art.tier - 1] + '階'],
-          ['觸發', seat ? NOTES.secondSignature : NOTES.bossSignature],
-          ['普攻傷害倍率', '× ' + art.factor],
-          ['附加效果', art.note]
+          ['觸發', signatureTrigger(art, seat, foe.traits?.phase)],
+          // A mend or a mirror is no blow: it has no strength against the normal strike.
+          art.strikes && ['普攻傷害倍率', '× ' + art.factor],
+          art.reach && ['絕技射程', art.reach + ' 格'],
+          [art.strikes ? '附加效果' : '效果', art.note]
         ]),
         links('關聯', where)
       ],
@@ -171,7 +181,7 @@ function troop(id) {
     summary: d.name + '的通常攻擊。',
     image: gameArt(d.portraitFile),
     sections: [links('使用者', [link('foes', id, d.name)])],
-    sources: cites(cite(d.name, 'src/rules/game.js'))
+    sources: cites(cite(d.name, troopSource(id)))
   };
 }
 

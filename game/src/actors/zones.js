@@ -597,10 +597,24 @@ function paintFormations(layer, now) {
 // formation before confirming it.
 const aimCache = new WeakMap();
 function paintFormationAim(layer, list, now) {
+  paintAimOutline(layer, list, now, aimCache, AIM_STYLES.formation);
+}
+// While an art that taunts (挑釁) is aimed or previewed: every tile within its radius of where the
+// hero will stand when it resolves, the ground from which an enemy that can reach him must strike
+// him. A rule the player needs, so it is drawn whatever the polish switches say.
+const tauntCache = new WeakMap();
+function paintTauntAim(layer, list, now) {
+  paintAimOutline(layer, list, now, tauntCache, AIM_STYLES.taunt);
+}
+const AIM_STYLES = {
+  formation: { wash: [255, 196, 110], ink: FORMATION.ink, line: '#fff4d8' },
+  taunt: { wash: [214, 70, 44], ink: 'rgba(58,10,4,.78)', line: '#ffd2bd' }
+};
+function paintAimOutline(layer, list, now, caches, style) {
   if (!list?.length) return;
   const c = layer.ctx;
-  let cache = aimCache.get(layer);
-  if (!cache) aimCache.set(layer, (cache = { view: new Float64Array(36), mark: '' }));
+  let cache = caches.get(layer);
+  if (!cache) caches.set(layer, (cache = { view: new Float64Array(36), mark: '' }));
   const mark = list.map((p) => p.x + ',' + p.y).join(' ');
   if (viewMoved(layer, cache) || cache.mark !== mark) {
     cache.mark = mark;
@@ -610,17 +624,17 @@ function paintFormationAim(layer, list, now) {
   const beat = layer.prefs.motion ? 0.5 + 0.5 * Math.sin(now / 260) : 0.7;
   c.save();
   c.lineCap = c.lineJoin = 'round';
-  c.fillStyle = 'rgba(255,196,110,' + (0.24 + beat * 0.12).toFixed(3) + ')';
+  c.fillStyle = 'rgba(' + style.wash.join(',') + ',' + (0.24 + beat * 0.12).toFixed(3) + ')';
   c.fill(cache.paths.fill);
-  c.strokeStyle = FORMATION.ink;
+  c.strokeStyle = style.ink;
   c.lineWidth = clamp(cache.scale * 0.08, 3, 4.6);
   c.stroke(cache.paths.edge);
   c.setLineDash([clamp(cache.scale * 0.16, 4, 9), clamp(cache.scale * 0.09, 3, 5)]);
   c.lineDashOffset = layer.prefs.motion ? -now / 60 : 0;
-  c.strokeStyle = '#fff4d8';
+  c.strokeStyle = style.line;
   c.lineWidth = clamp(cache.scale * 0.04, 1.6, 2.4);
   c.stroke(cache.paths.edge);
   c.restore();
 }
 
-export { paintField, paintReticles, paintFormations, paintFormationAim };
+export { paintField, paintReticles, paintFormations, paintFormationAim, paintTauntAim };
