@@ -8,6 +8,7 @@ planned for each pack and which decisions are waiting on the producer.
 | Path | What it holds |
 | --- | --- |
 | `prompts.md` | Prompts for the story's pictures: file name, size, where it appears. |
+| `story-characters/` | The youth and 獨孤求敗 (`qiubai`): a character card (`cards/`, 1024 × 1024) and a sprite sheet (`sprites/`, the roster pack's 8 × 5 format) each. Not in the game yet (roadmap 2.3, Q-N68). |
 | `story-art/` | Story pictures painted for the old story that the v1.0 story has no place for (`prompts.md` B4, B7). |
 | `jianying-roster-art/` | Thirty characters: a portrait and a sprite sheet each. |
 | `jianying-item-art/` | Eight skill effects and thirty-two item pictures, all animated. |
@@ -22,6 +23,8 @@ from the repository root (see the main README), not as a file.
 - `sprites/<id>.png`, 1152 × 880: 8 columns × 5 rows of 144 × 176 cells, foot at y 162. The rows
   are idle, walk, attack, hurt and special (絕技). The game's own sheets have the first four rows
   only, stored at half size; reading the fifth row is roadmap item 3.6.
+- `sprites/wanZhen.png` is not as the pack came: its strike, hurt and special rows were repainted
+  on 2026-11-21 (roadmap Q-N34), and both manifests carry the new checksum.
 - `manifest.json` gives each character's name, book, school, technique and bio. The bios were
   written for an earlier version of the story and are not to be copied into the game as they
   stand (roadmap 3.2).
@@ -48,5 +51,5 @@ a suggested time for each frame.
   袁承志 and 狄雲. The producer may later set some powerful weapons aside for quests rather than
   the shop (roadmap 0.14).
 - In the game: seven effects are `game/assets/fx-<name>.webp` (which art plays which is `ARTS` in
-  `game/src/fx/painted-effects.js`); each item is a still `item-<id>.webp` and a loop
-  `item-<id>-motion.webp`, both cut from these sheets by `tools/item-art.py`.
+  `game/src/fx/painted-effects.js`); each item is a still `item-<id>.webp`, the first frame
+  of its sheet, cut by `tools/item-art.py`. Items are shown still, so the other frames are not used.

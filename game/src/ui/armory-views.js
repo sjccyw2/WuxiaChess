@@ -12,7 +12,7 @@ const who = (u) => G.unitDetails(u).name;
 const small = (action, label, attr = '', disabled = false) =>
   btn(action, label, 'mj-action fo-action', attr + (disabled ? ' disabled' : ''));
 const grip = '<i class="fo-grip" aria-hidden="true">⠿</i>';
-const itemImage = (id, live = false) => itemPicture(id, 'fo-item-img', live);
+const itemImage = (id) => itemPicture(id, 'fo-item-img');
 const dropAttrs = (kind, destination) => 'data-drop="' + kind + '" data-dest="' + destination + '"';
 const dragAttrs = (kind, id, owner) =>
   'data-drag="' + kind + '" data-id="' + id + '" data-owner="' + owner + '" draggable="false"';
@@ -276,7 +276,7 @@ function armory(s, u, ui) {
     }
     return (
       '<section class="fo-inspector">' +
-      itemImage(v.id, true) +
+      itemImage(v.id) +
       '<div><h4>' +
       v.item.name +
       '</h4><b>' +

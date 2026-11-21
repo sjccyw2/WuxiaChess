@@ -42,7 +42,7 @@ function bowlsPage(s, mixing) {
       const label = face ? lotName(id) : '第' + n + '盅';
       // The cup that was won plays its item's loop.
       const content =
-        (face && ITEMS[id] ? itemPicture(id, '', done) : picture(face ? lotImage(id) : 'bowl-cover.webp')) +
+        (face && ITEMS[id] ? itemPicture(id) : picture(face ? lotImage(id) : 'bowl-cover.webp')) +
         '<strong>' +
         esc(label) +
         '</strong>' +
