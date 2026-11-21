@@ -1,159 +1,129 @@
-// What carries over from one run to the next. People forget; the stone keeps what the
-// youth leaves on it, one mark at the end of each run, won or lost.
+// What carries over from one run to the next. The heroes are copied afresh each run and the
+// youth wakes with only a shadow of the dream; 求敗 remembers every stone. Each run the youth
+// wins is one 境, and for each 求敗 cuts a line in the stone beside the table: the story of one
+// of the swords he laid down.
 //
-// WORLD is what the youth can read for himself: the invitation and the stone. It says
-// nothing of who set the boards.
+// WORLD is what the youth can read and work out for himself, in the journal.
 const WORLD = [
   {
-    name: '帖上的話',
-    text: '帖上說：借一念入局，同下十局。十局皆勝，還君此刻，另贈一悟。中道而敗，原念奉還，無損，亦無得。帖末沒有落款。'
+    name: '局規',
+    text: '棋臺沿上刻著兩行字：白子勝滿十局，放還本尊；中道而敗，收子入盒。姓韋的說得更白：贏足十場放你們回去，輸了統統收進盒子裡。'
   },
   {
     name: '不同年月的人',
-    text: '應帖的人各自從自己的年月來。有人方才還在城牆上，有人方才還在黑牢裡。他們都說，來之前那一瞬，自己正走到絕處。帖發了許多張，還有人持帖在盤外觀望：哪一局點亮了引路燈，或是贏得快、贏得一人不倒，便多一人肯來。'
+    text: '棋盒裡的白子黑子，各是一位高手。子一沾棋盤，子上便立起人來。他們都說，來之前那一瞬，自己正走到絕處。開局抓三枚；每勝一局，對面的老伯便再借出一枚白子。'
   },
   {
     name: '執子之人',
-    text: '入了盤的人只看得見身邊幾步，盤外的人才看得見全局，所以由盤外的人落子。先落的一枚是「眼」；眼破，全盤皆輸。盤上至多五枚白子。倒下的人只是離盤一局，下一局再落。'
+    text: '入了盤的人只瞧得見身邊幾步，盤外的人才瞧得見全局，所以由盤外的人來說往哪裡走。先落的一枚是「眼」；眼破，全盤皆輸。盤上至多五枚白子。倒下的人只是離盤一局，下一局再落。'
   },
   {
     name: '對面的人',
-    text: '黑子是另一個人落的。每一局他落下一位局主、一位副手。他們也是從自己的年月裡來的，卻沒有收過帖：一道戰意從盤外壓在他們心頭，叫他們非戰不可，自己也說不出緣由。勝了這一局，戰意便散，他們各自醒來。'
+    text: '他自稱求敗，說自己的姓名早已忘了。這盤棋他左手同右手下了幾百年。黑子是他落的：他落子之時，將一道戰意按在他們眉心，叫他們見人便打。他們不服，卻掙不開。勝了這一局，戰意才散。棋臺上「嗒」的一聲，便是他又落了一子。'
   },
   {
     name: '忘與不忘',
-    text: '走出這個地方，人會把這裡的事忘掉。石頭不會，器物不會，那個姓韋的也不會。'
+    text: '少年醒了便忘，只剩一點影子，手卻記得。對面的老伯一手也沒有忘。那個姓韋的也記得，問他，他就賴。'
   },
   {
-    name: '石上的痕',
-    text: '每一輪臨去，在石上留一道記號。贏的一輪留，輸的一輪也留。下一回睜眼，認不得人，還認得自己的痕。'
+    name: '臺邊的五行字',
+    text: '少年每勝一輪，求敗便在臺邊的石上刻一行字，是他從前一柄劍的來歷。輸掉的一輪，石上不添字。'
   },
   {
     name: '十局之後',
-    text: '走完十局，同行的人各自回去，帶走一悟。執子的人可以登上階頂，去見刻字的那個人。'
+    text: '贏滿十局，同行的人放還本尊。求敗說一聲「好棋」，請少年回去。少年便醒了。'
+  },
+  {
+    name: '韋小寶的盤口',
+    text: '那個姓韋的每一局都另開一個盤口，押少年贏得出甚麼花樣。押中了分紅：銀子、一卷武譜，或是一場打得太好、叫手自己記起來的仗。對面的老伯瞧不見他，也聽不見他。'
   }
 ];
 
-// The last thing he senses each run, after closing his eyes: his real life, where he lies
-// asleep. Sound, smell and touch only. They come in order, then repeat.
+// What he wakes to at the end of a run, by 境: his real life, where he has been lying asleep.
+// Sound, smell and touch, and what his hands do before he remembers anything.
 const FRAGMENTS = [
-  '有甚麼濕熱的東西在舔他的臉。一下，又一下。是一條狗。',
-  '鍋鏟碰著鐵鍋，嚓，嚓。有飯香。灶前有人在做飯，是娘。',
-  '娘在喊他起來。喊的是他的名字。偏偏那兩個字，他怎麼也聽不清。',
-  '雞啼了。窗紙發白，被窩外頭很冷。他不想起來。他想回谷裡去，雖然他已經不記得谷裡有誰。',
-  '被窩裡，他的手還握著，像剛握過誰的手。不止一個人的手。'
+  '有甚麼濕熱的東西在舔他的臉，一下，又一下。是家裡的狗。夢只剩一點影子：一張棋臺，一個老人。他的手指還拈著，像拈著一枚棋子。',
+  '鍋鏟碰著鐵鍋，嚓，嚓。有飯香。娘在灶前做飯。他拾起灶邊一根柴枝，不知怎地，手腕一抖，挽了個劍花。',
+  '娘在喊他起來，喊的是他的名字。夢裡也有人這般叫過他，卻想不起是誰。他到屋後翻出一柄生了鏽的舊劍。',
+  '雞啼了，窗紙發白，被窩外頭好冷。他不想起來：他想回去把那盤棋下完。那柄劍已經磨亮了，擱在枕邊。',
+  '被窩裡，他的手還握著，像剛握過許多人的手。他握住枕邊的劍，走到屋外，天還沒有亮。'
 ];
 const CLOSING = {
-  win: '那句「還不夠」還在耳邊。他闔上眼。',
-  loss: '眾人散去的背影還在眼前。他闔上眼。'
+  win: '那一聲「請回吧」猶在耳邊。少年醒了。',
+  loss: '盒蓋合上的那一聲猶在耳邊。少年醒了。'
 };
-// voyage counts from 1.
-const closingFor = (voyage, won) =>
-  (won ? CLOSING.win : CLOSING.loss) + FRAGMENTS[(Math.max(1, voyage) - 1) % FRAGMENTS.length];
+// realm counts from 1.
+const closingFor = (realm, won) =>
+  (won ? CLOSING.win : CLOSING.loss) + FRAGMENTS[Math.min(FRAGMENTS.length, Math.max(1, realm)) - 1];
 
-// Index 0 is the first run (no marks yet). Index 4 is also used on later runs.
-//   opening   what he finds on the stone when he opens his eyes (first board)
-//   echo      what he says at the night talk (fifth board)
-//   mark      the mark this run leaves; carve tells how
-//   afterWin / afterLoss   closing his eyes
-const wake = (voyage, entry) => ({
+// The five 境. Index 0 is the first: no run won yet.
+//   mark   the line cut in the stone when this 境 is won
+//   echo   what the youth says at the night talk (before the fifth board)
+//   carve  how the line came to be cut, told when the run is won
+const wake = (realm, entry) => ({
   ...entry,
-  afterWin: closingFor(voyage, true),
-  afterLoss: closingFor(voyage, false)
+  afterWin: closingFor(realm, true),
+  afterLoss: closingFor(realm, false)
 });
 const WAKES = [
   wake(1, {
-    name: '第一道・劍痕',
-    mark: '一道劍痕',
-    opening: {
-      note: '石臺旁有一面石壁，平整，乾淨，上頭甚麼也沒有。',
-      text: '好乾淨的一面石頭。……我為甚麼會留意一面石頭？'
-    },
+    name: '第一行・利劍',
+    sword: '利劍',
+    title: '深谷一枰逢稚子',
+    mark: '利劍：弱冠之前所用',
     echo: {
-      note: '谷口的月亮三天沒有動過。',
-      text: '石上那行字說，贏了他，我就知道自己是誰。你們呢？贏了回去，要做甚麼？'
+      note: '谷口的月亮，三天沒有動過分毫。',
+      text: '我覺得我是在學劍，只是劍不在我手上。……各位贏了回去，要做甚麼？'
     },
-    carve: '臨去，韋小寶教他一個乖：在石頭上劃一道，下回好認。他不懂甚麼叫下回，還是拔劍劃了。'
+    carve: '少年臨去回頭，見求敗取過一柄舊劍，在臺邊石上刻了一行字，刻的是他少年時一柄利劍的來歷。刻完，他對著那行字瞧了很久。'
   }),
   wake(2, {
-    name: '第二道・兩點',
-    mark: '兩個點，一深一淺',
-    opening: {
-      note: '石壁上有一道新痕。',
-      text: '這是劍尖劃的。我拔劍比了比……是我這柄劍。我幾時來過？'
-    },
+    name: '第二行・軟劍',
+    sword: '軟劍',
+    title: '棄劍容易棄子難',
+    mark: '軟劍：誤傷義士，棄之深谷',
     echo: {
-      note: '燈下，他把石上那道劍痕的事說了。沒有人信。',
-      text: '我疑心我來過這裡。……算了，當我沒說。你們贏了回去，要做甚麼？'
+      note: '燈下，少年將求敗那句話又想了一遍。',
+      text: '老伯說各位只是拓下來的一份。我不信一張拓片會口渴、會想家。……各位聽了，惱不惱？'
     },
-    carve: '他用劍尖在那道痕旁邊點了兩下，一深一淺。這一回，是他自己要留的。'
+    carve: '求敗在石上刻了第二行，刻的是一柄軟劍：誤傷義士，棄之深谷。刻到「棄」字，他的手停了一停。'
   }),
   wake(3, {
-    name: '第三道・一行字',
-    mark: '一行字：「你又忘了。照舊走十局。」',
-    opening: {
-      note: '他想也沒想，用劍尖在石上敲了兩下，一深一淺。然後才看見，石上早有這樣兩個點。',
-      text: '我的手記得，我不記得。……那就別靠記性。'
-    },
+    name: '第三行・重劍',
+    sword: '重劍',
+    title: '始聞盤上不平聲',
+    mark: '重劍：重劍無鋒，大巧不工',
     echo: {
-      note: '燈下，他把石上的痕一道一道指給眾人看。',
-      text: '這幾道都是我的劍尖留的，我卻不記得。我想，我們來過。不止一回。'
+      note: '燈下，少年望了望棋臺那邊。求敗閉著眼，眉頭卻沒有鬆開。',
+      text: '適才那位對手說，那念頭不是他的。老伯頭一回抬頭瞧了他一眼。……各位給人拓了來，惱不惱？'
     },
-    carve: '他在石上刻了一行字，刻得很深：「你又忘了。照舊走十局。」'
+    carve: '求敗在石上刻了第三行，刻的是一柄重劍：重劍無鋒，大巧不工。這一行他刻得極輕，石屑也沒有落下多少。'
   }),
   wake(4, {
-    name: '第四道・並排',
-    mark: '兩行字並排，筆跡相同',
-    opening: {
-      note: '石上有一行字，是他的筆跡：「你又忘了。照舊走十局。」',
-      text: '是我寫的。寫給我自己。……好，照舊。'
-    },
+    name: '第四行・木劍',
+    sword: '木劍',
+    title: '草木竹石皆可劍',
+    mark: '木劍：不滯於物，草木竹石均可為劍',
     echo: {
-      note: '燈下，他把石上那行字唸了一遍。',
-      text: '這是我寫給自己的。我們來過。我想問的是另一件事：對面下棋的那個人，是誰？'
+      note: '燈下，少年數了數身邊的人。',
+      text: '老伯問我，怎地抓著誰便用誰。我說，來的都是好朋友，哪有得揀的。……各位是拓來的也好，是本人也好，我一樣當各位是朋友。'
     },
-    carve: '他把這行字再刻一遍，刻在臺沿那行舊字旁邊。兩行並排，他才看出來：筆跡是一樣的，只是舊的那行老得多。'
+    carve: '求敗在石上刻了第四行，刻的是一柄木劍：不滯於物，草木竹石均可為劍。刻罷，他將那柄刻字的劍橫在膝上，沒有收起。'
   }),
   wake(5, {
-    name: '第五道・掌印',
-    mark: '同行者的掌印',
-    opening: {
-      note: '兩行字並排刻在石上。「勝我者，得其名。」「你又忘了。照舊走十局。」同一手筆跡，一行老，一行新。',
-      text: '是刻字的人學我的字，還是我學他的？……先走完十局再說。'
-    },
-    // From the sixth run on, the palm prints are already there.
-    openingLater: {
-      note: '石上兩行字底下，疊著幾個大小不一的掌印。',
-      text: '這些手印不是我的。有人陪我來過。……不止一個。'
-    },
+    name: '第五行・無劍',
+    sword: '無劍',
+    title: '無劍猶握一枰棋',
+    mark: '最後一行，他沒有刻',
     echo: {
-      note: '燈下，他數了數石上的痕，又數了數眼前的人。',
-      text: '我們來過，不止一回。每一回都有人陪我走到這裡。我只想記住這一件事。'
+      note: '燈下，少年將每個人的臉都瞧了一遍。',
+      text: '老伯說這是最後一盤。下完了，各位回各位的年月，我回我的被窩。……我記性不好，醒了多半要忘。各位莫怪。'
     },
-    carve: '同行的人各在石上按了一個掌印。大大小小，疊在他那兩行字底下。'
+    carve: '石上還空著一行的地方。求敗提起那柄刻字的劍，瞧了一瞧，沒有刻，將劍輕輕放在石旁。最後一行，他沒有刻。'
   })
 ];
+// A lost run cuts no line; and once the fifth 境 is won there is no line left to cut.
+const NO_MARK = '這一輪沒有下完。臺邊的石上，沒有多一行字。';
+const FULL_MARK = '臺邊的石上，四行字底下空著一行。那柄刻字的劍，仍舊放在石旁。';
 
-// From the fifth run on, a won run ends with a choice about the palm prints. Either one is
-// permanent; it only changes what the next run opens on.
-const FATE_PROMPT = '石上這些掌印，留還是不留？';
-const FATES = [
-  {
-    id: 'witness',
-    name: '留名',
-    desc: '把同行者的名字刻在掌印旁邊。下一輪睜眼，你讀得到是誰陪你走過。這些名字從此留在這座谷裡。',
-    ending:
-      '你把同行的人的名字，一個一個刻在掌印旁邊。刻到最後一個，石屑落在手背上。往後每一輪睜眼，你都會先讀到這些名字，再想起自己沒有名字。',
-    echo: '石上的掌印旁邊刻著幾個名字，是他的筆跡。他一個也不認得，唸出來卻很順口。'
-  },
-  {
-    id: 'return',
-    name: '還名',
-    desc: '把石上的掌印抹平，讓每個人只帶走自己那一悟。谷仍是無名之谷。',
-    ending:
-      '你用掌根把那些手印一個一個抹平。石頭又乾淨了。他們各自帶著一悟回去，誰也不欠這座谷甚麼。',
-    echo: '石上很乾淨。韋小寶多說了一句：「上回那幾位，走得很乾淨。」問他甚麼上回，他又賴了。'
-  }
-];
-
-export { WORLD, WAKES, FATES, FATE_PROMPT, FRAGMENTS, closingFor };
+export { WORLD, WAKES, FRAGMENTS, NO_MARK, FULL_MARK, closingFor };

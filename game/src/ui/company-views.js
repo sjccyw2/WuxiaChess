@@ -169,7 +169,7 @@ function memberLine(s, u, ui) {
             (side.warning ? '<small class="warn">' + esc(side.warning) + '</small>' : '')
         : esc(model.sideNote)
     ) +
-    (model.recruit ? row('應帖', esc(model.recruit)) : '') +
+    (model.recruit ? row('入局', esc(model.recruit)) : '') +
     '</dl></section>';
   return (
     brief +

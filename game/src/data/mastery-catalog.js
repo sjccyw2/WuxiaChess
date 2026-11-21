@@ -2,10 +2,11 @@
 // 'signature' means the hero's initially known art. The three common passives keep their existing ids.
 const CATALOG_NOTE =
   '傳承所記為原著人物、武學或器物。招式分支、戰棋效果、武譜流傳與參悟條件為本作演繹。';
-// Why a famous hero arrives holding only an early art, said once above every tree: what answers
-// the summons is a single thought of them, and buying a node is that hero remembering.
+// Why a famous hero arrives holding only an early art, said once above every tree: 求敗 wants
+// to watch an art grow, so every stone starts each game from its root, and buying a node is that
+// hero remembering. The art that made their name comes last, with the days it was paid for in.
 const RECALL_NOTE =
-  '應帖而來的只是一念。入門的功夫還在手上；後來所學，要在局中一招一招想起來。';
+  '入局的只是拓來的一念，每一盤都從根長起。手上最熟的功夫還在；後來所學，要在局中一招一招想起來。成名的那一招排在最後：要連換來它的那段日子，一併想起。';
 const GATE_LABELS = {
   kills: '親手擊倒敵人',
   casts: '親自施展絕技',
@@ -21,7 +22,7 @@ const HERO_PATHS = {
     boon: '料敵先機',
     signature: '石壁劍招',
     origin:
-      '風清揚在思過崖授劍。入境時，令狐冲已懂得循破綻出劍，往後要學的是在變招中仍能掌握先機。',
+      '入境之時，令狐冲手上只剩華山劍法，與思過崖石壁上瞧來的幾招。風清揚所授的九劍，要在局中一式一式想起；想到最後，才是那有進無退的一路。',
     layout: [
       ['mountainOpening', 'ninefoldFormula', null],
       ['breakArrow', 'breakSword', 'starSuction'],
@@ -35,7 +36,7 @@ const HERO_PATHS = {
     boon: '綠竹清音',
     signature: '清心普善咒',
     origin:
-      '綠竹巷中，任盈盈以琴曲安定令狐冲的心神。入境時她已能奏出此曲，後續所修在於照應同行數人的呼吸。',
+      '入境之時，任盈盈手上只剩一柄短劍，與綠竹巷中彈熟了的清心普善咒。號令群豪的威儀、琴簫合奏的那一曲，都要在局中慢慢想起。',
     layout: [
       ['sheathedDagger', 'blackNeedle', null],
       [null, 'qinXiaoRally', 'returningSong'],
@@ -49,7 +50,7 @@ const HERO_PATHS = {
     boon: '肝膽相照',
     signature: '吸功入地小法',
     origin:
-      '向問天戴著鐐銬與追兵周旋，早能把壓來的外力卸入地底。初入境時會卸一人之力，日後可借此替同伴守住陣腳。',
+      '入境之時，向問天手上只剩一條鐵鞭，與卸力入地的一點粗淺功夫。他雙手猶帶鐐銬；涼亭中獨抗數百人的那一番光景，要到最後方才想起。',
     layout: [
       ['ironChainForm', 'chainShelter', null],
       ['sweepingWhip', null, 'reverseForce'],
@@ -63,7 +64,7 @@ const HERO_PATHS = {
     boon: '襄陽軍聲',
     signature: '分筋錯骨手',
     origin:
-      '洪七公教郭靖掌法，周伯通在桃花島教他空明拳。入境時的郭靖已練成降龍掌，守城時方能體會剛柔收放的分寸。',
+      '入境之時，郭靖手上只剩江南七位恩師所授的南山掌法與分筋錯骨手，那是他最早學的功夫。降龍十八掌要從頭一掌想起，一掌一掌想到十八掌俱全。',
     layout: [
       ['southernStance', 'kanglongRegret', null],
       ['guoPairedHands', null, 'fieldDragonWard'],
@@ -77,7 +78,7 @@ const HERO_PATHS = {
     boon: '古墓輕身',
     signature: '天羅地網勢',
     origin:
-      '小龍女曾從周伯通習得雙手互搏，故入境時便能一人分使全真、玉女兩路劍法。再深一重，在於兩劍收發不留空隙。',
+      '入境之時，小龍女手上只剩古墓派入門的天羅地網勢，伸手攔得住滿室麻雀的那一路。雙手互搏、一人使兩柄劍，都是很後來的事，要在局中想起。',
     layout: [
       ['jadeThread', null, 'jadeNeedle'],
       ['jadeHeart', null, 'silkBell'],
@@ -91,7 +92,7 @@ const HERO_PATHS = {
     boon: '無量清風',
     signature: '北冥神功',
     origin:
-      '段譽先在無量山洞習得步法與內功，再於天龍寺記住六脈劍圖。初入境時可發指劍，待步息相合才能接連運使諸脈。',
+      '入境之時，段譽手上只剩無量山洞中學來的北冥神功，那是他平生所學的第一門功夫。六脈神劍要一脈一脈想起；六脈齊發，須到最後。',
     layout: [
       ['fingerPrimer', 'shangYang', 'ripplingSteps'],
       ['guanChong', null, 'lesserMarsh'],
@@ -105,7 +106,7 @@ const HERO_PATHS = {
     boon: '奇門布陣',
     signature: '蘭花拂穴手',
     origin:
-      '黃蓉自小看黃藥師布陣，又得洪七公親授打狗棒法。入境時她已能纏住一人的兵刃，再深一層，便可看穿整座陣的活眼。',
+      '入境之時，黃蓉手上只剩家傳的落英神劍掌與蘭花拂穴手，都是自小在桃花島上練熟的。打狗棒法要一訣一訣想起，最後一路天下無狗，須到最後。',
     layout: [
       ['huangPetals', null, 'peachWard'],
       ['beggarBind', null, null],
@@ -119,7 +120,7 @@ const HERO_PATHS = {
     boon: '重劍開路',
     signature: '蛤蟆功',
     origin:
-      '神鵰帶楊過在激流中練成重劍。他久候小龍女，另創黯然銷魂掌，入境時已能出掌。這十局更考驗他要把多少氣力留給下一程。',
+      '入境之時，楊過手上只剩義父所教的蛤蟆功，與古墓中練熟的劍。重劍是後來的事，那一路掌法更在後頭，要一局一局想將回去。',
     layout: [
       [null, null, 'quanzhenSword'],
       ['darkIronEdge', null, 'jadeFluteCut'],
@@ -133,7 +134,7 @@ const HERO_PATHS = {
     boon: '九陽護元',
     signature: '蝶谷醫術',
     origin:
-      '張無忌憑九陽內力在光明頂習得乾坤大挪移。入境時他已能替身旁一人卸勁，日後要試的是在眾人各受一擊時，如何照應周全。',
+      '入境之時，張無忌手上只剩武當長拳，與少年時在蝴蝶谷學來的醫術。九陽神功、乾坤大挪移，要在局中一層一層想起。',
     layout: [
       [null, 'nineYangMantle', null],
       ['qiankunShove', null, 'qiankunYield'],
@@ -147,7 +148,7 @@ const HERO_PATHS = {
     boon: '雪野追鋒',
     signature: '胡家刀法',
     origin:
-      '胡斐依父傳刀譜練刀，為追究不平之事走遍南北。入境時兩刀相接已純熟，雪山決鬥中的難處，是看見對方破綻後還能變招。',
+      '入境之時，胡斐手上只剩照著父親遺下的刀譜練熟的胡家刀法。雪山絕頂舉在半空的那一刀，要到最後方才想起。',
     layout: [
       ['huQuickDraw', null, 'snowPursuit'],
       ['foxFeint', 'miaoSword', 'silkwormPalm'],

@@ -84,7 +84,7 @@ const ENCOUNTERS = [
       '接骨續筋',
       'mend',
       'guard',
-      '昔日的跌打醫生，靠暗中下藥起家。他搭得出自己沒有中藥，卻說不出心裡那個「戰」字是誰擱的。',
+      '昔日的跌打醫生，靠暗中下藥起家。他搭得出自己沒有中藥，卻說不出心裡那個「戰」字是誰擱的。逼他動手的是戰意；同夥傷了，替人接骨續筋，卻是他自己的老本行。',
       'bandit',
       'hue-rotate(15deg) saturate(.7)',
     { mods: { hp: 0.9, atk: -3, step: 2, range: 1 }, sig: { heal: 'stage' } }
@@ -136,7 +136,7 @@ const ENCOUNTERS = [
       phase: {
         name: '遁走',
         flee: { turns: 3, herbs: 0.08, until: 0.75 },
-        log: '血刀老祖刀勢一收，踏雪往藥草地退去。',
+        log: '血刀老祖刀勢一收，踏雪往藥草地退去。打到半醒，他那本算盤回來了：先養傷，再砍人。',
         note: '氣血過半後退向最近的藥草地，三回合內只打身邊的人；在藥草地每回合回復最大氣血的 8%，回到七成五即止。'
       }
     }
@@ -227,7 +227,7 @@ const ENCOUNTERS = [
         cadence: 2,
         prefers: 'nearest',
         holds: false,
-        log: '歐陽鋒逆運經脈，狀若瘋狂。',
+        log: '歐陽鋒逆運經脈，狀若瘋狂。他醒了一半，醒過來的卻是那個瘋了的自己。',
         note: '攻擊 ＋6、防禦 −4、移動 ＋1，絕技每兩回合一次，不再原地等待，見人就撲。'
       }
     }
@@ -240,7 +240,7 @@ const ENCOUNTERS = [
       '靈蛇拳法',
       'pin',
       'guard',
-      '白駝山少主。他明白心裡那個念頭不是自己的主意，摺扇卻照樣指使群蛇。',
+      '白駝山少主。他明白心裡那個念頭不是自己的主意，摺扇卻照樣指使蛇奴，一撥一撥從桃溪趕將上來。',
       'duan',
       'sepia(.2) saturate(.6)',
     { mods: { atk: -4, range: 2 } }
@@ -344,7 +344,7 @@ const ENCOUNTERS = [
         step: 2,
         def: -3,
         cadence: 2,
-        log: '岳不群撕下君子面目，身形快得看不清。',
+        log: '岳不群撕下君子面目，身形快得看不清。打到半醒，君子劍底下的那個人先露了出來。',
         note: '移動 ＋2、防禦 −3，絕技每兩回合一次。'
       }
     }
@@ -381,7 +381,7 @@ const ENCOUNTERS = [
         atk: 5,
         range: 1,
         brace: true,
-        log: '斗轉星移倒轉銅漏，攻擊增加 5、防禦增加 4，射程擴至三格。',
+        log: '慕容博半醒，斗轉星移倒轉銅漏：攻擊增加 5、防禦增加 4，射程擴至三格。',
         note: '攻擊 ＋5、防禦 ＋4、射程擴至三格。'
       }
     }
@@ -688,14 +688,14 @@ const VILLAINS = {
     rank: 'mini',
     row: 'lieutenant',
     ...adversary('鳳天南', '佛山五虎門', '飛狐外傳', '五虎棍', '橫棍封橋', 'pin', 'guard',
-      '佛山五虎門掌門，使一條長棍，出手專絆人腳步。', 'fengTiannan', '', { mods: { step: 3 } })
+      '佛山五虎門掌門，霸著一個鎮，離了自己的地頭從不出頭。今日給落在一處不相干的渡口，手中長棍自己橫了過來，專絆人腳步。', 'fengTiannan', '', { mods: { step: 3 } })
   },
   zhaoZhong: {
     map: 1,
     rank: 'mini',
     row: 'lieutenant',
     ...adversary('張召重', '武當派・清廷', '書劍恩仇錄', '武當劍術', '凝碧截腕', 'weak', 'hero',
-      '武當出身的清廷武官，劍法沉穩，出手專截對手手腕。', 'zhaoZhong', '', {
+      '武當出身的清廷武官，上頭有令方才動手。壓著他的這一道令沒有印信，他竟也照辦了，守著東院，專尋為首之人，一劍截其手腕。', 'zhaoZhong', '', {
         mods: { def: 2, step: 3 },
         prefers: 'leader',
         post: { tile: 'spawn', tether: 2, wake: 'struck', note: '守在東院{tile}兩格內；受到攻擊後才離位。' }
@@ -706,14 +706,14 @@ const VILLAINS = {
     rank: 'mini',
     row: 'lieutenant',
     ...adversary('完顏洪烈', '金國趙王府', '射鵰英雄傳', '王府侍從截擊', '趙府令旗', 'exposed', 'guo',
-      '金國趙王，不親自衝陣，以令旗指揮弓手。', 'wanYan', '', { mods: { hp: 0.9, atk: -2 }, sig: { reach: 3 } })
+      '金國趙王，一生延攬豪傑，為的是他的國家。他從不親自衝陣；今日令旗自己舉了起來，指著誰，弓手便射誰。', 'wanYan', '', { mods: { hp: 0.9, atk: -2 }, sig: { reach: 3 } })
   },
   xianYu: {
     map: 8,
     rank: 'boss',
     row: 'master',
     ...adversary('鮮于通', '華山派', '倚天屠龍記', '摺扇點穴', '金蠶蠱毒', 'poison', 'duan',
-      '華山派掌門，使摺扇，扇中藏有蠱毒。', 'xianYu', '', {
+      '華山派掌門，人稱神機子，動手之前必先留下後著。今日連後著也來不及佈，只剩摺扇中的蠱毒，專尋已受傷的人下手。', 'xianYu', '', {
         mods: { hp: 0.7, def: -2, step: 3, range: 1 },
         prefers: 'wounded'
       })
@@ -723,7 +723,7 @@ const VILLAINS = {
     rank: 'mini',
     row: 'lieutenant',
     ...adversary('萬震山', '荊州萬門', '連城訣', '萬門劍式', '唐詩劍法', 'exposed', 'hero',
-      '荊州萬門的師父，使唐詩劍法，專攻對手破綻。', 'wanZhen', '', { mods: { def: 1 }, prefers: 'wounded' })
+      '荊州萬門的師父。他夜夜夢遊，人睡著了，手自己起來砌牆；給戰意按著動手，於他並不希奇。劍招專向傷重之人招呼。', 'wanZhen', '', { mods: { def: 1 }, prefers: 'wounded' })
   }
 };
 // Troop types that follow those villains. `row` as above; only the traits listed in the RANKS
@@ -736,7 +736,7 @@ const TROOPS = {
     school: '佛山五虎門',
     mini: 'fiveTiger',
     basic: '隔步掃棍',
-    bio: '五虎門門徒，使長棍，隔一步出手最準，被人貼身便施展不開。',
+    bio: '鳳天南念中的門徒。仗著人多棍長，隔一步出手最準，給人貼身便施展不開。',
     traits: { mods: { step: 3, range: 2 }, crowded: { within: 1, atk: 6 } }
   },
   qingShield: {
@@ -746,7 +746,7 @@ const TROOPS = {
     school: '清營',
     mini: 'qingShield',
     basic: '抵盾短刀',
-    bio: '清營士卒，持盾執刀守住門口，離開原位便護不住自己。',
+    bio: '張召重念中的營兵。持盾執刀守住門口，站在原位方成一堵牆，離了位便護不住自己。',
     traits: {
       mods: { hp: 1.2, def: 3, step: 2, range: 1 },
       stance: { while: 'posted', cut: 40 },
@@ -760,7 +760,7 @@ const TROOPS = {
     school: '金國趙王府',
     mini: 'jinBow',
     basic: '城外勁箭',
-    bio: '趙王府的弓手，要隔開三格才射得準，被人逼近便失了準頭。',
+    bio: '完顏洪烈念中的王府弓手。瞧著令旗放箭，隔得遠方才射得準，給人逼近便失了準頭。',
     traits: { mods: { range: 4 }, crowded: { within: 2, atk: 8 } }
   },
   huaBlade: {
@@ -770,7 +770,7 @@ const TROOPS = {
     school: '華山派',
     mini: 'huaBlade',
     basic: '合步斜刀',
-    bio: '華山弟子，兩人一組結刀陣，並肩時互相補位。',
+    bio: '鮮于通念中的華山弟子。兩人一組，合使刀法，並肩之時互相補位。',
     traits: { mods: { hp: 0.75, atk: -2, range: 1 }, cover: 'kin' }
   },
   wanDisciple: {
@@ -780,7 +780,7 @@ const TROOPS = {
     school: '荊州萬門',
     mini: 'wanDisciple',
     basic: '連步遞劍',
-    bio: '萬門弟子，見對手傷重，出劍便更狠。',
+    bio: '萬震山念中的門下弟子。見對手傷重，出劍便更狠。',
     traits: { mods: { hp: 0.8, range: 1 }, execute: { atk: 6 }, prefers: 'wounded' }
   }
 };
