@@ -51,6 +51,7 @@ P = [
  Panel('m-box.png',      38.6, 45.0, mbox_cam, poly=enter(38.6, 'tl', .35, .45, .6), shake=decay(41.55, .3, .45)),
 ]
 SFX_CLANG = Image.open('sfx-clang.png').convert('RGBA')
+SFX_TAP = Image.open('sfx-tap.png').convert('RGBA')
 def life(t, a, b): return (t - a) / (b - a) if a <= t < b else -1
 O = []
 def at(fn): O.append(fn); return fn
@@ -76,7 +77,7 @@ def _(c, t):
 @at
 def _(c, t):
     sfx_image(c, SFX_CLANG, (W * .6, H * .4), 620, life(t, 14.95, 16.3), rot=4)
-    sfx_hk(c, '嗒', (W * .3, H * .74), 160, life(t, 41.55, 42.6), rot=-6, trail=(-1, -.2))
+    sfx_image(c, SFX_TAP, (W * .3, H * .72), 400, life(t, 41.55, 42.9), rot=-6)
 @at
 def _(c, t):
     balloon_hk(c, ['這……', '這是甚麼地方？'], (820, 540), (560, 420), life(t, 21.6, 23.55))
@@ -100,19 +101,9 @@ def _(c, t):
         if t0 <= t < t0 + .2: k = max(k, a * (1 - (t - t0) / .2))
     return misregister(c, k)
 @at
-def _(c, t):
-    if t < 43.5: return
-    a = out3((t - 43.5) / .6)
-    g = np.zeros((H, W, 4), np.uint8); ramp = np.clip((np.arange(H) - H * .5) / (H * .5), 0, 1)
-    g[..., 3] = (ramp[:, None] * 225 * a).astype(np.uint8)
-    L = Image.fromarray(g, 'RGBA'); d = ImageDraw.Draw(L)
-    k = out5((t - 43.5) / .45); sz = int(150 * (1.2 - .2 * k))
-    for i, ch in enumerate('劍影江湖'):
-        d.text((W / 2 - 2 * sz * 1.15 + i * sz * 1.15, 1450 - (sz - 150) / 2), ch, font=font(ch, sz), fill=PAPER + (int(255 * a),), stroke_width=6, stroke_fill=INK + (int(255 * a),))
-    b = clamp((t - 43.9) / .4)
-    for i, ch in enumerate('一念江湖'):
-        d.text((W / 2 - 2 * 66 + i * 66, 1660), ch, font=font(ch, 46), fill=(218, 183, 120, int(255 * b)), stroke_width=3, stroke_fill=INK + (int(255 * b),))
-    c.paste(L, (0, 0), L)
+def _(c, t):   # the end: hold on his invitation, then fade to black
+    if t >= 44.0: flash(c, 1 - out3((t - 44.0) / .9), color=(0, 0, 0))
+hold_until_covered(P)
 def frame_at(t):
     canvas = Image.new('RGB', (W, H), PAPER)
     for pn in P:

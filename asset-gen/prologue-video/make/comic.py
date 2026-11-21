@@ -47,6 +47,13 @@ class Panel:
         self.mask, self.reveal, self.center, self.border, self.shake = mask, reveal, center, border, shake
         self.anchor = anchor   # ((image x, image y), (screen x, screen y)): pin that point of the picture to that spot
     def active(self, t): return self.t_in <= t < self.t_out
+    def full_at(self):
+        """When this panel first covers the whole frame (None if it never does: a lower page panel)."""
+        if self.mask == 'poly':
+            return self.poly[-1][0] if self.poly[-1][1] is FULL else None
+        t = self.t_in
+        while t < self.t_in + 5 and self.reveal(t) < .999: t += 1 / FPS
+        return t
     def render(self, canvas, t):
         tc = math.floor(t / STEP) * STEP
         u = (tc - self.t_in) / max(1e-6, self.t_out - self.t_in)
@@ -195,7 +202,18 @@ def flash(canvas, k, color=(255, 252, 240)):
     if 0 < k < 1:
         canvas.paste(Image.new('RGB', canvas.size, color), (0, 0), Image.new('L', canvas.size, int(255 * (1 - k))))
 
+def hold_until_covered(panels):
+    """A picture stays on screen until the next panel that fills the frame has finished coming in,
+    so a transition never shows the bare page behind it."""
+    for i, pn in enumerate(panels):
+        for nxt in panels[i + 1:]:
+            full = nxt.full_at()
+            if full is not None and nxt.t_in < pn.t_out + .5:
+                pn.t_out = max(pn.t_out, full + 1 / FPS)
+                break
+
 def render(panels, overlays, out, dur):
+    hold_until_covered(panels)
     p = subprocess.Popen(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(FPS),
                           '-i', '-', '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out],
                          stdin=subprocess.PIPE)

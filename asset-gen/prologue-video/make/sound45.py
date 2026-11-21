@@ -48,7 +48,7 @@ add(23.6, click(.25))                         # the stone stops in his fingers: 
 add(28.6, bell(110, 6, .32)); add(31.6, bell(146.8, 6, .22))
 for k in range(8): add(35.6 + k * .38, click(.18))   # stones set down, fast, while the camera snaps   # gravity under 罷了 and his name
 add(41.55, click())
-add(43.5, thump(1.4, .9))
+add(43.9, thump(1.4, .7))
 mix = np.tanh(mix * 1.2) * .85
 with wave.open('sound45.wav', 'wb') as w:
     w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((mix * 32767).astype(np.int16).tobytes())
