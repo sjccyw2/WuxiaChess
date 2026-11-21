@@ -65,6 +65,7 @@ function board(ids = ['hero', 'medic', 'guard'], seed = 7) {
   s.run.pool = G.PARTY.filter((id) => !ids.includes(id));
   s.run.scene = 'fight';
   s.run.formationOpen = false;
+  s.arrivals = {}; // a small battle of its own: board 0's reinforcements stay away
   for (const side of ['ally', 'enemy'])
     s.units
       .filter((u) => u.side === side)
@@ -134,9 +135,10 @@ function quietTurn(s) {
   for (const e of G.enemies(s)) e.acted = true;
   return G.nextRound(s);
 }
-// Win the board and walk through the camp to the next one.
+// Win the board (every enemy down, none still to come) and walk through the camp to the next one.
 function nextBoard(s) {
-  unit(s, G.commanderId(s)).hp = 0;
+  for (const e of G.enemies(s)) e.hp = 0;
+  s.arrivals = {};
   G.check(s);
   R.settle(s);
   R.turnPage(s, true);
@@ -3311,7 +3313,7 @@ section('board 8 倒影天街: the masked duelist');
   closeRound(s);
   yue.hp = Math.floor(yue.maxHp / 2);
   G.check(s);
-  check('at half the mask comes off', yue.phased && yue.step === 6 && yue.def === 20 && G.enemyTechnique(yue, s).cadence === 2 && s.logs.at(-1).text === '岳不群撕下君子面目，身形快得看不清。');
+  check('at half the mask comes off', yue.phased && yue.step === 6 && yue.def === 20 && G.enemyTechnique(yue, s).cadence === 2 && s.logs.slice(-2).some((l) => l.text === '岳不群撕下君子面目，身形快得看不清。'), JSON.stringify([yue.phased, yue.step, yue.def, s.logs.slice(-2)]));
 }
 
 section('board 9 無刻漏臺: the mirror');

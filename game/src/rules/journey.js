@@ -106,6 +106,7 @@ function initialRun(ids, seed, legacy) {
   fillProfile(chronicle);
   const run = {
     trees: TREES_EDITION,
+    battles: BATTLES_EDITION,
     voyage: chronicle.returns + 1,
     priorFate: chronicle.lastFate,
     seed,
@@ -161,7 +162,9 @@ function startRun(draw = drawLots(), legacy = LEGACY) {
   s.logs = [];
   s.stock = { remedy: 2 + (legacy.best >= 7 ? 1 : 0), elixir: 2, travelBlade: 1, bracer: 1 };
   s.run.manuals.push('softPalm');
+  s.units.push(...G.boardOf(s).pieces.map((piece) => G.pieceUnit(s, piece)));
   G.identifyEncounter(s);
+  setUpBoard(s);
   for (const [id, n] of Object.entries(legacy.parcel.stock)) s.stock[id] = (s.stock[id] || 0) + n;
   for (const u of G.party(s)) {
     prepareHero(u);
@@ -304,13 +307,15 @@ const ROUND_MARKS = [
   'signaturePush',
   'lastSiphonRound',
   'lastDazeRound',
-  'fleeThrough'
+  'fleeThrough',
+  'enteredRound'
 ];
 // Older saves have none of these fields; a malformed one is dropped rather than failing the save.
 function tidyMarks(s) {
   for (const u of [...s.units, ...s.run.bench]) {
     for (const k of ROUND_MARKS) if (u[k] != null && !Number.isFinite(u[k])) delete u[k];
-    for (const k of ['woke', 'phased']) if (u[k] != null && typeof u[k] !== 'boolean') delete u[k];
+    for (const k of ['woke', 'phased', 'halved'])
+      if (u[k] != null && typeof u[k] !== 'boolean') delete u[k];
     const once = u.usedOnce,
       cool = u.cooldowns;
     if (once != null && !(Array.isArray(once) && once.every((id) => typeof id === 'string')))
@@ -334,6 +339,66 @@ function tidyMarks(s) {
     else delete s.zones;
   }
 }
+// Boards gained kinds, extra pieces and reinforcements in this edition of the save.
+const BATTLES_EDITION = 1;
+// A board as a run reaches it: its reinforcements scheduled and its facts blank. Called once
+// its pieces are on the board (startRun, advance, and a migrated save not yet in the fight).
+function setUpBoard(s) {
+  const r = s.run;
+  r.battles = BATTLES_EDITION;
+  delete r.legacyBoard;
+  G.scheduleWaves(s);
+  s.tally = G.blankTally();
+}
+// A save from before boards had kinds. A board already in the fight finishes under its old rules
+// (its master, its four); one not yet fought is rebuilt with its new pieces. Nothing is logged:
+// the player sees nothing change under him.
+function migrateBattles(s) {
+  const r = s.run;
+  if (r.battles === BATTLES_EDITION) return;
+  if (r.status === 'battle' && r.scene === 'fight') {
+    r.legacyBoard = true;
+    s.arrivals = {};
+    s.tally = G.blankTally();
+    const commander = G.find(s, G.commanderId(s));
+    if (s.foreshadow && commander) commander.halved = true;
+  } else if (r.status === 'battle') {
+    s.units = [...G.party(s), ...defenders(s)];
+    G.identifyEncounter(s);
+    setUpBoard(s);
+  }
+  r.battles = BATTLES_EDITION;
+}
+// The board fields of a save, each dropped or reset when malformed rather than failing the save.
+function tidyBoard(s) {
+  const r = s.run,
+    board = G.boardOf(s);
+  if (r.legacyBoard !== true) delete r.legacyBoard;
+  if (r.deploying != null && typeof r.deploying !== 'boolean') delete r.deploying;
+  const arrivals = s.arrivals && typeof s.arrivals === 'object' ? s.arrivals : {};
+  s.arrivals = {};
+  for (const w of r.status === 'battle' ? board.waves : []) {
+    const due = arrivals[w.id];
+    const waiting = w.pieces.some((p) => !s.units.some((u) => u.id === p.id));
+    if (Number.isInteger(due) && due >= s.round && due <= G.LIMIT && waiting) s.arrivals[w.id] = due;
+  }
+  if (!validTally(s.tally)) s.tally = G.blankTally();
+}
+const count = (n) => Number.isSafeInteger(n) && n >= 0;
+function validTally(t) {
+  return (
+    !!t &&
+    typeof t === 'object' &&
+    Array.isArray(t.falls) &&
+    t.falls.every((f) => f && typeof f.id === 'string' && Number.isInteger(f.round)) &&
+    count(t.doses) &&
+    count(t.leaderHurt) &&
+    !!t.fired &&
+    typeof t.fired === 'object' &&
+    Object.values(t.fired).every(count) &&
+    typeof t.crossed === 'boolean'
+  );
+}
 function restoreRun(raw) {
   if (!raw) return null;
   if ([4, 5].includes(raw.version)) migrateSave(raw);
@@ -346,6 +411,10 @@ function restoreRun(raw) {
     s.run = initialRun(ids, newSeed(), LEGACY);
     for (const u of G.party(s)) prepareHero(u);
     s.run.scene = 'fight';
+    // The classic board finishes as it began: its master, its four, no reinforcements.
+    s.run.legacyBoard = true;
+    s.arrivals = {};
+    s.tally = G.blankTally();
     G.identifyEncounter(s);
     s.run.formationOpen =
       !s.result &&
@@ -530,6 +599,8 @@ function restoreRun(raw) {
   if (r.objectivePos && !G.walkable(r.objectivePos.x, r.objectivePos.y, s.mapIndex))
     delete r.objectivePos;
   G.identifyEncounter(s);
+  migrateBattles(s);
+  tidyBoard(s);
   const validHero = (u) =>
     Number.isSafeInteger(u.xp) &&
     u.xp >= 0 &&
@@ -940,6 +1011,7 @@ function advance(s) {
   s.units = [...line, ...defenders(s)];
   s.leader = s.selected = ids[0];
   s.round = 1;
+  setUpBoard(s);
   s.phase = 'ally';
   s.result = null;
   s.reason = '';
@@ -1220,4 +1292,4 @@ function campModel(s) {
   };
 }
 
-export { mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

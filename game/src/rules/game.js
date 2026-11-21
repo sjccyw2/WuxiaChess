@@ -507,7 +507,8 @@ function enemyTechnique(u, s) {
 function roundsToSignature(s, u) {
   const art = enemyTechnique(u, s);
   if (!art) return null;
-  const first = art.offset > 0 || s.run?.stage >= 5 ? 2 : 3;
+  // Counted from the round the piece came onto the board: round 1, or a reinforcement's entry.
+  const first = (u.enteredRound ?? 1) + (art.offset > 0 || s.run?.stage >= 5 ? 1 : 2);
   const next = Number.isInteger(u.signatureRound) ? u.signatureRound + art.cadence : first;
   return Math.max(0, next + (u.signaturePush || 0) - s.round);
 }
@@ -647,11 +648,12 @@ function turnBack(s, striker, bearer, blow, effects) {
   } else {
     bearer.signatureRound = s.round;
     if (bearer.signaturePush) bearer.signaturePush = 0;
+    noteFired(s, 'mirror'); // a villain's 斗轉星移 turned a blow
   }
   if (!blow.back || !living(striker)) return;
   let n = afterWard(blow.back, wardPercent(s, striker));
   if (ally(striker)) n = Math.min(n, (striker.conditions?.shield?.power || 0) + striker.hp - 1);
-  const dealt = n > 0 ? wound(s, striker, n, source) : 0;
+  const dealt = n > 0 ? blowing({ how: 'reflect' }, () => wound(s, striker, n, source)) : 0;
   effects.push([striker.id, '−' + dealt]);
   const verb = (ward.source ? '挪移' : '斗轉星移') + '反震' + unitDetails(striker).name;
   log(s, 'combat', verb + '，造成 ' + dealt + ' 點傷害。', unitDetails(bearer).name);
@@ -1657,6 +1659,7 @@ function woundSelfLoss(s, u, effects) {
   const n = hurt ? Math.min(hurt.power, u.hp - 1) : 0;
   if (n <= 0) return;
   u.hp -= n;
+  if (s.tally && u.id === s.leader) s.tally.leaderHurt += n; // 內傷 is an enemy's doing
   effects.push([u.id, '−' + n, 'sacrifice']);
   log(s, 'combat', '內傷發作，損失 ' + n + ' 點氣血。', unitDetails(u).name);
 }
@@ -2036,9 +2039,12 @@ function wound(s, u, n, source) {
   const d = Math.min(n, u.hp);
   u.hp -= d;
   if (!living(u)) delete u.conditions;
+  // 領隊無傷 counts what enemies take from the leader, through any blow, counter or poison.
+  if (s.tally && u.id === s.leader && d > 0 && source && !ally(source)) s.tally.leaderHurt += d;
   if (!ally(u)) {
     s.stats.damage += d;
     if (!living(u)) {
+      noteFall(s, u, source);
       s.stats.kills++;
       progress(source, 'kills', 1);
       if (unitDetails(u)?.traits?.ward) {
@@ -2058,8 +2064,9 @@ function wound(s, u, n, source) {
   }
   return d;
 }
+// The lamp's tile, when this run's secondary is to light it.
 function objectiveTile(s) {
-  return ['beacon', 'cache', 'herbs'].includes(s.run?.goal)
+  return s.run?.side?.kind === 'lamp' || ['beacon', 'cache', 'herbs'].includes(s.run?.goal)
     ? s.run.objectivePos || mapLayout(s.mapIndex).objective
     : null;
 }
@@ -2100,11 +2107,8 @@ function reflectStrike(s, victim, attacker, dealt, effects) {
   if (!stance || !dealt || !living(victim) || !living(attacker)) return;
   delete victim.conditions.riposte;
   const source = find(s, stance.source) || victim;
-  const amount = wound(
-    s,
-    attacker,
-    afterWard(Math.min(stance.power, dealt), wardPercent(s, attacker)),
-    source
+  const amount = blowing({ how: 'reflect' }, () =>
+    wound(s, attacker, afterWard(Math.min(stance.power, dealt), wardPercent(s, attacker)), source)
   );
   effects.push([attacker.id, '−' + amount]);
   log(
@@ -2185,12 +2189,20 @@ function resolve(s, u, t, skill) {
     // 留力 asks whether the hero struck last round; a counter or a support art is no strike.
     if (ally(u)) u.struckRound = s.round;
     let total = 0;
-    for (const power of f.rawHits) {
-      if (!living(t)) break;
-      const dealt = wound(s, t, power, u);
-      total += dealt;
-      effects.push([t.id, '−' + dealt]);
-    }
+    const facts = {
+      how: skill ? 'art' : 'basic',
+      art: skill ? id : null,
+      combo: !!(f.plan.spentMark || f.plan.spentPoison || f.plan.partner),
+      answered: !!art?.answer && strikeFactor(s, u, art, t).notes.some((n) => n.startsWith('破招'))
+    };
+    blowing(facts, () => {
+      for (const power of f.rawHits) {
+        if (!living(t)) break;
+        const dealt = wound(s, t, power, u);
+        total += dealt;
+        effects.push([t.id, '−' + dealt]);
+      }
+    });
     felled = !living(t);
     log(
       s,
@@ -2228,7 +2240,7 @@ function resolve(s, u, t, skill) {
     if (art?.recover) u.mp = Math.min(u.maxMp, u.mp + art.recover);
     for (const other of f.splash) {
       const v = find(s, other.id),
-        dealt = wound(s, v, other.raw, u);
+        dealt = blowing({ how: 'splash', art: skill ? id : null }, () => wound(s, v, other.raw, u));
       effects.push([v.id, '−' + dealt]);
       log(s, 'combat', '受到氣勁波及，損失 ' + dealt + ' 點氣血。', unitDetails(v).name);
       if (!ally(v)) wakePost(s, v, true);
@@ -2316,6 +2328,7 @@ function consume(s, u, id) {
   if (n <= 0) return false;
   u[k] += n;
   s.stock[id]--;
+  if (s.tally && s.run?.scene === 'fight') s.tally.doses++; // 不假丹藥
   if (k === 'hp') s.stats.healed += n;
   log(
     s,
@@ -2383,28 +2396,249 @@ function train(s, u, k) {
   );
   return true;
 }
+// How each kind of board is won (battles.js `kind`). The leader's fall and the round limit end
+// every kind the same way, in `check`.
+const KIND_RULES = {
+  // 斬將: every master has fallen, whoever else stands.
+  slay: { won: (s) => masterIds(s).every((id) => fallen(s, id)) },
+  // 殲滅: no enemy stands and none is still to come.
+  rout: { won: (s) => !enemies(s).some(living) && wavesLeft(s) === 0 }
+};
+const fallen = (s, id) => {
+  const u = s.units.find((v) => v.id === id);
+  return !!u && !living(u);
+};
 function check(s) {
   if (s.result) return;
-  const chief = find(s, commanderId(s));
   if (!living(find(s, leader(s)))) {
     s.result = 'loss';
     s.reason =
       DETAILS[leader(s)].name +
       (s.run ? '倒下，這一輪的眼破了。' : '負傷倒下，曲譜落入青城弟子手中。');
-  } else if (!living(chief)) {
-    s.result = 'win';
-    s.reason = s.run ? CHAMBER_TALES[s.mapIndex].victory : '余滄海收劍退開，渡口的船燈再度亮起。';
-  } else if (s.round > LIMIT) {
-    s.result = 'loss';
-    s.reason = s.run ? '十二合已過。借來的一念撐不住，散了。' : '十二回合已過，霧中的末班渡船已經離岸。';
-    s.round = LIMIT;
-  } else if (!s.foreshadow && chief.hp <= chief.maxHp / 2) {
-    s.foreshadow = true;
-    shiftPhase(s, chief); // 變招: the master's half-health change, if its data has one
+  } else {
+    markHalved(s); // 變招, and reinforcements that wait on a master's half
+    if (KIND_RULES[boardOf(s).kind].won(s)) {
+      s.result = 'win';
+      s.reason = s.run ? CHAMBER_TALES[s.mapIndex].victory : '余滄海收劍退開，渡口的船燈再度亮起。';
+    } else if (s.round > LIMIT) {
+      s.result = 'loss';
+      s.reason = s.run ? '十二合已過。借來的一念撐不住，散了。' : '十二回合已過，霧中的末班渡船已經離岸。';
+      s.round = LIMIT;
+    }
   }
   if (s.result) {
     s.phase = 'done';
     log(s, 'story', s.reason, s.result === 'win' ? '破關' : '敗退');
+  }
+}
+// Each master's half-health moment, once: `halved` is set, the commander's also sets
+// `s.foreshadow`, and a living master changes as its `phase` says. A master felled from above
+// half is marked as it falls, for the reinforcements that wait on it, but changes nothing.
+function markHalved(s) {
+  for (const id of masterIds(s)) {
+    const m = s.units.find((v) => v.id === id);
+    if (!m || m.halved || m.hp > m.maxHp / 2) continue;
+    m.halved = true;
+    if (id === commanderId(s)) s.foreshadow = true;
+    if (living(m)) shiftPhase(s, m);
+    fireHalved(s, id);
+  }
+}
+// Where the board's objective stands: the masters still living, the enemies still standing, and
+// the wave pieces still able to come. The interface and the simulator read progress here.
+function objectiveLeft(s) {
+  return {
+    masters: masterIds(s).filter((id) => !fallen(s, id)),
+    foes: enemies(s).filter(living).length,
+    waiting: wavesLeft(s)
+  };
+}
+// Whether the board would be won if exactly these enemies fell now, everyone else as they are.
+function winsIfFalls(s, ids) {
+  const gone = new Set(ids);
+  const down = (id) => gone.has(id) || fallen(s, id);
+  if (boardOf(s).kind === 'slay') return masterIds(s).every(down);
+  if (enemies(s).some((u) => living(u) && !gone.has(u.id))) return false;
+  // A master felled now marks his half and may call a wave.
+  const halved = (id) => gone.has(id) || !!s.units.find((v) => v.id === id)?.halved;
+  return wavesLeft(s, halved) === 0;
+}
+// ── Facts a secondary objective reads (journey.js SIDE_KINDS) ────────────
+// `s.tally` is kept from the moment a run's board is set up; a game without one records nothing.
+const blankTally = () => ({
+  falls: [], // every enemy fall, in order: { id, by, how, art, combo, answered, round, phase }
+  doses: 0, // medicine taken in the fight scene, deployment included
+  leaderHurt: 0, // 氣血 the leader lost to enemies
+  fired: {}, // villain behaviours that happened: { mirror, mend, herbs }
+  crossed: false // a wave piece stood inside the secondary's holdLine zone
+});
+// What the blow being resolved is, for the fall it may cause: set just before its wounds, put
+// back to 'other' just after.
+let blowNow = { how: 'other' };
+function blowing(facts, body) {
+  blowNow = facts;
+  try {
+    return body();
+  } finally {
+    blowNow = { how: 'other' };
+  }
+}
+function noteFall(s, u, source) {
+  s.tally?.falls.push({
+    id: u.id,
+    by: source && ally(source) ? source.id : null,
+    how: blowNow.how,
+    art: blowNow.art ?? null,
+    combo: !!blowNow.combo,
+    answered: !!blowNow.answered,
+    round: s.round,
+    phase: s.phase
+  });
+}
+const noteFired = (s, behaviour) => {
+  if (s.tally) s.tally.fired[behaviour] = (s.tally.fired[behaviour] || 0) + 1;
+};
+// A tile inside a zone of board data ({ x: [from, to] } and/or { y: [from, to] }).
+const inZone = (zone, p) =>
+  (!zone.x || (zone.x[0] <= p.x && p.x <= zone.x[1])) && (!zone.y || (zone.y[0] <= p.y && p.y <= zone.y[1]));
+// Where an enemy came to stand: a wave piece inside the secondary's line, a fleeing master on herbs.
+function noteStanding(s, u) {
+  const side = s.run?.side;
+  if (s.tally && side?.kind === 'holdLine' && u.enteredRound != null && living(u) && inZone(side.zone, u))
+    s.tally.crossed = true;
+  if (fleeing(s, u) && tileInfo(u.x, u.y, s.mapIndex)?.heal) noteFired(s, 'herbs');
+}
+// ── Reinforcements (battles.js `waves`) ───────────────────────────────────
+// `s.arrivals` holds, for each wave that is due and not yet all on the board, the round it
+// enters. A wave piece has entered once its id is among the units, living or not.
+const entered = (s, id) => s.units.some((u) => u.id === id);
+const waveDue = (s, w) => s.arrivals?.[w.id];
+// The masters a half-health wave waits on, as actor ids.
+const triggerIds = (s, w) => (w.when.halved || []).map((ref) => refId(s.mapIndex, ref));
+// A half-health wave has fired once any master it waits on has been at half.
+const waveFired = (s, w, halved) => triggerIds(s, w).some(halved);
+// Wave pieces still to come: those of scheduled waves, and every piece of a half-health wave
+// that has not fired. `halved` lets winsIfFalls ask as if some masters were already marked.
+function wavesLeft(s, halved = (id) => !!s.units.find((v) => v.id === id)?.halved) {
+  let n = 0;
+  for (const w of boardOf(s).waves) {
+    const waiting = w.pieces.filter((p) => !entered(s, p.id)).length;
+    if (waveDue(s, w) != null) n += waiting;
+    else if (w.when.halved && !waveFired(s, w, halved)) n += waiting;
+  }
+  return n;
+}
+// Schedules the round waves of a board as it is set up (journey.js setUpBoard).
+function scheduleWaves(s) {
+  s.arrivals = {};
+  for (const w of boardOf(s).waves) if (w.when.round) s.arrivals[w.id] = w.when.round;
+}
+// How a wave is named in every line about it: its leader, then its troops by name and count
+// (鳳天南率五虎門棍徒兩名; 嵩山弟子兩名; types joined with 、).
+function waveList(defs) {
+  const named = (def) => DETAILS[def.id.split('#')[0]];
+  const lead = defs[0] && named(defs[0]).rank ? named(defs[0]).name : '';
+  const counts = new Map();
+  for (const def of lead ? defs.slice(1) : defs) {
+    const name = named(def).name;
+    counts.set(name, (counts.get(name) || 0) + 1);
+  }
+  const troops = [...counts].map(([name, n]) => name + COUNTS[n] + '名').join('、');
+  return lead ? lead + (troops ? '率' + troops : '') : troops;
+}
+// The tile a wave piece enters on now: its own if no one stands there, else the nearest free
+// walkable tile within two (by distance, then lower y, then lower x); null if there is none.
+// `taken` are tiles already promised to pieces entering before it.
+function entryTile(s, piece, taken = []) {
+  const free = (p) =>
+    walkable(p.x, p.y, s.mapIndex) && !at(s, p.x, p.y) && !taken.some((q) => q.x === p.x && q.y === p.y);
+  const own = { x: piece.at[0], y: piece.at[1] };
+  if (free(own)) return own;
+  const near = fieldCells(s.mapIndex)
+    .filter((c) => distance(c, own) <= 2 && distance(c, own) > 0 && free(c))
+    .sort((a, b) => distance(a, own) - distance(b, own) || a.y - b.y || a.x - b.x);
+  return near[0] ? { x: near[0].x, y: near[0].y } : null;
+}
+// The pieces of the waves due in `round` as they would enter if they entered now: built where
+// `arrive` would put them, with their entry round, and not on the board. The danger zone and the
+// enemy page of a pending wave read these.
+function arrivalGhosts(s, round) {
+  const ghosts = [],
+    taken = [];
+  for (const w of boardOf(s).waves) {
+    if (waveDue(s, w) !== round) continue;
+    for (const piece of w.pieces) {
+      if (entered(s, piece.id)) continue;
+      const tile = entryTile(s, piece, taken);
+      if (!tile) continue;
+      taken.push(tile);
+      ghosts.push(pieceUnit(s, { ...piece, at: [tile.x, tile.y] }, round));
+    }
+  }
+  return ghosts;
+}
+// The waves scheduled and not yet all on the board, with the tiles and pieces still to enter.
+function pendingWaves(s) {
+  return boardOf(s)
+    .waves.filter((w) => waveDue(s, w) != null)
+    .map((wave) => {
+      const defs = wave.pieces.filter((p) => !entered(s, p.id));
+      return { wave, due: waveDue(s, wave), tiles: defs.map((p) => ({ x: p.at[0], y: p.at[1] })), defs };
+    });
+}
+// The start of a round: every wave due now enters, in data order, piece by piece. A piece whose
+// entry tile is taken enters beside it; one with nowhere to stand waits a round. They enter
+// unhurt and unacted, after every piece already on the board, so they act last.
+function arrive(s) {
+  for (const w of boardOf(s).waves) {
+    if (waveDue(s, w) !== s.round) continue;
+    const came = [];
+    let held = false;
+    for (const piece of w.pieces) {
+      if (entered(s, piece.id)) continue;
+      const name = DETAILS[piece.id.split('#')[0]].name;
+      const tile = entryTile(s, piece);
+      if (!tile) {
+        held = true;
+        log(s, 'system', name + '入場受阻，延至下一回合。', '敵援');
+        continue;
+      }
+      const u = pieceUnit(s, { ...piece, at: [tile.x, tile.y] }, s.round);
+      s.units.push(u);
+      came.push(piece);
+      if (tile.x !== piece.at[0] || tile.y !== piece.at[1])
+        log(s, 'system', name + '入場處有人，改由' + tileName(tile) + '入場。', '敵援');
+      noteStanding(s, u);
+    }
+    if (came.length) log(s, 'system', waveList(came) + '自' + w.place + '入場。', '敵援');
+    if (held && s.round < LIMIT) s.arrivals[w.id] = s.round + 1;
+    else delete s.arrivals[w.id];
+  }
+}
+// One round ahead of a wave: the log says who comes next round and from where.
+function announce(s) {
+  for (const w of boardOf(s).waves) {
+    if (waveDue(s, w) !== s.round + 1) continue;
+    const defs = w.pieces.filter((p) => !entered(s, p.id));
+    // A half-health wave that fired during the enemy phase just ended has said this already.
+    if (w.when.halved && s.logs.some((l) => l.who === '敵援' && l.round === s.round - 1 && l.text.endsWith(fireLine(s, w))))
+      continue;
+    if (defs.length) log(s, 'system', '下一回合，' + waveList(defs) + '自' + w.place + '入場。', '敵援');
+  }
+}
+const fireLine = (s, w) =>
+  '第' + NUMERALS[waveDue(s, w) - 1] + '回合，' + waveList(w.pieces.filter((p) => !entered(s, p.id))) + '自' + w.place + '入場。';
+// A master marked at half calls the half-health waves that wait on him, if no master they wait
+// on was at half before: due two rounds on. A wave that could no longer enter is not called.
+function fireHalved(s, id) {
+  for (const w of boardOf(s).waves) {
+    const ids = triggerIds(s, w);
+    if (!ids.includes(id) || waveDue(s, w) != null) continue;
+    if (ids.some((other) => other !== id && s.units.find((v) => v.id === other)?.halved)) continue;
+    if (s.round + 2 > LIMIT || !s.arrivals) continue;
+    s.arrivals[w.id] = s.round + 2;
+    const name = unitDetails(find(s, id)).name;
+    log(s, 'system', name + '氣血過半。' + fireLine(s, w), '敵援');
   }
 }
 // 變招 (§7.4): the first time the board's master falls to half 氣血, its `phase` changes it for
@@ -2525,6 +2759,11 @@ function wariness(s, u, t) {
 }
 function enemyAct(s, u) {
   if (s.phase !== 'enemy' || s.result || ally(u) || !living(u) || u.acted) return [];
+  const effects = enemyAction(s, u);
+  noteStanding(s, u); // where it ended: a wave piece over the line, a fleeing master on herbs
+  return effects;
+}
+function enemyAction(s, u) {
   if (u.conditions?.daze) return loseAction(s, u); // 失神: the action is lost, not the reflexes
   const step = stat(u, 'step', s); // as the action begins, before any formation it walks onto
   const friends = party(s).filter(living);
@@ -2648,7 +2887,9 @@ function enemyAct(s, u) {
     share
   ) {
     const power = Math.max(2, Math.round(damage(t, u, false, s.mapIndex, s) * share));
-    const hit = wound(s, u, afterCut(afterWard(power, wardPercent(s, u)), stanceCut(s, u)), t);
+    const hit = blowing({ how: 'counter' }, () =>
+      wound(s, u, afterCut(afterWard(power, wardPercent(s, u)), stanceCut(s, u)), t)
+    );
     effects.push([u.id, '−' + hit]);
     log(s, 'combat', '還擊，造成 ' + hit + ' 點傷害。', unitDetails(t).name);
     exp(s, t, living(u) ? 12 : 35);
@@ -2702,6 +2943,7 @@ function mendAct(s, u, field, { patient, c, heal, name }) {
   if (u.moved) followRoute(u, tracePath(field, c));
   const n = Math.min(patient.maxHp - patient.hp, healAmount(patient, heal));
   patient.hp += n;
+  noteFired(s, 'mend');
   u.signatureRound = s.round;
   if (u.signaturePush) u.signaturePush = 0;
   log(s, 'combat', '施展「' + name + '」，替' + unitDetails(patient).name + '接骨續筋。', unitDetails(u).name);
@@ -2808,11 +3050,8 @@ function nextRound(s) {
     }
     const poison = u.conditions?.poison;
     if (poison) {
-      const amount = wound(
-        s,
-        u,
-        afterWard(poison.power, wardPercent(s, u)),
-        find(s, poison.source)
+      const amount = blowing({ how: 'poison' }, () =>
+        wound(s, u, afterWard(poison.power, wardPercent(s, u)), find(s, poison.source))
       );
       log(s, 'combat', '毒發，損失 ' + amount + ' 點氣血。', unitDetails(u).name);
     }
@@ -2825,6 +3064,8 @@ function nextRound(s) {
   restOnHerbs(s, enemies(s));
   s.round++;
   s.phase = 'ally';
+  arrive(s); // reinforcements due this round enter before the heroes move
+  announce(s); // and those due next round are named
   check(s);
   if (s.result) return false;
   for (const u of party(s).filter(living)) {
@@ -2843,4 +3084,4 @@ function nextRound(s) {
   return true;
 }
 
-export { SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
