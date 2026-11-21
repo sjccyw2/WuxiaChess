@@ -1,8 +1,8 @@
 // What a board of the battles redesign marks on the ground, under the pieces:
 // - the deployment step's five posts, lit in gold with their numerals (一 … 五), filled where a
 //   hero stands and open where none does; the picked hero's post pulses (battleMarks);
-// - the tiles reinforcements enter on: a faint banner with the round while they are further off,
-//   a red 援 the round before they come (battleMarks);
+// - the tiles reinforcements enter on, with a red 援, the round before they come and not
+//   earlier (battleMarks);
 // - the edge of the secondary's line (拒敵於外), a dashed cyan line (battleMarks).
 // The posts are part of the deployment step itself and are drawn with the switch off; the rest
 // is presentation and goes with polish switch battleMarks.
@@ -74,49 +74,21 @@ function paintEntries(layer) {
   const s = layer.state;
   if (!POLISH.battleMarks || !s?.run || s.run.status !== 'battle' || s.result) return;
   const c = layer.ctx;
-  for (const p of G.pendingWaves(s)) {
-    const soon = p.due === s.round + 1;
+  // Only a wave that has been announced (it enters next round) is marked.
+  for (const p of G.announcedWaves(s))
     for (const t of p.tiles) {
       if (G.at(s, t.x, t.y)) continue;
       layer.path(layer.tile(t.x, t.y, 0.42));
       c.save();
       c.lineJoin = 'round';
-      if (soon) {
-        c.fillStyle = 'rgba(176,40,30,.30)';
-        c.fill();
-        c.strokeStyle = 'rgba(255,140,110,.95)';
-        c.lineWidth = 2;
-      } else {
-        c.setLineDash([3, 4]);
-        c.strokeStyle = 'rgba(232,190,160,.55)';
-        c.lineWidth = 1.3;
-      }
+      c.fillStyle = 'rgba(176,40,30,.30)';
+      c.fill();
+      c.strokeStyle = 'rgba(255,140,110,.95)';
+      c.lineWidth = 2;
       c.stroke();
       c.restore();
-      if (soon) badge(layer, t.x, t.y, '援', { fill: '#a8281e', ink: '#fff0e0', edge: '#ffc2a8' }, 1.15);
-      else {
-        // A small banner on its pole, with the round it comes.
-        const foot = layer.point(t.x, t.y, 0.02),
-          r = clamp(layer.scaleAt(t.x, t.y) * 0.13, 6, 11);
-        c.save();
-        c.globalAlpha = 0.72;
-        c.strokeStyle = '#3a2418';
-        c.lineWidth = 1.4;
-        c.beginPath();
-        c.moveTo(foot.x - r * 0.9, foot.y);
-        c.lineTo(foot.x - r * 0.9, foot.y - r * 2.6);
-        c.stroke();
-        c.fillStyle = '#7c3a28';
-        c.fillRect(foot.x - r * 0.9, foot.y - r * 2.6, r * 1.9, r * 1.3);
-        c.fillStyle = '#ffe9d0';
-        c.font = '700 ' + Math.round(r * 1.05) + 'px RiverSerif, "Noto Serif TC", serif';
-        c.textAlign = 'center';
-        c.textBaseline = 'middle';
-        c.fillText(G.NUMERALS[p.due - 1] || String(p.due), foot.x + r * 0.05, foot.y - r * 1.93);
-        c.restore();
-      }
+      badge(layer, t.x, t.y, '援', { fill: '#a8281e', ink: '#fff0e0', edge: '#ffc2a8' }, 1.15);
     }
-  }
 }
 
 function paintHoldLine(layer) {

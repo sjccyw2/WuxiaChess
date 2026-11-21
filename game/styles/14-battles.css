@@ -33,17 +33,6 @@
   background: #c96f2a;
   border-color: #ffe0b8;
 }
-.plan-entry {
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  place-self: stretch;
-  font: 700 10px/1 var(--serif, serif);
-  color: #ffe6d4;
-  background: repeating-linear-gradient(135deg, #7e2a1e, #7e2a1e 3px, #5d1f17 3px, #5d1f17 6px);
-  outline: 1px dashed #ff9f7f;
-  outline-offset: -1px;
-}
 .plan-post {
   z-index: 2;
   display: grid;
@@ -93,12 +82,6 @@
   width: 11px;
   height: 11px;
   aspect-ratio: auto;
-}
-.plan-key .plan-entry {
-  display: inline-grid;
-  width: 14px;
-  height: 14px;
-  font-size: 9px;
 }
 .plan-post-key {
   border-radius: 50%;

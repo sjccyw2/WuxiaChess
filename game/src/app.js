@@ -263,10 +263,10 @@ const deploying = () =>
 // Which of the board's five posts a tile is (0–4), or -1.
 const postAt = (x, y) =>
   state.run ? mapLayout(state.mapIndex).allies.findIndex((p) => p.x === x && p.y === y) : -1;
-// The pending wave whose entry tile this is, if any.
+// The announced wave whose entry tile this is, if any.
 const entryAt = (x, y) =>
   state.run?.status === 'battle'
-    ? G.pendingWaves(state).find((p) => p.tiles.some((t) => t.x === x && t.y === y))
+    ? G.announcedWaves(state).find((p) => p.tiles.some((t) => t.x === x && t.y === y))
     : null;
 // A tile on the edge of the secondary's line (拒敵於外): inside it, beside a tile outside it.
 function holdLineAt(x, y) {
@@ -298,9 +298,7 @@ function paint() {
   // 敵援: how many enter at the start of next round.
   const coming = state.result
     ? 0
-    : G.pendingWaves(state)
-        .filter((p) => p.due === state.round + 1)
-        .reduce((n, p) => n + p.defs.length, 0);
+    : G.announcedWaves(state).reduce((n, p) => n + p.defs.length, 0);
   $('trip-ledger').setAttribute(
     'aria-label',
     path.name +

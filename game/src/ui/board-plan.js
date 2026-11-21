@@ -1,11 +1,10 @@
 // The plan of a board as the briefing and the 整備 起陣圖 draw it: the terrain, the five ally
-// posts with their numerals, the enemy pieces where they start (局主, 副手, the rest), the tiles
-// reinforcements enter on with the round they come, and the secondary's lamp or line.
+// posts with their numerals, the enemy pieces where they start (局主, 副手, the rest), and the
+// secondary's lamp or line. Reinforcements are not on it: they come as a surprise.
 // Read from the board's data, so it needs no fight: the shop's look at the next board uses it too.
 import * as G from '../rules/game.js';
 import { BATTLES } from '../data/battles.js';
 import { mapLayout } from '../data/terrain.js';
-import { NUMERALS } from '../rules/journey.js';
 
 const POSTS = ['一', '二', '三', '四', '五'];
 const keyOf = (id) => id.split('#')[0];
@@ -25,20 +24,10 @@ function boardPlan(map, s = null) {
     ...layout.enemies.slice(0, 4).map((p, i) => piece(keys[i], p.x, p.y)),
     ...board.pieces.map((p) => piece(keyOf(p.id), p.at[0], p.at[1]))
   ];
-  const entries = board.waves.flatMap((w) =>
-    w.pieces.map((p) => ({
-      x: p.at[0],
-      y: p.at[1],
-      round: w.when.round || null,
-      label: w.when.round ? NUMERALS[w.when.round - 1] : '援',
-      title: '敵援入場處 · ' + (w.when.round ? '第' + NUMERALS[w.when.round - 1] + '回合 · ' : '') + G.waveList(w.pieces)
-    }))
-  );
   const side = s?.run?.side;
   return {
     layout,
     foes,
-    entries,
     lamp: s && side?.kind === 'lamp' ? G.objectiveTile(s) : null,
     zone: s && side?.kind === 'holdLine' ? side.zone : null
   };
@@ -57,9 +46,6 @@ function planGrid(plan, posts) {
   const foes = plan.foes
     .map((f) => '<b class="plan-foe ' + f.rank + '" title="' + f.name + '" style="' + place(f.x, f.y) + '"></b>')
     .join('');
-  const entries = plan.entries
-    .map((e) => '<b class="plan-entry" title="' + e.title + '" style="' + place(e.x, e.y) + '">' + e.label + '</b>')
-    .join('');
   const lamp = plan.lamp
     ? '<span class="wake-map-lamp" role="img" aria-label="支線燈記" style="' + place(plan.lamp.x, plan.lamp.y) + '">✦</span>'
     : '';
@@ -71,7 +57,6 @@ function planGrid(plan, posts) {
     '">' +
     cells +
     foes +
-    entries +
     lamp +
     layout.allies.map(({ x, y }, i) => posts(i, x, y, place(x, y))).join('') +
     '</div>'
@@ -86,7 +71,6 @@ function planKey(plan) {
     (has('boss') ? '<span><b class="plan-foe boss"></b>局主</span>' : '') +
     (has('mini') ? '<span><b class="plan-foe mini"></b>副手</span>' : '') +
     (has('troop') ? '<span><b class="plan-foe troop"></b>敵方</span>' : '') +
-    (plan.entries.length ? '<span><b class="plan-entry">援</b>援軍</span>' : '') +
     (plan.lamp ? '<span><i class="wake-map-lamp">✦</i>支線燈記</span>' : '') +
     (plan.zone ? '<span><i class="plan-zone-key"></i>支線界線</span>' : '') +
     '</p>'

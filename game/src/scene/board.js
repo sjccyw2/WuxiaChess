@@ -525,7 +525,7 @@ class BattleBoard {
     // Reinforcements' entry tiles, and while deploying the five posts.
     const entries = new Map();
     if (this.s.run?.status === 'battle')
-      for (const p of G.pendingWaves(this.s))
+      for (const p of G.announcedWaves(this.s))
         for (const t of p.tiles) entries.set(G.key(t.x, t.y), p.due);
     const posts = this.s.run?.deploying && this.s.run.scene === 'fight' ? mapLayout(this.mapIndex).allies : [];
     this.keys.forEach((b, i) => {

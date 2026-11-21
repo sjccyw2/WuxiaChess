@@ -51,7 +51,7 @@ import {
   wardEscorts,
   wardShare,
   stat,
-  pendingWaves,
+  announcedWaves,
   arrivalGhosts,
   pieceUnit,
   waveList,
@@ -988,7 +988,7 @@ const CHARGED = {
 // A reinforcement not yet on the board, as the enemy page shows it: the piece built where it
 // would enter now (G.arrivalGhosts), or at its own entry tile when that is taken.
 function waitingPiece(s, id) {
-  for (const p of pendingWaves(s)) {
+  for (const p of announcedWaves(s)) {
     const def = p.defs.find((d) => d.id === id);
     if (!def) continue;
     const u = arrivalGhosts(s, p.due).find((g) => g.id === id) || pieceUnit(s, def, p.due);
