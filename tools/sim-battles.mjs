@@ -2,6 +2,7 @@
 // so the game's difficulty can be compared before and after a change.
 //
 //   node tools/sim-battles.mjs [--runs N] [--seed S] [--boards A-B] [--json out.json]
+//                              [--trace | --trace-map M]
 //   node tools/sim-battles.mjs --compare before.json after.json
 //
 // Runs are built the way the game builds them (draw three heroes, start the run, deploy, settle
@@ -65,6 +66,9 @@ const JSON_OUT = opt('--json', null);
 const QUIET = args.includes('--quiet');
 // --trace prints the battle log of the first run, board by board, to see how the player plays.
 const TRACE = args.includes('--trace');
+// --trace-map M prints the battle log of the first board fought on map M, in whichever run.
+const TRACE_MAP = opt('--trace-map', null) == null ? null : Number(opt('--trace-map'));
+const traced = new Set();
 
 const hash = (a, b) => {
   let n = Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x632be5ab, 0xc2b2ae35);
@@ -443,14 +447,26 @@ function fight(s) {
   const rec = { stage: s.run.stage, map: s.mapIndex, usage: { basic: 0, start: 0, tier1: 0, tier2: 0, tier3: 0, tier4: 0, manual: 0, wait: 0 }, heroes: {}, misfires: 0 };
   for (const u of G.party(s))
     rec.heroes[u.id] = { dealt: 0, taken: 0, kills: 0, level: u.level, sp: u.sp, spent: spentPoints(u) };
-  if (TRACE) s.logs = [];
+  // The battle log keeps only its last lines; a traced board keeps its own copy.
+  const lines = (TRACE && tracing) || (TRACE_MAP === s.mapIndex && !traced.has(s.mapIndex)) ? [] : null;
   // What the villains did, read from the battle log as it is written (the log keeps only its
   // last lines): whether each board's defining behaviour shows up at all.
   rec.events = {};
-  const phaseLines = new Set(G.enemies(s).map((e) => G.unitDetails(e).traits?.phase?.log).filter(Boolean));
+  // (any piece's phase line: a piece that enters later may have one too)
+  const phaseLines = new Set(Object.values(G.DETAILS).map((d) => d.traits?.phase?.log).filter(Boolean));
+  // The secondary's state is read after every log line: the moment it fails is an event.
+  let sideNow = R.sideState(s);
   s.logs.push = function (entry) {
     for (const [name, test] of EVENTS) if (test(entry, phaseLines)) rec.events[name] = (rec.events[name] || 0) + 1;
-    return Array.prototype.push.call(this, entry);
+    const n = Array.prototype.push.call(this, entry);
+    lines?.push(entry);
+    const state = s.result ? sideNow : R.sideState(s);
+    if (state !== sideNow && state === 'failed') {
+      rec.events.sideFailed = (rec.events.sideFailed || 0) + 1;
+      rec.sideFailedRound = s.round;
+    }
+    sideNow = state;
+    return n;
   };
   while (!s.result) {
     allyPhase(s, rec);
@@ -465,9 +481,27 @@ function fight(s) {
   rec.downed = team.filter((u) => !G.living(u)).length;
   rec.side = R.sideDone(s);
   rec.leaderFell = !G.living(G.find(s, s.leader));
-  if (TRACE && tracing) {
+  // What kind of board it was, and what came onto it.
+  const board = G.boardOf(s);
+  rec.kind = board.kind;
+  rec.sideKind = s.run.side?.kind || null;
+  rec.sideState = R.sideState(s);
+  const wavePieces = board.waves.flatMap((w) => w.pieces.map((p) => p.id));
+  rec.arrived = wavePieces.filter((id) => s.units.some((u) => u.id === id)).length;
+  rec.enemies = G.enemies(s).length + wavePieces.length - rec.arrived;
+  rec.blocked = rec.events.blocked || 0;
+  const show = () => {
+    for (const l of lines) if (l.type !== 'grow') console.log('  r' + l.round + ' ' + l.phase + ' ' + l.who + ': ' + l.text);
+  };
+  if (lines && TRACE_MAP === s.mapIndex && !traced.has(s.mapIndex)) {
+    traced.add(s.mapIndex);
+    console.log('\n== map ' + s.mapIndex + ' (board ' + (rec.stage + 1) + ', ' + rec.kind + ', side ' + rec.sideKind + ' ' + rec.sideState + ') ' + (rec.won ? 'won' : 'lost') + ' in ' + rec.rounds + ' rounds: ' + (s.reason || ''));
+    console.log('  heroes: ' + G.party(s).map((u) => G.unitDetails(u).name + ' ' + Math.max(0, u.hp) + '/' + u.maxHp).join(', '));
+    console.log('  enemies: ' + G.enemies(s).map((u) => G.unitDetails(u).name + '@' + u.x + ',' + u.y + ' ' + Math.max(0, u.hp) + '/' + u.maxHp).join(', '));
+    show();
+  } else if (lines) {
     console.log('\n== board ' + (rec.stage + 1) + ' (map ' + s.mapIndex + ', ' + s.run.side?.kind + ') ' + (rec.won ? 'won' : 'lost') + ' in ' + rec.rounds + ' rounds');
-    for (const l of s.logs) if (l.type !== 'grow') console.log('  r' + l.round + ' ' + l.phase + ' ' + l.who + ': ' + l.text);
+    show();
   }
   return rec;
 }
@@ -484,7 +518,11 @@ const EVENTS = [
   ['lineHit', (e) => e.text.startsWith('被穿透的勁力擊中')],
   ['mirrored', (e) => e.text.startsWith('斗轉星移反震')],
   ['ropeBroke', (e) => e.who === '星索護陣'],
-  ['glidedOff', (e) => /^出手後退開/.test(e.text)]
+  ['glidedOff', (e) => /^出手後退開/.test(e.text)],
+  // Reinforcements: a wave entering, and a piece whose entry tile was taken (moved or delayed).
+  ['arrive', (e) => e.who === '敵援' && /自.+入場。$/.test(e.text) && !/^(下一回合|第.+回合，)/.test(e.text) && !e.text.includes('氣血過半') && !e.text.includes('入場處有人')],
+  ['blocked', (e) => e.who === '敵援' && (e.text.endsWith('入場受阻，延至下一回合。') || e.text.includes('入場處有人，改由'))]
+  // (sideFailed is counted in fight, from the secondary's state)
 ];
 // ── Between boards ──────────────────────────────────────────────────────
 function spentPoints(u) {
@@ -634,7 +672,7 @@ function aggregate(runs) {
   }));
   const heroes = {};
   // The same, by map: each board's villains fight their own way, whichever stage meets them.
-  const maps = Array.from({ length: 10 }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {} }));
+  const maps = Array.from({ length: 10 }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {}, kind: null, sides: {}, side: 0, arrived: 0, enemies: 0, blocked: 0 }));
   let misfires = 0;
   for (const run of runs)
     for (const b of run.boards) {
@@ -642,6 +680,17 @@ function aggregate(runs) {
       M.reached++;
       for (const [k, n] of Object.entries(b.events || {})) M.events[k] = (M.events[k] || 0) + n;
       M.stages[b.stage + 1] = (M.stages[b.stage + 1] || 0) + 1;
+      M.kind = b.kind;
+      M.arrived += b.arrived;
+      M.enemies += b.enemies;
+      M.blocked += b.blocked;
+      if (b.side) M.side++;
+      // The secondary by kind: drawn, met (won with it met), and how the rest ended.
+      const S = (M.sides[b.sideKind || '-'] ??= { drawn: 0, met: 0, failed: 0, open: 0 });
+      S.drawn++;
+      if (b.side) S.met++;
+      else if (b.sideState === 'failed') S.failed++;
+      else S.open++;
       if (b.won) {
         M.wins++;
         M.rounds += b.rounds;
@@ -704,7 +753,13 @@ function aggregate(runs) {
       winRate: r2(M.wins / M.reached),
       avgRounds: M.wins ? r1(M.rounds / M.wins) : null,
       hpLeft: M.wins ? r2(M.hpLeft / M.wins) : null,
-      events: Object.fromEntries(Object.entries(M.events).map(([k, n]) => [k, r1(n / M.reached)]))
+      events: Object.fromEntries(Object.entries(M.events).map(([k, n]) => [k, r1(n / M.reached)])),
+      kind: M.kind,
+      sideRate: r2(M.side / M.reached),
+      sides: Object.fromEntries(Object.entries(M.sides).sort().map(([k, S]) => [k, { ...S, rate: r2(S.met / S.drawn) }])),
+      arrived: r1(M.arrived / M.reached),
+      enemies: r1(M.enemies / M.reached),
+      blocked: r1(M.blocked / M.reached)
     })),
     heroes: Object.fromEntries(
       Object.entries(heroes).sort().map(([id, H]) => [
@@ -743,6 +798,13 @@ function print(out) {
   console.log(pad('map', 4) + pad('name', 6) + lpad('runs', 5) + lpad('win', 6) + lpad('rnds', 6) + lpad('hp', 6) + '   stages');
   for (const m of out.maps || [])
     console.log(pad(m.map, 4) + pad(m.name, 6) + lpad(m.reached, 5) + lpad(pc(m.winRate), 6) + lpad(m.avgRounds, 6) + lpad(pc(m.hpLeft), 6) + '   ' + Object.entries(m.stages).map(([k, n]) => k + ':' + n).join(' '));
+  console.log('\nKinds, secondaries and reinforcements per map (side: met over drawn, by kind; arr: wave pieces that entered, of all enemies)');
+  console.log(pad('map', 4) + pad('name', 6) + pad('kind', 6) + lpad('side', 6) + lpad('arr', 6) + lpad('foes', 6) + lpad('blkd', 6) + '   by kind (met/failed/open of drawn; open: never met, or the board was lost)');
+  for (const m of out.maps || [])
+    console.log(
+      pad(m.map, 4) + pad(m.name, 6) + pad(m.kind, 6) + lpad(pc(m.sideRate), 6) + lpad(m.arrived, 6) + lpad(m.enemies, 6) + lpad(m.blocked, 6) + '   ' +
+        Object.entries(m.sides || {}).map(([k, S]) => k + ' ' + pc(S.rate) + ' (' + S.met + '/' + S.failed + '/' + S.open + ' of ' + S.drawn + ')').join(', ')
+    );
   console.log('\nVillain behaviour per board fought (log events per board, averaged over its runs)');
   for (const m of out.maps || [])
     console.log(pad(m.map, 4) + pad(m.name, 6) + '  ' + (Object.entries(m.events || {}).map(([k, n]) => k + ' ' + n).join(', ') || '-'));
@@ -767,6 +829,16 @@ function compare(a, b) {
       pad(A.board, 6) + lpad(pc(A.winRate), 7) + lpad(pc(B.winRate), 7) + lpad(d(A.winRate, B.winRate, (v) => Math.round(v * 100) + 'pt'), 7) +
         lpad(A.avgRounds, 8) + lpad(B.avgRounds, 8) + lpad(d(A.avgRounds, B.avgRounds), 6) + lpad(pc(A.hpLeft), 6) + lpad(pc(B.hpLeft), 6) + lpad(d(A.hpLeft, B.hpLeft, (v) => Math.round(v * 100) + 'pt'), 7) +
         (moved ? '  << win rate moved more than ' + COMPARE_FLAG * 100 + 'pt' : '')
+    );
+  }
+  console.log('\n' + pad('map', 4) + pad('name', 6) + lpad('win a', 7) + lpad('win b', 7) + lpad('side a', 8) + lpad('side b', 8) + lpad('Δ', 7) + '  flag');
+  for (const A of a.maps || []) {
+    const B = (b.maps || []).find((x) => x.map === A.map);
+    if (!B) continue;
+    const moved = A.sideRate != null && B.sideRate != null && Math.abs(B.sideRate - A.sideRate) > COMPARE_FLAG;
+    console.log(
+      pad(A.map, 4) + pad(A.name, 6) + lpad(pc(A.winRate), 7) + lpad(pc(B.winRate), 7) + lpad(pc(A.sideRate), 8) + lpad(pc(B.sideRate), 8) + lpad(d(A.sideRate, B.sideRate, (v) => Math.round(v * 100) + 'pt'), 7) +
+        (moved ? '  << secondary success moved more than ' + COMPARE_FLAG * 100 + 'pt' : '')
     );
   }
   console.log('\n' + pad('hero', 7) + pad('name', 5) + lpad('dmg a', 7) + lpad('dmg b', 7) + lpad('Δ', 7) + lpad('dealt a', 9) + lpad('dealt b', 9) + lpad('kills a', 9) + lpad('kills b', 9));
