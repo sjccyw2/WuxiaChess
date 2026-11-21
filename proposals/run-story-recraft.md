@@ -3,13 +3,14 @@
 > For the producer. Written 2026-11-21 by the story designer. 繁體中文版：`run-story-recraft.zh-Hant.md`（內容相同）。
 > **Status: direction approved by the producer on 2026-11-21** (all fourteen questions answered in the session; section 9). Nothing in the game text, the two design documents or the wiki has been changed yet.
 > Scope: the per-run story (`wiki/content/單輪劇本.md`). The world view (§0 to §6) and the five-volume arc (§8) are treated as fixed.
+> **Superseded in part on 2026-11-21:** after this proposal was approved, the producer set a new overarching arc (`wiki/content/世界觀設定.md` v1.0) and renamed 劍意 to 戰意. The one opposite now sits at the table from the first scene and speaks; heroes are copies with no letter; the reason a win brings a hero (Q-N43) no longer holds. The mechanic readings here still stand except where they speak of the letter, of watchers holding it, or of an opponent who is never seen. The world view §9 lists what each decision becomes.
 > Chinese lines below are samples to set the tone. The rewrite is a separate task, and it carries these decisions into the two design documents.
 
 ## 0. The proposal in six sentences
 
 1. **The one opposite is playing, not posing a puzzle.** Every black stone lands with a 「嗒」 on the stone table. Stones he sets down during a board are the reinforcements, and the youth hears the stone one round before the person arrives.
-2. **The 劍意 decides only that a black stone fights. How he fights is his own.** Each adversary's behaviour is the man showing through, and at half health he is half awake (半醒): his own habits come back before the will lets go.
-3. **A board's kind is where its 劍意 sits:** on one brow (斬將), on two (兩位局主), on everyone (殲滅), and later on a thing or a place (破, 守, 奪, 脫出).
+2. **The 戰意 decides only that a black stone fights. How he fights is his own.** Each adversary's behaviour is the man showing through, and at half health he is half awake (半醒): his own habits come back before the will lets go.
+3. **A board's kind is where its 戰意 sits:** on one brow (斬將), on two (兩位局主), on everyone (殲滅), and later on a thing or a place (破, 守, 奪, 脫出).
 4. **Heroes remember their lives upward.** A single thought has no body, so only what the hands know best arrives. The rest returns one art at a time, and the art that made their name returns last, together with what it cost.
 5. **A win is proof.** A half-lit white stone at the board's edge is someone holding the letter and hesitating. Win the board and that person believes the match can be won.
 6. **The secondary is 韋小寶's side bet (盤口).** He cannot watch a game without opening a book on it. Twelve kinds of secondary are twelve bets, and he pays in silver, a manual from his stock, or a fight so well fought that the hands remember.
@@ -20,7 +21,7 @@ Three of these were real choices with alternatives (section 6). The producer cho
 
 ## 1. The premise of a run
 
-**One paragraph.** A run is one sitting of a ten-board match that is being played live. The youth falls asleep in his own years, opens his eyes in the valley and holds white: he sees the whole board, and the heroes on it see only a few steps. The one opposite holds black and is never seen, only heard: each stone he sets down lands on the stone table with a 「嗒」, and a moment later a person stands on the board. Black stones did not choose to come. A 劍意 on their brows makes them fight whoever arrives, but it does not tell them how, so each fights exactly as he always has, and every blow that lands wakes him a little. White stones chose: they answered an unsigned letter at the edge of death. What answered is a single thought, and a thought has no body, so each hero arrives with only what the hands know best. They remember the rest of their lives as the boards press them, and the art that made their name comes back last, with its cost. Each board won is proof that the match can be won, and one more person who was holding the letter steps in. 韋小寶, the only living man there, opens a side bet on every board. Ten wins send the heroes home with 一悟. The youth climbs to the one who carved the stone, loses in one move, hears 「還不夠」, and closes his eyes.
+**One paragraph.** A run is one sitting of a ten-board match that is being played live. The youth falls asleep in his own years, opens his eyes in the valley and holds white: he sees the whole board, and the heroes on it see only a few steps. The one opposite holds black and is never seen, only heard: each stone he sets down lands on the stone table with a 「嗒」, and a moment later a person stands on the board. Black stones did not choose to come. A 戰意 on their brows makes them fight whoever arrives, but it does not tell them how, so each fights exactly as he always has, and every blow that lands wakes him a little. White stones chose: they answered an unsigned letter at the edge of death. What answered is a single thought, and a thought has no body, so each hero arrives with only what the hands know best. They remember the rest of their lives as the boards press them, and the art that made their name comes back last, with its cost. Each board won is proof that the match can be won, and one more person who was holding the letter steps in. 韋小寶, the only living man there, opens a side bet on every board. Ten wins send the heroes home with 一悟. The youth climbs to the one who carved the stone, loses in one move, hears 「還不夠」, and closes his eyes.
 
 **What changed from the current premise.**
 
@@ -30,7 +31,7 @@ Three of these were real choices with alternatives (section 6). The producer cho
 | Black stones | A master and a lieutenant per board, both pressed by one will | Any number. One will per board; the master is where it sits. Stones from other books are strangers to the master, under the same will |
 | Rank and file | Not explained | 念中人: people the master's own thought brought with him. They are not summoned thoughts, so the rule 只見入道者 holds. They fade when he wakes |
 | What the will does | Makes them fight | Makes them fight, and nothing more. Manner, habits and tricks are the man's own. Half health is half awake |
-| Why this board is fought this way | One reason for all ten | The board's kind is where the 劍意 sits |
+| Why this board is fought this way | One reason for all ten | The board's kind is where the 戰意 sits |
 | Heroes' arts | One shared line; bios and tree introductions still describe the old state | Arts live in the body, and only a thought came. The hands keep what they know best; the famous art returns last, with its cost |
 | A new hero | Came because the secondary was met | Comes because the board was won. A win is proof |
 | The secondary | 盤外觀望的人 judging the win | 韋小寶's side bet |
@@ -42,7 +43,7 @@ Three of these were real choices with alternatives (section 6). The producer cho
 - The letter (英雄帖), word for word.
 - The youth: no name, the name he says by reflex, why he commands (當局者迷), why he cannot step onto the board.
 - 眼, 提子, the twelve-round limit (一念易散), the five 絕位, 收子, 通吃坊, 三盅通吃, 寄存, 賒帳, 破綻.
-- The masters' core: black stones, the 劍意, 「這念頭不是我的」, waking on defeat, and each master's first act on waking. Every existing line of the ten board scenes stands; a few need a count corrected (「兩個人」 where three now stand).
+- The masters' core: black stones, the 戰意, 「這念頭不是我的」, waking on defeat, and each master's first act on waking. Every existing line of the ten board scenes stands; a few need a count corrected (「兩個人」 where three now stand).
 - Every hero line: arrival, obey, the two deja vu lines, the two night-talk lines, farewell. All 23 same-book lines.
 - Deja vu rules, the night talk, the cross-run table (script §8 to §10), and the three-layer rule.
 
@@ -59,12 +60,12 @@ Status: **K** kept as it is, **C** changed wording, **N** new.
 | 1c | Every hero gains a point for each board won; a latecomer arrives with more points | Each win is one of the ten steps (仙規三, 登階). The higher the company stands, the more everyone remembers. Someone who steps in at the sixth step starts with what that height gives | One line after a win replaces 「同行俠客各得 1 武學點」: 「登了一級。同行的人，各自想起一點。」 | C |
 | 2 | A win alone brings the next hero | Letters went to many; some hold the letter and hesitate (world view §6, kept). A half-lit white stone at the board's edge is one of them. Nobody believes at first (script §4.1). A board won is proof that 「十局皆勝」 can be done | 軍情, the 應帖 row (it already names who comes). After a win: one changed spine line, then the hero's own arrival line as today | C |
 | 3 | Twelve kinds of secondary, one drawn per board per run, paying silver, 武學點 or a manual | 韋小寶 opens a side bet on every board (盤口). The win reward is already his 彩頭 (script §11); this is the same book, one line further. The draw changes each run because he calls a different bet each time. He pays in silver, in kind from his stock, or not at all, because a fight fought that well made the hands remember | 軍情, the 支線 row, prefixed 「韋小寶另開盤口」. After a win: one line from 韋小寶 by kind (twelve lines) and a tail by reward (three lines). Section 4 | N |
-| 4 | Boards differ in kind: 斬將, 殲滅, two masters; later destroy, defend, carry, escape | One 劍意 per board, and the kind is where it sits. On one brow: wake him and the board is over. On two brows: both. On everyone: each must be woken. Later kinds: fixed in a thing (break it), aimed at a thing of ours (hold until the thought runs out), or laid on the place (bring it out, or get out). 無刻漏臺's 星索 already tells this in the game | 軍情, the 戰局 row: one line per kind in the youth's voice (three now, one more per future kind). Each board's own scene keeps its sentence on why this fight cannot be avoided | N |
+| 4 | Boards differ in kind: 斬將, 殲滅, two masters; later destroy, defend, carry, escape | One 戰意 per board, and the kind is where it sits. On one brow: wake him and the board is over. On two brows: both. On everyone: each must be woken. Later kinds: fixed in a thing (break it), aimed at a thing of ours (hold until the thought runs out), or laid on the place (bring it out, or get out). 無刻漏臺's 星索 already tells this in the game | 軍情, the 戰局 row: one line per kind in the youth's voice (three now, one more per future kind). Each board's own scene keeps its sentence on why this fight cannot be avoided | N |
 | 4b | On a 斬將 board the rest need not fall | Rank and file are 念中人. A master's thought of himself includes his people: 丁春秋 cannot picture himself without disciples praising him. They are not summoned, so they are not 一念. When he wakes, they fade | One clause in a board's victory line: 「局主一醒，他心裡帶來的人便一個一個淡了。」 | N |
 | 5 | Reinforcements are a surprise, announced one round ahead; some come when a master is first at half health | The opponent is playing. A stone set down on the table is heard at once, and the person arrives one round later. 軍情 cannot show it because it has not been played. A wave that comes when a master is half down is the opponent answering a stone in danger | When a wave is announced: 「嗒。石臺上多了一枚黑子。」 beside the rule line that names the place. When a named villain steps on: his own line (board layer). Guide paragraph 敵援, one lead sentence | N |
 | 6 | Five villains joined existing boards, each with a troop type | Later moves by the same hand. They are strangers to the master, from other books and other years, under the same will. Like the heroes, they notice that the clothes around them are from no year they know. Their troops are their own 念中人 | Board scenes: one line each on arrival and one on waking. Bios in `VILLAINS` and `TROOPS`. Section 5 | N |
 | 7 | Every adversary fights in a way of his own | The will says fight; it does not say how. The post he holds, the trick he keeps, whom he goes for: all his. At half health he is half awake and his own nature comes through: 岳不群 drops the gentleman's face, 血刀老祖's arithmetic returns and he goes to mend, 歐陽鋒 runs his channels backward | Bios gain one clause tying habit to behaviour. One line the first time a behaviour shows (three exist as `phase.log`; the rest are new). Enemy pages keep the rule text | C |
-| 8a | 軍情 before 整備 | The youth reads the board from the stone table before anyone steps on. He can see where the 劍意 sits. He cannot see how a man will fight, because that is the man's own; the producer's ruling that 軍情 stops at 應帖 is therefore true in the world too | One lead line on the page. No information is added | N |
+| 8a | 軍情 before 整備 | The youth reads the board from the stone table before anyone steps on. He can see where the 戰意 sits. He cannot see how a man will fight, because that is the man's own; the producer's ruling that 軍情 stops at 應帖 is therefore true in the world too | One lead line on the page. No information is added | N |
 | 8b | 起陣: swap starting tiles before round one | The stone is still in his hand. 落子無悔: once the hand leaves it, it stays | The deployment tip: 「子還在手上，換得。一按『開戰』，落子無悔。」 | N |
 | 9 | More heroes, villains and boards are coming | Nothing above counts stones or names a cast. A new black stone needs four sentences (section 5, the card). A new hero needs the five lines they have today and one more. A new board needs its own entry; the bets and the kinds are shared | Structure only | N |
 | 10 | Recruitment, as shown on 軍情 | The half-lit stone has a name: the youth can see who is watching this board | 「盤邊一枚白子半亮著：〔名字〕持帖在看這一局。」 | C |
@@ -92,12 +93,12 @@ Status: **K** kept as it is, **C** changed wording, **N** new.
 | 3 | 石上的痕 | First board, before | He reads the stone. The three say the moment they came from. He explains that only he sees the whole board; the leader answers | K |
 | 4 | 手上少了甚麼 | First board, before | Each of the three starts a move and stops halfway. 韋小寶 tells them not to worry, it is the same for everyone, and then denies having said 「個個」 | N, two lines |
 | | *Every board, steps 5 to 11* | | | |
-| 5 | 觀局 | 軍情 page | He looks the board over from the stone table: where the 劍意 sits, what 韋小寶 is betting, who is watching with a letter in hand | N voice, no new information |
+| 5 | 觀局 | 軍情 page | He looks the board over from the stone table: where the 戰意 sits, what 韋小寶 is betting, who is watching with a letter in hand | N voice, no new information |
 | 6 | 整備 | 整備 | Who fights, what they carry, what they remember (the trees) | K |
 | 7 | 落子 | 起陣 | The stones are still in his hand. He may change where each stands. 開戰 is the hand leaving the stone | N, one line |
 | 8 | 局前 | Board scene | The master finds that the thought is not his. The youth says why the fight cannot be avoided. Where a stranger stone stands from the start, he has one line. A hero from the same book has their own line | K, one line added on three boards |
 | 9 | 戰中 | Battle | 「嗒」: another black stone, a round before the person. A stranger who steps on says one line. The first time a behaviour shows, one line. At half health: 半醒. 提子, 破綻 and 十二合 as today | N and C |
-| 10 | 局後・勝 | After | The 劍意 lifts. The master wakes and does the first thing that is his own; his people fade. 韋小寶 settles the bet, with a line for a bet met and a shorter one for a bet missed. The half-lit stone lights and a new hero arrives with their own arrival line. One step climbed: everyone remembers a little. Then the stall | K, C and N |
+| 10 | 局後・勝 | After | The 戰意 lifts. The master wakes and does the first thing that is his own; his people fade. 韋小寶 settles the bet, with a line for a bet met and a shorter one for a bet missed. The half-lit stone lights and a new hero arrives with their own arrival line. One step climbed: everyone remembers a little. Then the stall | K, C and N |
 | 11 | 局後・敗 | After | The master has won and the will does not leave him. The white stones go dark. 韋小寶 packs up | K |
 | 12 | 開張 | After the first win | 通吃坊 opens. Goods centuries apart side by side | K |
 | 13 | 夜話 | Before the fifth board | By the stall's lamp. The youth's question changes with the number of runs | K |
@@ -161,7 +162,7 @@ Why this reading fits what the game does:
 
 **The card.** Every named black stone, now and later, is written from four sentences. The first and last exist today for the ten masters (script §7). The middle two are new and are where the behaviours go.
 
-1. What he has never done, which the 劍意 now makes him do.
+1. What he has never done, which the 戰意 now makes him do.
 2. How he fights, which stays his own (his trait).
 3. What comes through when he is half awake (if he changes at half health).
 4. The first thing he does on waking.
@@ -326,13 +327,13 @@ Section 4 has all twelve and the three tails. One in sequence, after a board won
 | Moment | Line |
 |---|---|
 | 軍情, lead | 入盤之前，他在石臺邊把這一局先看一遍。入了盤的人，只看得見身邊幾步。 |
-| 軍情, 斬將 | 這一局的劍意只壓在一個人眉心。打醒他，他心裡帶來的人自然散。 |
-| 軍情, two masters | 這一局的劍意壓著兩個人。醒了一個不算，要兩個都醒。 |
-| 軍情, 殲滅 | 這一局的劍意不在一個人身上，散在每一個人身上。要一個一個打醒。 |
-| 軍情, a later kind (破) | 這一局的劍意釘在一件東西上。毀了它，人人都醒。 |
+| 軍情, 斬將 | 這一局的戰意只壓在一個人眉心。打醒他，他心裡帶來的人自然散。 |
+| 軍情, two masters | 這一局的戰意壓著兩個人。醒了一個不算，要兩個都醒。 |
+| 軍情, 殲滅 | 這一局的戰意不在一個人身上，散在每一個人身上。要一個一個打醒。 |
+| 軍情, a later kind (破) | 這一局的戰意釘在一件東西上。毀了它，人人都醒。 |
 | 起陣 | 子還在手上，換得。一按「開戰」，落子無悔。 |
-| A behaviour first shown (續命) | 閻基的手搭上了同夥的傷處。逼他動手的是劍意；替人接骨，卻是他自己的老本行。 |
-| A behaviour first shown (護駕) | 師父未動，弟子先撲上來挨打。這不是劍意，是他們門中的規矩。 |
+| A behaviour first shown (續命) | 閻基的手搭上了同夥的傷處。逼他動手的是戰意；替人接骨，卻是他自己的老本行。 |
+| A behaviour first shown (護駕) | 師父未動，弟子先撲上來挨打。這不是戰意，是他們門中的規矩。 |
 | Half awake (遁走), after the existing line | 打到半醒，他那本算盤回來了：先養傷，再砍人。 |
 | A 斬將 board won with others still standing | 局主一醒，他心裡帶來的人便一個一個淡了。 |
 
@@ -363,7 +364,7 @@ Line counts are estimates of lines of story text, not of code.
 
 | Document | Sections |
 |---|---|
-| `wiki/content/單輪劇本.md` to v0.6 | §0 (decisions); §1 (the paragraph); §4.3 (strangers, manner is their own, 半醒, 念中人); §4.4, rewritten whole as 韋小寶's 盤口; §4.5 (he plays during the board); §5 (the flow table and 5.3, where the same-book rule widens); §6 (a column: what is in the hand on arrival); §7 (two columns: where the 劍意 sits, and the stones set down later; the 支線 column goes); §11 (every row marked 待寫, and 11.1); §13; §14 (盤口, 花紅, 半醒, 念中人, 觀局; 引路燈 redefined) |
+| `wiki/content/單輪劇本.md` to v0.6 | §0 (decisions); §1 (the paragraph); §4.3 (strangers, manner is their own, 半醒, 念中人); §4.4, rewritten whole as 韋小寶's 盤口; §4.5 (he plays during the board); §5 (the flow table and 5.3, where the same-book rule widens); §6 (a column: what is in the hand on arrival); §7 (two columns: where the 戰意 sits, and the stones set down later; the 支線 column goes); §11 (every row marked 待寫, and 11.1); §13; §14 (盤口, 花紅, 半醒, 念中人, 觀局; 引路燈 redefined) |
 | `wiki/content/世界觀設定.md` to v0.9 | §0 (a v0.9 note). §4.4, two sentences: the will compels the fight and not the manner; rank and file are 念中人. §6, three rows that v0.8 itself marks 待故事細化時重寫 (十張地圖; 勝局得新英雄；支線另有獎賞). §11 (引路燈, and the new terms). Nothing in §1 to §5, §7 or §8 |
 
 **Checks at the end of the rewrite:** `node tools/check-story.mjs`, `node tools/check-wiki.mjs`, and `python3 tools/extra-fonts.py --check` for any new character.
