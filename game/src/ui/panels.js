@@ -33,6 +33,7 @@ import {
   targetOK,
   canPrepare,
   canUseMedicine,
+  medicineFor,
   artFor,
   basicFor,
   equippedArts,
@@ -50,6 +51,7 @@ import {
   stat
 } from '../rules/game.js';
 import { icon } from './icons.js';
+import { itemPicture } from './item-art.js';
 import { POLISH } from '../polish.js';
 import { extraHotkeys } from './field-extras.js';
 import { ON as actionFlow, anyIdle, flowHotkeys } from './action-flow.js';
@@ -373,7 +375,7 @@ function equippedCard(u, id, slot) {
   return (
     '<div class="equipped-card"><div class="item-icon">' +
     (item
-      ? '<img class="fo-mini" src="' + art('item-' + id + '.webp') + '" alt="">'
+      ? itemPicture(id, 'fo-mini')
       : icon(slot === '兵器' ? 'sword' : 'shield', 22)) +
     '</div><div><small>' +
     slot +
@@ -449,17 +451,29 @@ function profileContents(s, id) {
     '</div>'
   );
 }
-function effect(item) {
-  return item.atk
-    ? '攻擊 +' + item.atk
-    : item.def
-      ? '防禦 +' + item.def
-      : item.power
-        ? '絕技威力 +' + item.power
-        : item.hp
-          ? '氣血 +' + item.hp
-          : '內力 +' + item.mp;
+// An item's numbers in one line: 「攻擊 ＋17 · 移動 −1」.
+function itemBonus(item) {
+  return [
+    ['cleanse', '解除不良狀態'],
+    ['atk', '攻擊'],
+    ['def', '防禦'],
+    ['power', '絕技威力'],
+    ['step', '移動'],
+    ['barbs', '反刺'],
+    ['hp', '氣血'],
+    ['mp', '內力']
+  ]
+    .filter(([k]) => item[k])
+    .map(([k, n]) =>
+      item[k] === true ? n : k === 'barbs' ? n + ' ' + item[k] : n + (item[k] < 0 ? ' −' + -item[k] : ' ＋' + item[k])
+    )
+    .join(' · ');
 }
+// The button's word for a dose that would do nothing now.
+function medicineIdle(item) {
+  return item.hp && !item.mp ? '氣血已滿' : item.mp && !item.hp ? '內力已滿' : '無須服用';
+}
+const effect = itemBonus;
 function inventoryPage(s, id, filter) {
   const u = find(s, id);
   const groups = [
@@ -483,17 +497,15 @@ function inventoryPage(s, id, filter) {
       usable =
         (item.kind === 'use' ? canUseMedicine(s, u) : canPrepare(s, u)) &&
         match &&
-        (item.kind !== 'use' || (item.hp ? u.hp < u.maxHp : u.mp < u.maxMp));
+        (item.kind !== 'use' || medicineFor(u, item).helps);
     const label = !match
       ? '限' + DETAILS[item.owner].name
       : worn
         ? '卸下'
         : item.kind === 'use'
-          ? item.hp && u.hp === u.maxHp
-            ? '氣血已滿'
-            : item.mp && u.mp === u.maxMp
-              ? '內力已滿'
-              : '服用'
+          ? medicineFor(u, item).helps
+            ? '服用'
+            : medicineIdle(item)
           : '裝備';
     content +=
       '<div class="inventory-row"><span class="item-icon">' +
@@ -1241,4 +1253,4 @@ function resultPage(s) {
   );
 }
 
-export { portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };
+export { itemBonus, medicineIdle, portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };

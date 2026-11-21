@@ -13,6 +13,7 @@ const G = await load('rules/game.js');
 const R = await load('rules/journey.js');
 const BM = await load('rules/battle-mastery.js');
 const FR = await load('rules/form-rules.js');
+const FM = await load('rules/ferry-market.js');
 const { TECHNIQUES, MANUAL_PRICES } = await load('data/martial-arts.js');
 const { ENCOUNTERS, RANKS, STATUS_POWER } = await load('data/encounters.js');
 const { mapLayout } = await load('data/terrain.js');
@@ -224,18 +225,24 @@ section('save migration');
   const again = R.restoreRun(copy(respec));
   check('loading it again refunds nothing more', again && unit(again, 'hero').sp === 5);
 
-  // 青鋒劍 is gone from the game: a save holding one gets its price back and stays loadable.
+  // 青鋒劍 left the game on 2026-11-20 (saves holding one were refunded) and is back. A save from
+  // before it left keeps the sword where it was; a save that was refunded keeps its coins.
   const armed = board(['hero', 'medic', 'guard']);
   unit(armed, 'hero').weapon = 'blueEdge';
   armed.stock.pine = 1;
   armed.stock.blueEdge = 1;
   armed.run.shop.push({ id: 'blueEdge', price: 33, left: 1 });
   const purse = armed.run.coins;
-  const disarmed = R.restoreRun(copy(armed));
-  check('a save holding the removed sword restores', !!disarmed);
-  check('its bearer takes up his own weapon again', disarmed && unit(disarmed, 'hero').weapon === 'pine' && !disarmed.stock.pine);
-  check('it leaves the stores and the shelf', disarmed && !('blueEdge' in disarmed.stock) && !disarmed.run.shop.some((o) => o.id === 'blueEdge'));
-  check('both swords are paid for', disarmed?.run.coins === purse + 66, disarmed?.run.coins);
+  const kept = R.restoreRun(copy(armed));
+  check('a save holding 青鋒劍 restores', !!kept);
+  check('its bearer still holds it', kept && unit(kept, 'hero').weapon === 'blueEdge' && kept.stock.pine === 1);
+  check('the stores and the shelf keep it', kept?.stock.blueEdge === 1 && kept.run.shop.some((o) => o.id === 'blueEdge'));
+  check('no coins are paid out for it', kept?.run.coins === purse, kept?.run.coins);
+  const refunded = board(['hero', 'medic', 'guard']);
+  refunded.run.coins += 66; // what the old migration paid for two swords
+  const after = R.restoreRun(copy(refunded));
+  check('a save that was refunded restores with its coins', after?.run.coins === refunded.run.coins && unit(after, 'hero').weapon === 'pine');
+  check('青鋒劍 is a weapon again, on the shelf from the first board', G.ITEMS.blueEdge?.kind === 'weapon' && same(FM.MARKET_STOCK.blueEdge, [33, 1]) && G.ITEMS.blueEdge.atk === 10 && same(G.ITEMS.blueEdge.forms, ['exploit']));
   check('楊過 starts with the 古墓 sword', G.startingHero('yang').weapon === 'tombSword' && G.ITEMS.tombSword.owner === 'yang');
 
   const z = board();
@@ -3347,6 +3354,99 @@ section('board 9 無刻漏臺: the mirror');
   hero.acted = hero.moved = false;
   G.resolve(s, hero, bow, false);
   check('one rope down: the ward is 35% and the log says so', G.wardShare(s, mu) === 35 && s.logs.some((l) => l.text === '一條星索斷了。慕容博的護勁降至三成半。'));
+}
+
+// ── The shop's new items: 屠龍刀, 軟蝟甲 (反刺), 九花玉露丸, 玉蜂漿 ──────────
+section('items');
+{
+  // 反刺: a foe that strikes the wearer from beside her loses the barbs on top of whatever else
+  // happens, measured against the same exchange without the vest.
+  const exchange = (vest, { reach = 1, evade = false } = {}) => {
+    const s = board();
+    const hero = put(s, 'hero', 4, 7);
+    hero.gear = vest ? 'hedgehogVest' : null;
+    const foe = Object.assign(put(s, 'blade', 4 + reach, 7), { step: 0, range: reach });
+    if (evade) BM.applyCondition(s, hero, { kind: 'evade', power: 1, turns: 1 }, hero);
+    G.startEnemy(s);
+    G.enemyAct(s, foe);
+    return { foe: foe.hp, s };
+  };
+  const plain = exchange(false),
+    pricked = exchange(true);
+  check('a foe striking the wearer from beside her loses 7 more', plain.foe - pricked.foe === G.ITEMS.hedgehogVest.barbs && G.ITEMS.hedgehogVest.barbs === 7, plain.foe - pricked.foe);
+  check('the log names the barbs', pricked.s.logs.some((l) => l.text.startsWith('軟蝟甲的倒刺扎傷')));
+  check('a foe striking from two tiles away is not pricked', exchange(false, { reach: 2 }).foe === exchange(true, { reach: 2 }).foe);
+  check('a blow 閃身 makes miss does not touch her', exchange(false, { evade: true }).foe === exchange(true, { evade: true }).foe);
+  // Her own strike: the counter it draws from beside her is pricked, and the forecast says so.
+  const s = board();
+  const hero = put(s, 'hero', 4, 7);
+  hero.gear = 'hedgehogVest';
+  const foe = put(s, 'blade', 5, 7);
+  const f = G.forecast(hero, foe, false, s);
+  check('the forecast shows the counter pricked', f.counterRaw > 0 && f.barbs === 7 && f.notes.includes('反刺 · 還擊者被軟蝟甲扎傷 7 氣血'), JSON.stringify(f.notes));
+  const before = foe.hp;
+  G.resolve(s, hero, foe, false);
+  check('the strike deals what the forecast said, barbs included', before - foe.hp === f.amount + 7, before - foe.hp);
+  hero.gear = null;
+  check('without the vest the forecast has no barbs', !G.forecast(hero, foe, false, s).barbs);
+
+  // 九花玉露丸 lifts every ailment, then heals in full even through 內傷; with nothing to do it is kept.
+  const pill = G.ITEMS.nineFlowerPill;
+  check('its text names every ailment it lifts', FR.AILMENTS.every((k) => pill.desc.includes(BM.CONDITION_NAMES[k])));
+  const m = board();
+  const h = unit(m, 'hero');
+  h.hp = 20;
+  for (const kind of ['wound', 'poison', 'daze']) BM.applyCondition(m, h, { kind, power: 3, turns: 2 }, h);
+  m.stock.nineFlowerPill = 1;
+  check('九花玉露丸 is taken', G.consume(m, h, 'nineFlowerPill') && !m.stock.nineFlowerPill);
+  check('it lifts 內傷, 中毒 and 失神', !h.conditions.wound && !h.conditions.poison && !h.conditions.daze);
+  check('its healing is not halved by the 內傷 it lifted', h.hp === 20 + pill.hp, h.hp);
+  m.stock.nineFlowerPill = 1;
+  h.hp = h.maxHp;
+  check('a hale hero is not given one', !G.consume(m, h, 'nineFlowerPill') && m.stock.nineFlowerPill === 1);
+
+  // 玉蜂漿 restores both, and is worth taking when either is short.
+  const nectar = G.ITEMS.beeNectar;
+  h.hp = 40;
+  h.mp = 5;
+  m.stock.beeNectar = 2;
+  check('玉蜂漿 restores 氣血 and 內力 at once', G.consume(m, h, 'beeNectar') && h.hp === 40 + nectar.hp && h.mp === Math.min(h.maxMp, 5 + nectar.mp));
+  h.hp = h.maxHp;
+  h.mp = 0;
+  check('it is taken for 內力 alone when 氣血 is full', G.consume(m, h, 'beeNectar') && h.mp === Math.min(h.maxMp, nectar.mp));
+  check('金創藥 is unchanged', (() => {
+    h.hp = 10;
+    m.stock.remedy = 1;
+    return G.consume(m, h, 'remedy') && h.hp === 10 + G.ITEMS.remedy.hp && m.logs.at(-1).text === '服用金創藥，回復 48 點氣血。';
+  })());
+
+  // 屠龍刀: the most attack of any weapon, one step less, 定勢 on the basic attack.
+  const w = board();
+  const bearer = unit(w, 'guard');
+  const step = G.stat(bearer, 'step', w),
+    atk = G.stat(bearer, 'atk', w);
+  bearer.weapon = 'dragonSaber';
+  check('屠龍刀 adds 17 attack and costs a step', G.stat(bearer, 'atk', w) === atk - (G.ITEMS[G.startingHero('guard').weapon].atk || 0) + 17 && G.stat(bearer, 'step', w) === step - 1);
+  check('its basic attack carries 定勢', G.formsFor(bearer, null).includes('still'));
+  check('no shop weapon out-hits it', Object.entries(G.ITEMS).every(([id, it]) => it.kind !== 'weapon' || id === 'dragonSaber' || (it.atk || 0) < 17));
+
+  // Taking an item out of the shop is one line: off the table, never on the shelf or under a cup.
+  const offered = (id) => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const c = board();
+      c.run.seed = seed;
+      c.run.stage = 5;
+      c.run.last = { won: true, terminal: false };
+      if (FM.makeOffers(c).some((o) => o.id === id)) return true;
+    }
+    return false;
+  };
+  check('屠龍刀 reaches the shelf in later stages', offered('dragonSaber'));
+  const line = FM.MARKET_STOCK.dragonSaber;
+  delete FM.MARKET_STOCK.dragonSaber;
+  check('deleting its line keeps it off the shelf', !offered('dragonSaber'));
+  check('and out of the cups', !FM.validVisit({ cards: ['dragonSaber', 'remedy', 'jade'], order: [0, 1, 2], phase: 'show', pick: null }));
+  FM.MARKET_STOCK.dragonSaber = line;
 }
 
 // ─────────────────────────────────────────────────────────────────────────

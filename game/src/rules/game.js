@@ -5,7 +5,8 @@ import {
   forcedStep,
   secondaryTargets,
   supportEntry,
-  weaponFormText
+  weaponFormText,
+  AILMENTS
 } from './form-rules.js';
 import { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS } from '../data/encounters.js';
 import { NEW_HEROES } from '../data/new-heroes.js';
@@ -1789,6 +1790,18 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
     result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
   }
+  // 反刺: the counter comes from beside the wearer, so it pricks the one who makes it.
+  if (result.counterRaw > 0 && barbsOf(u) && distance(u, result.push || t) === 1) {
+    const guards = wardEscorts(s).filter(
+      (g) => !result.splash.some((hit) => hit.id === g.id && hit.amount >= g.hp)
+    );
+    result.barbs = afterWard(barbsOf(u), wardShare(s, t, guards));
+    result.notes.push(
+      '反刺 · 還擊者被軟蝟甲扎傷 ' +
+        Math.min(t.hp - result.amount - result.reflected, Math.max(0, result.barbs - shield)) +
+        ' 氣血'
+    );
+  }
   if (result.forms.includes('glide') && art && glideSteps(s, u) > 0)
     result.notes.push('回身 · 出招後尚可走 ' + glideSteps(s, u) + ' 步');
   if (result.forms.includes('again') && u.againRound !== s?.round)
@@ -1996,6 +2009,23 @@ function reflectStrike(s, victim, attacker, dealt, effects) {
     unitDetails(victim).name
   );
 }
+// 反刺 (軟蝟甲): a piece that strikes the wearer from the tile beside her, with a blow or a counter
+// that lands, is pricked for the gear's barbs. Defence does not cut it; the striker's own shield
+// takes it first, and a master's escorts share it as they share any blow. A blow 閃身 or 挪移
+// voids never touches her. The wearer's own strike shows the pricking of its counter in the
+// forecast (`barbs`).
+const barbsOf = (v) => ITEMS[v?.gear]?.barbs || 0;
+function barbStrike(s, wearer, striker, raw, effects) {
+  if (!raw || !living(striker)) return;
+  const amount = wound(s, striker, raw, wearer);
+  effects.push([striker.id, '−' + amount]);
+  log(
+    s,
+    'combat',
+    '軟蝟甲的倒刺扎傷' + unitDetails(striker).name + '，造成 ' + amount + ' 點傷害。',
+    unitDetails(wearer).name
+  );
+}
 function restoreHealth(s, caster, target, n, effects) {
   if (!n) return;
   target.hp += n;
@@ -2120,6 +2150,7 @@ function resolve(s, u, t, skill) {
       effects.push([u.id, '−' + dealt, 'counter']);
       log(s, 'combat', '還擊' + who + '，造成 ' + dealt + ' 點傷害。', unitDetails(t).name);
       reflectStrike(s, u, t, dealt, effects);
+      barbStrike(s, u, t, f.barbs, effects); // 反刺
     }
     woundSelfLoss(s, u, effects); // 內傷: the attacker pays once the exchange is over
   }
@@ -2189,22 +2220,33 @@ function canUseMedicine(s, u) {
     s.units.includes(u)
   );
 }
+// What a dose would do for `u` now: the ailments it lifts, then the 氣血 and 內力 it restores. A
+// lifted 內傷 no longer halves the healing that follows it.
+function medicineFor(u, item) {
+  const clean = item?.cleanse ? AILMENTS.filter((k) => u.conditions?.[k]) : [];
+  const hp = item?.hp
+    ? Math.min(clean.includes('wound') ? item.hp : healAmount(u, item.hp), u.maxHp - u.hp)
+    : 0;
+  const mp = item?.mp ? Math.min(item.mp, u.maxMp - u.mp) : 0;
+  return { clean, hp: Math.max(0, hp), mp: Math.max(0, mp), helps: clean.length + hp + mp > 0 };
+}
 function consume(s, u, id) {
   const item = ITEMS[id];
   if (item?.kind !== 'use' || !canUseMedicine(s, u) || !(s.stock[id] > 0)) return false;
-  const k = item.hp ? 'hp' : 'mp',
-    cap = k === 'hp' ? 'maxHp' : 'maxMp',
-    n = Math.min(k === 'hp' ? healAmount(u, item.hp) : item.mp, u[cap] - u[k]);
-  if (n <= 0) return false;
-  u[k] += n;
+  const dose = medicineFor(u, item);
+  if (!dose.helps) return false;
+  for (const k of dose.clean) delete u.conditions[k];
+  u.hp += dose.hp;
+  u.mp += dose.mp;
   s.stock[id]--;
-  if (k === 'hp') s.stats.healed += n;
-  log(
-    s,
-    'item',
-    '服用' + item.name + '，回復 ' + n + ' 點' + (k === 'hp' ? '氣血' : '內力') + '。',
-    unitDetails(u).name
-  );
+  s.stats.healed += dose.hp;
+  const parts = [
+    dose.clean.length && '解除' + dose.clean.map((k) => CONDITION_NAMES[k]).join('、'),
+    (dose.hp || dose.mp) &&
+      '回復 ' +
+        [dose.hp && dose.hp + ' 點氣血', dose.mp && dose.mp + ' 點內力'].filter(Boolean).join('與')
+  ].filter(Boolean);
+  log(s, 'item', '服用' + item.name + '，' + parts.join('，') + '。', unitDetails(u).name);
   return true;
 }
 function equip(s, u, id) {
@@ -2520,6 +2562,8 @@ function enemyAct(s, u) {
     if (lineKind(art)) lineThrough(s, u, t, strikePower, effects); // 穿行
   } else if (living(t) && !blow.void) basicPoison(s, u, t, effects); // 蛇毒
   reflectStrike(s, t, u, n, effects);
+  if (barbsOf(t) && !blow.void && distance(u, t) === 1)
+    barbStrike(s, t, u, afterWard(barbsOf(t), wardPercent(s, u)), effects); // 反刺
   const share = counterRatio(s, t);
   if (!living(t)) log(s, 'combat', '負傷退場。', unitDetails(t).name);
   else if (
@@ -2725,4 +2769,4 @@ function nextRound(s) {
   return true;
 }
 
-export { boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, medicineFor, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

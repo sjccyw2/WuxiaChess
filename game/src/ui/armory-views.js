@@ -3,8 +3,9 @@ import * as G from '../rules/game.js';
 import { seatsFor } from '../rules/formation.js';
 import { mapLayout } from '../data/terrain.js';
 import { art } from './artwork.js';
-import { face, btn, esc } from './panels.js';
+import { face, btn, esc, itemBonus, medicineIdle } from './panels.js';
 import { icon } from './icons.js';
+import { itemPicture } from './item-art.js';
 
 const slotNames = { weapon: '兵器', gear: '護具' };
 const numerals = ['一', '二', '三', '四', '五'];
@@ -12,9 +13,7 @@ const who = (u) => G.unitDetails(u).name;
 const small = (action, label, attr = '', disabled = false) =>
   btn(action, label, 'mj-action fo-action', attr + (disabled ? ' disabled' : ''));
 const grip = '<i class="fo-grip" aria-hidden="true">⠿</i>';
-const image = (file, cls = '') =>
-  '<img alt="" draggable="false" class="' + cls + '" src="' + esc(art(file)) + '">';
-const itemImage = (id) => image('item-' + id + '.webp', 'fo-item-img');
+const itemImage = (id, live = false) => itemPicture(id, 'fo-item-img', live);
 const dropAttrs = (kind, destination) => 'data-drop="' + kind + '" data-dest="' + destination + '"';
 const dragAttrs = (kind, id, owner) =>
   'data-drag="' + kind + '" data-id="' + id + '" data-owner="' + owner + '" draggable="false"';
@@ -177,19 +176,7 @@ function formationCards(s, u, ui) {
     '</section>'
   );
 }
-function bonus(item) {
-  return [
-    ['atk', '攻擊'],
-    ['def', '防禦'],
-    ['power', '絕技威力'],
-    ['step', '移動'],
-    ['hp', '氣血'],
-    ['mp', '內力']
-  ]
-    .filter(([k]) => item[k])
-    .map(([k, n]) => n + ' ＋' + item[k])
-    .join(' · ');
-}
+const bonus = itemBonus;
 function available(s, u) {
   const entries = [];
   for (const [id, item] of Object.entries(G.ITEMS)) {
@@ -293,18 +280,17 @@ function armory(s, u, ui) {
       );
     const attr = 'data-id="' + v.id + '" data-owner="' + v.owner + '"';
     const worn = v.owner === u.id;
-    const canUse = G.canUseMedicine(s, u) && (v.item.hp ? u.hp < u.maxHp : u.mp < u.maxMp);
+    const helps = G.medicineFor(u, v.item).helps,
+      canUse = G.canUseMedicine(s, u) && helps;
     let actions = '';
     if (v.item.kind === 'use') {
       actions += small(
         'item',
         canUse
           ? '服用一份'
-          : v.item.hp && u.hp === u.maxHp
-            ? '氣血已滿'
-            : v.item.mp && u.mp === u.maxMp
-              ? '內力已滿'
-              : '暫不可服',
+          : !helps
+            ? medicineIdle(v.item)
+            : '暫不可服',
         attr,
         !canUse
       );
@@ -319,7 +305,7 @@ function armory(s, u, ui) {
     }
     return (
       '<section class="fo-inspector">' +
-      itemImage(v.id) +
+      itemImage(v.id, true) +
       '<div><h4>' +
       v.item.name +
       '</h4><b>' +

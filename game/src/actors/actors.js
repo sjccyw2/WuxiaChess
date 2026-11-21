@@ -7,6 +7,7 @@ import { art } from '../ui/artwork.js';
 import { paintTechniqueStroke } from '../fx/technique-strokes.js';
 import { paintTechniqueTier } from '../fx/technique-tiers.js';
 import { paintSkillEffect } from '../fx/skill-effects.js';
+import { paintPaintedEffect } from '../fx/painted-effects.js';
 import { Impact } from '../fx/impact.js';
 import { paintCursor } from './cursor.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
@@ -1002,6 +1003,9 @@ class ActorLayer {
         }
         const from = this.point(e.from.x, e.from.y, 0.78);
         const to = this.point(e.to.x, e.to.y, 0.76);
+        // A famous art with a hand-painted sheet draws it in place of the ink effect and stroke.
+        if (paintPaintedEffect(c, e, now, from, to, this.scaleAt(e.to.x, e.to.y), !this.prefs.motion))
+          continue;
         if (e.flourish) {
           paintMasteryFlourish(
             c,

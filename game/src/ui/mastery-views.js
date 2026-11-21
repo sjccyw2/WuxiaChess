@@ -3,6 +3,7 @@ import { factBadge } from './panels.js';
 import { btn, titleHead, face, esc, bookCitation } from './panels.js';
 import { icon } from './icons.js';
 import { art } from './artwork.js';
+import { itemPicture } from './item-art.js';
 import { DETAILS } from '../rules/game.js';
 
 const text = (value) => esc(value ?? '');
@@ -322,7 +323,7 @@ function productRow(item, coins) {
     'mj-buy',
     `${data(item.id)} ${item.canBuy ? '' : 'disabled'} aria-label="${caption}${text(item.name)}，${price} 兩"`
   );
-  return `<li class="mj-product"><span class="mj-item-symbol">${item.group === 'manual' ? glyph(item.icon, 20) : '<img class="fo-mini" alt="" src="' + text(art('item-' + item.id + '.webp')) + '">'}</span><div>${item.description ? `<details class="shop-item-detail"><summary>${text(item.name)}</summary><p>${text(item.description)}</p></details>` : `<h5>${text(item.name)}</h5>`}<small>庫存 ${left}<i></i>持有 ${owned}</small></div>${action}</li>`;
+  return `<li class="mj-product"><span class="mj-item-symbol">${item.group === 'manual' ? glyph(item.icon, 20) : itemPicture(item.id, 'fo-mini')}</span><div>${item.description ? `<details class="shop-item-detail"><summary>${text(item.name)}</summary><p>${text(item.description)}</p></details>` : `<h5>${text(item.name)}</h5>`}<small>庫存 ${left}<i></i>持有 ${owned}</small></div>${action}</li>`;
 }
 function shop(model) {
   const offers = list(model.offers);
