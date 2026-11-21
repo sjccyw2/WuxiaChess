@@ -93,7 +93,7 @@ function prologueSteps(profile, name = '', film = false) {
         { who: 'qiu', text: tale.again.reply }
       ]
     : film
-      ? [...(known ? [] : [tale.film.name]), ...tale.first.slice(tale.first.findIndex((step) => step.afterFilm))]
+      ? [...(known ? [] : [tale.film.name, tale.film.named]), ...tale.first.slice(tale.first.findIndex((step) => step.afterFilm))]
       : tale.first.map((step) => (step.ask && known ? { ...step, ask: false } : step));
   // Until he has said his name, the page calls him only 少年.
   const asked = known ? -1 : steps.findIndex((step) => step.ask);
@@ -113,7 +113,7 @@ function prologuePage(profile, step = 0, name = '', film = false) {
     ? `<img class="fy-speaker-portrait" alt="" src="${text(art(picture))}">`
     : '';
   const entry = p.ask
-    ? `<label class="youth-name"><span>你的名字</span><input id="youth-name" type="text" maxlength="8" autocomplete="off" spellcheck="false" enterkeyhint="done" value="${text(name)}" placeholder="${text(YOUTH.name)}"></label><p class="footnote">最多八個字。留空便叫「${text(YOUTH.name)}」。這個名字會一直跟著你。</p>`
+    ? `<label class="youth-name"><span>起個名字</span><input id="youth-name" type="text" maxlength="8" autocomplete="off" spellcheck="false" enterkeyhint="done" value="${text(name)}" placeholder="${text(YOUTH.name)}"></label><p class="footnote">夢裡記不起自己的名字，便替他起一個。最多八個字。留空便叫「${text(YOUTH.name)}」。這個名字會一直跟著你。</p>`
     : '';
   const said = p.speaker
     ? `<div class="fy-byline"><strong>${text(p.speaker.name)}</strong><small>${text(p.speaker.role)}</small></div><blockquote>${text(p.text)}</blockquote>`

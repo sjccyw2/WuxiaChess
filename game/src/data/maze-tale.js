@@ -28,6 +28,17 @@ const TALE_ART = {
 };
 
 // {name} in a line is replaced by the youth's name.
+// The youth reaches for his name and cannot find it (in the dream he has forgotten it), then
+// makes one up. Shared by the pages and the page after the film.
+const YOUTH_FORGETS = {
+  who: 'youth',
+  note: '少年張口便要報上名字，那兩個字卻似到了嘴邊，又滑了回去。在這夢裡，他竟記不起自己叫甚麼。',
+  text: '我叫……我叫……'
+};
+const YOUTH_NAMES = {
+  who: 'youth',
+  text: '怪了，自己的名字，怎地想不起來？……那便叫{name}罷。我在家裡睡覺，一睜眼便到了這裡。老伯，你又是誰？'
+};
 const MAZE_TALE = {
   title: '劍影江湖・一念江湖',
   // Shown before the draw. A step is narration (note), a line (who, text), or both; `ask` marks
@@ -47,13 +58,14 @@ const MAZE_TALE = {
       {
         who: 'qiu',
         note: '那老者手中的黑子停在半空，緩緩抬起頭來，臉上微現詫異之色。',
-        text: '咦。老夫這劍境之中，幾百年來不曾有人闖得進來。……奇了。你身上半點功夫也無，老夫怎地瞧得見你？你是甚麼人？',
-        ask: true
+        text: '咦。老夫這劍境之中，幾百年來不曾有人闖得進來。……奇了。你身上半點功夫也無，老夫怎地瞧得見你？你是甚麼人？'
       },
-      { who: 'youth', text: '我叫{name}。我在家裡睡覺，一睜眼便到了這裡。老伯，你又是誰？' },
+      // In the dream he cannot recall his own name, so he makes one up: the name the player types.
+      { ...YOUTH_FORGETS, ask: true },
+      { ...YOUTH_NAMES },
       {
         who: 'qiu',
-        text: '{name}？這兩個字倒有些耳熟。……想不起了。老夫自己的姓名，也早已忘了。世人叫我「求敗」。'
+        text: '{name}？這名字倒有些耳熟。……想不起了。想不起自己的名字，也不打緊。老夫自己的姓名，也早已忘了。世人叫我「求敗」。'
       },
       { who: 'youth', text: '求敗？天下哪有人盼著打敗仗的？' },
       {
@@ -73,12 +85,13 @@ const MAZE_TALE = {
     // reached again only after a lost run); `beyond` once the fifth 境 has been won.
     // The first visit opens with a film (asset-gen/prologue-video), in a 9:16 cut for screens taller
     // than wide and a 16:9 cut otherwise: it tells the pages above up to 「抓三枚」, and in it the
-    // youth is cut off before he can say his name. So after it the player finishes his sentence,
-    // and the pages resume at `afterFilm`.
+    // youth is cut off before he can say his name. So after it he finds he cannot recall it and the
+    // player makes one up for him (`name`, `named`), and the pages resume at `afterFilm`.
     film: {
       tall: { file: 'prologue-film.mp4', poster: 'prologue-film.webp' },
       wide: { file: 'prologue-film-wide.mp4', poster: 'prologue-film-wide.webp' },
-      name: { who: 'youth', text: '我……我叫……', ask: true }
+      name: { ...YOUTH_FORGETS, ask: true },
+      named: YOUTH_NAMES
     },
     again: {
       note: '少年又睡著了。再睜開眼來，仍是那座山谷，那方青石棋臺。他說不出幾時來過，腳下卻自己認得路，逕自走到臺前。那頭大鵰向他點了點頭。',
