@@ -13,11 +13,11 @@ Run everything from a working folder that holds these scripts. Nothing here touc
 3. **Fonts.** Convert the game's serif to TTF beside the scripts: `river-serif.ttf` and
    `extra-serif.ttf` from `game/assets/*.woff2` (fontTools: open, set `flavor = None`, save).
    WenQuanYi Zen Hei is the last fallback.
-4. **Cut.** `python3 cut30.py` renders `silent30.mp4` (1080 × 1920, 30 fps); `python3 cut30.py 2.5 13.6`
-   saves stills at those times instead. `python3 sound30.py` writes `sound30.wav`. Then
-   `ffmpeg -i silent30.mp4 -i sound30.wav -c:v copy -c:a aac -shortest prologue-30.mp4`.
+4. **Cut.** `python3 cut45.py` renders `silent45.mp4` (1080 × 1920, 30 fps); `python3 cut45.py 2.5 33`
+   saves stills at those times instead. `python3 sound45.py` writes `sound45.wav`. Then
+   `ffmpeg -i silent45.mp4 -i sound45.wav -c:v libx264 -crf 23 -c:a aac -shortest prologue-45s.mp4`.
 
-`comic.py` holds the effects: panels shown through animated shapes (`poly`, `dots`, `iris`), the
-camera on twos, misregistration, burst lines, sound-effect lettering, narration boxes and speech
-balloons in vertical text. `cut30.py` is the timeline: one `Panel` per shot with its entrance,
+`comic.py` holds the effects: panels shown through animated shapes (`poly`, `dots`, `iris`, `fade`),
+the camera on twos, misregistration, burst lines, a vignette, and the 港漫 lettering (`box_hk`,
+`balloon_hk`, `sfx_hk`, `name_card`). `cut45.py` is the timeline: one `Panel` per shot with its entrance,
 and the lettering with its times. Needs Pillow, NumPy, fontTools and ffmpeg.

@@ -80,6 +80,8 @@ class Panel:
                         dist = math.hypot(gx - W / 2 - 40, gy - H / 2 - 40) / (H / 2)
                         rr = r * clamp(1.6 - dist * 0.6 + k * 0.6, 0, 1.4)
                         d.ellipse((gx + ox - rr, gy - rr, gx + ox + rr, gy + rr), fill=255)
+        elif self.mask == 'fade':
+            d.rectangle((0, 0, W + 80, H + 80), fill=int(255 * clamp(self.reveal(t))))
         elif self.mask == 'iris':
             k = self.reveal(t); R = k * math.hypot(W, H)
             cx0, cy0 = self.center
@@ -202,3 +204,98 @@ def render(panels, overlays, out, dur):
             canvas = o(canvas, t) or canvas
         p.stdin.write(canvas.tobytes())
     p.stdin.close(); p.wait()
+
+# ---------- Hong Kong comic lettering ----------
+def _cell(d, ch, x, y, size, fill):
+    """One character of vertical text, with punctuation placed for vertical setting."""
+    if ch == '…':   # vertical ellipsis: three dots down the middle of the cell
+        r = max(3, size * .07)
+        for i in range(3):
+            cy = y + size * (.22 + i * .28); cx = x + size * .5
+            d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=fill)
+    elif ch in '。，、': d.text((x + size * .5, y - size * .22), ch, font=font(ch, size), fill=fill)
+    else: d.text((x, y), ch, font=font(ch, size), fill=fill)
+
+def columns_hk(d, cols, x_right, y_top, size, fill, gap=1.08, col_gap=1.25):
+    for c, col in enumerate(cols):
+        x = x_right - (c + 1) * size * col_gap + size * (col_gap - 1)
+        for i, ch in enumerate(col):
+            _cell(d, ch, x, y_top + i * size * gap, size, fill)
+
+def box_hk(canvas, cols, x_right, y_top, k, size=50, dark=False, fade_in=.12):
+    """港漫 narration box: a rectangle with a double rule, flush to a corner, vertical text."""
+    if k <= 0 or k >= 1: return
+    a = int(255 * min(out3(k / fade_in), 1 - clamp((k - .9) / .1)))
+    bw = len(cols) * size * 1.25; bh = max(len(c) for c in cols) * size * 1.08
+    pad = size * .45
+    x1, y0 = x_right, y_top
+    x0, y1 = x1 - bw - pad * 2 + size * .25, y0 + bh + pad * 2
+    bg, fg = ((18, 18, 20), (244, 236, 216)) if dark else ((250, 245, 230), INK)
+    L = Image.new('RGBA', canvas.size); d = ImageDraw.Draw(L)
+    d.rectangle((x0, y0, x1, y1), fill=bg + (int(a * .94),), outline=INK + (a,), width=5)
+    d.rectangle((x0 + 9, y0 + 9, x1 - 9, y1 - 9), outline=fg + (int(a * .8),), width=2)
+    columns_hk(d, cols, x1 - pad + size * .05, y0 + pad, size, fg + (a,))
+    canvas.paste(L, (0, 0), L)
+
+def balloon_hk(canvas, cols, center, tail, k, size=54, shout=False, appear=.1):
+    """Oval balloon with vertical text; the tail points at the speaker (or off the panel)."""
+    if k <= 0 or k >= 1: return
+    pop = out3(k / appear); a = int(255 * (1 - clamp((k - .92) / .08)))
+    bw = len(cols) * size * 1.25; bh = max(len(c) for c in cols) * size * 1.08
+    rx, ry = (bw / 2 + size * 1.0) * 1.15 * (.9 + .1 * pop), (bh / 2 + size * .8) * 1.1 * (.9 + .1 * pop)
+    cx, cy = center; tx, ty = tail
+    L = Image.new('RGBA', canvas.size); d = ImageDraw.Draw(L)
+    al = int(a * pop)
+    base = math.atan2(ty - cy, tx - cx)
+    p1 = (cx + math.cos(base + .22) * rx * .82, cy + math.sin(base + .22) * ry * .82)
+    p2 = (cx + math.cos(base - .22) * rx * .82, cy + math.sin(base - .22) * ry * .82)
+    if shout:
+        pts = [(cx + math.cos(i / 30 * 2 * math.pi) * rx * (1.1 if i % 2 else .94), cy + math.sin(i / 30 * 2 * math.pi) * ry * (1.1 if i % 2 else .94)) for i in range(30)]
+        d.polygon(pts, fill=PAPER + (al,), outline=INK + (al,), width=6)
+    else:
+        d.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), fill=PAPER + (al,), outline=INK + (al,), width=6)
+    d.polygon([p1, (tx, ty), p2], fill=PAPER + (al,)); d.line([p1, (tx, ty), p2], fill=INK + (al,), width=6)
+    if not shout: d.ellipse((cx - rx + 4, cy - ry + 4, cx + rx - 4, cy + ry - 4), fill=PAPER + (al,))
+    columns_hk(d, cols, cx + bw / 2 - size * .1, cy - bh / 2, size, INK + (al,))
+    canvas.paste(L, (0, 0), L)
+
+def sfx_hk(canvas, text, center, size, k, rot=-10, trail=(1, 0), fill=(250, 248, 238)):
+    """港漫 sound effect: a heavy white character with a thick black outline and motion trails."""
+    if k <= 0 or k >= 1: return
+    pop = out5(k / .12); a = 1 - clamp((k - .75) / .25)
+    sz = int(size * (1.15 - .15 * pop))
+    L = Image.new('RGBA', (int(sz * len(text) * 1.1) + 240, sz + 240)); d = ImageDraw.Draw(L)
+    for e in range(4, 0, -1):   # trails behind the stroke direction
+        off = e * sz * .05
+        for i, ch in enumerate(text):
+            d.text((120 + i * sz * 1.05 - trail[0] * off, 100 - trail[1] * off), ch, font=font(ch, sz),
+                   fill=INK + (int(70 * a / e),))
+    for i, ch in enumerate(text):
+        d.text((120 + i * sz * 1.05, 100), ch, font=font(ch, sz), fill=fill + (int(255 * a),),
+               stroke_width=max(6, sz // 11), stroke_fill=INK + (int(255 * a),))
+    L = L.rotate(rot, resample=Image.BICUBIC, expand=True)
+    canvas.paste(L, (int(center[0] - L.width / 2), int(center[1] - L.height / 2)), L)
+
+def name_card(canvas, name, lead, x_center, y_top, k, size=210):
+    """A character's first naming, 港漫 fashion but calm: the name settles in, large and still."""
+    if k <= 0 or k >= 1: return
+    a = out3(k / .3) * (1 - clamp((k - .9) / .1))
+    s = 1.04 - .04 * out3(k / .5)
+    sz = int(size * s)
+    L = Image.new('RGBA', canvas.size); d = ImageDraw.Draw(L)
+    for i, ch in enumerate(name):
+        d.text((x_center - sz / 2, y_top + i * sz * 1.02), ch, font=font(ch, sz), fill=(246, 240, 226, int(255 * a)),
+               stroke_width=5, stroke_fill=(10, 10, 12, int(255 * a)))
+    d.line((x_center - sz * .62, y_top + 10, x_center - sz * .62, y_top + len(name) * sz * 1.02 - 10), fill=(246, 240, 226, int(200 * a)), width=3)
+    canvas.paste(L, (0, 0), L)
+    # the lead line sits above the name in a small dark caption box
+    lead_k = k / .9 if k < .9 else .999
+    box_hk(canvas, [lead], x_center + 50, y_top - 250, lead_k, size=40, dark=True, fade_in=.15)
+
+def vignette(canvas, amount):
+    if amount <= 0: return
+    yy, xx = np.mgrid[0:H:8, 0:W:8]
+    r = np.hypot((xx - W / 2) / (W / 2), (yy - H / 2) / (H / 2))
+    m = (np.clip(r - .55, 0, 1) / .9 * 255 * amount).clip(0, 255).astype(np.uint8)
+    mask = Image.fromarray(m, 'L').resize((W, H), Image.BILINEAR)
+    canvas.paste(Image.new('RGB', (W, H), (6, 6, 8)), (0, 0), mask)
