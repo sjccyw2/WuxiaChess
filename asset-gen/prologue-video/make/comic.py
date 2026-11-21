@@ -6,7 +6,10 @@ import math, subprocess
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 from fontTools.ttLib import TTFont
-W, H, FPS = 1080, 1920, 30
+import os
+# The frame: 1080 x 1920 for the upright cut; set COMIC_FRAME=1920x1080 before importing for the wide one.
+W, H = (int(v) for v in os.environ.get('COMIC_FRAME', '1080x1920').split('x'))
+FPS = 30
 STEP = 2 / FPS   # camera moves on twos
 INK, PAPER = (12, 12, 14), (246, 240, 226)
 FONT_FILES = [('river-serif.ttf', 0), ('extra-serif.ttf', 0), ('/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc', 0)]
@@ -40,11 +43,11 @@ def interp(keys, t, curve=out3):
 class Panel:
     """An image shown through an animated shape. cam(u) -> (zoom, cx, cy) over the panel's life
     u in [0, 1]; poly: keyframes of four screen points; mask 'poly', 'dots' or 'iris'."""
-    def __init__(self, src, t_in, t_out, cam, poly=None, mask='poly', reveal=None, center=(W / 2, H / 2), border=True, shake=None, anchor=None):
+    def __init__(self, src, t_in, t_out, cam, poly=None, mask='poly', reveal=None, center=None, border=True, shake=None, anchor=None):
         self.im = Image.open(src).convert('RGB')
         self.t_in, self.t_out, self.cam = t_in, t_out, cam
         self.poly = poly or [(t_in, FULL)]
-        self.mask, self.reveal, self.center, self.border, self.shake = mask, reveal, center, border, shake
+        self.mask, self.reveal, self.center, self.border, self.shake = mask, reveal, center or (W / 2, H / 2), border, shake
         self.anchor = anchor   # ((image x, image y), (screen x, screen y)): pin that point of the picture to that spot
     def active(self, t): return self.t_in <= t < self.t_out
     def full_at(self):
@@ -62,7 +65,8 @@ class Panel:
         bx0, by0, bx1, by1 = max(-40, min(xs)), max(-40, min(ys)), min(W + 40, max(xs)), min(H + 40, max(ys))
         bw, bh = int(bx1 - bx0), int(by1 - by0)
         if bw < 4 or bh < 4: return
-        zoom, cx, cy = self.cam(u)
+        # A camera marked `clock` is given the time itself, so it stays on beat however long the panel lasts.
+        zoom, cx, cy = self.cam(tc) if getattr(self.cam, 'clock', False) else self.cam(u)
         iw, ih = self.im.size
         cw = iw / zoom; ch = cw * bh / bw
         if ch > ih: ch = ih / zoom * 1.0; cw = ch * bw / bh

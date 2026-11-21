@@ -9,7 +9,7 @@ planned for each pack and which decisions are waiting on the producer.
 | --- | --- |
 | `prompts.md` | Prompts for the story's pictures: file name, size, where it appears. |
 | `story-characters/` | The youth and 求敗 (`qiubai`): a character card (`cards/`, 1024 × 1024) and a sprite sheet (`sprites/`, the roster pack's 8 × 5 format) each. 求敗's card is also his portrait in the game (`npc-qiubai.webp`); the sheets are not in the game yet (roadmap 2.3). 求敗 holds a twig, not a sword. |
-| `prologue-video/` | A 45-second, 9:16 manga-style cut of the whole prologue lettered like a Hong Kong comic, its painted panels, and the scripts that paint and cut it (`make/`). |
+| `prologue-video/` | The 45-second manga-style prologue film lettered like a Hong Kong comic, in an upright (9:16) and a wide (16:9) cut, the painted panels of each, and the scripts that paint and cut them (`make/`). |
 | `story-art/` | Story pictures painted for the old story that the v1.0 story has no place for (`prompts.md` B4, B7). |
 | `jianying-roster-art/` | Thirty characters: a portrait and a sprite sheet each. |
 | `jianying-item-art/` | Eight skill effects and thirty-two item pictures, all animated. |

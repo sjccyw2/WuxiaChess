@@ -21,7 +21,7 @@ import { icon } from './ui/icons.js';
 import { codexPage } from './ui/gates.js';
 import * as R from './rules/journey.js';
 import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
-import { filmFits, playFilm } from './ui/intro-film.js';
+import { playFilm } from './ui/intro-film.js';
 import { MAZE_TALE } from './data/maze-tale.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
@@ -1165,10 +1165,10 @@ function openFormation() {
   }
   openPage('formation');
 }
-// A new run starts with the youth opening his eyes, then the draw. On a phone held upright the
-// first visit opens with the film, and the pages pick up where it ends.
+// A new run starts with the youth opening his eyes, then the draw. A first visit opens with the
+// film (a 9:16 or 16:9 cut, by the screen's shape), and the pages pick up where it ends.
 function openPrologue() {
-  const film = filmFits() && firstVisit(state.run.chronicle);
+  const film = firstVisit(state.run.chronicle);
   prologue = { step: 0, name: prologue.name, film };
   if (!film) return openPage('prologue');
   closePage();

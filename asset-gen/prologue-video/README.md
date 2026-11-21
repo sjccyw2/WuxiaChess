@@ -7,10 +7,21 @@ after a 10-second test and a 30-second cut that the producer asked to slow down.
 cut is kept, with everything it was made from: `panels/` (thirteen panels and the two painted
 sound effects) and `make/` (the prompts, the compositor, the timeline and the sound).
 
-**In the game.** Phones held upright play `game/assets/prologue-film.mp4` on a first visit (roadmap
-1.11). It is this cut at 720 × 1280, re-encoded for streaming:
-`ffmpeg -i prologue-45s.mp4 -vf scale=720:1280 -c:v libx264 -profile:v high -level 4.0 -crf 28 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 128k prologue-film.mp4`.
-Its poster, `prologue-film.webp`, is the frame at 1.2 s. Replace both when the cut changes.
+**Two cuts, one timeline.** `prologue-45s.mp4` is the upright cut (9:16) and `prologue-45s-wide.mp4`
+the wide cut (16:9, rendered at 1920 × 1080; the copy here is 1280 × 720). They share every time,
+word and sound, so one soundtrack serves both. The wide cut's panels (`panels-wide/`) were painted
+from the upright ones, each with its 9:16 panel as the reference, so the characters, style and
+colours match; its valley is a taller panel (1536 × 2816) for the tilt. Where the upright cut stacks
+two panels as a manga page (求敗 above, the youth below), the wide cut sets them side by side; the
+captions and balloons are placed anew for each wide composition.
+
+**In the game.** A first visit plays the film on every screen (roadmap 1.11): the upright cut
+(`game/assets/prologue-film.mp4`, 720 × 1280) on a screen taller than wide, the wide cut
+(`game/assets/prologue-film-wide.mp4`, 1600 × 900) otherwise. A screen turned mid-film switches
+cuts and keeps its place. Both are re-encoded for streaming:
+`ffmpeg -i <cut> -vf scale=<size> -c:v libx264 -profile:v high -level 4.0 -crf 28 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 128k <file>`.
+Their posters, `prologue-film.webp` and `prologue-film-wide.webp`, are the frame at 1.2 s. Replace
+all four when a cut changes.
 
 **Pacing.** About three seconds a panel on average, but each beat has its own length, and only
 three moments hit hard: the eyes opening, the eagle, and the box landing on 求敗's last words. The rest enter gently

@@ -1,21 +1,21 @@
-// The opening film: on a phone held upright, the first visit's prologue is told by a 45-second
-// manga film (asset-gen/prologue-video) instead of its first pages. It fills the screen above
-// everything else. 略過 leaves at any time; at the end it offers 重看 and 繼續. Landscape phones
-// and desktops keep the pages until a 16:9 cut exists.
+// The opening film: the first visit's prologue is told by a 45-second manga film
+// (asset-gen/prologue-video) instead of its first pages. It fills the screen above everything
+// else. There are two cuts on one timeline: 9:16 for a screen taller than wide, 16:9 otherwise; a
+// screen that turns mid-film switches cuts and keeps its place. 略過 leaves at any time; at the end
+// it offers 重看 and 繼續.
 import { art } from './artwork.js';
 import { icon } from './icons.js';
 
-// The same upright-phone test as styles/08-phone-portrait.css, without its narrow-landscape case.
-const UPRIGHT = '(orientation: portrait) and (max-width: 800px)';
-const filmFits = (win = globalThis) => !!win.matchMedia?.(UPRIGHT).matches;
+const TALL = '(orientation: portrait)';
 
-let layer = null;
+let layer = null,
+  unturn = null;
 
-// file, poster: picture names in game/assets; onDone(shown):
+// tall, wide: { file, poster }, picture names in game/assets, for each cut; onDone(shown):
 // called once, with true when the player skips or continues and false when the file cannot play.
 // The film starts with its sound on even though the game's own sound starts off: the music is
 // half of it. A button in the corner mutes it.
-function playFilm({ file, poster, onDone }) {
+function playFilm({ tall, wide, onDone }) {
   closeFilm();
   const doc = globalThis.document;
   layer = doc.createElement('div');
@@ -34,8 +34,31 @@ function playFilm({ file, poster, onDone }) {
     end = layer.querySelector('.film-end'),
     skip = layer.querySelector('.film-skip'),
     start = layer.querySelector('.film-start');
-  video.poster = art(poster);
-  video.src = art(file);
+  const media = globalThis.matchMedia?.(TALL);
+  const cut = () => (media?.matches ? tall : wide);
+  let showing = cut();
+  video.poster = art(showing.poster);
+  video.src = art(showing.file);
+  // Turned mid-film: the other cut, from the same moment.
+  const turn = () => {
+    const next = cut();
+    if (!layer || next === showing) return;
+    const at = video.currentTime,
+      playing = !video.paused && !video.ended;
+    showing = next;
+    video.poster = art(next.poster);
+    video.src = art(next.file);
+    video.addEventListener(
+      'loadedmetadata',
+      () => {
+        video.currentTime = at;
+        if (playing) video.play()?.catch?.(() => {});
+      },
+      { once: true }
+    );
+  };
+  media?.addEventListener?.('change', turn);
+  unturn = () => media?.removeEventListener?.('change', turn);
   const sound = layer.querySelector('.film-sound');
   const showSound = () => {
     sound.innerHTML = icon(video.muted ? 'mute' : 'volume', 20);
@@ -90,6 +113,8 @@ function playFilm({ file, poster, onDone }) {
 }
 
 function closeFilm() {
+  unturn?.();
+  unturn = null;
   const v = layer?.querySelector('video');
   if (v) {
     v.pause();
@@ -100,4 +125,4 @@ function closeFilm() {
   layer = null;
 }
 
-export { filmFits, playFilm, closeFilm };
+export { playFilm, closeFilm };

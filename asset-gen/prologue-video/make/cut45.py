@@ -27,14 +27,16 @@ def reveal(t0, d): return lambda t: ease((t - t0) / d)
 def snap(t0, d): return lambda t: out5((t - t0) / d)
 
 def mbox_cam(u):   # a slow push toward the box, then a small punch as it lands on 「下盤棋吧」
-    z = lerp(1.0, 1.1, ease(u)); land = (38.6 + u * 6.4) - 41.55
+    t = u; k = clamp((t - 38.6) / 6.4)
+    z = lerp(1.0, 1.1, ease(k)); land = t - 41.55
     if 0 <= land < .25: z *= 1 + .06 * (1 - out5(land / .25))
-    return z, .5, lerp(.25, .32, ease(u))
+    return z, .5, lerp(.25, .32, ease(k))
 def hands_cam(u):   # snaps between his two hands, on twos, to show how fast he plays
-    t = 34.4 + u * 4.45
-    if t < 35.6: return lerp(1.0, 1.06, ease(u * 4)), .5, .32
+    t = u
+    if t < 35.6: return lerp(1.0, 1.06, ease((t - 34.4) / 1.2)), .5, .32
     side = int((t - 35.6) / .38) % 2
     return 1.9, (.04 if side == 0 else .96), .74
+hands_cam.clock = mbox_cam.clock = True
 P = [
  Panel('s1-asleep.png',   0.0,  4.75, cam(1.0, 1.14, .5, .45, .55, .38)),
  Panel('s2-eyes.png',     4.2,  6.95, punch(1.05, 1.15, .45, .5, .45), poly=enter(4.2, 'eyes', .1, .3, .25), shake=decay(4.2, .5), anchor=((576, 1150), (540, 1100))),
