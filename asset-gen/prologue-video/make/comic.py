@@ -277,6 +277,7 @@ def sfx_hk(canvas, text, center, size, k, rot=-10, trail=(1, 0), fill=(250, 248,
     canvas.paste(L, (int(center[0] - L.width / 2), int(center[1] - L.height / 2)), L)
 
 def name_card(canvas, name, lead, x_center, y_top, k, size=210):
+    """lead may be '' for the name alone."""
     """A character's first naming, 港漫 fashion but calm: the name settles in, large and still."""
     if k <= 0 or k >= 1: return
     a = out3(k / .3) * (1 - clamp((k - .9) / .1))
@@ -288,9 +289,8 @@ def name_card(canvas, name, lead, x_center, y_top, k, size=210):
                stroke_width=5, stroke_fill=(10, 10, 12, int(255 * a)))
     d.line((x_center - sz * .62, y_top + 10, x_center - sz * .62, y_top + len(name) * sz * 1.02 - 10), fill=(246, 240, 226, int(200 * a)), width=3)
     canvas.paste(L, (0, 0), L)
-    # the lead line sits above the name in a small dark caption box
-    lead_k = k / .9 if k < .9 else .999
-    box_hk(canvas, [lead], x_center + 50, y_top - 250, lead_k, size=40, dark=True, fade_in=.15)
+    if lead:   # an optional lead line above the name, in a small dark caption box
+        box_hk(canvas, [lead], x_center + 50, y_top - 250, k / .9 if k < .9 else .999, size=40, dark=True, fade_in=.15)
 
 def vignette(canvas, amount):
     if amount <= 0: return
@@ -299,3 +299,14 @@ def vignette(canvas, amount):
     m = (np.clip(r - .55, 0, 1) / .9 * 255 * amount).clip(0, 255).astype(np.uint8)
     mask = Image.fromarray(m, 'L').resize((W, H), Image.BILINEAR)
     canvas.paste(Image.new('RGB', (W, H), (6, 6, 8)), (0, 0), mask)
+
+def sfx_image(canvas, img, center, width, k, rot=0):
+    """A painted sound effect (transparent PNG): slams in a little large, settles, then fades."""
+    if k <= 0 or k >= 1: return
+    pop = out5(k / .1); a = 1 - clamp((k - .7) / .3)
+    w = int(width * (1.25 - .25 * pop)); h = int(img.height * w / img.width)
+    im = img.resize((w, h), Image.LANCZOS)
+    if rot: im = im.rotate(rot, resample=Image.BICUBIC, expand=True)
+    if a < 1: im.putalpha(im.getchannel('A').point(lambda v: int(v * a)))
+    jit = (1 - clamp(k / .25)) * 10
+    canvas.paste(im, (int(center[0] - im.width / 2 + jit * math.sin(k * 90)), int(center[1] - im.height / 2)), im)

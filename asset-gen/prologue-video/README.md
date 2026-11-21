@@ -11,17 +11,18 @@ three moments hit hard: the eyes opening, the eagle, and the box landing on 求�
 
 | Time | Panel | Beat | Entrance | Words |
 | --- | --- | --- | --- | --- |
-| 0 s | `s1-asleep` | quiet | (opening) slow push in | 這一覺，睡得好沉。 (dark box) |
+| 0 s | `s1-asleep` | quiet | (opening) slow push in | 這一覺，睡得好沉。 |
 | 4.2 s | `s2-eyes` | **impact** | a band slams across, flash, burst lines | 睜開眼來。 |
 | 6.5 s | `s3-valley` | awe | slow halftone-dot dissolve; the camera tilts down the tall panel | 竟不在自家床上。 · 但見好大一座山谷，四面峭壁如削。 |
-| 11.4 s | `d-selfplay` | mystery | a wedge slides in slowly, then opens | 谷底一方青石棋臺。 · 一個老者，正自己同自己對弈。 |
-| 14.8 s | `s4-board` | energy | iris; 「鏘」 | 棋子之上，人影鬥得正緊。 |
-| 17.6 s | `s5-eagle` | **jolt** | breaks in from the left, two shakes (it looks twice) | |
-| 20.0 s | `g-lost` | bewildered | drops in slowly from the top | 「這……這是甚麼地方？」 |
-| 23.0 s | `s6-qiubai` | tension | a hard, quiet cut; the music drops away | 「咦。」 · 「你是甚麼人？」 |
-| 26.4 s | `i-name` | hesitation | slides up as the lower panel of a page | 「我……我叫……」, cut off by 「罷了。」 from the panel above |
-| 28.6 s | `j-reveal` | gravity | a slow dissolve; the frame darkens; a low bell | 「老夫三百年沒見過一個活人，」 · then the name card: 世人叫他 / 求敗 |
-| 34.4 s | `l-hands` | his centuries | a slow dissolve | 左手同右手，一盤棋下了三百年。 (dark box) |
+| 11.0 s | `d-selfplay` | mystery | a wedge slides in slowly, then opens | 谷底一方青石棋臺。 · 一個老者，正自己同自己對弈。 |
+| 14.4 s | `s4-board` | energy | iris; the painted 「鏘」 (`panels/sfx-clang.png`) | 棋子之上，人影鬥得正緊。 |
+| 17.2 s | `s5-eagle` | **jolt** | breaks in from the left | |
+| 18.7 s | `e2-startle` | the eagle's size | slides up as the lower panel under its face, then takes the frame: the bird as tall as the startled youth | |
+| 21.2 s | `g-lost` | bewildered | drops in from the top | 「這……這是甚麼地方？」 |
+| 23.6 s | `s6-qiubai` | tension | a hard, quiet cut; the music drops away | 「咦。」 · 「來者何人？」 |
+| 26.6 s | `i-name` | hesitation | slides up as the lower panel of a page | 「我……我叫……」, cut off by 「罷了。」 from the panel above |
+| 28.6 s | `j-reveal` | gravity | a slow dissolve; the frame darkens; a low bell | 「老夫三百年沒見過一個活人，」 · then his full name, 獨孤求敗, alone |
+| 34.4 s | `l-hands` | his speed | a slow dissolve, then the camera snaps between his two hands as the stones click | 但見他左右手依次下棋，動作飛快。 |
 | 38.6 s | `m-box` | **the invitation** (last scene) | breaks in from the upper left; the box lands with 「嗒」; title at 43.5 s | 「今天你我有緣，」 · 「就陪老夫下盤棋吧！」 · 劍影江湖 · 一念江湖 |
 
 - **Words.** Only the lines that carry the scene. The youth never says his name, so the player
@@ -30,10 +31,11 @@ three moments hit hard: the eyes opening, the eagle, and the box landing on 求�
   panels and ending the video. How the game is played (the stones that walk and fight, drawing
   three) is left to the game itself: it reads as tutorial, not prologue. The game's own prologue (where the youth names himself and 求敗 says 幾百年) is unchanged.
 - **Lettering, 港漫 fashion.** Narration in rectangular boxes with a double rule, set flush to the
-  panel's corners and stacked; dark boxes for the quiet moments. Dialogue in ovals, vertical,
-  right to left. Sound effects as heavy white characters with a thick black outline and motion
-  trails. 求敗 is named once, as a 港漫 character is introduced, but calmly: his name settles in
-  large and white beside him, under a small dark caption, 世人叫他, with no flash or shake.
+  panel's corners and stacked. Dialogue in ovals, vertical,
+  right to left. Sound effects in the manner of 港漫: 「鏘」 is painted (brush calligraphy in steel and white with a thick
+  black outline, the cleanest of three tries at the character), 「嗒」 is set as a heavy white character
+  with a black outline and motion trails. 獨孤求敗 is named once, as a 港漫 character is introduced, but calmly: his full name settles
+  in large and white beside him, with no caption, flash or shake.
 - **Panels** (`panels/`): painted with an image model (OpenAI `gpt-image-2.6-flare`) in one manga
   style: bold ink line, spot blacks, screentone, speed lines, a muted ink-green, slate and ochre
   wash. The youth, the eagle and 求敗 were painted from their game portraits as references. The
