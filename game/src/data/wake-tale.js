@@ -55,6 +55,8 @@ const CLOSING = {
 // realm counts from 1.
 const closingFor = (realm, won) =>
   (won ? CLOSING.win : CLOSING.loss) + FRAGMENTS[Math.min(FRAGMENTS.length, Math.max(1, realm)) - 1];
+// One picture per fragment, in the same order (asset-gen/prompts.md, B6).
+const fragmentArt = (realm) => 'fragment-' + Math.min(FRAGMENTS.length, Math.max(1, realm)) + '.webp';
 
 // The five 境. Index 0 is the first: no run won yet.
 //   mark   the line cut in the stone when this 境 is won
@@ -126,4 +128,4 @@ const WAKES = [
 const NO_MARK = '這一輪沒有下完。臺邊的石上，沒有多一行字。';
 const FULL_MARK = '臺邊的石上，四行字底下空著一行。那柄刻字的劍，仍舊放在石旁。';
 
-export { WORLD, WAKES, FRAGMENTS, NO_MARK, FULL_MARK, closingFor };
+export { WORLD, WAKES, FRAGMENTS, NO_MARK, FULL_MARK, closingFor, fragmentArt };

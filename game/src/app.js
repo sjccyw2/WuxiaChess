@@ -16,7 +16,6 @@ import * as G from './rules/game.js';
 import * as P from './ui/panels.js';
 import { BattleBoard } from './scene/board.js';
 import { warmPaintedEffects } from './fx/painted-effects.js';
-import { watchItemArt } from './ui/item-art.js';
 import { FieldHud } from './ui/field-hud.js';
 import { icon } from './ui/icons.js';
 import { codexPage } from './ui/gates.js';
@@ -167,7 +166,6 @@ function refreshSound() {
   S.scene(screen === 'battle' ? state.mapIndex : null); // the battlefield's quiet ambience
   document.body.classList.toggle('no-motion', !prefs.motion);
 }
-watchItemArt(); // item pictures play while pointed at, focused or picked
 const board = new BattleBoard({
   canvas: $('board'),
   tactics: $('tactics'),

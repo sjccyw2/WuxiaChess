@@ -2,9 +2,9 @@ import { wakeJournal } from './wake-views.js';
 import { moveFacts } from '../rules/move-facts.js';
 import { factBadge } from './panels.js';
 import * as G from '../rules/game.js';
-import { MAZE_TALE, EAGLE } from '../data/maze-tale.js';
+import { MAZE_TALE, TALE_ART } from '../data/maze-tale.js';
 import { art } from './artwork.js';
-import { WAKES, NO_MARK, FULL_MARK, closingFor } from '../data/wake-tale.js';
+import { WAKES, NO_MARK, FULL_MARK, closingFor, fragmentArt } from '../data/wake-tale.js';
 import { titleHead, btn, esc } from './panels.js';
 import { icon } from './icons.js';
 
@@ -71,14 +71,12 @@ function journeyEnding(s) {
     '</h3><p>' +
     esc(won ? MAZE_TALE.win : MAZE_TALE.loss) +
     '</p></div>' +
-    // After a lost run only the youth, the old man and the great bird are left by the table.
+    // After a lost run the white stones have gone dark and go back into the box.
     (won
       ? ''
-      : '<figure class="ending-figure"><img src="' +
-        esc(art(EAGLE.portrait)) +
-        '" alt="' +
-        esc(EAGLE.name) +
-        '"></figure>') +
+      : '<figure class="ending-figure ending-scene"><img class="tale-scene" src="' +
+        esc(art(TALE_ART.loss)) +
+        '" alt="" decoding="async"></figure>') +
     '<div class="result-stats"><span>此輪破局<b>' +
     (r.stage + (won ? 1 : 0)) +
     ' / 10</b></span>' +
@@ -100,7 +98,9 @@ function journeyEnding(s) {
     '</h3><p>' +
     esc(carved ? wake.carve : won ? FULL_MARK : NO_MARK) +
     '</p></section>' +
-    '<section class="wake-choice wake-closing"><h3>夢醒</h3><p>' +
+    '<section class="wake-choice wake-closing"><h3>夢醒</h3><img class="tale-scene wake-fragment" src="' +
+    esc(art(fragmentArt(realm))) +
+    '" alt="" decoding="async"><p>' +
     esc(closingFor(realm, won)) +
     '</p></section>' +
     wakeJournal(r.chronicle, r.voyage) +

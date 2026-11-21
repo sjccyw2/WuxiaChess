@@ -20,6 +20,12 @@ const WEI = { name: '韋小寶', role: '通吃坊掌櫃', portrait: 'npc-wei.web
 const EAGLE = { name: '大鵰', role: '谷中的鵰', portrait: 'npc-eagle.webp' };
 // The one who set the boards. He sits across the table from the first scene and plays black.
 const QIUBAI = { name: '求敗', role: '對面的人', portrait: 'npc-qiubai.webp' };
+// The spine's wide pictures (asset-gen/prompts.md, group B), kept apart from the text.
+const TALE_ART = {
+  wake: 'scene-open-eyes.webp', // above the prologue's first page, every run
+  board: 'scene-board.webp', // the top of the draw page (抓子)
+  loss: 'scene-dark-stones.webp' // a lost run: the white stones gone dark
+};
 
 // {name} in a line is replaced by the youth's name.
 const MAZE_TALE = {
@@ -358,4 +364,4 @@ const SIDE_PAY = {
 // The board was won and the bet was not.
 const SIDE_MISS = '這一口你沒押中。不打緊，局是贏了的。';
 
-export { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, YOUTH, WEI, EAGLE, QIUBAI };
+export { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, YOUTH, WEI, EAGLE, QIUBAI, TALE_ART };

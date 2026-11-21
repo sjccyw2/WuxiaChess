@@ -10,10 +10,9 @@ The source sheets are transparent PNGs of 4 x 2 frames (effects 384 x 256 a fram
 
     fx-<effect>.webp         an effect sheet, still 4 x 2 frames, at 288 x 192 a frame. The board
                              draws a frame at most about 140 CSS px wide at its normal zoom.
-    item-<id>.webp           an item's still picture: its first frame, 256 x 256.
-    item-<id>-motion.webp    the same item animated, 192 x 192: all eight frames, looping, each held for the
-                             time the manifest suggests. Panels swap it in while the item is
-                             pointed at, focused or picked (game/src/ui/item-art.js).
+    item-<id>.webp           an item's still picture: its first frame, 256 x 256. Items are shown
+                             still, never animated (decision of 2026-11-21), so the other seven
+                             frames of an item sheet are not used.
 
 Which items: those the game has (read from game/src/rules/game.js), less KEEP, whose pictures
 stay as they are. Which effects: those named in game/src/fx/painted-effects.js. Nothing in
@@ -39,9 +38,7 @@ ASSETS = ROOT / 'game' / 'assets'
 KEEP = {'tombSword'}
 EFFECT_WIDTH = 1152  # 4 frames of 288 px
 ITEM_SIZE = 256  # the still
-MOTION_SIZE = 192  # the loop: the largest panel shows an item at 165 CSS px
 STILL_QUALITY = 82
-MOTION_QUALITY = 72
 EFFECT_QUALITY = 80
 
 
@@ -75,26 +72,12 @@ def convert_effect(asset: dict) -> str:
 
 
 def convert_item(asset: dict) -> str:
-    _, cells, durations = frames(asset['sheet'])
-    small = [cell.resize((MOTION_SIZE, MOTION_SIZE), Image.LANCZOS) for cell in cells]
+    _, cells, _ = frames(asset['sheet'])
     still = ASSETS / ('item-' + asset['id'] + '.webp')
-    motion = ASSETS / ('item-' + asset['id'] + '-motion.webp')
     cells[0].resize((ITEM_SIZE, ITEM_SIZE), Image.LANCZOS).save(
         still, 'WEBP', quality=STILL_QUALITY, alpha_quality=90, method=6
     )
-    small[0].save(
-        motion,
-        'WEBP',
-        save_all=True,
-        append_images=small[1:],
-        duration=durations,
-        loop=0,
-        quality=MOTION_QUALITY,
-        alpha_quality=85,
-        method=4,
-        minimize_size=True,
-    )
-    return f'{still.name} {still.stat().st_size // 1024} KB, {motion.name} {motion.stat().st_size // 1024} KB'
+    return f'{still.name} {still.stat().st_size // 1024} KB'
 
 
 def main() -> int:

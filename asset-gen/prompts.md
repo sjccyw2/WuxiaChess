@@ -8,9 +8,9 @@ The pictures are in three groups:
 | --- | --- | --- |
 | A | Replacements for pictures the game already shows | Nothing else to do. Save over the existing file and it appears. |
 | B | New pictures for story moments that are text-only today | The file name is reserved here. The game needs a small change to show each one. |
-| C | Cover art that still shows the old ferry | Save over the existing file. |
+| C | Cover art that showed the old ferry | Save over the existing file. |
 
-Group A is finished: all of its pictures are in the game. Group B and C remain.
+Groups B and C are painted; A0 (求敗) is still needed. Groups B and C were painted on 2026-11-21 with an image model (OpenAI `gpt-image-2.6-flare`) from the prompts below, each with its house style and avoid list. Wherever the eagle appears in a scene, this sentence was added so that it matches B1: *The eagle is enormous, ancient and ugly, taller than a man: sparse rough dark brown feathers with bare patches, a bald wrinkled head with a red fleshy knob on the crown, a heavy chipped hooked beak, short stubby wings on a thick body, a bird too heavy to fly; not a noble bird of prey.* The source pictures are not kept in the repository; regenerate from these prompts.
 
 ---
 
@@ -158,7 +158,7 @@ These file names are reserved. Each needs a small change in the game before it s
 
 ### B1. The eagle: `game/assets/npc-eagle.webp` (done)
 
-In the game: beside the prologue line where the youth first sees it, and on the screen after a lost run. Cropped from a full-body picture to the head and upper body.
+In the game: beside the prologue line where the youth first sees it. (Until B5 was painted it also stood on the screen after a lost run.) Cropped from a full-body picture to the head and upper body.
 
 - **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
 - **For:** the prologue and the screen after a lost run. It never speaks.
@@ -170,7 +170,9 @@ An enormous, ancient, ugly eagle, taller than a man. Sparse, rough, dark brown f
 
 Use the **People** house style. Avoid also: `majestic soaring eagle, spread wings, bald eagle, phoenix, fire`
 
-### B2. Opening his eyes: `game/assets/scene-open-eyes.webp`
+### B2. Opening his eyes: `game/assets/scene-open-eyes.webp` (done)
+
+In the game: across the top of the prologue's first page (入夢), on every run. Where the page is shorter than the picture, the top is kept, so the eagle's head stays in view. The first attempt was seen standing rather than lying down; the prompt that worked added *worm's-eye view, looking straight up* and put the eagle's head in the upper right.
 
 - **Final size:** 1000 × 500. **Generate at:** 1536 × 768.
 - **For:** the first page of the prologue.
@@ -182,7 +184,9 @@ The view of someone lying on their back on a valley floor, having just opened th
 
 Use the **Scenes** house style.
 
-### B3. The stone table and the board: `game/assets/scene-board.webp`
+### B3. The stone table and the board: `game/assets/scene-board.webp` (done)
+
+In the game: across the top of the draw page (抓子). On short landscape screens it shrinks to a strip aimed at the three white stones.
 
 - **Final size:** 1000 × 500. **Generate at:** 1536 × 768.
 - **For:** the top of the draw page, where three heroes answer the invitation.
@@ -194,7 +198,9 @@ A weathered stone table in a misty valley with a go board cut into its top. One 
 
 Use the **Scenes** house style. Avoid also: `chess pieces, xiangqi, hands, players`
 
-### B4. The last step: `game/assets/scene-summit.webp`
+### B4. The last step: `scene-summit.webp` (painted; not in the game)
+
+Painted for the old story, where a won run ended with a climb to the one who set the boards. In the v1.0 story the run ends at the table, so the picture waits in `asset-gen/story-art/`. It shows him from behind with grey hair loose, which no longer matches A0.
 
 - **Final size:** 1000 × 500. **Generate at:** 1536 × 768.
 - **For:** the ending after ten boards are won.
@@ -206,7 +212,9 @@ Ten worn stone steps climb to a bare summit above the mist. At the top stands a 
 
 Use the **Scenes** house style. Avoid also: `face, sword in the old man's hand, duel in progress, clashing blades, lightning`
 
-### B5. The stones go dark: `game/assets/scene-dark-stones.webp`
+### B5. The stones go dark: `game/assets/scene-dark-stones.webp` (done)
+
+In the game: on the ending after a lost run (眼破), under the result banner, where the eagle's portrait used to stand. The prompt has nobody at the table; in the v1.0 story 求敗 sits there, so a repaint could add him across the table.
 
 - **Final size:** 1000 × 500. **Generate at:** 1536 × 768.
 - **For:** the ending after a lost run.
@@ -217,7 +225,9 @@ The same weathered stone table and go board as dusk falls. The white stones on t
 
 Use the **Scenes** house style.
 
-### B6. Closing his eyes: five fragments
+### B6. Closing his eyes: five fragments (done)
+
+In the game: in the 夢醒 box at the end of each run, above the fragment's words. The picture follows the words, chosen by 境 (`fragmentArt` in `game/src/data/wake-tale.js`). For fragment-4 the first attempt showed a glass window with hills outside; adding *opaque white paper, not glass, nothing visible through it* fixed it.
 
 - **Files:** `game/assets/fragment-1.webp` to `fragment-5.webp`.
 - **Final size:** 720 × 400 each. **Generate at:** 16:9.
@@ -262,7 +272,9 @@ A boy's hand resting on a coarse patched quilt, fingers loosely curled as though
 
 Avoid also, for all five: `faces, readable expressions, swords, martial arts, bright colours`
 
-### B7. The invitation, 英雄帖: `game/assets/letter.webp`
+### B7. The invitation, 英雄帖: `letter.webp` (painted; not in the game)
+
+Painted for the old story. In the v1.0 story there is no invitation: the rule is cut into the edge of the table. The picture waits in `asset-gen/story-art/`.
 
 - **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
 - **For:** the draw page, beside the invitation's text.
@@ -276,11 +288,13 @@ Use the **Objects** house style. Avoid also: `red seal, stamp, signature, envelo
 
 ---
 
-## Group C: cover art that still shows the old ferry
+## Group C: cover art that showed the old ferry
 
 Both are 1550 × 620. Generate at 21:9 and crop to 5:2.
 
-### C1. Wiki and landing page cover: `wiki/assets/jianghu-cover.webp`
+### C1. Wiki and landing page cover: `wiki/assets/jianghu-cover.webp` (done)
+
+In the game: the landing page and the wiki's home page. The first attempt put the youth and the eagle left of centre, under the title; the prompt that worked says the whole left half is only pale mist.
 
 - **Appears in:** the top of the wiki's home page and behind the landing page, with a large title printed over the left.
 - **Composition:** the left third is pale, calm and nearly empty. The subject sits at about 70% across.
@@ -291,7 +305,9 @@ A deep, narrow valley in morning mist, painted wide. On the right, at the foot o
 
 Use the **Scenes** house style. Avoid also: `boat, river, ferry, pavilion, bridge`
 
-### C2. Panel header: `game/assets/panel-river.webp`
+### C2. Panel header: `game/assets/panel-river.webp` (done)
+
+In the game: the strip across the top of the panels and behind the draw page.
 
 - **Appears in:** a thin strip across the top of the game's dialogue and menu panels. Only a narrow horizontal band around the middle is ever visible, with the panel's title over the left.
 - **Composition:** everything of interest lies in a band across the middle of the picture, at about 70% across. The top and bottom thirds can be plain mist.
@@ -315,13 +331,13 @@ Use the **Scenes** house style. Avoid also: `boat, river, ferry, bright sky`
 | `stone-marks-0.webp` to `-5.webp` (done) | `game/assets/` | 1000 × 360 | A |
 | `bowl-cover.webp` (done) | `game/assets/` | 360 × 360 | A |
 | `npc-eagle.webp` (done) | `game/assets/` | 480 × 480 | B |
-| `scene-open-eyes.webp` | `game/assets/` | 1000 × 500 | B |
-| `scene-board.webp` | `game/assets/` | 1000 × 500 | B |
-| `scene-summit.webp` | `game/assets/` | 1000 × 500 | B |
-| `scene-dark-stones.webp` | `game/assets/` | 1000 × 500 | B |
-| `fragment-1.webp` to `fragment-5.webp` | `game/assets/` | 720 × 400 | B |
-| `letter.webp` | `game/assets/` | 480 × 480 | B |
-| `jianghu-cover.webp` | `wiki/assets/` | 1550 × 620 | C |
-| `panel-river.webp` | `game/assets/` | 1550 × 620 | C |
+| `scene-open-eyes.webp` (done) | `game/assets/` | 1000 × 500 | B |
+| `scene-board.webp` (done) | `game/assets/` | 1000 × 500 | B |
+| `scene-summit.webp` (painted, not used in v1.0) | `asset-gen/story-art/` | 1000 × 500 | B |
+| `scene-dark-stones.webp` (done) | `game/assets/` | 1000 × 500 | B |
+| `fragment-1.webp` to `fragment-5.webp` (done) | `game/assets/` | 720 × 400 | B |
+| `letter.webp` (painted, not used in v1.0) | `asset-gen/story-art/` | 480 × 480 | B |
+| `jianghu-cover.webp` (done) | `wiki/assets/` | 1550 × 620 | C |
+| `panel-river.webp` (done) | `game/assets/` | 1550 × 620 | C |
 
 Not on this list, because the existing art still fits the new story: the ten heroes, the ten board masters and their lieutenants, the ten figures to be saved, the ten map pictures, and all items.

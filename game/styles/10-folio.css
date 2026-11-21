@@ -635,3 +635,50 @@
   border: 1px solid #8b744c;
   border-radius: 4px;
 }
+/* The story's wide pictures (asset-gen/prompts.md, group B): 2:1 scenes, 9:5 fragments. */
+.tale-scene {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  border: 1px solid #8b744c;
+  border-radius: 4px;
+}
+.ending-figure.ending-scene {
+  width: 100%;
+}
+.ending-figure.ending-scene img {
+  aspect-ratio: 2 / 1;
+  max-height: 260px;
+  object-position: 50% 50%;
+}
+#modal .fy-scene {
+  max-height: 300px;
+  object-position: 50% 12%;
+  border-width: 0 0 1px;
+  border-radius: 0;
+}
+#modal .run-scene {
+  max-height: 220px;
+  object-position: 50% 45%;
+  margin: 0 0 10px;
+}
+.wake-fragment {
+  aspect-ratio: 9 / 5;
+  max-height: 240px;
+  margin: 0.6rem 0 0;
+}
+/* Short landscape screens: the words and the heroes come first, the picture gives way. */
+@media (orientation: landscape) and (max-height: 540px) {
+  #modal .fy-scene {
+    max-height: 30vh;
+  }
+  #modal .run-scene {
+    max-height: 24vh;
+    object-position: 50% 82%;
+  }
+  .ending-figure.ending-scene img,
+  .wake-fragment {
+    max-height: 34vh;
+  }
+}

@@ -4,7 +4,7 @@ import { rollLeaderInfo } from './mastery-views.js';
 import { btn, titleHead, face, esc, bookCitation } from './panels.js';
 import { icon } from './icons.js';
 import { BOOKS, DETAILS } from '../rules/game.js';
-import { MAZE_TALE, YOUTH, WEI, QIUBAI } from '../data/maze-tale.js';
+import { MAZE_TALE, YOUTH, WEI, QIUBAI, TALE_ART } from '../data/maze-tale.js';
 import { art } from './artwork.js';
 
 const EAGLE_PICTURE = 'npc-eagle.webp';
@@ -14,6 +14,7 @@ const idAttr = (id) => `data-id="${esc(id)}"`;
 const text = (value) => esc(value ?? '');
 const coin = '<i class="run-coin" aria-hidden="true"></i>';
 const playerImage = (id) => `<img src="${esc(face(id))}" alt="" decoding="async">`;
+const scene = (file, cls) => `<img class="tale-scene ${cls}" src="${text(art(file))}" alt="" decoding="async">`;
 
 function drawPortrait(id, captain) {
   const hero = DETAILS[id];
@@ -43,6 +44,7 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
   return `<section class="run-view run-roll">
     ${titleHead('scroll', '抓子')}
     <div class="run-lacquer">
+      ${scene(TALE_ART.board, 'run-scene')}
       <details class="hud-disclosure draw-tale"><summary>局規</summary><p>${text(MAZE_TALE.draw)}</p><p>棋臺沿上刻著：「${text(MAZE_TALE.rule)}」</p></details>
       <p class="lot-instruction">選一枚先落的子作領隊，是為這一輪的「眼」。領隊倒下，這一輪便結束。</p>
       <ul class="run-lots" aria-label="這一輪抓到的三位俠客">${ids.map((id) => drawPortrait(id, captain)).join('')}</ul>
@@ -94,7 +96,7 @@ function prologueSteps(profile, name = '') {
   return steps.map((step, i) => {
     const p = page(step);
     if (i <= asked && step.who === 'youth') p.speaker = { ...p.speaker, name: '少年' };
-    return { ...p, last: i === steps.length - 1 };
+    return { ...p, view: i === 0 ? TALE_ART.wake : '', last: i === steps.length - 1 };
   });
 }
 function prologuePage(profile, step = 0, name = '') {
@@ -114,7 +116,7 @@ function prologuePage(profile, step = 0, name = '') {
     : '';
   return `<section class="mj-view fy-story fy-prologue">
     <header class="modal-head"><div class="modal-title">${icon('scroll', 20)}<h2>入夢</h2></div><small>序幕</small></header>
-    <div class="fy-story-body${picture ? '' : ' fy-narration'}">${portrait}<div class="fy-dialogue">
+    ${p.view ? scene(p.view, 'fy-scene') : ''}<div class="fy-story-body${picture ? '' : ' fy-narration'}">${portrait}<div class="fy-dialogue">
       ${p.note ? (p.picture ? `<blockquote>${text(p.note)}</blockquote>` : `<p class="fy-stage-note">${text(p.note)}</p>`) : ''}${said}${p.after ? `<p class="fy-stage-note">${text(p.after)}</p>` : ''}${entry}
     </div></div>
     <footer class="mj-footer"><div class="fy-reading">${at ? btn('prologue-prev', '上一句', 'mj-action') : ''}<span>${at + 1}／${steps.length}</span></div><aside>${p.last || p.ask ? '' : btn('prologue-skip', '略過', 'mj-action')}${btn('prologue-next', p.last ? '看棋盤' : '下一句', 'gold-btn')}</aside></footer>
