@@ -1,5 +1,6 @@
 import { fieldCells } from '../data/terrain.js';
 import { drawDanger } from './danger.js';
+import { paintBattleMarks } from './battle-marks.js';
 import { paintMasteryFlourish } from '../fx/mastery-vfx.js';
 // Animated billboard art is painted after the ground. Only the ground ray can accept a move.
 import * as G from '../rules/game.js';
@@ -624,6 +625,8 @@ class ActorLayer {
     paintFormations(this, this.time);
     paintFormationAim(this, this.formationAim(s, u, art, hover), this.time);
     paintTauntAim(this, this.tauntAim(s, u, art, hover), this.time);
+    // The deployment step's posts, reinforcements' entry tiles and the secondary's line.
+    paintBattleMarks(this);
     const mark = hover && this.mode === 'skill' && G.at(s, hover.x, hover.y);
     if (mark && G.targetOK(s, u, mark, true)) {
       const f = G.forecast(u, mark, true, s);

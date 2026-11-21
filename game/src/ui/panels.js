@@ -7,7 +7,9 @@ import {
 } from '../rules/battle-mastery.js';
 import { art } from './artwork.js';
 import { fieldSize, fieldCells, terrainTypes, mapLayout, tileInfo } from '../data/terrain.js';
-import { objective, NUMERALS, guideInventory, acceptsGuide } from '../rules/journey.js';
+import { NUMERALS, guideInventory, acceptsGuide, briefing, boardBrief, sideForecast } from '../rules/journey.js';
+import { seatsFor } from '../rules/formation.js';
+import { POSTS, boardPlan, planGrid, planKey } from './board-plan.js';
 import {
   DETAILS,
   unitDetails,
@@ -48,7 +50,12 @@ import {
   unclaimedObjectiveTile,
   wardEscorts,
   wardShare,
-  stat
+  stat,
+  pendingWaves,
+  arrivalGhosts,
+  pieceUnit,
+  waveList,
+  boardOf
 } from '../rules/game.js';
 import { icon } from './icons.js';
 import { itemPicture } from './item-art.js';
@@ -204,6 +211,27 @@ function commander(s, mode) {
         '</span>',
       'field-action turn-action'
     );
+  // The deployment step: the end-turn control is 開戰, which starts round one.
+  const begin = btn(
+    'battle-begin',
+    icon('flag', 18) + '<span>開戰</span>',
+    'field-action turn-action ready',
+    'title="開戰"'
+  );
+  if (s.run?.deploying) {
+    if (actionFlow) return begin;
+    return (
+      [
+        ['move', 'move', '移動'],
+        ['skill', 'spark', '招式'],
+        ['wait', 'wait', '待命']
+      ]
+        .map(([a, ic, label]) =>
+          btn(a, icon(ic, 18) + '<span>' + label + '</span>', 'field-action', 'title="' + label + '" disabled')
+        )
+        .join('') + begin
+    );
+  }
   // Polish (actionFlow): the bar is reduced to End turn, which lights up once every hero has
   // at least moved.
   if (actionFlow) {
@@ -272,46 +300,9 @@ function commander(s, mode) {
     })
     .join('');
 }
+// The goal rows of the single-board game (no run). A run's goals page is the live briefing.
 function goalRows(s) {
-  if (s.run) {
-    const side = objective(s),
-      target = find(s, commanderId(s));
-    const recruitId = s.run.status === 'battle' ? s.run.pool[0] : s.run.last?.recruit;
-    // COMPAT (until the goals page is the live briefing): the drawn secondary's reward; a hero
-    // comes with any win.
-    const reward =
-      (recruitId && s.run.stage < 9 ? '勝則' + DETAILS[recruitId].name + '同行・' : '') +
-      side.reward;
-    return (
-      '<div class="goal-row"><span class="objective-mark">' +
-      icon(living(target) ? 'flag' : 'check', 16) +
-      '</span><div><small>主要目標</small><strong>' +
-      side.primary +
-      '</strong>' +
-      '<p class="goal-detail">副手 · ' +
-      unitDetails(s.units.find((u) => u.encounterId?.startsWith('lieutenant-')))?.name +
-      '</p>' +
-      (wardEscorts(s).length || s.units.some((v) => unitDetails(v)?.traits?.ward)
-        ? '<p class="goal-detail">星索護陣・' +
-          wardEscorts(s).length +
-          ' / ' +
-          s.units.filter((v) => unitDetails(v)?.traits?.ward).length +
-          ' 名護陣者，減傷 ' +
-          wardShare(s, target) +
-          '%</p>'
-        : '') +
-      '</div></div>' +
-      '<div class="goal-row"><span class="objective-mark alt">' +
-      icon(side.done ? 'check' : 'diamond', 16) +
-      '</span><div><small>支線・' +
-      reward +
-      '</small><strong>' +
-      side.name +
-      '</strong><p class="goal-detail">' +
-      side.instruction +
-      '</p></div></div>'
-    );
-  }
+  if (s.run) return '';
   const alive = party(s).filter(living).length,
     chief = find(s, 'chief');
   const won = s.result === 'win';
@@ -686,26 +677,150 @@ function logPage(s, filter) {
     '</div>'
   );
 }
+// ── The briefing (軍情) ─────────────────────────────────────────────────────
+// One page before 整備: how the board is won and lost, the drawn secondary and what it pays, who
+// stands against the heroes and who comes later, and a plan of the board. `live` is the goals
+// page of the fight: the same page with the state of the fight in it. `ahead` reads the next
+// board from the shop, with no secondary drawn yet. `back` names the page the footer returns to.
+function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {}) {
+  const r = s.run,
+    model = ahead ? boardBrief(r.route[r.stage + 1], r.stage + 1) : briefing(s, { live });
+  const plan = boardPlan(model.map, ahead ? null : s);
+  const seats = ahead ? [] : seatsFor(r);
+  const post = (i, x, y, at) =>
+    '<b class="plan-post' +
+    (seats[i] ? ' filled' : '') +
+    (seats[i] && seats[i] === (r.scene === 'fight' ? s.leader : r.next[0]) ? ' captain' : '') +
+    '" style="' +
+    at +
+    '" title="陣位' +
+    POSTS[i] +
+    (seats[i] ? ' · ' + DETAILS[seats[i]].name : '') +
+    '">' +
+    POSTS[i] +
+    '</b>';
+  const sect = (cls, title, body) =>
+    '<section class="brief-sec ' + cls + '"><h4>' + title + '</h4>' + body + '</section>';
+  const p = (text, cls = '') => (text ? '<p' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(text) + '</p>' : '');
+  const L = model.live;
+  // 勝利, and in the fight how far it has come: each master's 氣血, or the enemies left.
+  let progress = '';
+  if (L) {
+    const ward = (m) => {
+      const u = find(s, m.id);
+      if (!u || !(wardEscorts(s).length || s.units.some((v) => unitDetails(v)?.traits?.ward))) return '';
+      return (
+        '　星索護陣・' +
+        wardEscorts(s).length +
+        ' / ' +
+        s.units.filter((v) => unitDetails(v)?.traits?.ward).length +
+        ' 名護陣者，減傷 ' +
+        wardShare(s, u) +
+        '%'
+      );
+    };
+    const rows =
+      model.kind === 'rout'
+        ? [L.remaining, L.waiting].filter(Boolean).map((t) => '<li>' + esc(t) + '</li>')
+        : L.masters.map(
+            (m) =>
+              '<li class="' +
+              (m.fallen ? 'done' : '') +
+              '">' +
+              icon(m.fallen ? 'check' : 'flag', 14) +
+              '<span>' +
+              esc(m.line) +
+              esc(m.fallen ? '' : ward(m)) +
+              '</span></li>'
+          );
+    progress = rows.length ? '<ul class="brief-progress">' + rows.join('') + '</ul>' : '';
+  }
+  const sd = model.side;
+  const side = sd
+    ? '<p class="brief-side-name">' +
+      (sd.mark ? '<b class="side-mark ' + sd.state + '">' + sd.mark + '</b>' : '') +
+      '<strong>' +
+      esc(sd.name) +
+      '</strong>' +
+      (sd.stateText ? '<small class="side-state ' + sd.state + '">' + esc(sd.stateText) + '</small>' : '') +
+      '</p>' +
+      p(sd.detail) +
+      (sd.progress && sd.state === 'open' ? p(sd.progress, 'brief-note') : '') +
+      (sd.lost ? p(sd.lost, 'brief-note warn') : '') +
+      p(sd.rewardText, 'brief-small') +
+      p(sd.warning, 'brief-note warn')
+    : model.pool.length
+      ? p(model.sideNote) +
+        '<ul class="brief-pool">' +
+        model.pool.map((e) => '<li><strong>' + esc(e.name) + '</strong> ' + esc(e.rewardText) + '</li>').join('') +
+        '</ul>'
+      : p(model.sideNote);
+  const foes = model.foes
+    .map(
+      (f) =>
+        '<li><strong class="' +
+        (f.rank === '局主' ? 'boss' : 'mini') +
+        '">' +
+        f.rank +
+        '　' +
+        esc(f.name) +
+        '</strong>' +
+        (f.note ? '<small>' + esc(f.note) + '</small>' : '') +
+        (f.gist ? '<p>' + esc(f.gist) + '</p>' : '') +
+        '</li>'
+    )
+    .join('');
+  const chips = model.force.chips
+    .map((c) => '<span class="brief-chip" title="' + esc(c.gist) + '">' + esc(c.name) + '×' + c.count + '</span>')
+    .join('');
+  const waves = model.waves.length
+    ? '<ul class="brief-waves">' +
+      model.waves
+        .map(
+          (w) =>
+            '<li>' +
+            esc(w.line) +
+            (w.status ? '<small class="wave-status ' + (w.status === '下回合' ? 'next' : '') + '">' + w.status + '</small>' : '') +
+            '</li>'
+        )
+        .join('') +
+      '</ul>'
+    : p(model.noWaves);
+  const foot = live
+    ? btn('close', '返回戰盤', 'gold-btn')
+    : back
+      ? btn('close', back, 'gold-btn')
+      : btn('home', '主畫面', 'outline-btn') + btn('brief-next', '進入整備 ' + arrow, 'gold-btn');
+  return (
+    '<section class="mj-view brief-view">' +
+    titleHead('flag', '軍情', esc(model.heading)) +
+    (L ? '<p class="brief-live">' + esc(L.line) + '</p>' : '') +
+    '<div class="brief-body"><div class="brief-plan">' +
+    planGrid(plan, post) +
+    planKey(plan) +
+    '</div><div class="brief-text">' +
+    sect('brief-kind', '戰局', p(model.battle)) +
+    sect('brief-win', '勝利', p(model.win) + progress) +
+    sect('brief-loss', '敗退', p(model.loss)) +
+    sect('brief-side', '支線', side) +
+    (model.recruit ? sect('brief-recruit', '應帖', p(model.recruit)) : '') +
+    sect('brief-foes', '敵情', '<ul class="brief-foes">' + foes + '</ul>') +
+    sect('brief-force', '兵力', p(model.force.line) + (chips ? '<p class="brief-chips">' + chips + '</p>' : '')) +
+    sect('brief-waves', '援軍', waves) +
+    sect('brief-terrain', '地勢', p(model.terrain)) +
+    '</div></div>' +
+    extra +
+    '<div class="modal-foot right">' +
+    foot +
+    '</div></section>'
+  );
+}
 function goalsPage(s) {
   if (s.run)
-    return (
-      titleHead('flag', '十局棋路') +
-      '<div class="goals-detail">' +
-      goalRows(s) +
-      '</div>' +
-      '<div class="ledger-rules"><span>回合 ' +
-      s.round +
-      '／' +
-      LIMIT +
-      '</span><span>領隊 ' +
-      DETAILS[leader(s)].name +
-      '</span><span>銀 ' +
-      s.run.coins +
-      ' 兩</span></div>' +
-      '<details class="hud-disclosure"><summary>地勢與勝敗條件</summary><p>' +
-      esc(mapLayout(s.mapIndex).tactic) +
-      '</p><p>須於第十二回合結束前擊敗局主。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。達成支線並取勝，便有新俠客應帖而來。</p></details>' +
-      '<details class="hud-disclosure"><summary>十局次序 · ' +
+    return briefPage(s, {
+      live: true,
+      extra:
+      '<details class="hud-disclosure brief-route"><summary>十局次序 · ' +
       (s.run.stage + 1) +
       '／10</summary><ol class="journey-route">' +
       s.run.route
@@ -734,7 +849,7 @@ function goalsPage(s) {
         )
         .join('') +
       '</ol></details>'
-    );
+    });
   return (
     titleHead('flag', '戰役目標') +
     '<div class="goals-detail">' +
@@ -902,8 +1017,20 @@ const CHARGED = {
   mend: '蓄勢已成 · 同夥傷重便替他續命',
   stance: '蓄勢已成 · 近身打他必遭全力還擊'
 };
+// A reinforcement not yet on the board, as the enemy page shows it: the piece built where it
+// would enter now (G.arrivalGhosts), or at its own entry tile when that is taken.
+function waitingPiece(s, id) {
+  for (const p of pendingWaves(s)) {
+    const def = p.defs.find((d) => d.id === id);
+    if (!def) continue;
+    const u = arrivalGhosts(s, p.due).find((g) => g.id === id) || pieceUnit(s, def, p.due);
+    return { u, pending: p };
+  }
+  return null;
+}
 function enemyPage(s, id) {
-  const u = find(s, id),
+  const waiting = find(s, id) ? null : waitingPiece(s, id);
+  const u = waiting ? waiting.u : find(s, id),
     i = unitDetails(u),
     special = enemyTechnique(u, s),
     turns = roundsToSignature(s, u);
@@ -971,10 +1098,34 @@ function enemyPage(s, id) {
           '</span></p>'
       )
       .join('') +
-    '<p class="footnote">' +
-    icon('stone', 15) +
-    ('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。' + tileInfo(u.x, u.y, s.mapIndex).note) +
-    '</p>'
+    (waiting
+      ? '<p class="footnote">' +
+        icon('stone', 15) +
+        '<span>' +
+        esc('尚未入場 · 第' + NUMERALS[waiting.pending.due - 1] + '回合自' + waiting.pending.wave.place + '入場') +
+        '</span></p>' +
+        (waiting.pending.defs.length > 1
+          ? '<div class="wave-mates">' +
+            waiting.pending.defs
+              .map((d) => {
+                const mate = pieceUnit(s, d, waiting.pending.due);
+                return (
+                  '<span class="' +
+                  (d.id === id ? 'current' : '') +
+                  '"><img src="' +
+                  unitFace(mate) +
+                  '" alt=""><small>' +
+                  esc(unitDetails(mate).name) +
+                  '</small></span>'
+                );
+              })
+              .join('') +
+            '</div>'
+          : '')
+      : '<p class="footnote">' +
+        icon('stone', 15) +
+        ('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。' + tileInfo(u.x, u.y, s.mapIndex).note) +
+        '</p>')
   );
 }
 function attackPage(s, source, target, skill) {
@@ -1125,6 +1276,10 @@ function attackPage(s, source, target, skill) {
         : line('招式連攜', esc(note))
     );
   if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
+  // The secondary: this blow would fell its target and so meet or fail it.
+  const sideLine = s.run && !friendly && !blink ? sideForecast(s, u, aimed, f) : '';
+  if (sideLine)
+    lines.push(line('支線', sideLine.replace(/^支線 · /, ''), sideLine.endsWith('達成') ? 'positive' : 'negative'));
   if (skill)
     lines.push(
       line('自身消耗', f.mpCost + ' 內力' + (f.hpCost ? '、' + f.hpCost + ' 氣血' : ''))
@@ -1185,4 +1340,4 @@ function resultPage(s) {
   );
 }
 
-export { itemBonus, medicineIdle, portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };
+export { itemBonus, medicineIdle, portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, briefPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };
