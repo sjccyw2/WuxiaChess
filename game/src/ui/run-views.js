@@ -68,7 +68,7 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
 //   profile  the chronicle (name, returns, wins)
 //   step     which page is showing
 //   name     the name as typed so far (first run only)
-//   film     the film has just told the first pages (first visit, phone held upright): start at
+//   film     the film has just told the first pages (first visit): start at
 //            the name, then resume where the film ends
 function prologueSteps(profile, name = '', film = false) {
   const tale = MAZE_TALE.prologue,

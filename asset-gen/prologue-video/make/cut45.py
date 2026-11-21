@@ -27,17 +27,19 @@ def reveal(t0, d): return lambda t: ease((t - t0) / d)
 def snap(t0, d): return lambda t: out5((t - t0) / d)
 
 def mbox_cam(u):   # a slow push toward the box, then a small punch as it lands on 「下盤棋吧」
-    z = lerp(1.0, 1.1, ease(u)); land = (38.6 + u * 6.4) - 41.55
+    t = u; k = clamp((t - 38.6) / 6.4)
+    z = lerp(1.0, 1.1, ease(k)); land = t - 41.55
     if 0 <= land < .25: z *= 1 + .06 * (1 - out5(land / .25))
-    return z, .5, lerp(.25, .32, ease(u))
+    return z, .5, lerp(.25, .32, ease(k))
 def hands_cam(u):   # snaps between his two hands, on twos, to show how fast he plays
-    t = 34.4 + u * 4.45
-    if t < 35.6: return lerp(1.0, 1.06, ease(u * 4)), .5, .32
+    t = u
+    if t < 35.6: return lerp(1.0, 1.06, ease((t - 34.4) / 1.2)), .5, .32
     side = int((t - 35.6) / .38) % 2
     return 1.9, (.04 if side == 0 else .96), .74
+hands_cam.clock = mbox_cam.clock = True
 P = [
- Panel('s1-asleep.png',   0.0,  4.75, cam(1.0, 1.14, .5, .45, .55, .38)),
- Panel('s2-eyes.png',     4.2,  6.95, punch(1.05, 1.15, .45, .5, .45), poly=enter(4.2, 'eyes', .1, .3, .25), shake=decay(4.2, .5), anchor=((576, 1150), (540, 1100))),
+ Panel('s1-asleep.png',   0.0,  4.75, cam(1.06, 1.06, .48, .48, .45, .45)),
+ Panel('s2-eyes.png',     4.2,  6.95, cam(1.08, 1.08, .5, .5, .45, .45), poly=enter(4.2, 'eyes', .1, .3, .25), shake=decay(4.2, .5), anchor=((576, 1150), (540, 1100))),
  Panel('s3-valley.png',   6.5, 11.45, cam(1.0, 1.0, .5, .5, 0.0, 1.0), mask='dots', reveal=reveal(6.5, 1.1)),
  Panel('d-selfplay.png', 11.0, 14.9, cam(1.12, 1.24, .5, .5, .35, .45), poly=enter(11.0, 'wedge', .55, .7, .8)),
  Panel('s4-board.png',   14.4, 17.45, cam(1.35, 1.05, .55, .5, .45, .55, curve=out3), mask='iris', reveal=snap(14.4, .6), center=(W / 2, H * .62), shake=decay(14.95, .3, .4)),
@@ -80,14 +82,14 @@ def _(c, t):
     sfx_image(c, SFX_TAP, (W * .3, H * .72), 400, life(t, 41.55, 42.9), rot=-6)
 @at
 def _(c, t):
-    balloon_hk(c, ['這……', '這是甚麼地方？'], (820, 540), (560, 420), life(t, 21.6, 23.55))
-    balloon_hk(c, ['咦。'], (870, 250), (690, 420), life(t, 24.2, 25.4), size=70)
-    balloon_hk(c, ['來者何人？'], (200, 540), (430, 520), life(t, 25.4, 27.0), size=62)
-    balloon_hk(c, ['我……', '我叫……'], (880, 1470), (650, 1330), life(t, 27.1, 28.55))
-    balloon_hk(c, ['罷了。'], (230, 930), (470, 640), life(t, 27.95, 28.6), size=60, appear=.25)
-    balloon_hk(c, ['老夫三百年', '沒見過一個活人，'], (870, 330), (690, 520), life(t, 29.3, 31.8))
-    balloon_hk(c, ['今天你我有緣，'], (870, 330), (620, 420), life(t, 39.4, 41.5))
-    balloon_hk(c, ['就陪老夫', '下盤棋吧！'], (870, 330), (620, 420), life(t, 41.5, 43.7))
+    balloon_hk(c, ['這……', '這是甚麼地方？'], (830, 560), (520, 640), life(t, 21.6, 23.55))
+    balloon_hk(c, ['咦。'], (880, 520), (690, 690), life(t, 24.2, 25.4), size=70)
+    balloon_hk(c, ['來者何人？'], (190, 640), (470, 700), life(t, 25.4, 27.0), size=62)
+    balloon_hk(c, ['我……', '我叫……'], (880, 1430), (650, 1260), life(t, 27.1, 28.55))
+    balloon_hk(c, ['罷了。'], (215, 860), (500, 715), life(t, 27.95, 28.6), size=60, appear=.25)
+    balloon_hk(c, ['老夫三百年', '沒見過一個活人，'], (880, 620), (650, 870), life(t, 29.3, 31.8))
+    balloon_hk(c, ['今天你我有緣，'], (870, 380), (650, 540), life(t, 39.4, 41.5))
+    balloon_hk(c, ['就陪老夫', '下盤棋吧！'], (870, 380), (650, 540), life(t, 41.5, 43.7))
 @at
 def _(c, t):   # 求敗 is named once, calmly, while the frame is darkest
     name_card(c, '獨孤求敗', '', 165, 380, life(t, 31.6, 35.0), size=180)

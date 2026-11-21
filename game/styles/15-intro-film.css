@@ -1,4 +1,4 @@
-/* The opening film on upright phones (src/ui/intro-film.js): the whole screen, above everything.
+/* The opening film (src/ui/intro-film.js), in either cut: the whole screen, above everything.
    Its buttons keep to the bottom corners: the film's captions are set flush to the top corners. */
 .intro-film {
   position: fixed;
@@ -69,4 +69,30 @@
 }
 .intro-film [hidden] {
   display: none;
+}
+/* A large screen showing the wide cut: the buttons grow with it, so they still read at a glance. */
+@media (min-width: 1100px) and (min-height: 700px) {
+  .intro-film button {
+    font-size: 19px;
+    min-height: 52px;
+    padding: 14px 20px 14px 24px;
+  }
+  .intro-film .film-sound {
+    width: 52px;
+  }
+  .film-skip,
+  .film-sound {
+    bottom: 22px;
+  }
+  .film-skip {
+    right: 24px;
+  }
+  .film-sound {
+    left: 24px;
+  }
+  .intro-film .film-end button {
+    min-width: 150px;
+    font-size: 22px;
+    padding: 18px 26px 18px 30px;
+  }
 }

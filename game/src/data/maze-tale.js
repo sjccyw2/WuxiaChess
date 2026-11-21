@@ -71,12 +71,13 @@ const MAZE_TALE = {
     ],
     // Every later run: he has slept again. `greeting` is 求敗's by 境 (index 0 is the first 境,
     // reached again only after a lost run); `beyond` once the fifth 境 has been won.
-    // On a phone held upright the first visit opens with a film (asset-gen/prologue-video): it tells
-    // the pages above up to 「抓三枚」, and in it the youth is cut off before he can say his name. So
-    // after it the player finishes his sentence, and the pages resume at `afterFilm`.
+    // The first visit opens with a film (asset-gen/prologue-video), in a 9:16 cut for screens taller
+    // than wide and a 16:9 cut otherwise: it tells the pages above up to 「抓三枚」, and in it the
+    // youth is cut off before he can say his name. So after it the player finishes his sentence,
+    // and the pages resume at `afterFilm`.
     film: {
-      file: 'prologue-film.mp4',
-      poster: 'prologue-film.webp',
+      tall: { file: 'prologue-film.mp4', poster: 'prologue-film.webp' },
+      wide: { file: 'prologue-film-wide.mp4', poster: 'prologue-film-wide.webp' },
       name: { who: 'youth', text: '我……我叫……', ask: true }
     },
     again: {
