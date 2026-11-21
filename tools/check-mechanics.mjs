@@ -13,6 +13,7 @@ const G = await load('rules/game.js');
 const R = await load('rules/journey.js');
 const BM = await load('rules/battle-mastery.js');
 const FR = await load('rules/form-rules.js');
+const FM = await load('rules/ferry-market.js');
 const { TECHNIQUES, MANUAL_PRICES } = await load('data/martial-arts.js');
 const { ENCOUNTERS, RANKS, STATUS_POWER } = await load('data/encounters.js');
 const { mapLayout } = await load('data/terrain.js');
@@ -224,18 +225,24 @@ section('save migration');
   const again = R.restoreRun(copy(respec));
   check('loading it again refunds nothing more', again && unit(again, 'hero').sp === 5);
 
-  // 青鋒劍 is gone from the game: a save holding one gets its price back and stays loadable.
+  // 青鋒劍 left the game on 2026-11-20 (saves holding one were refunded) and is back. A save from
+  // before it left keeps the sword where it was; a save that was refunded keeps its coins.
   const armed = board(['hero', 'medic', 'guard']);
   unit(armed, 'hero').weapon = 'blueEdge';
   armed.stock.pine = 1;
   armed.stock.blueEdge = 1;
   armed.run.shop.push({ id: 'blueEdge', price: 33, left: 1 });
   const purse = armed.run.coins;
-  const disarmed = R.restoreRun(copy(armed));
-  check('a save holding the removed sword restores', !!disarmed);
-  check('its bearer takes up his own weapon again', disarmed && unit(disarmed, 'hero').weapon === 'pine' && !disarmed.stock.pine);
-  check('it leaves the stores and the shelf', disarmed && !('blueEdge' in disarmed.stock) && !disarmed.run.shop.some((o) => o.id === 'blueEdge'));
-  check('both swords are paid for', disarmed?.run.coins === purse + 66, disarmed?.run.coins);
+  const kept = R.restoreRun(copy(armed));
+  check('a save holding 青鋒劍 restores', !!kept);
+  check('its bearer still holds it', kept && unit(kept, 'hero').weapon === 'blueEdge' && kept.stock.pine === 1);
+  check('the stores and the shelf keep it', kept?.stock.blueEdge === 1 && kept.run.shop.some((o) => o.id === 'blueEdge'));
+  check('no coins are paid out for it', kept?.run.coins === purse, kept?.run.coins);
+  const refunded = board(['hero', 'medic', 'guard']);
+  refunded.run.coins += 66; // what the old migration paid for two swords
+  const after = R.restoreRun(copy(refunded));
+  check('a save that was refunded restores with its coins', after?.run.coins === refunded.run.coins && unit(after, 'hero').weapon === 'pine');
+  check('青鋒劍 is a weapon again, on the shelf from the first board', G.ITEMS.blueEdge?.kind === 'weapon' && same(FM.MARKET_STOCK.blueEdge, [33, 1]) && G.ITEMS.blueEdge.atk === 10 && same(G.ITEMS.blueEdge.forms, ['exploit']));
   check('楊過 starts with the 古墓 sword', G.startingHero('yang').weapon === 'tombSword' && G.ITEMS.tombSword.owner === 'yang');
 
   const z = board();

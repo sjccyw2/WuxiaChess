@@ -17,6 +17,13 @@ const MANUAL_PRICES = Object.fromEntries(
   Object.entries(TRADE_MANUALS).map(([id, book]) => [id, book.price])
 );
 const WARES = {
+  blueEdge: {
+    name: '青鋒劍',
+    kind: 'weapon',
+    atk: 10,
+    icon: 'sword',
+    desc: '青鋼劍身輕捷，攻擊增加 10。'
+  },
   ironFan: {
     name: '鐵骨折扇',
     kind: 'weapon',

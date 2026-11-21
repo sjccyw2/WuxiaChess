@@ -118,6 +118,7 @@ const WEAPON_FORMS = {
   mingSash: ['antidote', 'riposte'],
   foxSaber: ['flank'],
   frost: ['distill'],
+  blueEdge: ['exploit'],
   ironFan: ['mark', 'overflow'],
   silkWhip: ['pull', 'pin'],
   travelBlade: ['arc'],
