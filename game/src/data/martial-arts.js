@@ -99,6 +99,23 @@ const WARES = {
     step: -1,
     icon: 'sword',
     desc: '刀身烏沉，重逾百斤，揮動須站穩腳步。攻擊增加 17，移動減少 1 格。'
+  },
+  // `cleanse` lifts every ailment that 解厄 lifts (form-rules.js, AILMENTS) before the healing.
+  nineFlowerPill: {
+    name: '九花玉露丸',
+    kind: 'use',
+    hp: 36,
+    cleanse: true,
+    icon: 'leaf',
+    desc: '桃花島秘製的丸藥，清香沁人。先為使用者解除中毒、攻勢受挫、破防、絆足、破綻、封穴、亂氣、內傷、失神與纏械，再回復 36 點氣血。每次用去一份。'
+  },
+  beeNectar: {
+    name: '玉蜂漿',
+    kind: 'use',
+    hp: 30,
+    mp: 20,
+    icon: 'drop',
+    desc: '古墓玉蜂所釀的蜂漿，甘潤養氣。為使用者回復 30 點氣血與 20 點內力。每次用去一份。'
   }
 };
 const CAPTAINS = [

@@ -3359,6 +3359,36 @@ section('board 9 無刻漏臺: the mirror');
 // ── The shop's new items ──────────────────────────────────────────────────
 section('items');
 {
+  // 九花玉露丸 lifts every ailment, then heals in full even through 內傷; with nothing to do it is kept.
+  const pill = G.ITEMS.nineFlowerPill;
+  check('its text names every ailment it lifts', FR.AILMENTS.every((k) => pill.desc.includes(BM.CONDITION_NAMES[k])));
+  const m = board();
+  const h = unit(m, 'hero');
+  h.hp = 20;
+  for (const kind of ['wound', 'poison', 'daze']) BM.applyCondition(m, h, { kind, power: 3, turns: 2 }, h);
+  m.stock.nineFlowerPill = 1;
+  check('九花玉露丸 is taken', G.consume(m, h, 'nineFlowerPill') && !m.stock.nineFlowerPill);
+  check('it lifts 內傷, 中毒 and 失神', !h.conditions.wound && !h.conditions.poison && !h.conditions.daze);
+  check('its healing is not halved by the 內傷 it lifted', h.hp === 20 + pill.hp, h.hp);
+  m.stock.nineFlowerPill = 1;
+  h.hp = h.maxHp;
+  check('a hale hero is not given one', !G.consume(m, h, 'nineFlowerPill') && m.stock.nineFlowerPill === 1);
+
+  // 玉蜂漿 restores both, and is worth taking when either is short.
+  const nectar = G.ITEMS.beeNectar;
+  h.hp = 40;
+  h.mp = 5;
+  m.stock.beeNectar = 2;
+  check('玉蜂漿 restores 氣血 and 內力 at once', G.consume(m, h, 'beeNectar') && h.hp === 40 + nectar.hp && h.mp === Math.min(h.maxMp, 5 + nectar.mp));
+  h.hp = h.maxHp;
+  h.mp = 0;
+  check('it is taken for 內力 alone when 氣血 is full', G.consume(m, h, 'beeNectar') && h.mp === Math.min(h.maxMp, nectar.mp));
+  check('金創藥 is unchanged', (() => {
+    h.hp = 10;
+    m.stock.remedy = 1;
+    return G.consume(m, h, 'remedy') && h.hp === 10 + G.ITEMS.remedy.hp && m.logs.at(-1).text === '服用金創藥，回復 48 點氣血。';
+  })());
+
   // 屠龍刀: the most attack of any weapon, one step less, 定勢 on the basic attack.
   const w = board();
   const bearer = unit(w, 'guard');

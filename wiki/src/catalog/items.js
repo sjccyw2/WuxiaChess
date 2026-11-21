@@ -27,6 +27,7 @@ function item(id) {
         it.def && ['防禦', it.def],
         it.power && ['絕技威力', it.power],
         it.step && ['移動', it.step],
+        it.cleanse && ['解除', '中毒、內傷等不良狀態'],
         it.hp && ['回復氣血', it.hp],
         it.mp && ['回復內力', it.mp]
       ]),

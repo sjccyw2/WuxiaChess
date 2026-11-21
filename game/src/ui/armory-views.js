@@ -3,7 +3,7 @@ import * as G from '../rules/game.js';
 import { seatsFor } from '../rules/formation.js';
 import { mapLayout } from '../data/terrain.js';
 import { art } from './artwork.js';
-import { face, btn, esc, itemBonus } from './panels.js';
+import { face, btn, esc, itemBonus, medicineIdle } from './panels.js';
 import { icon } from './icons.js';
 import { itemPicture } from './item-art.js';
 
@@ -280,18 +280,17 @@ function armory(s, u, ui) {
       );
     const attr = 'data-id="' + v.id + '" data-owner="' + v.owner + '"';
     const worn = v.owner === u.id;
-    const canUse = G.canUseMedicine(s, u) && (v.item.hp ? u.hp < u.maxHp : u.mp < u.maxMp);
+    const helps = G.medicineFor(u, v.item).helps,
+      canUse = G.canUseMedicine(s, u) && helps;
     let actions = '';
     if (v.item.kind === 'use') {
       actions += small(
         'item',
         canUse
           ? '服用一份'
-          : v.item.hp && u.hp === u.maxHp
-            ? '氣血已滿'
-            : v.item.mp && u.mp === u.maxMp
-              ? '內力已滿'
-              : '暫不可服',
+          : !helps
+            ? medicineIdle(v.item)
+            : '暫不可服',
         attr,
         !canUse
       );

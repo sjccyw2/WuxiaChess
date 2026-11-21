@@ -49,7 +49,9 @@ const MARKET_STOCK = {
   remedy: [9, 1],
   elixir: [10, 1],
   greatPill: [18, 1],
-  dragonSaber: [52, 4]
+  dragonSaber: [52, 4],
+  nineFlowerPill: [22, 2],
+  beeNectar: [12, 1]
 };
 const MARKET_RULES =
   '每局重排貨架，各抽兩件兵器、兩件護具、兩種丹藥與兩卷武譜。銀價較底價浮動零至三兩。武譜購回後須授予俠客並花武學點參悟。';
