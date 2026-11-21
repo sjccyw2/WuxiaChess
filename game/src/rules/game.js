@@ -1785,6 +1785,18 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
     result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
   }
+  // 反刺: the counter comes from beside the wearer, so it pricks the one who makes it.
+  if (result.counterRaw > 0 && barbsOf(u) && distance(u, result.push || t) === 1) {
+    const guards = wardEscorts(s).filter(
+      (g) => !result.splash.some((hit) => hit.id === g.id && hit.amount >= g.hp)
+    );
+    result.barbs = afterWard(barbsOf(u), wardShare(s, t, guards));
+    result.notes.push(
+      '反刺 · 還擊者被軟蝟甲扎傷 ' +
+        Math.min(t.hp - result.amount - result.reflected, Math.max(0, result.barbs - shield)) +
+        ' 氣血'
+    );
+  }
   if (result.forms.includes('glide') && art && glideSteps(s, u) > 0)
     result.notes.push('回身 · 出招後尚可走 ' + glideSteps(s, u) + ' 步');
   if (result.forms.includes('again') && u.againRound !== s?.round)
@@ -1992,6 +2004,23 @@ function reflectStrike(s, victim, attacker, dealt, effects) {
     unitDetails(victim).name
   );
 }
+// 反刺 (軟蝟甲): a piece that strikes the wearer from the tile beside her, with a blow or a counter
+// that lands, is pricked for the gear's barbs. Defence does not cut it; the striker's own shield
+// takes it first, and a master's escorts share it as they share any blow. A blow 閃身 or 挪移
+// voids never touches her. The wearer's own strike shows the pricking of its counter in the
+// forecast (`barbs`).
+const barbsOf = (v) => ITEMS[v?.gear]?.barbs || 0;
+function barbStrike(s, wearer, striker, raw, effects) {
+  if (!raw || !living(striker)) return;
+  const amount = wound(s, striker, raw, wearer);
+  effects.push([striker.id, '−' + amount]);
+  log(
+    s,
+    'combat',
+    '軟蝟甲的倒刺扎傷' + unitDetails(striker).name + '，造成 ' + amount + ' 點傷害。',
+    unitDetails(wearer).name
+  );
+}
 function restoreHealth(s, caster, target, n, effects) {
   if (!n) return;
   target.hp += n;
@@ -2116,6 +2145,7 @@ function resolve(s, u, t, skill) {
       effects.push([u.id, '−' + dealt, 'counter']);
       log(s, 'combat', '還擊' + who + '，造成 ' + dealt + ' 點傷害。', unitDetails(t).name);
       reflectStrike(s, u, t, dealt, effects);
+      barbStrike(s, u, t, f.barbs, effects); // 反刺
     }
     woundSelfLoss(s, u, effects); // 內傷: the attacker pays once the exchange is over
   }
@@ -2527,6 +2557,8 @@ function enemyAct(s, u) {
     if (lineKind(art)) lineThrough(s, u, t, strikePower, effects); // 穿行
   } else if (living(t) && !blow.void) basicPoison(s, u, t, effects); // 蛇毒
   reflectStrike(s, t, u, n, effects);
+  if (barbsOf(t) && !blow.void && distance(u, t) === 1)
+    barbStrike(s, t, u, afterWard(barbsOf(t), wardPercent(s, u)), effects); // 反刺
   const share = counterRatio(s, t);
   if (!living(t)) log(s, 'combat', '負傷退場。', unitDetails(t).name);
   else if (

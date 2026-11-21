@@ -50,6 +50,7 @@ const MARKET_STOCK = {
   elixir: [10, 1],
   greatPill: [18, 1],
   dragonSaber: [52, 4],
+  hedgehogVest: [30, 2],
   nineFlowerPill: [22, 2],
   beeNectar: [12, 1]
 };

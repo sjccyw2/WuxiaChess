@@ -3356,9 +3356,40 @@ section('board 9 無刻漏臺: the mirror');
   check('one rope down: the ward is 35% and the log says so', G.wardShare(s, mu) === 35 && s.logs.some((l) => l.text === '一條星索斷了。慕容博的護勁降至三成半。'));
 }
 
-// ── The shop's new items ──────────────────────────────────────────────────
+// ── The shop's new items: 屠龍刀, 軟蝟甲 (反刺), 九花玉露丸, 玉蜂漿 ──────────
 section('items');
 {
+  // 反刺: a foe that strikes the wearer from beside her loses the barbs on top of whatever else
+  // happens, measured against the same exchange without the vest.
+  const exchange = (vest, { reach = 1, evade = false } = {}) => {
+    const s = board();
+    const hero = put(s, 'hero', 4, 7);
+    hero.gear = vest ? 'hedgehogVest' : null;
+    const foe = Object.assign(put(s, 'blade', 4 + reach, 7), { step: 0, range: reach });
+    if (evade) BM.applyCondition(s, hero, { kind: 'evade', power: 1, turns: 1 }, hero);
+    G.startEnemy(s);
+    G.enemyAct(s, foe);
+    return { foe: foe.hp, s };
+  };
+  const plain = exchange(false),
+    pricked = exchange(true);
+  check('a foe striking the wearer from beside her loses 7 more', plain.foe - pricked.foe === G.ITEMS.hedgehogVest.barbs && G.ITEMS.hedgehogVest.barbs === 7, plain.foe - pricked.foe);
+  check('the log names the barbs', pricked.s.logs.some((l) => l.text.startsWith('軟蝟甲的倒刺扎傷')));
+  check('a foe striking from two tiles away is not pricked', exchange(false, { reach: 2 }).foe === exchange(true, { reach: 2 }).foe);
+  check('a blow 閃身 makes miss does not touch her', exchange(false, { evade: true }).foe === exchange(true, { evade: true }).foe);
+  // Her own strike: the counter it draws from beside her is pricked, and the forecast says so.
+  const s = board();
+  const hero = put(s, 'hero', 4, 7);
+  hero.gear = 'hedgehogVest';
+  const foe = put(s, 'blade', 5, 7);
+  const f = G.forecast(hero, foe, false, s);
+  check('the forecast shows the counter pricked', f.counterRaw > 0 && f.barbs === 7 && f.notes.includes('反刺 · 還擊者被軟蝟甲扎傷 7 氣血'), JSON.stringify(f.notes));
+  const before = foe.hp;
+  G.resolve(s, hero, foe, false);
+  check('the strike deals what the forecast said, barbs included', before - foe.hp === f.amount + 7, before - foe.hp);
+  hero.gear = null;
+  check('without the vest the forecast has no barbs', !G.forecast(hero, foe, false, s).barbs);
+
   // 九花玉露丸 lifts every ailment, then heals in full even through 內傷; with nothing to do it is kept.
   const pill = G.ITEMS.nineFlowerPill;
   check('its text names every ailment it lifts', FR.AILMENTS.every((k) => pill.desc.includes(BM.CONDITION_NAMES[k])));
