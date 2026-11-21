@@ -169,6 +169,7 @@ function activeEffects(unit, round) {
   );
 }
 function applyCondition(s, target, effect, caster) {
+  if (target?.side === 'prop') return; // a board object takes no condition
   const { kind, power, turns } = effect;
   const held = (target.conditions ??= {});
   const old = held[kind];

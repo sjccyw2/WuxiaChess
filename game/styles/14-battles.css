@@ -95,6 +95,46 @@
   font-style: normal;
 }
 
+/* A board object on the plan: its own picture standing in its cell, ringed by whose it is. */
+.plan-grid > img.plan-object {
+  z-index: 1;
+  place-self: center;
+  width: 150%;
+  height: 150%;
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
+  object-position: center bottom;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 2px #0f1d19) drop-shadow(0 0 1px #0f1d19);
+}
+.plan-grid > img.plan-object.keep {
+  box-shadow: 0 0 0 1px #abe9c4;
+  background: #254b4188;
+}
+.plan-grid > img.plan-object.break {
+  box-shadow: 0 0 0 1px #ffa280;
+  background: #6a291e88;
+}
+.plan-grid > img.plan-object.broken {
+  opacity: 0.6;
+  box-shadow: none;
+}
+.plan-key .plan-object-key {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.brief-progress li.lost {
+  color: #e8927d;
+}
+/* An object's page: its picture shown whole, not cropped like a face. */
+.enemy-face.object-face {
+  object-fit: contain;
+  background: #1a2621;
+  padding: 4px;
+}
+
 /* ── The briefing page ─────────────────────────────────────────────────── */
 #modal:has(.brief-view) {
   width: min(900px, calc(100% - 28px));

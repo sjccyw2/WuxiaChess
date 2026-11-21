@@ -103,7 +103,7 @@ Heroes are drawn at random and the boards come in a different order each run, so
 | Layer | File | Tied to |
 | --- | --- | --- |
 | The spine | `game/src/data/maze-tale.js`, `wake-tale.js` | a position in the run and its 境 (how many runs the youth has won): falling asleep into the valley, the first board, the night talk, what 求敗 says after each board, the end. Everything 求敗 and 韋小寶 say is here |
-| The boards | `game/src/data/encounter-script.js` | one map: its black stones, on whom 求敗 has pressed a 戰意 that makes them fight, and the named stones he sets down beside them |
+| The boards | `game/src/data/encounter-script.js` | one map: its black stones, on whom 求敗 has pressed a 戰意 that makes them fight, the named stones he sets down beside them, and the things on the board (`objects`: the qin, the drum, the star posts) |
 | The heroes | `game/src/data/hero-voices.js` | one hero: arrival, deja vu, night talk, the art that made their name coming back, farewell |
 
 To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`, and the world behind it in `wiki/content/世界觀設定.md`.

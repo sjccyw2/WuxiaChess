@@ -49,6 +49,12 @@ function stageMission(stage) {
         ['勝利', m.win],
         ['敗退', m.loss],
         ['兵力', m.force.line],
+        // 守 and 破: the board's objects.
+        ...[...new Set(m.objects.map((o) => o.key))].map((key) => {
+          const o = m.objects.find((x) => x.key === key),
+            n = m.objects.filter((x) => x.key === key).length;
+          return [o.kindName, o.name + (n > 1 ? ' × ' + n : '')];
+        }),
         ...(m.waves.length ? m.waves.map((w) => ['援軍', w.line]) : [['援軍', m.noWaves]]),
         ['通關獎勵', NOTES.clearReward(G.REWARDS)]
       ]),
@@ -64,6 +70,7 @@ function stageMission(stage) {
       links('同局條目', [
         link('maps', stage, stageName(stage)),
         ...namedOn(stage).map(foeLink),
+        ...[...new Set(m.objects.map((o) => o.key))].map(foeLink),
         link('rules', m.kind, m.kindName),
         ...pool.map((side) => link('rules', 'side-' + side.kind, side.name)),
         link('story', 'map-' + stage, stageName(stage) + '對白')

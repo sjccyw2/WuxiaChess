@@ -18,6 +18,7 @@ import {
   TROOPS
 } from '../data/encounters.js';
 import { BATTLES } from '../data/battles.js';
+import { BOARD_OBJECTS } from '../data/board-objects.js';
 import { NEW_HEROES } from '../data/new-heroes.js';
 import { rosterPortrait } from '../data/roster-art.js';
 import {
@@ -30,7 +31,7 @@ import {
 } from './battle-mastery.js';
 import { FIELD_SIZE, fieldCells, mapLayout, validTile, tileInfo } from '../data/terrain.js';
 import { TECHNIQUES, WARES, CAPTAINS } from '../data/martial-arts.js';
-import { CHAMBER_TALES, MAZE_TALE, QIUBAI } from '../data/maze-tale.js';
+import { CHAMBER_TALES, MAZE_TALE, QIUBAI, YOUTH } from '../data/maze-tale.js';
 import { ENCOUNTER_SCRIPT } from '../data/encounter-script.js';
 const SIZE = FIELD_SIZE;
 const FIELD_EDITION = 1;
@@ -63,7 +64,19 @@ const find = (s, id) =>
 const party = (s) => s.units.filter(ally);
 const company = (s) => [...party(s), ...(s.run?.bench || [])];
 const commanderId = (s) => (s.run ? CAPTAINS[s.mapIndex][0] : 'chief');
-const enemies = (s) => s.units.filter((u) => !ally(u));
+const enemies = (s) => s.units.filter((u) => u.side === 'enemy');
+// Board objects (board-objects.js, battles.js `objects`) are units of side 'prop': on the board,
+// with 氣血, taking no turn, and neither the heroes' nor the black stones'.
+const isProp = (u) => u?.side === 'prop';
+const propKind = (u) => (isProp(u) ? BOARD_OBJECTS[u.encounterId || u.id]?.kind || null : null);
+const props = (s) => (s?.units || []).filter(isProp);
+// Whether u may strike t: a piece of the other side, or a board object u's side is there to break
+// (a hero, a 'break' object; a black stone, a 'keep' one). An object strikes no one.
+function hostile(u, t) {
+  if (!u || !t || isProp(u)) return false;
+  if (isProp(t)) return propKind(t) === (ally(u) ? 'break' : 'keep');
+  return t.side !== u.side;
+}
 // While the heroes are being deployed (journey.js deployLineup) nobody acts; swaps only.
 const canAct = (s, u) =>
   !!u &&
@@ -389,6 +402,23 @@ const LEGACY_BOARD = Object.freeze({
 });
 // The board being played. Every board rule reads the board through here.
 const boardOf = (s) => (!s.run || s.run.legacyBoard ? LEGACY_BOARD : BATTLES[s.mapIndex]);
+// The kind the board is played as. A save from before its board had objects (none on the board)
+// finishes under the kind it began with.
+function boardKind(s) {
+  const board = boardOf(s);
+  return board.objects?.length && !props(s).length ? board.legacyKind : board.kind;
+}
+// A board object as a unit: its 氣血 a share of its stage row's, its 防禦 that row's and its own.
+function propUnit(s, obj) {
+  const key = obj.id.split('#')[0],
+    info = BOARD_OBJECTS[key];
+  const row = stageRows(s.mapIndex, s.run?.stage || 0)[info.row];
+  const hp = Math.round(row[0] * info.hp);
+  const u = makeUnit(obj.id, 'prop', obj.at[0], obj.at[1], hp, 0, 0, row[2] + (info.def || 0), 0, 0);
+  if (obj.id.includes('#')) u.encounterId = key;
+  return u;
+}
+const propUnits = (s) => (boardOf(s).objects || []).map((obj) => propUnit(s, obj));
 // Every 局主 of the board, in the board's order; `commanderId` stays the one the text names.
 const masterIds = (s) => boardOf(s).masters.map((ref) => refId(s.mapIndex, ref));
 // The data entry of an extra piece (a starting piece or a wave's), and its wave if it has one.
@@ -875,11 +905,16 @@ function enemyTraitLines(s, u) {
   // A mirror that is the villain's signature is told in the signature's own lines.
   if (t.redirect && info.style !== 'mirror')
     say('挪移', '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。');
-  const wards = others.filter((v) => unitDetails(v)?.traits?.ward);
+  // A board object (星索樁) can carry the ward as well as a piece.
+  const wards = [...others, ...props(s).filter(living)].filter((v) => unitDetails(v)?.traits?.ward);
   if (u.id === commanderId(s) && wards.length)
     say(
       '星索護陣',
-      '每名存活的' + named(wards) + '替他抵擋 ' + unitDetails(wards[0]).traits.ward + '% 傷害。'
+      (wards.every(isProp) ? '每根立著的' : '每名存活的') +
+        named(wards) +
+        '替他抵擋 ' +
+        unitDetails(wards[0]).traits.ward +
+        '% 傷害。'
     );
   if (t.ward && master && u.id !== commanderId(s))
     say('護陣', '存活時替' + master + '抵擋 ' + t.ward + '% 傷害。');
@@ -916,7 +951,14 @@ function enemyTraitLines(s, u) {
   const masters = s.units ? masterIds(s) : [];
   if (masters.length > 1 && masters.includes(u.id)) {
     const other = masters.filter((id) => id !== u.id).map((id) => DETAILS[pieceKeyOf(s, id)]?.name);
-    say('雙局主', '與' + other.join('、') + '同為局主，兩人都倒下才算取勝。');
+    say(
+      '雙局主',
+      '與' +
+        other.join('、') +
+        '同為局主，兩人都倒下才算取勝' +
+        (boardKind(s) === 'keep' ? '（守滿回合亦勝）' : '') +
+        '。'
+    );
   }
   const wave = u.enteredRound != null && s.units && pieceDef(s, u.id)?.wave;
   if (wave) say('援軍', '第' + NUMERALS[u.enteredRound - 1] + '回合自' + wave.place + '入場。');
@@ -956,6 +998,9 @@ for (const [map, ranks] of RANKS.entries())
 for (const [id, v] of Object.entries(VILLAINS))
   DETAILS[id] = { ...v, role: v.rank === 'boss' ? '局主' : '副手' };
 for (const [id, t] of Object.entries(TROOPS)) DETAILS[id] = { ...t };
+// The board objects, with their pictures as their portraits.
+for (const [id, o] of Object.entries(BOARD_OBJECTS))
+  DETAILS[id] = { ...o, object: true, portraitFile: 'object-' + o.art + '.webp' };
 // The stage row each board's own pieces take their numbers from (stageRows).
 for (let map = 0; map < CAPTAINS.length; map++) {
   DETAILS[CAPTAINS[map][0]].row = 'master';
@@ -1616,13 +1661,13 @@ function targetOK(s, u, t, skill) {
   if (!canAct(s, u) || !t || !valid(t.x, t.y, s.mapIndex) || distance(u, t) > rangeFor(u, skill))
     return false;
   if (t.id && !s.units.includes(t)) return false;
-  if (!skill) return !!t.id && living(t) && !ally(t);
+  if (!skill) return !!t.id && living(t) && hostile(u, t);
   if (!canPay(s, u)) return false;
   const art = artFor(u),
     type = targetType(art);
   if (type === 'ground') return !t.id && walkable(t.x, t.y, s.mapIndex) && !at(s, t.x, t.y);
   if (!t.id || !living(t)) return false;
-  if (type === 'enemy') return !ally(t);
+  if (type === 'enemy') return hostile(u, t);
   if (!ally(t) || (type === 'self' && t.id !== u.id)) return false;
   // 號令: a companion who has acted this turn, never the caster.
   if (art.order) return t.id !== u.id && !!t.acted;
@@ -1888,6 +1933,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.notes.push(...guardNotes(art), ...priceNotes(art));
     return result;
   }
+  if (isProp(t)) return propForecast(s, u, t, skill, art, basic, result);
   const single = damage(u, t, skill, s?.mapIndex, s, art, basic);
   const step = forcedStep(s, u, t, art, result.forms, walkable);
   const plan = contactPlan(s, u, t, art, result.forms, step, unitDetails(t)?.rank === 'boss');
@@ -2018,6 +2064,26 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   result.notes.push(...guardNotes(art), ...priceNotes(art));
   return result;
 }
+// A blow at a board object: its hits on the object's 防禦 and ground, and nothing else. An object
+// does not counter, guard, dodge or move, and takes no condition, so the art's riders, pushes and
+// splash do not come with it; the art's own price still does.
+function propForecast(s, u, t, skill, art, basic, result) {
+  const single = damage(u, t, skill, s?.mapIndex, s, art, basic);
+  result.plan = { extra: 0, effects: [], notes: [] };
+  result.effects = [];
+  result.rawHits = (art?.hits || [1]).map((part) => Math.round(single * part));
+  result.hits = [...result.rawHits];
+  result.amount = result.hits.reduce((sum, n) => sum + n, 0);
+  result.notes = [];
+  if (art) result.notes.push(...strikeFactor(s, u, art, t).notes);
+  result.notes.push(OBJECT_NOTE);
+  if (result.forms.includes('again') && u.againRound !== s?.round)
+    result.notes.push(result.amount >= t.hp ? '連環 · 此擊可擊毀，本回合可再出手' : '連環 · 擊毀則可再出手');
+  selfLoss(s, u, art, result, true);
+  result.notes.push(...priceNotes(art));
+  return result;
+}
+const OBJECT_NOTE = '器物 · 不還擊、不閃避，招式附帶之效不及其身';
 // 化功 (§7.7): a hero whose direct blow lands on a villain with `contact` from the tile beside him
 // loses contact.mp + stage 內力 (never below 0), unless the villain is sealed before or by this
 // blow. 免受還擊 does not spare him; a disciple who took the blow for his master has no 化功.
@@ -2138,28 +2204,69 @@ function wound(s, u, n, source) {
   if (!living(u)) delete u.conditions;
   // 領隊無傷 counts what enemies take from the leader, through any blow, counter or poison.
   if (s.tally && u.id === s.leader && d > 0 && source && !ally(source)) s.tally.leaderHurt += d;
-  if (!ally(u)) {
+  if (isProp(u)) {
+    if (d > 0) propStruck(s, u);
+    if (!living(u)) propBroken(s, u);
+  } else if (!ally(u)) {
     s.stats.damage += d;
     if (!living(u)) {
       noteFall(s, u, source);
       s.stats.kills++;
       progress(source, 'kills', 1);
-      if (unitDetails(u)?.traits?.ward) {
-        const master = find(s, commanderId(s)),
-          left = wardShare(s, master);
-        const name = unitDetails(master).name;
-        log(
-          s,
-          'combat',
-          left
-            ? '一條星索斷了。' + name + '的護勁降至' + shareWords(left) + '。'
-            : '星索皆斷，' + name + '的護陣已破。',
-          '星索護陣'
-        );
-      }
     }
   }
+  if (!ally(u) && !living(u) && unitDetails(u)?.traits?.ward) {
+    const master = find(s, commanderId(s)),
+      left = wardShare(s, master);
+    const name = unitDetails(master).name;
+    log(
+      s,
+      'combat',
+      left
+        ? '一條星索斷了。' + name + '的護勁降至' + shareWords(left) + '。'
+        : '星索皆斷，' + name + '的護陣已破。',
+      '星索護陣'
+    );
+  }
   return d;
+}
+// ── Board objects in the fight ───────────────────────────────────────────
+// A board object's own line for a moment (encounter-script.js `objects`): 'hit' the first time it
+// is struck, 'half' the first time it is at half, 'broken', and 'held' (a 'keep' board held to
+// its last round). Logged as its speaker says it; nothing when the board has no line.
+function objectBeat(s, u, moment) {
+  const beat = s.run && ENCOUNTER_SCRIPT[s.mapIndex]?.objects?.[pieceKey(u)]?.[moment];
+  if (!beat) return null;
+  const speaker =
+    beat.who === 'youth'
+      ? YOUTH.role
+      : unitDetails(find(s, refId(s.mapIndex, { boss: 'master', mini: 'lieutenant' }[beat.who] || beat.who)))?.name;
+  return { ...beat, speaker: speaker || YOUTH.role };
+}
+function sayObject(s, u, moment) {
+  const beat = objectBeat(s, u, moment);
+  if (beat) log(s, 'story', beat.text, beat.speaker);
+}
+function propStruck(s, u) {
+  const who = propKind(u) === 'keep' ? '守物' : '破物';
+  if (!u.struck) {
+    u.struck = true;
+    log(s, 'combat', unitDetails(u).name + '受創。', who);
+    sayObject(s, u, 'hit');
+  }
+  if (!u.halved && living(u) && u.hp <= u.maxHp / 2) {
+    u.halved = true;
+    log(s, 'combat', unitDetails(u).name + '氣血過半。', who);
+    sayObject(s, u, 'half');
+  }
+}
+function propBroken(s, u) {
+  const name = unitDetails(u).name;
+  if (propKind(u) === 'break') {
+    const left = props(s).filter((v) => propKind(v) === 'break' && living(v)).length;
+    log(s, 'combat', left ? name + '倒了，尚餘 ' + left + ' 根。' : name + '盡數倒了。', '破物');
+  } else log(s, 'combat', name + '毀了。', '守物');
+  sayObject(s, u, 'broken');
 }
 // The lamp's tile, when this run's secondary is to light it.
 function objectiveTile(s) {
@@ -2526,8 +2633,26 @@ const KIND_RULES = {
   // 斬將: every master has fallen, whoever else stands.
   slay: { won: (s) => masterIds(s).every((id) => fallen(s, id)) },
   // 殲滅: no enemy stands and none is still to come.
-  rout: { won: (s) => !enemies(s).some(living) && wavesLeft(s) === 0 }
+  rout: { won: (s) => !enemies(s).some(living) && wavesLeft(s) === 0 },
+  // 守: every master has fallen, or the objects still stand when the last round to hold is over;
+  // a master still to come has not fallen. An object broken loses it (check).
+  keep: { won: (s) => masterIds(s).every((id) => fallen(s, id)) || heldOut(s) },
+  // 破: every object is broken, whoever stands.
+  break: { won: (s) => props(s).length > 0 && !props(s).some(living) }
 };
+// 守: the enemy phase of the board's last round to hold is over, every enemy having acted or fallen.
+function heldOut(s) {
+  const hold = boardOf(s).hold;
+  return !!hold && s.round >= hold && s.phase === 'enemy' && enemies(s).every((e) => !living(e) || e.acted);
+}
+// The rounds still to hold on a 'keep' board, this one included; null on any other.
+function holdLeft(s) {
+  const hold = boardKind(s) === 'keep' ? boardOf(s).hold : null;
+  return hold ? Math.max(0, hold - s.round + (s.phase === 'enemy' && heldOut(s) ? 0 : 1)) : null;
+}
+// The 'keep' object that has been broken, if any: the board is lost.
+const brokenKeep = (s) =>
+  boardKind(s) === 'keep' ? props(s).find((u) => propKind(u) === 'keep' && !living(u)) || null : null;
 const fallen = (s, id) => {
   const u = s.units.find((v) => v.id === id);
   return !!u && !living(u);
@@ -2541,8 +2666,17 @@ function check(s) {
       (s.run ? '倒下，這一輪的眼破了。' : '負傷倒下，曲譜落入青城弟子手中。');
   } else {
     markHalved(s); // 變招, and reinforcements that wait on a master's half
-    if (KIND_RULES[boardOf(s).kind].won(s)) {
+    const broken = brokenKeep(s);
+    if (broken) {
+      s.result = 'loss';
+      s.reason =
+        (s.run && ENCOUNTER_SCRIPT[s.mapIndex]?.objects?.[pieceKey(broken)]?.lost) ||
+        unitDetails(broken).name + '毀了，這一局輸了。';
+    } else if (KIND_RULES[boardKind(s)].won(s)) {
       s.result = 'win';
+      // 守 held to its last round: the board's own line first, then the board's victory.
+      if (boardKind(s) === 'keep' && !masterIds(s).every((id) => fallen(s, id)))
+        for (const u of props(s)) sayObject(s, u, 'held');
       s.reason = s.run ? CHAMBER_TALES[s.mapIndex].victory : '余滄海收劍退開，渡口的船燈再度亮起。';
     } else if (s.round > LIMIT) {
       s.result = 'loss';
@@ -2574,14 +2708,19 @@ function objectiveLeft(s) {
   return {
     masters: masterIds(s).filter((id) => !fallen(s, id)),
     foes: enemies(s).filter(living).length,
-    waiting: wavesLeft(s)
+    waiting: wavesLeft(s),
+    // The board's objects as they stand, and on a 'keep' board the rounds still to hold.
+    objects: props(s).map((u) => ({ id: u.id, kind: propKind(u), hp: Math.max(0, u.hp), maxHp: u.maxHp, broken: !living(u) })),
+    hold: holdLeft(s)
   };
 }
 // Whether the board would be won if exactly these enemies fell now, everyone else as they are.
 function winsIfFalls(s, ids) {
   const gone = new Set(ids);
   const down = (id) => gone.has(id) || fallen(s, id);
-  if (boardOf(s).kind === 'slay') return masterIds(s).every(down);
+  const kind = boardKind(s);
+  if (kind === 'slay' || kind === 'keep') return masterIds(s).every(down);
+  if (kind === 'break') return props(s).every((u) => down(u.id));
   if (enemies(s).some((u) => living(u) && !gone.has(u.id))) return false;
   // A master felled now marks his half and may call a wave.
   const halved = (id) => gone.has(id) || !!s.units.find((v) => v.id === id)?.halved;
@@ -2871,6 +3010,18 @@ function aimCost(s, u, t, friends, walk) {
     lean
   );
 }
+// How little an enemy wants to strike an object the heroes keep, on aimCost's scale: its 氣血, less
+// the object's lure, and less again for a blow that would break it. Taunts and preferences are for
+// heroes; an object neither dodges nor turns a blow back.
+function objectCost(s, u, t) {
+  const raw = damage(u, t, false, s.mapIndex, s),
+    art = strikingSignature(s, u);
+  const blow = art ? Math.round(raw * art.factor) : raw;
+  // The same scale as a hero's cost at this stage (aimCost), without the hero's terms.
+  const base = s.run?.stage >= 6 ? t.hp * 0.28 + (35 * t.hp) / t.maxHp : t.hp * 0.6;
+  return base - objectLure(t) - (blow >= t.hp ? 200 : 0);
+}
+const objectLure = (t) => BOARD_OBJECTS[pieceKey(t)]?.lure || 0;
 // 偏好 (§7.5): the term a villain's preference adds to the cost of striking hero t (lower is
 // wanted more), at every stage; it is read for the hero chosen, before any 代受 moves the blow.
 // `walk` is the walk this villain still needs to strike t from where it stands.
@@ -2925,8 +3076,10 @@ function enemyAction(s, u) {
   const range = strikeReach(s, u);
   const lineDue = !!lineKind(strikingSignature(s, u));
   const crowded = traitsOf(u).crowded;
+  // 守: the objects the heroes keep are targets as well as the heroes.
+  const kept = props(s).filter((v) => living(v) && hostile(u, v));
   const approach = new Map(
-    friends.map((target) => {
+    [...friends, ...kept].map((target) => {
       const positions = fieldCells(s.mapIndex).filter((cell) => {
         const occ = at(s, cell.x, cell.y);
         return (
@@ -2938,15 +3091,16 @@ function enemyAction(s, u) {
       return [target.id, movementField(s, u, positions, Infinity, true).costs];
     })
   );
-  const targetCost = new Map(
-    friends.map((t) => [
+  const targetCost = new Map([
+    ...friends.map((t) => [
       t.id,
       aimCost(s, u, t, friends, approach.get(t.id).get(key(u.x, u.y)) ?? Infinity)
-    ])
-  );
+    ]),
+    ...kept.map((t) => [t.id, objectCost(s, u, t)])
+  ]);
   // 挑釁: a taunter it can strike this turn is all it may choose from.
   const bound = taunters(s, u, cells, range),
-    prey = bound.length ? bound : friends;
+    prey = bound.length ? bound : [...friends, ...kept];
   for (const c of cells)
     for (const t of prey) {
       const d = distance(c, t),
@@ -2960,7 +3114,10 @@ function enemyAction(s, u) {
           // 穿行: a line signature looks for a tile with a second hero straight behind its mark.
           (can && lineDue && lineVictim(s, c, t) ? 30 : 0) -
           // 近身失準: it would rather strike from beyond its weak distance.
-          (can && crowded && d <= crowded.within ? crowded.atk * 4 : 0);
+          (can && crowded && d <= crowded.within ? crowded.atk * 4 : 0) +
+          // 守: the 戰意 is aimed at a kept object, so the walk is drawn to it: it counts as nearer
+          // by its `pull` in steps (a step weighs 40 here).
+          (!can && isProp(t) ? (BOARD_OBJECTS[pieceKey(t)]?.pull || 0) * 40 : 0);
       if (!best || score > best.score) best = { c, t, can, score };
     }
   u.acted = true;
@@ -2978,7 +3135,7 @@ function enemyAction(s, u) {
   }
   wakePost(s, u, false); // 坐鎮: a piece that wakes on striking leaves its post for good
   // 代受: the piece it chose may have someone beside it who takes the blow instead.
-  const t = takeCover(s, best.t);
+  const t = isProp(best.t) ? best.t : takeCover(s, best.t);
   if (t.conditions?.taunt) progress(t, 'protects', 1); // 挑釁: the blow he drew
   const art = strikingSignature(s, u);
   const raw = damage(u, t, false, s.mapIndex, s);
@@ -3015,7 +3172,7 @@ function enemyAction(s, u) {
         effects.push([other.id, '−' + chip]);
         log(s, 'combat', '被餘勁掃中，損失 ' + chip + ' 點氣血。', unitDetails(other).name);
       }
-    } else if (living(t) && !blow.void) {
+    } else if (living(t) && !blow.void && !isProp(t)) {
       if (art.style === 'drain') t.mp = Math.max(0, t.mp - art.power);
       else if (art.style !== 'line')
         applyCondition(s, t, { kind: art.style, power: art.power, turns: art.turns }, u);
@@ -3025,12 +3182,12 @@ function enemyAction(s, u) {
       log(s, 'combat', art.note, unitDetails(u).name);
     }
     if (lineKind(art)) lineThrough(s, u, t, strikePower, effects); // 穿行
-  } else if (living(t) && !blow.void) basicPoison(s, u, t, effects); // 蛇毒
+  } else if (living(t) && !blow.void && !isProp(t)) basicPoison(s, u, t, effects); // 蛇毒
   reflectStrike(s, t, u, n, effects);
   if (barbsOf(t) && !blow.void && distance(u, t) === 1)
     barbStrike(s, t, u, afterWard(barbsOf(t), wardPercent(s, u)), effects); // 反刺
-  const share = counterRatio(s, t);
-  if (!living(t)) log(s, 'combat', '負傷退場。', unitDetails(t).name);
+  const share = isProp(t) ? 0 : counterRatio(s, t);
+  if (!living(t) && !isProp(t)) log(s, 'combat', '負傷退場。', unitDetails(t).name);
   else if (
     living(u) &&
     !blow.silent &&
@@ -3236,4 +3393,4 @@ function nextRound(s) {
   return true;
 }
 
-export { announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor };
+export { isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor };

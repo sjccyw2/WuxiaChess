@@ -38,6 +38,13 @@ function enemies() {
   return [...pages.values()];
 }
 const boardLinks = (maps) => maps.map((map) => link('missions', 'map-' + map, stageName(map)));
+// The boards of a kind with objects, and what stands on each.
+const objectRows = (kind) =>
+  STAGES.filter((map) => G.BATTLES[map].kind === kind).map((map) => {
+    const board = G.BATTLES[map],
+      names = board.objects.map((o) => G.DETAILS[o.id.split('#')[0]].name);
+    return [stageName(map), names.join('、') + (board.hold ? '，守到第' + G.NUMERALS[board.hold - 1] + '回合結束' : '')];
+  });
 
 // Rows a few words add to their page from numbers the game exports.
 const EXTRA = {
@@ -55,12 +62,17 @@ const EXTRA = {
       ['通關獎勵', NOTES.clearReward(G.REWARDS)]
     ]),
   loss: () => rows('限時', [['回合上限', '第' + G.NUMERALS[G.LIMIT - 1] + '回合']]),
+  // 守 and 破: each board's objects and, on 守, how long they must stand.
+  keep: () => rows('各局守物', objectRows('keep')),
+  break: () => rows('各局破物', objectRows('break')),
   counter: () => rows('例外', [['無守', sentence(G.RULE_TERMS.openGuard.text)], ['卸勁', sentence(G.RULE_TERMS.stance.text)], ['後發', sentence(G.RULE_TERMS.retort.text)]])
 };
 // Boards a battle word applies to.
 const BOARDS = {
   slay: () => STAGES.filter((map) => G.BATTLES[map].kind === 'slay'),
   rout: () => STAGES.filter((map) => G.BATTLES[map].kind === 'rout'),
+  keep: () => STAGES.filter((map) => G.BATTLES[map].kind === 'keep'),
+  break: () => STAGES.filter((map) => G.BATTLES[map].kind === 'break'),
   waves: () => STAGES.filter((map) => G.BATTLES[map].waves.length)
 };
 

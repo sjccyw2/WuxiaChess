@@ -150,7 +150,7 @@ function startRun(draw = drawLots(), legacy = LEGACY) {
   s.logs = [];
   s.stock = { remedy: 2 + (legacy.best >= 7 ? 1 : 0), elixir: 2, travelBlade: 1, bracer: 1 };
   s.run.manuals.push('softPalm');
-  s.units.push(...G.boardOf(s).pieces.map((piece) => G.pieceUnit(s, piece)));
+  s.units.push(...G.boardOf(s).pieces.map((piece) => G.pieceUnit(s, piece)), ...G.propUnits(s));
   G.identifyEncounter(s);
   setUpBoard(s);
   for (const [id, n] of Object.entries(legacy.parcel.stock)) s.stock[id] = (s.stock[id] || 0) + n;
@@ -778,7 +778,7 @@ function deployLineup(s) {
     )
   );
   r.bench = all.filter((u) => !ids.includes(u.id));
-  s.units = [...active, ...G.enemies(s)];
+  s.units = [...active, ...s.units.filter((u) => !G.ally(u))]; // the black stones and the board objects
   s.selected = s.leader = ids[0];
   r.scene = 'fight';
   r.deploying = true; // the deployment step: swaps on the board until 開戰
@@ -859,6 +859,7 @@ const SIDE_KINDS = {
     // On 殲滅 a wave due after the limit would make it impossible.
     eligible: (s, e) =>
       G.boardOf(s).kind !== 'rout' || !G.boardOf(s).waves.some((w) => w.when.round > e.by),
+    // (On 守 the hold ends after it, so only felling every master meets it; no 守 pool has it.)
     detail: (s, side) => '在第' + NUMERALS[side.by - 1] + '回合結束前取勝。',
     state: (s, side) => (s.round > side.by ? 'failed' : 'open'),
     progress: (s, side) => '第 ' + s.round + '／' + side.by + ' 回合',
@@ -893,8 +894,11 @@ const SIDE_KINDS = {
     name: () => '先折羽翼',
     sort: 'reach',
     eligible: () => true,
+    // On 守 and 破 the masters need not fall at all: only not before the one named.
     detail: (s, side, map) =>
-      '先擊倒' + pieceName(map, side.first) + '，再擊倒' + masterNames(map, s ? G.boardOf(s) : BATTLES[map]) + '。',
+      ['slay', 'rout'].includes(s ? G.boardKind(s) : BATTLES[map].kind)
+        ? '先擊倒' + pieceName(map, side.first) + '，再擊倒' + masterNames(map, s ? G.boardOf(s) : BATTLES[map]) + '。'
+        : '擊倒' + pieceName(map, side.first) + '，且' + masterNames(map, s ? G.boardOf(s) : BATTLES[map]) + '不可先他而倒。',
     state: (s, side) => {
       const first = fallIndex(s, G.refId(s.mapIndex, side.first));
       const masters = G.masterIds(s).map((id) => fallIndex(s, id)).filter((i) => i >= 0);
@@ -1081,8 +1085,9 @@ function waveLine(map, wave) {
   const masters = wave.when.halved.map((ref) => pieceName(map, ref)).join('或');
   return masters + '氣血首次過半，兩回合後，' + list + '自' + wave.place + '入場。';
 }
-const KIND_NAMES = { slay: '斬將', rout: '殲滅' };
+const KIND_NAMES = { slay: '斬將', rout: '殲滅', keep: '守', break: '破' };
 const SIDE_MARKS = { open: '◇', met: '✓', failed: '✕' };
+const COUNT_WORDS = ['', '一', '兩', '三', '四'];
 // Everything the briefing page shows, for a board at a stage. `s` is the run on this board
 // (with its drawn secondary), or null for a look at a board without one (the wiki, the shop's
 // look at the next board), which lists the pool instead. `live` adds the state of the fight.
@@ -1091,18 +1096,32 @@ function boardModel(map, stage, s = null, live = false) {
     layout = mapLayout(map),
     r = s?.run;
   const masters = board.masters.map((ref) => pieceName(map, ref));
-  const kind = board.kind;
+  const kind = s ? G.boardKind(s) : board.kind;
+  // The board's objects, by kind of thing: '七弦琴', '星索樁兩根'.
+  const things = [...new Set((board.objects || []).map((o) => o.id.split('#')[0]))].map((key) => {
+    const n = board.objects.filter((o) => o.id.split('#')[0] === key).length;
+    return G.DETAILS[key].name + (n > 1 ? COUNT_WORDS[n] + '根' : '');
+  });
   // The kind of battle, as the youth reads it from the table: where the 戰意 sits.
   const battle =
     kind === 'rout'
       ? '殲滅 · ' + MAZE_TALE.brief.rout
-      : masters.length > 1
-        ? '斬將 · ' + MAZE_TALE.brief.slayTwo
-        : '斬將 · ' + MAZE_TALE.brief.slay;
+      : kind === 'keep'
+        ? '守 · ' + MAZE_TALE.brief.keep
+        : kind === 'break'
+          ? '破 · ' + MAZE_TALE.brief.break
+          : masters.length > 1
+            ? '斬將 · ' + MAZE_TALE.brief.slayTwo
+            : '斬將 · ' + MAZE_TALE.brief.slay;
+  const hold = board.hold ? '第' + NUMERALS[board.hold - 1] + '回合' : '';
   const win =
     kind === 'rout'
       ? '在第十二回合結束前擊敗全部敵人。' + (board.waves.length ? '援軍亦須擊敗。' : '')
-      : '在第十二回合結束前擊敗' + masters.join('與') + '。';
+      : kind === 'keep'
+        ? '守住' + things.join('、') + '，撐到' + hold + '結束；或在此之前擊敗' + masters.join('與') + '。'
+        : kind === 'break'
+          ? '在第十二回合結束前擊毀' + things.join('、') + '。'
+          : '在第十二回合結束前擊敗' + masters.join('與') + '。';
   const leader = s ? heroName(r.scene === 'fight' ? s.leader : r.next[0]) : '領隊';
   // 敵情: each 局主, then each 副手; the board's own first, then the leaders of its waves.
   const villain = (key) => G.DETAILS[key]?.rank;
@@ -1173,7 +1192,13 @@ function boardModel(map, stage, s = null, live = false) {
     kindName: KIND_NAMES[kind],
     battle,
     win,
-    loss: leader + '倒下，或第十二回合結束仍未取勝。',
+    loss: kind === 'keep' ? leader + '倒下，或' + things.join('、') + '被毀。' : leader + '倒下，或第十二回合結束仍未取勝。',
+    // The board's objects for the plan and the page: each with its picture and what it is.
+    objects: (board.objects || []).map((o) => {
+      const key = o.id.split('#')[0],
+        d = G.DETAILS[key];
+      return { id: o.id, key, name: d.name, kind: d.kind, kindName: d.role, art: d.portraitFile, x: o.at[0], y: o.at[1] };
+    }),
     side: r?.side ? sideRow(r.side, live) : null,
     pool: s ? [] : board.sides.map((e) => sideRow(e, false)),
     sideNote: s ? '' : '支線於入局時抽定。',
@@ -1203,7 +1228,13 @@ function boardModel(map, stage, s = null, live = false) {
         return { id, name, hp, maxHp: u?.maxHp || 0, fallen: !left.masters.includes(id), line: name + ' 氣血 ' + hp + '／' + (u?.maxHp || 0) };
       }),
       remaining: kind === 'rout' ? '尚餘敵人 ' + left.foes + ' 名' : '',
-      waiting: kind === 'rout' && left.waiting ? '援軍未到 ' + left.waiting + ' 名' : ''
+      waiting: kind === 'rout' && left.waiting ? '援軍未到 ' + left.waiting + ' 名' : '',
+      // 守 and 破: each object's 氣血, and on 守 the rounds still to hold.
+      objects: left.objects.map((o) => {
+        const name = G.unitDetails(G.find(s, o.id))?.name || '';
+        return { ...o, name, line: name + (o.broken ? ' 已毀' : ' 氣血 ' + o.hp + '／' + o.maxHp) };
+      }),
+      hold: left.hold != null ? (left.hold ? '尚須守 ' + left.hold + ' 回合' : '已守滿') : ''
     };
     for (const w of model.waves) {
       const wave = board.waves.find((x) => x.id === w.id);
@@ -1291,7 +1322,7 @@ function settle(s) {
   if (won && r.stage === 0) G.log(s, 'story', MAZE_TALE.shop, WEI.name);
   if (won) {
     // On a 斬將 board the rank and file were only in the master's thought.
-    if (G.boardOf(s).kind === 'slay' && G.enemies(s).some((v) => G.living(v) && !G.unitDetails(v).rank))
+    if (G.boardKind(s) === 'slay' && G.enemies(s).some((v) => G.living(v) && !G.unitDetails(v).rank))
       G.log(s, 'story', MAZE_TALE.fade, '戰意');
     G.log(s, 'grow', '分得彩頭 ' + (reward - (bonus?.reward === 'coins' ? bonus.amount : 0)) + ' 兩，同行俠客各得 1 武學點。', '通吃坊');
     G.log(s, 'story', MAZE_TALE.step, YOUTH.role);
@@ -1402,7 +1433,7 @@ function defenders(s) {
       p = layout.enemies[i];
     return G.makeUnit(G.slotId(map, slot), 'enemy', p.x, p.y, hp, 0, atk, def, step, range);
   });
-  return [...fixed, ...G.boardOf(s).pieces.map((piece) => G.pieceUnit(s, piece))];
+  return [...fixed, ...G.boardOf(s).pieces.map((piece) => G.pieceUnit(s, piece)), ...G.propUnits(s)];
 }
 function advance(s) {
   const r = s.run;

@@ -14,6 +14,7 @@ export const TEXT_FILES = [
   'src/actors/battle-marks.js',
   'src/rules/battle-mastery.js',
   'src/data/battles.js',
+  'src/data/board-objects.js',
   'src/ui/board-plan.js',
   'src/scene/board.js',
   'src/ui/bowl-views.js',

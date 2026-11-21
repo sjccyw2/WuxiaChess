@@ -1,5 +1,5 @@
-// 群敵錄: the two named opponents of each ferry stop, the villains who join them, then the
-// rank-and-file troop types.
+// 群敵錄: the two named opponents of each ferry stop, the villains who join them, the
+// rank-and-file troop types, then the board objects (守物 kept, 破物 to break).
 import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, links, link, gameArt } from './parts.js';
@@ -39,6 +39,7 @@ export function foePage(key) {
     for (const seat of [0, 1])
       if (G.refKey(stage, G.SLOTS[seat]) === key) return 'enc-' + stage + '-' + seat;
   if (G.VILLAINS[key]) return 'enc-' + key;
+  if (G.BOARD_OBJECTS[key]) return key;
   return troopIds().includes(key) ? key : key.split('-')[0];
 }
 export const foeLink = (key) => link('foes', foePage(key), G.DETAILS[key].name);
@@ -60,7 +61,8 @@ export const stageLinks = (stage) => [
 // Troop types: every unit description that is neither a hero nor a named opponent.
 export const troopIds = () =>
   Object.keys(G.DETAILS).filter(
-    (id) => !G.PARTY.includes(id) && !G.DETAILS[id].rank && (!id.includes('-') || ownTroop(id))
+    (id) =>
+      !G.PARTY.includes(id) && !G.DETAILS[id].rank && !G.BOARD_OBJECTS[id] && (!id.includes('-') || ownTroop(id))
   );
 // Where a troop entry is written: a board's own pieces in its RANKS, the shared ones in game.js.
 export const troopSource = (id) =>
@@ -141,5 +143,38 @@ export function foes() {
       sources: cites(cite(d.name, troopSource(id)))
     };
   });
-  return [...named, ...villains, ...troops];
+  return [...named, ...villains, ...troops, ...objects()];
+}
+// The board objects: what each is, where it stands, what it is measured against, and what it
+// means for its board (守: kept, 破: broken).
+function objects() {
+  return Object.entries(G.BOARD_OBJECTS).map(([id, o]) => {
+    const board = G.BATTLES[o.map],
+      count = board.objects.filter((p) => p.id.split('#')[0] === id).length,
+      row = { master: '局主', lieutenant: '副手' }[o.row] || o.row;
+    const rule =
+      o.kind === 'keep'
+        ? '黑子要毀它，俠客須守住它。撐過第' + G.NUMERALS[board.hold - 1] + '回合，或擊敗局主，便勝；它一毀，這一局便輸了。'
+        : '俠客須毀了它。盤上的' + o.name + '盡數倒下，這一局便勝了，局主倒不倒都一樣。';
+    return {
+      id,
+      name: o.name,
+      tag: o.role,
+      summary: o.bio,
+      image: gameArt(G.DETAILS[id].portraitFile),
+      sections: [
+        rows('器物誌', [
+          ['所在', stageName(o.map) + (count > 1 ? '（' + count + '件）' : '')],
+          ['種類', o.role + (o.kind === 'keep' ? '：我方守護，黑子攻擊' : '：我方攻擊，黑子不碰')],
+          ['氣血', '該局所在局次' + row + '氣血的 ' + Math.round(o.hp * 100) + '%'],
+          ['防禦', '該局所在局次' + row + '的防禦' + (o.def ? ' ＋' + o.def : '')],
+          ['勝負', rule],
+          ['不受', '不行動、不還擊、不閃避，推不動，不受招式附帶之效；波及也不及其身']
+        ]),
+        ruleLinks(traitTerms(G.DETAILS[id])),
+        links('相關條目', [link('rules', o.kind, o.kind === 'keep' ? '守' : '破'), ...stageLinks(o.map)])
+      ].filter(Boolean),
+      sources: cites(cite(o.name, 'src/data/board-objects.js'))
+    };
+  });
 }

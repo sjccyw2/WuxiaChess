@@ -142,6 +142,9 @@ const MAZE_TALE = {
     slay: '這一局的戰意，只壓在一個人眉心。打醒了他，他心裡帶來的人自然散去。',
     slayTwo: '這一局的戰意壓著兩個人。醒了一個不算，須得兩個都醒。',
     rout: '這一局的戰意不在一人身上，散在每一個人身上。須得一個一個打醒。',
+    // Boards whose 戰意 is in a thing (battles.js `objects`).
+    keep: '這一局的戰意不壓在人身上，對著的是我們這邊的一件東西。守住它，撐到那一念自己散了；打醒了局主，也是一樣。',
+    break: '這一局的戰意不壓在人身上，釘在東西上。毀了它，人人都醒。',
     side: '韋小寶另開盤口',
     // The white stone 求敗 has set by the board: who comes if this board is won.
     next: '盤邊擱著一枚白子：這一局勝了，求敗便借出{hero}。'

@@ -18,6 +18,7 @@ export const FILE_GROUP = {
   'src/app.js': '系統與提示',
   'src/data/battles.js': '目標與棋路',
   'src/actors/battle-marks.js': '戰盤與指令',
+  'src/data/board-objects.js': '目標與棋路',
   'src/ui/board-plan.js': '目標與棋路',
   'src/ui/field-extras.js': '戰盤與指令',
   'src/ui/phase-banner.js': '戰盤與指令',
