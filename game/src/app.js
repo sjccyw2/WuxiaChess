@@ -14,6 +14,7 @@ import { teamPage, dossier, encounterPage } from './ui/company-views.js';
 import * as G from './rules/game.js';
 import * as P from './ui/panels.js';
 import { BattleBoard } from './scene/board.js';
+import { warmPaintedEffects } from './fx/painted-effects.js';
 import { FieldHud } from './ui/field-hud.js';
 import { icon } from './ui/icons.js';
 import { codexPage } from './ui/gates.js';
@@ -292,6 +293,7 @@ function paint() {
     next?.focus({ preventScroll: true });
   }
   board.sync(state, mode, prefs);
+  warmPaintedEffects(state, G.enemyTechnique); // the painted effects this board can need
   refreshSound();
   syncZoom();
 }
