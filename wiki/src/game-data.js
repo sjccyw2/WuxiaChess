@@ -12,6 +12,7 @@ export * from '../../game/src/data/encounter-script.js';
 export * from '../../game/src/data/form-catalog.js';
 export * from '../../game/src/data/wake-tale.js';
 export * from '../../game/src/data/maze-tale.js';
+export * from '../../game/src/data/realms.js';
 export * from '../../game/src/data/hero-voices.js';
 export * from '../../game/src/data/martial-arts.js';
 export * from '../../game/src/data/rule-terms.js';

@@ -1,7 +1,7 @@
 // A headless player that fights the real boards with the real rules and the real enemy code,
 // so the game's difficulty can be compared before and after a change.
 //
-//   node tools/sim-battles.mjs [--runs N] [--seed S] [--boards A-B] [--json out.json]
+//   node tools/sim-battles.mjs [--runs N] [--seed S] [--boards A-B] [--realm 1-5] [--json out.json]
 //                              [--trace | --trace-map M]
 //   node tools/sim-battles.mjs --compare before.json after.json
 //
@@ -63,6 +63,8 @@ const RUNS = Number(opt('--runs', 100));
 const SEED = Number(opt('--seed', 1));
 const [FIRST, LAST] = String(opt('--boards', '1-10')).split('-').map(Number).concat([NaN]).map((v, i, a) => (i === 1 && Number.isNaN(v) ? a[0] : v));
 const JSON_OUT = opt('--json', null);
+// --realm N plays every run in the Nth 境 (data/realms.js), as if it were open.
+const REALM = Math.min(5, Math.max(1, Number(opt('--realm', 1)) || 1));
 const QUIET = args.includes('--quiet');
 // --trace prints the battle log of the first run, board by board, to see how the player plays.
 const TRACE = args.includes('--trace');
@@ -797,7 +799,7 @@ function deploy(s) {
 // ── A run ───────────────────────────────────────────────────────────────
 function playRun(seed) {
   const draw = R.drawLots(seed);
-  const s = R.startRun(draw, R.LEGACY);
+  const s = R.startRun({ ...draw, realm: REALM }, { ...R.LEGACY, realms: REALM });
   const run = { seed, heroes: [...draw.ids], leader: s.leader, boards: [] };
   for (;;) {
     R.turnPage(s, true); // the story
@@ -946,7 +948,7 @@ const pad = (v, n) => String(v ?? '-').padEnd(n);
 const lpad = (v, n) => String(v ?? '-').padStart(n);
 const pc = (v) => (v == null ? '-' : Math.round(v * 100) + '%');
 function print(out) {
-  console.log('Simulated ' + out.meta.runs + ' runs, seed ' + out.meta.seed + ', boards ' + out.meta.boards + '.');
+  console.log('Simulated ' + out.meta.runs + ' runs, seed ' + out.meta.seed + ', boards ' + out.meta.boards + ', 境 ' + (out.meta.realm || 1) + '.');
   console.log('\nPer board (won: rounds and health left are over won boards; usage is the share of hero actions)');
   console.log(pad('board', 6) + lpad('runs', 5) + lpad('win', 6) + lpad('rnds', 6) + lpad('hp', 6) + lpad('down', 6) + lpad('side', 6) + lpad('L:ldr', 6) + lpad('L:time', 7) + '   usage: ' + ['basic', 'start', 'tier1', 'tier2', 'tier3', 'tier4', 'manual', 'wait'].map((k) => pad(k, 7)).join(''));
   for (const b of out.boards)
@@ -1028,7 +1030,7 @@ for (let i = 0; i < RUNS; i++) {
   if (!QUIET && process.stderr.isTTY && i % 10 === 9) process.stderr.write('\r' + (i + 1) + '/' + RUNS + ' runs');
 }
 if (!QUIET && process.stderr.isTTY) process.stderr.write('\r');
-const out = { meta: { runs: RUNS, seed: SEED, boards: FIRST + '-' + LAST, seconds: Math.round((Date.now() - started) / 1000) }, ...aggregate(runs) };
+const out = { meta: { runs: RUNS, seed: SEED, boards: FIRST + '-' + LAST, realm: REALM, seconds: Math.round((Date.now() - started) / 1000) }, ...aggregate(runs) };
 print(out);
 if (JSON_OUT) {
   fs.writeFileSync(JSON_OUT, JSON.stringify(out, null, 1) + '\n');
