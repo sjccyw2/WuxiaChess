@@ -169,7 +169,6 @@ function memberLine(s, u, ui) {
             (side.warning ? '<small class="warn">' + esc(side.warning) + '</small>' : '')
         : esc(model.sideNote)
     ) +
-    row('兵力', esc(model.force.line) + (model.waves.length ? '' : '<small>' + esc(model.noWaves) + '</small>')) +
     (model.recruit ? row('應帖', esc(model.recruit)) : '') +
     '</dl></section>';
   return (

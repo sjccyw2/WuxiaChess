@@ -755,37 +755,9 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
         model.pool.map((e) => '<li><strong>' + esc(e.name) + '</strong> ' + esc(e.rewardText) + '</li>').join('') +
         '</ul>'
       : p(model.sideNote);
-  const foes = model.foes
-    .map(
-      (f) =>
-        '<li><strong class="' +
-        (f.rank === '局主' ? 'boss' : 'mini') +
-        '">' +
-        f.rank +
-        '　' +
-        esc(f.name) +
-        '</strong>' +
-        (f.note ? '<small>' + esc(f.note) + '</small>' : '') +
-        (f.gist ? '<p>' + esc(f.gist) + '</p>' : '') +
-        '</li>'
-    )
-    .join('');
-  const chips = model.force.chips
-    .map((c) => '<span class="brief-chip" title="' + esc(c.gist) + '">' + esc(c.name) + '×' + c.count + '</span>')
-    .join('');
-  const waves = model.waves.length
-    ? '<ul class="brief-waves">' +
-      model.waves
-        .map(
-          (w) =>
-            '<li>' +
-            esc(w.line) +
-            (w.status ? '<small class="wave-status ' + (w.status === '下回合' ? 'next' : '') + '">' + w.status + '</small>' : '') +
-            '</li>'
-        )
-        .join('') +
-      '</ul>'
-    : p(model.noWaves);
+  // The page stops at 應帖 (the producer's ruling of 2026-11-21): how each enemy fights, how
+  // many there are and when more arrive are for the player to find out on the board. The
+  // model still carries them (journey.js briefing) for the wiki and the tools.
   const foot = live
     ? btn('close', '返回戰盤', 'gold-btn')
     : back
@@ -804,10 +776,6 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     sect('brief-loss', '敗退', p(model.loss)) +
     sect('brief-side', '支線', side) +
     (model.recruit ? sect('brief-recruit', '應帖', p(model.recruit)) : '') +
-    sect('brief-foes', '敵情', '<ul class="brief-foes">' + foes + '</ul>') +
-    sect('brief-force', '兵力', p(model.force.line) + (chips ? '<p class="brief-chips">' + chips + '</p>' : '')) +
-    sect('brief-waves', '援軍', waves) +
-    sect('brief-terrain', '地勢', p(model.terrain)) +
     '</div></div>' +
     extra +
     '<div class="modal-foot right">' +

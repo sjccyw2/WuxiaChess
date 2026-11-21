@@ -242,54 +242,6 @@
   font-size: 13px;
   padding: 2px 0;
 }
-.brief-foes li {
-  padding: 4px 0;
-}
-.brief-foes strong {
-  color: #f4ead2;
-  letter-spacing: 0.04em;
-}
-.brief-foes strong.boss {
-  color: #ffb49c;
-}
-.brief-foes small {
-  margin-left: 4px;
-  color: #e9c27e;
-}
-.brief-foes p {
-  margin: 1px 0 0;
-  font-size: 13px;
-  color: #c9c3ad;
-}
-.brief-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.brief-chip {
-  padding: 2px 8px;
-  border: 1px solid #5d6c5c;
-  border-radius: 999px;
-  font-size: 13px;
-  background: #1a2b27;
-  cursor: help;
-}
-.brief-waves li {
-  padding: 2px 0;
-  line-height: 1.55;
-}
-.wave-status {
-  margin-left: 6px;
-  padding: 0 6px;
-  border-radius: 2px;
-  font-size: 12px;
-  background: #2c3a32;
-  color: #cfe3d4;
-}
-.wave-status.next {
-  background: #7e2a1e;
-  color: #ffe6d4;
-}
 .brief-route {
   margin-top: 12px;
 }
