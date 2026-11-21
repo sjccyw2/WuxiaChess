@@ -100,9 +100,15 @@ export function boardFoes() {
   const s = R.startRun(R.drawLots(12345), R.LEGACY);
   const out = [];
   for (let stage = 0; stage < 10; stage++) {
-    R.turnPage(s, true);
+    R.turnPage(s, true); // the story
+    R.turnPage(s, true); // the briefing
     R.deployLineup(s);
-    const foes = G.enemies(s).map((e) => ({ ...e, conditions: undefined }));
+    R.beginBattle(s);
+    // The board's fixed four only, so the reference targets do not move with its extra pieces.
+    const fixed = G.SLOTS.map((slot) => G.slotId(s.mapIndex, slot));
+    const foes = G.enemies(s)
+      .filter((e) => fixed.includes(e.id))
+      .map((e) => ({ ...e, conditions: undefined }));
     const boss = foes.find((e) => e.id === G.commanderId(s));
     const soft = foes.filter((e) => e !== boss).sort((a, b) => a.def - b.def)[0];
     out.push({ stage, map: s.mapIndex, boss, soft, foes });

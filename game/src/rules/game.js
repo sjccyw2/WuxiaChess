@@ -1433,7 +1433,8 @@ function canConfigure(s, u) {
   return !s.run
     ? canAct(s, u)
     : (managesCompany(s) && company(s).includes(u)) ||
-        (s.run.status === 'battle' && s.run.formationOpen && canAct(s, u));
+        (s.run.status === 'battle' && s.run.formationOpen && canAct(s, u)) ||
+        (!!s.run.deploying && party(s).includes(u)); // arts may be re-slotted while deploying
 }
 
 const adjacent = [
@@ -2747,7 +2748,8 @@ function restOnHerbs(s, units) {
   }
 }
 function startEnemy(s) {
-  if (s.phase !== 'ally' || s.result || (s.run?.scene && s.run.scene !== 'fight')) return false;
+  if (s.phase !== 'ally' || s.result || (s.run?.scene && s.run.scene !== 'fight') || s.run?.deploying)
+    return false;
   if (s.run) s.run.formationOpen = false;
   for (const u of party(s).filter(living)) {
     holdObjective(s, u);

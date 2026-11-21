@@ -123,7 +123,7 @@ for (let player = 0; player < 60; player++) {
       if (deja.length > 1) fail(at + ': more than one deja vu line');
       if (deja.length && (run === 1 || !legacy.seen.includes(s.mapIndex) || !legacy.walked[deja[0].person.id]))
         fail(at + ': deja vu without having been here before');
-      if (!R.turnPage(s, true) || !R.deployLineup(s)) {
+      if (!R.turnPage(s, true) || !R.turnPage(s, true) || !R.deployLineup(s) || !R.beginBattle(s)) {
         fail(at + ': could not deploy');
         break;
       }

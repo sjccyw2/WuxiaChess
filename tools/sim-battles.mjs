@@ -610,9 +610,11 @@ function playRun(seed) {
   const s = R.startRun(draw, R.LEGACY);
   const run = { seed, heroes: [...draw.ids], leader: s.leader, boards: [] };
   for (;;) {
-    R.turnPage(s, true);
+    R.turnPage(s, true); // the story
+    R.turnPage(s, true); // the briefing
     prepare(s);
     if (!R.deployLineup(s)) throw new Error('could not deploy, seed ' + seed);
+    R.beginBattle(s); // the opening tiles stay as 整備 seated them
     const rec = fight(s);
     run.boards.push(rec);
     R.settle(s);

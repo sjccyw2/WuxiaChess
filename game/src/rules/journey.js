@@ -567,7 +567,7 @@ function restoreRun(raw) {
     }
   }
   const allowedScenes = {
-    battle: ['before', 'prep', 'fight'],
+    battle: ['before', 'brief', 'prep', 'fight'],
     camp: ['after', 'shop'],
     ended: ['ended']
   };
@@ -736,14 +736,16 @@ function dialogue(s, scene = s.run.scene) {
     };
   });
 }
+// Battle scenes run before → brief (the briefing) → prep (整備) → fight; camp ones after → shop.
+const NEXT_SCENE = { before: 'brief', brief: 'prep', after: 'shop' };
 function turnPage(s, skip = false) {
   const r = s.run;
-  if (!['before', 'after'].includes(r.scene)) return false;
-  if (!skip && r.beat < dialogue(s).length - 1) {
+  if (!NEXT_SCENE[r.scene]) return false;
+  if (r.scene !== 'brief' && !skip && r.beat < dialogue(s).length - 1) {
     r.beat++;
     return true;
   }
-  r.scene = r.scene === 'before' ? 'prep' : 'shop';
+  r.scene = NEXT_SCENE[r.scene];
   r.beat = 0;
   return true;
 }
@@ -772,7 +774,34 @@ function deployLineup(s) {
   s.units = [...active, ...G.enemies(s)];
   s.selected = s.leader = ids[0];
   r.scene = 'fight';
+  r.deploying = true; // the deployment step: swaps on the board until 開戰
   G.log(s, 'system', active.map((u) => G.unitDetails(u).name).join('、') + '出陣。', '整備');
+  return true;
+}
+// Whether the opening tiles may still be swapped: deploying, before anyone has acted.
+const deploying = (s) =>
+  !!s.run?.deploying && s.run.status === 'battle' && s.run.scene === 'fight' && s.phase === 'ally' && s.round === 1 && !s.result;
+// The deployment step's swap: the hero on post `a` (0–4) changes places with whoever is on post
+// `b`, or moves there if it is empty. The seats of 整備 are written with it, so the next board
+// opens from the same order.
+function swapStart(s, a, b) {
+  const r = s.run;
+  if (!deploying(s) || ![a, b].every((n) => Number.isInteger(n) && n >= 0 && n < 5) || a === b)
+    return false;
+  const seats = seatsFor(r);
+  if (!seats[a]) return false;
+  [seats[a], seats[b]] = [seats[b], seats[a]];
+  r.posts = seats;
+  const posts = mapLayout(s.mapIndex).allies;
+  for (const u of G.party(s)) Object.assign(u, posts[seats.indexOf(u.id)], { origin: null });
+  return true;
+}
+// 開戰: the deployment step ends and round one begins; waves due in round two are named.
+function beginBattle(s) {
+  if (!deploying(s)) return false;
+  s.run.deploying = false;
+  G.log(s, 'system', '布陣已定。', '我方回合');
+  G.announce(s);
   return true;
 }
 function mapMission(map, marker) {
@@ -1292,4 +1321,4 @@ function campModel(s) {
   };
 }
 
-export { BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, mapGoalType, mapGoalName, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
