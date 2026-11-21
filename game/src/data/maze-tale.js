@@ -102,7 +102,6 @@ const MAZE_TALE = {
         '你來了，{name}。老夫有一事不明，要向你請教。先下棋，下完了再問。',
         '坐罷。這是最後一盤了。'
       ],
-      beyond: '你又來了。那最後一局，老夫還沒有想好怎生下法。且照舊下一盤。',
       youth: '老伯，我好像來過這裡。同你下過棋，是不是？',
       reply: '下過。你醒了便忘，老夫卻一手也沒有忘。抓三枚。'
     }
@@ -298,8 +297,25 @@ const MAZE_TALE = {
       { text: '小兄弟，多謝你。……還有最後一局，老夫要同你一齊下到盤上去。容老夫備一備。請回吧。' }
     ]
   ],
-  // The fifth 境 won again, while the last battle is not yet built.
-  closeAgain: [{ text: '好棋。那最後一局，老夫要同你一齊下到盤上去，只是還沒有備好。請回吧，改日再來。' }],
+  // After the fifth 境 is won (every 境 won): the last battle, then 求敗 lets go. Both are
+  // placeholders until the producer designs them (ROADMAP workstream 2): `board` stands for the
+  // eleventh board, `letGo` for the ending film, `wake` for the youth's last waking.
+  finale: {
+    board: [
+      { note: '五境下完。盤上的子一枚一枚收回盒中，棋盤空了。求敗站起身來，繞過棋臺，走到盤邊。' },
+      { who: 'qiu', text: '這最後一局，老夫不在盤外下了。你也不在盤外。咱們兩個，都到盤上去。' },
+      { who: 'youth', text: '到盤上去？……好，老伯，我陪你下。' }
+    ],
+    letGo: [
+      { note: '一局下罷。求敗拈著最後一枚黑子，懸在盤上，良久不落。' },
+      { note: '他將那枚子輕輕擱在盤邊。不是落子，是放下。' },
+      { note: '盤上的黑子一枚一枚暗了，白子一枚一枚亮了。盒裡收了幾百年的子，也都亮了起來。' },
+      { who: 'qiu', text: '原來如此。老夫求了一輩子，求的便是這一放。……{name}，多謝你。' },
+      { who: 'qiu', text: '你這孩子，倒有幾分像老夫年輕時候。' },
+      { note: '他向少年拱了拱手，轉身往谷口走去，大袖飄飄，撒手而去，不知所終。那頭大鵰望著他的背影，沒有跟去。' }
+    ],
+    wake: '少年醒了。天剛濛濛亮，他提了枕邊那柄劍，到屋後空地上練了一回。練罷抬頭，牆頭立著一頭大鵰，正側著頭瞧他。'
+  },
   // The run's last page.
   win: '十局下完，同行的人各歸本尊。棋臺上只剩兩個人，一頭鵰。求敗望著空盤，說道：「好棋。容老夫想一想。請回吧。」',
   winNote: '買下的東西寄在通吃坊，下一輪照舊取用。',

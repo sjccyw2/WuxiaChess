@@ -4,7 +4,8 @@ import { titleHead, esc } from './panels.js';
 
 // The stone beside the table: one line for each 境 won, and what the youth has worked out.
 function wakeJournal(profile, voyage, expanded = false) {
-  const opened = Math.min(profile.wins ?? 0, WAKES.length);
+  // The lines are cut for the 境 won, in order: as many as the 境 won.
+  const opened = Math.min(profile.cleared?.length ?? profile.wins ?? 0, WAKES.length);
   const holes = WAKES.map(
     (wake, i) =>
       '<li class="' +

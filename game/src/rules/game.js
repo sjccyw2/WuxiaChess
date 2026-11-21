@@ -19,6 +19,7 @@ import {
 } from '../data/encounters.js';
 import { BATTLES } from '../data/battles.js';
 import { NEW_HEROES } from '../data/new-heroes.js';
+import { inRealm } from '../data/realms.js';
 import { rosterPortrait } from '../data/roster-art.js';
 import {
   commandBonus,
@@ -407,9 +408,15 @@ function homeTile(s, u) {
   const found = pieceDef(s, u.id);
   return found ? { x: found.def.at[0], y: found.def.at[1] } : null;
 }
-// The four stage rows every enemy's numbers come from ([hp, atk, def, step, range] each). Board
-// 0 met first has the numbers the first board has always had.
-function stageRows(map, depth) {
+// The four stage rows every enemy's numbers come from ([hp, atk, def, step, range] each), in the
+// run's 境 (data/realms.js; the first 境 changes nothing). Board 0 met first has the numbers the
+// first board has always had.
+function stageRows(map, depth, realm = 1) {
+  const rows = stageBase(map, depth);
+  for (const slot of Object.keys(rows)) rows[slot] = inRealm(rows[slot], realm);
+  return rows;
+}
+function stageBase(map, depth) {
   if (map === 0 && depth === 0)
     return {
       master: [104, 25, 12, 2, 1],
@@ -456,7 +463,7 @@ function stageRows(map, depth) {
 function pieceUnit(s, piece, entered = null) {
   const key = piece.id.split('#')[0],
     info = DETAILS[key];
-  const row = stageRows(s.mapIndex, s.run?.stage || 0)[info.row];
+  const row = stageRows(s.mapIndex, s.run?.stage || 0, s.run?.realm)[info.row];
   const [hp, atk, def, step, range] = withMods(withMods(row, info.traits?.mods), piece.mods);
   const u = makeUnit(piece.id, 'enemy', piece.at[0], piece.at[1], hp, 0, atk, def, step, range);
   if (piece.id.includes('#')) u.encounterId = key;

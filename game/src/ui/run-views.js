@@ -6,6 +6,7 @@ import { icon } from './icons.js';
 import { BOOKS, DETAILS } from '../rules/game.js';
 import { MAZE_TALE, YOUTH, WEI, QIUBAI, TALE_ART } from '../data/maze-tale.js';
 import { art } from './artwork.js';
+import { REALMS } from '../data/realms.js';
 
 const EAGLE_PICTURE = 'npc-eagle.webp';
 
@@ -41,8 +42,11 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
   if (best >= 7) benefits.push(`<span>${icon('bottle', 15)}傷藥 <strong>＋1</strong></span>`);
   if (parcel)
     benefits.push(`<span>${icon('bag', 15)}通吃坊寄存 <strong>${parcel} 件</strong></span>`);
+  const realmAt = Math.min(REALMS.length, Math.max(1, meta.realm || 1)),
+    realm = REALMS[realmAt - 1];
   return `<section class="run-view run-roll">
     ${titleHead('scroll', '抓子')}
+    <p class="run-kicker realm-kicker">${icon('flag', 14)}第${'一二三四五'[realmAt - 1]}境・${text(realm.sword)}　${text(realm.note)}</p>
     <div class="run-lacquer">
       ${scene(TALE_ART.board, 'run-scene')}
       <details class="hud-disclosure draw-tale"><summary>局規</summary><p>${text(MAZE_TALE.draw)}</p><p>棋臺沿上刻著：「${text(MAZE_TALE.rule)}」</p></details>
@@ -70,11 +74,12 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
 //   name     the name as typed so far (first run only)
 //   film     the film has just told the first pages (first visit): start at
 //            the name, then resume where the film ends
-function prologueSteps(profile, name = '', film = false) {
+//   realm    the 境 picked for this run: 求敗 greets him by it
+function prologueSteps(profile, name = '', film = false, realm = 1) {
   const tale = MAZE_TALE.prologue,
     known = profile.name || '',
     called = known || name || YOUTH.name,
-    wins = profile.wins ?? 0;
+    greetings = tale.again.greeting;
   const people = { youth: { ...YOUTH, name: called }, qiu: QIUBAI, wei: WEI };
   const named = (line) => String(line).replaceAll('{name}', called);
   const page = (step) => ({
@@ -88,7 +93,7 @@ function prologueSteps(profile, name = '', film = false) {
   const steps = again
     ? [
         { note: tale.again.note, picture: EAGLE_PICTURE },
-        { who: 'qiu', text: wins >= 5 ? tale.again.beyond : tale.again.greeting[Math.min(4, wins)] },
+        { who: 'qiu', text: greetings[Math.min(greetings.length, Math.max(1, realm)) - 1] },
         { who: 'youth', text: tale.again.youth },
         { who: 'qiu', text: tale.again.reply }
       ]
@@ -103,8 +108,8 @@ function prologueSteps(profile, name = '', film = false) {
     return { ...p, view: i === 0 && !film ? TALE_ART.wake : '', last: i === steps.length - 1 };
   });
 }
-function prologuePage(profile, step = 0, name = '', film = false) {
-  const steps = prologueSteps(profile, name, film),
+function prologuePage(profile, step = 0, name = '', film = false, realm = 1) {
+  const steps = prologueSteps(profile, name, film, realm),
     at = Math.max(0, Math.min(step, steps.length - 1)),
     p = steps[at];
   // A page has a picture when someone speaks, or when the narration comes with one.

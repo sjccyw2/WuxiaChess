@@ -15,7 +15,9 @@ export const TITLES = {
   voices: '十位俠客自己的話',
   return: '請回吧與夢醒',
   archive: '霧鎖青竹渡',
-  world: '少年在棋臺邊瞧明白的事'
+  world: '少年在棋臺邊瞧明白的事',
+  realms: '五境：選境與開境',
+  finale: '最後一局與放下（暫代）'
 };
 const REALMS = '一二三四五';
 const LAST = G.MAP_LAYOUTS.length - 1;
@@ -51,8 +53,7 @@ function opening() {
       speech(
         '第二輪起：又是你',
         p.again.note,
-        p.again.greeting.map((line, i) => said(G.QIUBAI.name, line, '第' + REALMS[i] + '境')),
-        said(G.QIUBAI.name, p.again.beyond, '第五境勝了之後'),
+        p.again.greeting.map((line, i) => said(G.QIUBAI.name, line, '選了第' + REALMS[i] + '境')),
         said(YOUTH_NAME, p.again.youth),
         said(G.QIUBAI.name, p.again.reply)
       ),
@@ -185,7 +186,6 @@ function homecoming() {
     sections: [
       speech('放還（勝滿十局）', said(G.QIUBAI.name, t.release.text, t.release.note), t.win),
       ...t.close.map((lines, i) => speech('第' + REALMS[i] + '境收局', lines.map((b) => spine(b)))),
-      speech('第五境之後再勝', t.closeAgain.map((b) => spine(b))),
       speech(
         '眼破（中途落敗）',
         said(G.QIUBAI.name, t.scatter.text[0], '第一、二境。' + t.scatter.note),
@@ -195,7 +195,7 @@ function homecoming() {
         G.NO_MARK
       ),
       speech('夢醒：五境各一段', G.FRAGMENTS),
-      links('最後一局', [stageLinks(LAST)[1], stageLinks(LAST)[0]])
+      links('最後一局', [stageLinks(LAST)[1], stageLinks(LAST)[0], link('story', 'finale', TITLES.finale)])
     ],
     sources: cites(cite(t.win, 'src/data/maze-tale.js'))
   };
@@ -318,6 +318,11 @@ function wake(w, i) {
     // The stone as it stands once this line has been cut.
     image: gameArt('stone-marks-' + (i + 1) + '.webp'),
     sections: [
+      rows('難度', [
+        ['黑子', G.REALMS[i].note],
+        ['何時開', i ? '勝了第' + REALMS[i - 1] + '境（其時已開的最高一境）之後。' : '一開始便開。'],
+        ['勝了之後', next ? '若此境是已開的最高一境，第' + REALMS[i + 1] + '境便開。' : '五境皆勝，便有最後一局。']
+      ]),
       speech('入夢時', said(G.QIUBAI.name, t.prologue.again.greeting[i], i ? '' : '第一輪另有開場；這一句是敗了再來時說的。')),
       speech('夜話（第五局前）', said(YOUTH_NAME, w.echo.text, t.night + w.echo.note)),
       speech('收局', t.close[i].map((b) => spine(b))),
@@ -330,8 +335,52 @@ function wake(w, i) {
   };
 }
 
+// The five 境 as difficulty levels: what each changes, and how they open.
+function realms() {
+  const pct = (m) => (m === 1 ? '如常' : '×' + m);
+  return {
+    id: 'realms',
+    name: TITLES.realms,
+    tag: '難度',
+    summary:
+      '五境便是五級難度。每一輪入夢之前，從已開的境裡選一境。第一境一開始便開；勝了已開的最高一境，下一境方開；勝了較低的境，只是重下一遍，不開新境。五境皆勝，便有最後一局。所選的境，也定了這一輪求敗說的話。',
+    sections: [
+      rows(
+        '各境的黑子',
+        G.REALMS.map((r, i) => [
+          '第' + REALMS[i] + '境・' + r.sword,
+          '氣血 ' + pct(r.hp) + '，攻擊 ' + pct(r.atk) + '，防禦 ' + (r.def ? '+' + r.def : '如常') + '。' + r.note
+        ])
+      ),
+      links('五境', [...G.WAKES.map((w, i) => link('story', wakeId(i), w.name)), link('story', 'finale', TITLES.finale)])
+    ],
+    sources: cites(cite(G.REALMS[1].note, 'src/data/realms.js'))
+  };
+}
+
+// The last battle and 求敗 letting go: placeholders until the producer designs them.
+function finale() {
+  const f = G.MAZE_TALE.finale;
+  return {
+    id: 'finale',
+    name: TITLES.finale,
+    tag: '五境皆勝之後',
+    summary: '五境皆勝，第五境收局之後便是最後一局：一張新的棋盤，少年與求敗都親自上盤。這一局與求敗放下的終局動畫都尚未製成，遊戲裡暫以文字與簡單的動畫代之。',
+    image: gameArt(G.QIUBAI.portrait),
+    sections: [
+      speech('第十一局（暫代）', f.board.map((b) => (b.who ? spine(b) : b.note))),
+      speech('放下（暫代）', f.letGo.map((b) => (b.who ? spine(b) : b.note))),
+      speech('夢醒', f.wake),
+      links('相關', [link('story', 'realms', TITLES.realms), link('story', wakeId(G.WAKES.length - 1), G.WAKES.at(-1).name)])
+    ],
+    sources: cites(cite(f.wake, 'src/data/maze-tale.js'))
+  };
+}
+
 export function story() {
   return [
+    realms(),
+    finale(),
     opening(),
     qiubai(),
     voices(),

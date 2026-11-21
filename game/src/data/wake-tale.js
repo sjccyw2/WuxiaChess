@@ -124,8 +124,7 @@ const WAKES = [
     carve: '石上還空著一行的地方。求敗提起那柄刻字的劍，瞧了一瞧，沒有刻，將劍輕輕放在石旁。最後一行，他沒有刻。'
   })
 ];
-// A lost run cuts no line; and once the fifth 境 is won there is no line left to cut.
+// A lost run cuts no line.
 const NO_MARK = '這一輪沒有下完。臺邊的石上，沒有多一行字。';
-const FULL_MARK = '臺邊的石上，四行字底下空著一行。那柄刻字的劍，仍舊放在石旁。';
 
-export { WORLD, WAKES, FRAGMENTS, NO_MARK, FULL_MARK, closingFor, fragmentArt };
+export { WORLD, WAKES, FRAGMENTS, NO_MARK, closingFor, fragmentArt };
