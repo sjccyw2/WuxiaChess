@@ -1,0 +1,4003 @@
+{
+  "version": 1,
+  "title": "武學器物圖譜",
+  "language": "zh-Hant",
+  "frameOrder": "row-major",
+  "origin": "top-left",
+  "anchorUnits": "normalized-cell",
+  "frameIndexBase": 0,
+  "timing": "recommended-preview-milliseconds",
+  "assets": [
+    {
+      "id": "toad-qi",
+      "name": "蛤蟆功",
+      "group": "effect",
+      "category": "招式",
+      "role": "內功",
+      "books": [
+        "射鵰英雄傳",
+        "神鵰俠侶"
+      ],
+      "affiliation": "白駝山 · 歐陽鋒、楊過",
+      "source": "歐陽鋒的絕技，楊過年少時也曾受授。",
+      "gameIds": [
+        "toadLunge"
+      ],
+      "sheet": {
+        "path": "effects/toad-qi.png",
+        "sha256": "58da15ec2b303e94057921d8212eac85d4d9e90990910738aef5467d541a11ae",
+        "format": "RGBA PNG",
+        "width": 1536,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 384,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 192,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 1,
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 2,
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 3,
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 70
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 5,
+            "x": 384,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 768,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 7,
+            "x": 1152,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 115
+          }
+        ]
+      }
+    },
+    {
+      "id": "golden-serpent",
+      "name": "金蛇劍法",
+      "group": "effect",
+      "category": "招式",
+      "role": "劍法",
+      "books": [
+        "碧血劍"
+      ],
+      "affiliation": "金蛇郎君 · 袁承志",
+      "source": "袁承志從夏雪宜留下的遺物參悟金蛇劍法。",
+      "gameIds": [
+        "signature:chengZhi",
+        "ycSerpent"
+      ],
+      "sheet": {
+        "path": "effects/golden-serpent.png",
+        "sha256": "41169b83a30538b93a08aa9aba9d00bce26e26448d6845142592e0334e7bf038",
+        "format": "RGBA PNG",
+        "width": 1536,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 384,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 192,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 1,
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 80
+          },
+          {
+            "index": 2,
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 3,
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 65
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 384,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 768,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 7,
+            "x": 1152,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "dragon-palms",
+      "name": "降龍十八掌",
+      "group": "effect",
+      "category": "招式",
+      "role": "掌法",
+      "books": [
+        "天龍八部",
+        "射鵰英雄傳"
+      ],
+      "affiliation": "丐幫 · 蕭峰、洪七公、郭靖",
+      "source": "蕭峰以降龍掌力拒敵，郭靖則受教於洪七公。",
+      "gameIds": [
+        "signature:guo",
+        "qfDragon",
+        "hqDragon",
+        "hqTail",
+        "flyingDragon",
+        "dragonReserve"
+      ],
+      "sheet": {
+        "path": "effects/dragon-palms.png",
+        "sha256": "2d20ba815fe02161f61669671e4a071642cd2b6638cf1060cd2bda4fd31e5771",
+        "format": "RGBA PNG",
+        "width": 1536,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 384,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 192,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 80
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 5,
+            "x": 384,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 6,
+            "x": 768,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 1152,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 130
+          }
+        ]
+      }
+    },
+    {
+      "id": "six-meridians",
+      "name": "六脈神劍",
+      "group": "effect",
+      "category": "招式",
+      "role": "指法",
+      "books": [
+        "天龍八部"
+      ],
+      "affiliation": "大理段氏 · 段譽",
+      "source": "大理段氏以指力運使劍氣，段譽在天龍寺習得劍法。",
+      "gameIds": [
+        "signature:duan",
+        "sixMeridians"
+      ],
+      "sheet": {
+        "path": "effects/six-meridians.png",
+        "sha256": "b78357ee1c15b945eac786fe3e31346f1b2aee5909c08e229dfb9e12441c41b3",
+        "format": "RGBA PNG",
+        "width": 1536,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 384,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 192,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 1,
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 80
+          },
+          {
+            "index": 2,
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 3,
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 80
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 384,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 768,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 1152,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 105
+          }
+        ]
+      }
+    },
+    {
+      "id": "nine-swords",
+      "name": "獨孤九劍",
+      "group": "effect",
+      "category": "招式",
+      "role": "劍法",
+      "books": [
+        "笑傲江湖"
+      ],
+      "affiliation": "風清揚 · 令狐沖",
+      "source": "令狐沖在思過崖得風清揚傳授獨孤九劍。",
+      "gameIds": [
+        "signature:hero",
+        "ninefoldIntent"
+      ],
+      "sheet": {
+        "path": "effects/nine-swords.png",
+        "sha256": "59e43d9984230ea2f9572cefe329984df6f82a3e8c80f9d8dd4016da0d94037b",
+        "format": "RGBA PNG",
+        "width": 1536,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 384,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 192,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 1,
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 2,
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 3,
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 65
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 384,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 6,
+            "x": 768,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 1152,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 115
+          }
+        ]
+      }
+    },
+    {
+      "id": "jade-flick",
+      "name": "彈指神通",
+      "group": "effect",
+      "category": "招式",
+      "role": "指法",
+      "books": [
+        "射鵰英雄傳"
+      ],
+      "affiliation": "桃花島 · 黃藥師",
+      "source": "黃藥師擅以彈指之力送出石子。",
+      "gameIds": [
+        "signature:yaoShi",
+        "ysSkip",
+        "fingerFlick"
+      ],
+      "sheet": {
+        "path": "effects/jade-flick.png",
+        "sha256": "3232bac9bf2b563f1c14516bb336e82f08e53dcfb053e95e6314af4cb06f3503",
+        "format": "RGBA PNG",
+        "width": 1536,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 384,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 192,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 2,
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 65
+          },
+          {
+            "index": 3,
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 60
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 5,
+            "x": 384,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 6,
+            "x": 768,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 7,
+            "x": 1152,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "bamboo-staff",
+      "name": "打狗棒法",
+      "group": "effect",
+      "category": "招式",
+      "role": "棒法",
+      "books": [
+        "射鵰英雄傳"
+      ],
+      "affiliation": "丐幫 · 洪七公、黃蓉",
+      "source": "丐幫棒法由幫主相傳，黃蓉曾向洪七公學棒。",
+      "gameIds": [
+        "signature:huang",
+        "signature:hongQi",
+        "hqHook",
+        "beggarBind",
+        "staffWithoutDogs"
+      ],
+      "sheet": {
+        "path": "effects/bamboo-staff.png",
+        "sha256": "0c086ce176df067d4f85e1efb141eb60ceff1d7302e11536582b44d179d34ba3",
+        "format": "RGBA PNG",
+        "width": 1536,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 384,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 192,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 5,
+            "x": 384,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 768,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 7,
+            "x": 1152,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 115
+          }
+        ]
+      }
+    },
+    {
+      "id": "lone-palm",
+      "name": "黯然銷魂掌",
+      "group": "effect",
+      "category": "招式",
+      "role": "掌法",
+      "books": [
+        "神鵰俠侶"
+      ],
+      "affiliation": "楊過",
+      "source": "楊過在與小龍女分離的歲月裡自創這套掌法。",
+      "gameIds": [
+        "signature:yang",
+        "mournfulCloud",
+        "solitaryPalm"
+      ],
+      "sheet": {
+        "path": "effects/lone-palm.png",
+        "sha256": "0caa6f4c384b412b641824a1e065dec6525dfac5eec7a754d94ea5d6b919e64b",
+        "format": "RGBA PNG",
+        "width": 1536,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 384,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 192,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 120
+          },
+          {
+            "index": 1,
+            "x": 384,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 2,
+            "x": 768,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 3,
+            "x": 1152,
+            "y": 0,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 80
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 125
+          },
+          {
+            "index": 5,
+            "x": 384,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 6,
+            "x": 768,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 7,
+            "x": 1152,
+            "y": 256,
+            "w": 384,
+            "h": 256,
+            "previewDurationMs": 135
+          }
+        ]
+      }
+    },
+    {
+      "id": "goldSerpentBlade",
+      "name": "金蛇劍",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "異形長劍",
+      "books": [
+        "碧血劍"
+      ],
+      "affiliation": "金蛇郎君 · 袁承志",
+      "source": "夏雪宜留下的金蛇劍，後落入袁承志手中。",
+      "gameIds": [
+        "goldSerpentBlade"
+      ],
+      "sheet": {
+        "path": "weapons/goldSerpentBlade.png",
+        "sha256": "87cb8534a00b9078b7a3a8a4656ab3745c665396c3f83199e1fa111524930c1b",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "dragonSaber",
+      "name": "屠龍刀",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "寶刀",
+      "books": [
+        "倚天屠龍記"
+      ],
+      "affiliation": "謝遜",
+      "source": "屠龍刀牽動江湖各派的爭奪，曾由謝遜掌管。",
+      "gameIds": [
+        "dragonSaber"
+      ],
+      "sheet": {
+        "path": "weapons/dragonSaber.png",
+        "sha256": "7d2886ecbb4501ca058be5048292a0a8b0507c12aa08b01294bfe9482aec2997",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "darkIron",
+      "name": "玄鐵重劍",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "重劍",
+      "books": [
+        "神鵰俠侶"
+      ],
+      "affiliation": "獨孤求敗 · 楊過",
+      "source": "楊過在獨孤求敗的劍塚見到玄鐵重劍。",
+      "gameIds": [
+        "darkIron"
+      ],
+      "sheet": {
+        "path": "weapons/darkIron.png",
+        "sha256": "df8f7adb48bfe9fed567b91e69dbac5c0c37c3dbc839199770cb43ac7acd10e5",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "foxSaber",
+      "name": "胡家單刀",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "單刀",
+      "books": [
+        "飛狐外傳",
+        "雪山飛狐"
+      ],
+      "affiliation": "遼東胡家 · 胡斐",
+      "source": "本作配予胡斐的隨身器物。",
+      "gameIds": [
+        "foxSaber"
+      ],
+      "sheet": {
+        "path": "weapons/foxSaber.png",
+        "sha256": "10a064b29d4bdcaf5b3dad07d87b15ec80520d4de6f8254e2c4bbadb74e2c7d8",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "jadeCane",
+      "name": "青竹棒",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "竹棒",
+      "books": [
+        "射鵰英雄傳",
+        "神鵰俠侶"
+      ],
+      "affiliation": "桃花島・丐幫 · 黃蓉",
+      "source": "本作配予黃蓉的隨身器物。",
+      "gameIds": [
+        "jadeCane"
+      ],
+      "sheet": {
+        "path": "weapons/jadeCane.png",
+        "sha256": "fc24893be92a91cd154c1cf94a72b0f773d16bd908f98fb6163f1a2bda524eaf",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "twins",
+      "name": "古墓雙劍",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "雙劍",
+      "books": [
+        "神鵰俠侶"
+      ],
+      "affiliation": "古墓派 · 小龍女",
+      "source": "本作配予小龍女的隨身器物。",
+      "gameIds": [
+        "twins"
+      ],
+      "sheet": {
+        "path": "weapons/twins.png",
+        "sha256": "e2a708f58a00924c813aa49485849cc134c15108956aed5baa1ff860c5406985",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "pine",
+      "name": "華山長劍",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "長劍",
+      "books": [
+        "笑傲江湖"
+      ],
+      "affiliation": "華山派 · 令狐沖",
+      "source": "本作配予令狐沖的隨身器物。",
+      "gameIds": [
+        "pine"
+      ],
+      "sheet": {
+        "path": "weapons/pine.png",
+        "sha256": "db371f740ac10fcb8c6ca8a926dc563f5c6ed6a6a19b1e442b814ac7bb6f5291",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "frost",
+      "name": "寒潭短劍",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "短劍",
+      "books": [
+        "笑傲江湖"
+      ],
+      "affiliation": "華山派 · 令狐沖",
+      "source": "本作配予令狐沖的隨身器物。",
+      "gameIds": [
+        "frost"
+      ],
+      "sheet": {
+        "path": "weapons/frost.png",
+        "sha256": "11e29096ed0ff3b99c8527a939be1be72c4ca7ae72aa470ef7f46eb81835bb2c",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "blueEdge",
+      "name": "青鋒劍",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "長劍",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "blueEdge"
+      ],
+      "sheet": {
+        "path": "weapons/blueEdge.png",
+        "sha256": "34813995f8c60e7f075b4ace1443e2a07099a05d5a5789be255de0f28620bd8c",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "starSteel",
+      "name": "星紋精鋼劍",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "長劍",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "starSteel"
+      ],
+      "sheet": {
+        "path": "weapons/starSteel.png",
+        "sha256": "cf64b1fddbe7bac5b680d94ed2c6fa1c76d747aeec4b912715a675239f4d0bf4",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "travelBlade",
+      "name": "雁翎刀",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "單刀",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "travelBlade"
+      ],
+      "sheet": {
+        "path": "weapons/travelBlade.png",
+        "sha256": "94021393d7f61b5c3b8543f7bd01581acd7d0f4f4a86ad93bd79da6f292c7ab7",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "ironFan",
+      "name": "鐵骨折扇",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "鐵扇",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "ironFan"
+      ],
+      "sheet": {
+        "path": "weapons/ironFan.png",
+        "sha256": "7f6d99287c4bc41cd5116778f7e9e0098e3d044eecc2506d33a969f1728bd318",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "fan",
+      "name": "大理摺扇",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "折扇",
+      "books": [
+        "天龍八部"
+      ],
+      "affiliation": "大理段氏 · 段譽",
+      "source": "本作配予段譽的隨身器物。",
+      "gameIds": [
+        "fan"
+      ],
+      "sheet": {
+        "path": "weapons/fan.png",
+        "sha256": "b90b667c184dd1c1e448a906bbc84cf167de900cbf723b30f7ffb79d4d9639fe",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "silkWhip",
+      "name": "錦紋軟鞭",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "軟鞭",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "silkWhip"
+      ],
+      "sheet": {
+        "path": "weapons/silkWhip.png",
+        "sha256": "25410e166e51a520eadb08e82bd2f2976ad9b92702ccb37b31e8cc89c9f1a23a",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "pole",
+      "name": "精鋼軟鞭",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "軟鞭",
+      "books": [
+        "笑傲江湖"
+      ],
+      "affiliation": "日月神教 · 向問天",
+      "source": "本作配予向問天的隨身器物。",
+      "gameIds": [
+        "pole"
+      ],
+      "sheet": {
+        "path": "weapons/pole.png",
+        "sha256": "6b7d1b55d9380689177e124e4fd6df41bbac8cdfb6226d378bda088c9cb9c81e",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "staff",
+      "name": "綠竹短簫",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "短簫",
+      "books": [
+        "笑傲江湖"
+      ],
+      "affiliation": "日月神教 · 任盈盈",
+      "source": "本作配予任盈盈的隨身器物。",
+      "gameIds": [
+        "staff"
+      ],
+      "sheet": {
+        "path": "weapons/staff.png",
+        "sha256": "ff8c4baf19ec59b245580b2ce636c7edc63c4b148b24b7f7e6cd451f9943ec66",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "mingSash",
+      "name": "明教護腕",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "拳掌兵器",
+      "books": [
+        "倚天屠龍記"
+      ],
+      "affiliation": "明教・武當 · 張無忌",
+      "source": "本作配予張無忌的隨身器物。",
+      "gameIds": [
+        "mingSash"
+      ],
+      "sheet": {
+        "path": "weapons/mingSash.png",
+        "sha256": "1593371a712d68b01064e92ed3eb0e318539d47238cdadc9085c68167f967166",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "wraps",
+      "name": "布纏護手",
+      "group": "weapon",
+      "category": "兵器",
+      "role": "拳掌兵器",
+      "books": [
+        "射鵰英雄傳",
+        "神鵰俠侶"
+      ],
+      "affiliation": "江南七怪門下 · 郭靖",
+      "source": "本作配予郭靖的隨身器物。",
+      "gameIds": [
+        "wraps"
+      ],
+      "sheet": {
+        "path": "weapons/wraps.png",
+        "sha256": "537e550593c2c057a87165ac763d34fc924429ee60f2ba9770ea75eb7b4e4a02",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 90
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 75
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 85
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 95
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 120
+          }
+        ]
+      }
+    },
+    {
+      "id": "hedgehogVest",
+      "name": "軟蝟甲",
+      "group": "gear",
+      "category": "護具",
+      "role": "護身軟甲",
+      "books": [
+        "射鵰英雄傳"
+      ],
+      "affiliation": "桃花島 · 黃蓉",
+      "source": "黃蓉隨身所穿的桃花島護甲。",
+      "gameIds": [
+        "hedgehogVest"
+      ],
+      "sheet": {
+        "path": "gear/hedgehogVest.png",
+        "sha256": "03415cd84aaf801a4443f6576fe3eb0be59b03cd66eceb43984aab4c555ffd42",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 130
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "silkwormCoat",
+      "name": "烏蠶衣",
+      "group": "gear",
+      "category": "護具",
+      "role": "絲衣",
+      "books": [
+        "連城訣"
+      ],
+      "affiliation": "丁典 · 狄雲",
+      "source": "取材自原著中以烏蠶絲織成的護身衣。",
+      "gameIds": [
+        "silkwormCoat"
+      ],
+      "sheet": {
+        "path": "gear/silkwormCoat.png",
+        "sha256": "a678a07aaeb9f47f49de51852957e023eaed24433788ee89bb0160993990b478",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 130
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "heartMirror",
+      "name": "護心鏡",
+      "group": "gear",
+      "category": "護具",
+      "role": "護心鏡",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "heartMirror"
+      ],
+      "sheet": {
+        "path": "gear/heartMirror.png",
+        "sha256": "009881769ecbd4479a258e8d44c6f44838356c7a73ccb85386fbe323c7a09197",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 130
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "bracer",
+      "name": "玄鐵護腕",
+      "group": "gear",
+      "category": "護具",
+      "role": "護腕",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "bracer"
+      ],
+      "sheet": {
+        "path": "gear/bracer.png",
+        "sha256": "cb6772f4213d822d1fd7ae95ca3fac6f995e6658217660096d97be1ee17ce1c2",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 130
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "cloudCoat",
+      "name": "流雲軟甲",
+      "group": "gear",
+      "category": "護具",
+      "role": "軟甲",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "cloudCoat"
+      ],
+      "sheet": {
+        "path": "gear/cloudCoat.png",
+        "sha256": "6b0f32ecdcc52a7710b53a060755ba0b2d05b656ce6c9dc93af8e43779cf1bf9",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 130
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "trailBoots",
+      "name": "踏雲靴",
+      "group": "gear",
+      "category": "護具",
+      "role": "布靴",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "trailBoots"
+      ],
+      "sheet": {
+        "path": "gear/trailBoots.png",
+        "sha256": "454070616ee7f5651e6b2c0a9af82d3fc607e779bba8134779206947b0f02411",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 130
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "jade",
+      "name": "青玉佩",
+      "group": "gear",
+      "category": "護具",
+      "role": "玉佩",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "jade"
+      ],
+      "sheet": {
+        "path": "gear/jade.png",
+        "sha256": "6d11956c721f4033cf137c5234bbcedcc379932b89cfd9fa9bb8226740f78a51",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 130
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "bellJade",
+      "name": "聽潮古玉",
+      "group": "gear",
+      "category": "護具",
+      "role": "佩玉",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "bellJade"
+      ],
+      "sheet": {
+        "path": "gear/bellJade.png",
+        "sha256": "b2b587ed030cef9ac1ed1d3c80ce72d8691141625ed91c206abbcb95b12f1399",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 130
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "herbCharm",
+      "name": "凝神香囊",
+      "group": "gear",
+      "category": "護具",
+      "role": "香囊",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "herbCharm"
+      ],
+      "sheet": {
+        "path": "gear/herbCharm.png",
+        "sha256": "7ee9209a6ca3920498eefeaa7bd56aca470f72f0962ab034b2e9492ffc71554c",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 110
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 130
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "nineFlowerPill",
+      "name": "九花玉露丸",
+      "group": "use",
+      "category": "丹藥",
+      "role": "丸藥",
+      "books": [
+        "射鵰英雄傳"
+      ],
+      "affiliation": "桃花島",
+      "source": "九花玉露丸是桃花島的藥物。",
+      "gameIds": [
+        "nineFlowerPill"
+      ],
+      "sheet": {
+        "path": "consumables/nineFlowerPill.png",
+        "sha256": "6116ad7bcd03012957b484fed298672df320327ffdc5f251fcda45f3b238c359",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 125
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "beeNectar",
+      "name": "玉蜂漿",
+      "group": "use",
+      "category": "丹藥",
+      "role": "蜂漿",
+      "books": [
+        "神鵰俠侶"
+      ],
+      "affiliation": "古墓派",
+      "source": "古墓所養玉蜂的蜂漿，原著中曾用於療治蜂毒。",
+      "gameIds": [
+        "beeNectar"
+      ],
+      "sheet": {
+        "path": "consumables/beeNectar.png",
+        "sha256": "1432d185b22b4f9529c8e9d07faacd6fe6de600ccca1312469e8457cc2bbecac",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 125
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "remedy",
+      "name": "金創藥",
+      "group": "use",
+      "category": "丹藥",
+      "role": "外傷藥",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "remedy"
+      ],
+      "sheet": {
+        "path": "consumables/remedy.png",
+        "sha256": "7905499302fcf5f3fdb8e6823fc504057132251c54098ec3eeb6c90e579cc3a0",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 125
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "elixir",
+      "name": "回氣丹",
+      "group": "use",
+      "category": "丹藥",
+      "role": "丸藥",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "elixir"
+      ],
+      "sheet": {
+        "path": "consumables/elixir.png",
+        "sha256": "7994773e79a207d57e82764024c7a17e9564bb671fdbd3273a4abecd8dc85b86",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 125
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "greatPill",
+      "name": "大還丹",
+      "group": "use",
+      "category": "丹藥",
+      "role": "丸藥",
+      "books": [],
+      "affiliation": "十漏迷津",
+      "source": "《十漏迷津》中的江湖行旅用品。",
+      "gameIds": [
+        "greatPill"
+      ],
+      "sheet": {
+        "path": "consumables/greatPill.png",
+        "sha256": "cf3c6ac559c355435e9684a69bb97a98d9d76d77dd9f399a74f1fae2ef40c645",
+        "format": "RGBA PNG",
+        "width": 1024,
+        "height": 512,
+        "columns": 4,
+        "rows": 2,
+        "cellWidth": 256,
+        "cellHeight": 256,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "anchorPixels": {
+          "x": 128,
+          "y": 128
+        },
+        "frames": [
+          {
+            "index": 0,
+            "x": 0,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 135
+          },
+          {
+            "index": 1,
+            "x": 256,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 2,
+            "x": 512,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 3,
+            "x": 768,
+            "y": 0,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 100
+          },
+          {
+            "index": 4,
+            "x": 0,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 125
+          },
+          {
+            "index": 5,
+            "x": 256,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 105
+          },
+          {
+            "index": 6,
+            "x": 512,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 115
+          },
+          {
+            "index": 7,
+            "x": 768,
+            "y": 256,
+            "w": 256,
+            "h": 256,
+            "previewDurationMs": 140
+          }
+        ]
+      }
+    }
+  ]
+}
