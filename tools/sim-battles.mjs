@@ -112,14 +112,17 @@ function fieldFrom(map, p) {
 
 // ── What the enemies threaten ─────────────────────────────────────────────
 // For each living foe: the tiles it could strike next enemy phase, and how hard its next blow is.
+// Reinforcements due next round count as threats from the tiles they would enter on now
+// (G.arrivalGhosts), as the danger zone draws them.
 function threatMap(s) {
-  return G.enemies(s)
-    .filter(G.living)
+  const ghosts = G.arrivalGhosts(s, s.round + 1);
+  const seen = ghosts.length ? { ...s, units: [...s.units, ...ghosts] } : s;
+  return [...G.enemies(s).filter(G.living), ...ghosts]
     .map((e) => {
       // Where the rules say it may end its action (a posted or charged piece stays put).
-      const stand = G.standCells(s, e);
+      const stand = G.standCells(seen, e);
       const hits = new Set(),
-        range = G.strikeReach(s, e);
+        range = G.strikeReach(seen, e);
       for (const p of stand)
         for (let dx = -range; dx <= range; dx++)
           for (let dy = -range + Math.abs(dx); dy <= range - Math.abs(dx); dy++) hits.add(key(p.x + dx, p.y + dy));
@@ -142,19 +145,40 @@ function dangerAt(s, u, threats, gone = new Set()) {
 }
 
 // ── Scoring ─────────────────────────────────────────────────────────────
+// The pieces whose fall wins the board: the masters still standing on 斬將, every living enemy
+// on 殲滅 (G.objectiveLeft). The approach is measured to the nearest of them.
+function objectiveTargets(s) {
+  if (G.boardOf(s).kind === 'slay')
+    return G.objectiveLeft(s)
+      .masters.map((id) => G.find(s, id))
+      .filter((u) => u && G.living(u));
+  return G.enemies(s).filter(G.living);
+}
+function nearestField(map, targets) {
+  if (!targets.length) return null;
+  if (targets.length === 1) return fieldFrom(map, targets[0]);
+  const field = new Map();
+  for (const t of targets)
+    for (const [k, n] of fieldFrom(map, t)) if (n < (field.get(k) ?? Infinity)) field.set(k, n);
+  return field;
+}
 function boardContext(s) {
-  const boss = G.find(s, G.commanderId(s));
+  const targets = objectiveTargets(s);
   const marker = G.unclaimedObjectiveTile(s);
+  const side = s.run.side && R.sideState(s) === 'open' ? s.run.side : null;
   const ctx = {
     threats: threatMap(s),
-    boss,
-    bossField: boss && G.living(boss) ? fieldFrom(s.mapIndex, boss) : null,
+    targets: new Set(targets),
+    targetField: nearestField(s.mapIndex, targets),
+    // The secondary still to play for, and its policy row (SIDE_POLICY).
+    side,
+    sidePolicy: side ? SIDE_POLICY[side.kind] || {} : {},
     marker,
     markerField: marker ? fieldFrom(s.mapIndex, marker) : null,
-    speed: s.run.side?.kind === 'swift',
     escorts: new Set(G.wardEscorts(s)),
     runner: null
   };
+  ctx.speed = !!ctx.sidePolicy.speed;
   if (marker) {
     // The runner: whichever living hero not leading is nearest the marker (the leader if alone).
     const pool = G.party(s).filter(G.living);
@@ -176,14 +200,14 @@ function reachOf(u) {
 function placeScore(s, u, ctx, hpAfter, gone) {
   const leader = u.id === s.leader;
   const d = dangerAt(s, u, ctx.threats, gone);
-  let score = -d.expected * W.danger * (leader ? W.leaderCare : 1);
-  if (d.total >= hpAfter) score -= leader ? W.leaderLethal : W.lethal + u.maxHp / 2;
+  let score = -d.expected * W.danger * (leader ? leaderCare(ctx) : 1);
+  if (d.total >= hpAfter) score -= leader ? W.leaderLethal : W.lethal * (ctx.sidePolicy.lethal || 1) + u.maxHp / 2;
   else if (leader && d.total >= hpAfter * 0.75) score -= W.leaderLethal / 20;
   score += (tileInfo(u.x, u.y, s.mapIndex)?.defense || 0) * W.cover;
   const heal = tileInfo(u.x, u.y, s.mapIndex)?.heal || 0;
   if (heal) score += Math.min(heal, u.maxHp - hpAfter) * 0.8;
-  if (ctx.bossField && !gone.has(ctx.boss)) {
-    const steps = Math.max(0, (ctx.bossField.get(key(u.x, u.y)) ?? 30) - reachOf(u));
+  if (ctx.targetField && [...ctx.targets].some((v) => !gone.has(v))) {
+    const steps = Math.max(0, (ctx.targetField.get(key(u.x, u.y)) ?? 30) - reachOf(u));
     const urgency = 1 + s.round / 6 + (ctx.speed ? 0.8 : 0);
     score -= steps * (leader ? W.leaderApproach : W.approach) * urgency;
   }
@@ -194,45 +218,143 @@ function placeScore(s, u, ctx, hpAfter, gone) {
   }
   const lead = G.find(s, s.leader);
   if (!leader && lead && G.living(lead) && G.distance(u, lead) === 1 && dangerAt(s, lead, ctx.threats, gone).total > 0) score += W.guardLeader;
+  if (ctx.sidePolicy.place) score += ctx.sidePolicy.place(s, ctx.side, u);
   return score;
 }
+const leaderCare = (ctx) => W.leaderCare * (ctx.sidePolicy.leaderDanger || 1);
+
+// ── Secondary objectives: one policy row per kind (journey.js SIDE_KINDS), never per board ──
+// A row may give: `fell(s, side, blow)` → { score, holdWin } for a blow that fells `blow.gone`
+// (the struck piece is `blow.main`); `hit(s, side, v)` added when a blow lands on v; `place(s,
+// side, u)` added where a hero ends; `breakCharge(s, side, v)` in place of W.breakCharge;
+// `lethal` and `leaderDanger` multipliers; `speed`; `medicine(s, side, u)` whether medicine may be
+// taken. A row only plays while its secondary is open (R.sideState).
+const SIDE_W = {
+  lastBlow: 60, lastBlowOther: -80, orderEarly: -80, lateRound: 10, double: 25, mirrorCharge: -60,
+  mendValue: 30, herbsValue: 30, combo: 40, holdLineKill: 30, holdLinePlace: 8, holdLineReach: 2, answer: 50,
+  unhurtDanger: 4, intactLethal: 3
+};
+const piece = (s, ref) => G.find(s, G.refId(s.mapIndex, ref));
+const standing = (s, id) => {
+  const v = G.find(s, id);
+  return !!v && G.living(v);
+};
+// Steps from a tile to a zone of board data (0 inside).
+function zoneSteps(zone, p) {
+  const off = (r, v) => (!r ? 0 : v < r[0] ? r[0] - v : v > r[1] ? v - r[1] : 0);
+  return off(zone.x, p.x) + off(zone.y, p.y);
+}
+const SIDE_POLICY = {
+  // The lamp runner (boardContext) and the speed term were the player's already.
+  lamp: {},
+  swift: { speed: true },
+  intact: { lethal: SIDE_W.intactLethal },
+  unhurt: { leaderDanger: SIDE_W.unhurtDanger },
+  // Medicine only when the leader would otherwise fall.
+  noMedicine: {
+    medicine: (s, side, u) => u.id === s.leader && dangerAt(s, u, threatMap(s)).total >= u.hp
+  },
+  lastBlow: {
+    fell: (s, side, blow) => {
+      const target = piece(s, side.target);
+      if (!target || !blow.gone.has(target) || !standing(s, side.hero)) return { score: 0 };
+      // (any of the hero's own blows counts, its splash included: the rules credit the striker)
+      if (blow.u.id === side.hero) return { score: SIDE_W.lastBlow };
+      if (blow.wins && s.round >= SIDE_W.lateRound) return { score: 0 };
+      return { score: SIDE_W.lastBlowOther, holdWin: true };
+    }
+  },
+  order: {
+    fell: (s, side, blow) => {
+      const first = piece(s, side.first);
+      if (!first || !G.living(first) || blow.gone.has(first) || s.round >= SIDE_W.lateRound) return { score: 0 };
+      if (!G.masterIds(s).some((id) => [...blow.gone].some((v) => v.id === id))) return { score: 0 };
+      return { score: SIDE_W.orderEarly, holdWin: true };
+    }
+  },
+  double: {
+    fell: (s, side, blow) => {
+      const now = (s.tally?.falls || []).filter((f) => f.phase === 'ally' && f.round === s.round).length;
+      return { score: now < 2 && now + blow.gone.size >= 2 ? SIDE_W.double : 0 };
+    }
+  },
+  spare: {
+    // A charged 斗轉星移 stays charged until a direct blow is turned, so sparing it means never
+    // striking its bearer directly; like lastBlow and order, the player lets the secondary go
+    // late in the board rather than lose it.
+    breakCharge: (s, side, v) =>
+      side.behaviour === 'mirror' && piece(s, side.piece) === v && s.round < SIDE_W.lateRound ? SIDE_W.mirrorCharge : W.breakCharge,
+    hit: (s, side, v) => {
+      if (piece(s, side.piece) !== v) return 0;
+      if (side.behaviour === 'mend') return SIDE_W.mendValue;
+      if (side.behaviour === 'herbs' && !v.halved) return SIDE_W.herbsValue;
+      return 0;
+    }
+  },
+  combo: { fell: (s, side, blow) => ({ score: blow.main && blow.combo ? SIDE_W.combo : 0 }) },
+  holdLine: {
+    fell: (s, side, blow) => ({ score: [...blow.gone].filter((v) => v.enteredRound != null).length * SIDE_W.holdLineKill }),
+    place: (s, side, u) => {
+      const n = zoneSteps(side.zone, u);
+      return n > 0 && n <= SIDE_W.holdLineReach ? SIDE_W.holdLinePlace : 0;
+    }
+  },
+  answer: {
+    fell: (s, side, blow) => ({ score: blow.main && blow.u.id === side.hero && blow.answered ? SIDE_W.answer : 0 })
+  }
+};
 function foeValue(s, t, ctx) {
   let v = 1;
-  if (t === ctx.boss) v = W.bossDamage * (ctx.speed ? W.speedBoss : 1);
+  if (ctx.targets.has(t)) v = W.bossDamage * (ctx.speed ? W.speedBoss : 1);
   if (ctx.escorts.has(t)) v = W.escort;
   return v;
 }
-// What an option is worth, read entirely from the rules' forecast.
-function strikeScore(s, u, t, f, ctx, mp) {
+// What an option is worth, read entirely from the rules' forecast. A blow at a covered piece
+// lands on its coverer (forecast's coveredBy), so that is the piece it may fell.
+function strikeScore(s, u, t, f, ctx, mp, art = null) {
   let score = -mp * W.mp - f.hpCost * W.hpCost;
   const gone = new Set();
   const leader = u.id === s.leader;
-  const dealt = Math.min(f.amount, t.hp);
-  score += dealt * foeValue(s, t, ctx);
-  if (f.amount >= t.hp) {
-    gone.add(t);
-    score += t === ctx.boss ? W.win : W.killBase + t.atk + (ctx.escorts.has(t) ? 40 : 0);
-  } else
+  const victim = (f.coveredBy && G.find(s, f.coveredBy)) || t;
+  const dealt = Math.min(f.amount, victim.hp);
+  score += dealt * foeValue(s, victim, ctx);
+  if (dealt > 0 && ctx.sidePolicy.hit) score += ctx.sidePolicy.hit(s, ctx.side, victim);
+  if (f.amount >= victim.hp) gone.add(victim);
+  else
     for (const e of f.effects) score += (W.foeEffect[e.kind] ?? W.foeEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
   for (const hit of f.splash) {
     const v = G.find(s, hit.id);
-    if (!v || !G.living(v)) continue;
+    if (!v || !G.living(v) || gone.has(v)) continue;
     score += Math.min(hit.amount, v.hp) * foeValue(s, v, ctx);
-    if (hit.amount >= v.hp) {
-      gone.add(v);
-      score += v === ctx.boss ? W.win : W.killBase + v.atk;
-    }
+    if (hit.amount > 0 && ctx.sidePolicy.hit) score += ctx.sidePolicy.hit(s, ctx.side, v);
+    if (hit.amount >= v.hp) gone.add(v);
+  }
+  // The falls: the board is won if the rules say so with these gone; otherwise each is a kill.
+  if (gone.size) {
+    const blow = {
+      u,
+      main: gone.has(victim) ? victim : null,
+      gone,
+      wins: G.winsIfFalls(s, [...gone].map((v) => v.id)),
+      combo: !!(f.plan?.spentMark || f.plan?.spentPoison || f.plan?.partner),
+      answered: !!art?.answer && G.strikeFactor(s, u, art, victim).notes.some((n) => n.startsWith('破招'))
+    };
+    const side = ctx.sidePolicy.fell ? ctx.sidePolicy.fell(s, ctx.side, blow) : { score: 0 };
+    score += side.score;
+    const kills = [...gone].reduce((n, v) => n + W.killBase + v.atk + (ctx.escorts.has(v) ? 40 : 0), 0);
+    // A secondary may hold back a winning blow (by the wrong hand, in the wrong order) until late.
+    score += blow.wins && !side.holdWin ? W.win : kills;
   }
   score += (f.reflected || 0) * 0.8 + (f.selfHeal || 0) * 0.8;
   // A blow a charged reaction turns back (斗轉星移) does nothing to the foe but spends the charge,
   // which opens it to the blows after; the share turned back is paid like a counter.
-  if (f.turned && !f.turned.ward.source) score += W.breakCharge * foeValue(s, t, ctx);
+  if (f.turned && !f.turned.ward.source) score += (ctx.sidePolicy.breakCharge?.(s, ctx.side, victim) ?? W.breakCharge) * foeValue(s, victim, ctx);
   // 吸勁 putting a foe's signature back is worth something too.
-  if (f.siphon?.delay) score += W.delaySignature * foeValue(s, t, ctx);
+  if (f.siphon?.delay) score += W.delaySignature * foeValue(s, victim, ctx);
   const hpAfter = u.hp - f.hpCost - f.counter - (f.rebound || 0) + (f.selfHeal || 0);
-  score -= (f.rebound || 0) * W.counter * (leader ? W.leaderCare : 1);
-  score -= f.counter * W.counter * (leader ? W.leaderCare : 1);
-  if (hpAfter <= 0) score -= leader ? W.leaderLethal * 10 : W.lethal * 3;
+  score -= (f.rebound || 0) * W.counter * (leader ? leaderCare(ctx) : 1);
+  score -= f.counter * W.counter * (leader ? leaderCare(ctx) : 1);
+  if (hpAfter <= 0) score -= leader ? W.leaderLethal * 10 : W.lethal * 3 * (ctx.sidePolicy.lethal || 1);
   return { score, hpAfter, gone };
 }
 function supportScore(s, u, t, f, ctx, mp) {
@@ -319,7 +441,7 @@ function bestOption(s, u, ctx) {
           consider({ score: r.score, P, act: 'art', id, t });
           continue;
         }
-        r = f.support ? supportScore(s, u, t, f, ctx, mp) : strikeScore(s, u, t, f, ctx, mp);
+        r = f.support ? supportScore(s, u, t, f, ctx, mp) : strikeScore(s, u, t, f, ctx, mp, art);
         consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone), P, act: 'art', id, t });
       }
     }
@@ -356,13 +478,18 @@ function credit(rec, before, s, actor) {
 // ── A board ─────────────────────────────────────────────────────────────
 function useMedicine(s, u) {
   const leader = u.id === s.leader;
-  if (u.hp < u.maxHp * (W.medicineAt + (leader ? 0.15 : 0))) {
+  // A secondary may forbid medicine except to keep the leader standing (SIDE_POLICY).
+  const side = s.run.side && R.sideState(s) === 'open' ? s.run.side : null;
+  const rule = side && SIDE_POLICY[side.kind]?.medicine;
+  if (rule && !rule(s, side, u)) return;
+  if (rule || u.hp < u.maxHp * (W.medicineAt + (leader ? 0.15 : 0))) {
     const missing = u.maxHp - u.hp;
     const order = Object.entries(G.ITEMS)
       .filter(([id, it]) => it.kind === 'use' && it.hp && s.stock[id] > 0)
       .sort((a, b) => Math.abs(a[1].hp - missing) - Math.abs(b[1].hp - missing));
     if (order.length) G.consume(s, u, order[0][0]);
   }
+  if (rule) return;
   const cheapest = Math.min(...G.equippedArts(u).map((id) => G.cost(u, s, id)));
   if (Number.isFinite(cheapest) && u.mp < cheapest) {
     const mpItem = Object.entries(G.ITEMS).find(([id, it]) => it.kind === 'use' && it.mp && s.stock[id] > 0);
@@ -490,6 +617,9 @@ function fight(s) {
   rec.arrived = wavePieces.filter((id) => s.units.some((u) => u.id === id)).length;
   rec.enemies = G.enemies(s).length + wavePieces.length - rec.arrived;
   rec.blocked = rec.events.blocked || 0;
+  // How much of the objective still stood at the end (masters on 斬將, every enemy on 殲滅).
+  const goal = board.kind === 'slay' ? G.masterIds(s).map((id) => G.find(s, id)).filter(Boolean) : G.enemies(s);
+  rec.goalLeft = goal.reduce((n, u) => n + Math.max(0, u.hp), 0) / Math.max(1, goal.reduce((n, u) => n + u.maxHp, 0));
   const show = () => {
     for (const l of lines) if (l.type !== 'grow') console.log('  r' + l.round + ' ' + l.phase + ' ' + l.who + ': ' + l.text);
   };
@@ -642,6 +772,28 @@ function prepare(s) {
   for (const u of G.company(s)) equipArts(s, u);
 }
 
+// The deployment step: the leader takes the post where the least could strike him (danger
+// total, reinforcements due next round included; ties: farthest from the nearest enemy), the
+// others swap as that needs, then 開戰.
+function deploy(s) {
+  const lead = G.find(s, s.leader),
+    posts = mapLayout(s.mapIndex).allies,
+    threats = threatMap(s),
+    foes = G.enemies(s).filter(G.living),
+    home = { x: lead.x, y: lead.y };
+  const from = posts.findIndex((p) => p.x === lead.x && p.y === lead.y);
+  let best = null;
+  posts.forEach((p, i) => {
+    Object.assign(lead, { x: p.x, y: p.y });
+    const danger = dangerAt(s, lead, threats).total,
+      room = Math.min(...foes.map((e) => G.distance(e, p)));
+    if (!best || danger < best.danger || (danger === best.danger && room > best.room)) best = { i, danger, room };
+  });
+  Object.assign(lead, home);
+  if (from >= 0 && best.i !== from && !R.swapStart(s, from, best.i)) throw new Error('could not swap the leader to post ' + best.i);
+  if (!R.beginBattle(s)) throw new Error('could not begin the battle');
+}
+
 // ── A run ───────────────────────────────────────────────────────────────
 function playRun(seed) {
   const draw = R.drawLots(seed);
@@ -652,7 +804,7 @@ function playRun(seed) {
     R.turnPage(s, true); // the briefing
     prepare(s);
     if (!R.deployLineup(s)) throw new Error('could not deploy, seed ' + seed);
-    R.beginBattle(s); // the opening tiles stay as 整備 seated them
+    deploy(s);
     const rec = fight(s);
     run.boards.push(rec);
     R.settle(s);
@@ -672,7 +824,7 @@ function aggregate(runs) {
   }));
   const heroes = {};
   // The same, by map: each board's villains fight their own way, whichever stage meets them.
-  const maps = Array.from({ length: 10 }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {}, kind: null, sides: {}, side: 0, arrived: 0, enemies: 0, blocked: 0 }));
+  const maps = Array.from({ length: 10 }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {}, kind: null, sides: {}, side: 0, arrived: 0, enemies: 0, blocked: 0, lossLeader: 0, lossTime: 0, goalLeft: 0 }));
   let misfires = 0;
   for (const run of runs)
     for (const b of run.boards) {
@@ -681,6 +833,11 @@ function aggregate(runs) {
       for (const [k, n] of Object.entries(b.events || {})) M.events[k] = (M.events[k] || 0) + n;
       M.stages[b.stage + 1] = (M.stages[b.stage + 1] || 0) + 1;
       M.kind = b.kind;
+      if (!b.won) {
+        if (b.leaderFell) M.lossLeader++;
+        else M.lossTime++;
+        M.goalLeft += b.goalLeft;
+      }
       M.arrived += b.arrived;
       M.enemies += b.enemies;
       M.blocked += b.blocked;
@@ -753,6 +910,9 @@ function aggregate(runs) {
       winRate: r2(M.wins / M.reached),
       avgRounds: M.wins ? r1(M.rounds / M.wins) : null,
       hpLeft: M.wins ? r2(M.hpLeft / M.wins) : null,
+      lossLeader: M.lossLeader,
+      lossTime: M.lossTime,
+      goalLeftInLoss: M.lossLeader + M.lossTime ? r2(M.goalLeft / (M.lossLeader + M.lossTime)) : null,
       events: Object.fromEntries(Object.entries(M.events).map(([k, n]) => [k, r1(n / M.reached)])),
       kind: M.kind,
       sideRate: r2(M.side / M.reached),
@@ -795,9 +955,13 @@ function print(out) {
         ['basic', 'start', 'tier1', 'tier2', 'tier3', 'tier4', 'manual', 'wait'].map((k) => pad(pc(b.usage[k]), 7)).join('')
     );
   console.log('\nPer map (whichever stage it was met at; stages listed with their counts)');
-  console.log(pad('map', 4) + pad('name', 6) + lpad('runs', 5) + lpad('win', 6) + lpad('rnds', 6) + lpad('hp', 6) + '   stages');
+  console.log('(L:ldr, L:time: losses by the leader falling and by the round limit; goal: share of the objective\'s health still standing in a loss)');
+  console.log(pad('map', 4) + pad('name', 6) + lpad('runs', 5) + lpad('win', 6) + lpad('rnds', 6) + lpad('hp', 6) + lpad('L:ldr', 6) + lpad('L:time', 7) + lpad('goal', 6) + '   stages');
   for (const m of out.maps || [])
-    console.log(pad(m.map, 4) + pad(m.name, 6) + lpad(m.reached, 5) + lpad(pc(m.winRate), 6) + lpad(m.avgRounds, 6) + lpad(pc(m.hpLeft), 6) + '   ' + Object.entries(m.stages).map(([k, n]) => k + ':' + n).join(' '));
+    console.log(
+      pad(m.map, 4) + pad(m.name, 6) + lpad(m.reached, 5) + lpad(pc(m.winRate), 6) + lpad(m.avgRounds, 6) + lpad(pc(m.hpLeft), 6) + lpad(m.lossLeader, 6) + lpad(m.lossTime, 7) + lpad(pc(m.goalLeftInLoss), 6) + '   ' +
+        Object.entries(m.stages).map(([k, n]) => k + ':' + n).join(' ')
+    );
   console.log('\nKinds, secondaries and reinforcements per map (side: met over drawn, by kind; arr: wave pieces that entered, of all enemies)');
   console.log(pad('map', 4) + pad('name', 6) + pad('kind', 6) + lpad('side', 6) + lpad('arr', 6) + lpad('foes', 6) + lpad('blkd', 6) + '   by kind (met/failed/open of drawn; open: never met, or the board was lost)');
   for (const m of out.maps || [])
