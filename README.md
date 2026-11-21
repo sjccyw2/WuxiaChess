@@ -81,7 +81,8 @@ tools/
 Every visual upgrade layered on the original look has a switch in `game/src/polish.js`: board
 pieces, combat effects, lighting and water, panel finish, the loading veil, and the added
 controls (danger zone, `Tab` to the next hero, the side-docked strike forecast, and the
-action flow that replaces the four-button command bar). Set a switch to
+action flow that replaces the four-button command bar), the painted skill effects, and the
+marks for reinforcements and the secondary objective on the board. Set a switch to
 `false` to turn that one feature off; nothing else needs to change.
 
 To compare without editing the file:
@@ -91,6 +92,9 @@ To compare without editing the file:
 
 Styles for these features live in `styles/12-combat.css` and `styles/13-panels.css`, and every
 rule there is scoped under an `html.polish-…` class that the switch controls.
+
+The briefing page (軍情) and the deployment step before round one are game flow, not polish:
+they have no switch. Their styles are in `styles/14-battles.css`.
 
 ## How the story is put together
 

@@ -161,6 +161,8 @@ function sides() {
   return [index, ...pages];
 }
 
+// Rule words a guide paragraph is about, by the paragraph's title.
+const GUIDE_TERMS = { 布陣: ['deploy'], 敵援: ['waves', 'danger'], 支線: ['side', 'recruit'], 回合與養成: ['brace', 'medicine'] };
 // The in-game guide, paragraph by paragraph, and its line of keys.
 function guide() {
   const pages = G.guideEntries().map(([, title, body], i) => ({
@@ -173,6 +175,7 @@ function guide() {
       speech('指南原文', body),
       links('相關條目', [
         ...G.RULE_GROUPS.filter((g) => g.title === title).map(groupPage),
+        ...(GUIDE_TERMS[title] || []).map((id) => link('rules', id, G.RULE_TERMS[id].name)),
         link('rules', 'keys', '按鍵')
       ])
     ],
