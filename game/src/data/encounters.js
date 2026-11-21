@@ -7,7 +7,12 @@
 //   sig      { reach, power, turns, cadence, sweep, extra: 'pin' | 'line' | 'wound', heal, note }
 //   post     { tile: 'spawn' | 'master' | {x, y}, tether, wake: true | 'struck' | false, note }
 //   phase    { name, atk, def, step, range, cadence, prefers, brace, holds, flee, log, note }
-//   prefers, stance, redirect, contact, cover, banner, glide, basicPoison { power, turns, name }
+//   prefers, redirect, contact, banner, glide, basicPoison { power, turns, name }
+//   stance   { while: 'charged' | 'posted', cut, holds }: 'posted' (盾牆) cuts only on its post
+//   cover    'master' (takes blows for the board's master) | 'kin' (刀陣: for an adjacent piece
+//            of its own type with less 氣血)
+//   crowded  { within, atk }: 近身失準, its blows and counters on a hero that close are weaker
+//   execute  { atk }: 斬殘, its blows and counters on a hero at or below half are stronger
 //   ward     the share (percent) a living rank-and-file piece takes off its master's blows
 // A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
 // without traits plays exactly as before the redesign.

@@ -364,6 +364,11 @@ function slotId(map, slot) {
   const ids = map ? [CAPTAINS[map][0], 'echoBlade', 'echoBow', 'echoScout'] : FOES;
   return ids[SLOTS.indexOf(slot)];
 }
+// The DETAILS key of an actor id on this board, whether or not the piece is on it yet.
+const pieceKeyOf = (s, id) => {
+  const u = s.units?.find((v) => v.id === id);
+  return u ? pieceKey(u) : id.split('#')[0];
+};
 // A piece ref in board data: a slot of the fixed four, or an extra piece's own id.
 const refId = (map, ref) => (SLOTS.includes(ref) ? slotId(map, ref) : ref);
 // The DETAILS key a piece is described by.
@@ -563,7 +568,16 @@ function counterRatio(s, defender) {
 function stanceCut(s, v) {
   if (v.conditions?.stance) return v.conditions.stance.power;
   const stance = unitDetails(v)?.traits?.stance;
-  return stance && signatureDue(s, v) ? stance.cut || 0 : 0;
+  return stance && stanceHolds(s, v) ? stance.cut || 0 : 0;
+}
+// Whether a villain's `stance` is up now: 'charged' while its signature is due; 'posted' (盾牆)
+// while it stands exactly on its post, unwoken. A push off the tile ends it until it walks back.
+function stanceHolds(s, v) {
+  const t = unitDetails(v)?.traits;
+  if (!t?.stance) return false;
+  if (t.stance.while !== 'posted') return signatureDue(s, v);
+  const tile = t.post && !v.woke && s?.units ? postTile(s, v, t.post) : null;
+  return !!tile && v.x === tile.x && v.y === tile.y;
 }
 // 代受: who would take a direct blow aimed at t, if not t. A hero under the cover condition takes
 // it for any companion beside him; a piece with `cover: 'master'`, for its board's master. Of
@@ -573,9 +587,12 @@ function coverer(s, t) {
   let best = null;
   for (const v of s.units) {
     if (v === t || !living(v) || v.side !== t.side || distance(v, t) !== 1) continue;
+    const cover = !ally(v) && unitDetails(v)?.traits?.cover;
+    // 刀陣 ('kin'): one of a pair of the same type, the healthier taking the blow for the other.
     const covers = ally(v)
       ? !!v.conditions?.cover
-      : unitDetails(v)?.traits?.cover === 'master' && t.id === commanderId(s);
+      : (cover === 'master' && t.id === commanderId(s)) ||
+        (cover === 'kin' && pieceKey(v) === pieceKey(t) && v.hp > t.hp);
     if (covers && (!best || v.hp > best.hp)) best = v;
   }
   return best;
@@ -760,20 +777,33 @@ function signatureLines(s, u) {
 // The enemy page's lines for a board's piece as the board opens, with no game in progress (the
 // wiki reads these): seat 0 the master, 1 the lieutenant, 2 the archer, 3 the scout.
 function boardLines(map, seat, stage) {
-  const keys = encounterKeys(map),
+  return pieceLines(map, SLOTS[seat], stage);
+}
+// The same for any piece ref of the board (battles.js): every piece the board opens with, and
+// the ref's own wave piece as it enters, stand as ghosts at their tiles.
+function pieceLines(map, ref, stage) {
+  const s = { mapIndex: map, round: 1, run: { stage }, units: [] };
+  const rows = stageRows(map, stage),
+    keys = encounterKeys(map),
     layout = mapLayout(map);
-  const ids = map ? [CAPTAINS[map][0], 'echoBlade', 'echoBow', 'echoScout'] : FOES;
-  const units = keys.map((k, i) => ({
-    id: ids[i],
-    ...(i ? { encounterId: k } : {}),
-    side: 'enemy',
-    hp: 1,
-    maxHp: 1,
-    ...layout.enemies[i],
-    range: DETAILS[k]?.traits?.mods?.range ?? 1
-  }));
-  const s = { mapIndex: map, round: 1, run: { stage }, units };
-  return [...signatureLines(s, units[seat]), ...enemyTraitLines(s, units[seat])];
+  SLOTS.forEach((slot, i) => {
+    const [hp, atk, def, step, range] = withMods(rows[slot], DETAILS[keys[i]]?.traits?.mods);
+    const p = layout.enemies[i];
+    const u = makeUnit(slotId(map, slot), 'enemy', p.x, p.y, hp, 0, atk, def, step, range);
+    if (i) u.encounterId = keys[i];
+    s.units.push(u);
+  });
+  const board = BATTLES[map];
+  s.units.push(...board.pieces.map((piece) => pieceUnit(s, piece)));
+  const id = refId(map, ref);
+  let u = s.units.find((v) => v.id === id);
+  if (!u) {
+    const found = pieceDef(s, id);
+    if (!found) return [];
+    u = pieceUnit(s, found.def, found.wave.when.round ?? null);
+    s.units.push(u);
+  }
+  return [...signatureLines(s, u), ...enemyTraitLines(s, u)];
 }
 // The reach an enemy strikes with once its signature is due.
 function strikeReachWhenDue(s, u) {
@@ -824,7 +854,10 @@ function enemyTraitLines(s, u) {
   }
   if (t.contact)
     say('化功', '貼身打中他的俠客損失 ' + (t.contact.mp + stage) + ' 點內力（封穴時無效）。');
-  if (t.stance) {
+  if (t.stance?.while === 'posted') {
+    const tile = t.post && postTile(s, u, t.post);
+    say('盾牆', '站在原位' + (tile ? tileName(tile) : '') + '時，受到的傷害減 ' + t.stance.cut + '%；被推離原位便失去盾牆，走回後恢復。');
+  } else if (t.stance) {
     const r = COUNTS[strikeReachWhenDue(s, u)];
     say(
       '蓄勢反擊',
@@ -854,6 +887,14 @@ function enemyTraitLines(s, u) {
         (t.basicPoison.power + Math.floor(stage / 2)) +
         ' 氣血。'
     );
+  if (t.crowded)
+    say(
+      '近身失準',
+      (t.crowded.within === 1 ? '對相鄰的俠客' : '對 ' + t.crowded.within + ' 格以內的俠客') +
+        '出手或還擊時，攻擊 −' + t.crowded.atk + '。'
+    );
+  if (t.execute) say('斬殘', '對氣血不過半的俠客出手或還擊時，攻擊 ＋' + executeBonus(s, t) + '。');
+  if (t.cover === 'kin') say('刀陣', '相鄰的另一名' + info.name + '氣血較多時，替他承受俠客的直接攻擊。');
   if (t.prefers) say('偏好', PREFERS[t.prefers] + '。');
   const phase = info.traits?.phase;
   if (phase)
@@ -866,6 +907,13 @@ function enemyTraitLines(s, u) {
       '遁走中',
       '至第 ' + u.fleeThrough + ' 回合，或氣血回到 ' + Math.round(phase.flee.until * u.maxHp) + ' 為止。'
     );
+  const masters = s.units ? masterIds(s) : [];
+  if (masters.length > 1 && masters.includes(u.id)) {
+    const other = masters.filter((id) => id !== u.id).map((id) => DETAILS[pieceKeyOf(s, id)]?.name);
+    say('雙局主', '與' + other.join('、') + '同為局主，兩人都倒下才算取勝。');
+  }
+  const wave = u.enteredRound != null && s.units && pieceDef(s, u.id)?.wave;
+  if (wave) say('援軍', '第' + NUMERALS[u.enteredRound - 1] + '回合自' + wave.place + '入場。');
   return lines;
 }
 DETAILS.echoBlade = {
@@ -1631,13 +1679,28 @@ function strikeFactor(s, u, art, t = null) {
   if (extra) factor = Math.round((factor + extra) * 1e6) / 1e6;
   return { factor, notes };
 }
-function attackPower(s, u, art, basic = basicFor(u), target = null) {
+// `struckHp` is the target's 氣血 as the blow lands, where that differs from now (a counter
+// comes after the striker has paid for his action).
+function attackPower(s, u, art, basic = basicFor(u), target = null, struckHp = target?.hp) {
   const base = art
     ? stat(u, 'power', s) + 4
     : (basic.basicBonus || 0) + commandBonus(s, u, 'basic');
   const pursuit = target && target.hp <= target.maxHp / 2 ? commandBonus(s, u, 'pursuit') : 0;
-  return stat(u, 'atk', s) * (art ? strikeFactor(s, u, art, target).factor : 1) + base + pursuit;
+  const atk = stat(u, 'atk', s) - traitEdge(s, u, target, struckHp);
+  return atk * (art ? strikeFactor(s, u, art, target).factor : 1) + base + pursuit;
 }
+// What a villain's own traits take off (+) or add to (−) its attack against this hero, blows and
+// counters alike: 近身失準 (`crowded`) when the hero stands within its distance, 斬殘 (`execute`)
+// when the hero is at or below half.
+function traitEdge(s, u, target, struckHp = target?.hp) {
+  if (!target || ally(u) || !ally(target)) return 0;
+  const t = traitsOf(u);
+  let edge = 0;
+  if (t.crowded && distance(u, target) <= t.crowded.within) edge += t.crowded.atk;
+  if (t.execute && struckHp <= target.maxHp / 2) edge -= executeBonus(s, t);
+  return edge;
+}
+const executeBonus = (s, t) => t.execute.atk + Math.floor((s?.run?.stage || 0) / 2);
 function damage(
   u,
   t,
@@ -1645,13 +1708,14 @@ function damage(
   map = 0,
   s,
   art = skill ? artFor(u) : null,
-  basic = basicFor(u)
+  basic = basicFor(u),
+  struckHp = t.hp
 ) {
   const protection = stat(t, 'def', s) + tileInfo(t.x, t.y, map).defense + (t.brace ? 4 : 0);
   const pierce = art ? art.pierce || 0 : commandBonus(s, u, 'pierce') / 100;
   return Math.max(
     3,
-    Math.round(attackPower(s, u, art, basic, t) - protection * 0.65 * (1 - pierce))
+    Math.round(attackPower(s, u, art, basic, t, struckHp) - protection * 0.65 * (1 - pierce))
   );
 }
 // 內傷 (§5): a wounded unit gets half of every heal, rounded down, before the cap at its missing
@@ -1836,6 +1900,8 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   // The receiver's own defences, before its shield.
   const blow = received(s, t, result.rawHits);
   result.rawHits = blow.hits;
+  const wall = unitDetails(t)?.traits?.stance;
+  if (wall?.while === 'posted' && !blow.void && stanceHolds(s, t)) result.notes.push('盾牆 · 傷害 −' + wall.cut + '%');
   let shield = t.conditions?.shield?.power || 0;
   result.hits = result.rawHits.map((hit) => {
     const stopped = Math.min(hit, shield);
@@ -1881,12 +1947,19 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
             }
           }
         : t;
+    // The counter comes once the striker has paid his action's 氣血.
+    const after = u.hp - result.hpCost;
     result.counterRaw = afterCut(
-      Math.max(2, Math.round(damage(reply, u, false, s?.mapIndex, s) * share)),
+      Math.max(2, Math.round(damage(reply, u, false, s?.mapIndex, s, null, basicFor(reply), after) * share)),
       stanceCut(s, u)
     );
     result.counter = Math.max(0, result.counterRaw - (u.conditions?.shield?.power || 0));
     if (share === 1 && !t.conditions?.stance) result.notes.push('蓄勢反擊 · 還擊全力');
+    const traits = traitsOf(t);
+    if (traits.crowded && distance(t, u) <= traits.crowded.within)
+      result.notes.push('近身失準 · 還擊攻擊 −' + traits.crowded.atk);
+    if (traits.execute && after <= u.maxHp / 2)
+      result.notes.push('斬殘 · 還擊攻擊 ＋' + executeBonus(s, traits));
   }
   if (s && (art?.splash || result.forms.includes('line') || result.forms.includes('arc'))) {
     const targets = secondaryTargets(s, u, t, result.push || t, art, result.forms, walkable);
@@ -2782,6 +2855,7 @@ function enemyAction(s, u) {
   let best = null;
   const range = strikeReach(s, u);
   const lineDue = !!lineKind(strikingSignature(s, u));
+  const crowded = traitsOf(u).crowded;
   const approach = new Map(
     friends.map((target) => {
       const positions = fieldCells(s.mapIndex).filter((cell) => {
@@ -2815,7 +2889,9 @@ function enemyAction(s, u) {
           c.n * 2 +
           tileInfo(c.x, c.y, s.mapIndex).defense * 0.4 +
           // 穿行: a line signature looks for a tile with a second hero straight behind its mark.
-          (can && lineDue && lineVictim(s, c, t) ? 30 : 0);
+          (can && lineDue && lineVictim(s, c, t) ? 30 : 0) -
+          // 近身失準: it would rather strike from beyond its weak distance.
+          (can && crowded && d <= crowded.within ? crowded.atk * 4 : 0);
       if (!best || score > best.score) best = { c, t, can, score };
     }
   u.acted = true;
@@ -3089,4 +3165,4 @@ function nextRound(s) {
   return true;
 }
 
-export { KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

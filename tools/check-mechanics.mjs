@@ -3300,7 +3300,7 @@ section('board 8 倒影天街: the masked duelist');
   const s = realBoard(8, 8);
   const [yue, lao, bow, scout] = foesOf(s);
   check('岳不群 and 勞德諾 have the spec’s numbers', same(numbersOf(yue), [555, 82, 23, 4, 1]) && same(numbersOf(lao), [296, 76, 15, 4, 2]), numbersOf(yue) + ' / ' + numbersOf(lao));
-  check('岳不群’s page', same(pageOf(s, yue).slice(1), ['【游擊】出手後退開至多 2 步，離俠客越遠越好。', '【半血變招 · 辟邪現形】移動 ＋2、防禦 −3，絕技每兩回合一次。']), JSON.stringify(pageOf(s, yue)));
+  check('岳不群’s page', same(pageOf(s, yue).slice(1), ['【游擊】出手後退開至多 2 步，離俠客越遠越好。', '【半血變招 · 辟邪現形】移動 ＋2、防禦 −3，絕技每兩回合一次。', '【雙局主】與鮮于通同為局主，兩人都倒下才算取勝。']), JSON.stringify(pageOf(s, yue)));
   check('勞德諾 hunts the leader', same(G.enemyTraitLines(s, lao), ['【偏好】專挑領隊。']));
   check('the archer holds the footbridge', same(G.enemyTraitLines(s, bow), ['【坐鎮】守在橋頭（13，5）一格內，不離位。']) && G.unitDetails(scout).name === '嵩山密探');
   check('the posts are ground the heroes can walk to', postsReachable(s));
