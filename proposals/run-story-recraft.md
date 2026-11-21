@@ -1,6 +1,6 @@
 # Proposal: the story of one run, rebuilt on the game as it now plays
 
-> For the producer. Written 2026-11-21 by the story designer.
+> For the producer. Written 2026-11-21 by the story designer. 繁體中文版：`run-story-recraft.zh-Hant.md`（內容相同）。
 > **Status: direction approved by the producer on 2026-11-21** (all fourteen questions answered in the session; section 9). Nothing in the game text, the two design documents or the wiki has been changed yet.
 > Scope: the per-run story (`wiki/content/單輪劇本.md`). The world view (§0 to §6) and the five-volume arc (§8) are treated as fixed.
 > Chinese lines below are samples to set the tone. The rewrite is a separate task, and it carries these decisions into the two design documents.
@@ -10,7 +10,7 @@
 1. **The one opposite is playing, not posing a puzzle.** Every black stone lands with a 「嗒」 on the stone table. Stones he sets down during a board are the reinforcements, and the youth hears the stone one round before the person arrives.
 2. **The 劍意 decides only that a black stone fights. How he fights is his own.** Each adversary's behaviour is the man showing through, and at half health he is half awake (半醒): his own habits come back before the will lets go.
 3. **A board's kind is where its 劍意 sits:** on one brow (斬將), on two (兩位局主), on everyone (殲滅), and later on a thing or a place (破, 守, 奪, 脫出).
-4. **Heroes remember their lives upward.** A single thought has no body, so only what the hands knew earliest arrives. The rest returns one art at a time, and the art that made their name returns last, together with what it cost.
+4. **Heroes remember their lives upward.** A single thought has no body, so only what the hands know best arrives. The rest returns one art at a time, and the art that made their name returns last, together with what it cost.
 5. **A win is proof.** A half-lit white stone at the board's edge is someone holding the letter and hesitating. Win the board and that person believes the match can be won.
 6. **The secondary is 韋小寶's side bet (盤口).** He cannot watch a game without opening a book on it. Twelve kinds of secondary are twelve bets, and he pays in silver, a manual from his stock, or a fight so well fought that the hands remember.
 
@@ -20,7 +20,7 @@ Three of these were real choices with alternatives (section 6). The producer cho
 
 ## 1. The premise of a run
 
-**One paragraph.** A run is one sitting of a ten-board match that is being played live. The youth falls asleep in his own years, opens his eyes in the valley and holds white: he sees the whole board, and the heroes on it see only a few steps. The one opposite holds black and is never seen, only heard: each stone he sets down lands on the stone table with a 「嗒」, and a moment later a person stands on the board. Black stones did not choose to come. A 劍意 on their brows makes them fight whoever arrives, but it does not tell them how, so each fights exactly as he always has, and every blow that lands wakes him a little. White stones chose: they answered an unsigned letter at the edge of death. What answered is a single thought, and a thought has no body, so each hero arrives with only what the hands knew earliest. They remember the rest of their lives as the boards press them, and the art that made their name comes back last, with its cost. Each board won is proof that the match can be won, and one more person who was holding the letter steps in. 韋小寶, the only living man there, opens a side bet on every board. Ten wins send the heroes home with 一悟. The youth climbs to the one who carved the stone, loses in one move, hears 「還不夠」, and closes his eyes.
+**One paragraph.** A run is one sitting of a ten-board match that is being played live. The youth falls asleep in his own years, opens his eyes in the valley and holds white: he sees the whole board, and the heroes on it see only a few steps. The one opposite holds black and is never seen, only heard: each stone he sets down lands on the stone table with a 「嗒」, and a moment later a person stands on the board. Black stones did not choose to come. A 劍意 on their brows makes them fight whoever arrives, but it does not tell them how, so each fights exactly as he always has, and every blow that lands wakes him a little. White stones chose: they answered an unsigned letter at the edge of death. What answered is a single thought, and a thought has no body, so each hero arrives with only what the hands know best. They remember the rest of their lives as the boards press them, and the art that made their name comes back last, with its cost. Each board won is proof that the match can be won, and one more person who was holding the letter steps in. 韋小寶, the only living man there, opens a side bet on every board. Ten wins send the heroes home with 一悟. The youth climbs to the one who carved the stone, loses in one move, hears 「還不夠」, and closes his eyes.
 
 **What changed from the current premise.**
 
@@ -31,7 +31,7 @@ Three of these were real choices with alternatives (section 6). The producer cho
 | Rank and file | Not explained | 念中人: people the master's own thought brought with him. They are not summoned thoughts, so the rule 只見入道者 holds. They fade when he wakes |
 | What the will does | Makes them fight | Makes them fight, and nothing more. Manner, habits and tricks are the man's own. Half health is half awake |
 | Why this board is fought this way | One reason for all ten | The board's kind is where the 劍意 sits |
-| Heroes' arts | One shared line; bios and tree introductions still describe the old state | Arts live in the body, and only a thought came. The hands keep what they knew earliest; the famous art returns last, with its cost |
+| Heroes' arts | One shared line; bios and tree introductions still describe the old state | Arts live in the body, and only a thought came. The hands keep what they know best; the famous art returns last, with its cost |
 | A new hero | Came because the secondary was met | Comes because the board was won. A win is proof |
 | The secondary | 盤外觀望的人 judging the win | 韋小寶's side bet |
 | 軍情 and 起陣 | No voice | The youth reading the board before anyone steps onto it; the stone still in his hand |
@@ -246,7 +246,7 @@ First board, after the leader's answer (spine; 韋小寶 is the one who would kn
 | Who | Line |
 |---|---|
 | 旁白 | 三個人各自起了個手勢，都只起到一半，停住了。 |
-| 韋小寶 | 「不用慌，個個來到都是這樣。最早學的那一樣還在手上，後來的，打幾場自己會回來。……我說了『個個』麼？你聽錯了。」 |
+| 韋小寶 | 「不用慌，個個來到都是這樣。最熟的那一樣還在手上，後來的，打幾場自己會回來。……我說了『個個』麼？你聽錯了。」 |
 
 Above every tree (`RECALL_NOTE`, the decided line kept, one sentence added):
 
