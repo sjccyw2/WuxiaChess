@@ -90,7 +90,16 @@ const WARES = {
     icon: 'diamond',
     desc: '玉中隱有潮聲，絕技威力增加 12。'
   },
-  greatPill: { name: '大還丹', kind: 'use', hp: 92, icon: 'bottle', desc: '服下回復 92 點氣血。' }
+  greatPill: { name: '大還丹', kind: 'use', hp: 92, icon: 'bottle', desc: '服下回復 92 點氣血。' },
+  // A heavy blade: the most attack of any weapon, paid for in footwork.
+  dragonSaber: {
+    name: '屠龍刀',
+    kind: 'weapon',
+    atk: 17,
+    step: -1,
+    icon: 'sword',
+    desc: '刀身烏沉，重逾百斤，揮動須站穩腳步。攻擊增加 17，移動減少 1 格。'
+  }
 };
 const CAPTAINS = [
   'chief',

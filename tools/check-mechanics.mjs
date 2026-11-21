@@ -3356,6 +3356,38 @@ section('board 9 無刻漏臺: the mirror');
   check('one rope down: the ward is 35% and the log says so', G.wardShare(s, mu) === 35 && s.logs.some((l) => l.text === '一條星索斷了。慕容博的護勁降至三成半。'));
 }
 
+// ── The shop's new items ──────────────────────────────────────────────────
+section('items');
+{
+  // 屠龍刀: the most attack of any weapon, one step less, 定勢 on the basic attack.
+  const w = board();
+  const bearer = unit(w, 'guard');
+  const step = G.stat(bearer, 'step', w),
+    atk = G.stat(bearer, 'atk', w);
+  bearer.weapon = 'dragonSaber';
+  check('屠龍刀 adds 17 attack and costs a step', G.stat(bearer, 'atk', w) === atk - (G.ITEMS[G.startingHero('guard').weapon].atk || 0) + 17 && G.stat(bearer, 'step', w) === step - 1);
+  check('its basic attack carries 定勢', G.formsFor(bearer, null).includes('still'));
+  check('no shop weapon out-hits it', Object.entries(G.ITEMS).every(([id, it]) => it.kind !== 'weapon' || id === 'dragonSaber' || (it.atk || 0) < 17));
+
+  // Taking an item out of the shop is one line: off the table, never on the shelf or under a cup.
+  const offered = (id) => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const c = board();
+      c.run.seed = seed;
+      c.run.stage = 5;
+      c.run.last = { won: true, terminal: false };
+      if (FM.makeOffers(c).some((o) => o.id === id)) return true;
+    }
+    return false;
+  };
+  check('屠龍刀 reaches the shelf in later stages', offered('dragonSaber'));
+  const line = FM.MARKET_STOCK.dragonSaber;
+  delete FM.MARKET_STOCK.dragonSaber;
+  check('deleting its line keeps it off the shelf', !offered('dragonSaber'));
+  check('and out of the cups', !FM.validVisit({ cards: ['dragonSaber', 'remedy', 'jade'], order: [0, 1, 2], phase: 'show', pick: null }));
+  FM.MARKET_STOCK.dragonSaber = line;
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

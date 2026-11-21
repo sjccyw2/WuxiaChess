@@ -3,7 +3,7 @@ import * as G from '../rules/game.js';
 import { seatsFor } from '../rules/formation.js';
 import { mapLayout } from '../data/terrain.js';
 import { art } from './artwork.js';
-import { face, btn, esc } from './panels.js';
+import { face, btn, esc, itemBonus } from './panels.js';
 import { icon } from './icons.js';
 import { itemPicture } from './item-art.js';
 
@@ -176,19 +176,7 @@ function formationCards(s, u, ui) {
     '</section>'
   );
 }
-function bonus(item) {
-  return [
-    ['atk', '攻擊'],
-    ['def', '防禦'],
-    ['power', '絕技威力'],
-    ['step', '移動'],
-    ['hp', '氣血'],
-    ['mp', '內力']
-  ]
-    .filter(([k]) => item[k])
-    .map(([k, n]) => n + ' ＋' + item[k])
-    .join(' · ');
-}
+const bonus = itemBonus;
 function available(s, u) {
   const entries = [];
   for (const [id, item] of Object.entries(G.ITEMS)) {

@@ -122,7 +122,8 @@ const WEAPON_FORMS = {
   ironFan: ['mark', 'overflow'],
   silkWhip: ['pull', 'pin'],
   travelBlade: ['arc'],
-  starSteel: ['line']
+  starSteel: ['line'],
+  dragonSaber: ['still']
 };
 
 const COMBINATIONS = [
