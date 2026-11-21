@@ -12,8 +12,14 @@ export const GROUPS = ['開場與操作', '戰盤與指令', '整備與陣容', 
 
 // The group a file's text falls under when nothing more specific is listed.
 export const FILE_GROUP = {
+  'src/ui/action-flow.js': '戰盤與指令',
   'src/actors/actors.js': '戰盤與指令',
+  'src/actors/tokens.js': '戰盤與指令',
   'src/app.js': '系統與提示',
+  'src/data/battles.js': '目標與棋路',
+  'src/ui/field-extras.js': '戰盤與指令',
+  'src/ui/phase-banner.js': '戰盤與指令',
+  'src/data/rule-terms.js': '開場與操作',
   'src/ui/armory-views.js': '行裝與商肆',
   'src/rules/battle-mastery.js': '武學與效果',
   'src/ui/bowl-views.js': '行裝與商肆',

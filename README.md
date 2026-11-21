@@ -40,7 +40,7 @@ game/
     app.js            entry point: screens, input, save/load
     polish.js         presentation switches: one per visual upgrade (see below)
     loading.js        lifts the loading veil and fetches the dialog font early
-    data/             content tables: heroes, arts, foes, maps, story (see below)
+    data/             content tables: heroes, arts, foes, maps, battles, rule words, story (see below)
     rules/            game logic: combat, journey, shop, formations
     scene/            3D battlefield, camera, scenery, landforms
     actors/           sprites and movement on the board
@@ -117,9 +117,10 @@ The wiki holds no copy of the game's data. When the page opens it imports the ga
 | 群俠列傳 | `catalog/heroes.js` | hero details, starting stats, leader commands, art trees |
 | 武學總譜 | `catalog/skills.js` | every technique; numbers come from the game's own `moveFacts()` |
 | 百物譜 | `catalog/items.js` | items, shop prices, manuals |
-| 群敵錄 | `catalog/foes.js` | encounters and troop types |
-| 江湖人物 | `catalog/folk.js` | the youth, 韋小寶, and the shadow to be saved on each board |
-| 任務簿 | `catalog/missions.js` | side objectives, trials, rewards, growth numbers |
+| 群敵錄 | `catalog/foes.js` | each board's master and lieutenant, the villains who join them, and troop types |
+| 江湖人物 | `catalog/folk.js` | the youth, the eagle and 韋小寶 |
+| 任務簿 | `catalog/missions.js` | each board's battle (how it is won, its enemies and reinforcements, its pool of secondaries) and the heroes' trials |
+| 戰鬥規則 | `catalog/rules.js` | every rule word (`data/rule-terms.js`) with the arts, items and enemies that carry it; the kinds of secondary; growth numbers; the in-game guide and its keys |
 | 十局輿圖 | `catalog/maps.js` | map layouts and terrain |
 | 局中紀事 | `catalog/story.js` | all scripted dialogue and narration |
 | 遊戲原文 | `corpus/` | every Chinese string in the game's source, found by parsing the files |
@@ -136,6 +137,14 @@ What is written by hand in the wiki:
 - The ten map pictures in `wiki/assets/`. The clickable terrain grid beside them is live.
 
 When the wiki needs something new from the game, export it from the game module and add that module to `game-data.js`. Do not copy values into the wiki.
+
+### Rule words
+
+`game/src/data/rule-terms.js` holds the game's rule words (連環, 露空, 坐鎮, 援軍 …), one sentence each, and the paragraphs of the in-game guide. The guide (`ui/panels.js`, `helpPage`) and the wiki's 戰鬥規則 section both read it, so a rule is worded once.
+
+- **Adding a mechanic:** add its term there, with the field that carries it (`art`, `item`, `trait`, `condition` or `form`). The wiki then gives it a page and lists every art, item and enemy that has it, and those pages link back.
+- **What stops the wiki falling behind:** `node tools/check-wiki.mjs` fails when an art, item or enemy carries a field no term accounts for, when an enemy, board piece, kind of battle or kind of secondary has no page, or when a page shows a value that failed to resolve.
+
 
 ## Checks
 
