@@ -60,8 +60,10 @@ wiki/
     catalog/          builds each wiki section from game data
     corpus/           lists every line of in-game text
     view/             draws the pages
-asset-gen/
+asset-gen/            art not yet in the game (see asset-gen/README.md)
   prompts.md          prompts for the art the story still needs
+  jianying-roster-art/  thirty characters: portrait and sprite sheet each
+  jianying-item-art/    eight skill effects and thirty-two item pictures
 tools/
   check-wiki.mjs      builds the wiki outside a browser and checks its links
   check-story.mjs     plays hundreds of shuffled runs and checks the story holds
