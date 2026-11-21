@@ -12,6 +12,7 @@ import { skills } from './skills.js';
 import { items } from './items.js';
 import { missions } from './missions.js';
 import { maps } from './maps.js';
+import { rules } from './rules.js';
 
 export function buildCatalog() {
   return {
@@ -29,6 +30,7 @@ export function buildCatalog() {
       skills: skills(),
       items: items(),
       missions: missions(),
+      rules: rules(),
       maps: maps()
     }
   };

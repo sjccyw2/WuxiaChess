@@ -7,16 +7,19 @@ import { GAME_ROOT } from './game-data.js';
 
 // Files whose text is shown to players. Scenery modules only build 3D models and are skipped.
 export const TEXT_FILES = [
+  'src/ui/action-flow.js',
   'src/actors/actors.js',
   'src/app.js',
   'src/ui/armory-views.js',
   'src/rules/battle-mastery.js',
+  'src/data/battles.js',
   'src/scene/board.js',
   'src/ui/bowl-views.js',
   'src/ui/company-views.js',
   'src/data/encounter-script.js',
   'src/data/encounters.js',
   'src/rules/ferry-market.js',
+  'src/ui/field-extras.js',
   'src/ui/field-hud.js',
   'src/data/form-catalog.js',
   'src/rules/form-rules.js',
@@ -33,9 +36,12 @@ export const TEXT_FILES = [
   'src/rules/move-facts.js',
   'src/data/new-heroes.js',
   'src/ui/panels.js',
+  'src/ui/phase-banner.js',
+  'src/data/rule-terms.js',
   'src/ui/run-views.js',
   'src/fx/technique-strokes.js',
   'src/data/terrain.js',
+  'src/actors/tokens.js',
   'src/data/wake-tale.js',
   'src/ui/wake-views.js'
 ];

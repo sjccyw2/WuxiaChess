@@ -9,6 +9,7 @@ export const NOTES = {
     gear: '拖到俠客、身形圖或護具欄。',
     use: '共用藥箱。每次扣一份，服藥不耗移動或行動，沒有每回合次數限制。'
   },
+  notSold: '通吃坊不售。',
   manualUse: '每冊只授一人，授予後仍須滿足先修。',
   manualSource: '通吃坊購得，或三盅賭局所得。將武譜交給指定俠客後，才會出現在其授譜頁。',
   bossSignature:
@@ -19,6 +20,8 @@ export const NOTES = {
     '第二回合起蓄勢。蓄滿後保持，三格內有同夥氣血不足七成才施展，否則以普攻出手。施展後相隔三回合可再用。封穴時無法施展。',
   mirrorSignature:
     '首五局第三回合起蓄勢，後五局從第二回合起。蓄滿後保持，直到第一次受到直接攻擊；吸勁可使它延後。封穴時無效。',
+  waveSignature: '隨援軍入場的局主或副手，從入場那一回合起算蓄勢，回合數與開局在場者相同。',
+  noGist: '沒有特別的打法。',
   phaseCadence: (n) => '半血變招後改為相隔' + '一二三四五'[n - 1] + '回合。',
 
   // Sentences built around numbers the game exports (REWARDS, GROWTH, raiseLevel).

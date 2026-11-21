@@ -10,7 +10,8 @@ export function heroes() {
     const d = G.DETAILS[id],
       unit = G.startingHero(id),
       path = G.HERO_PATHS[id],
-      command = G.COMMANDS[id];
+      command = G.COMMANDS[id],
+      partner = G.PARTNERS[id];
     return {
       id,
       name: d.name,
@@ -21,7 +22,8 @@ export function heroes() {
         rows('人物誌', [
           ['稱號', d.epithet],
           ['原著', G.BOOKS[id]],
-          ['門派', d.school]
+          ['門派', d.school],
+          partner && ['合璧之人', G.DETAILS[partner].name + '：相鄰時，合璧之招倍率更高']
         ]),
         rows('初始屬性', [
           ['氣血', unit.maxHp],
@@ -44,8 +46,10 @@ export function heroes() {
           link('skills', 'signature-' + id, d.skill),
           link('items', unit.weapon, G.ITEMS[unit.weapon].name),
           ...Object.entries(G.TALENTS).map(([key, t]) => link('skills', key, t.name))
-        ])
-      ],
+        ]),
+        partner && links('合璧', [link('heroes', partner, G.DETAILS[partner].name), link('rules', 'paired', G.RULE_TERMS.paired.name)]),
+        speech('想起武學', G.RECALL_NOTE)
+      ].filter(Boolean),
       sources: cites(
         cite(d.name, 'src/data/new-heroes.js', 'src/rules/game.js'),
         cite(path.title, 'src/data/mastery-catalog.js'),

@@ -377,4 +377,4 @@ function paintGauge(layer, u, g) {
   }
 }
 
-export { paintBase, paintGauge };
+export { paintBase, paintGauge, STATUS_SIGNS };

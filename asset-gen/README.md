@@ -29,7 +29,7 @@ Who may be used, by the producer's ruling of 2026-11-21:
 
 | Group | Characters | Status |
 | --- | --- | --- |
-| Villains to join the existing boards now, each with a troop type | 鳳天南 `fengTiannan` + 五虎門棍徒 `fiveTiger` (青竹渡); 張召重 `zhaoZhong` + 清營刀盾兵 `qingShield` (紅楓驛); 完顏洪烈 `wanYan` + 趙王府弓手 `jinBow` (襄陽殘垣); 鮮于通 `xianYu` + 華山刀陣弟子 `huaBlade` (倒影天街); 萬震山 `wanZhen` + 萬門劍徒 `wanDisciple` (無刻漏臺) | Art is in `game/assets/` (roadmap 0.12). Their places on the boards and placeholder text arrive with the battle variety work (0.11). |
+| Villains to join the existing boards now, each with a troop type | 鳳天南 `fengTiannan` + 五虎門棍徒 `fiveTiger` (青竹渡); 張召重 `zhaoZhong` + 清營刀盾兵 `qingShield` (紅楓驛); 完顏洪烈 `wanYan` + 趙王府弓手 `jinBow` (襄陽殘垣); 鮮于通 `xianYu` + 華山刀陣弟子 `huaBlade` (倒影天街); 萬震山 `wanZhen` + 萬門劍徒 `wanDisciple` (無刻漏臺) | In the game since 2026-11-21, on the boards named (`game/src/data/battles.js`), with placeholder text (roadmap 0.12). |
 | Villains kept for new stages, each with a troop type | 東方不敗 `dongFang` + 黑木崖侍衛 `heiMuGuard`; 李秋水 `liQiu` + 西夏宮禁衛 `xiaGuard`; 洪安通 `hongAn` + 神龍教青龍門眾 `shenLong`; 裘千仞 `qiuRen` + 鐵掌幫拳手 `ironPalm`; 公孫止 `gongSun` + 絕情谷網手 `netHand` | Do not use on the existing boards. |
 | New heroes | 蕭峰 `qiaoFeng`, 虛竹 `xuZhu`, 洪七公 `hongQi`, 黃藥師 `yaoShi`, 張三丰 `sanFeng`, 趙敏 `zhaoMin`, 程靈素 `lingSu`, 狄雲 `diYun`, 袁承志 `chengZhi`, 阿青 `aQing` | Do not use. The producer will add them (roadmap 3.3). |
 
