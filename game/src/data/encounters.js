@@ -398,8 +398,8 @@ const ENCOUNTERS = [
 ];
 // The rank and file of each board, by board: { bow: {...}, scout: {...} }, each with the fields
 // of a DETAILS entry (name, role, school, mini, basic, bio) and optionally `traits` (only `mods`,
-// `post`, `cover`, `prefers`, `basicPoison` and `glide` apply to them). A board left empty keeps
-// the shared 黑子 pieces.
+// `post`, `cover`, `prefers`, `basicPoison`, `glide`, `crowded`, `execute` and `stance` with
+// `while: 'posted'` apply to them). A board left empty keeps the shared 黑子 pieces.
 const RANKS = [
   // ── board 0
   // Board 0: the 青城 archer and scout keep the shared pieces' text.
@@ -666,7 +666,162 @@ const VILLAIN_FORMS = {
   辟邪劍法: [1.32, 'shangYang'],
   嵩山快劍: [1.21, 'snowPursuit'],
   斗轉星移: [0, 'universeCanopy'],
-  火焰刀: [1.27, 'tideBreaker']
+  火焰刀: [1.27, 'tideBreaker'],
+  橫棍封橋: [1.15, 'beggarBind'],
+  凝碧截腕: [1.18, 'shangYang'],
+  趙府令旗: [1.1, 'foxFeint'],
+  金蠶蠱毒: [1.12, 'blackNeedle'],
+  唐詩劍法: [1.2, 'snowPursuit']
 };
 
-export { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS };
+// The villains added to the existing boards (battles.js). `rank` 'boss' is a 局主, 'mini' a 副手;
+// `row` the stage row their numbers come from (game.js stageRows); `map` the one board each
+// stands on. Their bios are placeholders that say who they are and how they fight, no story.
+const VILLAINS = {
+  fengTiannan: {
+    map: 0,
+    rank: 'mini',
+    row: 'lieutenant',
+    ...adversary('鳳天南', '佛山五虎門', '飛狐外傳', '五虎棍', '橫棍封橋', 'pin', 'guard',
+      '佛山五虎門掌門，使一條長棍，出手專絆人腳步。', 'fengTiannan', '', { mods: { step: 3 } })
+  },
+  zhaoZhong: {
+    map: 1,
+    rank: 'mini',
+    row: 'lieutenant',
+    ...adversary('張召重', '武當派・清廷', '書劍恩仇錄', '武當劍術', '凝碧截腕', 'weak', 'hero',
+      '武當出身的清廷武官，劍法沉穩，出手專截對手手腕。', 'zhaoZhong', '', {
+        mods: { def: 2, step: 3 },
+        prefers: 'leader',
+        post: { tile: 'spawn', tether: 2, wake: 'struck', note: '守在東院{tile}兩格內；受到攻擊後才離位。' }
+      })
+  },
+  wanYan: {
+    map: 6,
+    rank: 'mini',
+    row: 'lieutenant',
+    ...adversary('完顏洪烈', '金國趙王府', '射鵰英雄傳', '王府侍從截擊', '趙府令旗', 'exposed', 'guo',
+      '金國趙王，不親自衝陣，以令旗指揮弓手。', 'wanYan', '', { mods: { hp: 0.9, atk: -2 }, sig: { reach: 3 } })
+  },
+  xianYu: {
+    map: 8,
+    rank: 'boss',
+    row: 'master',
+    ...adversary('鮮于通', '華山派', '倚天屠龍記', '摺扇點穴', '金蠶蠱毒', 'poison', 'duan',
+      '華山派掌門，使摺扇，扇中藏有蠱毒。', 'xianYu', '', {
+        mods: { hp: 0.7, def: -2, step: 3, range: 1 },
+        prefers: 'wounded'
+      })
+  },
+  wanZhen: {
+    map: 9,
+    rank: 'mini',
+    row: 'lieutenant',
+    ...adversary('萬震山', '荊州萬門', '連城訣', '萬門劍式', '唐詩劍法', 'exposed', 'hero',
+      '荊州萬門的師父，使唐詩劍法，專攻對手破綻。', 'wanZhen', '', { mods: { def: 1 }, prefers: 'wounded' })
+  }
+};
+// Troop types that follow those villains. `row` as above; only the traits listed in the RANKS
+// comment apply to them.
+const TROOPS = {
+  fiveTiger: {
+    row: 'scout',
+    name: '五虎門棍徒',
+    role: '長棍',
+    school: '佛山五虎門',
+    mini: 'fiveTiger',
+    basic: '隔步掃棍',
+    bio: '五虎門門徒，使長棍，隔一步出手最準，被人貼身便施展不開。',
+    traits: { mods: { step: 3, range: 2 }, crowded: { within: 1, atk: 6 } }
+  },
+  qingShield: {
+    row: 'scout',
+    name: '清營刀盾兵',
+    role: '刀盾',
+    school: '清營',
+    mini: 'qingShield',
+    basic: '抵盾短刀',
+    bio: '清營士卒，持盾執刀守住門口，離開原位便護不住自己。',
+    traits: {
+      mods: { hp: 1.2, def: 3, step: 2, range: 1 },
+      stance: { while: 'posted', cut: 40 },
+      post: { tile: 'spawn', tether: 0, wake: false, note: '守在東院門前{tile}，不離位；被推離後會走回。' }
+    }
+  },
+  jinBow: {
+    row: 'bow',
+    name: '趙王府弓手',
+    role: '弓手',
+    school: '金國趙王府',
+    mini: 'jinBow',
+    basic: '城外勁箭',
+    bio: '趙王府的弓手，要隔開三格才射得準，被人逼近便失了準頭。',
+    traits: { mods: { range: 4 }, crowded: { within: 2, atk: 8 } }
+  },
+  huaBlade: {
+    row: 'scout',
+    name: '華山刀陣弟子',
+    role: '陣刀',
+    school: '華山派',
+    mini: 'huaBlade',
+    basic: '合步斜刀',
+    bio: '華山弟子，兩人一組結刀陣，並肩時互相補位。',
+    traits: { mods: { hp: 0.75, atk: -2, range: 1 }, cover: 'kin' }
+  },
+  wanDisciple: {
+    row: 'scout',
+    name: '萬門劍徒',
+    role: '追劍',
+    school: '荊州萬門',
+    mini: 'wanDisciple',
+    basic: '連步遞劍',
+    bio: '萬門弟子，見對手傷重，出劍便更狠。',
+    traits: { mods: { hp: 0.8, range: 1 }, execute: { atk: 6 }, prefers: 'wounded' }
+  }
+};
+// One line per villain and troop type, by DETAILS key: the rule each plays by, never story. The
+// briefing lists them under 敵情 and 兵力.
+const GISTS = {
+  chief: '守在橋頭；有俠客踏入攻擊範圍或打他，才離位追擊。',
+  'lieutenant-0': '守在橋尾；有俠客踏入攻擊範圍或打他，才離位追擊。',
+  courier: '快劍令目標防禦降低。',
+  'lieutenant-1': '同夥傷重時替他接骨續筋，回復氣血。',
+  reed: '身旁弟子替他受招；貼身打中他會被化去內力。',
+  'lieutenant-2': '毒焰隔三格傷人，令目標中毒。',
+  snow: '一刀掃及兩旁；半血後退向藥草地調息。',
+  'lieutenant-3': '守在棧口一格內，專挑傷重者。',
+  qin: '存活時其餘敵人攻擊提升；受到攻擊才離開琴臺。',
+  'lieutenant-4': '守在石階一格內，一掌波及兩旁。',
+  peach: '蓄勢時原地不動，近身打他必遭全力還擊；半血後逆練撲人。',
+  'lieutenant-5': '摺扇令目標絆足。',
+  wall: '五輪穿過目標，再傷其後一人。',
+  'lieutenant-6': '守在門洞一格內，專挑落單者。',
+  jadeHall: '冰魄銀針令目標中毒並受內傷；專挑療傷者。',
+  'lieutenant-7': '守在石頸北口一格內。',
+  mirror: '出手後退開；半血後身法更快。',
+  'lieutenant-8': '專挑領隊。',
+  murong: '蓄勢時第一下直接攻擊被反震；守索人存活時替他減傷。',
+  'lieutenant-9': '火焰刀隔四格傷人並削去內力；專挑內力深厚者。',
+  fengTiannan: '長棍令目標絆足。',
+  zhaoZhong: '守在東院兩格內，受擊才離位；截腕令目標攻擊降低；專挑領隊。',
+  wanYan: '令旗指處，目標防禦降低；絕技隔三格出手。',
+  xianYu: '扇中藏蠱，令目標中毒；專挑傷重者。',
+  wanZhen: '劍法令目標防禦降低；專挑傷重者。',
+  'bow-2': '回到丁春秋身旁，替他受招。',
+  'scout-2': '回到丁春秋身旁，替他受招。',
+  'bow-3': '守在崖棧一格內。',
+  'bow-5': '普攻令目標中毒。',
+  'scout-5': '普攻令目標中毒。',
+  'bow-6': '守在東牆一格內。',
+  'scout-6': '移動五步。',
+  'bow-8': '守在橋頭一格內。',
+  'bow-9': '存活時替慕容博減傷三成半。',
+  'scout-9': '存活時替慕容博減傷三成半。',
+  fiveTiger: '隔一格出棍；有俠客貼身時攻擊減弱。',
+  qingShield: '守在門前不動；站在原位時受到的傷害減四成。',
+  jinBow: '射程四格；兩格以內的目標打得較輕。',
+  huaBlade: '相鄰的同門中，氣血較多者替對方受招。',
+  wanDisciple: '對氣血不過半者出手更重；專挑傷重者。'
+};
+
+export { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS, VILLAINS, TROOPS, GISTS };

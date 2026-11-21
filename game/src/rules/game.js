@@ -7,7 +7,16 @@ import {
   supportEntry,
   weaponFormText
 } from './form-rules.js';
-import { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS } from '../data/encounters.js';
+import {
+  ENCOUNTERS,
+  RANKS,
+  STATUS_POWER,
+  SIGNATURE_RULES,
+  VILLAIN_FORMS,
+  VILLAINS,
+  TROOPS
+} from '../data/encounters.js';
+import { BATTLES } from '../data/battles.js';
 import { NEW_HEROES } from '../data/new-heroes.js';
 import {
   commandBonus,
@@ -23,6 +32,8 @@ import { CHAMBER_TALES } from '../data/maze-tale.js';
 const SIZE = FIELD_SIZE;
 const FIELD_EDITION = 1;
 const LIMIT = 12;
+// Round and board numbers as the text says them; rounds run to LIMIT.
+const NUMERALS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
 const ORIGINAL_PARTY = ['hero', 'medic', 'guard'];
 const PARTY = [...ORIGINAL_PARTY, 'guo', 'xiao', 'duan', ...Object.keys(NEW_HEROES)];
 const BOOKS = {
@@ -50,9 +61,11 @@ const party = (s) => s.units.filter(ally);
 const company = (s) => [...party(s), ...(s.run?.bench || [])];
 const commanderId = (s) => (s.run ? CAPTAINS[s.mapIndex][0] : 'chief');
 const enemies = (s) => s.units.filter((u) => !ally(u));
+// While the heroes are being deployed (journey.js deployLineup) nobody acts; swaps only.
 const canAct = (s, u) =>
   !!u &&
   (!s.run?.scene || s.run.scene === 'fight') &&
+  !s.run?.deploying &&
   s.phase === 'ally' &&
   !s.result &&
   ally(u) &&
@@ -332,13 +345,111 @@ function encounterKeys(map) {
   return [CAPTAINS[map][0], 'lieutenant-' + map, 'bow-' + map, 'scout-' + map];
 }
 // Actor ids never change, so saves stay valid; what each piece is on this board is recomputed.
+// A troop copy ('fiveTiger#1', 'bow-2#1') is the DETAILS entry named before its '#'.
 function identifyEncounter(s) {
   if (!s.run) return;
   const keys = encounterKeys(s.mapIndex);
   for (const u of s.units) {
+    if (ally(u)) continue;
     const role = ['blade', 'bow', 'scout'].indexOf(u.id.replace(/^echo/, '').toLowerCase());
-    if (!ally(u) && role >= 0) u.encounterId = keys[role + 1];
+    if (role >= 0) u.encounterId = keys[role + 1];
+    else if (u.id.includes('#')) u.encounterId = u.id.split('#')[0];
   }
+}
+// ── Boards (battles.js) ───────────────────────────────────────────────────
+// The fixed four of a board by slot, and the actor ids they have always had.
+const SLOTS = ['master', 'lieutenant', 'bow', 'scout'];
+function slotId(map, slot) {
+  const ids = map ? [CAPTAINS[map][0], 'echoBlade', 'echoBow', 'echoScout'] : FOES;
+  return ids[SLOTS.indexOf(slot)];
+}
+// A piece ref in board data: a slot of the fixed four, or an extra piece's own id.
+const refId = (map, ref) => (SLOTS.includes(ref) ? slotId(map, ref) : ref);
+// The DETAILS key a piece is described by.
+const pieceKey = (u) => u.encounterId || u.id.split('#')[0];
+// A board saved mid-fight before boards had kinds finishes as it began: its master, its four.
+const LEGACY_BOARD = Object.freeze({
+  kind: 'slay',
+  masters: ['master'],
+  pieces: [],
+  waves: [],
+  sides: []
+});
+// The board being played. Every board rule reads the board through here.
+const boardOf = (s) => (!s.run || s.run.legacyBoard ? LEGACY_BOARD : BATTLES[s.mapIndex]);
+// Every 局主 of the board, in the board's order; `commanderId` stays the one the text names.
+const masterIds = (s) => boardOf(s).masters.map((ref) => refId(s.mapIndex, ref));
+// The data entry of an extra piece (a starting piece or a wave's), and its wave if it has one.
+function pieceDef(s, id) {
+  const board = boardOf(s);
+  const start = board.pieces.find((p) => p.id === id);
+  if (start) return { def: start, wave: null };
+  for (const wave of board.waves) {
+    const def = wave.pieces.find((p) => p.id === id);
+    if (def) return { def, wave };
+  }
+  return null;
+}
+// An extra piece's home: its starting tile, or its wave's entry tile. Null for the fixed four.
+function homeTile(s, u) {
+  const found = pieceDef(s, u.id);
+  return found ? { x: found.def.at[0], y: found.def.at[1] } : null;
+}
+// The four stage rows every enemy's numbers come from ([hp, atk, def, step, range] each). Board
+// 0 met first has the numbers the first board has always had.
+function stageRows(map, depth) {
+  if (map === 0 && depth === 0)
+    return {
+      master: [104, 25, 12, 2, 1],
+      lieutenant: [56, 20, 7, 2, 1],
+      bow: [48, 18, 5, 2, 3],
+      scout: [56, 19, 8, 3, 1]
+    };
+  const boss = map === 9,
+    veteran = Math.max(0, depth - 4),
+    seasoned = Math.max(0, depth - 3);
+  return {
+    master: [
+      99 + depth * 32 + seasoned * 40 + (boss ? 240 : 0),
+      23 + veteran * 3 + Math.round(depth * 3.2 + veteran * 5.3),
+      10 + Math.round(depth * 1.6),
+      depth >= 7 ? 4 : depth >= 3 ? 3 : 2,
+      boss || depth >= 6 || [2, 4, 8].includes(map) ? 2 : 1
+    ],
+    lieutenant: [
+      55 + depth * 12 + seasoned * 29,
+      19 + veteran * 3 + Math.round(depth * 2.2 + seasoned * 5.4),
+      7 + depth,
+      depth >= 3 ? 3 : 2,
+      depth >= 6 ? 2 : 1
+    ],
+    bow: [
+      48 + depth * 11 + seasoned * 29,
+      17 + veteran * 1 + Math.round(depth * 2.2 + seasoned * 5.4),
+      5 + depth,
+      depth >= 4 ? 3 : 2,
+      depth >= 6 ? 4 : 3
+    ],
+    scout: [
+      51 + depth * 11 + seasoned * 29,
+      18 + Math.round(depth * 2.2 + seasoned * 5.4),
+      7 + depth,
+      depth >= 5 ? 4 : 3,
+      depth >= 7 ? 2 : 1
+    ]
+  };
+}
+// An extra piece as a unit, from its data entry: its type's stage row with the type's mods, then
+// the piece's own. A wave piece is built with the round it entered (`entered`).
+function pieceUnit(s, piece, entered = null) {
+  const key = piece.id.split('#')[0],
+    info = DETAILS[key];
+  const row = stageRows(s.mapIndex, s.run?.stage || 0)[info.row];
+  const [hp, atk, def, step, range] = withMods(withMods(row, info.traits?.mods), piece.mods);
+  const u = makeUnit(piece.id, 'enemy', piece.at[0], piece.at[1], hp, 0, atk, def, step, range);
+  if (piece.id.includes('#')) u.encounterId = key;
+  if (entered != null) u.enteredRound = entered;
+  return u;
 }
 // A villain's `mods` on the stage numbers: health scaled, attack and defence added, step and
 // range set outright.
@@ -567,6 +678,8 @@ function postTile(s, u, post) {
     return m && living(m) && m !== u ? { x: m.x, y: m.y } : null;
   }
   if (post.tile === 'spawn') {
+    const home = homeTile(s, u);
+    if (home) return home;
     const i = encounterKeys(s.mapIndex).indexOf(u.encounterId || u.id);
     return mapLayout(s.mapIndex).enemies[i] || null;
   }
@@ -781,6 +894,21 @@ for (const [map, ranks] of RANKS.entries())
     const base = map ? 'echo' + role[0].toUpperCase() + role.slice(1) : role;
     DETAILS[role + '-' + map] = { ...DETAILS[base], ...info };
   }
+// The villains and troop types added to the boards (battles.js). A missing portrait or sprite
+// sheet falls back as every piece's does (actors.js).
+for (const [id, v] of Object.entries(VILLAINS))
+  DETAILS[id] = { ...v, role: v.rank === 'boss' ? '局主' : '副手', portraitFile: 'foe-' + id + '.webp' };
+for (const [id, t] of Object.entries(TROOPS)) DETAILS[id] = { ...t, portraitFile: 'foe-' + id + '.webp' };
+// The stage row each board's own pieces take their numbers from (stageRows).
+for (let map = 0; map < CAPTAINS.length; map++) {
+  DETAILS[CAPTAINS[map][0]].row = 'master';
+  DETAILS['lieutenant-' + map].row = 'lieutenant';
+  DETAILS['bow-' + map].row = 'bow';
+  DETAILS['scout-' + map].row = 'scout';
+}
+DETAILS.blade.row = 'lieutenant';
+DETAILS.bow.row = 'bow';
+DETAILS.scout.row = 'scout';
 const STORIES = [
   {
     place: '洛陽 · 綠竹巷',
@@ -938,12 +1066,7 @@ function newGame(ids = ORIGINAL_PARTY) {
     stats: { damage: 0, healed: 0, kills: 0 },
     units: [
       ...ids.map((id, index) => makeUnit(id, 'ally', ...posts[index], ...HERO_STATS[id])),
-      ...[
-        [104, 25, 12, 2, 1],
-        [56, 20, 7, 2, 1],
-        [48, 18, 5, 2, 3],
-        [56, 19, 8, 3, 1]
-      ].map((numbers, i) => {
+      ...SLOTS.map((slot) => stageRows(0, 0)[slot]).map((numbers, i) => {
         const [hp, atk, def, step, range] = withMods(
           numbers,
           DETAILS[encounterKeys(0)[i]]?.traits?.mods
@@ -2720,4 +2843,4 @@ function nextRound(s) {
   return true;
 }
 
-export { boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };
+export { SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound };

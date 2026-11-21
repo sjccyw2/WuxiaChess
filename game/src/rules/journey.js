@@ -12,12 +12,12 @@ import {
 } from './battle-mastery.js';
 import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE, RECALL_NOTE } from '../data/mastery-catalog.js';
 import * as G from './game.js';
+import { NUMERALS } from './game.js';
 import { mapLayout } from '../data/terrain.js';
 import { TECHNIQUES, MANUAL_PRICES, CAPTAINS } from '../data/martial-arts.js';
 import { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, YOUTH, WEI } from '../data/maze-tale.js';
 import { HERO_VOICES } from '../data/hero-voices.js';
 
-const NUMERALS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 const goals = [
   'beacon',
   'speed',
@@ -399,7 +399,8 @@ function restoreRun(raw) {
     !s.units.every(
       (u) =>
         u &&
-        G.DETAILS[u.id] &&
+        typeof u.id === 'string' &&
+        G.DETAILS[u.id.split('#')[0]] &&
         Number.isFinite(u.hp) &&
         u.maxHp > 0 &&
         canRestorePoint(u) &&
@@ -882,53 +883,19 @@ function appointLeader(s, id) {
   r.next = [id, ...r.next.filter((member) => member !== id)];
   return true;
 }
+// The enemies a board opens with: its fixed four on their spawn tiles, with the stage's numbers,
+// then the board's extra starting pieces (battles.js) in their data order.
 function defenders(s) {
-  const depth = s.run.stage,
-    map = s.mapIndex,
-    layout = mapLayout(map);
-  const boss = map === 9,
-    chief = CAPTAINS[map][0],
-    units = [];
-  const ids = [chief, 'echoBlade', 'echoBow', 'echoScout'];
-  const veteran = Math.max(0, depth - 4);
-  const seasoned = Math.max(0, depth - 3);
-  const stats = [
-    [
-      99 + depth * 32 + seasoned * 40 + (boss ? 240 : 0),
-      23 + veteran * 3 + Math.round(depth * 3.2 + veteran * 5.3),
-      10 + Math.round(depth * 1.6),
-      depth >= 7 ? 4 : depth >= 3 ? 3 : 2,
-      boss || depth >= 6 || [2, 4, 8].includes(map) ? 2 : 1
-    ],
-    [
-      55 + depth * 12 + seasoned * 29,
-      19 + veteran * 3 + Math.round(depth * 2.2 + seasoned * 5.4),
-      7 + depth,
-      depth >= 3 ? 3 : 2,
-      depth >= 6 ? 2 : 1
-    ],
-    [
-      48 + depth * 11 + seasoned * 29,
-      17 + veteran * 1 + Math.round(depth * 2.2 + seasoned * 5.4),
-      5 + depth,
-      depth >= 4 ? 3 : 2,
-      depth >= 6 ? 4 : 3
-    ],
-    [
-      51 + depth * 11 + seasoned * 29,
-      18 + Math.round(depth * 2.2 + seasoned * 5.4),
-      7 + depth,
-      depth >= 5 ? 4 : 3,
-      depth >= 7 ? 2 : 1
-    ]
-  ];
-  const keys = G.encounterKeys(map);
-  for (const [i, id] of ids.entries()) {
-    const [hp, atk, def, step, range] = G.withMods(stats[i], G.DETAILS[keys[i]]?.traits?.mods),
+  const map = s.mapIndex,
+    layout = mapLayout(map),
+    rows = G.stageRows(map, s.run.stage),
+    keys = G.encounterKeys(map);
+  const fixed = G.SLOTS.map((slot, i) => {
+    const [hp, atk, def, step, range] = G.withMods(rows[slot], G.DETAILS[keys[i]]?.traits?.mods),
       p = layout.enemies[i];
-    units.push(G.makeUnit(id, 'enemy', p.x, p.y, hp, 0, atk, def, step, range));
-  }
-  return units;
+    return G.makeUnit(G.slotId(map, slot), 'enemy', p.x, p.y, hp, 0, atk, def, step, range);
+  });
+  return [...fixed, ...G.boardOf(s).pieces.map((piece) => G.pieceUnit(s, piece))];
 }
 function advance(s) {
   const r = s.run;

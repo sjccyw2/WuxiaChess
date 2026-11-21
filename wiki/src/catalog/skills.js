@@ -7,7 +7,7 @@ import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, cells, gameArt } from './parts.js';
 import { heroPortrait } from './heroes.js';
-import { stageName, troopIds, troopSource, RANKS } from './foes.js';
+import { stageName, troopIds, troopSource, troopArt, RANKS } from './foes.js';
 import { trialOf } from './missions.js';
 import { NOTES } from './notes.js';
 
@@ -179,7 +179,7 @@ function troop(id) {
     name: d.basic,
     tag: '敵方普攻',
     summary: d.name + '的通常攻擊。',
-    image: gameArt(d.portraitFile),
+    image: troopArt(id),
     sections: [links('使用者', [link('foes', id, d.name)])],
     sources: cites(cite(d.name, troopSource(id)))
   };

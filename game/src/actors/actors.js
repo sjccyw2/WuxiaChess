@@ -88,6 +88,15 @@ class ActorLayer {
   sheet(id) {
     return spriteSheet(id, (name) => this.image(name));
   }
+  // A piece whose own sheets and still have all failed to load (art not yet in game/assets) is
+  // drawn with the shared rank-and-file sheet, archer or swordsman, rather than not at all.
+  standIn(details) {
+    const id = details.mini;
+    const own = ['motion-' + id, compactSheetName(id), 'mini-' + id];
+    for (const name of own) this.image(name);
+    if (!own.every((name) => this.imageFailures.has(name))) return null;
+    return this.sheet(details.row === 'bow' ? 'archer' : 'bandit');
+  }
   reset() {
     for (const e of this.effects || [])
       if (e.kind === 'technique' && e.announced) this.onTechnique?.(e.skill, 'end');
@@ -798,7 +807,7 @@ class ActorLayer {
     const flip = dir[0] * Math.cos(this.view.yaw) - dir[1] * Math.sin(this.view.yaw) < 0;
     const details = G.unitDetails(u),
       id = details.mini,
-      sheet = this.sheet(id);
+      sheet = this.sheet(id) || this.standIn(details);
     c.save();
     // The cached copy of a frame already carries the robe tint, so with unitTokens no
     // canvas filter is set while painting.
