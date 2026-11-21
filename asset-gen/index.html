@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#1d302b">
+  <title>武學器物圖譜 · 劍影江湖</title>
+  <style>
+    @font-face{font-family:RiverSerif;src:url(fonts/river-serif.woff) format('woff');font-weight:600 900;font-display:swap}
+    @font-face{font-family:RiverSans;src:url(fonts/river-sans.woff) format('woff');font-weight:100 900;font-display:swap}
+    :root{
+      color-scheme:light;--ink:#202c28;--sub:#586158;--paper:#f4efdf;--ivory:#fffaf0;
+      --edge:#c8bda5;--jade:#254b3f;--cinnabar:#963f33;--bronze:#b99a61;
+      --sans:RiverSans,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+      --serif:RiverSerif,"Noto Serif TC","Songti TC","PMingLiU",serif;
+    }
+    *{box-sizing:border-box}
+    html{min-height:100%;background:var(--paper)}
+    body{margin:0;background:linear-gradient(105deg,#ede7d6 0,transparent 23rem),var(--paper);color:var(--ink);font:1rem/1.55 var(--sans)}
+    a{color:var(--jade);text-underline-offset:.22em}
+    button,input{color:inherit;font:inherit}
+    button{cursor:pointer}
+    button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #c67d32;outline-offset:3px}
+    [hidden]{display:none!important}
+    .skip{position:absolute;top:-8rem;left:1rem;background:white;padding:.5rem;z-index:20}
+    .skip:focus{top:.5rem}
+    .mast{background:#1d302b;color:#f7efdc;border-bottom:3px solid #ac9060}
+    .mast-row,.page{width:min(82rem,100%);margin-inline:auto;padding-inline:clamp(1rem,4.3vw,4rem)}
+    .mast-row{min-height:3.8rem;display:flex;align-items:center;gap:1rem}
+    .brand{display:inline-flex;align-items:center;gap:.75rem;color:inherit;text-decoration:none;font:700 1.3rem/1 var(--serif);letter-spacing:.08em}
+    .seal{background:#923f33;color:#f4e5bf;border:1px solid #d79c79;outline:1px solid #a04e40;outline-offset:2px;display:grid;place-items:center;width:1.65rem;height:1.82rem;line-height:1;font-size:1.24rem;transform:rotate(-3deg)}
+    .return{margin-left:auto;font-size:.9rem;color:#f0e6d1;text-decoration:none}
+    .return:hover{text-decoration:underline}
+    .page{padding-block:clamp(1.4rem,3.8vw,3.1rem) 2rem}
+    .intro{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:clamp(1.3rem,2.6vw,2rem)}
+    h1,h2,p{margin:0}
+    h1{font:800 clamp(2rem,4.3vw,3.25rem)/1.15 var(--serif);letter-spacing:.055em;color:#243c32}
+    .intro-copy{margin-top:.35rem;color:var(--sub);font-size:.95rem}
+    .download,.file,.play{
+      display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:2.6rem;
+      border-radius:.2rem;text-decoration:none;font-weight:650;cursor:pointer
+    }
+    .download{padding:.48rem .95rem;background:var(--jade);border:1px solid #234437;color:var(--ivory);white-space:nowrap}
+    .download:hover,.play:hover{background:#355c4d}
+    .file{border:1px solid #b3a389;color:var(--jade);background:#fffaf0;padding:.4rem .85rem;white-space:nowrap;font-size:.92rem}
+    .file:hover,.tab:hover,.step:hover{border-color:#867453}
+    .download[aria-disabled="true"],.file[aria-disabled="true"]{opacity:.7}
+    .ico{width:1.07em;height:1.07em;flex:none}
+    .bench{display:grid;grid-template-columns:minmax(14.8rem,19rem) minmax(0,1fr);align-items:start;gap:clamp(1rem,2.8vw,2.5rem)}
+    .shelf{min-width:0;border-top:3px double var(--bronze)}
+    .tabbar{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--edge);padding:.65rem 0;gap:.17rem}
+    .tab{background:transparent;border:1px solid transparent;border-radius:.18rem;min-height:2.48rem;white-space:nowrap;font-size:.88rem;padding:.2rem .1rem}
+    .tab-count{font:600 .65rem/1.2 var(--sans);font-variant-numeric:tabular-nums;margin-left:.18rem;color:#686e61}
+    .tab[aria-pressed="true"]{color:#fff8e5;background:#2d4c41;border-color:#274437}
+    .tab[aria-pressed="true"] .tab-count{color:#e0dbb9}
+    .catalog{display:grid;gap:.22rem;padding:.6rem .32rem .35rem 0;max-height:min(67dvh,41.5rem);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#9caa95 transparent}
+    .entry{display:flex;align-items:center;gap:.75rem;width:100%;background:transparent;border:1px solid transparent;border-radius:.16rem;padding:.26rem .5rem;text-align:left;color:var(--ink);line-height:1.24}
+    .entry:hover{background:#eae5d4}
+    .entry[aria-pressed="true"]{background:#e6e8d8;border-color:#a7b49c;box-shadow:inset 3px 0 var(--jade)}
+    .sample{flex:none;width:2.55rem;height:2.55rem;border-radius:.16rem;background-color:#34453b;background-repeat:no-repeat;background-size:800% 500%;box-shadow:inset 0 0 0 1px #50534438}
+    .entry-name{font:700 1rem/1.35 var(--serif)}
+    .viewer{min-width:0;border:1px solid #bfb399;background:#f9f5e9;box-shadow:0 6px 20px #29291d09}
+    .piece-head{display:flex;gap:.8rem;align-items:center;justify-content:space-between;padding:clamp(.75rem,1.5vw,1.15rem) clamp(.85rem,1.65vw,1.45rem)}
+    .piece-source{font-size:.83rem;color:var(--sub)}
+    h2{font:750 clamp(1.55rem,2.9vw,2.2rem)/1.25 var(--serif);letter-spacing:.035em}
+    .stage{--field:#20342f;--shine:#3b5248;--tick:#c4ae78;position:relative;display:grid;place-items:center;isolation:isolate;overflow:hidden;min-height:0;background:radial-gradient(ellipse at 49% 45%,var(--shine),var(--field) 75%);height:clamp(16rem,37vh,27rem);border-block:1px solid #ac997144}
+    .stage::before,.stage::after{content:"";position:absolute;inset:.65rem;z-index:-1;pointer-events:none}
+    .stage::before{border:1px solid color-mix(in srgb,var(--tick) 22%,transparent)}
+    .stage::after{--c:color-mix(in srgb,var(--tick) 79%,transparent);background:
+      linear-gradient(var(--c),var(--c)) left top/1.25rem 1px no-repeat,linear-gradient(var(--c),var(--c)) left top/1px 1.25rem no-repeat,
+      linear-gradient(var(--c),var(--c)) right top/1.25rem 1px no-repeat,linear-gradient(var(--c),var(--c)) right top/1px 1.25rem no-repeat,
+      linear-gradient(var(--c),var(--c)) left bottom/1.25rem 1px no-repeat,linear-gradient(var(--c),var(--c)) left bottom/1px 1.25rem no-repeat,
+      linear-gradient(var(--c),var(--c)) right bottom/1.25rem 1px no-repeat,linear-gradient(var(--c),var(--c)) right bottom/1px 1.25rem no-repeat}
+    .stage[data-ground="light"]{--field:#ded4b9;--shine:#f6efdc;--tick:#7c6946}
+    #scene{width:100%;height:100%;object-fit:contain;padding:1.35rem 1.8rem;position:absolute;inset:0}
+    .panel{padding:.85rem clamp(.85rem,1.65vw,1.45rem) .95rem}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:.55rem .85rem;flex-wrap:wrap;margin-bottom:.7rem}
+    .play-block,.grounds{display:inline-flex;align-items:center;gap:.5rem}
+    .play{background:var(--jade);border:1px solid var(--jade);color:#fff8e5;font-size:.9rem;min-height:2.32rem;min-width:5.15rem;padding:.33rem .6rem}
+    .counter{font-size:.85rem;color:var(--sub);font-variant-numeric:tabular-nums}
+    .ground{border:1px solid #c7beab;border-radius:1.5rem;background:transparent;color:#535d54;display:inline-flex;align-items:center;gap:.32rem;padding:.27rem .52rem;min-height:2.05rem;font-size:.8rem}
+    .ground:before{content:"";width:.72rem;height:.72rem;display:inline-block;border:1px solid #797f6a;border-radius:50%;background:#263b34}
+    .ground[data-mode="light"]:before{background:#efe5c8}
+    .ground[aria-pressed="true"]{color:#243e31;border-color:#777e68;background:#e8e8d7}
+    .strip{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:clamp(.15rem,.45vw,.37rem)}
+    .step{min-width:0;min-height:2.4rem;border:1px solid var(--edge);border-radius:.12rem;background:#31453c;padding:.15rem;position:relative;display:grid;place-items:center}
+    .strip[data-ground="light"] .step{background:#eae1c9}
+    .step[aria-pressed="true"]{border-color:var(--cinnabar);outline:2px solid var(--cinnabar);outline-offset:-1px}
+    .frame-art{width:100%;max-width:calc(2.8rem * var(--frame-ratio,1));display:block;background-repeat:no-repeat;background-size:400% 200%}
+    .step-number{position:absolute;left:.17rem;bottom:.1rem;border-radius:.12rem;padding:.03rem .18rem;background:#1d2928bc;color:#fbf4df;font:500 .66rem/1.2 var(--sans);font-variant-numeric:tabular-nums}
+    .description{color:#48564b;font-size:.91rem;margin:.75rem 0 .1rem}
+    .lower{margin-top:1.5rem;border-top:1px solid var(--edge);padding-top:.8rem;display:flex;justify-content:space-between;align-items:flex-start;gap:.65rem 1.25rem;flex-wrap:wrap}
+    .spec{font-size:.88rem;color:var(--sub)}
+    .spec summary{cursor:pointer;color:var(--jade);font-weight:600}
+    .spec p{margin:.38rem 0}
+    .links{display:flex;gap:1rem;flex-wrap:wrap;font-size:.86rem}
+    .notice{font-size:.88rem;color:#78382e;margin-top:.45rem}
+    .notice:empty{display:none}
+    .noscript{padding:1rem;border:1px solid var(--edge)}
+    @media(max-width:56rem){
+      .bench{grid-template-columns:minmax(12rem,14rem) minmax(0,1fr);gap:1rem}
+      .tab{font-size:.84rem}.tab-count{margin-left:.1rem}.entry{gap:.5rem}
+    }
+    @media(max-width:44rem){
+      .mast-row,.page{padding-inline:1rem}.mast-row{min-height:3.15rem}
+      .page{padding-block:1.15rem 1.4rem}.intro{margin-bottom:1rem}.intro-copy{font-size:.87rem;margin-top:.2rem}
+      .download{font-size:.88rem;padding:.36rem .66rem;min-height:2.35rem}
+      .bench{display:block}.shelf{border-top:none}.tabbar{padding:.15rem 0 .45rem;max-width:28rem}
+      .catalog{display:flex;gap:.38rem;overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;max-height:none;padding:.47rem .1rem .58rem;scrollbar-width:thin}
+      .entry{width:auto;min-width:max-content;max-width:12rem;gap:.36rem;padding:.25rem .42rem;background:#eee8d8;border-color:#cfc4ad}
+      .entry[aria-pressed="true"]{box-shadow:inset 0 -2px var(--jade)}.entry-name{font-size:.83rem}.sample{width:1.62rem;height:1.62rem}
+      .piece-head{padding:.65rem .8rem}.stage{height:clamp(13.5rem,33vh,20.5rem)}
+      .panel{padding:.67rem .7rem .72rem}.toolbar{gap:.3rem .6rem}.grounds,.play-block{gap:.3rem}
+      .file{font-size:.83rem;min-height:2.2rem;padding:.29rem .55rem}
+      .frame-art{max-width:calc(2.3rem * var(--frame-ratio,1))}.step{min-height:2.2rem}.lower{margin-top:.9rem}
+    }
+    @media(max-width:24rem){.mast-row,.page{padding-inline:.65rem}.tab-count{font-size:.61rem}.play{min-width:4.25rem}.counter{font-size:.76rem}.ground{font-size:.73rem;padding:.2rem .38rem}.strip{gap:.1rem}.file .ico{display:none}}
+    @media(max-height:31rem) and (min-width:44.01rem){.mast-row{min-height:2.65rem}.page{padding-block:.75rem}.intro{margin-bottom:.65rem}h1{font-size:1.9rem}.stage{height:12rem}.catalog{max-height:56dvh}.piece-head{padding-block:.45rem}.panel{padding-block:.5rem}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#sheet-view">跳至原圖預覽</a>
+  <svg xmlns="http://www.w3.org/2000/svg" hidden>
+    <symbol id="i-down" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></g></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m6 3 15 9-15 9z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14m8-14v14" fill="none" stroke="currentColor" stroke-width="3"/></symbol>
+  </svg>
+  <header class="mast">
+    <div class="mast-row"><span class="brand"><span class="seal" aria-hidden="true">劍</span>劍影江湖</span></div>
+  </header>
+  <main class="page">
+    <header class="intro">
+      <div><h1>武學器物圖譜</h1><p class="intro-copy">八式武學 · 三十二件器物</p></div>
+      
+    </header>
+    <noscript><p class="noscript">開啟 JavaScript 可播放動作。原圖清單可由頁底下載。</p></noscript>
+    <div class="bench">
+      <aside class="shelf" aria-label="選擇素材">
+        <div class="tabbar" role="group" aria-label="分類" id="groups"></div>
+        <div class="catalog" id="entries" role="group" aria-label="素材名稱"></div>
+      </aside>
+      <article class="viewer" id="sheet-view" aria-labelledby="sheet-title" tabindex="-1">
+        <header class="piece-head">
+          <div><h2 id="sheet-title"></h2><p class="piece-source" id="origin"></p></div>
+          <a class="file" id="single" download><svg class="ico" aria-hidden="true"><use href="#i-down"></use></svg>下載原圖 PNG</a>
+        </header>
+        <div class="stage" id="stage" data-ground="dark">
+          <canvas id="scene" role="img" width="384" height="256" aria-label="招式動作預覽"></canvas>
+        </div>
+        <div class="panel">
+          <div class="toolbar">
+            <div class="play-block">
+              <button class="play" type="button" id="play"><svg class="ico" aria-hidden="true"><use id="play-glyph" href="#i-play"></use></svg><span id="play-text">播放</span></button>
+              <span class="counter" id="counter">第 1 格／8</span>
+            </div>
+            <div class="grounds" role="group" aria-label="預覽底色">
+              <button class="ground" data-mode="dark" type="button" aria-pressed="true">墨底</button>
+              <button class="ground" data-mode="light" type="button" aria-pressed="false">紙底</button>
+            </div>
+          </div>
+          <div class="strip" id="strip" role="group" aria-label="逐格查看" data-ground="dark"></div>
+          <p class="description" id="source"></p>
+          <p class="notice" id="status" role="status" aria-live="polite"></p>
+        </div>
+      </article>
+    </div>
+    <footer class="lower">
+      <details class="spec"><summary>原圖規格</summary><p id="dimensions"></p><p>逐格由左至右、由上至下讀取，定位點在每格中央。畫冊採用的每格時長收錄於清單。</p></details>
+      <nav class="links" aria-label="匯出清單"><a href="manifest.json" download="manifest.json">JSON 清單</a><a href="manifest.csv" download="manifest.csv">CSV 清單</a></nav>
+    </footer>
+  </main>
+  <script type="application/json" id="atlas-data">{"rows":[{"id":"toad-qi","name":"蛤蟆功","group":"effect","role":"內功","books":["射鵰英雄傳","神鵰俠侶"],"affiliation":"白駝山 · 歐陽鋒、楊過","source":"歐陽鋒的絕技，楊過年少時也曾受授。","durations":[110,100,100,70,110,85,90,115],"gameIds":["toadLunge"],"cell":[384,256],"index":0,"path":"effects/toad-qi.png","preview":"effects/toad-qi.png"},{"id":"golden-serpent","name":"金蛇劍法","group":"effect","role":"劍法","books":["碧血劍"],"affiliation":"金蛇郎君 · 袁承志","source":"袁承志從夏雪宜留下的遺物參悟金蛇劍法。","durations":[100,80,75,65,105,85,90,120],"gameIds":["signature:chengZhi","ycSerpent"],"cell":[384,256],"index":1,"path":"effects/golden-serpent.png","preview":"effects/golden-serpent.png"},{"id":"dragon-palms","name":"降龍十八掌","group":"effect","role":"掌法","books":["天龍八部","射鵰英雄傳"],"affiliation":"丐幫 · 蕭峰、洪七公、郭靖","source":"蕭峰以降龍掌力拒敵，郭靖則受教於洪七公。","durations":[105,90,85,80,115,90,95,130],"gameIds":["signature:guo","qfDragon","hqDragon","hqTail","flyingDragon","dragonReserve"],"cell":[384,256],"index":2,"path":"effects/dragon-palms.png","preview":"effects/dragon-palms.png"},{"id":"six-meridians","name":"六脈神劍","group":"effect","role":"指法","books":["天龍八部"],"affiliation":"大理段氏 · 段譽","source":"大理段氏以指力運使劍氣，段譽在天龍寺習得劍法。","durations":[95,80,75,80,105,85,95,105],"gameIds":["signature:duan","sixMeridians"],"cell":[384,256],"index":3,"path":"effects/six-meridians.png","preview":"effects/six-meridians.png"},{"id":"nine-swords","name":"獨孤九劍","group":"effect","role":"劍法","books":["笑傲江湖"],"affiliation":"風清揚 · 令狐沖","source":"令狐沖在思過崖得風清揚傳授獨孤九劍。","durations":[100,85,75,65,105,75,95,115],"gameIds":["signature:hero","ninefoldIntent"],"cell":[384,256],"index":4,"path":"effects/nine-swords.png","preview":"effects/nine-swords.png"},{"id":"jade-flick","name":"彈指神通","group":"effect","role":"指法","books":["射鵰英雄傳"],"affiliation":"桃花島 · 黃藥師","source":"黃藥師擅以彈指之力送出石子。","durations":[105,95,65,60,110,75,85,120],"gameIds":["signature:yaoShi","ysSkip","fingerFlick"],"cell":[384,256],"index":5,"path":"effects/jade-flick.png","preview":"effects/jade-flick.png"},{"id":"bamboo-staff","name":"打狗棒法","group":"effect","role":"棒法","books":["射鵰英雄傳"],"affiliation":"丐幫 · 洪七公、黃蓉","source":"丐幫棒法由幫主相傳，黃蓉曾向洪七公學棒。","durations":[105,90,85,75,100,85,85,115],"gameIds":["signature:huang","signature:hongQi","hqHook","beggarBind","staffWithoutDogs"],"cell":[384,256],"index":6,"path":"effects/bamboo-staff.png","preview":"effects/bamboo-staff.png"},{"id":"lone-palm","name":"黯然銷魂掌","group":"effect","role":"掌法","books":["神鵰俠侶"],"affiliation":"楊過","source":"楊過在與小龍女分離的歲月裡自創這套掌法。","durations":[120,105,100,80,125,100,105,135],"gameIds":["signature:yang","mournfulCloud","solitaryPalm"],"cell":[384,256],"index":7,"path":"effects/lone-palm.png","preview":"effects/lone-palm.png"},{"id":"goldSerpentBlade","name":"金蛇劍","group":"weapon","role":"異形長劍","books":["碧血劍"],"affiliation":"金蛇郎君 · 袁承志","source":"夏雪宜留下的金蛇劍，後落入袁承志手中。","durations":[105,90,85,75,105,85,95,120],"gameIds":["goldSerpentBlade"],"cell":[256,256],"index":8,"path":"weapons/goldSerpentBlade.png","preview":"weapons/goldSerpentBlade.png"},{"id":"dragonSaber","name":"屠龍刀","group":"weapon","role":"寶刀","books":["倚天屠龍記"],"affiliation":"謝遜","source":"屠龍刀牽動江湖各派的爭奪，曾由謝遜掌管。","durations":[105,90,85,75,105,85,95,120],"gameIds":["dragonSaber"],"cell":[256,256],"index":9,"path":"weapons/dragonSaber.png","preview":"weapons/dragonSaber.png"},{"id":"darkIron","name":"玄鐵重劍","group":"weapon","role":"重劍","books":["神鵰俠侶"],"affiliation":"獨孤求敗 · 楊過","source":"楊過在獨孤求敗的劍塚見到玄鐵重劍。","durations":[105,90,85,75,105,85,95,120],"gameIds":["darkIron"],"cell":[256,256],"index":10,"path":"weapons/darkIron.png","preview":"weapons/darkIron.png"},{"id":"foxSaber","name":"胡家單刀","group":"weapon","role":"單刀","books":["飛狐外傳","雪山飛狐"],"affiliation":"遼東胡家 · 胡斐","source":"本作配予胡斐的隨身器物。","durations":[105,90,85,75,105,85,95,120],"gameIds":["foxSaber"],"cell":[256,256],"index":11,"path":"weapons/foxSaber.png","preview":"weapons/foxSaber.png"},{"id":"jadeCane","name":"青竹棒","group":"weapon","role":"竹棒","books":["射鵰英雄傳","神鵰俠侶"],"affiliation":"桃花島・丐幫 · 黃蓉","source":"本作配予黃蓉的隨身器物。","durations":[105,90,85,75,105,85,95,120],"gameIds":["jadeCane"],"cell":[256,256],"index":12,"path":"weapons/jadeCane.png","preview":"weapons/jadeCane.png"},{"id":"twins","name":"古墓雙劍","group":"weapon","role":"雙劍","books":["神鵰俠侶"],"affiliation":"古墓派 · 小龍女","source":"本作配予小龍女的隨身器物。","durations":[105,90,85,75,105,85,95,120],"gameIds":["twins"],"cell":[256,256],"index":13,"path":"weapons/twins.png","preview":"weapons/twins.png"},{"id":"pine","name":"華山長劍","group":"weapon","role":"長劍","books":["笑傲江湖"],"affiliation":"華山派 · 令狐沖","source":"本作配予令狐沖的隨身器物。","durations":[105,90,85,75,105,85,95,120],"gameIds":["pine"],"cell":[256,256],"index":14,"path":"weapons/pine.png","preview":"weapons/pine.png"},{"id":"frost","name":"寒潭短劍","group":"weapon","role":"短劍","books":["笑傲江湖"],"affiliation":"華山派 · 令狐沖","source":"本作配予令狐沖的隨身器物。","durations":[105,90,85,75,105,85,95,120],"gameIds":["frost"],"cell":[256,256],"index":15,"path":"weapons/frost.png","preview":"weapons/frost.png"},{"id":"blueEdge","name":"青鋒劍","group":"weapon","role":"長劍","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[105,90,85,75,105,85,95,120],"gameIds":["blueEdge"],"cell":[256,256],"index":16,"path":"weapons/blueEdge.png","preview":"weapons/blueEdge.png"},{"id":"starSteel","name":"星紋精鋼劍","group":"weapon","role":"長劍","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[105,90,85,75,105,85,95,120],"gameIds":["starSteel"],"cell":[256,256],"index":17,"path":"weapons/starSteel.png","preview":"weapons/starSteel.png"},{"id":"travelBlade","name":"雁翎刀","group":"weapon","role":"單刀","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[105,90,85,75,105,85,95,120],"gameIds":["travelBlade"],"cell":[256,256],"index":18,"path":"weapons/travelBlade.png","preview":"weapons/travelBlade.png"},{"id":"ironFan","name":"鐵骨折扇","group":"weapon","role":"鐵扇","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[105,90,85,75,105,85,95,120],"gameIds":["ironFan"],"cell":[256,256],"index":19,"path":"weapons/ironFan.png","preview":"weapons/ironFan.png"},{"id":"fan","name":"大理摺扇","group":"weapon","role":"折扇","books":["天龍八部"],"affiliation":"大理段氏 · 段譽","source":"本作配予段譽的隨身器物。","durations":[105,90,85,75,105,85,95,120],"gameIds":["fan"],"cell":[256,256],"index":20,"path":"weapons/fan.png","preview":"weapons/fan.png"},{"id":"silkWhip","name":"錦紋軟鞭","group":"weapon","role":"軟鞭","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[105,90,85,75,105,85,95,120],"gameIds":["silkWhip"],"cell":[256,256],"index":21,"path":"weapons/silkWhip.png","preview":"weapons/silkWhip.png"},{"id":"pole","name":"精鋼軟鞭","group":"weapon","role":"軟鞭","books":["笑傲江湖"],"affiliation":"日月神教 · 向問天","source":"本作配予向問天的隨身器物。","durations":[105,90,85,75,105,85,95,120],"gameIds":["pole"],"cell":[256,256],"index":22,"path":"weapons/pole.png","preview":"weapons/pole.png"},{"id":"staff","name":"綠竹短簫","group":"weapon","role":"短簫","books":["笑傲江湖"],"affiliation":"日月神教 · 任盈盈","source":"本作配予任盈盈的隨身器物。","durations":[105,90,85,75,105,85,95,120],"gameIds":["staff"],"cell":[256,256],"index":23,"path":"weapons/staff.png","preview":"weapons/staff.png"},{"id":"mingSash","name":"明教護腕","group":"weapon","role":"拳掌兵器","books":["倚天屠龍記"],"affiliation":"明教・武當 · 張無忌","source":"本作配予張無忌的隨身器物。","durations":[105,90,85,75,105,85,95,120],"gameIds":["mingSash"],"cell":[256,256],"index":24,"path":"weapons/mingSash.png","preview":"weapons/mingSash.png"},{"id":"wraps","name":"布纏護手","group":"weapon","role":"拳掌兵器","books":["射鵰英雄傳","神鵰俠侶"],"affiliation":"江南七怪門下 · 郭靖","source":"本作配予郭靖的隨身器物。","durations":[105,90,85,75,105,85,95,120],"gameIds":["wraps"],"cell":[256,256],"index":25,"path":"weapons/wraps.png","preview":"weapons/wraps.png"},{"id":"hedgehogVest","name":"軟蝟甲","group":"gear","role":"護身軟甲","books":["射鵰英雄傳"],"affiliation":"桃花島 · 黃蓉","source":"黃蓉隨身所穿的桃花島護甲。","durations":[135,110,105,100,130,105,115,140],"gameIds":["hedgehogVest"],"cell":[256,256],"index":26,"path":"gear/hedgehogVest.png","preview":"gear/hedgehogVest.png"},{"id":"silkwormCoat","name":"烏蠶衣","group":"gear","role":"絲衣","books":["連城訣"],"affiliation":"丁典 · 狄雲","source":"取材自原著中以烏蠶絲織成的護身衣。","durations":[135,110,105,100,130,105,115,140],"gameIds":["silkwormCoat"],"cell":[256,256],"index":27,"path":"gear/silkwormCoat.png","preview":"gear/silkwormCoat.png"},{"id":"heartMirror","name":"護心鏡","group":"gear","role":"護心鏡","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[135,110,105,100,130,105,115,140],"gameIds":["heartMirror"],"cell":[256,256],"index":28,"path":"gear/heartMirror.png","preview":"gear/heartMirror.png"},{"id":"bracer","name":"玄鐵護腕","group":"gear","role":"護腕","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[135,110,105,100,130,105,115,140],"gameIds":["bracer"],"cell":[256,256],"index":29,"path":"gear/bracer.png","preview":"gear/bracer.png"},{"id":"cloudCoat","name":"流雲軟甲","group":"gear","role":"軟甲","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[135,110,105,100,130,105,115,140],"gameIds":["cloudCoat"],"cell":[256,256],"index":30,"path":"gear/cloudCoat.png","preview":"gear/cloudCoat.png"},{"id":"trailBoots","name":"踏雲靴","group":"gear","role":"布靴","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[135,110,105,100,130,105,115,140],"gameIds":["trailBoots"],"cell":[256,256],"index":31,"path":"gear/trailBoots.png","preview":"gear/trailBoots.png"},{"id":"jade","name":"青玉佩","group":"gear","role":"玉佩","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[135,110,105,100,130,105,115,140],"gameIds":["jade"],"cell":[256,256],"index":32,"path":"gear/jade.png","preview":"gear/jade.png"},{"id":"bellJade","name":"聽潮古玉","group":"gear","role":"佩玉","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[135,110,105,100,130,105,115,140],"gameIds":["bellJade"],"cell":[256,256],"index":33,"path":"gear/bellJade.png","preview":"gear/bellJade.png"},{"id":"herbCharm","name":"凝神香囊","group":"gear","role":"香囊","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[135,110,105,100,130,105,115,140],"gameIds":["herbCharm"],"cell":[256,256],"index":34,"path":"gear/herbCharm.png","preview":"gear/herbCharm.png"},{"id":"nineFlowerPill","name":"九花玉露丸","group":"use","role":"丸藥","books":["射鵰英雄傳"],"affiliation":"桃花島","source":"九花玉露丸是桃花島的藥物。","durations":[135,115,105,100,125,105,115,140],"gameIds":["nineFlowerPill"],"cell":[256,256],"index":35,"path":"consumables/nineFlowerPill.png","preview":"consumables/nineFlowerPill.png"},{"id":"beeNectar","name":"玉蜂漿","group":"use","role":"蜂漿","books":["神鵰俠侶"],"affiliation":"古墓派","source":"古墓所養玉蜂的蜂漿，原著中曾用於療治蜂毒。","durations":[135,115,105,100,125,105,115,140],"gameIds":["beeNectar"],"cell":[256,256],"index":36,"path":"consumables/beeNectar.png","preview":"consumables/beeNectar.png"},{"id":"remedy","name":"金創藥","group":"use","role":"外傷藥","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[135,115,105,100,125,105,115,140],"gameIds":["remedy"],"cell":[256,256],"index":37,"path":"consumables/remedy.png","preview":"consumables/remedy.png"},{"id":"elixir","name":"回氣丹","group":"use","role":"丸藥","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[135,115,105,100,125,105,115,140],"gameIds":["elixir"],"cell":[256,256],"index":38,"path":"consumables/elixir.png","preview":"consumables/elixir.png"},{"id":"greatPill","name":"大還丹","group":"use","role":"丸藥","books":[],"affiliation":"十漏迷津","source":"《十漏迷津》中的江湖行旅用品。","durations":[135,115,105,100,125,105,115,140],"gameIds":["greatPill"],"cell":[256,256],"index":39,"path":"consumables/greatPill.png","preview":"consumables/greatPill.png"}],"groups":{"effect":"招式","weapon":"兵器","gear":"護具","use":"丹藥"},"thumbnails":"thumbnails.webp","delivery":null}</script>
+  <script>
+  (() => {
+    'use strict';
+    const data = JSON.parse(document.getElementById('atlas-data').textContent);
+    const $ = (id) => document.getElementById(id);
+    const records = new Map(data.rows.map((row) => [row.id, row]));
+    const firstIn = new Map();
+    for (const row of data.rows) if (!firstIn.has(row.group)) firstIn.set(row.group, row.id);
+    const ctx = $('scene').getContext('2d');
+    const grounded = [...document.querySelectorAll('.ground')];
+    let selected, group, sheet, activeId = 0, frame = 0, clock = 0, frameStart = 0;
+    let playing = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let downloadingAll = false, downloadingOne = false;
+
+    function mark(node, on) { node.setAttribute('aria-pressed', String(on)); }
+    function button(cls, listener) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = cls; b.addEventListener('click', listener);
+      return b;
+    }
+    function notice(message) { $('status').textContent = message; }
+    function syncPlay() {
+      const label = playing ? '暫停' : '播放';
+      $('play-text').textContent = label;
+      $('play').setAttribute('aria-label', label + '動作');
+      $('play-glyph').setAttribute('href', playing ? '#i-pause' : '#i-play');
+    }
+    function draw() {
+      const canvas = $('scene');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (sheet) {
+          const w = sheet.naturalWidth / 4, h = sheet.naturalHeight / 2;
+          ctx.drawImage(sheet, frame % 4 * w, Math.floor(frame / 4) * h, w, h, 0, 0, canvas.width, canvas.height);
+        }
+      }
+      canvas.dataset.frame = String(frame);
+      for (const [i, b] of [...$('strip').children].entries()) mark(b, i === frame);
+      $('counter').textContent = '第 ' + (frame + 1) + ' 格／8';
+    }
+    function playFromHere() {
+      cancelAnimationFrame(clock);
+      if (!playing || !sheet || document.hidden) return;
+      frameStart = performance.now();
+      clock = requestAnimationFrame(advance);
+    }
+    function advance(now) {
+      if (!playing || !sheet || document.hidden) return;
+      const timings = selected.durations;
+      const cycle = timings.reduce((sum, ms) => sum + ms, 0);
+      let elapsed = now - frameStart;
+      if (elapsed >= cycle) {
+        const cycles = Math.floor(elapsed / cycle);
+        frameStart += cycles * cycle; elapsed -= cycles * cycle;
+      }
+      const previous = frame;
+      while (elapsed >= timings[frame]) {
+        const ms = timings[frame];
+        frameStart += ms; elapsed -= ms;
+        frame = (frame + 1) % 8;
+      }
+      if (frame !== previous) draw();
+      clock = requestAnimationFrame(advance);
+    }
+    function inspectFrame(i) {
+      playing = false; frame = i; syncPlay(); playFromHere(); draw();
+    }
+    function renderStrip(row) {
+      $('strip').style.setProperty('--frame-ratio', String(row.cell[0] / row.cell[1]));
+      const steps = Array.from({length: 8}, (_, i) => {
+        const b = button('step', () => inspectFrame(i));
+        b.setAttribute('aria-label', '第 ' + (i + 1) + ' 格');
+        const art = document.createElement('span');
+        art.className = 'frame-art';
+        art.style.aspectRatio = row.cell[0] + ' / ' + row.cell[1];
+        art.style.backgroundImage = 'url("' + row.preview + '")';
+        art.style.backgroundPosition = ((i % 4) * 100 / 3) + '% ' + (i < 4 ? 0 : 100) + '%';
+        const number = document.createElement('span');
+        number.className = 'step-number'; number.textContent = i + 1;
+        b.append(art, number);
+        return b;
+      });
+      $('strip').replaceChildren(...steps);
+    }
+    function renderEntries(key) {
+      group = key;
+      for (const b of $('groups').children) mark(b, b.dataset.group === key);
+      const cards = data.rows.filter((row) => row.group === key).map((row) => {
+        const b = button('entry', () => select(row.id));
+        b.dataset.id = row.id; b.setAttribute('aria-label', row.name);
+        const image = document.createElement('span');
+        image.className = 'sample'; image.setAttribute('aria-hidden', 'true');
+        image.style.backgroundImage = 'url("' + data.thumbnails + '")';
+        image.style.backgroundPosition = row.index % 8 * 100 / 7 + '% ' + Math.floor(row.index / 8) * 25 + '%';
+        const name = document.createElement('span');
+        name.className = 'entry-name'; name.textContent = row.name;
+        b.append(image, name);
+        return b;
+      });
+      $('entries').replaceChildren(...cards);
+    }
+    function select(id, writeHash = true) {
+      const row = records.get(id);
+      if (!row || selected?.id === id) return;
+      selected = row; sheet = null;
+      const generation = ++activeId;
+      if (group !== row.group) renderEntries(row.group);
+      for (const b of $('entries').children) {
+        mark(b, b.dataset.id === id);
+        if (b.dataset.id === id && window.matchMedia('(max-width: 44rem)').matches) {
+          const scroll = $('entries');
+          const left = b.offsetLeft - scroll.offsetLeft;
+          if (left < scroll.scrollLeft || left + b.offsetWidth > scroll.scrollLeft + scroll.clientWidth)
+            scroll.scrollLeft = left - .5 * (scroll.clientWidth - b.offsetWidth);
+        }
+      }
+      const dimension = row.cell;
+      $('scene').width = dimension[0]; $('scene').height = dimension[1];
+      $('scene').setAttribute('aria-label', row.name + '八格動作預覽');
+      $('sheet-title').textContent = row.name;
+      $('origin').textContent = [row.role, row.affiliation, ...row.books.map((b) => '《' + b + '》')].filter(Boolean).join(' · ');
+      $('source').textContent = row.source;
+      $('dimensions').textContent = row.name + ' · 透明 PNG · ' + (dimension[0] * 4) + ' × ' + (dimension[1] * 2) +
+        ' 像素，每格 ' + dimension[0] + ' × ' + dimension[1] + ' 像素，共四欄兩列。';
+      $('single').href = data.delivery ? '#png-' + id : row.path;
+      $('single').download = id + '.png';
+      if (!downloadingOne && !downloadingAll) notice('');
+      frame = 0; renderStrip(row); draw(); playFromHere();
+      if (writeHash && location.hash !== '#' + id) {
+        try { history.replaceState(null, '', '#' + id); } catch { location.hash = id; }
+      }
+      const image = new Image();
+      image.onload = () => {
+        if (generation !== activeId) return;
+        sheet = image; draw(); playFromHere();
+      };
+      image.onerror = () => { if (generation === activeId) notice('讀取圖像失敗。請重新開啟圖譜。'); };
+      image.src = row.preview;
+    }
+    for (const [key, label] of Object.entries(data.groups)) {
+      const b = button('tab', () => { if (group !== key) select(firstIn.get(key)); });
+      b.dataset.group = key;
+      const count = data.rows.filter((row) => row.group === key).length;
+      b.setAttribute('aria-label', label + '，' + count + ' 張');
+      const tally = document.createElement('span'); tally.className = 'tab-count'; tally.textContent = count;
+      b.append(label, tally); $('groups').append(b);
+    }
+    $('play').addEventListener('click', () => { playing = !playing; syncPlay(); playFromHere(); });
+    for (const b of grounded) b.addEventListener('click', () => {
+      const mode = b.dataset.mode;
+      for (const other of grounded) mark(other, other.dataset.mode === mode);
+      $('stage').dataset.ground = mode; $('strip').dataset.ground = mode;
+    });
+    document.addEventListener('visibilitychange', playFromHere);
+    window.addEventListener('hashchange', () => select(location.hash.slice(1), false));
+    syncPlay(); select(records.has(location.hash.slice(1)) ? location.hash.slice(1) : data.rows[0].id, false);
+
+    if (!data.delivery) return;
+    // Reuse the stored PNG bytes in the download package. Static hosts may return
+    // either a requested byte range or a complete part and both are supported.
+    const release = data.delivery;
+    async function readInterval(start, size, mime, progress) {
+      let position = 0, received = 0;
+      const chunks = [];
+      for (const part of release.parts) {
+        const left = Math.max(0, start - position), right = Math.min(part.size, start + size - position);
+        if (right > left) {
+          const whole = left === 0 && right === part.size;
+          const response = await fetch(part.url, {headers: whole ? {} : {Range: 'bytes=' + left + '-' + (right - 1)}});
+          if (!response.ok) throw Error('download');
+          const bytes = await response.blob();
+          let chunk;
+          if (bytes.size === right - left) chunk = bytes;
+          else if (response.status === 200 && bytes.size === part.size) chunk = bytes.slice(left, right);
+          else throw Error('length');
+          received += chunk.size; chunks.push(chunk);
+          if (progress) progress(received);
+        }
+        position += part.size;
+      }
+      if (received !== size) throw Error('incomplete');
+      return new Blob(chunks, {type: mime});
+    }
+    async function offerFile(blob, filename, wanted) {
+      if (window.crypto?.subtle) {
+        const bytes = await window.crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+        const actual = Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, '0')).join('');
+        if (actual !== wanted) throw Error('checksum');
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename;
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+    const whole = $('whole');
+    if (release.parts.length > 1) whole.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (downloadingAll) return;
+      downloadingAll = true; whole.setAttribute('aria-disabled', 'true');
+      try {
+        notice('正在準備整套素材…');
+        const blob = await readInterval(0, release.size, 'application/zip',
+          (n) => { notice('正在準備整套素材 ' + Math.round(n * 100 / release.size) + '%'); });
+        await offerFile(blob, release.name, release.sha256);
+        notice('整套素材已備妥。解壓縮後開啟 index.html 可離線看圖。');
+      } catch { notice('下載中斷。請再按一次「下載全套」。'); }
+      finally { downloadingAll = false; whole.removeAttribute('aria-disabled'); }
+    });
+    $('single').addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (downloadingOne) return;
+      downloadingOne = true; $('single').setAttribute('aria-disabled', 'true');
+      const row = selected;
+      try {
+        notice('正在準備' + row.name + '原圖…');
+        const png = await readInterval(row.offset, row.bytes, 'image/png');
+        await offerFile(png, row.id + '.png', row.hash);
+        notice(row.name + '的原圖已備妥。');
+      } catch { notice('未能取得原圖。請再按一次「下載原圖 PNG」。'); }
+      finally { downloadingOne = false; $('single').removeAttribute('aria-disabled'); }
+    });
+  })();
+  </script>
+</body>
+</html>
