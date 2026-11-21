@@ -1,0 +1,72 @@
+/* The opening film on upright phones (src/ui/intro-film.js): the whole screen, above everything.
+   Its buttons keep to the bottom corners: the film's captions are set flush to the top corners. */
+.intro-film {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #050506;
+  display: grid;
+  place-items: center;
+}
+.intro-film video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #050506;
+}
+.intro-film button {
+  font: 600 16px/1 var(--serif, serif);
+  letter-spacing: 0.2em;
+  color: #f6eedc;
+  background: #14181ab3;
+  border: 1px solid #d7be8399;
+  border-radius: 4px;
+  padding: 11px 16px 11px 19px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.intro-film button:focus-visible {
+  outline: 2px solid #dab778;
+  outline-offset: 2px;
+}
+.film-skip {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+}
+.film-sound {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  left: calc(env(safe-area-inset-left, 0px) + 12px);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  width: 44px;
+}
+.intro-film .film-sound {
+  padding: 0;
+}
+.film-start {
+  position: absolute;
+  font-size: 22px;
+  padding: 16px 28px 16px 32px;
+}
+.film-end {
+  position: absolute;
+  inset: auto 0 calc(env(safe-area-inset-bottom, 0px) + 9vh);
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+.intro-film .film-end button {
+  min-width: 118px;
+  font-size: 18px;
+  padding: 14px 20px 14px 24px;
+}
+.intro-film .film-continue {
+  background: #8f3b2b;
+  border-color: #e0b170;
+}
+.intro-film [hidden] {
+  display: none;
+}

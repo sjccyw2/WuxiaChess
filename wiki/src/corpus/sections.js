@@ -46,6 +46,7 @@ export const FILE_GROUP = {
   'src/data/new-heroes.js': '圖鑑與人物',
   'src/ui/panels.js': '開場與操作',
   'src/ui/run-views.js': '開場與操作',
+  'src/ui/intro-film.js': '開場與操作',
   'src/fx/technique-strokes.js': '系統與提示',
   'src/data/terrain.js': '地圖與地形',
   'src/data/wake-tale.js': '劇情、對白與旁白',

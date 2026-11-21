@@ -68,7 +68,9 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
 //   profile  the chronicle (name, returns, wins)
 //   step     which page is showing
 //   name     the name as typed so far (first run only)
-function prologueSteps(profile, name = '') {
+//   film     the film has just told the first pages (first visit, phone held upright): start at
+//            the name, then resume where the film ends
+function prologueSteps(profile, name = '', film = false) {
   const tale = MAZE_TALE.prologue,
     known = profile.name || '',
     called = known || name || YOUTH.name,
@@ -90,17 +92,19 @@ function prologueSteps(profile, name = '') {
         { who: 'youth', text: tale.again.youth },
         { who: 'qiu', text: tale.again.reply }
       ]
-    : tale.first.map((step) => (step.ask && known ? { ...step, ask: false } : step));
+    : film
+      ? [...(known ? [] : [tale.film.name]), ...tale.first.slice(tale.first.findIndex((step) => step.afterFilm))]
+      : tale.first.map((step) => (step.ask && known ? { ...step, ask: false } : step));
   // Until he has said his name, the page calls him only 少年.
   const asked = known ? -1 : steps.findIndex((step) => step.ask);
   return steps.map((step, i) => {
     const p = page(step);
     if (i <= asked && step.who === 'youth') p.speaker = { ...p.speaker, name: '少年' };
-    return { ...p, view: i === 0 ? TALE_ART.wake : '', last: i === steps.length - 1 };
+    return { ...p, view: i === 0 && !film ? TALE_ART.wake : '', last: i === steps.length - 1 };
   });
 }
-function prologuePage(profile, step = 0, name = '') {
-  const steps = prologueSteps(profile, name),
+function prologuePage(profile, step = 0, name = '', film = false) {
+  const steps = prologueSteps(profile, name, film),
     at = Math.max(0, Math.min(step, steps.length - 1)),
     p = steps[at];
   // A page has a picture when someone speaks, or when the narration comes with one.
@@ -123,4 +127,7 @@ function prologuePage(profile, step = 0, name = '') {
   </section>`;
 }
 
-export { rollView, prologuePage, prologueSteps };
+// Whether this run opens with the first visit's prologue, which the film tells.
+const firstVisit = (profile) => !(profile.name && (profile.returns ?? 0) > 0);
+
+export { rollView, prologuePage, prologueSteps, firstVisit };

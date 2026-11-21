@@ -20,7 +20,9 @@ import { FieldHud } from './ui/field-hud.js';
 import { icon } from './ui/icons.js';
 import { codexPage } from './ui/gates.js';
 import * as R from './rules/journey.js';
-import { rollView, prologuePage, prologueSteps } from './ui/run-views.js';
+import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
+import { filmFits, playFilm } from './ui/intro-film.js';
+import { MAZE_TALE } from './data/maze-tale.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
 import { mapLayout } from './data/terrain.js';
@@ -44,8 +46,9 @@ let hasSave = !!saved,
 let state = saved || R.startRun(R.drawLots(0));
 let draft = null,
   codexId = 'hero';
-// The prologue shown before the draw: which page it is on, and the name typed so far.
-let prologue = { step: 0, name: '' };
+// The prologue shown before the draw: which page it is on, the name typed so far, and whether the
+// opening film told its first pages.
+let prologue = { step: 0, name: '', film: false };
 let prefs = Object.assign(
   {
     sound: false,
@@ -683,7 +686,7 @@ function pageHtml() {
     case 'wake':
       return journalPage(state);
     case 'prologue':
-      return prologuePage(state.run.chronicle, prologue.step, prologue.name);
+      return prologuePage(state.run.chronicle, prologue.step, prologue.name, prologue.film);
     case 'formation':
       return rollView(
         draft.ids,
@@ -1162,10 +1165,21 @@ function openFormation() {
   }
   openPage('formation');
 }
-// A new run starts with the youth opening his eyes, then the draw.
+// A new run starts with the youth opening his eyes, then the draw. On a phone held upright the
+// first visit opens with the film, and the pages pick up where it ends.
 function openPrologue() {
-  prologue = { step: 0, name: prologue.name };
-  openPage('prologue');
+  const film = filmFits() && firstVisit(state.run.chronicle);
+  prologue = { step: 0, name: prologue.name, film };
+  if (!film) return openPage('prologue');
+  closePage();
+  playFilm({
+    ...MAZE_TALE.prologue.film,
+    // If the film could not play, the pages tell the whole prologue instead.
+    onDone: (shown) => {
+      prologue.film = shown;
+      openPage('prologue');
+    }
+  });
 }
 // Keeps what was typed when the page is redrawn or left.
 function keepName() {
@@ -1407,7 +1421,7 @@ function command(action, id, data = {}, keyboard = false) {
     case 'prologue-skip': {
       if (dialogState !== 'prologue') break;
       keepName();
-      const steps = prologueSteps(state.run.chronicle, prologue.name),
+      const steps = prologueSteps(state.run.chronicle, prologue.name, prologue.film),
         ask = steps.findIndex((step) => step.ask);
       if (action === 'prologue-prev') prologue.step = Math.max(0, prologue.step - 1);
       // Skipping still stops at the name the first time, since it has to be given once.
