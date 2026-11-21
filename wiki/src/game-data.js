@@ -7,6 +7,7 @@ export * from '../../game/src/data/terrain.js';
 export * from '../../game/src/data/mastery-catalog.js';
 export * from '../../game/src/data/new-heroes.js';
 export * from '../../game/src/data/encounters.js';
+export * from '../../game/src/data/battles.js';
 export * from '../../game/src/data/encounter-script.js';
 export * from '../../game/src/data/form-catalog.js';
 export * from '../../game/src/data/wake-tale.js';

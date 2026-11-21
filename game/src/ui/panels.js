@@ -276,14 +276,16 @@ function goalRows(s) {
     const side = objective(s),
       target = find(s, commanderId(s));
     const recruitId = s.run.status === 'battle' ? s.run.pool[0] : s.run.last?.recruit;
+    // COMPAT (until the goals page is the live briefing): the drawn secondary's reward; a hero
+    // comes with any win.
     const reward =
-      (recruitId && s.run.stage < 9 ? '可邀' + DETAILS[recruitId].name + '同行・' : '') +
-      '賞銀 19 兩';
+      (recruitId && s.run.stage < 9 ? '勝則' + DETAILS[recruitId].name + '同行・' : '') +
+      side.reward;
     return (
       '<div class="goal-row"><span class="objective-mark">' +
       icon(living(target) ? 'flag' : 'check', 16) +
-      '</span><div><small>主要目標</small><strong>擊敗' +
-      unitDetails(target).name +
+      '</span><div><small>主要目標</small><strong>' +
+      side.primary +
       '</strong>' +
       '<p class="goal-detail">副手 · ' +
       unitDetails(s.units.find((u) => u.encounterId?.startsWith('lieutenant-')))?.name +

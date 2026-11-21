@@ -147,7 +147,7 @@ function boardContext(s) {
     bossField: boss && G.living(boss) ? fieldFrom(s.mapIndex, boss) : null,
     marker,
     markerField: marker ? fieldFrom(s.mapIndex, marker) : null,
-    speed: s.run.goal === 'speed',
+    speed: s.run.side?.kind === 'swift',
     escorts: new Set(G.wardEscorts(s)),
     runner: null
   };
@@ -463,10 +463,10 @@ function fight(s) {
   rec.rounds = s.round;
   rec.hpLeft = team.reduce((n, u) => n + Math.max(0, u.hp), 0) / team.reduce((n, u) => n + u.maxHp, 0);
   rec.downed = team.filter((u) => !G.living(u)).length;
-  rec.side = R.objective(s).done;
+  rec.side = R.sideDone(s);
   rec.leaderFell = !G.living(G.find(s, s.leader));
   if (TRACE && tracing) {
-    console.log('\n== board ' + (rec.stage + 1) + ' (map ' + s.mapIndex + ', ' + s.run.goal + ') ' + (rec.won ? 'won' : 'lost') + ' in ' + rec.rounds + ' rounds');
+    console.log('\n== board ' + (rec.stage + 1) + ' (map ' + s.mapIndex + ', ' + s.run.side?.kind + ') ' + (rec.won ? 'won' : 'lost') + ' in ' + rec.rounds + ' rounds');
     for (const l of s.logs) if (l.type !== 'grow') console.log('  r' + l.round + ' ' + l.phase + ' ' + l.who + ': ' + l.text);
   }
   return rec;
@@ -610,9 +610,11 @@ function playRun(seed) {
   const s = R.startRun(draw, R.LEGACY);
   const run = { seed, heroes: [...draw.ids], leader: s.leader, boards: [] };
   for (;;) {
-    R.turnPage(s, true);
+    R.turnPage(s, true); // the story
+    R.turnPage(s, true); // the briefing
     prepare(s);
     if (!R.deployLineup(s)) throw new Error('could not deploy, seed ' + seed);
+    R.beginBattle(s); // the opening tiles stay as 整備 seated them
     const rec = fight(s);
     run.boards.push(rec);
     R.settle(s);

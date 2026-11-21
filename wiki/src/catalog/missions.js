@@ -9,25 +9,29 @@ import { NOTES } from './notes.js';
 
 const STAGES = G.MAP_LAYOUTS.map((_, stage) => stage);
 
-export const missionLabel = (stage) => G.mapMission(stage).name;
+// A board's secondary is drawn per run from its pool, so the board's entry is its 支線 page.
+export const missionLabel = () => '支線';
+const sideTale = (kind) => G.SIDE_TALES[kind] || G.SIDE_TALES.done;
 
 function stageMission(stage) {
-  const m = G.mapMission(stage);
+  const m = G.boardBrief(stage, G.mapStages(stage)[0]);
   return {
     id: 'map-' + stage,
-    name: stageName(stage) + ' · ' + m.name,
-    tag: '支線',
-    summary: m.instruction,
+    name: stageName(stage) + ' · ' + m.kindName,
+    tag: '戰局',
+    summary: m.battle,
     image: wikiArt('map-' + stage + '.webp'),
     sections: [
       rows('勝負與獎勵', [
         ['勝利', m.win],
         ['敗退', m.loss],
-        ['支線', m.instruction],
+        ['兵力', m.force.line],
+        ...(m.waves.length ? m.waves.map((w) => ['援軍', w.line]) : [['援軍', m.noWaves]]),
+        ...m.pool.map((side) => ['支線', side.name + (side.detail ? '：' + side.detail : '') + (side.hero === '*' ? '（由出陣俠客抽定一人）' : '')]),
         ['支線獎勵', NOTES.sideReward(G.REWARDS)],
         ['通關獎勵', NOTES.clearReward(G.REWARDS)]
       ]),
-      speech('支線紀事', G.SIDE_TALES[m.goal]),
+      speech('支線紀事', ...[...new Set(m.pool.map((side) => sideTale(side.kind)))]),
       links('同局條目', [
         link('maps', stage, stageName(stage)),
         link('foes', 'enc-' + stage + '-0', m.boss),
@@ -35,7 +39,7 @@ function stageMission(stage) {
       ])
     ],
     sources: cites(
-      cite('function mapMission', 'src/rules/journey.js'),
+      cite('function boardModel', 'src/rules/journey.js'),
       cite('function settle', 'src/rules/journey.js')
     )
   };

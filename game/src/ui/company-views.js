@@ -141,7 +141,8 @@ function memberLine(s, u, ui) {
     ? [{ id: CAPTAINS[map][0] }, { id: 'lieutenant-' + map }]
     : G.enemies(s).filter((v) => G.unitDetails(v).rank);
   const board = mapLayout(map);
-  const mission = R.mapMission(map, upcoming ? null : G.objectiveTile(s));
+  // COMPAT (until this block is rebuilt from R.briefing): the drawn secondary for this board.
+  const mission = upcoming ? R.mapMission(map) : R.objective(s);
   const recruit = (upcoming ? s.run.stage + 1 : s.run.stage) < 9 && s.run.pool.length > 0;
   const leader = G.DETAILS[line[0]]?.name || '領隊';
   const brief =
@@ -158,8 +159,9 @@ function memberLine(s, u, ui) {
     esc(mission.name) +
     '</strong>　' +
     esc(mission.instruction) +
-    '<small>勝利時另得 19 兩' +
-    (recruit ? '，並有一位俠客應帖而來' : '') +
+    '<small>' +
+    (mission.reward ? '勝利時另得' + esc(mission.reward) : '') +
+    (recruit ? (mission.reward ? '；' : '') + '取勝後有一位俠客應帖而來' : '') +
     '。</small></dd></div></dl></section>';
   return (
     brief +

@@ -22,7 +22,8 @@ export const NOTES = {
   phaseCadence: (n) => '半血變招後改為相隔' + '一二三四五'[n - 1] + '回合。',
 
   // Sentences built around numbers the game exports (REWARDS, GROWTH, raiseLevel).
-  sideReward: (r) => '額外 ' + r.side + ' 兩。不是最後一局、且仍有未應帖的俠客時，另有一人應帖而來。',
+  sideReward: (r) =>
+    '賞銀 ' + r.side + ' ＋ ' + r.sidePerStage + ' ×（第幾局 − 1）兩；或出陣生還者各 1 武學點；或武譜一卷。每局勝利皆有一人應帖而來。',
   clearReward: (r) =>
     r.clear + ' ＋ ' + r.perStage + ' ×（第幾局 − 1）兩，全體同行俠客各 1 武學點。',
   levelling: (g) => '每滿 ' + g.levelXp + ' 歷練升一級，每級與每次過關各得 1 武學點。',

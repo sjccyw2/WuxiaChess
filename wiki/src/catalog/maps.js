@@ -12,8 +12,7 @@ const point = ({ x, y }) => ({ x, y });
 function map(stage) {
   const layout = G.mapLayout(stage),
     types = G.terrainTypes(stage),
-    [boss, second] = G.ENCOUNTERS[stage],
-    mission = G.mapMission(stage);
+    [boss, second] = G.ENCOUNTERS[stage];
   const counts = new Map();
   for (const cell of layout.cells) counts.set(cell.kind, (counts.get(cell.kind) || 0) + 1);
   const standable = layout.cells.filter((c) => Number.isFinite(G.tileInfo(c.x, c.y, stage)?.cost));
@@ -39,7 +38,7 @@ function map(stage) {
           cells: layout.cells.map((c) => ({ x: c.x, y: c.y, kind: c.kind })),
           allies: layout.allies.map(point),
           enemies: layout.enemies.map(point),
-          objective: mission.tile ? point(mission.tile) : null,
+          objective: G.BATTLES[stage].sides.some((side) => side.kind === 'lamp') ? point(layout.objective) : null,
           legend: Object.fromEntries(Object.entries(types).map(([kind, t]) => [kind, t.name]))
         }
       },

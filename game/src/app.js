@@ -1278,6 +1278,9 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'field-deploy':
       if (dialogState === 'team' && R.deployLineup(state)) {
+        // COMPAT (until the deployment step has its interface): start round one at once, the
+        // heroes on the tiles their 整備 seats give them. Remove with the 開戰 button.
+        R.beginBattle(state);
         mode = 'move';
         viewId = state.selected;
         closePage();
@@ -1301,6 +1304,9 @@ function command(action, id, data = {}, keyboard = false) {
     case 'scene-next':
     case 'scene-skip':
       if (dialogState === 'encounter' && R.turnPage(state, action === 'scene-skip')) {
+        // COMPAT (until the briefing page exists): pass straight through the 'brief' scene to
+        // 整備. Remove with the briefing page.
+        if (state.run.scene === 'brief') R.turnPage(state, true);
         save();
         showScene();
         audio('page');

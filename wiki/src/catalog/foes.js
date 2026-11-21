@@ -34,7 +34,10 @@ export const troopIds = () =>
     (id) => !G.PARTY.includes(id) && !G.DETAILS[id].rank && (!id.includes('-') || ownTroop(id))
   );
 // Where a troop entry is written: a board's own pieces in its RANKS, the shared ones in game.js.
-export const troopSource = (id) => (id.includes('-') ? 'src/data/encounters.js' : 'src/rules/game.js');
+export const troopSource = (id) =>
+  id.includes('-') || G.TROOPS[id] ? 'src/data/encounters.js' : 'src/rules/game.js';
+// A troop type's picture: its portrait.
+export const troopArt = (id) => gameArt(G.DETAILS[id].portraitFile);
 
 export function foes() {
   const named = G.ENCOUNTERS.flatMap((pair, stage) =>
@@ -69,7 +72,7 @@ export function foes() {
       name: d.name,
       tag: '敵軍兵種',
       summary: d.bio || d.school + ' · ' + d.role,
-      image: gameArt(d.portraitFile),
+      image: troopArt(id),
       sections: [
         rows('人物誌', [['門派', d.school], ['身分', d.role], map != null && ['出現地點', stageName(Number(map))]]),
         acts.length && rows('行事', acts),
