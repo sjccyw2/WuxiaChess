@@ -40,11 +40,12 @@ def interp(keys, t, curve=out3):
 class Panel:
     """An image shown through an animated shape. cam(u) -> (zoom, cx, cy) over the panel's life
     u in [0, 1]; poly: keyframes of four screen points; mask 'poly', 'dots' or 'iris'."""
-    def __init__(self, src, t_in, t_out, cam, poly=None, mask='poly', reveal=None, center=(W / 2, H / 2), border=True, shake=None):
+    def __init__(self, src, t_in, t_out, cam, poly=None, mask='poly', reveal=None, center=(W / 2, H / 2), border=True, shake=None, anchor=None):
         self.im = Image.open(src).convert('RGB')
         self.t_in, self.t_out, self.cam = t_in, t_out, cam
         self.poly = poly or [(t_in, FULL)]
         self.mask, self.reveal, self.center, self.border, self.shake = mask, reveal, center, border, shake
+        self.anchor = anchor   # ((image x, image y), (screen x, screen y)): pin that point of the picture to that spot
     def active(self, t): return self.t_in <= t < self.t_out
     def render(self, canvas, t):
         tc = math.floor(t / STEP) * STEP
@@ -64,6 +65,9 @@ class Panel:
             a = self.shake(t)
             sx, sy = a * math.sin(t * 93) * 26, a * math.cos(t * 71) * 26
         x = clamp((iw - cw) * cx + sx, 0, iw - cw); y = clamp((ih - ch) * cy + sy, 0, ih - ch)
+        if self.anchor:
+            (ix, iy), (px, py) = self.anchor; k = cw / bw
+            x = clamp(ix - (px - bx0) * k + sx, 0, iw - cw); y = clamp(iy - (py - by0) * k + sy, 0, ih - ch)
         tile = self.im.crop((int(x), int(y), int(x + cw), int(y + ch))).resize((bw, bh), Image.BILINEAR)
         m = Image.new('L', (W + 80, H + 80))
         d = ImageDraw.Draw(m)

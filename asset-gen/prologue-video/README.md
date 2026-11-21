@@ -12,7 +12,7 @@ three moments hit hard: the eyes opening, the eagle, and the box landing on 求�
 | Time | Panel | Beat | Entrance | Words |
 | --- | --- | --- | --- | --- |
 | 0 s | `s1-asleep` | quiet | (opening) slow push in | 這一覺，睡得好沉。 |
-| 4.2 s | `s2-eyes` | **impact** | a band slams across, flash, burst lines | 睜開眼來。 |
+| 4.2 s | `s2-eyes` | **impact** | a band slams across at the height of his eyes, flash, burst lines; the eyes stay put as it opens | 睜開眼來。 |
 | 6.5 s | `s3-valley` | awe | slow halftone-dot dissolve; the camera tilts down the tall panel | 竟不在自家床上。 · 但見好大一座山谷，四面峭壁如削。 |
 | 11.0 s | `d-selfplay` | mystery | a wedge slides in slowly, then opens | 谷底一方青石棋臺。 · 一個老者，正自己同自己對弈。 |
 | 14.4 s | `s4-board` | energy | iris; the painted 「鏘」 (`panels/sfx-clang.png`) | 棋子之上，人影鬥得正緊。 |
