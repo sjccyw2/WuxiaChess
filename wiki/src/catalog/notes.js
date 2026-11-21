@@ -26,7 +26,7 @@ export const NOTES = {
 
   // Sentences built around numbers the game exports (REWARDS, GROWTH, raiseLevel).
   sideReward: (r) =>
-    '賞銀 ' + r.side + ' ＋ ' + r.sidePerStage + ' ×（第幾局 − 1）兩；或出陣生還者各 1 武學點；或武譜一卷。每局勝利皆有一人應帖而來。',
+    '賞銀 ' + r.side + ' ＋ ' + r.sidePerStage + ' ×（第幾局 − 1）兩；或出陣生還者各 1 武學點；或武譜一卷。支線成敗不影響應帖：不是最後一局、且仍有未應帖的俠客時，每次取勝另有一人前來。',
   clearReward: (r) =>
     r.clear + ' ＋ ' + r.perStage + ' ×（第幾局 − 1）兩，全體同行俠客各 1 武學點。',
   levelling: (g) => '每滿 ' + g.levelXp + ' 歷練升一級，每級與每次過關各得 1 武學點。',
