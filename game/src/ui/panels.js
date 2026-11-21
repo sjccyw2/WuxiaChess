@@ -7,7 +7,9 @@ import {
 } from '../rules/battle-mastery.js';
 import { art } from './artwork.js';
 import { fieldSize, fieldCells, terrainTypes, mapLayout, tileInfo } from '../data/terrain.js';
-import { objective, NUMERALS, guideInventory, acceptsGuide } from '../rules/journey.js';
+import { NUMERALS, guideInventory, acceptsGuide, briefing, boardBrief, sideForecast } from '../rules/journey.js';
+import { seatsFor } from '../rules/formation.js';
+import { POSTS, boardPlan, planGrid, planKey } from './board-plan.js';
 import {
   DETAILS,
   unitDetails,
@@ -33,6 +35,7 @@ import {
   targetOK,
   canPrepare,
   canUseMedicine,
+  medicineFor,
   artFor,
   basicFor,
   equippedArts,
@@ -47,10 +50,17 @@ import {
   unclaimedObjectiveTile,
   wardEscorts,
   wardShare,
-  stat
+  stat,
+  announcedWaves,
+  arrivalGhosts,
+  pieceUnit,
+  waveList,
+  boardOf
 } from '../rules/game.js';
 import { icon } from './icons.js';
+import { itemPicture } from './item-art.js';
 import { POLISH } from '../polish.js';
+import { guideEntries } from '../data/rule-terms.js';
 import { extraHotkeys } from './field-extras.js';
 import { ON as actionFlow, anyIdle, flowHotkeys } from './action-flow.js';
 const portraits = {
@@ -201,6 +211,27 @@ function commander(s, mode) {
         '</span>',
       'field-action turn-action'
     );
+  // The deployment step: the end-turn control is 開戰, which starts round one.
+  const begin = btn(
+    'battle-begin',
+    icon('flag', 18) + '<span>開戰</span>',
+    'field-action turn-action ready',
+    'title="開戰"'
+  );
+  if (s.run?.deploying) {
+    if (actionFlow) return begin;
+    return (
+      [
+        ['move', 'move', '移動'],
+        ['skill', 'spark', '招式'],
+        ['wait', 'wait', '待命']
+      ]
+        .map(([a, ic, label]) =>
+          btn(a, icon(ic, 18) + '<span>' + label + '</span>', 'field-action', 'title="' + label + '" disabled')
+        )
+        .join('') + begin
+    );
+  }
   // Polish (actionFlow): the bar is reduced to End turn, which lights up once every hero has
   // at least moved.
   if (actionFlow) {
@@ -269,44 +300,9 @@ function commander(s, mode) {
     })
     .join('');
 }
+// The goal rows of the single-board game (no run). A run's goals page is the live briefing.
 function goalRows(s) {
-  if (s.run) {
-    const side = objective(s),
-      target = find(s, commanderId(s));
-    const recruitId = s.run.status === 'battle' ? s.run.pool[0] : s.run.last?.recruit;
-    const reward =
-      (recruitId && s.run.stage < 9 ? '可邀' + DETAILS[recruitId].name + '同行・' : '') +
-      '賞銀 19 兩';
-    return (
-      '<div class="goal-row"><span class="objective-mark">' +
-      icon(living(target) ? 'flag' : 'check', 16) +
-      '</span><div><small>主要目標</small><strong>擊敗' +
-      unitDetails(target).name +
-      '</strong>' +
-      '<p class="goal-detail">副手 · ' +
-      unitDetails(s.units.find((u) => u.encounterId?.startsWith('lieutenant-')))?.name +
-      '</p>' +
-      (wardEscorts(s).length || s.units.some((v) => unitDetails(v)?.traits?.ward)
-        ? '<p class="goal-detail">星索護陣・' +
-          wardEscorts(s).length +
-          ' / ' +
-          s.units.filter((v) => unitDetails(v)?.traits?.ward).length +
-          ' 名護陣者，減傷 ' +
-          wardShare(s, target) +
-          '%</p>'
-        : '') +
-      '</div></div>' +
-      '<div class="goal-row"><span class="objective-mark alt">' +
-      icon(side.done ? 'check' : 'diamond', 16) +
-      '</span><div><small>支線・' +
-      reward +
-      '</small><strong>' +
-      side.name +
-      '</strong><p class="goal-detail">' +
-      side.instruction +
-      '</p></div></div>'
-    );
-  }
+  if (s.run) return '';
   const alive = party(s).filter(living).length,
     chief = find(s, 'chief');
   const won = s.result === 'win';
@@ -373,7 +369,7 @@ function equippedCard(u, id, slot) {
   return (
     '<div class="equipped-card"><div class="item-icon">' +
     (item
-      ? '<img class="fo-mini" src="' + art('item-' + id + '.webp') + '" alt="">'
+      ? itemPicture(id, 'fo-mini')
       : icon(slot === '兵器' ? 'sword' : 'shield', 22)) +
     '</div><div><small>' +
     slot +
@@ -449,17 +445,29 @@ function profileContents(s, id) {
     '</div>'
   );
 }
-function effect(item) {
-  return item.atk
-    ? '攻擊 +' + item.atk
-    : item.def
-      ? '防禦 +' + item.def
-      : item.power
-        ? '絕技威力 +' + item.power
-        : item.hp
-          ? '氣血 +' + item.hp
-          : '內力 +' + item.mp;
+// An item's numbers in one line: 「攻擊 ＋17 · 移動 −1」.
+function itemBonus(item) {
+  return [
+    ['cleanse', '解除不良狀態'],
+    ['atk', '攻擊'],
+    ['def', '防禦'],
+    ['power', '絕技威力'],
+    ['step', '移動'],
+    ['barbs', '反刺'],
+    ['hp', '氣血'],
+    ['mp', '內力']
+  ]
+    .filter(([k]) => item[k])
+    .map(([k, n]) =>
+      item[k] === true ? n : k === 'barbs' ? n + ' ' + item[k] : n + (item[k] < 0 ? ' −' + -item[k] : ' ＋' + item[k])
+    )
+    .join(' · ');
 }
+// The button's word for a dose that would do nothing now.
+function medicineIdle(item) {
+  return item.hp && !item.mp ? '氣血已滿' : item.mp && !item.hp ? '內力已滿' : '無須服用';
+}
+const effect = itemBonus;
 function inventoryPage(s, id, filter) {
   const u = find(s, id);
   const groups = [
@@ -483,17 +491,15 @@ function inventoryPage(s, id, filter) {
       usable =
         (item.kind === 'use' ? canUseMedicine(s, u) : canPrepare(s, u)) &&
         match &&
-        (item.kind !== 'use' || (item.hp ? u.hp < u.maxHp : u.mp < u.maxMp));
+        (item.kind !== 'use' || medicineFor(u, item).helps);
     const label = !match
       ? '限' + DETAILS[item.owner].name
       : worn
         ? '卸下'
         : item.kind === 'use'
-          ? item.hp && u.hp === u.maxHp
-            ? '氣血已滿'
-            : item.mp && u.mp === u.maxMp
-              ? '內力已滿'
-              : '服用'
+          ? medicineFor(u, item).helps
+            ? '服用'
+            : medicineIdle(item)
           : '裝備';
     content +=
       '<div class="inventory-row"><span class="item-icon">' +
@@ -671,26 +677,118 @@ function logPage(s, filter) {
     '</div>'
   );
 }
+// ── The briefing (軍情) ─────────────────────────────────────────────────────
+// One page before 整備: how the board is won and lost, the drawn secondary and what it pays, who
+// stands against the heroes and who comes later, and a plan of the board. `live` is the goals
+// page of the fight: the same page with the state of the fight in it. `ahead` reads the next
+// board from the shop, with no secondary drawn yet. `back` names the page the footer returns to.
+function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {}) {
+  const r = s.run,
+    model = ahead ? boardBrief(r.route[r.stage + 1], r.stage + 1) : briefing(s, { live });
+  const plan = boardPlan(model.map, ahead ? null : s);
+  const seats = ahead ? [] : seatsFor(r);
+  const post = (i, x, y, at) =>
+    '<b class="plan-post' +
+    (seats[i] ? ' filled' : '') +
+    (seats[i] && seats[i] === (r.scene === 'fight' ? s.leader : r.next[0]) ? ' captain' : '') +
+    '" style="' +
+    at +
+    '" title="陣位' +
+    POSTS[i] +
+    (seats[i] ? ' · ' + DETAILS[seats[i]].name : '') +
+    '">' +
+    POSTS[i] +
+    '</b>';
+  const sect = (cls, title, body) =>
+    '<section class="brief-sec ' + cls + '"><h4>' + title + '</h4>' + body + '</section>';
+  const p = (text, cls = '') => (text ? '<p' + (cls ? ' class="' + cls + '"' : '') + '>' + esc(text) + '</p>' : '');
+  const L = model.live;
+  // 勝利, and in the fight how far it has come: each master's 氣血, or the enemies left.
+  let progress = '';
+  if (L) {
+    const ward = (m) => {
+      const u = find(s, m.id);
+      if (!u || !(wardEscorts(s).length || s.units.some((v) => unitDetails(v)?.traits?.ward))) return '';
+      return (
+        '　星索護陣・' +
+        wardEscorts(s).length +
+        ' / ' +
+        s.units.filter((v) => unitDetails(v)?.traits?.ward).length +
+        ' 名護陣者，減傷 ' +
+        wardShare(s, u) +
+        '%'
+      );
+    };
+    const rows =
+      model.kind === 'rout'
+        ? [L.remaining, L.waiting].filter(Boolean).map((t) => '<li>' + esc(t) + '</li>')
+        : L.masters.map(
+            (m) =>
+              '<li class="' +
+              (m.fallen ? 'done' : '') +
+              '">' +
+              icon(m.fallen ? 'check' : 'flag', 14) +
+              '<span>' +
+              esc(m.line) +
+              esc(m.fallen ? '' : ward(m)) +
+              '</span></li>'
+          );
+    progress = rows.length ? '<ul class="brief-progress">' + rows.join('') + '</ul>' : '';
+  }
+  const sd = model.side;
+  const side = sd
+    ? '<p class="brief-side-name">' +
+      (sd.mark ? '<b class="side-mark ' + sd.state + '">' + sd.mark + '</b>' : '') +
+      '<strong>' +
+      esc(sd.name) +
+      '</strong>' +
+      (sd.stateText ? '<small class="side-state ' + sd.state + '">' + esc(sd.stateText) + '</small>' : '') +
+      '</p>' +
+      p(sd.detail) +
+      (sd.progress && sd.state === 'open' ? p(sd.progress, 'brief-note') : '') +
+      (sd.lost ? p(sd.lost, 'brief-note warn') : '') +
+      p(sd.rewardText, 'brief-small') +
+      p(sd.warning, 'brief-note warn')
+    : model.pool.length
+      ? p(model.sideNote) +
+        '<ul class="brief-pool">' +
+        model.pool.map((e) => '<li><strong>' + esc(e.name) + '</strong> ' + esc(e.rewardText) + '</li>').join('') +
+        '</ul>'
+      : p(model.sideNote);
+  // The page stops at 應帖 (the producer's ruling of 2026-11-21): how each enemy fights, how
+  // many there are and when more arrive are for the player to find out on the board. The
+  // model still carries them (journey.js briefing) for the wiki and the tools.
+  const foot = live
+    ? btn('close', '返回戰盤', 'gold-btn')
+    : back
+      ? btn('close', back, 'gold-btn')
+      : btn('home', '主畫面', 'outline-btn') + btn('brief-next', '進入整備 ' + arrow, 'gold-btn');
+  return (
+    '<section class="mj-view brief-view">' +
+    titleHead('flag', '軍情', esc(model.heading)) +
+    (L ? '<p class="brief-live">' + esc(L.line) + '</p>' : '') +
+    '<div class="brief-body"><div class="brief-plan">' +
+    planGrid(plan, post) +
+    planKey(plan) +
+    '</div><div class="brief-text">' +
+    sect('brief-kind', '戰局', p(model.battle)) +
+    sect('brief-win', '勝利', p(model.win) + progress) +
+    sect('brief-loss', '敗退', p(model.loss)) +
+    sect('brief-side', '支線', side) +
+    (model.recruit ? sect('brief-recruit', '應帖', p(model.recruit)) : '') +
+    '</div></div>' +
+    extra +
+    '<div class="modal-foot right">' +
+    foot +
+    '</div></section>'
+  );
+}
 function goalsPage(s) {
   if (s.run)
-    return (
-      titleHead('flag', '十局棋路') +
-      '<div class="goals-detail">' +
-      goalRows(s) +
-      '</div>' +
-      '<div class="ledger-rules"><span>回合 ' +
-      s.round +
-      '／' +
-      LIMIT +
-      '</span><span>領隊 ' +
-      DETAILS[leader(s)].name +
-      '</span><span>銀 ' +
-      s.run.coins +
-      ' 兩</span></div>' +
-      '<details class="hud-disclosure"><summary>地勢與勝敗條件</summary><p>' +
-      esc(mapLayout(s.mapIndex).tactic) +
-      '</p><p>須於第十二回合結束前擊敗局主。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。達成支線並取勝，便有新俠客應帖而來。</p></details>' +
-      '<details class="hud-disclosure"><summary>十局次序 · ' +
+    return briefPage(s, {
+      live: true,
+      extra:
+      '<details class="hud-disclosure brief-route"><summary>十局次序 · ' +
       (s.run.stage + 1) +
       '／10</summary><ol class="journey-route">' +
       s.run.route
@@ -719,7 +817,7 @@ function goalsPage(s) {
         )
         .join('') +
       '</ol></details>'
-    );
+    });
   return (
     titleHead('flag', '戰役目標') +
     '<div class="goals-detail">' +
@@ -813,83 +911,12 @@ function terrainPage(s) {
   );
 }
 function helpPage() {
-  const rules = [
-    [
-      'scroll',
-      '一念江湖',
-      '每一輪有三位俠客應帖，由你執子。十局各有一位局主，給一道劍意壓著心神，非戰不可；勝了，他才醒得過來。每局另有一道支線，達成支線並取勝，便多一位同伴。每局至多五人上盤。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。'
-    ],
-    [
-      'bag',
-      '通吃坊與武譜',
-      '每局結束可到韋小寶的通吃坊購物。每冊武譜限授一人。受授後在「授業武譜」花點參悟，再裝入三格之一。過關與升級各得一點。戰中剛參悟的絕技可即時裝上一次。'
-    ],
-    [
-      'people',
-      '選擇俠客',
-      '點選俠客腳下的底座，或在「隊伍」選擇俠客後按「操控此俠客」。青玉底座屬我方，朱紅底座屬敵方。'
-    ],
-    [
-      'move',
-      '走位與地形',
-      '十局各有其形。深水、斷崖與天井沒有地格，須沿橋路繞行。指向青綠地格可預覽路線，點選後，俠客沿縱橫棋路逐格行走。可穿越友軍，遇敵軍、太湖石與茶箱須繞道。淺灘和竹林耗兩步，過木橋只耗一步。按「地形圖」查閱掩體與藥草，出招前按「撤步」可循原路返回。'
-    ],
-    [
-      'target',
-      '環視戰場',
-      '拖曳可旋轉，滾輪或雙指開合可縮放。按住 Shift 拖曳可平移，觸控放大後以雙指平移。按準星可定位目前俠客，按縮放百分比可回到全圖。'
-    ],
-    [
-      'swords',
-      '攻擊與絕技',
-      (actionFlow ? '移動後，或再點一次俠客，' : '打開「招式」，') +
-        '選普攻或已攜帶的武學，再點目標可預覽實際傷害。射程內的敵人若仍存活便會還擊。療傷、護盾與助勢的武學施於友軍或自身，同樣先預覽再施展。'
-    ],
-    [
-      'tree',
-      '想起武學',
-      '應帖而來的只是一念：俠客只帶著入門的功夫，放在武學樹的根基一行。後來所學，要在局中花武學點數一招一招想起來，越往上越近他的成名絕學。'
-    ],
-    [
-      'spark',
-      '出手節奏',
-      '連環：擊倒主目標時，本回合可再出手一次，每回合限一次。回身：出招後仍可走完未用的步數，走後不能撤步。號令：令一位本回合已行動的同伴重新移動並出手一次。留力：上一回合未曾普攻或攻擊敵人，方可施展。壓箱：每局只能施展一次。調息：施展後須隔數回合才能再用。'
-    ],
-    [
-      'danger',
-      '絕技的代價',
-      '有些絕技要出招者自己付代價，至多延續到他的下一回合：露空，至下回合防禦降低；無守，至下回合不能還擊；立樁，下一回合不能移動；曲終，下一回合不能施展絕技，仍可普攻。這是代價，不是傷病，解厄解不掉。'
-    ],
-    [
-      'shield',
-      '護人與布陣',
-      '代受：至下回合，敵人對相鄰同伴的直接攻擊改由自己承受。挑釁：至下回合，兩格內能攻到自己的敵人只能攻擊自己，兩格從出招後所站之處算起，預覽時棋盤會框出範圍。布陣：以落點為中心布下五格陣勢，至下一敵方回合結束；敵人踏入即須停步，回合開始時站在陣中移動減 2，我方站在陣中防禦 ＋4。'
-    ],
-    [
-      'pin',
-      '附加狀態',
-      '吸勁：命中後回復 8 點內力，並使目標的絕技延後一回合；同一敵人每回合只延一次，局主不能連續兩回合被延。內傷：療傷減半，每次出手攻擊後自損氣血。失神：失去下一次行動；局主受過後，下一回合可抵抗。纏械：攻擊降低，普攻與絕技只能攻擊相鄰一格。'
-    ],
-    [
-      'end',
-      '回合與養成',
-      (actionFlow
-        ? '每人每回合可移動一次，並出招一次。未出招的俠客在回合結束時自動待命，防禦暫時提升 4 點。'
-        : '每人每回合可移動一次，並出招或待命一次。') +
-        '服藥每次扣一份，可連用並保留移動與行動。領隊陣法作用於自身與兩格內的友軍。結束回合後敵方會行動。每滿 100 歷練升一級，獲 1 點武學點數。三級後出招所得歷練逐級遞減。'
-    ]
-  ];
+  // The paragraphs are worded in data/rule-terms.js, which the wiki reads too.
+  const rules = guideEntries({ actionFlow });
   return (
     titleHead('help', '操作指南') +
     '<div class="field-help">' +
-    [
-      [
-        'grid',
-        '棋格與面板',
-        '點地名查看目標。隊伍可分配物資與武譜，點俠客肖像可查小傳、屬性與武學樹。右上角的棋格圖示可開關地格邊線。'
-      ],
-      ...rules
-    ]
+    rules
       .map(
         ([ic, title, body]) =>
           `<details class="hud-disclosure"><summary>${icon(ic, 17)} ${title}</summary><p>${body}</p></details>`
@@ -958,8 +985,20 @@ const CHARGED = {
   mend: '蓄勢已成 · 同夥傷重便替他續命',
   stance: '蓄勢已成 · 近身打他必遭全力還擊'
 };
+// A reinforcement not yet on the board, as the enemy page shows it: the piece built where it
+// would enter now (G.arrivalGhosts), or at its own entry tile when that is taken.
+function waitingPiece(s, id) {
+  for (const p of announcedWaves(s)) {
+    const def = p.defs.find((d) => d.id === id);
+    if (!def) continue;
+    const u = arrivalGhosts(s, p.due).find((g) => g.id === id) || pieceUnit(s, def, p.due);
+    return { u, pending: p };
+  }
+  return null;
+}
 function enemyPage(s, id) {
-  const u = find(s, id),
+  const waiting = find(s, id) ? null : waitingPiece(s, id);
+  const u = waiting ? waiting.u : find(s, id),
     i = unitDetails(u),
     special = enemyTechnique(u, s),
     turns = roundsToSignature(s, u);
@@ -1027,10 +1066,34 @@ function enemyPage(s, id) {
           '</span></p>'
       )
       .join('') +
-    '<p class="footnote">' +
-    icon('stone', 15) +
-    ('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。' + tileInfo(u.x, u.y, s.mapIndex).note) +
-    '</p>'
+    (waiting
+      ? '<p class="footnote">' +
+        icon('stone', 15) +
+        '<span>' +
+        esc('尚未入場 · 第' + NUMERALS[waiting.pending.due - 1] + '回合自' + waiting.pending.wave.place + '入場') +
+        '</span></p>' +
+        (waiting.pending.defs.length > 1
+          ? '<div class="wave-mates">' +
+            waiting.pending.defs
+              .map((d) => {
+                const mate = pieceUnit(s, d, waiting.pending.due);
+                return (
+                  '<span class="' +
+                  (d.id === id ? 'current' : '') +
+                  '"><img src="' +
+                  unitFace(mate) +
+                  '" alt=""><small>' +
+                  esc(unitDetails(mate).name) +
+                  '</small></span>'
+                );
+              })
+              .join('') +
+            '</div>'
+          : '')
+      : '<p class="footnote">' +
+        icon('stone', 15) +
+        ('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。' + tileInfo(u.x, u.y, s.mapIndex).note) +
+        '</p>')
   );
 }
 function attackPage(s, source, target, skill) {
@@ -1181,6 +1244,10 @@ function attackPage(s, source, target, skill) {
         : line('招式連攜', esc(note))
     );
   if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
+  // The secondary: this blow would fell its target and so meet or fail it.
+  const sideLine = s.run && !friendly && !blink ? sideForecast(s, u, aimed, f) : '';
+  if (sideLine)
+    lines.push(line('支線', sideLine.replace(/^支線 · /, ''), sideLine.endsWith('達成') ? 'positive' : 'negative'));
   if (skill)
     lines.push(
       line('自身消耗', f.mpCost + ' 內力' + (f.hpCost ? '、' + f.hpCost + ' 氣血' : ''))
@@ -1241,4 +1308,4 @@ function resultPage(s) {
   );
 }
 
-export { portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };
+export { itemBonus, medicineIdle, portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, briefPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };

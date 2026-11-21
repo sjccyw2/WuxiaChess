@@ -40,7 +40,7 @@ game/
     app.js            entry point: screens, input, save/load
     polish.js         presentation switches: one per visual upgrade (see below)
     loading.js        lifts the loading veil and fetches the dialog font early
-    data/             content tables: heroes, arts, foes, maps, story (see below)
+    data/             content tables: heroes, arts, foes, maps, battles, rule words, story (see below)
     rules/            game logic: combat, journey, shop, formations
     scene/            3D battlefield, camera, scenery, landforms
     actors/           sprites and movement on the board
@@ -60,14 +60,19 @@ wiki/
     catalog/          builds each wiki section from game data
     corpus/           lists every line of in-game text
     view/             draws the pages
-asset-gen/
+asset-gen/            art not yet in the game (see asset-gen/README.md)
   prompts.md          prompts for the art the story still needs
+  jianying-roster-art/  thirty characters: portrait and sprite sheet each
+  jianying-item-art/    eight skill effects and thirty-two item pictures
 tools/
   check-wiki.mjs      builds the wiki outside a browser and checks its links
   check-story.mjs     plays hundreds of shuffled runs and checks the story holds
   extra-fonts.py      regenerates the extra font characters for the game and the wiki
   map-preview.html    draws one battlefield with the game's own board, camera and lighting
   shoot-map.mjs       photographs a battlefield from a set of camera angles
+  roster-art.py       makes the game's files for characters from the roster pack
+  roster-preview.html stands fighters on a battlefield and plays each row of their sheets
+  shoot-roster.mjs    photographs every frame of a character's sheet on the board, beside another
   sound-check.mjs     renders every sound and fails if one clips or is out of balance
 ```
 
@@ -76,7 +81,8 @@ tools/
 Every visual upgrade layered on the original look has a switch in `game/src/polish.js`: board
 pieces, combat effects, lighting and water, panel finish, the loading veil, and the added
 controls (danger zone, `Tab` to the next hero, the side-docked strike forecast, and the
-action flow that replaces the four-button command bar). Set a switch to
+action flow that replaces the four-button command bar), the painted skill effects, and the
+marks for reinforcements and the secondary objective on the board. Set a switch to
 `false` to turn that one feature off; nothing else needs to change.
 
 To compare without editing the file:
@@ -86,6 +92,9 @@ To compare without editing the file:
 
 Styles for these features live in `styles/12-combat.css` and `styles/13-panels.css`, and every
 rule there is scoped under an `html.polish-…` class that the switch controls.
+
+The briefing page (軍情) and the deployment step before round one are game flow, not polish:
+they have no switch. Their styles are in `styles/14-battles.css`.
 
 ## How the story is put together
 
@@ -112,9 +121,10 @@ The wiki holds no copy of the game's data. When the page opens it imports the ga
 | 群俠列傳 | `catalog/heroes.js` | hero details, starting stats, leader commands, art trees |
 | 武學總譜 | `catalog/skills.js` | every technique; numbers come from the game's own `moveFacts()` |
 | 百物譜 | `catalog/items.js` | items, shop prices, manuals |
-| 群敵錄 | `catalog/foes.js` | encounters and troop types |
-| 江湖人物 | `catalog/folk.js` | the youth, 韋小寶, and the shadow to be saved on each board |
-| 任務簿 | `catalog/missions.js` | side objectives, trials, rewards, growth numbers |
+| 群敵錄 | `catalog/foes.js` | each board's master and lieutenant, the villains who join them, and troop types |
+| 江湖人物 | `catalog/folk.js` | the youth, the eagle and 韋小寶 |
+| 任務簿 | `catalog/missions.js` | each board's battle (how it is won, its enemies and reinforcements, its pool of secondaries) and the heroes' trials |
+| 戰鬥規則 | `catalog/rules.js` | every rule word (`data/rule-terms.js`) with the arts, items and enemies that carry it; the kinds of secondary; growth numbers; the in-game guide and its keys |
 | 十局輿圖 | `catalog/maps.js` | map layouts and terrain |
 | 局中紀事 | `catalog/story.js` | all scripted dialogue and narration |
 | 遊戲原文 | `corpus/` | every Chinese string in the game's source, found by parsing the files |
@@ -131,6 +141,14 @@ What is written by hand in the wiki:
 - The ten map pictures in `wiki/assets/`. The clickable terrain grid beside them is live.
 
 When the wiki needs something new from the game, export it from the game module and add that module to `game-data.js`. Do not copy values into the wiki.
+
+### Rule words
+
+`game/src/data/rule-terms.js` holds the game's rule words (連環, 露空, 坐鎮, 援軍 …), one sentence each, and the paragraphs of the in-game guide. The guide (`ui/panels.js`, `helpPage`) and the wiki's 戰鬥規則 section both read it, so a rule is worded once.
+
+- **Adding a mechanic:** add its term there, with the field that carries it (`art`, `item`, `trait`, `condition` or `form`). The wiki then gives it a page and lists every art, item and enemy that has it, and those pages link back.
+- **What stops the wiki falling behind:** `node tools/check-wiki.mjs` fails when an art, item or enemy carries a field no term accounts for, when an enemy, board piece, kind of battle or kind of secondary has no page, or when a page shows a value that failed to resolve.
+
 
 ## Checks
 
@@ -180,6 +198,8 @@ Two more tools help when the scenery or the sound changes. Both need Playwright 
 node tools/shoot-map.mjs 3 pictures/     # map 3 from nine camera angles, with draw calls and triangles
 node tools/sound-check.mjs               # every sound: no clipping, clean start and end, balanced loudness
 ```
+
+A character from the roster pack enters the game with `python3 tools/roster-art.py <id>`, which writes its sheets, still and portrait into `game/assets/`; its id is then added to `game/src/data/roster-art.js`. A piece then becomes that character by naming the id as its `mini`. To check how a sheet draws, `node tools/shoot-roster.mjs pictures/ --ids <id> --beside chief` saves every frame of its five rows on a real board beside a piece already in the game (add `--mobile` for a phone), and `tools/roster-preview.html?ids=<id>,chief` shows them playing. Both need Playwright with Chromium, and no web server.
 
 The ten map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
 

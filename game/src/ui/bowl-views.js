@@ -4,6 +4,7 @@ import { icon } from './icons.js';
 import { ITEMS } from '../rules/game.js';
 import { TECHNIQUES } from '../data/martial-arts.js';
 import { VISITOR, lotName, lotImage } from '../rules/ferry-market.js';
+import { itemPicture } from './item-art.js';
 const places = ['一', '二', '三'];
 const picture = (file, cls = '') =>
   '<img class="' + cls + '" draggable="false" src="' + esc(art(file)) + '" alt="">';
@@ -39,8 +40,9 @@ function bowlsPage(s, mixing) {
       const face = shown || (done && i === v.pick);
       const id = shown ? v.cards[i] : face ? chosen : null;
       const label = face ? lotName(id) : '第' + n + '盅';
+      // The cup that was won plays its item's loop.
       const content =
-        picture(face ? lotImage(id) : 'bowl-cover.webp') +
+        (face && ITEMS[id] ? itemPicture(id, '', done) : picture(face ? lotImage(id) : 'bowl-cover.webp')) +
         '<strong>' +
         esc(label) +
         '</strong>' +

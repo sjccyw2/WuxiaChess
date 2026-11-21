@@ -1,10 +1,10 @@
-import { mapMission } from '../rules/journey.js';
+import { POSTS, boardPlan, planGrid, planKey } from './board-plan.js';
 import * as G from '../rules/game.js';
 import { seatsFor } from '../rules/formation.js';
-import { mapLayout } from '../data/terrain.js';
 import { art } from './artwork.js';
-import { face, btn, esc } from './panels.js';
+import { face, btn, esc, itemBonus, medicineIdle } from './panels.js';
 import { icon } from './icons.js';
+import { itemPicture } from './item-art.js';
 
 const slotNames = { weapon: '兵器', gear: '護具' };
 const numerals = ['一', '二', '三', '四', '五'];
@@ -12,9 +12,7 @@ const who = (u) => G.unitDetails(u).name;
 const small = (action, label, attr = '', disabled = false) =>
   btn(action, label, 'mj-action fo-action', attr + (disabled ? ' disabled' : ''));
 const grip = '<i class="fo-grip" aria-hidden="true">⠿</i>';
-const image = (file, cls = '') =>
-  '<img alt="" draggable="false" class="' + cls + '" src="' + esc(art(file)) + '">';
-const itemImage = (id) => image('item-' + id + '.webp', 'fo-item-img');
+const itemImage = (id, live = false) => itemPicture(id, 'fo-item-img', live);
 const dropAttrs = (kind, destination) => 'data-drop="' + kind + '" data-dest="' + destination + '"';
 const dragAttrs = (kind, id, owner) =>
   'data-drag="' + kind + '" data-id="' + id + '" data-owner="' + owner + '" draggable="false"';
@@ -24,62 +22,38 @@ function planningMap(s) {
     ? s.run.route[s.run.stage + 1]
     : s.mapIndex;
 }
-function planDiagram(board, seats, chief, marker) {
-  const dots = board.cells
-    .map(
-      ({ x, y, kind }) =>
-        '<i class="ft-' +
-        kind +
-        '" style="grid-column:' +
+// The 起陣圖: the board's plan with its five posts as buttons that take the picked hero; the
+// enemy pieces, the reinforcements' entry tiles and the secondary's lamp or line drawn with it.
+function planDiagram(s, seats, chief) {
+  const map = planningMap(s),
+    plan = boardPlan(map, map === s.mapIndex ? s : null);
+  const post = (i, x, y, at) =>
+    btn(
+      'place-post',
+      POSTS[i],
+      'fo-pin' + (seats[i] === chief ? ' captain' : '') + (seats[i] ? '' : ' open'),
+      'data-id="' +
+        i +
+        '" ' +
+        dropAttrs('post', i) +
+        ' style="' +
+        at +
+        '" aria-label="第' +
+        numerals[i] +
+        '陣位，第' +
         (x + 1) +
-        ';grid-row:' +
+        '列第' +
         (y + 1) +
-        '"></i>'
-    )
-    .join('');
-  const posts = board.allies
-    .map(({ x, y }, i) =>
-      btn(
-        'place-post',
-        String(i + 1),
-        'fo-pin' + (seats[i] === chief ? ' captain' : ''),
-        'data-id="' +
-          i +
-          '" ' +
-          dropAttrs('post', i) +
-          ' style="grid-column:' +
-          (x + 1) +
-          ';grid-row:' +
-          (y + 1) +
-          '" aria-label="第' +
-          numerals[i] +
-          '陣位，第' +
-          (x + 1) +
-          '列第' +
-          (y + 1) +
-          '行"'
-      )
-    )
-    .join('');
+        '行"'
+    );
   return (
     '<details class="fo-map-plan"><summary>' +
     icon('pin', 15) +
-    board.name +
-    ' · 起陣圖</summary><div class="fo-map-grid" style="--map-w:' +
-    board.width +
-    ';--map-h:' +
-    board.height +
-    '">' +
-    dots +
-    (marker
-      ? '<span class="wake-map-lamp" role="img" aria-label="支線燈記" style="grid-column:' +
-        (marker.x + 1) +
-        ';grid-row:' +
-        (marker.y + 1) +
-        '">✦</span>'
-      : '') +
-    posts +
-    '</div></details>'
+    plan.layout.name +
+    ' · 起陣圖</summary>' +
+    planGrid(plan, post) +
+    planKey(plan) +
+    '</details>'
   );
 }
 function formationCards(s, u, ui) {
@@ -152,6 +126,7 @@ function formationCards(s, u, ui) {
     '／5</span></header><div class="fo-hand">' +
     seats.map(card).join('') +
     '</div>' +
+    (manage && s.run.scene === 'prep' ? '<p class="fo-redeploy">出陣後可在戰盤上再換位置。</p>' : '') +
     (manage
       ? '<div class="fo-bench" ' +
         dropAttrs('post', -1) +
@@ -167,29 +142,12 @@ function formationCards(s, u, ui) {
           ? '已選' + who(G.find(s, picked)) + ' · 點選陣位放置'
           : '拖曳俠客，或先點選俠客再選陣位。') +
         '</div>' +
-        planDiagram(
-          mapLayout(planningMap(s)),
-          seats,
-          chief,
-          mapMission(planningMap(s), planningMap(s) === s.mapIndex ? G.objectiveTile(s) : null).tile
-        )
+        planDiagram(s, seats, chief)
       : '') +
     '</section>'
   );
 }
-function bonus(item) {
-  return [
-    ['atk', '攻擊'],
-    ['def', '防禦'],
-    ['power', '絕技威力'],
-    ['step', '移動'],
-    ['hp', '氣血'],
-    ['mp', '內力']
-  ]
-    .filter(([k]) => item[k])
-    .map(([k, n]) => n + ' ＋' + item[k])
-    .join(' · ');
-}
+const bonus = itemBonus;
 function available(s, u) {
   const entries = [];
   for (const [id, item] of Object.entries(G.ITEMS)) {
@@ -293,18 +251,17 @@ function armory(s, u, ui) {
       );
     const attr = 'data-id="' + v.id + '" data-owner="' + v.owner + '"';
     const worn = v.owner === u.id;
-    const canUse = G.canUseMedicine(s, u) && (v.item.hp ? u.hp < u.maxHp : u.mp < u.maxMp);
+    const helps = G.medicineFor(u, v.item).helps,
+      canUse = G.canUseMedicine(s, u) && helps;
     let actions = '';
     if (v.item.kind === 'use') {
       actions += small(
         'item',
         canUse
           ? '服用一份'
-          : v.item.hp && u.hp === u.maxHp
-            ? '氣血已滿'
-            : v.item.mp && u.mp === u.maxMp
-              ? '內力已滿'
-              : '暫不可服',
+          : !helps
+            ? medicineIdle(v.item)
+            : '暫不可服',
         attr,
         !canUse
       );
@@ -319,7 +276,7 @@ function armory(s, u, ui) {
     }
     return (
       '<section class="fo-inspector">' +
-      itemImage(v.id) +
+      itemImage(v.id, true) +
       '<div><h4>' +
       v.item.name +
       '</h4><b>' +

@@ -4,7 +4,8 @@ import { esc, goLink } from './html.js';
 
 function board(m) {
   const allies = new Map(m.allies.map((p, i) => [p.x + ',' + p.y, i + 1])),
-    enemies = new Map(m.enemies.map((p, i) => [p.x + ',' + p.y, i + 1]));
+    enemies = new Map(m.enemies.map((p, i) => [p.x + ',' + p.y, i + 1])),
+    entries = new Map((m.entries || []).map((p) => [p.x + ',' + p.y, p.place]));
   const cells = m.cells
     .map((c) => {
       const key = c.x + ',' + c.y,
@@ -13,7 +14,9 @@ function board(m) {
         ? '我方陣位 ' + allies.get(key)
         : enemies.has(key)
           ? '敵方陣位 ' + enemies.get(key)
-          : '';
+          : entries.has(key)
+            ? '援軍入場格（' + entries.get(key) + '）'
+            : '';
       const text =
         '第 ' +
         (c.x + 1) +
@@ -37,7 +40,7 @@ function board(m) {
         '" data-cell="' +
         esc(text) +
         '">' +
-        (objective ? '燈' : allies.has(key) ? '俠' : enemies.has(key) ? '敵' : '') +
+        (objective ? '燈' : allies.has(key) ? '俠' : enemies.has(key) ? '敵' : entries.has(key) ? '援' : '') +
         '</button>'
       );
     })

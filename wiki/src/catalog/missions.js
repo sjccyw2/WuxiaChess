@@ -1,42 +1,78 @@
-// 任務簿: the side objective of each ferry stop, each hero's capstone trial, and the
-// shared rules of growth.
+// 任務簿: each board's battle (how it is won, who is on it, its pool of secondaries) and each
+// hero's capstone trial. The shared rules of growth are a page of 戰鬥規則 (rules.js).
 import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, wikiArt } from './parts.js';
 import { heroPortrait } from './heroes.js';
-import { stageName } from './foes.js';
+import { stageName, namedOn, foeLink } from './foes.js';
 import { NOTES } from './notes.js';
 
 const STAGES = G.MAP_LAYOUTS.map((_, stage) => stage);
 
-export const missionLabel = (stage) => G.mapMission(stage).name;
+// A board's secondary is drawn per run from its pool, so the board's entry is its 支線 page.
+export const missionLabel = () => '支線';
+const sideTale = (kind) => G.SIDE_TALES[kind] || G.SIDE_TALES.done;
+
+// A secondary as its board states it. Where the hero is drawn at the start of the run, the
+// game's own sentence is asked for with a stand-in hero, whose name is then replaced.
+const DRAWN = '抽定的一位出陣俠客';
+export function sideText(map, entry) {
+  const kind = G.SIDE_KINDS[entry.kind],
+    standIn = G.PARTY[0],
+    side = entry.hero === '*' ? { ...entry, hero: standIn } : entry;
+  const detail = kind.detail(null, side, map);
+  return entry.hero === '*' ? detail.replaceAll(G.DETAILS[standIn].name, DRAWN) : detail;
+}
+// The secondaries a board's pool holds: { kind, name, detail, reward }.
+export function sidePool(map) {
+  const stage = G.mapStages(map)[0],
+    named = G.boardBrief(map, stage).pool; // the same entries, in the same order, with their names
+  return G.BATTLES[map].sides.map((entry, i) => ({
+    kind: entry.kind,
+    name: named[i].name,
+    detail: sideText(map, entry),
+    reward: G.rewardText(entry, stage)
+  }));
+}
 
 function stageMission(stage) {
-  const m = G.mapMission(stage);
+  const m = G.boardBrief(stage, G.mapStages(stage)[0]),
+    pool = sidePool(stage);
   return {
     id: 'map-' + stage,
-    name: stageName(stage) + ' · ' + m.name,
-    tag: '支線',
-    summary: m.instruction,
+    name: stageName(stage) + ' · ' + m.kindName,
+    tag: '戰局',
+    summary: m.battle,
     image: wikiArt('map-' + stage + '.webp'),
     sections: [
       rows('勝負與獎勵', [
         ['勝利', m.win],
         ['敗退', m.loss],
-        ['支線', m.instruction],
-        ['支線獎勵', NOTES.sideReward(G.REWARDS)],
+        ['兵力', m.force.line],
+        ...(m.waves.length ? m.waves.map((w) => ['援軍', w.line]) : [['援軍', m.noWaves]]),
         ['通關獎勵', NOTES.clearReward(G.REWARDS)]
       ]),
-      speech('支線紀事', G.SIDE_TALES[m.goal]),
+      rows('敵方', [
+        ...m.foes.map((f) => [f.rank + ' · ' + f.name, f.gist || NOTES.noGist]),
+        ...m.force.chips.map((c) => [c.name + ' × ' + c.count, c.gist || NOTES.noGist])
+      ]),
+      rows('支線（每輪抽出一道）', [
+        ...pool.map((side) => [side.name, side.detail + '獎勵：' + side.reward + '。']),
+        ['支線獎勵', NOTES.sideReward(G.REWARDS)]
+      ]),
+      speech('支線紀事', ...[...new Set(pool.map((side) => sideTale(side.kind)))]),
       links('同局條目', [
         link('maps', stage, stageName(stage)),
-        link('foes', 'enc-' + stage + '-0', m.boss),
+        ...namedOn(stage).map(foeLink),
+        link('rules', m.kind, m.kindName),
+        ...pool.map((side) => link('rules', 'side-' + side.kind, side.name)),
         link('story', 'map-' + stage, stageName(stage) + '對白')
       ])
     ],
     sources: cites(
-      cite('function mapMission', 'src/rules/journey.js'),
-      cite('function settle', 'src/rules/journey.js')
+      cite('function boardModel', 'src/rules/journey.js'),
+      cite('function settle', 'src/rules/journey.js'),
+      cite('const BATTLES', 'src/data/battles.js')
     )
   };
 }
@@ -90,12 +126,12 @@ function levelGain(fromLevel) {
   };
 }
 
-function development() {
+export function development() {
   const growth = G.GROWTH;
   return {
     id: 'development',
     name: '回合、歷練與武學點',
-    tag: '戰鬥規則',
+    tag: '養成',
     summary: NOTES.levelling(growth),
     image: null,
     sections: [
@@ -118,7 +154,6 @@ function development() {
 export function missions() {
   return [
     ...STAGES.map(stageMission),
-    ...Object.entries(G.MASTERY_ARTS).filter(([, art]) => art.gate).map(trial),
-    development()
+    ...Object.entries(G.MASTERY_ARTS).filter(([, art]) => art.gate).map(trial)
   ];
 }

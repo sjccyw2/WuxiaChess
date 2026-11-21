@@ -1,0 +1,304 @@
+/* Battles that differ in kind: the briefing (軍情), the plan of a board, the 整備 目標 block's
+   additions, the deployment step's controls, the plaque's reinforcement line and the enemy page
+   of a reinforcement not yet on the board. All of it is game flow, shown with every polish
+   switch off; the board's own markers are drawn in actors/battle-marks.js. */
+
+/* ── The plan of a board ───────────────────────────────────────────────── */
+.plan-grid > b,
+.plan-grid > span {
+  min-width: 0;
+  min-height: 0;
+}
+.plan-grid .plan-zone {
+  background: #3f6f74;
+  box-shadow: inset 0 0 0 1px #8fdde8a8;
+}
+.plan-foe {
+  z-index: 1;
+  place-self: center;
+  width: 78%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #2b2522;
+  border: 1px solid #b58f7a;
+}
+.plan-foe.boss {
+  width: 92%;
+  border-radius: 2px;
+  background: #a32f22;
+  border-color: #ffd7b0;
+  box-shadow: 0 0 0 1px #3d0e08;
+}
+.plan-foe.mini {
+  background: #c96f2a;
+  border-color: #ffe0b8;
+}
+.plan-post {
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  place-self: stretch;
+  border-radius: 50%;
+  border: 1px dashed #e8c47a;
+  color: #e8c47a;
+  background: #0f1d19cc;
+  font: 700 10px/1 var(--serif, serif);
+}
+.plan-post.filled {
+  border-style: solid;
+  background: #e8c47a;
+  color: #2b1d0b;
+}
+.plan-post.captain {
+  box-shadow: 0 0 0 2px #2e6f5a;
+}
+.fo-pin {
+  font-family: var(--serif, serif);
+}
+.fo-pin.open {
+  background: #0f1d19;
+  color: #e8c47a;
+  border-style: dashed;
+  border-color: #e8c47a;
+}
+.plan-key {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 12px;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #c9c3ad;
+}
+.plan-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.plan-key .plan-foe,
+.plan-key .plan-post-key,
+.plan-key .plan-zone-key {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  aspect-ratio: auto;
+}
+.plan-post-key {
+  border-radius: 50%;
+  background: #e8c47a;
+}
+.plan-zone-key {
+  background: #3f6f74;
+  box-shadow: inset 0 0 0 1px #8fdde8;
+}
+.plan-key .wake-map-lamp {
+  font-style: normal;
+}
+
+/* ── The briefing page ─────────────────────────────────────────────────── */
+#modal:has(.brief-view) {
+  width: min(900px, calc(100% - 28px));
+}
+.brief-view .modal-intro {
+  margin: 0;
+  padding: 6px var(--mj-pad, 18px) 0;
+  font-size: 13px;
+  color: #cdbf9c;
+}
+.brief-view .mj-fixed-head + .mj-scroll {
+  padding-top: 12px;
+}
+.brief-live {
+  margin: 0 0 12px;
+  padding: 7px 10px;
+  border: 1px solid #5c6b5b;
+  border-radius: 3px;
+  background: #10201c;
+  color: #f0e5cc;
+  font-variant-numeric: tabular-nums;
+  white-space: pre-wrap;
+}
+.brief-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
+  gap: 18px;
+  align-items: start;
+}
+.brief-plan {
+  position: sticky;
+  top: 0;
+}
+.brief-plan .plan-grid {
+  margin: 0 auto;
+  width: min(100%, calc(26px * var(--map-w)));
+}
+.brief-sec {
+  padding: 0 0 10px;
+  margin: 0 0 10px;
+  border-bottom: 1px solid var(--mj-rule, #40544b);
+}
+.brief-sec:last-child {
+  border-bottom: 0;
+  margin-bottom: 0;
+}
+.brief-sec h4 {
+  margin: 0 0 4px;
+  font: 700 13px/1.3 var(--serif, serif);
+  letter-spacing: 0.2em;
+  color: #e3c588;
+}
+.brief-sec p {
+  margin: 0 0 4px;
+  line-height: 1.6;
+}
+.brief-sec ul {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.brief-small {
+  font-size: 13px;
+  color: #c9bc9f;
+}
+.brief-note {
+  font-size: 13px;
+  color: #b7d8c4;
+}
+.brief-note.warn,
+.wake-mission small.warn {
+  color: #ffb79a;
+}
+.brief-side-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+.brief-side-name strong {
+  font-size: 15px;
+  color: #f4ead2;
+}
+.side-mark {
+  font-size: 15px;
+  color: #b7d8c4;
+}
+.side-mark.met {
+  color: #9ee3a6;
+}
+.side-mark.failed {
+  color: #ff9f86;
+}
+.side-state {
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-size: 12px;
+  background: #24372f;
+  color: #cfe3d4;
+}
+.side-state.met {
+  background: #2c4a2c;
+  color: #c8f2c4;
+}
+.side-state.failed {
+  background: #4a2a22;
+  color: #ffc7b4;
+}
+.brief-progress li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  font-variant-numeric: tabular-nums;
+  color: #f0e5cc;
+}
+.brief-progress li svg {
+  flex: none;
+  color: #e3a07a;
+}
+.brief-progress li.done {
+  color: #a9c8b2;
+}
+.brief-progress li.done svg {
+  color: #9ee3a6;
+}
+.brief-pool li {
+  font-size: 13px;
+  padding: 2px 0;
+}
+.brief-route {
+  margin-top: 12px;
+}
+@media (max-width: 700px) {
+  .brief-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .brief-plan {
+    position: static;
+  }
+  .brief-plan .plan-grid {
+    width: min(100%, calc(21px * var(--map-w)));
+  }
+}
+/* Phone held sideways: little height, so the plan sits beside the words, smaller. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .brief-body {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 12px;
+  }
+  .brief-plan .plan-grid {
+    width: min(100%, calc(17px * var(--map-w)));
+  }
+  .brief-live {
+    margin-bottom: 8px;
+  }
+}
+
+/* ── 整備 ─────────────────────────────────────────────────────────────── */
+.wake-mission header .brief-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 2px 10px;
+  font-size: 13px;
+}
+.wake-mission header span + .brief-open {
+  margin-left: 8px;
+}
+.fo-redeploy {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #c5cbb7;
+}
+
+/* ── The board ─────────────────────────────────────────────────────────── */
+.phase-readout .reinforce {
+  font: 650 12px/1.2 var(--sans, sans-serif);
+  font-style: normal;
+  color: #ffb49c;
+  white-space: nowrap;
+}
+.wave-mates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 0;
+}
+.wave-mates span {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+.wave-mates span.current {
+  opacity: 1;
+}
+.wave-mates img {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid #b58f7a;
+}

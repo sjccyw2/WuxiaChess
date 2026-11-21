@@ -1,5 +1,6 @@
 import { fieldCells } from '../data/terrain.js';
 import { drawDanger } from './danger.js';
+import { paintBattleMarks } from './battle-marks.js';
 import { paintMasteryFlourish } from '../fx/mastery-vfx.js';
 // Animated billboard art is painted after the ground. Only the ground ray can accept a move.
 import * as G from '../rules/game.js';
@@ -7,6 +8,7 @@ import { art } from '../ui/artwork.js';
 import { paintTechniqueStroke } from '../fx/technique-strokes.js';
 import { paintTechniqueTier } from '../fx/technique-tiers.js';
 import { paintSkillEffect } from '../fx/skill-effects.js';
+import { paintPaintedEffect } from '../fx/painted-effects.js';
 import { Impact } from '../fx/impact.js';
 import { paintCursor } from './cursor.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
@@ -16,6 +18,9 @@ import {
   compactImage,
   compactSheetName,
   spriteSheet,
+  sheetRow,
+  STRIKE_ROW,
+  SPECIAL_ROW,
   FRAMES,
   CELL_WIDTH,
   CELL_HEIGHT,
@@ -87,6 +92,15 @@ class ActorLayer {
   }
   sheet(id) {
     return spriteSheet(id, (name) => this.image(name));
+  }
+  // A piece whose own sheets and still have all failed to load (art not yet in game/assets) is
+  // drawn with the shared rank-and-file sheet, archer or swordsman, rather than not at all.
+  standIn(details) {
+    const id = details.mini;
+    const own = ['motion-' + id, compactSheetName(id), 'mini-' + id];
+    for (const name of own) this.image(name);
+    if (!own.every((name) => this.imageFailures.has(name))) return null;
+    return this.sheet(details.row === 'bow' ? 'archer' : 'bandit');
   }
   reset() {
     for (const e of this.effects || [])
@@ -233,8 +247,10 @@ class ActorLayer {
     const hit = start + duration * 0.52;
     const contact = pushed ? pushed.path[0] : target;
     const direction = [contact.x - origin.x, contact.y - origin.y];
+    // A villain's signature and every art a hero uses (a strike, a mend, a formation, a
+    // glide) play the special pose; a plain blow, and the counter to it, play the strike.
     this.addClip(actor.id, {
-      row: 2,
+      row: special ? SPECIAL_ROW : STRIKE_ROW,
       start,
       end: start + duration,
       direction,
@@ -325,7 +341,7 @@ class ActorLayer {
           recipient = G.find(this.state, id);
         const direction = [recipient.x - initiator.x, recipient.y - initiator.y];
         this.addClip(initiator.id, {
-          row: 2,
+          row: STRIKE_ROW,
           start: reply,
           end: reply + (full ? 680 : 440),
           direction
@@ -609,6 +625,8 @@ class ActorLayer {
     paintFormations(this, this.time);
     paintFormationAim(this, this.formationAim(s, u, art, hover), this.time);
     paintTauntAim(this, this.tauntAim(s, u, art, hover), this.time);
+    // The deployment step's posts, reinforcements' entry tiles and the secondary's line.
+    paintBattleMarks(this);
     const mark = hover && this.mode === 'skill' && G.at(s, hover.x, hover.y);
     if (mark && G.targetOK(s, u, mark, true)) {
       const f = G.forecast(u, mark, true, s);
@@ -798,7 +816,10 @@ class ActorLayer {
     const flip = dir[0] * Math.cos(this.view.yaw) - dir[1] * Math.sin(this.view.yaw) < 0;
     const details = G.unitDetails(u),
       id = details.mini,
-      sheet = this.sheet(id);
+      sheet = this.sheet(id) || this.standIn(details);
+    // A sheet without the special pose, and the still, play the strike in its place.
+    row = sheet ? sheetRow(sheet, row) : row === SPECIAL_ROW ? STRIKE_ROW : row;
+    const striking = row === STRIKE_ROW || row === SPECIAL_ROW;
     c.save();
     // The cached copy of a frame already carries the robe tint, so with unitTokens no
     // canvas filter is set while painting.
@@ -807,7 +828,7 @@ class ActorLayer {
     c.translate(p.x, p.y);
     if (flip) c.scale(-1, 1);
     if (this.prefs.motion) {
-      if (row === 2) c.translate(scale * drive[frame], 0);
+      if (striking) c.translate(scale * drive[frame], 0);
       if (row === 3) c.translate(scale * recoil[frame], 0);
     }
     if (spent && !POLISH.actedDim) c.globalAlpha *= 0.82;
@@ -838,7 +859,7 @@ class ActorLayer {
         const ph = h * 0.78,
           pw = (ph * still.naturalWidth) / still.naturalHeight;
         // Keep the action readable if the browser rejects both sheet formats.
-        if (row === 2) c.rotate(drive[frame]);
+        if (striking) c.rotate(drive[frame]);
         if (row === 3) c.rotate(recoil[frame] * 1.4);
         if (row === 1) c.translate(0, -scale * stepLift[frame]);
         c.drawImage(still, -pw / 2, -ph, pw, ph);
@@ -994,6 +1015,9 @@ class ActorLayer {
         }
         const from = this.point(e.from.x, e.from.y, 0.78);
         const to = this.point(e.to.x, e.to.y, 0.76);
+        // A famous art with a hand-painted sheet draws it in place of the ink effect and stroke.
+        if (paintPaintedEffect(c, e, now, from, to, this.scaleAt(e.to.x, e.to.y), !this.prefs.motion))
+          continue;
         if (e.flourish) {
           paintMasteryFlourish(
             c,

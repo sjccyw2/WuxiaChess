@@ -23,6 +23,8 @@ const SWITCHES = {
   koBurst: true, // a defeated piece breaks apart instead of fading
   cameraFollow: true, // camera eases toward whoever is acting
   skillCutIn: true, // portrait cut-in for high-tier techniques
+  paintedEffects: true, // hand-painted effect sheets for the famous arts (fx/painted-effects.js)
+  battleMarks: true, // reinforcements' entry markers and amber strike outline, the secondary's line, the picked post's pulse
 
   // World
   lighting: true, // key light, shadow and colour grade

@@ -1,5 +1,5 @@
 // Polish: sets the html.polish-* classes that styles/12 and 13 key off, before first paint.
-import './polish.js';
+import { POLISH } from './polish.js';
 // Polish: the owner-approved control additions (danger zone, Tab to the next hero, forecast dock).
 import * as X from './ui/field-extras.js';
 // Polish (actionFlow): the redesigned hero turn, with no command bar.
@@ -8,12 +8,15 @@ import { journalPage } from './ui/wake-views.js';
 import { bowlsPage } from './ui/bowl-views.js';
 import { coverBowls, pickBowl } from './rules/ferry-market.js';
 import { panelDrag } from './ui/panel-drag.js';
-import { canPlaceEquipment, equipmentPlacement } from './ui/armory-views.js';
+import { canPlaceEquipment, equipmentPlacement, planningMap } from './ui/armory-views.js';
+import { POSTS } from './ui/board-plan.js';
 import { moveFacts } from './rules/move-facts.js';
 import { teamPage, dossier, encounterPage } from './ui/company-views.js';
 import * as G from './rules/game.js';
 import * as P from './ui/panels.js';
 import { BattleBoard } from './scene/board.js';
+import { warmPaintedEffects } from './fx/painted-effects.js';
+import { watchItemArt } from './ui/item-art.js';
 import { FieldHud } from './ui/field-hud.js';
 import { icon } from './ui/icons.js';
 import { codexPage } from './ui/gates.js';
@@ -59,6 +62,12 @@ let mode = 'move',
   storyIndex = 0,
   subjectId = 'chief',
   strikeData = null;
+// The deployment step: the hero picked to change places (an id), and the entry tip's state.
+let deployPick = null,
+  deployTip = false;
+// The briefing opened from 整備 (or the shop's 整備): which page it returns to, and whether it
+// reads the next board.
+let briefFrom = null;
 let studyUI = { tab: 'school', node: null, slot: 0 };
 let teamUI = { tab: 'line', slot: 0 };
 let heroParent = null,
@@ -138,6 +147,15 @@ function mapTip(msg, ms = 2200, held = false) {
       t.classList.remove('show');
     }, ms);
 }
+// A tip that must be read, shown after the one being held (reinforcements, the secondary).
+let tipQueue = Promise.resolve();
+function heldTip(msg, ms) {
+  tipQueue = tipQueue.then(async () => {
+    const wait = tipHeld - Date.now();
+    if (wait > 0) await new Promise((done) => setTimeout(done, wait + 80));
+    if (screen === 'battle') mapTip(msg, ms, true);
+  });
+}
 function refreshSound() {
   const label = prefs.sound ? '關閉音效' : '開啟音效';
   const button = $('title-sound');
@@ -149,6 +167,7 @@ function refreshSound() {
   S.scene(screen === 'battle' ? state.mapIndex : null); // the battlefield's quiet ambience
   document.body.classList.toggle('no-motion', !prefs.motion);
 }
+watchItemArt(); // item pictures play while pointed at, focused or picked
 const board = new BattleBoard({
   canvas: $('board'),
   tactics: $('tactics'),
@@ -217,8 +236,17 @@ const board = new BattleBoard({
       t.classList.remove('show');
       return;
     }
+    const entry = !G.at(state, x, y) && entryAt(x, y);
+    if (entry) {
+      t.textContent =
+        '敵援入場處 · 第' + R.NUMERALS[entry.due - 1] + '回合 · ' + G.waveList(entry.defs);
+      t.classList.add('show');
+      return;
+    }
     let info = '';
     if (goal && goal.x === x && goal.y === y) info = '支線燈記';
+    else if (deploying() && postAt(x, y) >= 0) info = '起陣格 · 陣位' + POSTS[postAt(x, y)];
+    else if (holdLineAt(x, y)) info = '支線界線 · 援軍不得踏入' + state.run.side.place;
     else if ((mode === 'move' || mode === 'glide') && steps) info = steps + ' 步';
     else if (place.defense) info = '防禦 ＋' + place.defense;
     t.textContent = place.name + (info ? ' · ' + info : '');
@@ -228,6 +256,25 @@ const board = new BattleBoard({
 const hud = new FieldHud(document, () => board.resize(), notice);
 function selected() {
   return G.find(state, state.selected);
+}
+// The deployment step: on the board, before round one, until 開戰.
+const deploying = () =>
+  screen === 'battle' && state.run?.scene === 'fight' && !!state.run.deploying && !state.result;
+// Which of the board's five posts a tile is (0–4), or -1.
+const postAt = (x, y) =>
+  state.run ? mapLayout(state.mapIndex).allies.findIndex((p) => p.x === x && p.y === y) : -1;
+// The announced wave whose entry tile this is, if any.
+const entryAt = (x, y) =>
+  state.run?.status === 'battle'
+    ? G.announcedWaves(state).find((p) => p.tiles.some((t) => t.x === x && t.y === y))
+    : null;
+// A tile on the edge of the secondary's line (拒敵於外): inside it, beside a tile outside it.
+function holdLineAt(x, y) {
+  const side = state.run?.status === 'battle' && state.run.side;
+  if (side?.kind !== 'holdLine' || !G.inZone(side.zone, { x, y })) return false;
+  return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(
+    ([dx, dy]) => G.valid(x + dx, y + dy, state.mapIndex) && !G.inZone(side.zone, { x: x + dx, y: y + dy })
+  );
 }
 function paint() {
   if (screen === 'title') {
@@ -248,13 +295,31 @@ function paint() {
   $('medicine-button').disabled = !G.canUseMedicine(state, selected());
   $('chapter-number').textContent = '第' + R.NUMERALS[state.run.stage] + '局';
   $('map-name').textContent = path.name;
+  // 敵援: how many enter at the start of next round.
+  const coming = state.result
+    ? 0
+    : G.announcedWaves(state).reduce((n, p) => n + p.defs.length, 0);
   $('trip-ledger').setAttribute(
     'aria-label',
-    path.name + '，第' + state.round + '回合，查看戰役目標'
+    path.name +
+      '，第' +
+      state.round +
+      '回合' +
+      (coming ? '，下回合敵援 ' + coming + ' 名' : '') +
+      '，查看戰役目標'
   );
   $('scene').setAttribute('aria-label', path.name + '，可旋轉的立體戰棋地圖');
-  const side = state.result ? '戰役結束' : state.phase === 'enemy' ? '敵方行動' : '我方行動';
-  const phase = `<small>第 <b>${state.round}</b> 回合</small><strong class="${state.phase === 'enemy' ? 'enemy' : ''}">${side}</strong>`;
+  const side = state.result
+    ? '戰役結束'
+    : deploying()
+      ? '起陣'
+      : state.phase === 'enemy'
+        ? '敵方行動'
+        : '我方行動';
+  const phase =
+    `<small>第 <b>${state.round}</b> 回合</small><strong class="${state.phase === 'enemy' ? 'enemy' : ''}">${side}</strong>` +
+    (coming ? `<em class="reinforce">敵援 · 下回合 ${coming} 名</em>` : '');
+  board.layers.pick = deploying() ? deployPick : null;
   if ($('round-badge').dataset.phase !== phase) {
     $('round-badge').innerHTML = phase;
     $('round-badge').dataset.phase = phase;
@@ -292,6 +357,7 @@ function paint() {
     next?.focus({ preventScroll: true });
   }
   board.sync(state, mode, prefs);
+  warmPaintedEffects(state, G.enemyTechnique); // the painted effects this board can need
   refreshSound();
   syncZoom();
 }
@@ -307,9 +373,51 @@ function syncZoom() {
   compass?.style.setProperty('--bearing', -board.view.yaw + 'rad');
 }
 function update() {
+  noteBoard();
   save();
   paint();
   notePhases();
+}
+// 敵援 and 支線: the lines the rules log about reinforcements become board tips, held long
+// enough to read; a change in the secondary's state is a tip once (and a failure a log line).
+// What was already so when a board is opened is noted without a tip.
+const seenLogs = new WeakSet();
+let notedBoard = null,
+  notedRun = null,
+  notedSide = null;
+function waveTip(text) {
+  const line = text.replace(/。$/, '');
+  if (line.startsWith('下一回合，')) return ['下回合敵援 · ' + line.slice(5), 3200];
+  if (!line.includes('，') && line.endsWith('入場')) return ['敵援入場 · ' + line.slice(0, -2), 4000];
+  return [line, 4000];
+}
+function noteBoard() {
+  const r = state?.run;
+  if (!r || r.status !== 'battle') return;
+  const where = r.stage + ':' + state.mapIndex;
+  if (where !== notedBoard || notedRun !== state) {
+    notedBoard = where;
+    notedRun = state;
+    for (const l of state.logs) seenLogs.add(l);
+    notedSide = R.sideState(state);
+    return;
+  }
+  for (const l of state.logs) {
+    if (seenLogs.has(l)) continue;
+    seenLogs.add(l);
+    if (l.who === '敵援' && screen === 'battle') heldTip(...waveTip(l.text));
+  }
+  const now = R.sideState(state);
+  if (now === notedSide) return;
+  notedSide = now;
+  if (r.scene !== 'fight' || state.result || screen !== 'battle') return;
+  if (now === 'met') heldTip('支線達成 · 取勝即得' + R.rewardText(r.side, r.stage), 3600);
+  else if (now === 'failed') {
+    const line = '支線已失 · ' + R.sideLost(state);
+    G.log(state, 'system', line, '支線');
+    seenLogs.add(state.logs[state.logs.length - 1]);
+    heldTip(line, 3600);
+  }
 }
 // 變招: the moment a master changes at half health the board tip says so, in the phase's own
 // line, and holds it a while; the log has the same line and the enemy page shows it from then on.
@@ -358,11 +466,103 @@ function openArts(keyboard = false) {
     hud.panel === 'arts' && screen === 'battle' ? { hero: selected(), state } : null
   );
 }
+// ── The deployment step ─────────────────────────────────────────────────────
+const DEPLOY_TIP =
+  '起陣 · 點選一位俠客，再點另一位俠客或亮起的空格互換位置；按「開戰」開始第一回合。';
+function showDeployTip() {
+  deployTip = true;
+  mapTip(DEPLOY_TIP, 3600000);
+}
+// A tap while deploying: pick a hero, swap him with another or move him to an empty post; an
+// enemy or an entry marker opens its page; any other tile says where heroes may go.
+function deployClick(x, y) {
+  if (deployTip) {
+    deployTip = false;
+    mapTip(null);
+  }
+  const occ = G.at(state, x, y),
+    post = postAt(x, y),
+    picked = deployPick && G.find(state, deployPick);
+  if (occ && !G.ally(occ)) {
+    subjectId = occ.id;
+    openPage('enemy-info');
+    return;
+  }
+  if (occ) {
+    if (!picked) pickDeploy(occ.id);
+    else if (picked === occ) pickDeploy(null);
+    else swapPosts(postAt(picked.x, picked.y), post);
+    return;
+  }
+  const entry = entryAt(x, y);
+  if (entry) {
+    subjectId = entry.defs[0].id;
+    openPage('enemy-info');
+    return;
+  }
+  if (post >= 0) {
+    if (picked) swapPosts(postAt(picked.x, picked.y), post);
+    else mapTip('起陣格 · 陣位' + POSTS[post]);
+    return;
+  }
+  mapTip('起陣時只能換到亮起的起陣格');
+}
+function pickDeploy(id) {
+  deployPick = id;
+  if (id) state.selected = viewId = id;
+  selectionVersion++;
+  paint();
+  audio(id ? 'select' : 'tap');
+}
+function swapPosts(a, b) {
+  if (!R.swapStart(state, a, b)) {
+    audio('deny');
+    return;
+  }
+  deployPick = null;
+  update();
+  audio('seat');
+}
+// The next (or previous) fielded hero to pick, for Tab while deploying.
+function cyclePick(step) {
+  const line = G.party(state);
+  const here = line.findIndex((u) => u.id === (deployPick || state.selected));
+  pickDeploy(line[(here + step + line.length) % line.length].id);
+}
+// 開戰: round one begins with the heroes where they stand.
+function beginDeployed() {
+  if (!R.beginBattle(state)) return;
+  deployPick = null;
+  deployTip = false;
+  closePage();
+  state.selected = viewId = state.leader;
+  mode = 'move';
+  mapTip('第 1 回合 · 我方行動');
+  update();
+  audio('turn');
+  showPhase('ally', state.round, prefs.motion);
+}
 function cellClick(x, y) {
   if (screen !== 'battle' || dialog.open || state.run.scene !== 'fight') return;
+  if (deploying()) {
+    deployClick(x, y);
+    return;
+  }
   const occ = G.at(state, x, y);
   if (occ) {
     unitClick(occ.id);
+    return;
+  }
+  // An entry marker of a wave still to come opens its page, unless the tile is a step to take.
+  const entry = entryAt(x, y);
+  if (
+    entry &&
+    !(mode === 'move' && board.reach.has(G.key(x, y))) &&
+    !(mode === 'glide' && board.reach.has(G.key(x, y))) &&
+    !(mode === 'skill' && G.targetType(G.artFor(selected())) === 'ground')
+  ) {
+    subjectId = entry.defs[0].id;
+    openPage('enemy-info');
     return;
   }
   if (state.result || state.phase !== 'ally') return;
@@ -429,6 +629,11 @@ function zoneTip(x, y) {
 }
 function unitClick(id) {
   if (screen !== 'battle' || dialog.open || state.run.scene !== 'fight') return;
+  if (deploying()) {
+    const t = G.find(state, id);
+    if (t) deployClick(t.x, t.y);
+    return;
+  }
   const u = selected(),
     t = G.find(state, id),
     skill = mode === 'skill';
@@ -507,6 +712,15 @@ function pageHtml() {
       return P.logPage(state, logFilter);
     case 'goals':
       return P.goalsPage(state);
+    case 'brief':
+      // Before 整備 (the scene), or reopened from 整備 with 軍情.
+      return briefFrom
+        ? P.briefPage(state, {
+            ahead: briefFrom.ahead,
+            live: state.run.scene === 'fight',
+            back: briefFrom.label
+          })
+        : P.briefPage(state);
     case 'help':
       return P.helpPage();
     case 'terrain':
@@ -619,7 +833,7 @@ function openPage(name, heroId) {
   if (!dialog.open) {
     dialog.showModal();
     (
-      dialog.querySelector('[data-do="scene-next"]') ||
+      dialog.querySelector('[data-do="scene-next"], [data-do="brief-next"]') ||
       dialog.querySelector('.mj-tabs [aria-selected="true"]') ||
       dialog.querySelector('[data-do="close"]') ||
       dialog.querySelector('button')
@@ -631,6 +845,11 @@ function closePage() {
   else dialogState = null;
 }
 function dismissLayer() {
+  if (dialogState === 'brief' && briefFrom) {
+    briefFrom = null;
+    openPage('team', viewId);
+    return;
+  }
   if (dialogState === 'bowls') {
     openPage('camp');
     return;
@@ -648,7 +867,7 @@ function dismissLayer() {
     return;
   }
   if (
-    ['team', 'encounter', 'camp', 'result'].includes(dialogState) &&
+    ['team', 'encounter', 'brief', 'camp', 'result'].includes(dialogState) &&
     state.run.scene !== 'fight'
   ) {
     openTitle();
@@ -657,8 +876,10 @@ function dismissLayer() {
   closePage();
 }
 function showScene() {
+  briefFrom = null;
   const page = {
     before: 'encounter',
+    brief: 'brief',
     prep: 'team',
     after: 'encounter',
     shop: 'camp',
@@ -848,13 +1069,20 @@ async function runEnemy() {
   while (token === aiRun && screen === 'battle' && state.phase === 'enemy' && !state.result) {
     const e = G.enemies(state).find((u) => G.living(u) && !u.acted);
     if (!e) {
+      const before = new Set(state.units.map((u) => u.id));
       G.nextRound(state);
       mode = 'move';
+      // 援軍: the pieces that entered as the round began.
+      const came = state.units.filter((u) => !before.has(u.id));
+      if (!state.result) mapTip('第 ' + state.round + ' 回合 · 我方行動');
       update();
       board.watch(false); // combat feel: hand the camera back
+      if (came.length) {
+        board.showEffects(came.map((u) => [u.id, '援軍', 'status']));
+        board.follow(...came);
+      }
       if (!result()) {
         audio('turn');
-        mapTip('第 ' + state.round + ' 回合 · 我方行動');
         showPhase('ally', state.round, prefs.motion);
       }
       return;
@@ -903,6 +1131,10 @@ function beginEnemy() {
 function askEnd() {
   if (state.run.scene !== 'fight') {
     showScene();
+    return;
+  }
+  if (deploying()) {
+    beginDeployed();
     return;
   }
   if (state.result) {
@@ -957,7 +1189,7 @@ function openTitle() {
   $('start-primary').querySelector('strong').textContent = hasSave
     ? state.run.scene === 'after'
       ? '繼續戰後劇情'
-      : state.run.scene === 'prep'
+      : state.run.scene === 'prep' || state.run.scene === 'brief'
         ? '繼續整備'
         : state.run.status === 'camp'
           ? '返回通吃坊'
@@ -991,8 +1223,15 @@ function enterBattle(fresh) {
         : selected().moved && !selected().acted
           ? 'attack'
           : 'move';
+  deployPick = null;
+  if (deploying()) {
+    mode = 'deploy';
+    state.selected = viewId = state.leader;
+  }
   window.scrollTo({ top: 0, behavior: 'instant' });
   update();
+  // A run saved while deploying comes back to it, with the tip that says what to do.
+  if (deploying() && !dialog.open) showDeployTip();
   if (fresh) {
     storyIndex = 0;
     audio('turn');
@@ -1124,6 +1363,10 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     // Polish (dangerZone): show or hide the tiles the enemy can strike next turn.
     case 'field-danger':
+      if (deploying()) {
+        mapTip('起陣時敵方範圍常亮');
+        break;
+      }
       prefs.danger = !prefs.danger;
       savePrefs();
       paint();
@@ -1273,15 +1516,36 @@ function command(action, id, data = {}, keyboard = false) {
       }
       break;
     case 'field-deploy':
+      // Onto the board, into the deployment step: swaps until 開戰.
       if (dialogState === 'team' && R.deployLineup(state)) {
-        mode = 'move';
+        mode = 'deploy';
+        deployPick = null;
         viewId = state.selected;
         closePage();
         update();
         audio('turn');
-        mapTip('我方行動');
-        showPhase('ally', state.round, prefs.motion); // combat feel: phase banner
+        showDeployTip();
       }
+      break;
+    case 'battle-begin':
+      if (deploying()) beginDeployed();
+      break;
+    case 'brief-next':
+      if (dialogState === 'brief' && state.run.scene === 'brief' && R.turnPage(state)) {
+        save();
+        showScene();
+        audio('page');
+      }
+      break;
+    // 軍情 in 整備 (or the shop's look at the next board): the whole briefing, then back.
+    case 'brief-open':
+      if (dialogState !== 'team') break;
+      briefFrom = {
+        ahead: planningMap(state) !== state.mapIndex,
+        label: state.run.scene === 'prep' ? '返回整備' : '返回隊伍'
+      };
+      openPage('brief');
+      audio('page');
       break;
     case 'scene-prev':
       if (dialogState === 'encounter') {
@@ -1597,6 +1861,35 @@ document.addEventListener('keydown', (e) => {
     if (k === 'escape' && hud.fallback) hud.setFallback(false);
     if (k === '?') openPage('help');
     return;
+  }
+  // The deployment step: E or Enter begins, Esc lets go of the pick, Tab picks the next hero, D says the
+  // zone stays lit; the number keys do nothing. G, ?, [ and ] work as always.
+  if (deploying()) {
+    if (k === 'escape') {
+      if (hud.panel) hud.closePanel(true);
+      else if (deployPick) pickDeploy(null);
+      return;
+    }
+    // Enter on a focused control (a board tile, a button) presses that control instead.
+    const onControl = !!e.target.closest?.('button, a, input, select, textarea, summary, [role="button"]');
+    if (k === 'e' || (k === 'enter' && !onControl)) {
+      e.preventDefault();
+      beginDeployed();
+      return;
+    }
+    if (k === 'tab') {
+      if (POLISH.nextHeroKey && X.tabIsFree()) {
+        e.preventDefault();
+        cyclePick(e.shiftKey ? -1 : 1);
+      }
+      return;
+    }
+    if (k === 'd' && !$('danger-toggle')?.hidden) {
+      e.preventDefault();
+      mapTip('起陣時敵方範圍常亮');
+      return;
+    }
+    if (k !== '?' && k !== 'g') return;
   }
   if (k === 'escape') {
     // Polish (actionFlow): Esc takes back the move while the hero has not yet struck.

@@ -1,4 +1,4 @@
-import { fieldCells } from '../data/terrain.js';
+import { fieldCells, mapLayout } from '../data/terrain.js';
 import * as G from '../rules/game.js';
 import { FerryCamera } from './camera.js';
 import { makeScenery, decorateWorld, Cutaway } from './environment.js';
@@ -522,10 +522,18 @@ class BattleBoard {
   }
   syncKeys() {
     const marker = G.unclaimedObjectiveTile(this.s);
+    // Reinforcements' entry tiles, and while deploying the five posts.
+    const entries = new Map();
+    if (this.s.run?.status === 'battle')
+      for (const p of G.announcedWaves(this.s))
+        for (const t of p.tiles) entries.set(G.key(t.x, t.y), p.due);
+    const posts = this.s.run?.deploying && this.s.run.scene === 'fight' ? mapLayout(this.mapIndex).allies : [];
     this.keys.forEach((b, i) => {
       const x = i % this.view.columns,
         y = Math.floor(i / this.view.columns),
         occ = G.at(this.s, x, y);
+      const due = entries.get(G.key(x, y)),
+        post = posts.findIndex((p) => p.x === x && p.y === y);
       b.setAttribute(
         'aria-label',
         '第' +
@@ -538,6 +546,8 @@ class BattleBoard {
           '。' +
           G.terrainInfo(x, y, this.mapIndex).note +
           (marker && marker.x === x && marker.y === y ? '支線燈記。' : '') +
+          (due ? '敵援入場處，第' + G.NUMERALS[due - 1] + '回合。' : '') +
+          (post >= 0 ? '起陣格，陣位' + G.NUMERALS[post] + '。' : '') +
           (this.reach.has(G.key(x, y)) ? '可移動至此。' : '')
       );
     });

@@ -141,26 +141,36 @@ function memberLine(s, u, ui) {
     ? [{ id: CAPTAINS[map][0] }, { id: 'lieutenant-' + map }]
     : G.enemies(s).filter((v) => G.unitDetails(v).rank);
   const board = mapLayout(map);
-  const mission = R.mapMission(map, upcoming ? null : G.objectiveTile(s));
-  const recruit = (upcoming ? s.run.stage + 1 : s.run.stage) < 9 && s.run.pool.length > 0;
-  const leader = G.DETAILS[line[0]]?.name || '領隊';
+  // The briefing in short: this board's (or, from the shop, the next board's, whose secondary
+  // is not drawn yet). 軍情 opens the whole briefing.
+  const model = upcoming ? R.boardBrief(map, s.run.stage + 1) : R.briefing(s);
+  const side = model.side;
+  const row = (term, body) => '<div><dt>' + term + '</dt><dd>' + body + '</dd></div>';
   const brief =
     '<section class="wake-mission" aria-label="作戰目標"><header>' +
     icon('flag', 19) +
     '<h3>作戰目標</h3><span>' +
     esc(board.name) +
-    '</span></header><dl>' +
-    '<div><dt>勝利</dt><dd>' +
-    esc(mission.win) +
-    '</dd></div><div><dt>敗退</dt><dd>' +
-    esc(leader) +
-    '倒下，或回合用盡。</dd></div><div><dt>支線</dt><dd><strong>' +
-    esc(mission.name) +
-    '</strong>　' +
-    esc(mission.instruction) +
-    '<small>勝利時另得 19 兩' +
-    (recruit ? '，並有一位俠客應帖而來' : '') +
-    '。</small></dd></div></dl></section>';
+    '</span>' +
+    btn('brief-open', icon('flag', 14) + '軍情', 'mj-action brief-open', 'title="軍情"') +
+    '</header><dl>' +
+    row('勝利', esc(model.win)) +
+    row('敗退', esc(model.loss)) +
+    row(
+      '支線',
+      side
+        ? '<strong>' +
+            esc(side.name) +
+            '</strong>　' +
+            esc(side.detail) +
+            '<small>' +
+            esc(side.rewardText) +
+            '</small>' +
+            (side.warning ? '<small class="warn">' + esc(side.warning) + '</small>' : '')
+        : esc(model.sideNote)
+    ) +
+    (model.recruit ? row('應帖', esc(model.recruit)) : '') +
+    '</dl></section>';
   return (
     brief +
     formationCards(s, u, ui) +

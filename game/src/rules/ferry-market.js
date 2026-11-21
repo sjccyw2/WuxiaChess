@@ -19,8 +19,11 @@ const VISITOR = {
   rules: '第一局獲勝後必定開局。其餘各局戰後有四成機會。每次可免費揭一盅，三個位置機會均等。'
 };
 // Base prices exclude a small, seeded premium. Minimum depth is one-based.
+// Only what is listed here is ever on the shelf or under a cup: to keep an item for a quest or
+// another way of earning it, delete its line.
 const MARKET_STOCK = {
   travelBlade: [23, 1],
+  blueEdge: [33, 1],
   ironFan: [31, 1],
   silkWhip: [29, 1],
   starSteel: [45, 3],
@@ -45,7 +48,11 @@ const MARKET_STOCK = {
   herbCharm: [28, 1],
   remedy: [9, 1],
   elixir: [10, 1],
-  greatPill: [18, 1]
+  greatPill: [18, 1],
+  dragonSaber: [52, 4],
+  hedgehogVest: [30, 2],
+  nineFlowerPill: [22, 2],
+  beeNectar: [12, 1]
 };
 const MARKET_RULES =
   '每局重排貨架，各抽兩件兵器、兩件護具、兩種丹藥與兩卷武譜。銀價較底價浮動零至三兩。武譜購回後須授予俠客並花武學點參悟。';
@@ -98,6 +105,19 @@ function makeOffers(s) {
     }
   }
   return rows;
+}
+// ── The secondary's manual (journey.js settle) ───────────────────────────
+// A met secondary that pays a manual: one the shelf could carry after this board, preferring one
+// not already in the store and not held by every hero, drawn from the run and stage.
+function bonusManual(s) {
+  const r = s.run,
+    store = r.stage === 9 ? r.chronicle.parcel.manuals : r.manuals;
+  const known = (id) => store.includes(id) || G.company(s).every((u) => u.guides.includes(id));
+  const deck = shuffled(
+    Object.keys(MANUAL_PRICES).filter((id) => manualStage(id) <= r.stage + 1),
+    ferryRandom(r, 0x2c1b3c6d)
+  ).sort((a, b) => Number(known(a)) - Number(known(b)));
+  return deck[0] || null;
 }
 function makeVisit(s) {
   const r = s.run,
@@ -173,4 +193,4 @@ function pickBowl(s, position) {
   return true;
 }
 
-export { VISITOR, MARKET_STOCK, MARKET_RULES, manualStage, makeOffers, makeVisit, validVisit, lotName, lotImage, grantLot, coverBowls, pickBowl };
+export { VISITOR, MARKET_STOCK, MARKET_RULES, manualStage, bonusManual, makeOffers, makeVisit, validVisit, lotName, lotImage, grantLot, coverBowls, pickBowl };

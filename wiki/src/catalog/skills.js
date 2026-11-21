@@ -7,9 +7,10 @@ import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, cells, gameArt } from './parts.js';
 import { heroPortrait } from './heroes.js';
-import { stageName, troopIds, troopSource, RANKS } from './foes.js';
+import { stageName, troopIds, troopSource, troopArt, boardsOf, RANKS } from './foes.js';
 import { trialOf } from './missions.js';
 import { NOTES } from './notes.js';
+import { artTerms, ruleLinks } from './terms.js';
 
 export const BASELINE_ATTACK = 30;
 const TARGETS = { basic: '普攻', enemy: '敵軍', ally: '友軍', self: '自身', ground: '空地', passive: '被動' };
@@ -69,10 +70,17 @@ function starting(heroId) {
     {
       id: 'signature-' + heroId,
       name: d.skill,
-      tag: '天生絕技',
+      tag: '入門武學',
       summary: d.skillDesc,
       image: heroPortrait(heroId),
-      sections: [figures(signature, G.artFor(baseline(heroId).unit, 'signature')), known(SLOT.art), triggers(signature), motion(signature), ownerLink(heroId)].filter(Boolean),
+      sections: [
+        figures(signature, G.artFor(baseline(heroId).unit, 'signature')),
+        known(SLOT.art),
+        triggers(signature),
+        ruleLinks(artTerms(G.artFor(baseline(heroId).unit, 'signature'), G.ART_FORMS['signature:' + heroId] || [])),
+        motion(signature),
+        ownerLink(heroId)
+      ].filter(Boolean),
       sources
     }
   ];
@@ -99,6 +107,7 @@ function learned([id, art]) {
         ['攜帶', art.kind === 'basic' ? SLOT.basic : SLOT.art]
       ]),
       triggers(f),
+      ruleLinks(artTerms(art, G.ART_FORMS[id] || [])),
       art.needs?.length && links('先修武學', art.needs.map((need) => artLink(need, owner))),
       trial && links('解鎖任務', [link('missions', 'trial-' + id, trial)]),
       art.source && speech('武學淵源', art.source),
@@ -131,17 +140,15 @@ function signatureTrigger(art, seat, phase) {
   const base = art.style === 'mirror' ? NOTES.mirrorSignature : art.style === 'mend' ? NOTES.mendSignature : seat ? NOTES.secondSignature : NOTES.bossSignature;
   return base + (phase?.cadence ? NOTES.phaseCadence(phase.cadence) : '');
 }
-function opponent(stage, seat) {
-  const foe = G.ENCOUNTERS[stage][seat],
-    unitId = seat ? 'lieutenant-' + stage : G.CAPTAINS[stage][0],
-    // At the first stage the board can be met at; the numbers that grow with the stage are on
-    // the opponent's own page (行事).
-    art = G.enemyTechnique({ id: unitId }, { run: { stage: G.mapStages(stage)[0] } }),
-    image = gameArt((seat ? 'lieutenant-' : 'captain-') + stage + '.webp'),
-    where = [link('foes', 'enc-' + stage + '-' + seat, foe.name), link('maps', stage, stageName(stage))];
+// A named opponent's two arts: the fixed pair of a board (stage, seat) or a villain who joins it.
+function opponentArts({ key, foe, stage, second, page, image, unitId, arrives = false }) {
+  // At the first stage the board can be met at; the numbers that grow with the stage are on
+  // the opponent's own page (行事).
+  const art = G.enemyTechnique({ id: unitId }, { run: { stage: G.mapStages(stage)[0] } }),
+    where = [link('foes', page, foe.name), link('maps', stage, stageName(stage))];
   return [
     {
-      id: 'foe-' + stage + '-' + seat,
+      id: 'foe-' + key,
       name: art.name,
       tag: '敵方絕技',
       summary: art.note,
@@ -150,18 +157,18 @@ function opponent(stage, seat) {
         rows('施展規則', [
           ['使用者', foe.name],
           ['位階', G.NUMERALS[art.tier - 1] + '階'],
-          ['觸發', signatureTrigger(art, seat, foe.traits?.phase)],
+          ['觸發', signatureTrigger(art, second, foe.traits?.phase) + (arrives ? NOTES.waveSignature : '')],
           // A mend or a mirror is no blow: it has no strength against the normal strike.
           art.strikes && ['普攻傷害倍率', '× ' + art.factor],
           art.reach && ['絕技射程', art.reach + ' 格'],
           [art.strikes ? '附加效果' : '效果', art.note]
         ]),
-        links('關聯', where)
+        links('關聯', [...where, link('rules', 'signature', G.RULE_TERMS.signature.name)])
       ],
       sources: cites(cite(foe.name, 'src/data/encounters.js'), cite('function roundsToSignature', 'src/rules/game.js'))
     },
     {
-      id: 'foe-' + stage + '-' + seat + '-basic',
+      id: 'foe-' + key + '-basic',
       name: foe.basic,
       tag: '敵方普攻',
       summary: foe.name + '的通常攻擊。',
@@ -171,6 +178,27 @@ function opponent(stage, seat) {
     }
   ];
 }
+const opponent = (stage, seat) =>
+  opponentArts({
+    key: stage + '-' + seat,
+    foe: G.ENCOUNTERS[stage][seat],
+    stage,
+    second: seat,
+    page: 'enc-' + stage + '-' + seat,
+    image: gameArt((seat ? 'lieutenant-' : 'captain-') + stage + '.webp'),
+    unitId: seat ? 'lieutenant-' + stage : G.CAPTAINS[stage][0]
+  });
+const villain = ([id, foe]) =>
+  opponentArts({
+    key: id,
+    foe,
+    stage: foe.map,
+    second: foe.rank === 'boss' ? 0 : 1,
+    page: 'enc-' + id,
+    image: gameArt(G.DETAILS[id].portraitFile),
+    unitId: id,
+    arrives: boardsOf(id).some((b) => b.wave)
+  });
 
 function troop(id) {
   const d = G.DETAILS[id];
@@ -179,7 +207,7 @@ function troop(id) {
     name: d.basic,
     tag: '敵方普攻',
     summary: d.name + '的通常攻擊。',
-    image: gameArt(d.portraitFile),
+    image: troopArt(id),
     sections: [links('使用者', [link('foes', id, d.name)])],
     sources: cites(cite(d.name, troopSource(id)))
   };
@@ -224,6 +252,7 @@ export function skills() {
     ...Object.entries(G.TECHNIQUES).map(learned),
     ...Object.keys(G.TALENTS).map(root),
     ...G.ENCOUNTERS.flatMap((pair, stage) => pair.flatMap((_, seat) => opponent(stage, seat))),
+    ...Object.entries(G.VILLAINS).flatMap(villain),
     ...troopIds().map(troop),
     ...Object.entries(G.FORM_RULES).map(form),
     ...G.COMBINATIONS.map(combination)

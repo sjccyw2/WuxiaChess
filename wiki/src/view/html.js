@@ -9,6 +9,7 @@ export const categories = {
   skills: ['武學總譜', '武', '式'],
   items: ['百物譜', '物', '件'],
   missions: ['任務簿', '令', '項'],
+  rules: ['戰鬥規則', '則', '條'],
   maps: ['十局輿圖', '圖', '圖'],
   text: ['遊戲原文', '文', '條']
 };

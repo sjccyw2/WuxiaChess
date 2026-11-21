@@ -1,0 +1,80 @@
+// The plan of a board as the briefing and the 整備 起陣圖 draw it: the terrain, the five ally
+// posts with their numerals, the enemy pieces where they start (局主, 副手, the rest), and the
+// secondary's lamp or line. Reinforcements are not on it: they come as a surprise.
+// Read from the board's data, so it needs no fight: the shop's look at the next board uses it too.
+import * as G from '../rules/game.js';
+import { BATTLES } from '../data/battles.js';
+import { mapLayout } from '../data/terrain.js';
+
+const POSTS = ['一', '二', '三', '四', '五'];
+const keyOf = (id) => id.split('#')[0];
+const place = (x, y) => 'grid-column:' + (x + 1) + ';grid-row:' + (y + 1);
+
+// What stands where before round one. `s` is a run on this board (its drawn secondary, a
+// legacy board's four), or null for a board seen ahead of time.
+function boardPlan(map, s = null) {
+  const layout = mapLayout(map),
+    board = s ? G.boardOf(s) : BATTLES[map],
+    keys = G.encounterKeys(map);
+  const piece = (key, x, y) => {
+    const rank = G.DETAILS[key]?.rank;
+    return { x, y, name: G.DETAILS[key]?.name || '', rank: rank === 'boss' ? 'boss' : rank ? 'mini' : 'troop' };
+  };
+  const foes = [
+    ...layout.enemies.slice(0, 4).map((p, i) => piece(keys[i], p.x, p.y)),
+    ...board.pieces.map((p) => piece(keyOf(p.id), p.at[0], p.at[1]))
+  ];
+  const side = s?.run?.side;
+  return {
+    layout,
+    foes,
+    lamp: s && side?.kind === 'lamp' ? G.objectiveTile(s) : null,
+    zone: s && side?.kind === 'holdLine' ? side.zone : null
+  };
+}
+
+// The plan as a grid. `posts(i, x, y)` draws post i (a 整備 button, or a plain numeral);
+// `chief` is the post index of the leader.
+function planGrid(plan, posts) {
+  const { layout, zone } = plan;
+  const cells = layout.cells
+    .map(
+      ({ x, y, kind }) =>
+        '<i class="ft-' + kind + (zone && G.inZone(zone, { x, y }) ? ' plan-zone' : '') + '" style="' + place(x, y) + '"></i>'
+    )
+    .join('');
+  const foes = plan.foes
+    .map((f) => '<b class="plan-foe ' + f.rank + '" title="' + f.name + '" style="' + place(f.x, f.y) + '"></b>')
+    .join('');
+  const lamp = plan.lamp
+    ? '<span class="wake-map-lamp" role="img" aria-label="支線燈記" style="' + place(plan.lamp.x, plan.lamp.y) + '">✦</span>'
+    : '';
+  return (
+    '<div class="fo-map-grid plan-grid" style="--map-w:' +
+    layout.width +
+    ';--map-h:' +
+    layout.height +
+    '">' +
+    cells +
+    foes +
+    lamp +
+    layout.allies.map(({ x, y }, i) => posts(i, x, y, place(x, y))).join('') +
+    '</div>'
+  );
+}
+
+// The key under a plan: only what this plan shows.
+function planKey(plan) {
+  const has = (rank) => plan.foes.some((f) => f.rank === rank);
+  return (
+    '<p class="plan-key"><span><i class="plan-post-key"></i>起陣格</span>' +
+    (has('boss') ? '<span><b class="plan-foe boss"></b>局主</span>' : '') +
+    (has('mini') ? '<span><b class="plan-foe mini"></b>副手</span>' : '') +
+    (has('troop') ? '<span><b class="plan-foe troop"></b>敵方</span>' : '') +
+    (plan.lamp ? '<span><i class="wake-map-lamp">✦</i>支線燈記</span>' : '') +
+    (plan.zone ? '<span><i class="plan-zone-key"></i>支線界線</span>' : '') +
+    '</p>'
+  );
+}
+
+export { POSTS, boardPlan, planGrid, planKey };
