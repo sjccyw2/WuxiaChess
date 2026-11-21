@@ -36,9 +36,8 @@ export const troopIds = () =>
 // Where a troop entry is written: a board's own pieces in its RANKS, the shared ones in game.js.
 export const troopSource = (id) =>
   id.includes('-') || G.TROOPS[id] ? 'src/data/encounters.js' : 'src/rules/game.js';
-// A troop type's picture. The new troop types' portraits (foe-<id>.webp) are not in game/assets
-// yet; until they are, their pages go without one.
-export const troopArt = (id) => (G.TROOPS[id] ? null : gameArt(G.DETAILS[id].portraitFile));
+// A troop type's picture: its portrait.
+export const troopArt = (id) => gameArt(G.DETAILS[id].portraitFile);
 
 export function foes() {
   const named = G.ENCOUNTERS.flatMap((pair, stage) =>

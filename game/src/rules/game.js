@@ -18,6 +18,7 @@ import {
 } from '../data/encounters.js';
 import { BATTLES } from '../data/battles.js';
 import { NEW_HEROES } from '../data/new-heroes.js';
+import { rosterPortrait } from '../data/roster-art.js';
 import {
   commandBonus,
   effectsOf,
@@ -896,11 +897,11 @@ for (const [map, ranks] of RANKS.entries())
     const base = map ? 'echo' + role[0].toUpperCase() + role.slice(1) : role;
     DETAILS[role + '-' + map] = { ...DETAILS[base], ...info };
   }
-// The villains and troop types added to the boards (battles.js). A missing portrait or sprite
-// sheet falls back as every piece's does (actors.js).
+// The villains and troop types added to the boards (battles.js). Their portraits follow their
+// sprites, below.
 for (const [id, v] of Object.entries(VILLAINS))
-  DETAILS[id] = { ...v, role: v.rank === 'boss' ? '局主' : '副手', portraitFile: 'foe-' + id + '.webp' };
-for (const [id, t] of Object.entries(TROOPS)) DETAILS[id] = { ...t, portraitFile: 'foe-' + id + '.webp' };
+  DETAILS[id] = { ...v, role: v.rank === 'boss' ? '局主' : '副手' };
+for (const [id, t] of Object.entries(TROOPS)) DETAILS[id] = { ...t };
 // The stage row each board's own pieces take their numbers from (stageRows).
 for (let map = 0; map < CAPTAINS.length; map++) {
   DETAILS[CAPTAINS[map][0]].row = 'master';
@@ -911,6 +912,10 @@ for (let map = 0; map < CAPTAINS.length; map++) {
 DETAILS.blade.row = 'lieutenant';
 DETAILS.bow.row = 'bow';
 DETAILS.scout.row = 'scout';
+// A piece drawn as one of the painted roster characters wears that character's portrait,
+// whatever seat it fills: the face follows the sprite (data/roster-art.js).
+for (const d of Object.values(DETAILS))
+  if (rosterPortrait(d.mini)) d.portraitFile = rosterPortrait(d.mini);
 const STORIES = [
   {
     place: '洛陽 · 綠竹巷',
