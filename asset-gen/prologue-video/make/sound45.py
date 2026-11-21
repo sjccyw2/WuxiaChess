@@ -8,7 +8,7 @@ rng = np.random.default_rng(11)
 def env(points):
     xs, ys = zip(*points); return np.interp(t, xs, ys)
 drone = (0.09 * np.sin(2 * np.pi * 55 * t) + 0.04 * np.sin(2 * np.pi * 82.4 * t) + 0.02 * np.sin(2 * np.pi * 110 * t)) * (0.7 + 0.3 * np.sin(2 * np.pi * .11 * t))
-mix = drone * env([(0, 0), (2, .7), (4.2, .8), (6.5, 1), (11, 1), (20, 1), (23, .25), (27.9, .2), (28.6, .9), (34, 1), (38.9, .5), (40.6, 1), (44, 1), (45, 0)])
+mix = drone * env([(0, 0), (2, .7), (4.2, .8), (6.5, 1), (11, 1), (20, 1), (23, .25), (27.9, .2), (28.6, .9), (34, 1), (39.4, .9), (41.5, 1), (44, 1), (45, 0)])
 def add(at, sig, gain=1.0):
     i = int(at * SR); m = min(len(sig), n - i)
     if m > 0: mix[i:i + m] += gain * sig[:m]
@@ -35,16 +35,18 @@ notes = [(0.8, 'A3'), (2.6, 'E4'),                                   # asleep: s
          (11.6, 'G4'), (12.8, 'E4'), (14.0, 'D4'),                    # the old man: mystery
          (14.8, 'A4'), (15.3, 'B4'), (16.4, 'G4'),                     # the board
          (20.2, 'E4'), (21.6, 'D4'),                                   # lost
-         (34.6, 'E4'), (35.6, 'G4'), (36.6, 'A4'), (37.2, 'B4'), (37.8, 'D5'),   # the invitation lifts
-         (40.7, 'A4'), (41.6, 'G4'), (42.6, 'A4'), (42.65, 'E5'), (43.6, 'A3'), (43.65, 'E4'), (43.7, 'A4')]
+         (35.2, 'E4'), (36.6, 'D4'), (38.0, 'E4'),                     # his centuries at the board
+         (39.4, 'G4'), (40.2, 'A4'), (40.9, 'B4'),                     # the invitation lifts
+         (41.55, 'A4'), (41.6, 'E5'), (43.5, 'A3'), (43.55, 'E4'), (43.6, 'A4')]
 for at, nm in notes: add(at, pluck(F[nm]))
-for at in (4.1, 6.4, 11.35, 14.7, 17.5, 19.9, 26.3, 37.0, 38.85, 40.5, 42.5): add(at, whoosh(amp=.22 if at not in (4.1, 17.5, 42.5) else .32))
-for at in (4.2, 17.6, 42.6): add(at, thump())
+for at in (4.1, 6.4, 11.35, 14.7, 17.5, 19.9, 26.3, 34.3, 38.5, 41.4): add(at, whoosh(amp=.22 if at not in (4.1, 17.5) else .32))
+for at in (4.2, 17.6): add(at, thump())
+add(41.55, thump(.5, .6))
 add(18.6, thump(.4, .45)); add(15.35, click(.45)); add(15.38, whoosh(.2, .3))
 add(23.0, click(.25))                         # the stone stops in his fingers: 「咦」
 add(28.6, bell(110, 6, .32)); add(31.6, bell(146.8, 6, .22))   # gravity under 罷了 and his name
-for at in (42.85, 43.1, 43.35): add(at, click())
-add(43.6, thump(1.4, .9))
+add(41.55, click())
+add(43.5, thump(1.4, .9))
 mix = np.tanh(mix * 1.2) * .85
 with wave.open('sound45.wav', 'wb') as w:
     w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((mix * 32767).astype(np.int16).tobytes())

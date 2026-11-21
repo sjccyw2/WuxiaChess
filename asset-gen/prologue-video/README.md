@@ -6,7 +6,7 @@ and can be rendered again with `make/` (see `make/README.md`). Made 2026-11-21 (
 after a 10-second test and a 30-second cut that the producer asked to slow down.
 
 **Pacing.** About three seconds a panel on average, but each beat has its own length, and only
-three moments hit hard: the eyes opening, the eagle, the stones lighting. The rest enter gently
+three moments hit hard: the eyes opening, the eagle, and the box landing on 求敗's last words. The rest enter gently
 (dissolves, slow slides, hard quiet cuts) so that the hits land.
 
 | Time | Panel | Beat | Entrance | Words |
@@ -21,16 +21,14 @@ three moments hit hard: the eyes opening, the eagle, the stones lighting. The re
 | 23.0 s | `s6-qiubai` | tension | a hard, quiet cut; the music drops away | 「咦。」 · 「你是甚麼人？」 |
 | 26.4 s | `i-name` | hesitation | slides up as the lower panel of a page | 「我……我叫……」, cut off by 「罷了。」 from the panel above |
 | 28.6 s | `j-reveal` | gravity | a slow dissolve; the frame darkens; a low bell | 「老夫三百年沒見過一個活人，」 · then the name card: 世人叫他 / 求敗 |
-| 34.4 s | `l-hands` | his centuries | dissolve | 「今天你我有緣，」 |
-| 37.0 s | `m-box` | the invitation | breaks in from the upper left | 「就陪老夫下盤棋吧！」 |
-| 38.9 s | `n-cantplay` | comic beat | the lower panel of a page, short | 「我不會下棋。」 |
-| 40.6 s | `o-grab` | resolve | iris from the box | 「子自己會走，自己會打。」 |
-| 42.6 s | `p-rise` | **climax** | a band slams in, flash; 「嗒」 three times; title at 43.6 s | 三枚白子，登時亮了。 · 劍影江湖 · 一念江湖 |
+| 34.4 s | `l-hands` | his centuries | a slow dissolve | 左手同右手，一盤棋下了三百年。 (dark box) |
+| 38.6 s | `m-box` | **the invitation** (last scene) | breaks in from the upper left; the box lands with 「嗒」; title at 43.5 s | 「今天你我有緣，」 · 「就陪老夫下盤棋吧！」 · 劍影江湖 · 一念江湖 |
 
 - **Words.** Only the lines that carry the scene. The youth never says his name, so the player
   can still give him one in the game; 求敗 cuts him off with 「罷了，老夫三百年沒見過一個活人，今天
-  你我有緣，就陪老夫下盤棋吧！」, a line the producer wrote for the video and carried across three
-  panels. The game's own prologue (where the youth names himself and 求敗 says 幾百年) is unchanged.
+  你我有緣，就陪老夫下盤棋吧！」, a line the producer wrote for the video, carried across three
+  panels and ending the video. How the game is played (the stones that walk and fight, drawing
+  three) is left to the game itself: it reads as tutorial, not prologue. The game's own prologue (where the youth names himself and 求敗 says 幾百年) is unchanged.
 - **Lettering, 港漫 fashion.** Narration in rectangular boxes with a double rule, set flush to the
   panel's corners and stacked; dark boxes for the quiet moments. Dialogue in ovals, vertical,
   right to left. Sound effects as heavy white characters with a thick black outline and motion
@@ -44,5 +42,5 @@ three moments hit hard: the eyes opening, the eagle, the stones lighting. The re
   `game/src/data/maze-tale.js`), set vertically in the game's serif (`river-serif` with the `extra-serif`
   supplement) when the frames are rendered.
 - **Sound**: synthesised to follow the arc: a drone that drops away at 「咦」, plucked-string notes on a
-  pentatonic scale, a low bell under 求敗's name, thumps on the three impacts, the stone clicks. It
+  pentatonic scale, a low bell under 求敗's name, thumps on the three impacts, a click as the box lands. It
   is a placeholder for real music.

@@ -5,6 +5,7 @@ from shots import MANGA, AVOID, YOUTH, EAGLE
 QIU = ("求敗 from the reference: an old Chinese swordsman with a long white beard to the chest, white hair tied back plainly in a topknot, "
        "a lean, weathered, stern face, a plain grey hemp robe worn at the cuffs; no ornaments, no sword")
 C = "Keep the main subject in the middle of the frame, with room around it, so the panel can also be cropped to a square."
+# n-cantplay, o-grab and p-rise were painted for the 30 s cut and are not in the 45 s cut.
 SHOTS = {
  'd-selfplay': (["ref-qiubai.png"], f"Seen from a little way off across a misty valley floor: a square stone go table under towering cliffs. Seated at it, {QIU}, playing against himself, holding a black go stone in his left hand and a white go stone in his right, both hands poised over the board, utterly absorbed. Beside the table crouches the dark shape of a huge bird. Mist, silence, a single shaft of pale light from above. {C}"),
  'g-lost': (["ref-youth.png"], f"{YOUTH}, standing on a valley floor in his plain sleeping clothes, barefoot, turning on the spot in bewilderment, one hand half raised, looking up at the impossibly high cliffs around him. Low angle, the cliffs towering, swirling manga motion lines around him, a tiny sweat drop at his temple. {C}"),

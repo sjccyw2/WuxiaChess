@@ -5,7 +5,7 @@ Run everything from a working folder that holds these scripts. Nothing here touc
 1. **References.** Save as PNG: `ref-youth.png` (`asset-gen/story-characters/cards/youth.webp`),
    `ref-eagle.png` (`game/assets/npc-eagle.webp`), `ref-qiubai.png`
    (`asset-gen/story-characters/cards/qiubai.webp`).
-2. **Panels.** `python3 shots.py`, `python3 s6.py` and `python3 shots2.py` paint the sixteen panels
+2. **Panels.** `python3 shots.py`, `python3 s6.py` and `python3 shots2.py` paint the panels (the cut uses thirteen)
    through the OpenAI Images API (`api.py`; the key is supplied by the environment, never written
    here). Each script takes panel names to repaint only those. The panels already painted are in
    `../panels/` as WebP; convert them back to PNG of the same names to re-cut without repainting.
