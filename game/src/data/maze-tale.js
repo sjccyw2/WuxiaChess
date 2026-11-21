@@ -81,8 +81,8 @@ const MAZE_TALE = {
       { who: 'youth', text: '我不會下棋。', afterFilm: true },
       { who: 'qiu', text: '這不是尋常的棋。子自己會走，自己會打。你只須告訴他們往哪裡去。' }
     ],
-    // Every later run: he has slept again. `greeting` is 求敗's by 境 (index 0 is the first 境,
-    // reached again only after a lost run); `beyond` once the fifth 境 has been won.
+    // Every later run: he has slept again. `greeting` is 求敗's by the 境 the player picked
+    // (index 0 is the first 境, which may be picked again at any time).
     // The first visit opens with a film (asset-gen/prologue-video), in a 9:16 cut for screens taller
     // than wide and a 16:9 cut otherwise: it tells the pages above up to 「抓三枚」, and in it the
     // youth is cut off before he can say his name. So after it he finds he cannot recall it and the
@@ -96,7 +96,7 @@ const MAZE_TALE = {
     again: {
       note: '少年又睡著了。再睜開眼來，仍是那座山谷，那方青石棋臺。他說不出幾時來過，腳下卻自己認得路，逕自走到臺前。那頭大鵰向他點了點頭。',
       greeting: [
-        '又是你，{name}。上一盤你沒有下完。坐。',
+        '你又來了，{name}。坐，隨便下一盤。',
         '又是你，{name}。坐。',
         '你來了。坐。這一輪，老夫不讓。',
         '你來了，{name}。老夫有一事不明，要向你請教。先下棋，下完了再問。',
