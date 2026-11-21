@@ -65,11 +65,20 @@ const MAZE_TALE = {
         note: '他將一隻烏木棋盒推過臺面。',
         text: '你既來了，也是緣法。坐下，陪老夫下一盤。抓三枚。'
       },
-      { who: 'youth', text: '我不會下棋。' },
+      // The pages pick up here after the film (below).
+      { who: 'youth', text: '我不會下棋。', afterFilm: true },
       { who: 'qiu', text: '這不是尋常的棋。子自己會走，自己會打。你只須告訴他們往哪裡去。' }
     ],
     // Every later run: he has slept again. `greeting` is 求敗's by 境 (index 0 is the first 境,
     // reached again only after a lost run); `beyond` once the fifth 境 has been won.
+    // On a phone held upright the first visit opens with a film (asset-gen/prologue-video): it tells
+    // the pages above up to 「抓三枚」, and in it the youth is cut off before he can say his name. So
+    // after it the player finishes his sentence, and the pages resume at `afterFilm`.
+    film: {
+      file: 'prologue-film.mp4',
+      poster: 'prologue-film.webp',
+      name: { who: 'youth', text: '我……我叫……', ask: true }
+    },
     again: {
       note: '少年又睡著了。再睜開眼來，仍是那座山谷，那方青石棋臺。他說不出幾時來過，腳下卻自己認得路，逕自走到臺前。那頭大鵰向他點了點頭。',
       greeting: [

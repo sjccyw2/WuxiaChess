@@ -7,6 +7,11 @@ after a 10-second test and a 30-second cut that the producer asked to slow down.
 cut is kept, with everything it was made from: `panels/` (thirteen panels and the two painted
 sound effects) and `make/` (the prompts, the compositor, the timeline and the sound).
 
+**In the game.** Phones held upright play `game/assets/prologue-film.mp4` on a first visit (roadmap
+1.11). It is this cut at 720 × 1280, re-encoded for streaming:
+`ffmpeg -i prologue-45s.mp4 -vf scale=720:1280 -c:v libx264 -profile:v high -level 4.0 -crf 28 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 128k prologue-film.mp4`.
+Its poster, `prologue-film.webp`, is the frame at 1.2 s. Replace both when the cut changes.
+
 **Pacing.** About three seconds a panel on average, but each beat has its own length, and only
 three moments hit hard: the eyes opening, the eagle, and the box landing on 求敗's last words. The rest enter gently
 (dissolves, slow slides, hard quiet cuts) so that the hits land. A picture stays on screen until

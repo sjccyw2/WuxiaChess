@@ -40,6 +40,7 @@ export const TEXT_FILES = [
   'src/ui/panels.js',
   'src/ui/phase-banner.js',
   'src/data/rule-terms.js',
+  'src/ui/intro-film.js',
   'src/ui/run-views.js',
   'src/fx/technique-strokes.js',
   'src/data/terrain.js',
