@@ -274,7 +274,10 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'spare', behaviour: 'mirror', piece: 'master', reward: 'manual' },
+      // 不觸斗轉星移 (spare, behaviour 'mirror') stood here; the simulator never met it, since the
+      // mirror stays charged until it turns a blow. It can return once 吸勁 can hold the mirror off
+      // (ROADMAP 0.8).
+      { kind: 'intact', reward: 'manual' },
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'coins' },
       { kind: 'order', first: 'wanZhen', reward: 'coins' },
       { kind: 'unhurt', reward: 'coins' }

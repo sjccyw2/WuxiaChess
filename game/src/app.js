@@ -314,7 +314,7 @@ function paint() {
   const side = state.result
     ? '戰役結束'
     : deploying()
-      ? '布陣'
+      ? '起陣'
       : state.phase === 'enemy'
         ? '敵方行動'
         : '我方行動';
@@ -470,7 +470,7 @@ function openArts(keyboard = false) {
 }
 // ── The deployment step ─────────────────────────────────────────────────────
 const DEPLOY_TIP =
-  '布陣 · 點選一位俠客，再點另一位俠客或亮起的空格互換位置；按「開戰」開始第一回合。';
+  '起陣 · 點選一位俠客，再點另一位俠客或亮起的空格互換位置；按「開戰」開始第一回合。';
 function showDeployTip() {
   deployTip = true;
   mapTip(DEPLOY_TIP, 3600000);
@@ -507,7 +507,7 @@ function deployClick(x, y) {
     else mapTip('起陣格 · 陣位' + POSTS[post]);
     return;
   }
-  mapTip('布陣時只能換到亮起的起陣格');
+  mapTip('起陣時只能換到亮起的起陣格');
 }
 function pickDeploy(id) {
   deployPick = id;
@@ -1366,7 +1366,7 @@ function command(action, id, data = {}, keyboard = false) {
     // Polish (dangerZone): show or hide the tiles the enemy can strike next turn.
     case 'field-danger':
       if (deploying()) {
-        mapTip('布陣時敵方範圍常亮');
+        mapTip('起陣時敵方範圍常亮');
         break;
       }
       prefs.danger = !prefs.danger;
@@ -1864,7 +1864,7 @@ document.addEventListener('keydown', (e) => {
     if (k === '?') openPage('help');
     return;
   }
-  // The deployment step: E begins, Esc lets go of the pick, Tab picks the next hero, D says the
+  // The deployment step: E or Enter begins, Esc lets go of the pick, Tab picks the next hero, D says the
   // zone stays lit; the number keys do nothing. G, ?, [ and ] work as always.
   if (deploying()) {
     if (k === 'escape') {
@@ -1872,7 +1872,9 @@ document.addEventListener('keydown', (e) => {
       else if (deployPick) pickDeploy(null);
       return;
     }
-    if (k === 'e') {
+    // Enter on a focused control (a board tile, a button) presses that control instead.
+    const onControl = !!e.target.closest?.('button, a, input, select, textarea, summary, [role="button"]');
+    if (k === 'e' || (k === 'enter' && !onControl)) {
       e.preventDefault();
       beginDeployed();
       return;
@@ -1886,7 +1888,7 @@ document.addEventListener('keydown', (e) => {
     }
     if (k === 'd' && !$('danger-toggle')?.hidden) {
       e.preventDefault();
-      mapTip('布陣時敵方範圍常亮');
+      mapTip('起陣時敵方範圍常亮');
       return;
     }
     if (k !== '?' && k !== 'g') return;

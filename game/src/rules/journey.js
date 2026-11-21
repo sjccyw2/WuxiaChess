@@ -765,7 +765,7 @@ function swapStart(s, a, b) {
 function beginBattle(s) {
   if (!deploying(s)) return false;
   s.run.deploying = false;
-  G.log(s, 'system', '布陣已定。', '我方回合');
+  G.log(s, 'system', '起陣已定。', '我方回合');
   G.announce(s);
   return true;
 }

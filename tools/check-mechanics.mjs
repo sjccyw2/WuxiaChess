@@ -3834,7 +3834,7 @@ section('deployment');
   check('swapStart from an empty post, or to itself, is refused', !R.swapStart(s, 2, 0) && !R.swapStart(s, 0, 0) && !R.swapStart(s, 0, 7));
   const saved = R.restoreRun(copy(s));
   check('a save made while deploying restores into it', saved?.run.deploying === true && !G.canAct(saved, G.find(saved, saved.leader)));
-  check('beginBattle ends the step and logs it', R.beginBattle(s) && s.run.deploying === false && logged(s, '布陣已定。', '我方回合') && G.canAct(s, lead));
+  check('beginBattle ends the step and logs it', R.beginBattle(s) && s.run.deploying === false && logged(s, '起陣已定。', '我方回合') && G.canAct(s, lead));
   check('no swap after the battle has begun', !R.swapStart(s, 0, 1) && !R.beginBattle(s));
 }
 
