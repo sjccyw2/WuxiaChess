@@ -2,9 +2,9 @@ import { wakeJournal, fatePage } from './wake-views.js';
 import { moveFacts } from '../rules/move-facts.js';
 import { factBadge } from './panels.js';
 import * as G from '../rules/game.js';
-import { MAZE_TALE, EAGLE } from '../data/maze-tale.js';
+import { MAZE_TALE, TALE_ART } from '../data/maze-tale.js';
 import { art } from './artwork.js';
-import { WAKES, closingFor } from '../data/wake-tale.js';
+import { WAKES, closingFor, fragmentArt } from '../data/wake-tale.js';
 import { titleHead, btn, esc } from './panels.js';
 import { icon } from './icons.js';
 
@@ -68,14 +68,11 @@ function journeyEnding(s) {
     '</h3><p>' +
     esc(won ? MAZE_TALE.win : MAZE_TALE.loss) +
     '</p></div>' +
-    // After a lost run only the youth and the great bird are left by the table.
-    (won
-      ? ''
-      : '<figure class="ending-figure"><img src="' +
-        esc(art(EAGLE.portrait)) +
-        '" alt="' +
-        esc(EAGLE.name) +
-        '"></figure>') +
+    // Won: the last step and the one at the top, seen from behind. Lost: only the youth and
+    // the great bird are left by the table.
+    '<figure class="ending-figure ending-scene"><img class="tale-scene" src="' +
+    esc(art(won ? TALE_ART.win : TALE_ART.loss)) +
+    '" alt="" decoding="async"></figure>' +
     '<div class="result-stats"><span>此輪破局<b>' +
     (r.stage + (won ? 1 : 0)) +
     ' / 10</b></span>' +
@@ -96,7 +93,9 @@ function journeyEnding(s) {
     esc(wake.carve) +
     '</p></section>' +
     fatePage(s) +
-    '<section class="wake-choice wake-closing"><h3>闔眼</h3><p>' +
+    '<section class="wake-choice wake-closing"><h3>闔眼</h3><img class="tale-scene wake-fragment" src="' +
+    esc(art(fragmentArt(r.voyage))) +
+    '" alt="" decoding="async"><p>' +
     esc(closingFor(r.voyage, won)) +
     '</p></section>' +
     wakeJournal(r.chronicle, r.voyage) +

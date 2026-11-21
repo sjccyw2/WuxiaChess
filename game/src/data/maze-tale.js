@@ -17,6 +17,15 @@ const WEI = { name: '韋小寶', role: '通吃坊掌櫃', portrait: 'npc-wei.web
 // The great bird that waits by the stone table. It never speaks, and the game never gives
 // it any other name.
 const EAGLE = { name: '大鵰', role: '谷中的鵰', portrait: 'npc-eagle.webp' };
+// The spine's wide pictures (asset-gen/prompts.md, group B), kept apart from the text.
+const TALE_ART = {
+  // Above a prologue scene, by its place in MAZE_TALE.prologue.scenes.
+  prologue: { 0: 'scene-open-eyes.webp' },
+  board: 'scene-board.webp', // the top of the draw page
+  letter: 'letter.webp', // beside the invitation, which has no signature
+  win: 'scene-summit.webp', // 階盡: the one at the top is seen only from behind
+  loss: 'scene-dark-stones.webp' // 眼破: only the youth and the great bird are left
+};
 
 const MAZE_TALE = {
   title: '劍影江湖・一念江湖',
@@ -141,4 +150,4 @@ const SIDE_TALES = {
   done: '盤外持帖觀望的人，看在眼裡。'
 };
 
-export { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, YOUTH, WEI, EAGLE };
+export { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, YOUTH, WEI, EAGLE, TALE_ART };

@@ -47,9 +47,12 @@ const CLOSING = {
   win: '那句「還不夠」還在耳邊。他闔上眼。',
   loss: '眾人散去的背影還在眼前。他闔上眼。'
 };
+// One picture per fragment, in the same order (asset-gen/prompts.md, B6).
+const FRAGMENT_ART = FRAGMENTS.map((_, i) => 'fragment-' + (i + 1) + '.webp');
 // voyage counts from 1.
-const closingFor = (voyage, won) =>
-  (won ? CLOSING.win : CLOSING.loss) + FRAGMENTS[(Math.max(1, voyage) - 1) % FRAGMENTS.length];
+const fragmentAt = (voyage) => (Math.max(1, voyage) - 1) % FRAGMENTS.length;
+const closingFor = (voyage, won) => (won ? CLOSING.win : CLOSING.loss) + FRAGMENTS[fragmentAt(voyage)];
+const fragmentArt = (voyage) => FRAGMENT_ART[fragmentAt(voyage)];
 
 // Index 0 is the first run (no marks yet). Index 4 is also used on later runs.
 //   opening   what he finds on the stone when he opens his eyes (first board)
@@ -156,4 +159,4 @@ const FATES = [
   }
 ];
 
-export { WORLD, WAKES, FATES, FATE_PROMPT, FRAGMENTS, closingFor };
+export { WORLD, WAKES, FATES, FATE_PROMPT, FRAGMENTS, closingFor, fragmentArt };

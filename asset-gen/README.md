@@ -1,13 +1,13 @@
 # Art library
 
-The full-size source art painted for the game, and the prompts for art still to be painted.
+The full-size source art painted for the game, and the prompts the story pictures were painted from.
 Nothing in this folder is loaded by the game: a picture enters the game when it is copied (and
 usually resized) into `game/assets/` and named in the game's data. `ROADMAP.md` says what is
 planned for each pack and which decisions are waiting on the producer.
 
 | Path | What it holds |
 | --- | --- |
-| `prompts.md` | Prompts for pictures the story still needs: file name, size, where it appears. |
+| `prompts.md` | Prompts for the story's pictures (all painted and in the game): file name, size, where it appears. |
 | `jianying-roster-art/` | Thirty characters: a portrait and a sprite sheet each. |
 | `jianying-item-art/` | Eight skill effects and thirty-two item pictures, all animated. |
 
