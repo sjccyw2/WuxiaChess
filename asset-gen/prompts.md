@@ -10,7 +10,7 @@ The pictures are in three groups:
 | B | New pictures for story moments that are text-only today | The file name is reserved here. The game needs a small change to show each one. |
 | C | Cover art that showed the old ferry | Save over the existing file. |
 
-Groups B and C are painted; A0 (求敗) is still needed. Groups B and C were painted on 2026-11-21 with an image model (OpenAI `gpt-image-2.6-flare`) from the prompts below, each with its house style and avoid list. Wherever the eagle appears in a scene, this sentence was added so that it matches B1: *The eagle is enormous, ancient and ugly, taller than a man: sparse rough dark brown feathers with bare patches, a bald wrinkled head with a red fleshy knob on the crown, a heavy chipped hooked beak, short stubby wings on a thick body, a bird too heavy to fly; not a noble bird of prey.* The source pictures are not kept in the repository; regenerate from these prompts.
+Every picture is painted. A0 (求敗) and groups B and C were painted on 2026-11-21 with an image model (OpenAI `gpt-image-2.6-flare`) from the prompts below, each with its house style and avoid list. Wherever the eagle appears in a scene, this sentence was added so that it matches B1: *The eagle is enormous, ancient and ugly, taller than a man: sparse rough dark brown feathers with bare patches, a bald wrinkled head with a red fleshy knob on the crown, a heavy chipped hooked beak, short stubby wings on a thick body, a bird too heavy to fly; not a noble bird of prey.* The source pictures are not kept in the repository; regenerate from these prompts.
 
 ---
 
@@ -68,9 +68,9 @@ text, letters, Chinese characters, calligraphy, watermark, signature, seal stamp
 
 ## Group A: replacements for pictures already in the game
 
-### A0. 求敗: `game/assets/npc-qiubai.webp` (needed)
+### A0. 求敗: `game/assets/npc-qiubai.webp` (done)
 
-The file in the game is a placeholder: a black go stone on the stone table. This portrait replaces it.
+In the game since 2026-11-21, replacing the placeholder go stone. The full 1024 × 1024 painting is his character card, `asset-gen/story-characters/cards/qiubai.webp`; his sprite sheet was painted from it.
 
 - **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
 - **Appears in:** the prologue, after every board, and at the end of every run. He is the character the player watches most.
@@ -324,7 +324,7 @@ Use the **Scenes** house style. Avoid also: `boat, river, ferry, bright sky`
 
 | File | Folder | Size | Group |
 | --- | --- | --- | --- |
-| `npc-qiubai.webp` (needed; a placeholder is in the game) | `game/assets/` | 480 × 480 | A |
+| `npc-qiubai.webp` (done) | `game/assets/` | 480 × 480 | A |
 | `npc-youth.webp` (done) | `game/assets/` | 480 × 480 | A |
 | `npc-wei.webp` (done) | `game/assets/` | 480 × 480 | A |
 | `run-merchant.webp` (done) | `game/assets/` | 1000 × 500 | A |

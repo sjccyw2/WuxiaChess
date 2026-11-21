@@ -8,7 +8,8 @@ planned for each pack and which decisions are waiting on the producer.
 | Path | What it holds |
 | --- | --- |
 | `prompts.md` | Prompts for the story's pictures: file name, size, where it appears. |
-| `story-characters/` | The youth and 獨孤求敗 (`qiubai`): a character card (`cards/`, 1024 × 1024) and a sprite sheet (`sprites/`, the roster pack's 8 × 5 format) each. Not in the game yet (roadmap 2.3, Q-N68). |
+| `story-characters/` | The youth and 求敗 (`qiubai`): a character card (`cards/`, 1024 × 1024) and a sprite sheet (`sprites/`, the roster pack's 8 × 5 format) each. 求敗's card is also his portrait in the game (`npc-qiubai.webp`); the sheets are not in the game yet (roadmap 2.3). 求敗 holds a twig, not a sword. |
+| `prologue-video/` | A 45-second, 9:16 manga-style cut of the whole prologue lettered like a Hong Kong comic, its painted panels, and the scripts that paint and cut it (`make/`). |
 | `story-art/` | Story pictures painted for the old story that the v1.0 story has no place for (`prompts.md` B4, B7). |
 | `jianying-roster-art/` | Thirty characters: a portrait and a sprite sheet each. |
 | `jianying-item-art/` | Eight skill effects and thirty-two item pictures, all animated. |
@@ -23,8 +24,10 @@ from the repository root (see the main README), not as a file.
 - `sprites/<id>.png`, 1152 × 880: 8 columns × 5 rows of 144 × 176 cells, foot at y 162. The rows
   are idle, walk, attack, hurt and special (絕技). The game's own sheets have the first four rows
   only, stored at half size; reading the fifth row is roadmap item 3.6.
-- `sprites/wanZhen.png` is not as the pack came: its strike, hurt and special rows were repainted
-  on 2026-11-21 (roadmap Q-N34), and both manifests carry the new checksum.
+- The ten sheets in the game (the five villains on the existing boards and their troops) are not as
+  the pack came: on 2026-11-21 every strike and hurt row was repainted, and the special rows of
+  萬震山, 完顏洪烈, 鮮于通 and 趙王府弓手; 萬門劍徒 was repainted whole at the height of the other troops
+  (roadmap Q-N34). Both manifests carry the new checksums.
 - `manifest.json` gives each character's name, book, school, technique and bio. The bios were
   written for an earlier version of the story and are not to be copied into the game as they
   stand (roadmap 3.2).
