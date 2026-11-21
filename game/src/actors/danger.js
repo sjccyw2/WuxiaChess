@@ -59,28 +59,81 @@ function dangerTiles(s) {
   return tiles;
 }
 
-// Painted under the move and strike tiles: one wash over the whole zone, one line round its edge.
-function drawDanger(layer) {
-  const s = layer.state;
-  if (!POLISH.dangerZone || !layer.prefs.danger || !s || s.result || s.phase !== 'ally') return;
-  if (s.run?.scene && s.run.scene !== 'fight') return;
-  const tiles = dangerTiles(s);
-  if (!tiles.size) return;
-  const c = layer.ctx,
-    fill = new Path2D(),
-    edge = new Path2D();
+// The tiles the reinforcements entering next round could strike in their first action: each
+// built where it would enter if it entered now (G.arrivalGhosts), with everyone where they
+// stand now. An estimate, and the help page says so.
+let arrivalMemo = { mark: '', tiles: new Set() };
+function arrivalTiles(s) {
+  const ghosts = G.arrivalGhosts(s, s.round + 1);
+  if (!ghosts.length) return new Set();
+  const mark =
+    s.mapIndex +
+    '|' +
+    ghosts.map((g) => g.id + ':' + g.x + ':' + g.y).join(';') +
+    '|' +
+    s.units
+      .filter(G.living)
+      .map((u) => u.id + ':' + u.x + ':' + u.y)
+      .join(';');
+  if (mark === arrivalMemo.mark) return arrivalMemo.tiles;
+  const tiles = new Set();
+  const seen = { ...s, units: [...s.units, ...ghosts] };
+  for (const g of ghosts) {
+    const range = G.strikeReach(seen, g);
+    for (const c of G.standCells(seen, g))
+      for (let dx = -range; dx <= range; dx++) {
+        const span = range - Math.abs(dx);
+        for (let dy = -span; dy <= span; dy++)
+          if (G.walkable(c.x + dx, c.y + dy, s.mapIndex)) tiles.add(G.key(c.x + dx, c.y + dy));
+      }
+  }
+  arrivalMemo = { mark, tiles };
+  return tiles;
+}
+// One region's outline: the sides of its tiles that face a tile outside it.
+function outline(layer, tiles, fill) {
+  const edge = new Path2D();
   for (const k of tiles) {
     const [x, y] = k.split(',').map(Number);
     const q = layer.tile(x, y, 0.5);
-    fill.moveTo(q[0].x, q[0].y);
-    for (let i = 1; i < 4; i++) fill.lineTo(q[i].x, q[i].y);
-    fill.closePath();
+    if (fill) {
+      fill.moveTo(q[0].x, q[0].y);
+      for (let i = 1; i < 4; i++) fill.lineTo(q[i].x, q[i].y);
+      fill.closePath();
+    }
     for (const [dx, dy, a, b] of SIDES)
       if (!tiles.has(G.key(x + dx, y + dy))) {
         edge.moveTo(q[a].x, q[a].y);
         edge.lineTo(q[b].x, q[b].y);
       }
   }
+  return edge;
+}
+// Painted under the move and strike tiles: one wash over the whole zone, one line round its edge.
+// While deploying the zone is drawn whatever the D setting. Under it, a dashed amber outline for
+// the reinforcements due next round (battleMarks).
+function drawDanger(layer) {
+  const s = layer.state;
+  const lit = layer.prefs.danger || (s?.run?.deploying && s.run.scene === 'fight');
+  if (!POLISH.dangerZone || !lit || !s || s.result || s.phase !== 'ally') return;
+  if (s.run?.scene && s.run.scene !== 'fight') return;
+  const c = layer.ctx;
+  if (POLISH.battleMarks && s.run?.status === 'battle') {
+    const coming = arrivalTiles(s);
+    if (coming.size) {
+      c.save();
+      c.lineCap = 'round';
+      c.setLineDash([6, 5]);
+      c.strokeStyle = 'rgba(240,170,60,.9)';
+      c.lineWidth = 2;
+      c.stroke(outline(layer, coming));
+      c.restore();
+    }
+  }
+  const tiles = dangerTiles(s);
+  if (!tiles.size) return;
+  const fill = new Path2D(),
+    edge = outline(layer, tiles, fill);
   c.save();
   c.fillStyle = 'rgba(132,44,118,.25)';
   c.fill(fill);
@@ -95,4 +148,4 @@ function drawDanger(layer) {
   c.restore();
 }
 
-export { dangerTiles, drawDanger };
+export { dangerTiles, arrivalTiles, drawDanger };

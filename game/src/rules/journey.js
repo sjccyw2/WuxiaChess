@@ -1179,38 +1179,6 @@ function briefing(s, { live = false } = {}) {
 function boardBrief(map, stage) {
   return boardModel(map, stage);
 }
-// COMPAT (until the interface reads `briefing` and `boardBrief`): the shapes the 整備 block, the
-// map diagram and the goals page read today. Remove with those readers.
-function mapMission(map, marker = null) {
-  const brief = boardBrief(map, 0);
-  return {
-    name: '支線',
-    instruction: brief.sideNote,
-    win: brief.win,
-    loss: '領隊倒下，或第十二回合結束仍未取勝。',
-    reward: '',
-    tile: marker
-  };
-}
-function objective(s) {
-  const brief = briefing(s, { live: true }),
-    side = brief.side;
-  return {
-    goal: s.run.side?.kind,
-    name: side?.name || '',
-    primary:
-      '擊敗' +
-      (brief.kind === 'rout'
-        ? '全部敵人'
-        : G.masterIds(s).map((id) => G.unitDetails(G.find(s, id))?.name).join('與')),
-    tile: G.objectiveTile(s),
-    instruction: side ? side.detail + side.warning : '',
-    reward: side ? rewardText(s.run.side, s.run.stage) : '',
-    win: brief.win,
-    loss: brief.loss,
-    done: s.run.status === 'battle' ? sideState(s) === 'met' : !!s.run.last?.optional
-  };
-}
 function recruit(s) {
   const r = s.run,
     id = r.pool.shift();
@@ -1730,4 +1698,4 @@ function campModel(s) {
   };
 }
 
-export { SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, mapMission, objective, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, chooseFate, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
