@@ -42,8 +42,8 @@ def mbox_cam(u):
     return z, .5, lerp(.3, .45, ease(k))
 hands_cam.clock = mbox_cam.clock = True
 P = [
- Panel(PAN + 's1-asleep.png',   0.0,  4.75, cam(1.0, 1.12, .4, .5, .4, .5)),
- Panel(PAN + 's2-eyes.png',     4.2,  6.95, punch(1.05, 1.15, .45, .5, .45), poly=enter(4.2, 'eyes', .1, .3, .25), shake=decay(4.2, .5), anchor=((1075, 590), (960, 575))),
+ Panel(PAN + 's1-asleep.png',   0.0,  4.75, cam(1.05, 1.05, .45, .45, .45, .45)),
+ Panel(PAN + 's2-eyes.png',     4.2,  6.95, cam(1.08, 1.08, .5, .5, .45, .45), poly=enter(4.2, 'eyes', .1, .3, .25), shake=decay(4.2, .5), anchor=((1075, 590), (960, 575))),
  Panel(PAN + 's3-valley.png',   6.5, 11.45, cam(1.0, 1.0, .5, .5, 0.0, 1.0), mask='dots', reveal=reveal(6.5, 1.1)),
  Panel(PAN + 'd-selfplay.png', 11.0, 14.9, cam(1.05, 1.15, .5, .5, .4, .5), poly=enter(11.0, 'wedge', .55, .7, .8)),
  Panel(PAN + 's4-board.png',   14.4, 17.45, cam(1.3, 1.04, .5, .5, .4, .5, curve=out3), mask='iris', reveal=snap(14.4, .6), center=(W * .48, H * .4), shake=decay(14.95, .3, .4)),
@@ -86,14 +86,14 @@ def _(c, t):
     sfx_image(c, SFX_TAP, (W * .3, H * .66), 360, life(t, 41.55, 42.9), rot=-6)
 @at
 def _(c, t):
-    balloon_hk(c, ['這……', '這是甚麼地方？'], (1330, 330), (1010, 210), life(t, 21.6, 23.55))
-    balloon_hk(c, ['咦。'], (1420, 230), (1170, 360), life(t, 24.2, 25.4), size=70)
-    balloon_hk(c, ['來者何人？'], (540, 330), (850, 380), life(t, 25.4, 27.0), size=62)
-    balloon_hk(c, ['我……', '我叫……'], (1720, 560), (1360, 300), life(t, 27.1, 28.55))
-    balloon_hk(c, ['罷了。'], (230, 620), (430, 380), life(t, 27.95, 28.6), size=60, appear=.25)
-    balloon_hk(c, ['老夫三百年', '沒見過一個活人，'], (1600, 330), (1260, 450), life(t, 29.3, 31.8))
-    balloon_hk(c, ['今天你我有緣，'], (1560, 300), (1200, 400), life(t, 39.4, 41.5))
-    balloon_hk(c, ['就陪老夫', '下盤棋吧！'], (1560, 300), (1200, 400), life(t, 41.5, 43.7))
+    balloon_hk(c, ['這……', '這是甚麼地方？'], (1330, 400), (955, 255), life(t, 21.6, 23.55))
+    balloon_hk(c, ['咦。'], (1460, 320), (1195, 390), life(t, 24.2, 25.4), size=70)
+    balloon_hk(c, ['來者何人？'], (580, 400), (960, 390), life(t, 25.4, 27.0), size=62)
+    balloon_hk(c, ['我……', '我叫……'], (1745, 580), (1515, 320), life(t, 27.1, 28.55))
+    balloon_hk(c, ['罷了。'], (250, 650), (565, 405), life(t, 27.95, 28.6), size=60, appear=.25)
+    balloon_hk(c, ['老夫三百年', '沒見過一個活人，'], (1650, 340), (1355, 440), life(t, 29.3, 31.8))
+    balloon_hk(c, ['今天你我有緣，'], (1600, 320), (1240, 360), life(t, 39.4, 41.5))
+    balloon_hk(c, ['就陪老夫', '下盤棋吧！'], (1600, 320), (1240, 360), life(t, 41.5, 43.7))
 @at
 def _(c, t):
     name_card(c, '獨孤求敗', '', 330, 150, life(t, 31.6, 35.0), size=180)
