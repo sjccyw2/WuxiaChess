@@ -798,7 +798,7 @@ function beginBattle(s) {
 // facts the game records in `s.tally` (game.js). A 'keep' kind fails on an event and is met at
 // the win if it never failed; a 'reach' kind is met on an event and fails once it cannot be.
 // A secondary is done when the board is won with it met.
-const pieceName = (map, ref) => G.DETAILS[G.refId(map, ref).split('#')[0]]?.name || '';
+const pieceName = (map, ref) => G.DETAILS[G.refKey(map, ref)]?.name || '';
 const heroName = (id) => G.DETAILS[id]?.name || '';
 const fallOf = (s, ref) => s.tally?.falls.find((f) => f.id === G.refId(s.mapIndex, ref));
 const fallIndex = (s, id) => s.tally?.falls.findIndex((f) => f.id === id) ?? -1;
@@ -890,7 +890,8 @@ const SIDE_KINDS = {
         const i = fallIndex(s, m);
         return i >= 0 && (first < 0 || i < first);
       });
-      return (G.DETAILS[(id || '').split('#')[0]]?.name || '') + '先於' + pieceName(s.mapIndex, side.first) + '倒下';
+      const ref = G.boardOf(s).masters.find((m) => G.refId(s.mapIndex, m) === id);
+      return (ref ? pieceName(s.mapIndex, ref) : '') + '先於' + pieceName(s.mapIndex, side.first) + '倒下';
     }
   },
   double: {
