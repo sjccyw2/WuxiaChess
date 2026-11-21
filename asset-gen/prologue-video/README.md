@@ -44,6 +44,12 @@ the next panel has fully covered it, so no transition shows the bare page.
 - **Type**: the words are (`MAZE_TALE.prologue` in
   `game/src/data/maze-tale.js`), set vertically in the game's serif (`river-serif` with the `extra-serif`
   supplement) when the frames are rendered.
-- **Sound**: synthesised to follow the arc: a drone that drops away at 「咦」, plucked-string notes on a
-  pentatonic scale, a low bell under 求敗's name, thumps on the three impacts, a click as the box lands. It
-  is a placeholder for real music.
+- **Sound**: one piece of music from start to finish, at one tempo and in one mood that does not follow
+  the story: a plucked-string melody in the spirit of a guzheng (A 羽 pentatonic, 72 bpm) over a
+  low drone and a soft hand drum, fading in and out only. Under it, sound effects for what is on
+  screen and nothing else: crickets while he sleeps that stop when he wakes (連蟲聲也無), valley
+  wind and a distant waterfall, go stones on the board, a ringing blade clash on 「鏘」, the eagle's
+  wing beats and croak, a scuff and stumble on gravel, footsteps, the run of stones as his hands
+  play, and the box scraped across the table landing on 「嗒」 with the stones rattling inside. No
+  whooshes or impact hits. All of it is synthesised in `make/sound45.py`; no samples are used.
+  Real recorded music and effects would sound better.

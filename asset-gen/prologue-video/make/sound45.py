@@ -1,55 +1,130 @@
-# Sound bed for the 45 s cut, following its arc: a quiet start, a hit on the eyes, awe, mystery,
-# the clash, the eagle, silence at 「咦」, a low bell under 求敗's name, a lift on the invitation,
-# a comic pause, the three stones and a last low hit under the title. All synthesised; a placeholder.
+# Soundtrack for the 45 s cut: one piece of music, the same tempo and mood throughout, under sound
+# effects tied to what is on screen. Everything is synthesised here; no samples are used.
 import numpy as np, wave
 SR, DUR = 44100, 45.0
-n = int(SR * DUR); t = np.arange(n) / SR
-rng = np.random.default_rng(11)
-def env(points):
-    xs, ys = zip(*points); return np.interp(t, xs, ys)
-drone = (0.09 * np.sin(2 * np.pi * 55 * t) + 0.04 * np.sin(2 * np.pi * 82.4 * t) + 0.02 * np.sin(2 * np.pi * 110 * t)) * (0.7 + 0.3 * np.sin(2 * np.pi * .11 * t))
-mix = drone * env([(0, 0), (2, .7), (4.2, .8), (6.5, 1), (11, 1), (21, 1), (23.6, .25), (27.9, .2), (28.6, .9), (34, 1), (39.4, .9), (41.5, 1), (44, 1), (45, 0)])
-def add(at, sig, gain=1.0):
-    i = int(at * SR); m = min(len(sig), n - i)
-    if m > 0: mix[i:i + m] += gain * sig[:m]
-def pluck(freq, d=2.6, amp=.3):
-    N = int(SR / freq); buf = rng.uniform(-1, 1, N); out = np.zeros(int(d * SR))
-    for i in range(len(out)):
-        out[i] = buf[i % N]; buf[i % N] = 0.4975 * (buf[i % N] + buf[(i + 1) % N])
-    return amp * out * np.exp(-np.arange(len(out)) / SR * 1.2)
-def bell(freq, d=5.0, amp=.35):
-    tt = np.arange(int(d * SR)) / SR
-    parts = [(1, 1), (2.01, .5), (2.76, .35), (5.4, .15)]
-    return amp * sum(a * np.sin(2 * np.pi * freq * r * tt) * np.exp(-tt * (0.6 + r * .35)) for r, a in parts)
-def whoosh(d=.35, amp=.25):
-    m = int(d * SR); x = np.convolve(rng.standard_normal(m), np.ones(30) / 30, 'same')
-    return amp * 6 * x * np.sin(np.pi * np.arange(m) / m) ** 2
-def thump(d=.6, amp=.85):
-    m = int(d * SR); tt = np.arange(m) / SR; return amp * np.sin(2 * np.pi * (72 - 34 * tt / d) * tt) * np.exp(-tt * 7)
-def click(amp=.55):
-    m = int(.09 * SR); tt = np.arange(m) / SR
-    return amp * (np.sin(2 * np.pi * 2300 * tt) + .5 * np.sin(2 * np.pi * 3700 * tt)) * np.exp(-tt * 65)
-F = {'G3': 196.0, 'A3': 220.0, 'D4': 293.66, 'E4': 329.63, 'G4': 392.0, 'A4': 440.0, 'B4': 493.88, 'D5': 587.33, 'E5': 659.25}
-notes = [(0.8, 'A3'), (2.6, 'E4'),                                   # asleep: sparse
-         (6.6, 'D4'), (7.6, 'E4'), (8.8, 'G4'), (10.2, 'A4'),         # the valley: rising
-         (11.2, 'G4'), (12.4, 'E4'), (13.6, 'D4'),                    # the old man: mystery
-         (14.4, 'A4'), (14.95, 'B4'), (16.0, 'G4'),                    # the board
-         (21.4, 'E4'), (22.6, 'D4'),                                   # lost
-         (35.6, 'E4'), (35.98, 'G4'), (36.36, 'E4'), (36.74, 'A4'), (37.12, 'G4'), (37.5, 'B4'),   # his hands, fast
-         (39.4, 'G4'), (40.2, 'A4'), (40.9, 'B4'),                     # the invitation lifts
-         (41.55, 'A4'), (41.6, 'E5'), (43.5, 'A3'), (43.55, 'E4'), (43.6, 'A4')]
-for at, nm in notes: add(at, pluck(F[nm]))
-for at in (4.1, 6.4, 10.9, 14.3, 17.1, 18.6, 21.1, 26.5, 34.3, 38.5, 41.4): add(at, whoosh(amp=.22 if at not in (4.1, 17.1, 18.6) else .32))
-for at in (4.2, 17.2): add(at, thump())
-add(18.7, thump(.45, .55))
-add(41.55, thump(.5, .6))
-add(14.95, click(.5)); add(14.98, whoosh(.2, .3))
-add(23.6, click(.25))                         # the stone stops in his fingers: 「咦」
-add(28.6, bell(110, 6, .32)); add(31.6, bell(146.8, 6, .22))
-for k in range(8): add(35.6 + k * .38, click(.18))   # stones set down, fast, while the camera snaps   # gravity under 罷了 and his name
-add(41.55, click())
-add(43.9, thump(1.4, .7))
-mix = np.tanh(mix * 1.2) * .85
+N = int(SR * DUR); T = np.arange(N) / SR
+rng = np.random.default_rng(21)
+music = np.zeros(N); sfx = np.zeros(N)
+def add(buf, at, sig, gain=1.0):
+    i = int(at * SR); m = min(len(sig), N - i)
+    if m > 0 and i >= 0: buf[i:i + m] += gain * sig[:m]
+
+# ---------- instruments ----------
+from scipy.signal import butter, sosfilt
+def band(x, lo, hi, order=2): return sosfilt(butter(order, [lo, hi], 'bandpass', fs=SR, output='sos'), x)
+def hp(x, f): return sosfilt(butter(2, f, 'highpass', fs=SR, output='sos'), x)
+def lowp(x, f): return sosfilt(butter(2, f, 'lowpass', fs=SR, output='sos'), x)
+def pluck(freq, d=3.0, amp=.3, bright=.5):
+    """Karplus-Strong string, computed a period at a time; a short body resonance makes it zither-like."""
+    P = max(2, int(round(SR / freq - .5))); L = int(d * SR)   # the averaging adds half a sample of delay
+    out = np.zeros(L + P + 1)
+    out[:P] = rng.uniform(-1, 1, P) * (1 - bright) + np.sign(rng.uniform(-1, 1, P)) * bright * .3
+    out[:P] -= out[:P].mean()   # no DC: it would muddy the note
+    k = 0.4985
+    for s in range(P, L, P):
+        e = min(s + P, L)
+        prev = out[s - P:e - P + 1]
+        out[s:e] = k * (prev[:e - s] + prev[1:e - s + 1])
+    x = out[:L] * np.exp(-np.arange(L) / SR * 1.1)
+    body = np.convolve(x, np.exp(-np.arange(400) / 60) * np.sin(np.arange(400) * 2 * np.pi * 180 / SR), 'same') * .02
+    return amp * hp(x + body, 50)
+def drum(amp=.25):
+    m = int(.45 * SR); t = np.arange(m) / SR
+    return amp * (np.sin(2 * np.pi * (95 - 40 * t) * t) * np.exp(-t * 9) + .15 * rng.standard_normal(m) * np.exp(-t * 60))
+# ---------- the music: A 羽 pentatonic (A C D E G), 72 bpm, one mood throughout ----------
+BEAT = 60 / 72
+NOTE = {'A2': 110.0, 'E3': 164.81, 'A3': 220.0, 'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'G4': 392.0, 'A4': 440.0, 'C5': 523.25, 'D5': 587.33, 'E5': 659.25}
+# (beat, note, length in beats) for a 4-bar phrase; two phrases alternate, the second answering the first
+A = [(0, 'E4', 1.5), (1.5, 'D4', .5), (2, 'C4', 1), (3, 'D4', 1), (4, 'E4', 1), (5, 'G4', 1), (6, 'A4', 2),
+     (8, 'G4', 1), (9, 'E4', .5), (9.5, 'D4', .5), (10, 'E4', 2), (12, 'C4', 1), (13, 'D4', 1), (14, 'A3', 2)]
+B = [(0, 'A4', 1), (1, 'C5', 1), (2, 'D5', 1.5), (3.5, 'C5', .5), (4, 'A4', 2), (6, 'G4', 1), (7, 'E4', 1),
+     (8, 'D4', 1), (9, 'E4', 1), (10, 'G4', 1.5), (11.5, 'E4', .5), (12, 'D4', 1), (13, 'C4', 1), (14, 'A3', 2)]
+start = 0.6; beat = 0
+phrases = [A, B, A, B, A, B]
+for ph in phrases:
+    for b, nm, ln in ph:
+        at = start + (beat + b) * BEAT
+        if at < DUR - 1: add(music, at, pluck(NOTE[nm], d=max(1.6, ln * BEAT * 2.4), amp=.26))
+        if ln >= 2 and at + BEAT * .5 < DUR - 1:   # a soft octave answer on long notes
+            add(music, at + BEAT * .5, pluck(NOTE[nm] / 2, d=2.0, amp=.1, bright=.2))
+    for bar in range(4):
+        add(music, start + (beat + bar * 4) * BEAT, drum(.16))
+        add(music, start + (beat + bar * 4 + 2.5) * BEAT, drum(.07))
+    beat += 16
+drone = .045 * np.sin(2 * np.pi * 110 * T) + .03 * np.sin(2 * np.pi * 164.81 * T) + .015 * np.sin(2 * np.pi * 220.5 * T)
+music += drone * (1 + .08 * np.sin(2 * np.pi * .2 * T))
+music *= np.clip(T / 2.0, 0, 1) * np.clip((DUR - T) / 2.5, 0, 1)   # fade in and out only
+
+# ---------- sound effects ----------
+def env_seg(a, b, fa=.3, fb=.3):
+    return np.clip((T - a) / fa, 0, 1) * np.clip((b - T) / fb, 0, 1)
+# crickets while he sleeps; they stop when he wakes (連蟲聲也無)
+crick = np.zeros(N)
+for at in np.arange(0.2, 4.1, 0.55):
+    at += rng.uniform(-.08, .08)
+    for p in range(3):
+        m = int(.025 * SR); t = np.arange(m) / SR
+        add(crick, at + p * .045, np.sin(2 * np.pi * 4700 * t) * np.sin(np.pi * t / .025) ** 2, .075)
+sfx += crick
+# valley wind from his waking on; a distant waterfall while the valley is in view
+wind = lowp(np.cumsum(rng.standard_normal(N)) * .002, 500)
+wind = hp(wind, 60) * (0.6 + 0.4 * np.sin(2 * np.pi * .07 * T + 1) * np.sin(2 * np.pi * .031 * T))
+sfx += wind * 1.8 * env_seg(4.6, 45, 2.0, 1.5)
+sfx += band(rng.standard_normal(N), 250, 1800) * .012 * env_seg(6.5, 17.2, 1.5, 1.2)
+# a cloth rustle as his eyes open
+def rustle(d=.5, amp=.08):
+    m = int(d * SR); return amp * band(rng.standard_normal(m), 1500, 6000) * np.sin(np.pi * np.arange(m) / m) ** 1.5
+add(sfx, 4.25, rustle())
+# go stones on a stone board
+def stone(amp=.32, pitch=1.0):
+    m = int(.12 * SR); t = np.arange(m) / SR
+    return amp * (np.sin(2 * np.pi * 2400 * pitch * t) * .7 + np.sin(2 * np.pi * 3650 * pitch * t) * .4 + band(rng.standard_normal(m), 1500, 7000) * .6) * np.exp(-t * 70)
+for i, at in enumerate((11.9, 12.9, 13.7)): add(sfx, at, stone(.22, 1.0 if i % 2 else 1.08))
+# blades: one ringing clash on 「鏘」, then smaller ones as the fight goes on
+def clash(amp=.35, d=1.6):
+    m = int(d * SR); t = np.arange(m) / SR
+    parts = [(1180, 1), (1872, .7), (2937, .55), (4215, .4), (5630, .25)]
+    ring = sum(a * np.sin(2 * np.pi * f * t) * np.exp(-t * (2.5 + f / 2500)) for f, a in parts)
+    hit = band(rng.standard_normal(m), 2000, 9000) * np.exp(-t * 45)
+    return amp * (ring * .6 + hit)
+add(sfx, 14.95, clash(.24)); add(sfx, 15.7, clash(.1, 1.0)); add(sfx, 16.5, clash(.075, .8))
+# the eagle: wing beats and a hoarse croak
+def flap(amp=.3):
+    m = int(.16 * SR); t = np.arange(m) / SR
+    return amp * lowp(rng.standard_normal(m), 900) * np.exp(-((t - .04) / .035) ** 2)
+for at in (17.15, 17.35, 17.55): add(sfx, at, flap())
+m = int(.6 * SR); t = np.arange(m) / SR
+f = 340 - 120 * t / .6
+croak = np.sign(np.sin(2 * np.pi * np.cumsum(f) / SR)) * .5 + rng.standard_normal(m) * .5
+croak = band(croak, 500, 2600) * np.sin(np.pi * t / .6) ** .8 * (1 + .5 * np.sin(2 * np.pi * 28 * t))
+add(sfx, 17.4, croak, .12)
+# the youth: a scuff and a stumble on gravel when startled, footsteps when lost
+def gravel(d=.35, amp=.16):
+    m = int(d * SR); x = np.zeros(m)
+    idx = rng.integers(0, m, int(d * 900)); x[idx] = rng.uniform(-1, 1, len(idx))
+    return amp * hp(np.convolve(x, np.exp(-np.arange(60) / 8), 'same'), 800) * np.sin(np.pi * np.arange(m) / m)
+def step(amp=.2):
+    m = int(.18 * SR); t = np.arange(m) / SR
+    return amp * (np.sin(2 * np.pi * 70 * t) * np.exp(-t * 30)) + gravel(.18, amp * .6)
+add(sfx, 18.75, gravel(.45, .22)); add(sfx, 18.95, step(.22)); add(sfx, 19.25, step(.18))
+for at in (21.5, 22.05, 22.6): add(sfx, at, step(.14))
+add(sfx, 23.45, stone(.18))   # the last stone he set down before he looked up
+# his hands at speed: a run of stones, in time with the camera
+for k in range(8): add(sfx, 35.6 + k * .38, stone(.2, 1.0 if k % 2 else 1.1))
+# the box: scraped across the stone table, landing hard, the stones rattling inside
+m = int(2.4 * SR); t = np.arange(m) / SR
+scrape = band(rng.standard_normal(m), 300, 2400) * (0.5 + 0.5 * np.abs(np.sin(2 * np.pi * 9 * t + rng.uniform(0, 6)))) * np.clip(t / .4, 0, 1)
+add(sfx, 39.1, scrape, .07)
+m = int(.5 * SR); t = np.arange(m) / SR
+knock = (np.sin(2 * np.pi * 160 * t) * np.exp(-t * 18) * .8 + band(rng.standard_normal(m), 600, 5000) * np.exp(-t * 55)) * .45
+add(sfx, 41.55, knock)
+for k in range(6): add(sfx, 41.62 + k * .05 + rng.uniform(0, .02), stone(.07, rng.uniform(.9, 1.3)))
+sfx *= np.clip((DUR - T) / 1.0, 0, 1)
+
+mix = music * 1.0 + sfx * 1.0
+mix = np.tanh(mix * 1.1) * .9
+st = np.stack([mix, mix], axis=1)
 with wave.open('sound45.wav', 'wb') as w:
-    w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((mix * 32767).astype(np.int16).tobytes())
-print('sound done')
+    w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes((st * 32767).astype(np.int16).tobytes())
+for name, buf in (('music', music), ('sfx', sfx), ('mix', mix)):
+    print(name, 'peak', round(float(np.abs(buf).max()), 3), 'rms', round(float(np.sqrt((buf ** 2).mean())), 4))
