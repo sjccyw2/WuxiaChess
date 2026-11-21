@@ -30,7 +30,8 @@ import {
 } from './battle-mastery.js';
 import { FIELD_SIZE, fieldCells, mapLayout, validTile, tileInfo } from '../data/terrain.js';
 import { TECHNIQUES, WARES, CAPTAINS } from '../data/martial-arts.js';
-import { CHAMBER_TALES } from '../data/maze-tale.js';
+import { CHAMBER_TALES, MAZE_TALE, QIUBAI } from '../data/maze-tale.js';
+import { ENCOUNTER_SCRIPT } from '../data/encounter-script.js';
 const SIZE = FIELD_SIZE;
 const FIELD_EDITION = 1;
 const LIMIT = 12;
@@ -229,7 +230,7 @@ const DETAILS = {
     mini: 'hero',
     portrait: 'hero',
     epithet: '華山浪子',
-    bio: '華山派大弟子，生性灑脫而重情義。思過崖上得風清揚指點，以獨孤九劍擇人劍勢中的破綻。',
+    bio: '華山派大弟子，生性灑脫而重情義，思過崖上曾得風清揚指點劍法。入局之時他一身濕氣，手上只剩華山劍法與石壁上瞧來的幾招；那一路有進無退的劍法，要在局中一式一式想起。',
     basic: '華山劍法',
     skill: '石壁劍招',
     skillIcon: 'sword',
@@ -244,7 +245,7 @@ const DETAILS = {
     mini: 'medic',
     portrait: 'medic',
     epithet: '綠竹知音',
-    bio: '日月神教聖姑，精於琴簫。她在洛陽綠竹巷以琴音為令狐冲療傷，兩人由一卷曲譜結緣。',
+    bio: '日月神教聖姑，精於琴簫，在洛陽綠竹巷以琴音為令狐冲療傷，兩人由一卷曲譜結緣。入局之時她手上只剩一柄短劍與清心普善咒；琴簫合奏的那一曲，要到最後方才想起。',
     basic: '日月短劍',
     skill: '清心普善咒',
     skillIcon: 'leaf',
@@ -259,7 +260,7 @@ const DETAILS = {
     mini: 'guard',
     portrait: 'guard',
     epithet: '天王老子',
-    bio: '人稱「天王老子」，是任我行的親信。他使鞭剛猛，曾與令狐冲並肩脫險，兩人從此肝膽相照。',
+    bio: '人稱「天王老子」，是任我行的親信，曾與令狐冲並肩脫險，兩人從此肝膽相照。入局之時他雙手猶帶鐐銬，手上只剩一條鐵鞭與卸力入地的粗淺功夫。',
     basic: '鐵鞭橫江',
     skill: '吸功入地小法',
     skillIcon: 'spark',
@@ -274,7 +275,7 @@ const DETAILS = {
     mini: 'guo',
     portrait: 'guo',
     epithet: '大漠俠士',
-    bio: '自幼長於漠北，後隨洪七公修習降龍十八掌，鎮守襄陽多年。他應帖的理由很簡單：有人喊救命。',
+    bio: '自幼長於漠北，後隨洪七公學掌，鎮守襄陽多年。有人呼救，他是定要去的。入局之時他手上只剩江南七位恩師所授的掌法與分筋錯骨手；降龍十八掌要從頭一掌想起。',
     basic: '南山掌法',
     skill: '分筋錯骨手',
     skillIcon: 'hand',
@@ -289,7 +290,7 @@ const DETAILS = {
     mini: 'xiao',
     portrait: 'xiao',
     epithet: '古墓清影',
-    bio: '古墓派傳人。習得左右互搏後，她能以雙手合使玉女素心劍法，一人分擔兩條劍路。',
+    bio: '古墓派傳人，性子清冷，言語極少。入局之時她手上只剩古墓入門的天羅地網勢；一人分使兩柄劍，是很後來的事，要在局中想起。',
     basic: '玉女劍法',
     skill: '天羅地網勢',
     skillIcon: 'feather',
@@ -304,7 +305,7 @@ const DETAILS = {
     mini: 'duan',
     portrait: 'duan',
     epithet: '大理公子',
-    bio: '大理段氏子弟，擅凌波微步與六脈神劍。他把這趟稀奇的際遇當作又一場白日夢，照樣向人人作揖。',
+    bio: '大理段氏子弟，是個書獃子，將這趟稀奇的際遇當作又一場白日夢，照樣向人人作揖。入局之時他手上只剩無量山洞中學來的北冥神功；六脈神劍時靈時不靈，要一脈一脈想起。',
     basic: '點指截脈',
     skill: '北冥神功',
     skillIcon: 'drop',
@@ -2171,7 +2172,7 @@ function holdObjective(s, u) {
   const marker = unclaimedObjectiveTile(s);
   if (marker && ally(u) && living(u) && distance(u, marker) === 0) {
     s.run.marked = true;
-    log(s, 'story', '點亮了引路燈。盤外持帖的人，望得見入局的路了。', unitDetails(u).name);
+    log(s, 'story', '點亮了引路燈。盤外瞧這一局，瞧得清清楚楚了。', unitDetails(u).name);
   }
 }
 function commitSteps(u) {
@@ -2545,7 +2546,7 @@ function check(s) {
       s.reason = s.run ? CHAMBER_TALES[s.mapIndex].victory : '余滄海收劍退開，渡口的船燈再度亮起。';
     } else if (s.round > LIMIT) {
       s.result = 'loss';
-      s.reason = s.run ? '十二合已過。借來的一念撐不住，散了。' : '十二回合已過，霧中的末班渡船已經離岸。';
+      s.reason = s.run ? '十二合已過。拓來的一念撐不住，散了。' : '十二回合已過，霧中的末班渡船已經離岸。';
       s.round = LIMIT;
     }
   }
@@ -2738,9 +2739,21 @@ function arrive(s) {
       noteStanding(s, u);
     }
     if (came.length) log(s, 'system', waveList(came) + '自' + w.place + '入場。', '敵援');
+    for (const piece of came) strangerSteps(s, piece.id);
     if (held && s.round < LIMIT) s.arrivals[w.id] = s.round + 1;
     else delete s.arrivals[w.id];
   }
+}
+// A named black stone steps on during the battle: what he says, what a stone already there says
+// to that, and what a fielded hero from his series of books answers (encounter-script.js extras).
+function strangerSteps(s, id) {
+  const lines = s.run && ENCOUNTER_SCRIPT[s.mapIndex]?.extras?.[id];
+  if (!lines?.enter) return;
+  log(s, 'story', lines.enter, DETAILS[id].name);
+  const other = lines.reply && find(s, refId(s.mapIndex, { boss: 'master', mini: 'lieutenant' }[lines.reply.who] || lines.reply.who));
+  if (other && living(other)) log(s, 'story', lines.reply.text, unitDetails(other).name);
+  for (const u of party(s))
+    if (living(u) && lines.heroes?.[u.id]) log(s, 'story', lines.heroes[u.id], DETAILS[u.id].name);
 }
 // One round ahead of a wave: the log says who comes next round and from where.
 function announce(s) {
@@ -2750,7 +2763,11 @@ function announce(s) {
     // A half-health wave that fired during the enemy phase just ended has said this already.
     if (w.when.halved && s.logs.some((l) => l.who === '敵援' && l.round === s.round - 1 && l.text.endsWith(fireLine(s, w))))
       continue;
-    if (defs.length) log(s, 'system', '下一回合，' + waveList(defs) + '自' + w.place + '入場。', '敵援');
+    if (defs.length) {
+      // 求敗 sets a stone down: the sound comes a round before the person.
+      if (s.run) log(s, 'story', MAZE_TALE.clack, QIUBAI.name);
+      log(s, 'system', '下一回合，' + waveList(defs) + '自' + w.place + '入場。', '敵援');
+    }
   }
 }
 const fireLine = (s, w) =>
@@ -2765,6 +2782,8 @@ function fireHalved(s, id) {
     if (s.round + 2 > LIMIT || !s.arrivals) continue;
     s.arrivals[w.id] = s.round + 2;
     const name = unitDetails(find(s, id)).name;
+    // 求敗 answers a stone in danger.
+    if (s.run) log(s, 'story', MAZE_TALE.clackSave, QIUBAI.name);
     log(s, 'system', name + '氣血過半。' + fireLine(s, w), '敵援');
   }
 }

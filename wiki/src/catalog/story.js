@@ -9,56 +9,97 @@ import { missionLabel } from './missions.js';
 
 export const YOUTH_NAME = '少年';
 export const TITLES = {
-  opening: '睜眼',
-  shop: '通吃坊與三盅通吃',
+  opening: '入夢',
+  qiu: '求敗的話',
+  shop: '通吃坊、盤口與三盅通吃',
   voices: '十位俠客自己的話',
-  return: '階盡與眼破',
+  return: '請回吧與夢醒',
   archive: '霧鎖青竹渡',
-  world: '帖上與石上讀到的事'
+  world: '少年在棋臺邊瞧明白的事'
 };
+const REALMS = '一二三四五';
 const LAST = G.MAP_LAYOUTS.length - 1;
 const said = (speaker, text, note) => ({ ...(note ? { note } : {}), ...(speaker ? { speaker } : {}), text });
 
 // Who a line of a board's script belongs to.
 function speakerOf(who, stage) {
   const [boss, second] = G.ENCOUNTERS[stage];
-  return { youth: YOUTH_NAME, boss: boss.name, mini: second.name, leader: '當局領隊', ally: '當局同行俠客' }[who];
+  return (
+    { youth: YOUTH_NAME, boss: boss.name, mini: second.name, leader: '當局領隊', ally: '當局同行俠客', qiu: G.QIUBAI.name, wei: G.WEI.name }[who] ||
+    G.VILLAINS[who]?.name
+  );
 }
+// A line of the spine: 求敗 unless it says otherwise.
+const spine = (b, note) => said(speakerOf(b.who || 'qiu', 0), b.text, [note, b.note].filter(Boolean).join('　'));
 const beats = (list, stage) => list.map((b) => said(speakerOf(b.who, stage), b.text, b.note));
 
-// The prologue, the invitation and the first board's opening: the same every run.
+// The prologue and the first board's opening.
 function opening() {
   const t = G.MAZE_TALE,
-    p = t.prologue,
-    wei = G.WEI.name;
+    p = t.prologue;
   return {
     id: 'opening',
     name: TITLES.opening,
     tag: '序幕',
-    summary: p.scenes[2],
+    summary: p.first[1].note,
     image: gameArt(G.YOUTH.portrait),
     sections: [
       speech(
-        '少年睜開眼',
-        p.scenes,
-        said(wei, p.greeting.first, '第一輪'),
-        said(wei, p.greeting.again, '第二輪起'),
-        said('', p.naming),
-        said(YOUTH_NAME, '我叫〔玩家輸入的名字〕。', p.named),
-        said(wei, p.reply.first, '第一輪'),
-        said(wei, p.reply.again, '第二輪起'),
-        p.board,
-        p.stones
+        '第一輪：少年闖進劍境',
+        p.first.map((step) => (step.who ? said(speakerOf(step.who, 0), step.text, step.note) : step.note))
       ),
-      speech('英雄帖', t.draw, '「' + t.letter + '」'),
-      speech('第一局之前', said(YOUTH_NAME, t.command.text, t.command.note), t.deploy),
+      speech(
+        '第二輪起：又是你',
+        p.again.note,
+        p.again.greeting.map((line, i) => said(G.QIUBAI.name, line, '第' + REALMS[i] + '境')),
+        said(G.QIUBAI.name, p.again.beyond, '第五境勝了之後'),
+        said(YOUTH_NAME, p.again.youth),
+        said(G.QIUBAI.name, p.again.reply)
+      ),
+      speech('抓子與局規', t.draw, '棋臺沿上刻著：「' + t.rule + '」'),
+      speech(
+        '第一局之前',
+        said(YOUTH_NAME, t.ruleRead.text, t.ruleRead.note),
+        said(G.WEI.name, t.ruleTold),
+        said(YOUTH_NAME, t.command.text, t.command.note),
+        said(G.WEI.name, t.recall.text, t.recall.note),
+        t.deploy
+      ),
+      speech('說破：第二、三境', t.told.cold.map((b) => spine(b))),
+      speech('說破：第四、五境', t.told.plain.map((b) => spine(b))),
       links('接下來', [
+        link('story', 'qiu', TITLES.qiu),
         link('story', 'voices', TITLES.voices),
         link('story', 'wake-1', G.WAKES[0].name),
-        link('folk', 'wei', wei)
+        link('folk', 'qiu', G.QIUBAI.name)
       ])
     ],
-    sources: cites(cite(p.scenes[0], 'src/data/maze-tale.js'))
+    sources: cites(cite(p.first[0].note, 'src/data/maze-tale.js'))
+  };
+}
+
+// Everything 求敗 says after a board, by 境: the one person who changes from run to run.
+function qiubai() {
+  const t = G.MAZE_TALE;
+  return {
+    id: 'qiu',
+    name: TITLES.qiu,
+    tag: '隨境而變',
+    summary: t.after[0][8].text,
+    image: gameArt(G.QIUBAI.portrait),
+    sections: [
+      ...t.after.map((lines, i) =>
+        speech(
+          '第' + REALMS[i] + '境・' + G.WAKES[i].sword + '：每勝一局之後',
+          lines.map((line, n) => said(G.QIUBAI.name, line.text, '第' + G.NUMERALS[n] + '局勝後。' + (line.note || '')))
+        )
+      ),
+      speech('添子', t.lend),
+      speech('局中落子', t.clack, t.clackSave),
+      speech('少年同韋小寶說話時', t.unseen.map((b, i) => said(G.QIUBAI.name, b.text, '第' + REALMS[i] + '境。' + b.note))),
+      links('相關', [link('story', 'opening', TITLES.opening), link('story', 'return', TITLES.return), link('folk', 'qiu', G.QIUBAI.name)])
+    ],
+    sources: cites(cite(t.after[0][0].text, 'src/data/maze-tale.js'))
   };
 }
 
@@ -73,13 +114,36 @@ function shop() {
     image: gameArt(v.portrait),
     sections: [
       speech('開張（第一局勝後）', said(v.name, t.opened.text, t.opened.note), t.shop),
+      speech(
+        '他怎生來的：每輪一個大話',
+        t.origins.tales.map((tale, i) => said(v.name, tale, i ? '' : t.origins.note))
+      ),
+      speech(
+        '盤口：支線達成',
+        Object.entries(G.SIDE_KINDS).map(([kind, k]) => said(v.name, G.SIDE_TALES[kind] || G.SIDE_TALES.done, kindName(kind, k)))
+      ),
+      speech(
+        '盤口：賠彩與落空',
+        said(v.name, G.SIDE_PAY.coins, '賞銀'),
+        said(v.name, G.SIDE_PAY.manual, '武譜'),
+        said(v.name, G.SIDE_PAY.points, '武學點'),
+        said(v.name, G.SIDE_MISS, '這一局贏了，支線落空')
+      ),
       speech(v.title, v.arrival, said(v.name, v.reveal), said(v.name, v.blind), said(v.name, v.win)),
-      speech('落敗時', said(v.name, t.scatter.text, t.scatter.note)),
+      speech('落敗時', said(v.name, t.packUp.text)),
       links('人物', [link('folk', 'wei', v.name)])
     ],
     sources: cites(cite(v.name, 'src/rules/ferry-market.js'), cite(t.shop, 'src/data/maze-tale.js'))
   };
 }
+// A kind of secondary by the name the game shows; 斷其退路 and its two kin share one line.
+const kindName = (kind, k) => {
+  try {
+    return kind === 'spare' ? '不容續命、斷其退路、不觸斗轉星移' : k.name({});
+  } catch {
+    return kind;
+  }
+};
 
 // Lines that belong to a hero rather than to a board, so they hold whoever is drawn.
 function voices() {
@@ -87,7 +151,7 @@ function voices() {
     id: 'voices',
     name: TITLES.voices,
     tag: '不隨局、不隨次序',
-    summary: '俠客是隨機應帖的，局的次序也會變。這些話跟著人走：入境的第一句、聽見由少年執子時的回答、似曾相識、夜話，與臨別。',
+    summary: '俠客是隨手抓的，局的次序也會變。這些話跟著人走：入境的第一句、聽見由少年執子時的回答、似曾相識、夜話、想起成名絕學，與臨別。',
     image: heroPortrait(G.PARTY[0]),
     sections: [
       ...G.PARTY.map((id) => {
@@ -98,9 +162,10 @@ function voices() {
           said(name, v.arrival.text, '入境。' + v.arrival.note),
           said(name, v.obey, '作領隊時，聽見由少年執子。'),
           v.echoes.map((line) => said(name, line, '似曾相識。只在第二輪起、到過的局裡出現。')),
-          said(name, v.night[0], '夜話，第一、二輪。'),
-          said(name, v.night[1], '夜話，第三輪起。'),
-          said(name, v.farewell, '走完十局，臨別。')
+          said(name, v.night[0], '夜話，第一境。'),
+          said(name, v.night[1], '夜話，第二境起：得知自己是拓來的一份。'),
+          said(name, v.summit, '想起成名絕學時。'),
+          said(name, v.farewell, '勝滿十局，放還本尊之前。')
         );
       }),
       links('相關', [link('story', 'opening', TITLES.opening), link('story', 'return', TITLES.return)])
@@ -114,13 +179,22 @@ function homecoming() {
   return {
     id: 'return',
     name: TITLES.return,
-    tag: '結局',
+    tag: '一輪的收尾',
     summary: t.win,
-    image: gameArt('captain-' + LAST + '.webp'),
+    image: gameArt(G.QIUBAI.portrait),
     sections: [
-      speech('階盡（走完十局）', t.win, t.winAgain),
-      speech('眼破（中途落敗）', t.loss, said(G.WEI.name, t.scatter.text, t.scatter.note)),
-      speech('闔眼：真實世界的碎片', G.FRAGMENTS),
+      speech('放還（勝滿十局）', said(G.QIUBAI.name, t.release.text, t.release.note), t.win),
+      ...t.close.map((lines, i) => speech('第' + REALMS[i] + '境收局', lines.map((b) => spine(b)))),
+      speech('第五境之後再勝', t.closeAgain.map((b) => spine(b))),
+      speech(
+        '眼破（中途落敗）',
+        said(G.QIUBAI.name, t.scatter.text[0], '第一、二境。' + t.scatter.note),
+        said(G.QIUBAI.name, t.scatter.text[1], '第三境起。'),
+        said(G.WEI.name, t.packUp.text),
+        t.loss,
+        G.NO_MARK
+      ),
+      speech('夢醒：五境各一段', G.FRAGMENTS),
       links('最後一局', [stageLinks(LAST)[1], stageLinks(LAST)[0]])
     ],
     sources: cites(cite(t.win, 'src/data/maze-tale.js'))
@@ -184,11 +258,20 @@ function stage(i) {
         '同書俠客的專屬臺詞',
         Object.entries(script.heroLines).map(([id, line]) => said(G.DETAILS[id].name, line))
       ),
+      // The named black stones 求敗 set down beside the master and his lieutenant.
+      ...Object.entries(script.extras || {}).map(([id, extra]) =>
+        speech(
+          G.VILLAINS[id].name + '：後來才落的黑子',
+          extra.enter && said(G.VILLAINS[id].name, extra.enter, '入場時。'),
+          extra.reply && said(speakerOf(extra.reply.who, i), extra.reply.text),
+          Object.entries(extra.heroes || {}).map(([hero, line]) => said(G.DETAILS[hero].name, line, '同書俠客在陣時。'))
+        )
+      ).filter((section) => section.speeches.length),
       speech('戰後 · 勝', beats(script.win, i)),
       speech(
-        '支線 · 達成 / 未達成',
+        '韋小寶的盤口 · 押中',
         ...[...new Set(G.BATTLES[i].sides.map((side) => G.SIDE_TALES[side.kind] || G.SIDE_TALES.done))].map(
-          (tale) => said('達成', tale)
+          (tale) => said(G.WEI.name, tale)
         )
       ),
       speech('戰後 · 敗', beats(script.loss, i)),
@@ -205,10 +288,9 @@ function stage(i) {
 }
 
 const wakeId = (i) => 'wake-' + (i + 1);
-const fateId = (f) => 'fate-' + f.id;
 const worldLink = () => link('story', 'world', TITLES.world);
 
-// What the youth can read for himself in the game: the invitation and the stone.
+// What the youth can read and work out for himself in the game: the rule and the stone.
 function world() {
   return {
     id: 'world',
@@ -218,71 +300,46 @@ function world() {
     image: gameArt('stone-marks-' + G.WAKES.length + '.webp'),
     sections: [
       ...G.WORLD.map((w) => speech(w.name, w.text)),
-      links('石上的五道痕', G.WAKES.map((w, i) => link('story', wakeId(i), w.name))),
-      links('第五輪起的抉擇', G.FATES.map((f) => link('story', fateId(f), f.name)))
+      links('臺邊的五行字', G.WAKES.map((w, i) => link('story', wakeId(i), w.name)))
     ],
     sources: cites(cite(G.WORLD[0].name, 'src/data/wake-tale.js'))
   };
 }
 
+// One 境: the line 求敗 cuts in the stone when the youth wins it, and what belongs to it.
 function wake(w, i) {
-  const next = G.WAKES[i + 1];
+  const next = G.WAKES[i + 1],
+    t = G.MAZE_TALE;
   return {
     id: wakeId(i),
     name: w.name,
-    tag: '第 ' + (i + 1) + ' 輪・石上的痕',
+    tag: '第' + REALMS[i] + '境・' + w.title,
     summary: w.mark,
-    // The stone as it stands once this run's mark has been cut.
+    // The stone as it stands once this line has been cut.
     image: gameArt('stone-marks-' + (i + 1) + '.webp'),
     sections: [
-      speech(
-        '睜眼所見（第一局前）',
-        said(YOUTH_NAME, w.opening.text, w.opening.note),
-        w.openingLater && said(YOUTH_NAME, w.openingLater.text, '第六輪起。' + w.openingLater.note)
-      ),
-      speech('夜話（第五局前）', said(YOUTH_NAME, w.echo.text, w.echo.note)),
-      speech('留痕', w.carve),
-      speech('闔眼 · 勝', w.afterWin),
-      speech('闔眼 · 敗', w.afterLoss),
-      links('相關', [
-        worldLink(),
-        ...(next
-          ? [link('story', wakeId(i + 1), next.name)]
-          : G.FATES.map((f) => link('story', fateId(f), f.name)))
-      ])
+      speech('入夢時', said(G.QIUBAI.name, t.prologue.again.greeting[i], i ? '' : '第一輪另有開場；這一句是敗了再來時說的。')),
+      speech('夜話（第五局前）', said(YOUTH_NAME, w.echo.text, t.night + w.echo.note)),
+      speech('收局', t.close[i].map((b) => spine(b))),
+      speech('石上多一行', w.carve),
+      speech('夢醒 · 勝', w.afterWin),
+      speech('夢醒 · 敗', w.afterLoss),
+      links('相關', [worldLink(), link('story', 'qiu', TITLES.qiu), ...(next ? [link('story', wakeId(i + 1), next.name)] : [])])
     ],
     sources: cites(cite(w.name, 'src/data/wake-tale.js'))
-  };
-}
-
-function fate(f) {
-  const last = G.WAKES.length - 1;
-  return {
-    id: fateId(f),
-    name: f.name,
-    tag: '第五輪後・劇透',
-    summary: f.desc,
-    image: gameArt('stone-marks-' + G.WAKES.length + '.webp'),
-    sections: [
-      speech(G.FATE_PROMPT, f.desc),
-      speech('這樣選了之後', f.ending),
-      speech('下一輪睜眼所見', f.echo),
-      links('來處', [link('story', wakeId(last), G.WAKES[last].name)])
-    ],
-    sources: cites(cite(f.name, 'src/data/wake-tale.js'))
   };
 }
 
 export function story() {
   return [
     opening(),
+    qiubai(),
     voices(),
     shop(),
     homecoming(),
     archive(),
     ...G.MAP_LAYOUTS.map((_, i) => stage(i)),
     world(),
-    ...G.WAKES.map(wake),
-    ...G.FATES.map(fate)
+    ...G.WAKES.map(wake)
   ];
 }

@@ -1,10 +1,10 @@
-import { wakeJournal, fatePage } from './wake-views.js';
+import { wakeJournal } from './wake-views.js';
 import { moveFacts } from '../rules/move-facts.js';
 import { factBadge } from './panels.js';
 import * as G from '../rules/game.js';
 import { MAZE_TALE, EAGLE } from '../data/maze-tale.js';
 import { art } from './artwork.js';
-import { WAKES, closingFor } from '../data/wake-tale.js';
+import { WAKES, NO_MARK, FULL_MARK, closingFor } from '../data/wake-tale.js';
 import { titleHead, btn, esc } from './panels.js';
 import { icon } from './icons.js';
 
@@ -52,23 +52,26 @@ function equippedMoves(s, u) {
     moves.push(btn('field-loadout', icon('book', 15) + '招式配置', 'field-loadout'));
   return moves.join('');
 }
-// The end of a run. Won: the heroes have gone home, and the youth climbs the last step,
-// loses in one stroke and is told it is not enough. Lost: the stones go dark. Either way he
-// leaves a mark on the stone, closes his eyes, and half senses the place where he sleeps.
+// The end of a run. Won: the white stones have gone home, 求敗 says what he saw this run, cuts a
+// line in the stone beside the table and sends the youth home. Lost: the white stones go back in
+// the box. Either way the youth wakes, with only a shadow of the dream and something in his hands.
 function journeyEnding(s) {
   const r = s.run,
     won = s.result === 'win',
-    wake = WAKES[Math.min(WAKES.length, r.voyage) - 1];
+    realm = Math.min(WAKES.length, Math.max(1, r.realm || 1)),
+    wake = WAKES[realm - 1],
+    // Past the fifth 境 there is no line left to cut.
+    carved = won && (r.realm || 1) <= WAKES.length;
   return (
-    titleHead(won ? 'flag' : 'scroll', won ? '階盡' : '眼破') +
+    titleHead(won ? 'flag' : 'scroll', won ? '好棋' : '眼破') +
     '<div class="result-banner"><div class="result-seal">' +
-    (won ? '階' : '破') +
+    (won ? '勝' : '破') +
     '</div><h3>' +
-    (won ? '還不夠' : '白子俱暗') +
+    (won ? '請回吧' : '白子俱暗') +
     '</h3><p>' +
     esc(won ? MAZE_TALE.win : MAZE_TALE.loss) +
     '</p></div>' +
-    // After a lost run only the youth and the great bird are left by the table.
+    // After a lost run only the youth, the old man and the great bird are left by the table.
     (won
       ? ''
       : '<figure class="ending-figure"><img src="' +
@@ -85,27 +88,26 @@ function journeyEnding(s) {
     r.chronicle.best +
     ' 局</b></span></div>' +
     '<p class="footnote">' +
-    (won ? MAZE_TALE.winAgain : '買下的東西寄在通吃坊，下一輪照舊取用。') +
+    MAZE_TALE.winNote +
     '</p>' +
     '<p class="wake-manifest">此輪同行　' +
     G.company(s)
       .map((u) => esc(G.unitDetails(u).name))
       .join('、') +
     '</p>' +
-    '<section class="wake-choice wake-closing"><h3>留痕</h3><p>' +
-    esc(wake.carve) +
+    '<section class="wake-choice wake-closing"><h3>' +
+    (carved ? esc(wake.name) : '臺邊的石') +
+    '</h3><p>' +
+    esc(carved ? wake.carve : won ? FULL_MARK : NO_MARK) +
     '</p></section>' +
-    fatePage(s) +
-    '<section class="wake-choice wake-closing"><h3>闔眼</h3><p>' +
-    esc(closingFor(r.voyage, won)) +
+    '<section class="wake-choice wake-closing"><h3>夢醒</h3><p>' +
+    esc(closingFor(realm, won)) +
     '</p></section>' +
     wakeJournal(r.chronicle, r.voyage) +
-    (won && r.voyage >= 5 && !r.last.fate
-      ? ''
-      : '<div class="modal-foot right">' +
-        btn('home', '返回主畫面', 'outline-btn') +
-        btn('title-new', '再睜眼', 'gold-btn') +
-        '</div>')
+    '<div class="modal-foot right">' +
+    btn('home', '返回主畫面', 'outline-btn') +
+    btn('title-new', '再入夢', 'gold-btn') +
+    '</div>'
   );
 }
 

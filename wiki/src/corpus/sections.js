@@ -184,7 +184,6 @@ export const PLACES = {
     'deployLineup': ['戰場紀錄', '回合與整備'],
     'boardModel': ['目標與棋路', '任務與達成條件'],
     'settle': ['目標與棋路', '棋路與結算'],
-    'chooseFate': ['戰場紀錄', '局中紀事'],
     'buy': ['戰場紀錄', '用物'],
     'advance': ['目標與棋路', '棋路與結算'],
     'giveGuide': ['戰場紀錄', '成長'],
@@ -231,26 +230,41 @@ export const PLACES = {
   },
   'src/data/maze-tale.js': {
     'YOUTH': ['圖鑑與人物', '少年與韋小寶'],
+    'QIUBAI': ['圖鑑與人物', '少年與韋小寶'],
     'WEI': ['圖鑑與人物', '少年與韋小寶'],
     'EAGLE': ['圖鑑與人物', '少年與韋小寶'],
     'MAZE_TALE': ['劇情、對白與旁白', '一輪的骨架'],
     'MAZE_TALE.title': ['開場與操作', '標題'],
-    'MAZE_TALE.prologue': ['劇情、對白與旁白', '睜眼'],
-    'MAZE_TALE.letter': ['劇情、對白與旁白', '英雄帖'],
-    'MAZE_TALE.draw': ['劇情、對白與旁白', '英雄帖'],
+    'MAZE_TALE.prologue': ['劇情、對白與旁白', '入夢'],
+    'MAZE_TALE.rule': ['劇情、對白與旁白', '局規'],
+    'MAZE_TALE.draw': ['劇情、對白與旁白', '局規'],
+    'MAZE_TALE.ruleRead': ['劇情、對白與旁白', '局規'],
+    'MAZE_TALE.ruleTold': ['劇情、對白與旁白', '局規'],
+    'MAZE_TALE.told': ['劇情、對白與旁白', '說破'],
     'MAZE_TALE.command': ['劇情、對白與旁白', '第一局之前'],
+    'MAZE_TALE.recall': ['劇情、對白與旁白', '第一局之前'],
     'MAZE_TALE.deploy': ['劇情、對白與旁白', '第一局之前'],
+    'MAZE_TALE.inHand': ['劇情、對白與旁白', '軍情與起陣'],
+    'MAZE_TALE.brief': ['劇情、對白與旁白', '軍情與起陣'],
+    'MAZE_TALE.clack': ['劇情、對白與旁白', '求敗落子'],
+    'MAZE_TALE.clackSave': ['劇情、對白與旁白', '求敗落子'],
     'MAZE_TALE.shop': ['劇情、對白與旁白', '通吃坊開張'],
     'MAZE_TALE.opened': ['劇情、對白與旁白', '通吃坊開張'],
+    'MAZE_TALE.origins': ['劇情、對白與旁白', '韋小寶的來歷'],
+    'MAZE_TALE.unseen': ['劇情、對白與旁白', '韋小寶的來歷'],
     'MAZE_TALE.night': ['劇情、對白與旁白', '夜話'],
+    'MAZE_TALE.after': ['劇情、對白與旁白', '求敗的話'],
+    'MAZE_TALE.lend': ['劇情、對白與旁白', '添子'],
+    'MAZE_TALE.step': ['劇情、對白與旁白', '添子'],
+    'MAZE_TALE.fade': ['劇情、對白與旁白', '求敗落子'],
     'MAZE_TALE.scatter': ['劇情、對白與旁白', '眼破'],
-    'MAZE_TALE.win': ['劇情、對白與旁白', '階盡'],
-    'MAZE_TALE.winAgain': ['劇情、對白與旁白', '階盡'],
+    'MAZE_TALE.packUp': ['劇情、對白與旁白', '眼破'],
+    'MAZE_TALE.release': ['劇情、對白與旁白', '請回吧'],
+    'MAZE_TALE.close': ['劇情、對白與旁白', '請回吧'],
+    'MAZE_TALE.closeAgain': ['劇情、對白與旁白', '請回吧'],
+    'MAZE_TALE.win': ['劇情、對白與旁白', '請回吧'],
+    'MAZE_TALE.winNote': ['劇情、對白與旁白', '請回吧'],
     'MAZE_TALE.loss': ['劇情、對白與旁白', '眼破'],
-    'MAZE_TALE.join': ['劇情、對白與旁白', '應帖'],
-    'MAZE_TALE.unlit': ['劇情、對白與旁白', '支線紀事'],
-    'MAZE_TALE.joined': ['劇情、對白與旁白', '應帖'],
-    'MAZE_TALE.closing': ['劇情、對白與旁白', '闔眼'],
     'CHAMBER_TALES': ['劇情、對白與旁白', '青竹渡・局的紀事'],
     'CHAMBER_TALES[1].name': ['劇情、對白與旁白', '紅楓驛・局的紀事'],
     'CHAMBER_TALES[1].arrival': ['劇情、對白與旁白', '紅楓驛・局的紀事'],
@@ -280,7 +294,9 @@ export const PLACES = {
     'CHAMBER_TALES[9].arrival': ['劇情、對白與旁白', '無刻漏臺・局的紀事'],
     'CHAMBER_TALES[9].victory': ['劇情、對白與旁白', '無刻漏臺・局的紀事'],
     'LAMP_TALE': ['劇情、對白與旁白', '支線紀事'],
-    'SIDE_TALES': ['劇情、對白與旁白', '支線紀事']
+    'SIDE_TALES': ['劇情、對白與旁白', '韋小寶的盤口'],
+    'SIDE_PAY': ['劇情、對白與旁白', '韋小寶的盤口'],
+    'SIDE_MISS': ['劇情、對白與旁白', '韋小寶的盤口']
   },
   'src/data/hero-voices.js': {
     'HERO_VOICES': ['劇情、對白與旁白', '俠客自己的話']
@@ -326,10 +342,10 @@ export const PLACES = {
     'resultPage': ['目標與棋路', '目標與結算']
   },
   'src/ui/run-views.js': {
-    'drawPortrait': ['開場與操作', '應帖與落子'],
-    'rollView': ['開場與操作', '應帖與落子'],
-    'prologueSteps': ['開場與操作', '睜眼'],
-    'prologuePage': ['開場與操作', '睜眼']
+    'drawPortrait': ['開場與操作', '抓子與落子'],
+    'rollView': ['開場與操作', '抓子與落子'],
+    'prologueSteps': ['開場與操作', '入夢'],
+    'prologuePage': ['開場與操作', '入夢']
   },
   'src/fx/technique-strokes.js': {
     'RECIPES': ['系統與提示', '介面用語']
@@ -339,16 +355,15 @@ export const PLACES = {
     'regionalNotes': ['地圖與地形', '地形說明']
   },
   'src/data/wake-tale.js': {
-    'WORLD': ['劇情、對白與旁白', '帖上與石上讀到的事'],
-    'FRAGMENTS': ['劇情、對白與旁白', '闔眼'],
-    'CLOSING': ['劇情、對白與旁白', '闔眼'],
-    'WAKES': ['劇情、對白與旁白', '石上的痕'],
-    'FATE_PROMPT': ['劇情、對白與旁白', '留名與還名'],
-    'FATES': ['劇情、對白與旁白', '留名與還名']
+    'WORLD': ['劇情、對白與旁白', '少年在棋臺邊瞧明白的事'],
+    'FRAGMENTS': ['劇情、對白與旁白', '夢醒'],
+    'CLOSING': ['劇情、對白與旁白', '夢醒'],
+    'WAKES': ['劇情、對白與旁白', '臺邊的五行字'],
+    'NO_MARK': ['劇情、對白與旁白', '臺邊的五行字'],
+    'FULL_MARK': ['劇情、對白與旁白', '臺邊的五行字']
   },
   'src/ui/wake-views.js': {
     'wakeJournal': ['系統與提示', '介面用語'],
     'journalPage': ['系統與提示', '介面用語'],
-    'fatePage': ['系統與提示', '介面用語']
   }
 };

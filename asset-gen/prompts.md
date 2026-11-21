@@ -58,7 +58,7 @@ text, letters, Chinese characters, calligraphy, watermark, signature, seal stamp
 ## 2. Rules that apply to every picture
 
 - **No readable writing.** Image models garble Chinese characters. Where the story has an inscription or a letter, ask for worn, illegible marks. The game supplies the words as text.
-- **Never show who set the boards.** The story keeps his identity hidden. He may appear only from behind, with no face, no name, no sword, and nothing that points to a known character.
+- **求敗 is shown.** Since world view v1.0 the one who set the boards sits across the table from the first scene and speaks, so he has a face (A0 below). The older rule that he may be seen only from behind is withdrawn.
 - **The youth belongs to no era.** His clothes must not be recognisably Song, Ming or Qing, and he wears no sect colours or ornaments.
 - **韋小寶 is the opposite.** He is plainly from the Qing dynasty, later than everyone else. His shaved forehead and queue are the visual clue that this place holds people from different centuries.
 - **The eagle is called 大鵰 in the game, not by its famous name.** Draw it as the novels describe it: huge, ugly and old, not a noble bird of prey.
@@ -67,6 +67,20 @@ text, letters, Chinese characters, calligraphy, watermark, signature, seal stamp
 ---
 
 ## Group A: replacements for pictures already in the game
+
+### A0. 求敗: `game/assets/npc-qiubai.webp` (needed)
+
+The file in the game is a placeholder: a black go stone on the stone table. This portrait replaces it.
+
+- **Final size:** 480 × 480. **Generate at:** 1024 × 1024.
+- **Appears in:** the prologue, after every board, and at the end of every run. He is the character the player watches most.
+- **Composition:** same crop as A1: the face in the upper third, the whole head inside the central 60% of the width, nothing important in the bottom quarter. One hand raised near the chest holding a single black go stone between two fingers.
+
+```text
+An old Chinese swordsman seated at a rough stone table in a deep mountain valley, seen from the chest up, facing the viewer. A long white beard to the chest, white hair tied back plainly, a lean weathered face. His expression is stern, stubborn and absorbed, the look of a man who has studied one problem for centuries; not kindly, not cruel. A plain grey hemp robe, worn at the cuffs, no ornaments, no sect colours, clothing of no identifiable dynasty. One hand raised near his chest, holding a single black go stone between the index and middle fingers, about to set it down. He carries no sword. Behind him, out of focus, sheer cliff walls and pale light falling from high above.
+```
+
+Avoid also: `smile, sword in hand, armour, crown, halo, glowing eyes, magic, lightning, monk's robe, Taoist hat`
 
 ### A1. The youth: `game/assets/npc-youth.webp` (done)
 
@@ -294,6 +308,7 @@ Use the **Scenes** house style. Avoid also: `boat, river, ferry, bright sky`
 
 | File | Folder | Size | Group |
 | --- | --- | --- | --- |
+| `npc-qiubai.webp` (needed; a placeholder is in the game) | `game/assets/` | 480 × 480 | A |
 | `npc-youth.webp` (done) | `game/assets/` | 480 × 480 | A |
 | `npc-wei.webp` (done) | `game/assets/` | 480 × 480 | A |
 | `run-merchant.webp` (done) | `game/assets/` | 1000 × 500 | A |

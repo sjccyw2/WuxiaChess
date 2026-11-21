@@ -755,7 +755,7 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
         model.pool.map((e) => '<li><strong>' + esc(e.name) + '</strong> ' + esc(e.rewardText) + '</li>').join('') +
         '</ul>'
       : p(model.sideNote);
-  // The page stops at 應帖 (the producer's ruling of 2026-11-21): how each enemy fights, how
+  // The page stops at 入局 (the producer's ruling of 2026-11-21): how each enemy fights, how
   // many there are and when more arrive are for the player to find out on the board. The
   // model still carries them (journey.js briefing) for the wiki and the tools.
   const foot = live
@@ -767,6 +767,7 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     '<section class="mj-view brief-view">' +
     titleHead('flag', '軍情', esc(model.heading)) +
     (L ? '<p class="brief-live">' + esc(L.line) + '</p>' : '') +
+    (model.lead && !live ? '<p class="brief-lead">' + esc(model.lead) + '</p>' : '') +
     '<div class="brief-body"><div class="brief-plan">' +
     planGrid(plan, post) +
     planKey(plan) +
@@ -774,8 +775,8 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     sect('brief-kind', '戰局', p(model.battle)) +
     sect('brief-win', '勝利', p(model.win) + progress) +
     sect('brief-loss', '敗退', p(model.loss)) +
-    sect('brief-side', '支線', side) +
-    (model.recruit ? sect('brief-recruit', '應帖', p(model.recruit)) : '') +
+    sect('brief-side', '支線', (model.sideLead ? p(model.sideLead + '：', 'brief-small') : '') + side) +
+    (model.recruit ? sect('brief-recruit', '入局', p(model.recruit)) : '') +
     '</div></div>' +
     extra +
     '<div class="modal-foot right">' +

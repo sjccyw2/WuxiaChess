@@ -4,8 +4,10 @@ import { rollLeaderInfo } from './mastery-views.js';
 import { btn, titleHead, face, esc, bookCitation } from './panels.js';
 import { icon } from './icons.js';
 import { BOOKS, DETAILS } from '../rules/game.js';
-import { MAZE_TALE, YOUTH, WEI } from '../data/maze-tale.js';
+import { MAZE_TALE, YOUTH, WEI, QIUBAI } from '../data/maze-tale.js';
 import { art } from './artwork.js';
+
+const EAGLE_PICTURE = 'npc-eagle.webp';
 
 const amount = (value) => Math.max(0, Math.trunc(Number(value) || 0));
 const idAttr = (id) => `data-id="${esc(id)}"`;
@@ -39,11 +41,11 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
   if (parcel)
     benefits.push(`<span>${icon('bag', 15)}通吃坊寄存 <strong>${parcel} 件</strong></span>`);
   return `<section class="run-view run-roll">
-    ${titleHead('scroll', '三子應帖')}
+    ${titleHead('scroll', '抓子')}
     <div class="run-lacquer">
-      <details class="hud-disclosure draw-tale"><summary>英雄帖</summary><p>${text(MAZE_TALE.draw)}</p><p>「${text(MAZE_TALE.letter)}」</p></details>
+      <details class="hud-disclosure draw-tale"><summary>局規</summary><p>${text(MAZE_TALE.draw)}</p><p>棋臺沿上刻著：「${text(MAZE_TALE.rule)}」</p></details>
       <p class="lot-instruction">選一枚先落的子作領隊，是為這一輪的「眼」。領隊倒下，這一輪便結束。</p>
-      <ul class="run-lots" aria-label="這一輪應帖的三位俠客">${ids.map((id) => drawPortrait(id, captain)).join('')}</ul>
+      <ul class="run-lots" aria-label="這一輪抓到的三位俠客">${ids.map((id) => drawPortrait(id, captain)).join('')}</ul>
     </div>
     ${rollLeaderInfo(captain, COMMANDS[captain].name, commandDescription(captain))}
     <details class="hud-disclosure draw-records"><summary>歷輪紀錄與開局資源</summary><div class="run-draw-ledger">
@@ -58,29 +60,42 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
   </section>`;
 }
 
-// The prologue: the youth opens his eyes. He thinks he has just woken; in truth he has
-// just fallen asleep. 韋小寶 asks his name, and the first time the player types it. On later
-// runs the same name comes to him again, as if by chance.
-//   profile  the chronicle (name, returns)
+// The prologue: the youth falls asleep and finds himself beside the stone table, where an old
+// man is playing himself. The first time, 求敗 asks who he is and the player types the name. On
+// later runs 求敗 remembers him, and greets him by the 境 he has reached.
+//   profile  the chronicle (name, returns, wins)
 //   step     which page is showing
 //   name     the name as typed so far (first run only)
 function prologueSteps(profile, name = '') {
   const tale = MAZE_TALE.prologue,
     known = profile.name || '',
-    again = (profile.returns ?? 0) > 0,
-    called = known || name || YOUTH.name;
-  const steps = tale.scenes.map((note, i) => ({ note, picture: tale.pictures?.[i] || '' }));
-  const greeting = { speaker: WEI, text: again ? tale.greeting.again : tale.greeting.first };
-  // The first time, the name is typed on the page where 韋小寶 asks for it, so that skipping
-  // to the name still shows him. Later, the name comes by itself on a page of its own.
-  if (known) steps.push(greeting, { note: tale.naming });
-  else steps.push({ ...greeting, after: tale.naming, ask: true });
-  steps.push({ speaker: { ...YOUTH, name: called }, text: '我叫' + called + '。' });
-  steps.push({ note: tale.named });
-  steps.push({ speaker: WEI, text: known && again ? tale.reply.again : tale.reply.first });
-  steps.push({ note: tale.board });
-  steps.push({ note: tale.stones, last: true });
-  return steps;
+    called = known || name || YOUTH.name,
+    wins = profile.wins ?? 0;
+  const people = { youth: { ...YOUTH, name: called }, qiu: QIUBAI, wei: WEI };
+  const named = (line) => String(line).replaceAll('{name}', called);
+  const page = (step) => ({
+    ...step,
+    note: step.note && named(step.note),
+    text: step.text && named(step.text),
+    speaker: people[step.who]
+  });
+  // He has been here before only if a name was given: the first visit asks for it.
+  const again = known && (profile.returns ?? 0) > 0;
+  const steps = again
+    ? [
+        { note: tale.again.note, picture: EAGLE_PICTURE },
+        { who: 'qiu', text: wins >= 5 ? tale.again.beyond : tale.again.greeting[Math.min(4, wins)] },
+        { who: 'youth', text: tale.again.youth },
+        { who: 'qiu', text: tale.again.reply }
+      ]
+    : tale.first.map((step) => (step.ask && known ? { ...step, ask: false } : step));
+  // Until he has said his name, the page calls him only 少年.
+  const asked = known ? -1 : steps.findIndex((step) => step.ask);
+  return steps.map((step, i) => {
+    const p = page(step);
+    if (i <= asked && step.who === 'youth') p.speaker = { ...p.speaker, name: '少年' };
+    return { ...p, last: i === steps.length - 1 };
+  });
 }
 function prologuePage(profile, step = 0, name = '') {
   const steps = prologueSteps(profile, name),
@@ -98,7 +113,7 @@ function prologuePage(profile, step = 0, name = '') {
     ? `<div class="fy-byline"><strong>${text(p.speaker.name)}</strong><small>${text(p.speaker.role)}</small></div><blockquote>${text(p.text)}</blockquote>`
     : '';
   return `<section class="mj-view fy-story fy-prologue">
-    <header class="modal-head"><div class="modal-title">${icon('scroll', 20)}<h2>睜眼</h2></div><small>序幕</small></header>
+    <header class="modal-head"><div class="modal-title">${icon('scroll', 20)}<h2>入夢</h2></div><small>序幕</small></header>
     <div class="fy-story-body${picture ? '' : ' fy-narration'}">${portrait}<div class="fy-dialogue">
       ${p.note ? (p.picture ? `<blockquote>${text(p.note)}</blockquote>` : `<p class="fy-stage-note">${text(p.note)}</p>`) : ''}${said}${p.after ? `<p class="fy-stage-note">${text(p.after)}</p>` : ''}${entry}
     </div></div>
