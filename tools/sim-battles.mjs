@@ -63,7 +63,7 @@ const RUNS = Number(opt('--runs', 100));
 const SEED = Number(opt('--seed', 1));
 const [FIRST, LAST] = String(opt('--boards', '1-10')).split('-').map(Number).concat([NaN]).map((v, i, a) => (i === 1 && Number.isNaN(v) ? a[0] : v));
 const JSON_OUT = opt('--json', null);
-// --realm N plays every run in the Nth 境 (data/realms.js), as if it were open.
+// --realm N plays every run in the Nth 境界 (data/realms.js), as if it were open.
 const REALM = Math.min(5, Math.max(1, Number(opt('--realm', 1)) || 1));
 const QUIET = args.includes('--quiet');
 // --trace prints the battle log of the first run, board by board, to see how the player plays.
@@ -948,7 +948,7 @@ const pad = (v, n) => String(v ?? '-').padEnd(n);
 const lpad = (v, n) => String(v ?? '-').padStart(n);
 const pc = (v) => (v == null ? '-' : Math.round(v * 100) + '%');
 function print(out) {
-  console.log('Simulated ' + out.meta.runs + ' runs, seed ' + out.meta.seed + ', boards ' + out.meta.boards + ', 境 ' + (out.meta.realm || 1) + '.');
+  console.log('Simulated ' + out.meta.runs + ' runs, seed ' + out.meta.seed + ', boards ' + out.meta.boards + ', 境界 ' + (out.meta.realm || 1) + '.');
   console.log('\nPer board (won: rounds and health left are over won boards; usage is the share of hero actions)');
   console.log(pad('board', 6) + lpad('runs', 5) + lpad('win', 6) + lpad('rnds', 6) + lpad('hp', 6) + lpad('down', 6) + lpad('side', 6) + lpad('L:ldr', 6) + lpad('L:time', 7) + '   usage: ' + ['basic', 'start', 'tier1', 'tier2', 'tier3', 'tier4', 'manual', 'wait'].map((k) => pad(k, 7)).join(''));
   for (const b of out.boards)

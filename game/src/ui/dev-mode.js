@@ -6,7 +6,7 @@
 // In a battle (from its story, briefing or 整備 too) it can win the board now, win it with the
 // secondary met, or lose it; each goes through the game's own settling, so rewards, the next
 // hero, the story and the end of the run follow as in play (journey.js devFinish). Outside a
-// battle it can open all five 境 and jump to the placeholder last battle.
+// battle it can open all five 境界 and jump to the placeholder last battle.
 import { btn } from './panels.js';
 
 const DEV_KEY = 'jianying.dev-mode.v1';
@@ -34,7 +34,7 @@ function devMode() {
 function devPanel({ battle }) {
   return battle
     ? btn('dev-win', '速勝', 'dev-btn') + btn('dev-win-side', '速勝・支線', 'dev-btn') + btn('dev-lose', '速敗', 'dev-btn')
-    : btn('dev-unlock', '開五境', 'dev-btn') + btn('dev-finale', '跳至終局', 'dev-btn');
+    : btn('dev-unlock', '開五重境界', 'dev-btn') + btn('dev-finale', '跳至終局', 'dev-btn');
 }
 
 export { devMode, devPanel };

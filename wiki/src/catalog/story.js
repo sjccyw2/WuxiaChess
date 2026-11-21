@@ -16,7 +16,7 @@ export const TITLES = {
   return: '請回吧與夢醒',
   archive: '霧鎖青竹渡',
   world: '少年在棋臺邊瞧明白的事',
-  realms: '五境：選境與開境',
+  realms: '五重境界：選境界與開境界',
   finale: '最後一局與放下（暫代）'
 };
 const REALMS = '一二三四五';
@@ -53,7 +53,7 @@ function opening() {
       speech(
         '第二輪起：又是你',
         p.again.note,
-        p.again.greeting.map((line, i) => said(G.QIUBAI.name, line, '選了第' + REALMS[i] + '境')),
+        p.again.greeting.map((line, i) => said(G.QIUBAI.name, line, '選了第' + REALMS[i] + '境界')),
         said(YOUTH_NAME, p.again.youth),
         said(G.QIUBAI.name, p.again.reply)
       ),
@@ -66,8 +66,8 @@ function opening() {
         said(G.WEI.name, t.recall.text, t.recall.note),
         t.deploy
       ),
-      speech('說破：第二、三境', t.told.cold.map((b) => spine(b))),
-      speech('說破：第四、五境', t.told.plain.map((b) => spine(b))),
+      speech('說破：第二、三境界', t.told.cold.map((b) => spine(b))),
+      speech('說破：第四、五境界', t.told.plain.map((b) => spine(b))),
       links('接下來', [
         link('story', 'qiu', TITLES.qiu),
         link('story', 'voices', TITLES.voices),
@@ -79,25 +79,25 @@ function opening() {
   };
 }
 
-// Everything 求敗 says after a board, by 境: the one person who changes from run to run.
+// Everything 求敗 says after a board, by 境界: the one person who changes from run to run.
 function qiubai() {
   const t = G.MAZE_TALE;
   return {
     id: 'qiu',
     name: TITLES.qiu,
-    tag: '隨境而變',
+    tag: '隨境界而變',
     summary: t.after[0][8].text,
     image: gameArt(G.QIUBAI.portrait),
     sections: [
       ...t.after.map((lines, i) =>
         speech(
-          '第' + REALMS[i] + '境・' + G.WAKES[i].sword + '：每勝一局之後',
+          '第' + REALMS[i] + '境界・' + G.WAKES[i].sword + '：每勝一局之後',
           lines.map((line, n) => said(G.QIUBAI.name, line.text, '第' + G.NUMERALS[n] + '局勝後。' + (line.note || '')))
         )
       ),
       speech('添子', t.lend),
       speech('局中落子', t.clack, t.clackSave),
-      speech('少年同韋小寶說話時', t.unseen.map((b, i) => said(G.QIUBAI.name, b.text, '第' + REALMS[i] + '境。' + b.note))),
+      speech('少年同韋小寶說話時', t.unseen.map((b, i) => said(G.QIUBAI.name, b.text, '第' + REALMS[i] + '境界。' + b.note))),
       links('相關', [link('story', 'opening', TITLES.opening), link('story', 'return', TITLES.return), link('folk', 'qiu', G.QIUBAI.name)])
     ],
     sources: cites(cite(t.after[0][0].text, 'src/data/maze-tale.js'))
@@ -163,8 +163,8 @@ function voices() {
           said(name, v.arrival.text, '入境。' + v.arrival.note),
           said(name, v.obey, '作領隊時，聽見由少年執子。'),
           v.echoes.map((line) => said(name, line, '似曾相識。只在第二輪起、到過的局裡出現。')),
-          said(name, v.night[0], '夜話，第一境。'),
-          said(name, v.night[1], '夜話，第二境起：得知自己是拓來的一份。'),
+          said(name, v.night[0], '夜話，第一境界。'),
+          said(name, v.night[1], '夜話，第二境界起：得知自己是拓來的一份。'),
           said(name, v.summit, '想起成名絕學時。'),
           said(name, v.farewell, '勝滿十局，放還本尊之前。')
         );
@@ -185,16 +185,16 @@ function homecoming() {
     image: gameArt(G.QIUBAI.portrait),
     sections: [
       speech('放還（勝滿十局）', said(G.QIUBAI.name, t.release.text, t.release.note), t.win),
-      ...t.close.map((lines, i) => speech('第' + REALMS[i] + '境收局', lines.map((b) => spine(b)))),
+      ...t.close.map((lines, i) => speech('第' + REALMS[i] + '境界收局', lines.map((b) => spine(b)))),
       speech(
         '眼破（中途落敗）',
-        said(G.QIUBAI.name, t.scatter.text[0], '第一、二境。' + t.scatter.note),
-        said(G.QIUBAI.name, t.scatter.text[1], '第三境起。'),
+        said(G.QIUBAI.name, t.scatter.text[0], '第一、二境界。' + t.scatter.note),
+        said(G.QIUBAI.name, t.scatter.text[1], '第三境界起。'),
         said(G.WEI.name, t.packUp.text),
         t.loss,
         G.NO_MARK
       ),
-      speech('夢醒：五境各一段', G.FRAGMENTS),
+      speech('夢醒：五重境界各一段', G.FRAGMENTS),
       links('最後一局', [stageLinks(LAST)[1], stageLinks(LAST)[0], link('story', 'finale', TITLES.finale)])
     ],
     sources: cites(cite(t.win, 'src/data/maze-tale.js'))
@@ -306,22 +306,22 @@ function world() {
   };
 }
 
-// One 境: the line 求敗 cuts in the stone when the youth wins it, and what belongs to it.
+// One 境界: the line 求敗 cuts in the stone when the youth wins it, and what belongs to it.
 function wake(w, i) {
   const next = G.WAKES[i + 1],
     t = G.MAZE_TALE;
   return {
     id: wakeId(i),
     name: w.name,
-    tag: '第' + REALMS[i] + '境・' + w.title,
+    tag: '第' + REALMS[i] + '境界・' + w.title,
     summary: w.mark,
     // The stone as it stands once this line has been cut.
     image: gameArt('stone-marks-' + (i + 1) + '.webp'),
     sections: [
       rows('難度', [
         ['黑子', G.REALMS[i].note],
-        ['何時開', i ? '勝了第' + REALMS[i - 1] + '境（其時已開的最高一境）之後。' : '一開始便開。'],
-        ['勝了之後', next ? '若此境是已開的最高一境，第' + REALMS[i + 1] + '境便開。' : '五境皆勝，便有最後一局。']
+        ['何時開', i ? '勝了第' + REALMS[i - 1] + '境界（其時已開的最高一重境界）之後。' : '一開始便開。'],
+        ['勝了之後', next ? '若此重境界是已開的最高一重境界，第' + REALMS[i + 1] + '境界便開。' : '五重境界皆勝，便有最後一局。']
       ]),
       speech('入夢時', said(G.QIUBAI.name, t.prologue.again.greeting[i], i ? '' : '第一輪另有開場；這一句是敗了再來時說的。')),
       speech('夜話（第五局前）', said(YOUTH_NAME, w.echo.text, t.night + w.echo.note)),
@@ -335,7 +335,7 @@ function wake(w, i) {
   };
 }
 
-// The five 境 as difficulty levels: what each changes, and how they open.
+// The five 境界 as difficulty levels: what each changes, and how they open.
 function realms() {
   const pct = (m) => (m === 1 ? '如常' : '×' + m);
   return {
@@ -343,16 +343,16 @@ function realms() {
     name: TITLES.realms,
     tag: '難度',
     summary:
-      '五境便是五級難度。每一輪入夢之前，從已開的境裡選一境。第一境一開始便開；勝了已開的最高一境，下一境方開；勝了較低的境，只是重下一遍，不開新境。五境皆勝，便有最後一局。所選的境，也定了這一輪求敗說的話。',
+      '五重境界便是五級難度。每一輪入夢之前，從已開的境界裡選一重境界。第一境界一開始便開；勝了已開的最高一重境界，下一重境界方開；勝了較低的境界，只是重下一遍，不開新境界。五重境界皆勝，便有最後一局。所選的境界，也定了這一輪求敗說的話。',
     sections: [
       rows(
-        '各境的黑子',
+        '各重境界的黑子',
         G.REALMS.map((r, i) => [
-          '第' + REALMS[i] + '境・' + r.sword,
+          '第' + REALMS[i] + '境界・' + r.sword,
           '氣血 ' + pct(r.hp) + '，攻擊 ' + pct(r.atk) + '，防禦 ' + (r.def ? '+' + r.def : '如常') + '。' + r.note
         ])
       ),
-      links('五境', [...G.WAKES.map((w, i) => link('story', wakeId(i), w.name)), link('story', 'finale', TITLES.finale)])
+      links('五重境界', [...G.WAKES.map((w, i) => link('story', wakeId(i), w.name)), link('story', 'finale', TITLES.finale)])
     ],
     sources: cites(cite(G.REALMS[1].note, 'src/data/realms.js'))
   };
@@ -364,8 +364,8 @@ function finale() {
   return {
     id: 'finale',
     name: TITLES.finale,
-    tag: '五境皆勝之後',
-    summary: '五境皆勝，第五境收局之後便是最後一局：一張新的棋盤，少年與求敗都親自上盤。這一局與求敗放下的終局動畫都尚未製成，遊戲裡暫以文字與簡單的動畫代之。',
+    tag: '五重境界皆勝之後',
+    summary: '五重境界皆勝，第五境界收局之後便是最後一局：一張新的棋盤，少年與求敗都親自上盤。這一局與求敗放下的終局動畫都尚未製成，遊戲裡暫以文字與簡單的動畫代之。',
     image: gameArt(G.QIUBAI.portrait),
     sections: [
       speech('第十一局（暫代）', f.board.map((b) => (b.who ? spine(b) : b.note))),

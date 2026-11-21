@@ -46,7 +46,7 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
     realm = REALMS[realmAt - 1];
   return `<section class="run-view run-roll">
     ${titleHead('scroll', '抓子')}
-    <p class="run-kicker realm-kicker">${icon('flag', 14)}第${'一二三四五'[realmAt - 1]}境・${text(realm.sword)}　${text(realm.note)}</p>
+    <p class="run-kicker realm-kicker">${icon('flag', 14)}第${'一二三四五'[realmAt - 1]}境界・${text(realm.sword)}　${text(realm.note)}</p>
     <div class="run-lacquer">
       ${scene(TALE_ART.board, 'run-scene')}
       <details class="hud-disclosure draw-tale"><summary>局規</summary><p>${text(MAZE_TALE.draw)}</p><p>棋臺沿上刻著：「${text(MAZE_TALE.rule)}」</p></details>
@@ -68,13 +68,13 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
 
 // The prologue: the youth falls asleep and finds himself beside the stone table, where an old
 // man is playing himself. The first time, 求敗 asks who he is and the player types the name. On
-// later runs 求敗 remembers him, and greets him by the 境 he has reached.
+// later runs 求敗 remembers him, and greets him by the 境界 he has reached.
 //   profile  the chronicle (name, returns, wins)
 //   step     which page is showing
 //   name     the name as typed so far (first run only)
 //   film     the film has just told the first pages (first visit): start at
 //            the name, then resume where the film ends
-//   realm    the 境 picked for this run: 求敗 greets him by it
+//   realm    the 境界 picked for this run: 求敗 greets him by it
 function prologueSteps(profile, name = '', film = false, realm = 1) {
   const tale = MAZE_TALE.prologue,
     known = profile.name || '',

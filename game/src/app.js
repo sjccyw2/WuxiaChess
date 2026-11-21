@@ -49,9 +49,9 @@ let state = saved || R.startRun(R.drawLots(0));
 let draft = null,
   codexId = 'hero';
 // The prologue shown before the draw: which page it is on, the name typed so far, whether the
-// opening film told its first pages, and the 境 picked for the run.
+// opening film told its first pages, and the 境界 picked for the run.
 let prologue = { step: 0, name: '', film: false, realm: 1 };
-// The 境 picker's choice (選境), and which part of the placeholder last battle is showing.
+// The 境界 picker's choice (選境界), and which part of the placeholder last battle is showing.
 let realmPick = 0,
   finalePhase = 'board';
 let prefs = Object.assign(
@@ -1194,8 +1194,8 @@ function openPrologue() {
     }
   });
 }
-// A new run: the 境 is picked first (選境) once more than one is open or the last battle has
-// been reached; otherwise the run is in the first 境 and the prologue opens at once.
+// A new run: the 境界 is picked first (選境界) once more than one is open or the last battle has
+// been reached; otherwise the run is in the first 境界 and the prologue opens at once.
 function beginNewRun() {
   const profile = state.run.chronicle,
     open = R.openRealms(profile);
@@ -1501,7 +1501,7 @@ function command(action, id, data = {}, keyboard = false) {
       state.run.chronicle.realms = R.REALM_NUMBERS.length;
       state.run.chronicle.cleared = [...new Set([...state.run.chronicle.cleared, 1, 2, 3, 4])].sort();
       if (hasSave) save();
-      notice('五境皆已開，前四境記作已勝。');
+      notice('五重境界皆已開，前四重境界記作已勝。');
       if (dialogState === 'realm') drawModal(true);
       break;
     case 'dev-finale':

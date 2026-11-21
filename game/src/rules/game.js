@@ -409,7 +409,7 @@ function homeTile(s, u) {
   return found ? { x: found.def.at[0], y: found.def.at[1] } : null;
 }
 // The four stage rows every enemy's numbers come from ([hp, atk, def, step, range] each), in the
-// run's 境 (data/realms.js; the first 境 changes nothing). Board 0 met first has the numbers the
+// run's 境界 (data/realms.js; the first 境界 changes nothing). Board 0 met first has the numbers the
 // first board has always had.
 function stageRows(map, depth, realm = 1) {
   const rows = stageBase(map, depth);

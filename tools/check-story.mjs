@@ -39,17 +39,17 @@ for (const id of G.PARTY) {
   if (!v.summit) fail(id + ': no line for the top art');
   if (!HERO_PATHS[id]?.layout.at(-1).find(Boolean)) fail(id + ': the tree has no top art');
 }
-// The spine: 求敗 has a line after each of the first nine boards in each of the five 境, a close
-// for each 境, and a greeting for each; 韋小寶 has a line for every kind of pay.
+// The spine: 求敗 has a line after each of the first nine boards in each of the five 境界, a close
+// for each 境界, and a greeting for each; 韋小寶 has a line for every kind of pay.
 if (MAZE_TALE.after.length !== WAKES.length || MAZE_TALE.close.length !== WAKES.length)
-  fail('求敗 does not have lines for all five 境');
+  fail('求敗 does not have lines for all five 境界');
 MAZE_TALE.after.forEach((lines, i) => {
-  if (lines.length !== 9 || lines.some((line) => !line.text)) fail('境 ' + (i + 1) + ': 求敗 needs a line after each of nine boards');
+  if (lines.length !== 9 || lines.some((line) => !line.text)) fail('境界 ' + (i + 1) + ': 求敗 needs a line after each of nine boards');
 });
 MAZE_TALE.close.forEach((lines, i) => {
-  if (!lines.at(-1).text.includes('請回吧')) fail('境 ' + (i + 1) + ': the close does not end with 請回吧');
+  if (!lines.at(-1).text.includes('請回吧')) fail('境界 ' + (i + 1) + ': the close does not end with 請回吧');
 });
-if (MAZE_TALE.prologue.again.greeting.length !== WAKES.length) fail('求敗 needs a greeting for each 境');
+if (MAZE_TALE.prologue.again.greeting.length !== WAKES.length) fail('求敗 needs a greeting for each 境界');
 // The last battle and 求敗 letting go are placeholders, but their lines must be whole and
 // spoken by the two who are on the board.
 const finaleTale = MAZE_TALE.finale;
@@ -59,18 +59,18 @@ for (const line of [...(finaleTale?.board || []), ...(finaleTale?.letGo || [])])
 // He lets go and leaves as a man would: no 仙俠 words (the producer's ruling).
 for (const word of ['破碎虛空', '飛升', '成仙'])
   if (JSON.stringify(MAZE_TALE).includes(word)) fail('the spine says ' + word);
-// A profile from before the 境 could be picked: one more than the runs won is open, the rest won.
+// A profile from before the 境界 could be picked: one more than the runs won is open, the rest won.
 {
   const old = { ...R.LEGACY, wins: 3, returns: 4 };
   delete old.realms, delete old.cleared, delete old.finale;
   for (const [pick, expect] of [[undefined, 4], [2, 2], [5, 4]]) {
     const s = R.startRun({ ...R.drawLots(7), realm: pick }, old);
-    if (s.run.realm !== expect) fail('an old profile with 3 runs won starts in 境 ' + s.run.realm + ' when ' + pick + ' is picked');
+    if (s.run.realm !== expect) fail('an old profile with 3 runs won starts in 境界 ' + s.run.realm + ' when ' + pick + ' is picked');
     if (s.run.chronicle.realms !== 4 || s.run.chronicle.cleared.join() !== '1,2,3') fail('an old profile with 3 runs won is not brought up to date');
   }
 }
 
-if (MAZE_TALE.unseen.length !== WAKES.length) fail('求敗 needs a line about the empty spot for each 境');
+if (MAZE_TALE.unseen.length !== WAKES.length) fail('求敗 needs a line about the empty spot for each 境界');
 for (const reward of SIDE_REWARDS) if (!SIDE_PAY[reward]) fail('韋小寶 has no line for a bet paid in ' + reward);
 if (!SIDE_MISS) fail('韋小寶 has no line for a bet missed');
 ENCOUNTER_SCRIPT.forEach((script, map) => {
@@ -171,7 +171,7 @@ for (let player = 0; player < 60; player++) {
   const roll = dice(player * 7919 + 11);
   let legacy = R.LEGACY;
   // Each player plays several runs in a row, so later runs can carry deja vu. Before each run the
-  // player picks a 境: some always the highest open, some any open one, some one not yet open
+  // player picks a 境界: some always the highest open, some any open one, some one not yet open
   // (which the run must refuse, starting in the highest open instead).
   for (let run = 1; run <= 7; run++) {
     const draw = R.drawLots(Math.floor(roll() * 4294967296));
@@ -192,11 +192,11 @@ for (let player = 0; player < 60; player++) {
     leaders.add(draw.leaderId);
     if (R.youthName(s) !== '阿' + player) fail(label + ': the name was not kept');
     if (r.voyage !== run) fail(label + ': run counter is ' + r.voyage);
-    // The 境 is the one picked, if it is open.
-    if (r.realm !== wanted) fail(label + ': 境 is ' + r.realm + ', picked ' + draw.realm + ' with ' + open + ' open');
+    // The 境界 is the one picked, if it is open.
+    if (r.realm !== wanted) fail(label + ': 境界 is ' + r.realm + ', picked ' + draw.realm + ' with ' + open + ' open');
     const realm = r.realm;
     // How far this run gets: some lose early, some reach the end.
-    // Every sixth player wins every run, so the fifth 境, the last battle and the runs after it
+    // Every sixth player wins every run, so the fifth 境界, the last battle and the runs after it
     // are played too.
     const reach = run % 3 === 0 || player % 6 === 0 ? 10 : 1 + Math.floor(roll() * 10);
     realms.add(r.realm);
@@ -211,12 +211,12 @@ for (let player = 0; player < 60; player++) {
             fail(at + ': ' + G.DETAILS[u.id].name + ' did not arrive');
         if (!before.some((line) => line.text === HERO_VOICES[s.leader].obey)) fail(at + ': leader did not answer');
         if (!before.some((line) => line.speaker === WEI.name && line.text === MAZE_TALE.ruleTold)) fail(at + ': nobody made the rule plain');
-        // From the second 境 the heroes are told that they are copies.
+        // From the second 境界 the heroes are told that they are copies.
         const told = before.some((line) => [...MAZE_TALE.told.cold, ...MAZE_TALE.told.plain].some((b) => b.text === line.text));
-        if (told !== realm >= 2) fail(at + ': 境 ' + realm + (told ? ' tells' : ' does not tell') + ' the heroes what they are');
+        if (told !== realm >= 2) fail(at + ': 境界 ' + realm + (told ? ' tells' : ' does not tell') + ' the heroes what they are');
       }
       if (r.stage === 4 && !before.some((line) => line.text === HERO_VOICES[line.person?.id]?.night[realm >= 2 ? 1 : 0]))
-        fail(at + ': no night talk for 境 ' + realm);
+        fail(at + ': no night talk for 境界 ' + realm);
       // A named black stone who stands on the board from the start has his say before the battle.
       for (const piece of BATTLES[s.mapIndex].pieces)
         if (VILLAINS[piece.id] && !before.some((line) => line.person?.id === piece.id))
@@ -255,13 +255,13 @@ for (let player = 0; player < 60; player++) {
       const qiu = after.filter((line) => line.speaker === QIUBAI.name);
       if (!qiu.length) fail(at + ': 求敗 says nothing');
       if (r.last.terminal && !qiu.at(-1).text.includes('請回吧')) fail(at + ': the run does not end with 請回吧');
-      // A run won ends on what 求敗 saw in this 境.
+      // A run won ends on what 求敗 saw in this 境界.
       if (r.last.terminal && won)
         for (const beat of MAZE_TALE.close[realm - 1])
           if (!after.some((line) => line.text === beat.text.replaceAll('{name}', R.youthName(s))))
-            fail(at + ': the close of 境 ' + r.realm + ' is incomplete');
+            fail(at + ': the close of 境界 ' + r.realm + ' is incomplete');
       if (won && !r.last.terminal && !qiu.some((line) => line.text === MAZE_TALE.after[realm - 1][r.stage].text))
-        fail(at + ': 求敗 has the wrong line for 境 ' + realm + ' board ' + (r.stage + 1));
+        fail(at + ': 求敗 has the wrong line for 境界 ' + realm + ' board ' + (r.stage + 1));
       if (won && !r.last.terminal && !r.last.recruit && r.pool.length > 0)
         fail(at + ': a win brought no hero');
       if (r.last.terminal && won)
@@ -280,16 +280,16 @@ for (let player = 0; player < 60; player++) {
     }
     legacy = r.chronicle;
     if (legacy.returns !== run) fail(label + ': the run was not counted');
-    // A run won marks its 境 won; won in the highest open 境, it opens the next; won in the
+    // A run won marks its 境界 won; won in the highest open 境界, it opens the next; won in the
     // fifth, the last battle follows. A run lost changes none of it.
     const runWon = r.last.won && r.last.terminal;
     const opens = runWon && realm === open && open < WAKES.length ? open + 1 : 0;
-    if (R.openRealms(legacy) !== (opens || open)) fail(label + ': ' + R.openRealms(legacy) + ' 境 open after a run in 境 ' + realm + ' with ' + open + ' open');
-    if ((r.last.opened || 0) !== opens) fail(label + ': the ending says 境 ' + r.last.opened + ' opened, not ' + opens);
+    if (R.openRealms(legacy) !== (opens || open)) fail(label + ': ' + R.openRealms(legacy) + ' 境界 open after a run in 境界 ' + realm + ' with ' + open + ' open');
+    if ((r.last.opened || 0) !== opens) fail(label + ': the ending says 境界 ' + r.last.opened + ' opened, not ' + opens);
     const clearedNow = runWon ? [...new Set([...clearedBefore, realm])].sort() : clearedBefore;
-    if (legacy.cleared.join() !== clearedNow.join()) fail(label + ': 境 won are ' + legacy.cleared + ', not ' + clearedNow);
+    if (legacy.cleared.join() !== clearedNow.join()) fail(label + ': 境界 won are ' + legacy.cleared + ', not ' + clearedNow);
     const finale = runWon && realm === WAKES.length;
-    if (!!r.last.finale !== finale || legacy.finale !== finaleBefore + (finale ? 1 : 0)) fail(label + ': the last battle ' + (finale ? 'did not follow' : 'followed') + ' a run in 境 ' + realm);
+    if (!!r.last.finale !== finale || legacy.finale !== finaleBefore + (finale ? 1 : 0)) fail(label + ': the last battle ' + (finale ? 'did not follow' : 'followed') + ' a run in 境界 ' + realm);
     if (finale) finales++;
     for (const u of G.company(s)) if (!legacy.walked[u.id]) fail(label + ': ' + names([u.id]) + ' not recorded as having walked');
     if (!R.restoreRun(JSON.parse(JSON.stringify(s)))) fail(label + ': the finished run does not load');
@@ -298,7 +298,7 @@ for (let player = 0; player < 60; player++) {
 
 console.log(
   runs + ' runs · ' + scenes + ' scenes · ' + trios.size + ' different trios · ' +
-    routes.size + ' board orders · ' + leaders.size + ' leaders · ' + echoes + ' deja vu lines · 境 ' + [...realms].sort((a, b) => a - b).join(' ') +
+    routes.size + ' board orders · ' + leaders.size + ' leaders · ' + echoes + ' deja vu lines · 境界 ' + [...realms].sort((a, b) => a - b).join(' ') +
     ' · ' + finales + ' last battles'
 );
 if (!finales) fail('no run reached the last battle');

@@ -35,7 +35,7 @@ const LEGACY = {
   name: '',
   walked: {},
   seen: [],
-  // The 境 as difficulty levels (data/realms.js): the highest open, the ones won, and how many
+  // The 境界 as difficulty levels (data/realms.js): the highest open, the ones won, and how many
   // times the last battle has been reached.
   realms: 1,
   cleared: [],
@@ -45,12 +45,12 @@ const MAPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 // A name typed by the player: no spaces or line breaks, at most eight characters.
 const cleanName = (value) => [...String(value ?? '').replace(/\s+/g, '')].slice(0, 8).join('');
 const youthName = (s) => s.run?.chronicle?.name || YOUTH.name;
-// The 境 a run is played in: the one the player picked before it began, from those open.
+// The 境界 a run is played in: the one the player picked before it began, from those open.
 const realmOf = (r) => Math.min(WAKES.length, Math.max(1, r?.realm || 1));
 const REALM_NUMBERS = Array.from({ length: REALM_COUNT }, (_, i) => i + 1);
-// The 境 open to a profile: the first always; each further one once the one before it is won.
+// The 境界 open to a profile: the first always; each further one once the one before it is won.
 const openRealms = (profile) => Math.min(REALM_COUNT, Math.max(1, profile?.realms || 1));
-// Whether a profile has won every 境, which is what brings the last battle.
+// Whether a profile has won every 境界, which is what brings the last battle.
 const allCleared = (profile) => REALM_NUMBERS.every((n) => profile?.cleared?.includes(n));
 // A line with its {name} (the youth) and any other {keys} filled in.
 const fill = (text, s, more = {}) =>
@@ -63,8 +63,8 @@ function fillProfile(chronicle) {
   chronicle.name ??= '';
   chronicle.walked ??= {};
   chronicle.seen ??= [];
-  // Profiles from before the 境 could be picked: the 境 a run was played in was one more than
-  // the runs won, so every 境 up to that one is open and those below it are won.
+  // Profiles from before the 境界 could be picked: the 境界 a run was played in was one more than
+  // the runs won, so every 境界 up to that one is open and those below it are won.
   const won = Math.min(REALM_COUNT, chronicle.wins || 0);
   chronicle.realms ??= Math.min(REALM_COUNT, won + 1);
   chronicle.cleared ??= REALM_NUMBERS.slice(0, won);
@@ -112,7 +112,7 @@ function initialRun(ids, seed, legacy, realm) {
     trees: TREES_EDITION,
     battles: BATTLES_EDITION,
     voyage: chronicle.returns + 1,
-    // The 境 picked; one not yet open (or none given) is the highest open.
+    // The 境界 picked; one not yet open (or none given) is the highest open.
     realm: realm >= 1 && realm <= openRealms(chronicle) ? realmIndex(realm) : openRealms(chronicle),
     priorFate: chronicle.lastFate,
     seed,
@@ -167,7 +167,7 @@ function startRun(draw = drawLots(), legacy = LEGACY) {
   s.logs = [];
   s.stock = { remedy: 2 + (legacy.best >= 7 ? 1 : 0), elixir: 2, travelBlade: 1, bracer: 1 };
   s.run.manuals.push('softPalm');
-  // The first board's black stones, in the run's 境 (the first 境 has them as newGame made them).
+  // The first board's black stones, in the run's 境界 (the first 境界 has them as newGame made them).
   s.units = [...G.party(s), ...defenders(s)];
   G.identifyEncounter(s);
   setUpBoard(s);
@@ -566,8 +566,8 @@ function restoreRun(raw) {
   fillProfile(r.chronicle);
   r.voyage ??= Math.max(1, r.chronicle.returns + (closed ? 0 : 1));
   r.priorFate ??= null;
-  // Runs saved before the 境 was kept: one more than the runs won before this one began. Runs
-  // saved past the fifth 境 (when it was played again) are in the fifth.
+  // Runs saved before the 境界 was kept: one more than the runs won before this one began. Runs
+  // saved past the fifth 境界 (when it was played again) are in the fifth.
   r.realm ??= Math.max(1, r.chronicle.wins + 1 - (closed && r.last.won ? 1 : 0));
   if (Number.isSafeInteger(r.realm)) r.realm = Math.min(REALM_COUNT, r.realm);
   if (
@@ -656,7 +656,7 @@ function echoBeat(s) {
 // The lines of one scene: before a battle, or after it.
 //
 // Three layers are put together here, and none of them knows about the others:
-//   the spine   what belongs to this position in the run and to its 境 (the first board, the
+//   the spine   what belongs to this position in the run and to its 境界 (the first board, the
 //               night talk, what 求敗 says after each board, the end)
 //   the board   ENCOUNTER_SCRIPT for the map being played
 //   the heroes  HERO_VOICES for whoever happens to be in the company
@@ -681,7 +681,7 @@ function dialogue(s, scene = s.run.scene) {
       for (const u of G.company(s)) beats.push({ who: u.id, ...HERO_VOICES[u.id].arrival });
       beats.push({ who: 'youth', ...MAZE_TALE.ruleRead });
       beats.push({ who: 'wei', text: MAZE_TALE.ruleTold });
-      // From the second 境 the heroes are told what they are.
+      // From the second 境界 the heroes are told what they are.
       if (realm >= 2) beats.push(...(realm >= 4 ? MAZE_TALE.told.plain : MAZE_TALE.told.cold));
       beats.push({ who: 'youth', ...MAZE_TALE.command });
       beats.push({ who: captain.id, text: HERO_VOICES[captain.id].obey });
@@ -1344,8 +1344,8 @@ function settle(s) {
   if (bonus) G.log(s, 'grow', '支線達成，' + rewardText(r.side, r.stage, bonus.manual) + '。', '支線');
   return true;
 }
-// A run won: its 境 is marked won, and winning the highest open 境 opens the next. Winning the
-// fifth means every 境 has been won, and the last battle follows (r.last.finale). Kept on the
+// A run won: its 境界 is marked won, and winning the highest open 境界 opens the next. Winning the
+// fifth means every 境界 has been won, and the last battle follows (r.last.finale). Kept on the
 // run until settle writes it into r.last.
 function clearRealm(r) {
   const p = r.chronicle,

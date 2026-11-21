@@ -1,5 +1,5 @@
-// The 境 picker shown before a run, and the placeholder last battle and ending that follow the
-// fifth 境 won. The 境 are difficulty levels (data/realms.js); the story keys 求敗's lines to the
+// The 境界 picker shown before a run, and the placeholder last battle and ending that follow the
+// fifth 境界 won. The 境界 are difficulty levels (data/realms.js); the story keys 求敗's lines to the
 // one picked.
 import { btn, titleHead, esc } from './panels.js';
 import { icon } from './icons.js';
@@ -11,7 +11,7 @@ import { MAZE_TALE, YOUTH, QIUBAI } from '../data/maze-tale.js';
 const NUMERAL = '一二三四五';
 
 //   profile  the chronicle: realms (highest open), cleared (won), finale (times reached)
-//   picked   the 境 chosen so far
+//   picked   the 境界 chosen so far
 function realmView(profile, picked) {
   const open = Math.max(1, profile.realms || 1),
     cleared = profile.cleared || [];
@@ -24,7 +24,7 @@ function realmView(profile, picked) {
     return `<li class="realm-card${shut ? ' shut' : ''}${won ? ' won' : ''}${chosen ? ' chosen' : ''}">
       ${btn(
         'realm-pick',
-        `<span class="realm-seal">${NUMERAL[i]}</span><span class="realm-name"><strong>第${NUMERAL[i]}境・${esc(realm.sword)}</strong><small>${esc(WAKES[i].title)}</small></span><span class="realm-state">${state}</span><span class="realm-note">${esc(shut ? '先勝第' + NUMERAL[i - 1] + '境，此境方開。' : realm.note)}</span>`,
+        `<span class="realm-seal">${NUMERAL[i]}</span><span class="realm-name"><strong>第${NUMERAL[i]}境界・${esc(realm.sword)}</strong><small>${esc(WAKES[i].title)}</small></span><span class="realm-state">${state}</span><span class="realm-note">${esc(shut ? '先勝第' + NUMERAL[i - 1] + '境界，此重境界方開。' : realm.note)}</span>`,
         'realm-choice',
         `data-id="${n}" aria-pressed="${chosen}" ${shut ? 'disabled' : ''}`
       )}
@@ -32,10 +32,10 @@ function realmView(profile, picked) {
   }).join('');
   const finale = profile.finale > 0;
   return `<section class="run-view run-realm">
-    ${titleHead('scroll', '選境')}
-    <p class="realm-lead">棋臺邊的石上刻著五柄劍的來歷。每勝一輪，求敗便放下一樣，他的黑子便多一分自己，也多一分難纏。選一境入夢。勝了已開的最高一境，下一境方開；五境皆勝，便有最後一局。</p>
-    <ol class="realm-list" aria-label="五境">${cards}</ol>
-    <footer class="run-footer">${btn('close', '返回', 'outline-btn')}<span class="realm-actions">${finale ? btn('finale-replay', '重看終局', 'outline-btn') : ''}${btn('realm-go', '入夢・第' + NUMERAL[picked - 1] + '境', 'gold-btn')}</span></footer>
+    ${titleHead('scroll', '選境界')}
+    <p class="realm-lead">棋臺邊的石上刻著五柄劍的來歷。每勝一輪，求敗便放下一樣，他的黑子便多一分自己，也多一分難纏。選一重境界入夢。勝了已開的最高一重境界，下一重境界方開；五重境界皆勝，便有最後一局。</p>
+    <ol class="realm-list" aria-label="五重境界">${cards}</ol>
+    <footer class="run-footer">${btn('close', '返回', 'outline-btn')}<span class="realm-actions">${finale ? btn('finale-replay', '重看終局', 'outline-btn') : ''}${btn('realm-go', '入夢・第' + NUMERAL[picked - 1] + '境界', 'gold-btn')}</span></footer>
   </section>`;
 }
 

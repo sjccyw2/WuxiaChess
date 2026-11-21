@@ -1,16 +1,16 @@
-// The five 境 as difficulty levels. The player picks one before each run, from those open.
-// The first is open from the start; winning a run in the highest open 境 opens the next, and
-// winning the fifth (which means every 境 has been won) leads to the last battle.
+// The five 境界 as difficulty levels. The player picks one before each run, from those open.
+// The first is open from the start; winning a run in the highest open 境界 opens the next, and
+// winning the fifth (which means every 境界 has been won) leads to the last battle.
 //
-// In the story each 境 is one step in 求敗 letting go: the 戰意 on his black stones loosens and
+// In the story each 境界 is one step in 求敗 letting go: the 戰意 on his black stones loosens and
 // they grow more themselves, and so stronger (world view §8.2). In play that is, for now, the
-// enemies' numbers only. The first 境 plays exactly as the game always has.
+// enemies' numbers only. The first 境界 plays exactly as the game always has.
 //
-//   sword   the sword of the tomb this 境 is named for
+//   sword   the sword of the tomb this 境界 is named for
 //   hp      every enemy's 氣血, multiplied
 //   atk     every enemy's 攻擊, multiplied
 //   def     every enemy's 防禦, added
-//   note    what the picker says the 境 changes
+//   note    what the picker says the 境界 changes
 const REALMS = [
   { sword: '利劍', hp: 1, atk: 1, def: 0, note: '黑子如常。' },
   { sword: '軟劍', hp: 1.06, atk: 1.03, def: 0, note: '黑子氣血略厚，出手略重。' },
@@ -21,7 +21,7 @@ const REALMS = [
 const REALM_COUNT = REALMS.length;
 const realmIndex = (realm) => Math.min(REALM_COUNT, Math.max(1, Math.trunc(Number(realm)) || 1));
 const realmRule = (realm) => REALMS[realmIndex(realm) - 1];
-// A stage row [hp, atk, def, step, range] in a 境. The first 境 leaves it untouched.
+// A stage row [hp, atk, def, step, range] in a 境界. The first 境界 leaves it untouched.
 function inRealm(row, realm = 1) {
   const n = realmIndex(realm);
   if (n === 1) return row;

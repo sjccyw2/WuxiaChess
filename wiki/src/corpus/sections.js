@@ -366,10 +366,10 @@ export const PLACES = {
     'NO_MARK': ['劇情、對白與旁白', '臺邊的五行字']
   },
   'src/data/realms.js': {
-    'REALMS': ['開場與操作', '五境']
+    'REALMS': ['開場與操作', '五重境界']
   },
   'src/ui/realm-views.js': {
-    'realmView': ['開場與操作', '五境'],
+    'realmView': ['開場與操作', '五重境界'],
     'finaleView': ['劇情、對白與旁白', '最後一局（暫代）']
   },
   'src/ui/dev-mode.js': {
