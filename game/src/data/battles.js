@@ -1,8 +1,14 @@
 // What each board is: how it is won, who stands on it beyond its fixed four pieces, who comes
 // later, and the pool its secondary objective is drawn from. One entry per map index.
 //
-//   kind     'slay': every master must fall; 'rout': every enemy, reinforcements included
+//   kind     'slay': every master must fall; 'rout': every enemy, reinforcements included;
+//            'keep' (守): the board's objects must stand until the end of round `hold`, or every
+//            master fall first, and it is lost if one breaks; 'break' (破): every object must break
 //   masters  piece refs of the board's 局主, 'master' first
+//   objects  the board objects (board-objects.js), { id, at }; an id is the object's key, or the
+//            key numbered on its board ('starPost#1') when there are two
+//   hold     on a 'keep' board, the last round the objects must stand through
+//   legacyKind  the kind a save from before the board had objects finishes under
 //   pieces   starting pieces beyond the fixed four, in the order they act
 //   waves    reinforcements: { id, when: { round } | { halved: [refs] }, place, pieces }; a
 //            wave's first piece leads it, and each piece's `at` is its entry tile
@@ -99,10 +105,15 @@ const BATTLES = [
       { kind: 'swift', by: 5, reward: 'coins' }
     ]
   },
-  // 4 空山琴臺: 嵩山弟子 up both wings, east in round 3 and west in round 5.
+  // 4 空山琴臺: keep the qin on its stone seat on the open terrace, east of the steps, through
+  // round 8; 嵩山弟子 up both wings, east in round 3 and west in round 5. 左冷禪 and 費彬 hold
+  // their posts; their men go for the qin.
   {
-    kind: 'slay',
+    kind: 'keep',
+    legacyKind: 'slay',
     masters: ['master'],
+    objects: [{ id: 'guqin', at: [8, 5] }],
+    hold: 8,
     pieces: [],
     waves: [
       {
@@ -172,10 +183,16 @@ const BATTLES = [
       { kind: 'lamp', reward: 'coins' }
     ]
   },
-  // 6 襄陽殘垣: the big one; riders twice from the east, 完顏洪烈 and his archers from the west.
+  // 6 襄陽殘垣: keep the city's war drum where the one passage south opens, through round 9: whoever
+  // gets through the passage is at the drum. Riders twice from
+  // the east, 完顏洪烈 and his archers from the west. 完顏洪烈 is its second master (Q-N28): a
+  // master still to come has not fallen, so felling 金輪國師 alone does not end it.
   {
-    kind: 'slay',
-    masters: ['master'],
+    kind: 'keep',
+    legacyKind: 'slay',
+    masters: ['master', 'wanYan'],
+    objects: [{ id: 'warDrum', at: [6, 9] }],
+    hold: 9,
     pieces: [],
     waves: [
       {
@@ -211,7 +228,9 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
       { kind: 'intact', reward: 'coins' },
       { kind: 'double', reward: 'coins' },
-      { kind: 'holdLine', zone: { y: [9, 12] }, place: '南面甬道', reward: 'manual' }
+      // 南面甬道 (holdLine, y 9–12) stood here: with the drum at the passage's mouth it was the
+      // primary over again, met every time the board was won.
+      { kind: 'unhurt', reward: 'manual' }
     ]
   },
   // 7 寒玉石室: the lean board, its four pieces only.
@@ -254,10 +273,17 @@ const BATTLES = [
       { kind: 'answer', hero: 'hero', reward: 'points' }
     ]
   },
-  // 9 無刻漏臺: the final board; a second lieutenant beside the ropes, his disciples at the west gate.
+  // 9 無刻漏臺: the final board; break the two posts the star ropes are tied to, each guarded by a
+  // rope-keeper, while each standing post takes 35% off 慕容博's blows. A second lieutenant beside
+  // the ropes, his disciples at the west gate.
   {
-    kind: 'slay',
+    kind: 'break',
+    legacyKind: 'slay',
     masters: ['master'],
+    objects: [
+      { id: 'starPost#1', at: [11, 4] },
+      { id: 'starPost#2', at: [2, 11] }
+    ],
     pieces: [
       { id: 'wanZhen', at: [10, 3] },
       { id: 'wanDisciple#1', at: [9, 3] }
@@ -278,7 +304,9 @@ const BATTLES = [
       // mirror stays charged until it turns a blow. It can return once 吸勁 can hold the mirror off
       // (ROADMAP 0.8).
       { kind: 'intact', reward: 'manual' },
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'coins' },
+      // The last blow on 慕容博 stood here: the board ends when the second post falls, so it could
+      // be met only by felling him first through his ward, and almost never was.
+      { kind: 'lastBlow', hero: '*', target: 'lieutenant', reward: 'coins' },
       { kind: 'order', first: 'wanZhen', reward: 'coins' },
       { kind: 'unhurt', reward: 'coins' }
     ]

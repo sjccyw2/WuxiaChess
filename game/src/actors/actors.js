@@ -190,7 +190,13 @@ class ActorLayer {
     this.mode = mode;
     this.prefs = prefs;
     this.preview = null;
-    this.warm(state.units.filter(G.living).map((u) => G.unitDetails(u).mini));
+    this.warm(state.units.filter((u) => G.living(u) && !G.isProp(u)).map((u) => G.unitDetails(u).mini));
+    // Board objects: both pictures, so the broken one is ready when it breaks.
+    for (const u of G.props(state)) {
+      const art = 'object-' + G.unitDetails(u).art;
+      this.image(art);
+      this.image(art + '-broken');
+    }
     this.latestMoves.clear();
     for (const u of state.units) {
       const old = this.snapshot.get(u.id);
@@ -535,12 +541,20 @@ class ActorLayer {
     c.save();
     for (const [i, guard] of guards.entries()) {
       const from = this.location(guard, this.time);
-      const star = (t) =>
-        this.point(
+      // A star post's rope leaves from the knot on the post as drawn (object(), the frame before);
+      // the path is eased from there onto the arc a piece's rope takes from its waist.
+      const knot = G.isProp(guard) ? this.knots?.get(guard.id) : null,
+        waist = knot && this.point(from.x, from.y, 0.24);
+      const star = (t) => {
+        const q = this.point(
           from.x + (center.x - from.x) * t,
           from.y + (center.y - from.y) * t,
           0.24 + Math.sin(Math.PI * t) * 0.38
         );
+        if (!knot) return q;
+        const k = (1 - t) * (1 - t);
+        return { ...q, x: q.x + (knot.x - waist.x) * k, y: q.y + (knot.y - waist.y) * k };
+      };
       const start = star(0);
       c.beginPath();
       c.moveTo(start.x, start.y);
@@ -744,7 +758,75 @@ class ActorLayer {
     }
     return clamp(hp, 0, u.maxHp);
   }
+  // A board object (G.isProp): its painted picture standing on its tile, the broken one once it
+  // has broken; a gauge and a mark saying whose it is (守 ours, 破 to break) while it stands. It
+  // shakes while a blow lands, and never fades: a broken thing stays on the board.
+  object(u, pos, now) {
+    const c = this.ctx,
+      p = this.point(pos.x, pos.y),
+      scale = this.scaleAt(pos.x, pos.y);
+    if (!scale) return;
+    const d = G.unitDetails(u),
+      keep = G.propKind(u) === 'keep',
+      shown = this.healthAt(u, now),
+      broken = shown <= 0;
+    const tr = this.tracks.get(u.id) || {};
+    const hurt = (tr.clips || []).find((clip) => clip.row === 3 && now >= clip.start && now < clip.end);
+    const shake = hurt && this.prefs.motion ? Math.sin((now - hurt.start) / 22) * scale * 0.035 * (1 - (now - hurt.start) / (hurt.end - hurt.start)) : 0;
+    c.save();
+    // Its shadow, and a ring in the colour of the side it belongs to.
+    this.circle(pos.x + 0.05, pos.y + 0.035, 0.38, 0.094);
+    c.fillStyle = 'rgba(27,32,25,.34)';
+    c.fill();
+    if (!broken) {
+      this.circle(pos.x, pos.y, 0.36, 0.099);
+      c.strokeStyle = keep ? '#b7ebc4cc' : '#f2ac86cc';
+      c.lineWidth = 1.6;
+      c.setLineDash([4, 3]);
+      c.stroke();
+      c.setLineDash([]);
+    }
+    const img = this.image('object-' + d.art + (broken ? '-broken' : ''));
+    let top = p.y - scale;
+    if (img.complete && img.naturalWidth) {
+      // Its height a share of a fighter's, and never wider than about a tile and a half.
+      let h = scale * 1.68 * (d.size || 0.8),
+        w = (h * img.naturalWidth) / img.naturalHeight;
+      const most = scale * 1.6;
+      if (w > most) {
+        h *= most / w;
+        w = most;
+      }
+      top = p.y - h * 0.93;
+      c.drawImage(img, p.x - w / 2 + shake, top, w, h);
+      // Where a rope tied to it starts (drawWard): the knot, a little above the middle.
+      (this.knots ??= new Map()).set(u.id, { x: p.x, y: top + h * 0.36 });
+      if (!broken)
+        this.boxes.push({ id: u.id, left: p.x - w / 2, right: p.x + w / 2, top: top + h * 0.1, bottom: p.y + scale * 0.08 });
+    }
+    if (!broken) {
+      const len = clamp(scale * 0.62, 20, 42),
+        y = top - 5;
+      c.fillStyle = '#17241fe8';
+      c.fillRect(p.x - len / 2 - 1, y - 1, len + 2, 5);
+      c.fillStyle = keep ? '#abe9c4' : '#ffa280';
+      c.fillRect(p.x - len / 2, y, (len * shown) / u.maxHp, 3);
+      const bx = p.x + len / 2 + 4;
+      c.fillStyle = keep ? '#254b41' : '#6a291e';
+      c.fillRect(bx - 1, y - 6, 13, 14);
+      c.fillStyle = keep ? '#d8f5df' : '#ffda8e';
+      c.font = 'bold 10px serif';
+      c.textAlign = 'center';
+      c.textBaseline = 'alphabetic';
+      c.fillText(keep ? '守' : '破', bx + 5.5, y + 4.5);
+    }
+    c.restore();
+  }
   actor(u, pos, now, title) {
+    if (G.isProp(u)) {
+      if (!title) this.object(u, pos, now);
+      return;
+    }
     const c = this.ctx,
       p = this.point(pos.x, pos.y),
       scale = this.scaleAt(pos.x, pos.y);

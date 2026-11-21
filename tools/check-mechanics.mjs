@@ -141,6 +141,12 @@ function quietTurn(s) {
 // Win the board (every enemy down, none still to come) and walk through the camp to the next one.
 function nextBoard(s) {
   for (const e of G.enemies(s)) e.hp = 0;
+  // 破: its objects broken too; 守: held to its last round (a master still to come never falls).
+  for (const o of G.props(s)) if (G.propKind(o) === 'break') o.hp = 0;
+  if (G.boardKind(s) === 'keep') {
+    s.round = G.boardOf(s).hold;
+    s.phase = 'enemy';
+  }
   s.arrivals = {};
   G.check(s);
   R.settle(s);
@@ -3247,7 +3253,7 @@ for (const stage of [5, 6]) {
   const want = { 5: [[373, 47, 20, 2, 2], [156, 44, 12, 4, 2]], 6: [[452, 59, 22, 2, 2], [193, 54, 13, 4, 2]] }[stage];
   check('stage ' + stage + ': 金輪國師 and 霍都 have the spec’s numbers', same(numbersOf(jin), want[0]) && same(numbersOf(huo), want[1]), numbersOf(jin) + ' / ' + numbersOf(huo));
   check('stage ' + stage + ': 龍象般若功 is a line at 1.30 reaching 3', G.enemyTechnique(jin, s).style === 'line' && G.enemyTechnique(jin, s).factor === 1.3 && G.enemyTechnique(jin, s).reach === 3);
-  check('stage ' + stage + ': 金輪國師’s page', same(pageOf(s, jin), ['輪勢穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。', '絕技射程 3 格。']), JSON.stringify(pageOf(s, jin)));
+  check('stage ' + stage + ': 金輪國師’s page', same(pageOf(s, jin), ['輪勢穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。', '絕技射程 3 格。', '【雙局主】與完顏洪烈同為局主，兩人都倒下才算取勝（守滿回合亦勝）。']), JSON.stringify(pageOf(s, jin)));
   check('stage ' + stage + ': 霍都 holds the gateway (RULINGS F) and picks the lone hero', same(G.enemyTraitLines(s, huo), ['【坐鎮】守在門洞（6，5）一格內，不離位。', '【偏好】專挑落單者。']), JSON.stringify(G.enemyTraitLines(s, huo)));
   check('stage ' + stage + ': the archer holds the east wall; the horseman rides five', same(G.enemyTraitLines(s, bow), ['【坐鎮】守在東牆（15，6）一格內，不離位。']) && scout.step === 5);
   check('stage ' + stage + ': the posts are ground the heroes can walk to', postsReachable(s));
@@ -3336,11 +3342,11 @@ section('board 9 無刻漏臺: the mirror');
   const [mu, jiu, bow, scout] = foesOf(s);
   check('慕容博 and 鳩摩智 have the spec’s numbers', same(numbersOf(mu), [867, 93, 24, 4, 2]) && same(numbersOf(jiu), [337, 86, 16, 3, 2]), numbersOf(mu) + ' / ' + numbersOf(jiu));
   check('斗轉星移 is the mirror, no blow', G.enemyTechnique(mu, s).style === 'mirror' && !G.enemyTechnique(mu, s).strikes);
-  check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。', '【星索護陣】每名存活的守索人替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
+  check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。', '【星索護陣】每根立著的星索樁替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
   check('鳩摩智’s page', same(pageOf(s, jiu), ['另外削去目標 24 點內力。', '絕技射程 4 格。', '【偏好】專挑內力深厚者。']), JSON.stringify(pageOf(s, jiu)));
-  check('the rope-holders’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【坐鎮】守在索樁一格內，不離位。', '【護陣】存活時替慕容博抵擋 35% 傷害。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
+  check('the rope-holders’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【坐鎮】守在索樁一格內，不離位。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
   check('the posts are ground the heroes can walk to', postsReachable(s));
-  check('two living rope-holders take 70% off him', G.wardShare(s, mu) === 70);
+  check('two standing star posts take 70% off him', G.wardShare(s, mu) === 70);
   // The mirror: charged in round 2, the first direct blow does him nothing and turns half back.
   for (const v of G.party(s)) if (!['hero', 'medic', 'guard'].includes(v.id)) v.hp = 0;
   s.round = 2;
@@ -3356,13 +3362,123 @@ section('board 9 無刻漏臺: the mirror');
   const atk = mu.atk;
   G.check(s);
   check('at half his phase is the data’s', mu.phased && mu.atk === atk + 5 && mu.range === 3 && mu.brace && s.logs.at(-1).text === G.unitDetails(mu).traits.phase.log);
-  // A rope breaks.
-  bow.hp = 1;
-  const reach = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: bow.x + dx, y: bow.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
+  // A rope breaks: a hero fells the post it is tied to.
+  const post = unit(s, 'starPost#1');
+  post.hp = 1;
+  const reach = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: post.x + dx, y: post.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
   const hero = put(s, 'hero', reach.x, reach.y);
   hero.acted = hero.moved = false;
-  G.resolve(s, hero, bow, false);
+  G.resolve(s, hero, post, false);
   check('one rope down: the ward is 35% and the log says so', G.wardShare(s, mu) === 35 && s.logs.some((l) => l.text === '一條星索斷了。慕容博的護勁降至三成半。'));
+}
+
+// ── Board objects (roadmap 0.11 stage two): 守 the qin and the drum, 破 the star posts ─────
+section('board objects: 守 and 破');
+const { BOARD_OBJECTS } = await load('data/board-objects.js');
+const { ENCOUNTER_SCRIPT } = await load('data/encounter-script.js');
+{
+  // Every hero off the board but the leader, who is parked where no enemy will reach this turn.
+  const clearHeroes = (s) => {
+    for (const v of G.party(s)) if (v.id !== s.leader) v.hp = 0;
+  };
+  const s = realBoard(4, 3);
+  const qin = unit(s, 'guqin'),
+    zuo = unit(s, G.commanderId(s));
+  const row = G.stageRows(4, 3).master;
+  check('空山琴臺 is a 守 board, its qin on a 琴座 stone east of the steps', G.boardKind(s) === 'keep' && qin && qin.side === 'prop' && qin.x === 8 && qin.y === 5 && G.terrainInfo(8, 5, 4).name === '琴座矮石');
+  check('the qin’s 氣血 and 防禦 come from the stage’s master row', qin.maxHp === Math.round(row[0] * BOARD_OBJECTS.guqin.hp) && qin.def === row[2] + BOARD_OBJECTS.guqin.def, [qin.maxHp, qin.def]);
+  check('it is no hero’s and no foe’s piece', !G.party(s).includes(qin) && !G.enemies(s).includes(qin) && G.props(s).includes(qin));
+  const hero = unit(s, s.leader);
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: qin.x + dx, y: qin.y + dy })).find((p) => G.walkable(p.x, p.y, 4) && !G.at(s, p.x, p.y));
+  put(s, s.leader, spot.x, spot.y);
+  hero.acted = hero.moved = false;
+  check('a hero may not strike the qin, with a plain blow or an art', !G.targetOK(s, hero, qin, false) && !G.targetOK(s, hero, qin, true));
+  check('a black stone may', G.hostile(zuo, qin) && !G.hostile(zuo, zuo));
+  check('nobody walks onto or through its tile', !G.reachable(s, hero).has(G.key(qin.x, qin.y)));
+  BM.applyCondition(s, qin, { kind: 'pin', power: 2, turns: 2 }, zuo);
+  check('it takes no condition', !qin.conditions?.pin);
+  const live = R.briefing(s, { live: true });
+  check('軍情 names the kind, the hold and the qin', live.kindName === '守' && live.win.includes('七弦琴') && live.win.includes('第八回合') && live.objects.length === 1 && live.objects[0].art === 'object-qin.webp');
+  check('and the goals page has its 氣血 and the rounds to hold', live.live.objects[0].hp === qin.hp && live.live.hold === '尚須守 8 回合', JSON.stringify(live.live));
+  // A black stone beside it with no hero in reach strikes the qin, and the board says so once.
+  const raider = G.enemies(s).find((v) => v.id !== G.commanderId(s) && !G.traitsOf(v).post);
+  const near = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: qin.x + dx, y: qin.y + dy })).find((p) => G.walkable(p.x, p.y, 4) && !G.at(s, p.x, p.y));
+  Object.assign(raider, near);
+  hero.x = mapLayout(4).allies[0].x;
+  hero.y = mapLayout(4).allies[0].y;
+  clearHeroes(s);
+  G.party(s).forEach((v) => v.hp > 0 && Object.assign(v, { x: 3, y: 0 }));
+  const before = qin.hp;
+  soloTurn(s, raider);
+  check('a black stone with the qin in reach strikes it', qin.hp < before, [before, qin.hp, raider.id, raider.x, raider.y]);
+  check('the first blow on it is told by the board', s.logs.some((l) => l.text === ENCOUNTER_SCRIPT[4].objects.guqin.hit.text));
+  check('it gave no counter and the striker is unhurt', raider.hp === raider.maxHp);
+  // Holding: not won in round 7, won once round 8's enemy phase is over.
+  const hold = copy(s);
+  hold.round = 7;
+  hold.phase = 'enemy';
+  for (const e of G.enemies(hold)) e.acted = true;
+  G.check(hold);
+  check('round 7 held is not yet a win', hold.result === null);
+  hold.round = 8;
+  G.check(hold);
+  check('round 8 held: won, the board says the thought ran out', hold.result === 'win' && hold.logs.some((l) => l.text === ENCOUNTER_SCRIPT[4].objects.guqin.held.text));
+  const early = copy(s);
+  early.round = 8;
+  early.phase = 'ally';
+  G.check(early);
+  check('round 8 is not held until its enemy phase is over', early.result === null);
+  // Felling every master wins too; the qin breaking loses, whatever else.
+  const slay = copy(s);
+  unit(slay, G.commanderId(slay)).hp = 0;
+  G.check(slay);
+  check('felling 左冷禪 wins the 守 board', slay.result === 'win');
+  const lost = copy(s);
+  unit(lost, 'guqin').hp = 1;
+  const breaker = G.enemies(lost).find((v) => v.id === raider.id);
+  for (const e of G.enemies(lost)) e.acted = e !== breaker;
+  G.enemyAct(lost, breaker);
+  check('the qin broken loses the board, with the board’s own reason', lost.result === 'loss' && lost.reason === ENCOUNTER_SCRIPT[4].objects.guqin.lost, lost.reason);
+  check('and its breaking is no fall in the tally', !lost.tally.falls.some((f) => f.id === 'guqin'));
+  // A save keeps it; a save from before boards had objects plays the board as it began.
+  const kept = R.restoreRun(copy(s));
+  check('a save keeps the qin', !!kept && G.props(kept).length === 1 && G.find(kept, 'guqin').hp === qin.hp);
+  const old = copy(s);
+  old.units = old.units.filter((u) => u.side !== 'prop');
+  const restored = R.restoreRun(old);
+  check('a save from before the qin loads and plays as 斬將', !!restored && G.boardKind(restored) === 'slay');
+  // The danger zone: the qin threatens nothing, and its tile is shaded when a black stone reaches it.
+  const zone = dangerTiles(s);
+  check('the danger zone shades the qin’s tile', zone.has(G.key(qin.x, qin.y)));
+}
+{
+  const s = realBoard(6, 5);
+  const drum = unit(s, 'warDrum');
+  check('襄陽殘垣 is a 守 board, its drum where the passage south opens, held through round 9', G.boardKind(s) === 'keep' && drum && drum.x === 6 && drum.y === 9 && G.boardOf(s).hold === 9);
+  const jin = unit(s, G.commanderId(s));
+  jin.hp = 0;
+  G.check(s);
+  check('felling 金輪國師 while 完顏洪烈 has not come is no win', s.result === null && G.objectiveLeft(s).masters.includes('wanYan'));
+}
+{
+  const s = realBoard(9, 9);
+  const [a, b] = ['starPost#1', 'starPost#2'].map((id) => unit(s, id));
+  check('無刻漏臺 is a 破 board with two star posts beside the rope-keepers', G.boardKind(s) === 'break' && a && b && G.distance(a, unit(s, 'echoBow')) === 1 && G.distance(b, unit(s, 'echoScout')) === 1);
+  const hero = unit(s, s.leader);
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: a.x + dx, y: a.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
+  put(s, s.leader, spot.x, spot.y);
+  hero.acted = hero.moved = false;
+  const f = G.forecast(hero, a, false, s);
+  check('a hero may strike a post: a plain blow, no counter, no push, no rider', G.targetOK(s, hero, a, false) && f.amount > 0 && f.counterRaw === 0 && !f.push && !f.effects.length && f.notes.includes(G.OBJECT_NOTE));
+  check('no black stone strikes a post', !G.hostile(unit(s, G.commanderId(s)), a));
+  check('splash and arcs pass the posts by', !FR.secondaryTargets(s, hero, unit(s, 'echoBow'), unit(s, 'echoBow'), { splash: 1 }, ['arc'], G.walkable).has(a));
+  a.hp = 1;
+  G.resolve(s, hero, a, false);
+  check('one post down: no result yet, the ward halves, the board speaks', !s.result && G.wardShare(s, unit(s, 'murong')) === 35 && s.logs.some((l) => l.text === ENCOUNTER_SCRIPT[9].objects.starPost.broken.text));
+  check('a post broken is no kill', s.stats.kills === 0 || !s.tally.falls.some((x) => x.id.startsWith('starPost')));
+  b.hp = 0;
+  G.check(s);
+  check('both down: the 破 board is won, 慕容博 standing', s.result === 'win' && G.living(unit(s, 'murong')));
 }
 
 // ── The shop's new items: 屠龍刀, 軟蝟甲 (反刺), 九花玉露丸, 玉蜂漿 ──────────
@@ -3519,7 +3635,8 @@ section('battle data');
   const newHeroes = ['qiaoFeng', 'xuZhu', 'hongQi', 'yaoShi', 'sanFeng', 'zhaoMin', 'lingSu', 'diYun', 'chengZhi', 'aQing'];
   const text = JSON.stringify([BATTLES, VILLAINS, TROOPS]);
   check('no kept-back villain, troop or new hero appears in the boards or the new tables', [...kept, ...newHeroes].every((id) => !text.includes(id)));
-  check('ten boards, each slay or rout, masters led by the board master', BATTLES.length === 10 && BATTLES.every((b) => ['slay', 'rout'].includes(b.kind) && b.masters[0] === 'master'));
+  check('ten boards, each slay, rout, keep or break, masters led by the board master', BATTLES.length === 10 && BATTLES.every((b) => ['slay', 'rout', 'keep', 'break'].includes(b.kind) && b.masters[0] === 'master'));
+  check('a board with objects has a kind for saves from before them, and a keep board a hold', BATTLES.every((b) => !b.objects || (['slay', 'rout'].includes(b.legacyKind) && (b.kind !== 'keep' || (b.hold > 0 && b.hold < G.LIMIT)))));
   for (const [map, b] of BATTLES.entries()) {
     const layout = mapLayout(map),
       reach = reachableTiles(map);
@@ -4297,7 +4414,7 @@ for (const [map, b] of BATTLES.entries())
   const s9 = realBoard(9, 9);
   check('無刻漏臺: the wards still read 35% each', G.wardShare(s9, unit(s9, 'murong')) === 70);
   check('無刻漏臺: 萬門劍徒’s page', same(G.pieceLines(9, 'wanDisciple#1', 9), ['【斬殘】對氣血不過半的俠客出手或還擊時，攻擊 ＋10。', '【偏好】專挑傷重者。']));
-  check('襄陽殘垣: 完顏洪烈 is a 副手 leading the round-4 wave', R.boardBrief(6, 5).foes.some((f) => f.name === '完顏洪烈' && f.rank === '副手' && f.note === '（第四回合入場）'));
+  check('襄陽殘垣: 完顏洪烈 is its second 局主, leading the round-4 wave', R.boardBrief(6, 5).foes.some((f) => f.name === '完顏洪烈' && f.rank === '局主' && f.note === '（第四回合入場）') && BATTLES[6].masters.includes('wanYan'));
   check('寒玉石室 stays lean: four pieces, no waves, no lamp in its pool', BATTLES[7].pieces.length === 0 && !BATTLES[7].waves.length && !BATTLES[7].sides.some((e) => e.kind === 'lamp'));
 }
 

@@ -13,7 +13,8 @@
 //            of its own type with less 氣血)
 //   crowded  { within, atk }: 近身失準, its blows and counters on a hero that close are weaker
 //   execute  { atk }: 斬殘, its blows and counters on a hero at or below half are stronger
-//   ward     the share (percent) a living rank-and-file piece takes off its master's blows
+//   ward     the share (percent) a living piece takes off its master's blows (星索護陣; today only
+//            the board objects carry it, board-objects.js)
 // A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
 // without traits plays exactly as before the redesign.
 function adversary(name, school, book, basic, skill, style, visual, bio, mini, robe, traits = {}) {
@@ -372,7 +373,7 @@ const ENCOUNTERS = [
       '斗轉星移',
       'mirror',
       'duan',
-      '姑蘇慕容氏，半生躲在暗處撥弄旁人相鬥，如今自己成了旁人盤上的一枚子。兩股星索從盤外垂下，繫在他身上；兩名守索人各守一股，斷索可卸他的護勁。',
+      '姑蘇慕容氏，半生躲在暗處撥弄旁人相鬥，如今自己成了旁人盤上的一枚子。兩股星索從盤外垂下，各繫在一根銅樁上，再牽到他身上；樁旁各有一名守索人。倒一根樁，便卸他三成半護勁。',
       'murong',
       '',
     {
@@ -591,8 +592,8 @@ const RANKS = [
       school: '姑蘇慕容',
       mini: 'archer',
       basic: '星索',
-      bio: '繫住一股星索的人。索不斷，慕容博的護勁不散。',
-      traits: { post: { tile: 'spawn', tether: 1, wake: false, note: '守在索樁一格內，不離位。' }, ward: 35 }
+      bio: '守著一根索樁的人。樁不倒，繫在慕容博身上的那股星索便不斷。',
+      traits: { post: { tile: 'spawn', tether: 1, wake: false, note: '守在索樁一格內，不離位。' } }
     },
     scout: {
       name: '守索人',
@@ -600,8 +601,8 @@ const RANKS = [
       school: '姑蘇慕容',
       mini: 'bandit',
       basic: '星索',
-      bio: '繫住另一股星索的人。',
-      traits: { post: { tile: 'spawn', tether: 1, wake: false, note: '守在索樁一格內，不離位。' }, ward: 35 }
+      bio: '守著另一根索樁的人。',
+      traits: { post: { tile: 'spawn', tether: 1, wake: false, note: '守在索樁一格內，不離位。' } }
     }
   }
 ];
@@ -703,7 +704,7 @@ const VILLAINS = {
   },
   wanYan: {
     map: 6,
-    rank: 'mini',
+    rank: 'boss', // the board's second 局主 now that it is a 守 board (Q-N28)
     row: 'lieutenant',
     ...adversary('完顏洪烈', '金國趙王府', '射鵰英雄傳', '王府侍從截擊', '趙府令旗', 'exposed', 'guo',
       '金國趙王，一生延攬豪傑，為的是他的國家。他從不親自衝陣；今日令旗自己舉了起來，指著誰，弓手便射誰。', 'wanYan', '', { mods: { hp: 0.9, atk: -2 }, sig: { reach: 3 } })
@@ -805,7 +806,7 @@ const GISTS = {
   'lieutenant-7': '守在石頸北口一格內。',
   mirror: '出手後退開；半血後身法更快。',
   'lieutenant-8': '專挑領隊。',
-  murong: '蓄勢時第一下直接攻擊被反震；守索人存活時替他減傷。',
+  murong: '蓄勢時第一下直接攻擊被反震；星索樁立著時替他減傷。',
   'lieutenant-9': '火焰刀隔四格傷人並削去內力；專挑內力深厚者。',
   fengTiannan: '長棍令目標絆足。',
   zhaoZhong: '守在東院兩格內，受擊才離位；截腕令目標攻擊降低；專挑領隊。',
@@ -820,8 +821,8 @@ const GISTS = {
   'bow-6': '守在東牆一格內。',
   'scout-6': '移動五步。',
   'bow-8': '守在橋頭一格內。',
-  'bow-9': '存活時替慕容博減傷三成半。',
-  'scout-9': '存活時替慕容博減傷三成半。',
+  'bow-9': '守在一根星索樁旁，不離位。',
+  'scout-9': '守在另一根星索樁旁，不離位。',
   fiveTiger: '隔一格出棍；有俠客貼身時攻擊減弱。',
   qingShield: '守在門前不動；站在原位時受到的傷害減四成。',
   jinBow: '射程四格；兩格以內的目標打得較輕。',

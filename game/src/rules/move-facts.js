@@ -94,7 +94,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
           ? target === u
           : kind === 'ally'
             ? target.side === u.side
-            : target.side !== u.side));
+            : G.hostile(u, target)));
   const forecast = legal
     ? G.forecast(u, target, !basic, s, art, basic ? definition : G.basicFor(u))
     : null;

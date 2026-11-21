@@ -130,7 +130,7 @@ function contactPlan(s, u, t, art, forms, step, boss) {
 function secondaryTargets(s, u, t, center, art, forms, passable) {
   const targets = new Map(),
     add = (v, ratio) => {
-      if (v && v !== t && v.side !== u.side && v.hp > 0)
+      if (v && v !== t && v.side !== u.side && v.side !== 'prop' && v.hp > 0)
         targets.set(v, Math.max(targets.get(v) || 0, ratio));
     };
   if (art?.splash) for (const v of s.units) if (distance(center, v) === 1) add(v, art.splash);
@@ -150,7 +150,7 @@ function secondaryTargets(s, u, t, center, art, forms, passable) {
   }
   if (forms.includes('arc')) {
     const near = s.units.filter(
-      (v) => v !== t && v.side !== u.side && v.hp > 0 && distance(t, v) <= 2
+      (v) => v !== t && v.side !== u.side && v.side !== 'prop' && v.hp > 0 && distance(t, v) <= 2
     );
     near.sort((a, b) => distance(t, a) - distance(t, b) || a.y - b.y || a.x - b.x);
     add(near[0], 0.32);

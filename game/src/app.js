@@ -324,7 +324,9 @@ function paint() {
         : '我方行動';
   const phase =
     `<small>第 <b>${state.round}</b> 回合</small><strong class="${state.phase === 'enemy' ? 'enemy' : ''}">${side}</strong>` +
-    (coming ? `<em class="reinforce">敵援 · 下回合 ${coming} 名</em>` : '');
+    (coming ? `<em class="reinforce">敵援 · 下回合 ${coming} 名</em>` : '') +
+    // 守: the rounds still to hold, this one included.
+    (!state.result && G.holdLeft(state) ? `<em class="reinforce hold">守 · 尚須 ${G.holdLeft(state)} 回合</em>` : '');
   board.layers.pick = deploying() ? deployPick : null;
   if ($('round-badge').dataset.phase !== phase) {
     $('round-badge').innerHTML = phase;
@@ -413,6 +415,8 @@ function noteBoard() {
     if (seenLogs.has(l)) continue;
     seenLogs.add(l);
     if (l.who === '敵援' && screen === 'battle') heldTip(...waveTip(l.text));
+    // 守 and 破: an object first struck, at half, broken.
+    if ((l.who === '守物' || l.who === '破物') && screen === 'battle') heldTip(l.who + ' · ' + l.text.replace(/。$/, ''), 3600);
   }
   const now = R.sideState(state);
   if (now === notedSide) return;

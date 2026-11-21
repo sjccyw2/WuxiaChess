@@ -106,6 +106,25 @@ ENCOUNTER_SCRIPT.forEach((script, map) => {
       if (!sameSeries(G.BOOKS[hero], VILLAINS[id].book))
         fail(here + ': ' + G.DETAILS[hero].name + ' has a line against ' + who + ' but is not from ' + VILLAINS[id].book);
   }
+  // The board's objects (battles.js `objects`): each has its lines, and only those on the board.
+  const objectKeys = [...new Set((board.objects || []).map((o) => o.id.split('#')[0]))];
+  for (const key of objectKeys) {
+    const lines = script.objects?.[key],
+      name = G.DETAILS[key].name,
+      keep = G.DETAILS[key].kind === 'keep';
+    if (!lines) {
+      fail(here + ': ' + name + ' has no lines');
+      continue;
+    }
+    for (const moment of ['hit', 'broken', ...(keep ? ['held'] : [])]) {
+      const beat = lines[moment];
+      if (!beat?.text || !(['boss', 'mini', 'youth'].includes(beat.who) || script.extras?.[beat.who]))
+        fail(here + ': ' + name + ' has no speaker or text when ' + moment);
+    }
+    if (keep && !lines.lost) fail(here + ': ' + name + ' breaking has no reason for the loss');
+  }
+  for (const key of Object.keys(script.objects || {}))
+    if (!objectKeys.includes(key)) fail(here + ': lines for ' + key + ', which is not on this board');
   for (const part of ['before', 'win', 'loss'])
     for (const beat of script[part])
       if (!(['boss', 'mini', 'youth', 'leader', 'ally'].includes(beat.who) || script.extras?.[beat.who]) || !beat.text)

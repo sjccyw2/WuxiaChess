@@ -13,7 +13,7 @@ const SIDES = [
 let memo = { mark: '', tiles: new Set() };
 
 function dangerTiles(s) {
-  const alive = s.units.filter(G.living);
+  const alive = s.units.filter((u) => G.living(u) && !G.isProp(u)); // an object threatens nothing
   const mark =
     s.mapIndex +
     '|' +

@@ -17,6 +17,13 @@
 //               reply   { who, text }: what a stone already there says to that
 //               heroes  a hero from his series of books answers him: before the battle if he
 //                       stands there from the start, as he steps on if he arrives later
+//   objects   the board's objects (battles.js `objects`), by key; each moment a { who, text } line
+//             (who as above, but no leader or ally) said as it happens:
+//               hit     the first time it is struck
+//               half    the first time it is at half its 氣血
+//               broken  as it breaks
+//               lost    a 'keep' object: the board's reason for the loss its breaking is (text only)
+//               held    a 'keep' object: the last round to hold is over and it still stands
 const ENCOUNTER_SCRIPT = [
   {
     before: [
@@ -197,7 +204,7 @@ const ENCOUNTER_SCRIPT = [
       },
       {
         who: 'youth',
-        text: '一道戰意壓在他們眉心。連這等事事盤算的人，也算不出自己為甚麼要打。……石階只得一條，從正面上。'
+        text: '一道戰意壓在他們眉心，對著的卻是臺上那張琴。連這等事事盤算的人，也算不出自己為甚麼要打。……琴在我們這邊。守住它，撐到那一念自己散了。'
       },
       { who: 'ally', text: '號令旁人慣了的人，如今給別的甚麼號令著。打贏了他，才算幫他一把。' }
     ],
@@ -223,7 +230,16 @@ const ENCOUNTER_SCRIPT = [
       medic: '左冷禪這一世只肯聽自己的。能教他不由自主的人，我倒想見上一見。先破了這一局再說。',
       guard: '左冷禪，你也有給人當刀使的一日？老子本該大笑三聲。可惜那使刀的，連老子也一併算計在內。'
     },
-    extras: {}
+    extras: {},
+    objects: {
+      guqin: {
+        hit: { who: 'youth', text: '琴絃給震得嗡的一聲。……他們要的不是我們，是這張琴。' },
+        half: { who: 'youth', text: '琴身裂了一道縫。再挨得幾下，這一曲便沒處彈了。' },
+        broken: { who: 'boss', text: '斷了。左某恨這一曲恨了半輩子，今日斷它的，卻不是左某自己的手。' },
+        lost: '琴斷絃絕，那道戰意得了它要的東西。這一局輸了。',
+        held: { who: 'youth', text: '八合過了。借來的那一念撐不住，自己散了。琴還在。' }
+      }
+    }
   },
   {
     before: [
@@ -280,7 +296,7 @@ const ENCOUNTER_SCRIPT = [
       },
       {
         who: 'youth',
-        text: '一個不肯受人擺佈，一個只想脫身，都給同一道戰意按在這裡。……門洞窄，他的輪子掃得開。別擠在一處。'
+        text: '一個不肯受人擺佈，一個只想脫身，都給同一道戰意按在這裡。那戰意對著的，是城頭那面鼓。……鼓在我們這邊，守住它。門洞窄，他的輪子掃得開，別擠在一處。'
       },
       { who: 'leader', text: '他不是自己要擋這道門。那就不必同他講道理，贏了再說。' }
     ],
@@ -321,6 +337,15 @@ const ENCOUNTER_SCRIPT = [
           huang: '趙王爺，當年你千方百計要那部兵書，到頭來一場空。今日連這面令旗，也不是你自己要舉的。',
           yang: '聽說我爹爹叫了你十八年父王。……我該叫你甚麼？'
         }
+      }
+    },
+    objects: {
+      warDrum: {
+        hit: { who: 'youth', text: '鼓面悶悶的響了一聲。……他們要的是這面鼓破。' },
+        half: { who: 'youth', text: '蒙皮裂開了。鼓一破，這座城便再沒有聲音。' },
+        broken: { who: 'boss', text: '鼓破了。……為師攻過這座城，從沒有這般容易。這一下，不是為師要打的。' },
+        lost: '鼓破了，城頭再無聲息。那道戰意得了它要的東西，這一局輸了。',
+        held: { who: 'youth', text: '九合過了，那一念散了。鼓還好端端的在架上。' }
       }
     }
   },
@@ -426,7 +451,7 @@ const ENCOUNTER_SCRIPT = [
       {
         who: 'youth',
         note: '無刻漏臺。兩股星索從盤外垂將下來，繫在臺心一位老者身上。到了這裡，那道戰意連藏也不藏了。',
-        text: '最後一局。壓在局主心頭的東西，在這裡瞧得見：便是那兩條索。兩條索各有人守，先斷索。'
+        text: '最後一局。壓在局主心頭的東西，在這裡瞧得見：便是那兩條索。索各繫在一根銅樁上，樁旁各有人守。樁倒了，索便斷。'
       },
       {
         who: 'mini',
@@ -468,7 +493,14 @@ const ENCOUNTER_SCRIPT = [
     heroLines: {
       duan: '慕容老先生，令郎與在下很有些過節。可今日同在下為難的不是慕容家，是繫在你身上的那兩根索。在下的六脈神劍時靈時不靈，但願此刻肯靈。'
     },
-    extras: { wanZhen: {} }
+    extras: { wanZhen: {} },
+    objects: {
+      starPost: {
+        hit: { who: 'boss', text: '銅樁一震，繫在老夫身上的那股索跟著一緊。……打得好。' },
+        half: { who: 'youth', text: '樁身裂了，索上的光暗了一層。' },
+        broken: { who: 'boss', text: '索鬆了一股。……老夫這身子，又有一分是自己的了。' }
+      }
+    }
   }
 ];
 
