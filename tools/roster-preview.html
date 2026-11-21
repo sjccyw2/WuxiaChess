@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Roster preview</title>
+    <!-- The game finds its pictures beside its own page, so this page borrows that address. -->
+    <base href="../game/" />
+    <!--
+      Developer preview of fighters' sprite sheets, drawn by the game's own board, actor layer
+      and outlines, on a real battlefield. Serve the repository root and open
+        tools/roster-preview.html?ids=fengTiannan,chief
+        ids=a,b,…       the sprite ids to stand on the board (a piece's `mini`), placed outward
+                        from the middle of the board; the default is every sprite the game has
+        side=enemy      the team outline: enemy (default) or ally
+        robe=…          a CSS filter list to tint them with, as a villain's `robe` does
+        map=0..9        which battlefield
+        row=0..4        idle, walk, strike, hurt, special (絕技); a sheet without the special
+                        row plays its strike, as in battle
+        frame=0..7      hold this frame; without it the row plays, and without row the five
+                        rows play in turn
+        zoom, tile=x,y  as in map-preview.html; tile also centres the camera there
+      window.preview.show({ ids, row, frame, … }) changes the same things without reloading,
+      and window.preview.box() gives the screen rectangle round the pieces.
+      tools/shoot-roster.mjs drives this page and saves a contact sheet per character.
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+      }
+      #scene {
+        position: fixed;
+        inset: 0;
+      }
+      #scene canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      #board-hits {
+        position: absolute;
+        inset: 0;
+        visibility: hidden;
+      }
+      #caption {
+        position: fixed;
+        left: 8px;
+        top: 8px;
+        padding: 2px 6px;
+        color: #f4ead2;
+        background: #000a;
+        font: 12px/1.4 monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="scene">
+      <canvas id="board"></canvas>
+      <canvas id="tactics"></canvas>
+      <div id="board-hits"></div>
+    </div>
+    <div id="caption"></div>
+    <script src="vendor/three.min.js"></script>
+    <script type="module">
+      import { BattleBoard } from './src/scene/board.js';
+      import * as R from './src/rules/journey.js';
+      import * as G from './src/rules/game.js';
+      import { fieldCells, FIELD_CENTER } from './src/data/terrain.js';
+
+      const ROWS = ['idle', 'walk', 'strike', 'hurt', 'special'];
+      const q = new URLSearchParams(location.search);
+      const number = (name) => (q.has(name) && q.get(name) !== '' ? Number(q.get(name)) : null);
+      const map = Math.max(0, Math.min(9, number('map') || 0));
+      const everyone = [...new Set(Object.values(G.DETAILS).map((d) => d.mini).filter(Boolean))];
+      const $ = (id) => document.getElementById(id);
+      const board = new BattleBoard({
+        canvas: $('board'),
+        tactics: $('tactics'),
+        hits: $('board-hits'),
+        scene: $('scene'),
+        frame: null,
+        onCell() {},
+        onUnit() {},
+        onHover() {},
+        onCamera() {},
+        onTechnique() {}
+      });
+      const state = R.startRun(R.drawLots(7));
+      state.mapIndex = map;
+      state.selected = null;
+      const template = G.enemies(state)[0];
+      const layers = board.layers;
+      // The board's own clock would run the clips out; this page sets the time itself.
+      layers.advance = function () {
+        this.waitingForArt = false;
+      };
+      board.changeMap(map);
+      board.present(false);
+      // The world is drawn when the camera moves; the fighters animate on their own canvas.
+      board.sync({ ...state, units: [] }, 'move', { motion: false, grid: true });
+
+      // Walkable tiles outward from the middle of the board, nearest first.
+      const tiles = fieldCells(map)
+        .filter((p) => G.walkable(p.x, p.y, map))
+        .sort(
+          (a, b) =>
+            Math.hypot(a.x - FIELD_CENTER, a.y - FIELD_CENTER) -
+              Math.hypot(b.x - FIELD_CENTER, b.y - FIELD_CENTER) || a.y - b.y || a.x - b.x
+        );
+      // The tiles the pieces stand on: the middle one first, then those nearest it that lie
+      // along the same line across the screen, so pieces stand side by side for comparison.
+      function places(count) {
+        const screen = (p) => layers.point(p.x, p.y),
+          first = screen(tiles[0]),
+          step = Math.max(1, layers.scaleAt(tiles[0].x, tiles[0].y));
+        const across = tiles
+          .slice(1)
+          .map((p) => ({ p, at: screen(p) }))
+          .filter(({ at }) => Math.abs(at.y - first.y) < step * 0.4)
+          .sort((a, b) => Math.abs(a.at.x - first.x) - Math.abs(b.at.x - first.x))
+          .map(({ p }) => p);
+        const order = [tiles[0], ...across, ...tiles.slice(1).filter((p) => !across.includes(p))];
+        return Array.from({ length: count }, (_, i) => order[i % order.length]);
+      }
+      let current = {},
+        timer = 0;
+
+      function show(options = {}) {
+        current = { ...current, ...options };
+        const { ids = everyone, side = 'enemy', robe = '', tile = null, zoom = null } = current;
+        // Each piece gets a description of its own that only names its sprite.
+        const spots = places(ids.length);
+        const units = ids.map((id, i) => {
+          const key = 'preview-' + i;
+          G.DETAILS[key] = { ...G.DETAILS['lieutenant-0'], name: id, mini: id, robe, traits: {} };
+          const at = spots[i];
+          return {
+            ...template,
+            id: key,
+            encounterId: key,
+            side,
+            x: at.x,
+            y: at.y,
+            hp: template.maxHp,
+            acted: false,
+            conditions: {}
+          };
+        });
+        state.units = units;
+        layers.reset();
+        layers.prefs = { motion: true, grid: true };
+        board.sync(state, 'move', { motion: false, grid: true });
+        layers.prefs = { motion: true, grid: true };
+        if (zoom != null) board.view.setZoom(zoom);
+        if (tile) board.view.focusTile(tile[0], tile[1], board.view.zoom);
+        board.dirty = true;
+        play();
+      }
+
+      // Every piece plays the same row; a held frame stands still at its middle.
+      function pose(row, frame) {
+        layers.time = (frame + 0.5) * 1000;
+        for (const u of state.units)
+          layers.tracks.set(u.id, { clips: [{ row, start: 0, end: 8000 }], impacts: [], exit: 0 });
+        $('caption').textContent =
+          'row ' + row + ' ' + ROWS[row] + ' · frame ' + frame + ' · ' + current.ids.join(' ');
+        board.draw();
+      }
+      function play() {
+        clearTimeout(timer);
+        const { row = null, frame = null } = current;
+        if (row != null && frame != null) return pose(row, frame);
+        let tick = 0;
+        const step = () => {
+          const shown = row ?? Math.floor(tick / 8) % ROWS.length;
+          pose(shown, tick % 8);
+          tick++;
+          timer = setTimeout(step, 125);
+        };
+        step();
+      }
+      // The screen rectangle round every piece standing on the board, padded by a tile.
+      function box() {
+        let left = Infinity,
+          right = -Infinity,
+          top = Infinity,
+          bottom = -Infinity;
+        for (const u of state.units) {
+          const p = layers.point(u.x, u.y),
+            s = layers.scaleAt(u.x, u.y);
+          left = Math.min(left, p.x - s * 1.1);
+          right = Math.max(right, p.x + s * 1.1);
+          top = Math.min(top, p.y - s * 1.75);
+          bottom = Math.max(bottom, p.y + s * 0.4);
+        }
+        return { left, right, top, bottom };
+      }
+
+      const listed = q.get('ids');
+      show({
+        ids: listed ? listed.split(',').filter(Boolean) : everyone,
+        side: q.get('side') || 'enemy',
+        robe: q.get('robe') || '',
+        row: number('row'),
+        frame: number('frame'),
+        zoom: number('zoom'),
+        tile: q.get('tile')?.split(',').map(Number) || null
+      });
+      // The shooting script waits for this, then for the sheets.
+      window.preview = { board, state, show, pose, box, tiles, ready: true };
+    </script>
+  </body>
+</html>

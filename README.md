@@ -70,6 +70,9 @@ tools/
   extra-fonts.py      regenerates the extra font characters for the game and the wiki
   map-preview.html    draws one battlefield with the game's own board, camera and lighting
   shoot-map.mjs       photographs a battlefield from a set of camera angles
+  roster-art.py       makes the game's files for characters from the roster pack
+  roster-preview.html stands fighters on a battlefield and plays each row of their sheets
+  shoot-roster.mjs    photographs every frame of a character's sheet on the board, beside another
   sound-check.mjs     renders every sound and fails if one clips or is out of balance
 ```
 
@@ -182,6 +185,8 @@ Two more tools help when the scenery or the sound changes. Both need Playwright 
 node tools/shoot-map.mjs 3 pictures/     # map 3 from nine camera angles, with draw calls and triangles
 node tools/sound-check.mjs               # every sound: no clipping, clean start and end, balanced loudness
 ```
+
+A character from the roster pack enters the game with `python3 tools/roster-art.py <id>`, which writes its sheets, still and portrait into `game/assets/`; its id is then added to `game/src/data/roster-art.js`. A piece then becomes that character by naming the id as its `mini`. To check how a sheet draws, `node tools/shoot-roster.mjs pictures/ --ids <id> --beside chief` saves every frame of its five rows on a real board beside a piece already in the game (add `--mobile` for a phone), and `tools/roster-preview.html?ids=<id>,chief` shows them playing. Both need Playwright with Chromium, and no web server.
 
 The ten map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
 

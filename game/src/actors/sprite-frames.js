@@ -7,7 +7,6 @@ import { CELL_WIDTH, CELL_HEIGHT, FOOT_Y, FRAMES } from './sprite-sheets.js';
 
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const TAU = Math.PI * 2;
-const ROWS = 4;
 const INK = '#07110f';
 // The line drawn round a figure: jade for the player's side, vermilion for the enemy.
 const OUTLINES = { ally: '#a5ffe0', enemy: '#ff9b7a', spent: '#6f7f7a' };
@@ -156,8 +155,8 @@ function atlasFor(sheet, look, cell, edge) {
       cw = Math.round((cell * CELL_WIDTH) / CELL_HEIGHT),
       pad = look.team ? Math.ceil(edge * 1.5 + 1) : 0;
     atlas = {
-      canvas: makeCanvas((cw + pad * 2) * FRAMES, (ch + pad * 2) * ROWS),
-      ready: new Uint8Array(FRAMES * ROWS),
+      canvas: makeCanvas((cw + pad * 2) * FRAMES, (ch + pad * 2) * sheet.rows),
+      ready: new Uint8Array(FRAMES * sheet.rows),
       cw,
       ch,
       pad,
