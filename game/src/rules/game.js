@@ -9,6 +9,7 @@ import {
 } from './form-rules.js';
 import { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS } from '../data/encounters.js';
 import { NEW_HEROES } from '../data/new-heroes.js';
+import { rosterPortrait } from '../data/roster-art.js';
 import {
   commandBonus,
   effectsOf,
@@ -781,6 +782,10 @@ for (const [map, ranks] of RANKS.entries())
     const base = map ? 'echo' + role[0].toUpperCase() + role.slice(1) : role;
     DETAILS[role + '-' + map] = { ...DETAILS[base], ...info };
   }
+// A piece drawn as one of the painted roster characters wears that character's portrait,
+// whatever seat it fills: the face follows the sprite (data/roster-art.js).
+for (const d of Object.values(DETAILS))
+  if (rosterPortrait(d.mini)) d.portraitFile = rosterPortrait(d.mini);
 const STORIES = [
   {
     place: '洛陽 · 綠竹巷',
