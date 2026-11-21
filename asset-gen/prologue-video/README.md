@@ -3,7 +3,9 @@
 `prologue-45s.mp4` is a 45-second, 9:16 cut of the whole first-run prologue (入夢) in a manga style,
 lettered like a Hong Kong comic (港漫). The copy here is 720 × 1280; it was rendered at 1080 × 1920
 and can be rendered again with `make/` (see `make/README.md`). Made 2026-11-21 (roadmap 1.11),
-after a 10-second test and a 30-second cut that the producer asked to slow down.
+after a 10-second test and a 30-second cut that the producer asked to slow down. Only the final
+cut is kept, with everything it was made from: `panels/` (thirteen panels and the two painted
+sound effects) and `make/` (the prompts, the compositor, the timeline and the sound).
 
 **Pacing.** About three seconds a panel on average, but each beat has its own length, and only
 three moments hit hard: the eyes opening, the eagle, and the box landing on 求敗's last words. The rest enter gently
