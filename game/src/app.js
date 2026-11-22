@@ -376,8 +376,6 @@ function syncZoom() {
   const high = board.view.pitch >= 1.12;
   $('camera').innerHTML = icon('cube', 16) + '<span>' + (high ? '斜視' : '俯視') + '</span>';
   $('camera').setAttribute('aria-pressed', String(high));
-  const compass = document.querySelector('.compass');
-  compass?.style.setProperty('--bearing', -board.view.yaw + 'rad');
 }
 function update() {
   noteBoard();
@@ -1703,12 +1701,6 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'sound-toggle':
       toggleSound();
-      break;
-    case 'orbit-left':
-      board.rotate(-1);
-      break;
-    case 'orbit-right':
-      board.rotate(1);
       break;
     case 'lead-lot':
       if (dialogState === 'formation' && draft?.picks.includes(id)) {

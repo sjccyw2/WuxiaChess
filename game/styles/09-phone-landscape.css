@@ -134,8 +134,7 @@
   }
 }
 @media (max-width: 500px) {
-  .opening-head,
-  .opening-foot {
+  .opening-head {
     margin-left: max(var(--rim), env(safe-area-inset-left));
     margin-right: max(var(--rim), env(safe-area-inset-right));
   }
@@ -160,36 +159,23 @@
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
-  .opening-head,
-  .opening-foot {
+  .opening-head {
     margin-left: max(var(--rim), env(safe-area-inset-left));
     margin-right: max(var(--rim), env(safe-area-inset-right));
-  }
-  .opening-head {
     height: 44px;
-  }
-  .opening-foot {
-    min-height: 36px;
   }
   .opening-content {
     padding-block: 4px;
-  }
-  .opening .opening-description {
-    display: none;
-  }
-  .opening .opening-menu {
-    margin-top: 9px;
   }
   .opening-tools button {
     min-width: 44px;
     height: 44px;
   }
-  .opening .title-rule {
-    margin-block: 2px 6px;
-  }
   .opening #game-title {
-    font-size: clamp(42px, 15dvh, 78px);
-    margin-block: 4px;
+    margin-block: 0 12px;
+  }
+  .opening #game-title img {
+    width: clamp(200px, 62dvh, 380px);
   }
   .opening .embark,
   .opening .embark-new,
@@ -1668,13 +1654,17 @@
   }
 }
 
+/* 江湖誌, first of the title's tools, top right. */
 .opening-wiki {
-  color: #f2e4bd;
+  color: #fff4d9;
   text-decoration: none;
-  font: 600 14px var(--sans);
-  border-bottom: 1px solid #bca876;
-  padding: 6px 2px;
+  font: 600 13px var(--serif);
+  letter-spacing: 0.1em;
+  padding: 6px 4px 5px;
+  margin-inline-end: 4px;
+  border-bottom: 1px solid #bca87699;
   white-space: nowrap;
+  filter: drop-shadow(0 1px 2px #142824);
 }
 .opening-wiki:hover,
 .opening-wiki:focus-visible {

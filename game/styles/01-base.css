@@ -2693,7 +2693,7 @@ body:has(dialog[open]) {
   height: 100svh;
   max-height: 1500px;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   background: #243a37;
   color: #f4efdf;
 }
@@ -2719,8 +2719,7 @@ body:has(dialog[open]) {
     ),
     linear-gradient(0deg, #0a1919db, transparent 22%, transparent 76%, #18242068);
 }
-.opening-head,
-.opening-foot {
+.opening-head {
   margin-inline: var(--rim);
   display: flex;
   align-items: center;
@@ -2734,22 +2733,19 @@ body:has(dialog[open]) {
   border-bottom: 1px solid #dbc89860;
 }
 .opening-brand,
-.opening-tools,
-.opening-foot button {
+.opening-tools {
   pointer-events: auto;
 }
 .opening-brand,
 .opening-tools,
 .opening-tools button,
-.chapter-place,
-.panorama-controls,
-.chapter-label,
 .opening-menu {
   display: flex;
   align-items: center;
 }
 .opening-brand {
   gap: 12px;
+  white-space: nowrap;
   color: #efe5ca;
   font: 700 16px var(--serif);
   letter-spacing: 0.17em;
@@ -2797,64 +2793,16 @@ body:has(dialog[open]) {
   pointer-events: none;
   max-width: calc(100% - 2 * var(--rim));
 }
-.chapter-label {
-  gap: 12px;
-  letter-spacing: 0.19em;
-  color: #ead2a0;
-  font: 600 clamp(12px, 0.96vw, 16px) / 1.4 var(--serif);
-}
-.chapter-label span {
-  padding: 4px 8px 5px 10px;
-  border: 1px solid #a67b53;
-  background: #6f382ae8;
-  color: #f4dfbb;
-  line-height: 1;
-}
-.chapter-label i {
-  display: block;
-  width: 27px;
-  height: 1px;
-  background: #c5ae79;
-}
-.chapter-label b {
-  font-weight: 600;
-}
+/* The painted title (asset-gen/title-art/); its alt text is the name. */
 #game-title {
-  font: 800 clamp(72px, 8.1vw, 145px) / 1.18 var(--serif);
-  margin: 17px 0 10px -0.04em;
-  color: #f5edda;
-  letter-spacing: 0.045em;
-  white-space: nowrap;
-  text-shadow: 0 3px 14px #25332b75;
+  margin: 0 0 clamp(24px, 3.6vh, 44px) -0.5%;
+  line-height: 0;
 }
-.title-rule {
-  width: clamp(150px, 18vw, 340px);
-  height: 9px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.title-rule i {
-  width: 20%;
-  height: 1px;
-  background: #d0b27a;
-}
-.title-rule i:last-child {
-  background: linear-gradient(90deg, #d0b27a, transparent);
-  width: 65%;
-}
-.title-rule b {
-  width: 5px;
-  height: 5px;
-  background: #d4b378;
-  transform: rotate(45deg);
-}
-.opening-description {
-  margin: 20px 0 28px;
-  font: 500 clamp(15px, 1.16vw, 21px) / 1.95 var(--serif);
-  letter-spacing: 0.12em;
-  color: #e6e6d7;
-  text-shadow: 0 1px 4px #182a20;
+#game-title img {
+  display: block;
+  width: clamp(300px, 40vw, 720px);
+  height: auto;
+  filter: drop-shadow(0 3px 14px #0b1716b3);
 }
 .opening-menu {
   gap: 12px 15px;
@@ -2911,66 +2859,6 @@ body:has(dialog[open]) {
 .embark-new:hover {
   color: #ffe3a3;
   background: #1c332c55;
-}
-.opening-foot {
-  min-height: 68px;
-  border-top: 1px solid #dbc89857;
-  color: #d8dbc9;
-  letter-spacing: 0.13em;
-  font-size: 12px;
-}
-.chapter-place {
-  gap: 10px;
-}
-.chapter-place svg {
-  width: 14px;
-  height: 15px;
-  color: #d8bc83;
-}
-.chapter-place i {
-  width: 24px;
-  height: 1px;
-  background: #b8a77982;
-}
-.chapter-place b {
-  font: 600 14px var(--serif);
-  color: #e6dbb6;
-  letter-spacing: 0.15em;
-}
-.panorama-controls {
-  gap: 8px;
-}
-.panorama-hint {
-  margin-right: 5px;
-}
-.panorama-controls button {
-  color: #e7d3a7;
-  font:
-    24px/1 Georgia,
-    serif;
-  width: 31px;
-  height: 31px;
-  border: 1px solid #cfbc8f66;
-  background: #16242155;
-}
-.panorama-controls button:hover {
-  background: #34423a;
-}
-.compass {
-  width: 19px;
-  height: 19px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #cebd9688;
-  border-radius: 50%;
-}
-.compass:before {
-  content: '';
-  width: 5px;
-  height: 14px;
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-  background: linear-gradient(#e6cd9a 49%, #8a8070 50%);
-  transform: rotate(var(--bearing, -0.45rad));
 }
 dialog:has(.formation-slots),
 dialog:has(.codex-detail) {
@@ -3174,9 +3062,6 @@ dialog:has(.codex-detail) {
     gap: 5px 9px;
     max-width: 400px;
   }
-  .opening-foot {
-    min-height: 57px;
-  }
   .field {
     min-height: 260px;
   }
@@ -3203,19 +3088,10 @@ dialog:has(.codex-detail) {
     padding: 16px 0 clamp(25px, 5.6vh, 65px);
   }
   #game-title {
-    font-size: clamp(64px, 15vw, 115px);
-    margin: 11px 0 7px;
+    margin-bottom: 22px;
   }
-  .opening-description {
-    margin: 13px 0 20px;
-    font-size: 16px;
-  }
-  .opening-foot {
-    font-size: 10px;
-  }
-  .panorama-hint {
-    font-size: 10px;
-    letter-spacing: 0.05em;
+  #game-title img {
+    width: min(86vw, 560px);
   }
 }
 @media (max-width: 500px) {
@@ -3243,9 +3119,6 @@ dialog:has(.codex-detail) {
   .embark strong {
     font-size: 16px;
   }
-  .opening-description {
-    font-size: 15px;
-  }
   .opening-menu {
     gap: 2px 7px;
   }
@@ -3253,18 +3126,6 @@ dialog:has(.codex-detail) {
   .codex-link {
     font-size: 13px;
     padding: 10px 4px;
-  }
-  .chapter-place {
-    gap: 6px;
-  }
-  .chapter-place i {
-    width: 13px;
-  }
-  .panorama-controls {
-    gap: 5px;
-  }
-  .panorama-hint {
-    display: none;
   }
   .field {
     aspect-ratio: 1.19;
@@ -3330,18 +3191,14 @@ dialog:has(.codex-detail) {
   .opening-head {
     height: 55px;
   }
-  .opening-foot {
-    min-height: 45px;
-  }
   .opening-content {
     padding: 10px 0;
   }
-  .opening-description {
-    margin: 8px 0 13px;
-  }
   #game-title {
-    font-size: clamp(54px, 6.8vw, 90px);
-    margin: 5px 0;
+    margin-bottom: 16px;
+  }
+  #game-title img {
+    width: clamp(260px, 34vw, 480px);
   }
 }
 .embark {

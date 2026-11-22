@@ -50,11 +50,8 @@ import {
 import { inSplash } from '../rules/form-rules.js';
 import { CONDITION_NAMES } from '../rules/battle-mastery.js';
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-const openingActors = [
-  { id: 'hero', x: 5.1, y: 5.25, side: 'ally', hp: 1 },
-  { id: 'xiao', x: 7.0, y: 3.45, side: 'ally', hp: 1 },
-  { id: 'guo', x: 7.4, y: 6.5, side: 'ally', hp: 1 }
-];
+// The title scene stands empty: the board is shown without fighters (producer, 2026-11-22).
+const openingActors = [];
 const drive = [-0.025, -0.045, -0.058, -0.025, 0.11, 0.15, 0.076, 0];
 const recoil = [0, -0.03, -0.073, -0.105, -0.089, -0.054, -0.024, 0];
 const stepLift = [0, 0.04, 0.07, 0.035, 0, 0.035, 0.065, 0.03];

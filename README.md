@@ -1,6 +1,6 @@
 # WuxiaChess · 劍影江湖
 
-A 3D wuxia tactics game, and a wiki (江湖志) that documents it by reading the game's own data.
+A 3D wuxia tactics game, and a wiki (江湖誌) that documents it by reading the game's own data.
 
 - **Play:** `game/`
 - **Wiki:** `wiki/`

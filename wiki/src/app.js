@@ -34,7 +34,7 @@ function render() {
               ? entry(g, id)
               : listPage(g, p)
             : lost();
-  document.title = (content.querySelector('h1')?.textContent || '江湖志') + ' · 劍影江湖';
+  document.title = (content.querySelector('h1')?.textContent || '江湖誌') + ' · 劍影江湖';
   mountCompare(content);
   if (focusKey) content.querySelector('[data-cmp-key="' + CSS.escape(focusKey) + '"]')?.focus({ preventScroll: true });
   if (window.scrollTo && !stay) window.scrollTo(0, 0);

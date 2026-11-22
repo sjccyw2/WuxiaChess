@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#101a1a" />
     <meta
       name="description"
-      content="《一念江湖》十局立體江湖戰棋。少年在夢裡闖進深谷，與自稱求敗的老者對弈；三位不同年代的俠客入局。由你執子，走完十局。"
+      content="《劍影江湖》十局立體武俠戰棋。少年在夢裡闖進深谷，與自稱求敗的老者對弈；三位不同年代的俠客入局。由你執子，走完十局。"
     />
-    <title>劍影江湖 · 一念江湖</title>
+    <title>劍影江湖</title>
     <link rel="icon" type="image/svg+xml" href="assets/seal.svg" />
     <!--
       Loading veil (presentation switch: loadingVeil).
@@ -116,8 +116,8 @@
     <link rel="modulepreload" href="src/scene/board.js" />
     <link rel="modulepreload" href="src/scene/environment.js" />
     <link rel="modulepreload" href="src/actors/actors.js" />
-    <!-- The title's fighters: behind the font and the scripts, ahead of the larger sheets. -->
-    <link rel="preload" href="assets/battle-poses.png" as="image" fetchpriority="low" />
+    <!-- The title itself, painted (asset-gen/title-art/). -->
+    <link rel="preload" href="assets/title-jianying.webp" as="image" fetchpriority="high" />
   </head>
   <body>
     <section class="opening" id="start-screen" aria-labelledby="game-title">
@@ -137,9 +137,10 @@
       <div class="opening-glaze" aria-hidden="true"></div>
       <header class="opening-head">
         <div class="opening-brand">
-          <img src="assets/seal.svg" width="34" height="38" alt="" /><span>金庸群俠戰棋</span>
+          <img src="assets/seal.svg" width="34" height="38" alt="" /><span>武俠戰棋</span>
         </div>
         <div class="opening-tools">
+          <a class="opening-wiki" href="../wiki/" target="_blank" rel="noopener">江湖誌 ↗</a>
           <button class="opening-icon title-fullscreen" data-do="fullscreen" aria-label="全螢幕" title="全螢幕" aria-pressed="false"><span data-icon="expand"></span></button>
           <button data-do="title-help" class="start-help"><span data-icon="help"></span>遊玩指南</button
           ><i></i>
@@ -155,10 +156,9 @@
         </div>
       </header>
       <div class="opening-content">
-        <div class="chapter-label"><span>群俠外傳</span><i></i><b>一念江湖</b></div>
-        <h1 id="game-title">劍影江湖</h1>
-        <div class="title-rule" aria-hidden="true"><i></i><b></b><i></i></div>
-        <p class="opening-description">谷裡有一盤棋，等了你很久。你不記得自己是誰。</p>
+        <h1 id="game-title">
+          <img src="assets/title-jianying.webp" width="1200" height="360" alt="劍影江湖" fetchpriority="high" />
+        </h1>
         <div class="opening-menu">
           <button class="embark" id="start-primary" data-do="start-primary">
             <span data-icon="sword"></span><strong>入夢</strong>
@@ -169,18 +169,6 @@
           <button class="codex-link" data-do="codex"><span data-icon="book"></span>群俠列傳</button>
         </div>
       </div>
-      <footer class="opening-foot">
-        <div class="chapter-place">
-          <span data-icon="pin"></span><span>第一局</span><i></i><b>青竹渡</b>
-        </div>
-        <a class="opening-wiki" href="../wiki/" target="_blank" rel="noopener">江湖志 ↗</a>
-        <div class="panorama-controls">
-          <span class="panorama-hint">拖曳環視</span
-          ><button data-do="orbit-left" aria-label="向左環視" title="向左環視">‹</button
-          ><span class="compass" aria-hidden="true"></span
-          ><button data-do="orbit-right" aria-label="向右環視" title="向右環視">›</button>
-        </div>
-      </footer>
     </section>
     <main id="main" class="battle-screen" hidden>
       <section id="field" class="battlefield" aria-label="戰棋地圖與行動指令">

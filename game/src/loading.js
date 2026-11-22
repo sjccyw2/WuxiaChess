@@ -24,15 +24,22 @@ const sceneDrawn = new Promise((done) => {
   watch.observe(scene, { subtree: true, attributes: true, attributeFilter: ['width', 'height'] });
 });
 
-// The title is set in RiverSerif. A font that fails is not worth waiting for.
+// The title is a painted picture; the name beside the seal and the buttons are set in
+// RiverSerif. A picture or font that fails is not worth waiting for.
 async function titleFont() {
-  const title = document.getElementById('game-title');
-  const style = getComputedStyle(title);
+  const art = document.querySelector('#game-title img');
+  const label = document.querySelector('.opening-brand span');
+  const style = getComputedStyle(label);
   const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-  try {
-    if (!document.fonts.check(font, title.textContent))
-      await document.fonts.load(font, title.textContent);
-  } catch {}
+  await Promise.all([
+    art?.decode().catch(() => {}),
+    (async () => {
+      try {
+        if (!document.fonts.check(font, label.textContent))
+          await document.fonts.load(font, label.textContent);
+      } catch {}
+    })()
+  ]);
 }
 
 // Every sheet the board has asked for is in. If any was still on its way when the scene

@@ -90,7 +90,7 @@ export function home() {
   return (
     '<div class="hero">' +
     image(wikiArt('jianghu-cover.webp'), '', true) +
-    '<div class="hero-copy"><span>劍影江湖・一念江湖（暫名）</span><h1>江湖志</h1>' +
+    '<div class="hero-copy"><span>劍影江湖・一念江湖（暫名）</span><h1>江湖誌</h1>' +
     (lore.length
       ? anchor('#lore', '讀世界觀 <span aria-hidden="true">→</span>')
       : anchor(href('story', 'opening'), '讀序章 <span aria-hidden="true">→</span>')) +

@@ -665,8 +665,7 @@ html.polish-ui-chrome #modal .switch.on i {
 }
 
 /* --------------------------------------------------------- 7  Title screen */
-html.polish-ui-chrome .opening-tools button,
-html.polish-ui-chrome .panorama-controls button {
+html.polish-ui-chrome .opening-tools button {
   border-radius: 3px;
 }
 @media (hover: hover) {
@@ -676,11 +675,6 @@ html.polish-ui-chrome .panorama-controls button {
   }
   html.polish-ui-chrome .opening-menu :is(.codex-link, .embark-new):enabled:hover {
     box-shadow: inset 0 -1px #f1d9a3;
-  }
-  html.polish-ui-chrome .panorama-controls button:hover {
-    color: #fff5dc;
-    border-color: #f1d9a3;
-    background: #223246db;
   }
 }
 
@@ -844,8 +838,7 @@ html.polish-forecast-bars #modal .fc-bar.ko .fc-after {
       transform: translateX(2px);
     }
     html.polish-ui-chrome body:not(.no-motion) .battlefield .view-grid button:enabled:hover:not(:active),
-    html.polish-ui-chrome body:not(.no-motion) .opening-tools button:hover:not(:active),
-    html.polish-ui-chrome body:not(.no-motion) .panorama-controls button:hover:not(:active) {
+    html.polish-ui-chrome body:not(.no-motion) .opening-tools button:hover:not(:active) {
       transform: translateY(-1px);
     }
     html.polish-ui-chrome body:not(.no-motion) .opening-menu :is(.codex-link, .embark-new):enabled:hover:not(:active) {
