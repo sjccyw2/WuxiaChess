@@ -531,7 +531,33 @@ class Impact {
     const base = px / TONES[e.tone][3];
     const rise = base * (0.45 * easeOut(Math.min(1, age / 220)) + 0.35 * (age / life));
     const x = anchor.x + (e.tone === 'word' ? base * 2.3 : 0),
-      y = anchor.y - rise - (e.tone === 'word' ? 0 : (e.lane || 0) * base * 1.15);
+      level = anchor.y - rise - (e.tone === 'word' ? 0 : (e.lane || 0) * base * 1.15);
+    // Numbers over pieces that stand close on screen (side by side, or one behind the other)
+    // would print on top of one another. As a number appears it is lifted clear of the numbers
+    // already showing where it would land; the lift is decided once, so it never jumps.
+    if (e.lift == null) {
+      e.lift = 0;
+      if (e.tone !== 'word')
+        for (let pass = 0; pass < 4; pass++) {
+          const top = level - e.lift - h * 0.52,
+            bottom = top + h * 0.7;
+          const under = layer.effects.find(
+            (o) =>
+              o !== e &&
+              o.kind === 'number' &&
+              o.box &&
+              !o.done &&
+              Math.abs(o.box.x - x) < (o.box.w + w) * 0.4 &&
+              o.box.top < bottom &&
+              o.box.top + o.box.h > top
+          );
+          if (!under) break;
+          e.lift += bottom - under.box.top + 2;
+        }
+    }
+    const y = level - e.lift;
+    // Where this number sits, for the ones that come after it.
+    if (e.tone !== 'word') e.box = { x, top: y - h * 0.52, w, h: h * 0.7 };
     c.save();
     c.globalAlpha = Math.min(1, age / 50, (life - age) / 200);
     c.translate(x, y);

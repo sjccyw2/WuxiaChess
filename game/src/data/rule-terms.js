@@ -220,7 +220,7 @@ const RULE_GROUPS = [
         id: 'prefers',
         name: '偏好',
         trait: (t) => !!(t.prefers || t.phase?.prefers),
-        text: '選擇目標時另有所好：傷重者、落單者、領隊、療傷者、內力深厚者，或離得最近的人'
+        text: '選擇目標時另有所好：傷重者、落單者、領隊、療傷者、內力深厚者、離得最近的人，或倚仗掩體、有人代受的人'
       },
       { id: 'contact', name: '化功', trait: 'contact', text: '貼身打中他的俠客損失內力；封穴時無效' },
       { id: 'banner', name: '盟令', trait: 'banner', text: '存活時其餘敵人攻擊提高，倒下後即失效' },
@@ -264,7 +264,42 @@ const RULE_GROUPS = [
         name: '刀陣',
         trait: (t) => t.cover === 'kin',
         text: '相鄰的同袍氣血較多時，替他承受俠客的直接攻擊'
-      }
+      },
+      {
+        id: 'flurry',
+        name: '分刺',
+        trait: 'flurry',
+        text: '每次出手之後，再刺射程內另一名俠客，威力較前一擊為輕；這一刺無人可代受，閃身與挪移也攔不住，且不受還擊'
+      },
+      {
+        id: 'bend',
+        name: '轉折',
+        trait: 'bend',
+        text: '出手不走直路：無視目標所在地形的防禦加成，旁人也無法替目標代受'
+      },
+      {
+        id: 'pull',
+        name: '擒拿',
+        trait: 'pull',
+        text: '絕技命中後，將目標扯到自己身旁的空格；目標已在身旁，或身旁沒有空格，便扯不動'
+      },
+      { id: 'fleet', name: '水上飄', trait: 'fleet', text: '每一格只消耗 1 步，淺水與林叢都拖不慢他' },
+      {
+        id: 'twin',
+        name: '陰陽倒亂',
+        trait: 'twin',
+        text: '兩件兵刃輪著使：單數回合攻擊提高，雙數回合射程多一格'
+      },
+      { id: 'prowl', name: '獨行', trait: 'lone', text: '身旁沒有其他敵人時，出手或還擊攻擊提高' },
+      { id: 'pincer', name: '夾衛', trait: 'pincer', text: '目標身旁另有敵人時，出手或還擊攻擊提高' },
+      {
+        id: 'stepPoison',
+        name: '步裡藏毒',
+        trait: 'stepPoison',
+        text: '走動之後的普攻令目標中毒；原地出手與還擊不帶毒'
+      },
+      { id: 'lastStand', name: '沉樁', trait: 'lastStand', text: '氣血降到一定程度以下時，受到的傷害減少' },
+      { id: 'snare', name: '墜網', trait: 'snare', text: '普攻令目標絆足，移動減少；還擊不帶網' }
     ]
   },
   {

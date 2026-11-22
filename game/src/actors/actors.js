@@ -237,8 +237,12 @@ class ActorLayer {
   }
   pose(actor, target, kind, origin = actor) {
     const full = this.prefs.motion;
+    // A target that changed tile with this blow was moved by it: a hero's push, or a villain's
+    // 擒拿 dragging a hero in. Its move plays at the impact, not as a walk before it.
     const pushed =
-      kind === 'signature-hit' || kind === 'basic-hit' ? this.latestMoves.get(target.id) : null;
+      kind === 'signature-hit' || kind === 'basic-hit' || kind === 'villain-skill'
+        ? this.latestMoves.get(target.id)
+        : null;
     const start = Math.max(this.tail(actor.id), this.tail(target.id, pushed));
     const blink = kind === 'blink',
       friendly = blink || kind === 'healing' || kind === 'support';
@@ -270,8 +274,10 @@ class ActorLayer {
       if (pushed) {
         this.cue(hit, { type: 'skid', id: target.id });
         pushed.knockback = true;
+        // A drag may cover more than one tile: it slides straight from where the piece stood.
+        pushed.path = [pushed.path[0], pushed.path.at(-1)];
         pushed.start = hit;
-        pushed.end = hit + (full ? 265 : 105);
+        pushed.end = hit + (full ? (hostile ? 380 : 265) : 105);
         this.hold(pushed.end);
       }
       if (target.hp <= 0) {

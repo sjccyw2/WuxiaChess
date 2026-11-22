@@ -1,4 +1,5 @@
-// One entry per board, in map order. Each board is a closed scene. Its black stones did not
+// One entry per board, in map order (the ten boards of the first edition, then the five built
+// round one villain each). Each board is a closed scene. Its black stones did not
 // choose to be here: 求敗 pressed a 戰意 on them as he set them down, and they must fight whoever
 // comes. They feel that the thought is not their own, they strain against it, and they cannot
 // see who did it; inside the board a man sees only a few steps. Beating them lifts it.
@@ -6,7 +7,7 @@
 // A board must never mention another board or where it falls in the run, because boards are
 // shuffled. It is written in 金庸's manner (wiki/content/單輪劇本.md §15).
 //
-//   who       boss, mini (the lieutenant), youth (the player's character, who sees the whole
+//   who       boss, mini (the lieutenant; a board built round one villain has none), youth (the player's character, who sees the whole
 //             board from the table), leader and ally (whichever heroes are fielded; these lines
 //             must suit anyone), or the id of a named black stone beyond those two ('zhaoZhong').
 //             A line of a stone that is not on the board is left out.
@@ -501,6 +502,182 @@ const ENCOUNTER_SCRIPT = [
         broken: { who: 'boss', text: '索鬆了一股。……老夫這身子，又有一分是自己的了。' }
       }
     }
+  },
+  // The boards built round one villain: no lieutenant, so no 'mini' line.
+  {
+    before: [
+      {
+        who: 'boss',
+        note: '神龍竹堂。海島之上好大一座竹堂，堂前高臺上端坐一個白鬚老者，臺下教眾齊聲念誦，聲震竹瓦。',
+        text: '住口！……本座叫你們住口。「仙福永享，壽與天齊」這八個字，本座聽了幾十年，今日聽來，竟像是在祝另一個人。心裡有一道號令，卻不是本座下的。'
+      },
+      {
+        who: 'youth',
+        text: '他一向坐在臺上，叫旁人去拚命。今日一道戰意壓著，連他自己也得下臺來。……他的手長，隔著幾步也抓得到人。給他扯了過去，旁邊的人要接應得上。'
+      },
+      { who: 'leader', text: '發號令的給人號令了去，底下念咒的還不曉得。先打醒了臺上那一個，臺下的自然散了。' }
+    ],
+    win: [
+      {
+        who: 'boss',
+        note: '念誦之聲忽然止歇。洪安通立在臺前，低頭瞧著自己一雙手，五指兀自作擒拿之勢。',
+        text: '散了。……都跪著作甚？適才本座親自下場，是誰的主意？哪一個說得出那人是誰，本座賞他一顆豹胎易筋丸的解藥！'
+      },
+      { who: 'youth', text: '戰意散了。他醒過來頭一件事，是查問誰敢越過他去發號令。……那個人，他是查不著的。' }
+    ],
+    loss: [
+      {
+        who: 'boss',
+        note: '臺下念誦之聲又起，一聲高過一聲。',
+        text: '勝了。念甚麼？不許念！……這一仗不是本座要打的，這仙福也不是祝給本座的。'
+      },
+      { who: 'youth', text: '他贏了，臺下念得更響，他的臉色卻更難看。那道戰意還壓著他。' }
+    ],
+    heroLines: {},
+    extras: {}
+  },
+  {
+    before: [
+      {
+        who: 'boss',
+        note: '絕情花徑。谷中遍地奇花，嬌艷無比，枝上卻生滿小刺。花徑盡頭一人寬袍緩帶，左手金刀，右手黑劍，臉上猶帶三分笑意。',
+        text: '貴客光降，公孫某本當掃徑相迎。只是有一事好生奇怪：本谷之中，向來是公孫某替旁人拿主意，今日卻有人替公孫某拿了主意。這一刀一劍並非待客之道，也並非公孫某的本心。'
+      },
+      {
+        who: 'youth',
+        text: '他笑著說話，手上的刀劍卻一點不慢。一道戰意壓著他，也壓著他那些張網的弟子，這一局要一個個都打醒才算。……花叢有刺，走不快，小心給網罩在裡頭。'
+      },
+      { who: 'ally', text: '嘴上愈客氣的人，下手愈不容情。他那一刀一劍輪著使，一回重，一回長，瞧準了再近身。' }
+    ],
+    win: [
+      {
+        who: 'boss',
+        note: '金刀黑劍雙雙垂下。公孫止整了整衣冠，卻先回頭望了一眼石屋的門。',
+        text: '失禮，失禮。適才之事，公孫某全然作不得主。諸位請便，石屋那邊卻不必去了。'
+      },
+      { who: 'youth', text: '戰意散了。他醒過來頭一件事，是回頭瞧那扇門閂好了沒有。……他有不想給人瞧見的東西，那是他自己的事了。' }
+    ],
+    loss: [
+      {
+        who: 'boss',
+        note: '漁網四面收攏。公孫止臉上的笑意，一分一分的淡了下去。',
+        text: '客人是留下了，公孫某卻歡喜不起來。這個主意不是公孫某拿的。……收網，再張開。它還要公孫某等下一批客人。'
+      },
+      { who: 'youth', text: '他贏了，笑卻掛不住了。那道戰意還在替他拿主意。' }
+    ],
+    heroLines: {
+      yang: '公孫谷主，你我的帳本來不少。只是今日你這對刀劍來得不由自主，倒比你平日那張笑臉老實些。我先打散那個替你作主的，再同你算你自己的。',
+      xiao: '公孫先生，你救過我，也騙過我。今日攔路的不是你。我不怪你，可也不讓。',
+      huang: '這位谷主笑得斯文，手上可一點不斯文。給人算計到這步田地，連一句漂亮話也說不周全，那人手段倒高。'
+    },
+    extras: {}
+  },
+  {
+    before: [
+      {
+        who: 'boss',
+        note: '鐵掌溪灘。一道湍溪橫在山前，水聲轟轟。對岸山門之前立著一個黃葛短衫的老者，雙掌垂在身側，凝然不動。',
+        text: '老夫一雙鐵掌，要打誰便打誰，從不問第二句。今日心裡卻有人替老夫點了名，連問也不容老夫問。嘿，裘某幾時成了旁人掌上的一枚子？'
+      },
+      {
+        who: 'youth',
+        text: '他不服，可是掌已經提起來了。一道戰意壓在他眉心。……溪水急，我們涉水走不快，他卻踏著水面便過來了。別在水裡同他糾纏，佔住石頭再打。'
+      },
+      { who: 'leader', text: '掌力再重，也是給人牽著打出來的。各位先搶踏腳的石頭，在水裡是鬥他不過的。' }
+    ],
+    win: [
+      {
+        who: 'boss',
+        note: '裘千仞雙掌一垂，立在當地，再不移動半步。他將右掌翻了過來，瞧了半晌。',
+        text: '散了。適才那幾掌，不是老夫要打的。……這倒奇了。那麼老夫從前要打的那許多掌，又有幾掌是該打的？'
+      },
+      { who: 'youth', text: '戰意散了。他沒有走，也沒有發怒，只站在那裡瞧自己的手掌。……這一句他問的是自己，旁人答不上。' }
+    ],
+    loss: [
+      {
+        who: 'boss',
+        note: '溪水照舊轟轟的流。裘千仞立在溪邊，掌心的勁力一吐一收，停不下來。',
+        text: '贏了。老夫贏過的陣仗多了，從沒有一陣贏得這般不由自主。……它還要老夫守著這條溪。'
+      },
+      { who: 'youth', text: '他贏了，掌卻收不回去。那道戰意還壓在他眉心。' }
+    ],
+    heroLines: {
+      guo: '裘幫主，蓉兒當年中你一掌，險些送了性命，我沒有一日忘記。可今日這一掌不是你要打的。這筆帳，等你醒了再算。',
+      huang: '裘老兒，當年你一掌打去我半條命，這筆帳我記到如今。可你今日兩眼發直，倒像你那位愛吹牛皮的兄長給人點了穴道。先打醒了你，再同你算。',
+      yang: '這一雙鐵掌我認得。我見到他時，他已落髮為僧，法號慈恩。……原來他也有過這般不肯回頭的時候。'
+    },
+    extras: {}
+  },
+  {
+    before: [
+      {
+        who: 'boss',
+        note: '西夏夜苑。宮燈一盞盞亮著，蓮池無波。殿階之前立著一個白衫女子，面上垂一幅白綢，話聲輕柔婉轉。',
+        text: '我同人鬥了一世，為的是誰，自己心裡明白。今夜卻奇了：心裡這一個「戰」字，不是為他，也不是為師姊。是誰這般大膽，敢借我的手來使？'
+      },
+      {
+        who: 'youth',
+        text: '她說話好聽，掌力卻會拐彎。一道戰意壓著她。……躲在石欄後面沒有用，她的掌力繞得過來。那些禁衛喜歡兩個夾一個，別教他們圍上。'
+      },
+      { who: 'ally', text: '話聲這般柔，出手卻這般狠。她這掌力不走直路，大家不必指望誰替誰擋。' }
+    ],
+    win: [
+      {
+        who: 'boss',
+        note: '掌風一斂，宮燈不再搖晃。李秋水抬起手來，先按了按面上的白綢。',
+        text: '散了。適才那些掌，不是我要打的。……你們當中，可有人瞧見了我的臉？沒有便好。'
+      },
+      { who: 'youth', text: '戰意散了。她醒過來頭一件事，是按住面上那幅白綢，問有沒有人瞧見。……她怕的原來是這個。' }
+    ],
+    loss: [
+      {
+        who: 'boss',
+        note: '宮燈一盞一盞，自己又亮了回來。李秋水立在殿階之前，袖中的掌力吞吐不定。',
+        text: '贏了又如何？這一場不是為他打的，贏來作甚。……它還不肯走。'
+      },
+      { who: 'youth', text: '她贏了，半點也不歡喜。那道戰意還壓著她。' }
+    ],
+    heroLines: {
+      duan: '這位前輩的身形，在下好生眼熟，倒像無量山石洞之中那一尊玉像。……只是神仙姊姊決不會出手傷人。得罪了。'
+    },
+    extras: {}
+  },
+  {
+    before: [
+      {
+        who: 'boss',
+        note: '黑木繡閣。崖頂一座花園，紅梅翠竹，佈置得極是精雅。小舍門前坐著一人，一身粉紅衣衫，膝上擱著繃架，指間拈一枚繡花針。',
+        text: '我早已不同人動手了。天下英雄，在我眼裡不及繃架上這一朵花。偏偏今日這枚針不肯繡花，自己離了繃子，要去刺人。……是誰擾我？'
+      },
+      {
+        who: 'youth',
+        note: '少年說到這裡，棋臺對面的求敗抬了抬眼。',
+        text: '他叫不敗。旁人求了一世的東西，他拿來作了名字，轉頭便去繡花。……一道戰意壓著他，針才離了繃子。他快得瞧不清，一出手便是兩個人，別一齊擠到他身前。'
+      },
+      { who: 'leader', text: '一枚繡花針，也是給人按著手刺出來的。他身法再快，總有落腳之處。各位散開些，別擠作一堆。' }
+    ],
+    win: [
+      {
+        who: 'boss',
+        note: '繡花針叮的一聲，落在石徑之上。東方不敗俯身拾起，先去瞧那繃架。',
+        text: '繡壞了三針。……你們幾個，擾了我半日清靜。去罷，我不殺你們。適才那些針，原也不是我要刺的。'
+      },
+      { who: 'youth', text: '戰意散了。他醒過來頭一件事，是數繃架上繡壞了幾針。……勝敗二字，他是真的不放在心上。' }
+    ],
+    loss: [
+      {
+        who: 'boss',
+        note: '園中落了一地梅瓣，瓣上各有一個針孔。東方不敗坐回門前，針卻不肯往繃架上落。',
+        text: '都倒下了。……我要繡花，它偏要我等人。蓮弟若是問起，教我怎生對答？'
+      },
+      { who: 'youth', text: '他贏了，卻連一朵花也繡不成。那道戰意還壓著他的針。' }
+    ],
+    heroLines: {
+      hero: '東方教主！在下久聞大名，只道是個三頭六臂的人物，原來教主愛的是繡花。給人逼著放下針線來廝殺，這滋味想來比給人逼著戒酒還要難受。',
+      medic: '東方叔叔。……小時候你常抱我去山上採果子，我至今記得。今日教你我動手的，不是我爹爹的舊帳，是壓在你針上的那東西。',
+      guard: '東方不敗，你奪了任教主的位子，老子同你有的是帳算。可你今日連教主也不想當，只想繡花，偏有人不許。嘿，這人比老子還不講理。'
+    },
+    extras: {}
   }
 ];
 

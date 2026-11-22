@@ -1,5 +1,6 @@
 // What each board is: how it is won, who stands on it beyond its fixed four pieces, who comes
-// later, and the pool its secondary objective is drawn from. One entry per map index.
+// later, and the pool its secondary objective is drawn from. One entry per map index: the ten
+// boards of the first edition, then the five built round one villain each.
 //
 //   kind     'slay': every master must fall; 'rout': every enemy, reinforcements included;
 //            'keep' (守): the board's objects must stand until the end of round `hold`, or every
@@ -19,6 +20,8 @@
 // numbered on its board ('fiveTiger#1', 'bow-2#1'). `mods` on a piece apply after its type's own.
 // Ids are kept in saves, so a piece keeps its id once a board ships.
 
+// The board every run ends on (無刻漏臺), by map index.
+const FINAL_MAP = 9;
 // The reward kinds a secondary may pay (journey.js settle).
 const SIDE_REWARDS = ['coins', 'points', 'manual'];
 
@@ -310,7 +313,124 @@ const BATTLES = [
       { kind: 'order', first: 'wanZhen', reward: 'coins' },
       { kind: 'unhurt', reward: 'coins' }
     ]
+  },
+  // Boards 10 to 14 are each built round one villain: he is the 局主, there is no lieutenant, and
+  // the other three of the fixed four are his troop type (encounters.js GARRISONS). A run meets
+  // each in place of an earlier board of the same stage (journey.js routeFor).
+  // 10 神龍竹堂: 洪安通 on the dais before his bamboo hall; two more 門眾 come up the west beach in
+  // round 3.
+  {
+    kind: 'slay',
+    masters: ['master'],
+    pieces: [],
+    waves: [
+      {
+        id: 'shore',
+        when: { round: 3 },
+        place: '西灘',
+        pieces: [
+          { id: 'shenLong#1', at: [0, 6] },
+          { id: 'shenLong#2', at: [1, 7] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'lamp', reward: 'coins' },
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'intact', reward: 'coins' },
+      { kind: 'holdLine', zone: { y: [9, 11] }, place: '南灘', reward: 'manual' }
+    ]
+  },
+  // 11 絕情花徑: defeat everyone; 公孫止 before his stone house, six 網手 along both paths round
+  // the pool.
+  {
+    kind: 'rout',
+    masters: ['master'],
+    pieces: [
+      { id: 'netHand#1', at: [10, 5] },
+      { id: 'netHand#2', at: [6, 9] },
+      { id: 'netHand#3', at: [5, 1] }
+    ],
+    waves: [],
+    sides: [
+      { kind: 'double', reward: 'coins' },
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'unhurt', reward: 'coins' },
+      { kind: 'noMedicine', reward: 'manual' }
+    ]
+  },
+  // 12 鐵掌溪灘: 裘千仞 crosses the stream as if it were dry ground; his men stand on the stepping
+  // stones, and two more come down the mountain path in round 3.
+  {
+    kind: 'slay',
+    masters: ['master'],
+    pieces: [{ id: 'ironPalm#1', at: [10, 5] }],
+    waves: [
+      {
+        id: 'trail',
+        when: { round: 3 },
+        place: '北岸山道',
+        pieces: [
+          { id: 'ironPalm#2', at: [1, 2] },
+          { id: 'ironPalm#3', at: [10, 2] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'intact', reward: 'coins' },
+      { kind: 'lamp', reward: 'coins' },
+      { kind: 'unhurt', reward: 'manual' }
+    ]
+  },
+  // 13 西夏夜苑: 李秋水 before the hall steps, a guard pair before her and one on the bridge; two
+  // more from the east and west galleries in round 4.
+  {
+    kind: 'slay',
+    masters: ['master'],
+    pieces: [],
+    waves: [
+      {
+        id: 'galleries',
+        when: { round: 4 },
+        place: '東西迴廊',
+        pieces: [
+          { id: 'xiaGuard#1', at: [0, 3] },
+          { id: 'xiaGuard#2', at: [12, 3] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'double', reward: 'manual' },
+      { kind: 'noMedicine', reward: 'coins' },
+      { kind: 'lamp', reward: 'coins' }
+    ]
+  },
+  // 14 黑木繡閣: 東方不敗 before the small house, the guards each alone about the garden; two more
+  // along the east gallery in round 4.
+  {
+    kind: 'slay',
+    masters: ['master'],
+    pieces: [{ id: 'heiMuGuard#1', at: [7, 8] }],
+    waves: [
+      {
+        id: 'east',
+        when: { round: 4 },
+        place: '東廊',
+        pieces: [
+          { id: 'heiMuGuard#2', at: [11, 7] },
+          { id: 'heiMuGuard#3', at: [11, 4] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'intact', reward: 'manual' },
+      { kind: 'unhurt', reward: 'coins' },
+      { kind: 'lamp', reward: 'coins' }
+    ]
   }
 ];
 
-export { BATTLES, SIDE_REWARDS };
+export { BATTLES, SIDE_REWARDS, FINAL_MAP };

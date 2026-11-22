@@ -2,7 +2,7 @@ import { mapLayout } from '../data/terrain.js';
 // A depth-buffered renderer for browsers without WebGL. It draws the same model,
 // camera and projected tiles. Static scenery is redrawn only when the camera changes.
 import { sunDirection } from './environment.js';
-import { setting, bytes } from './maze-atmosphere.js';
+import { setting, bytes, isNight } from './maze-atmosphere.js';
 
 const clamp = (n, l, h) => Math.max(l, Math.min(h, n));
 const pack = (r, g, b) => (255 << 24) | ((b & 255) << 16) | ((g & 255) << 8) | (r & 255);
@@ -297,7 +297,7 @@ class SoftwareScene {
             sparkle = 92;
         }
         const sunlight =
-          (this.index === 7 ? 0.07 : this.index === 9 ? 0.34 : 1) *
+          (this.index === 7 ? 0.07 : isNight(this.index) ? 0.34 : 1) *
           (this.index ? clamp((7 * sy) / len, 0, 1) : 1);
         bits[y * w + x] = pack(
           clamp(

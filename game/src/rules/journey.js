@@ -41,7 +41,7 @@ const LEGACY = {
   cleared: [],
   finale: 0
 };
-const MAPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+const MAPS = BATTLES.map((_, map) => map);
 // A name typed by the player: no spaces or line breaks, at most eight characters.
 const cleanName = (value) => [...String(value ?? '').replace(/\s+/g, '')].slice(0, 8).join('');
 // The youth is 無名 (he cannot recall his own name in the dream). A name typed in an older save is
@@ -83,15 +83,24 @@ function newSeed() {
 function drawLots(seed = newSeed()) {
   return { seed, ids: shuffled(G.PARTY, random(seed)).slice(0, 3) };
 }
-function routeFor(seed) {
+// The ten boards of a run, in order. A run always opens on 青竹渡 and ends on 無刻漏臺; between
+// them the boards stand in tiers of like strength. Since edition 2 each tier also holds a board
+// built round one villain (maps 10 to 14), so a run draws ten of fifteen: two of three for each
+// of the three early pairs of stages, and one of two for the eighth and the ninth. A run saved
+// before that (no `routes`) keeps the route its seed made then: the first ten boards only.
+const ROUTE_EDITION = 2;
+function routeFor(seed, edition = ROUTE_EDITION) {
   const rand = random(seed ^ 0x79ac7d53);
+  if (edition < 2)
+    return [0, ...shuffled([1, 2], rand), ...shuffled([3, 4], rand), ...shuffled([5, 6], rand), 7, 8, 9];
+  const two = (tier) => shuffled(tier, rand).slice(0, 2);
   return [
     0,
-    ...shuffled([1, 2], rand),
-    ...shuffled([3, 4], rand),
-    ...shuffled([5, 6], rand),
-    7,
-    8,
+    ...two([1, 2, 10]),
+    ...two([3, 4, 11]),
+    ...two([5, 6, 12]),
+    shuffled([7, 13], rand)[0],
+    shuffled([8, 14], rand)[0],
     9
   ];
 }
@@ -118,6 +127,7 @@ function initialRun(ids, seed, legacy, realm) {
     realm: realm >= 1 && realm <= openRealms(chronicle) ? realmIndex(realm) : openRealms(chronicle),
     priorFate: chronicle.lastFate,
     seed,
+    routes: ROUTE_EDITION,
     route: routeFor(seed),
     stage: 0,
     status: 'battle',
@@ -418,7 +428,7 @@ function restoreRun(raw) {
   }
   const s = raw,
     r = s.run;
-  const expectedRoute = r && routeFor(r.seed);
+  const expectedRoute = r && routeFor(r.seed, r.routes ?? 1);
   const board = mapLayout(s.mapIndex);
   // Saves from the rectangular battlefields may occupy a tile now cut away.
   const canRestorePoint = (p) =>
@@ -440,6 +450,7 @@ function restoreRun(raw) {
     !Number.isInteger(r.stage) ||
     r.stage < 0 ||
     r.stage > 9 ||
+    ![undefined, 1, ROUTE_EDITION].includes(r.routes) ||
     !Array.isArray(r.route) ||
     r.route.length !== 10 ||
     r.route.some((v, i) => v !== expectedRoute[i]) ||
@@ -1241,8 +1252,9 @@ function boardModel(map, stage, s = null, live = false) {
   const start = 4 + board.pieces.length,
     later = board.waves.reduce((n, w) => n + w.pieces.length, 0);
   const chips = new Map();
+  // Every fixed seat that is not a named opponent: on a board with no lieutenant, three of them.
   for (const key of [
-    ...G.encounterKeys(map).slice(2),
+    ...G.encounterKeys(map).slice(1),
     ...[...board.pieces, ...board.waves.flatMap((w) => w.pieces)].map((p) => p.id.split('#')[0])
   ]) {
     if (villain(key)) continue;
@@ -1390,7 +1402,9 @@ function settle(s) {
     const past = fillProfile(r.chronicle);
     past.returns++;
     for (const u of G.company(s)) past.walked[u.id] = (past.walked[u.id] || 0) + 1;
-    past.seen = MAPS.filter((map) => past.seen.includes(map) || r.route.indexOf(map) <= r.stage);
+    // The boards this run reached. A run draws ten of fifteen: a board not on its route is not seen.
+    const reached = r.route.slice(0, r.stage + 1);
+    past.seen = MAPS.filter((map) => past.seen.includes(map) || reached.includes(map));
   }
   const bonus = optional ? paySide(s) : null;
   delete r.devSide;
@@ -1532,10 +1546,9 @@ function appointLeader(s, id) {
 function defenders(s) {
   const map = s.mapIndex,
     layout = mapLayout(map),
-    rows = G.stageRows(map, s.run.stage, s.run.realm),
-    keys = G.encounterKeys(map);
+    numbers = G.seatNumbers(map, s.run.stage, s.run.realm);
   const fixed = G.SLOTS.map((slot, i) => {
-    const [hp, atk, def, step, range] = G.withMods(rows[slot], G.DETAILS[keys[i]]?.traits?.mods),
+    const [hp, atk, def, step, range] = numbers[i],
       p = layout.enemies[i];
     return G.makeUnit(G.slotId(map, slot), 'enemy', p.x, p.y, hp, 0, atk, def, step, range);
   });
@@ -1872,4 +1885,4 @@ function campModel(s) {
   };
 }
 
-export { devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

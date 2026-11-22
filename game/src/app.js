@@ -1109,10 +1109,13 @@ async function runEnemy() {
       return;
     }
     const dazed = !!e.conditions?.daze; // 失神: the piece loses its action, and says so
+    const pulls = state.tally?.fired?.pull || 0;
     const effects = G.enemyAct(state, e);
     audio(effects.length && !dazed ? 'ready' : 'move'); // footfalls and blows follow as board cues
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
+    // 擒拿: who was dragged in, said once the blow and the drag have played.
+    const dragged = (state.tally?.fired?.pull || 0) > pulls && effects[0] ? G.find(state, effects[0][0]) : null;
     if (dazed) mapTip(uName(e) + ' 失神，錯過了這一手');
     // 續命: a mend is no blow, so the board says what it did.
     else if (effects[0]?.[1].startsWith('+'))
@@ -1134,6 +1137,7 @@ async function runEnemy() {
     board.showEffects(effects);
     if (result(true)) return;
     await board.finished();
+    if (dragged) mapTip(uName(e) + ' · 擒拿，將' + uName(dragged) + '扯到身前', 3200);
     await sleep(prefs.motion ? 150 : 45);
   }
 }
