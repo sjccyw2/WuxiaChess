@@ -53,6 +53,22 @@ function pad(m, x, y, z, rx, rz, yaw) {
       [m.rgb(needleEdge), m.rgb(needleEdge), m.rgb(snowShade), m.rgb(snowShade)]
     );
     face(m, [cap[i], cap[j], crown], [m.rgb(snowShade), m.rgb(snowShade), m.rgb(snow)]);
+    // Tufts of needles hang out past the rim, so the pad has a ragged edge.
+    const r = rim[i],
+      s = rim[j],
+      mid = [(r[0] + s[0]) / 2, (r[1] + s[1]) / 2, (r[2] + s[2]) / 2];
+    for (const p of [r, mid]) {
+      const ox = p[0] - x,
+        oz = p[2] - z;
+      m.face(
+        [
+          [p[0] - oz * 0.12, p[1] + 0.01, p[2] + ox * 0.12],
+          [p[0] + ox * 0.22, p[1] - 0.09 * rx, p[2] + oz * 0.22],
+          [p[0] + oz * 0.12, p[1] + 0.01, p[2] - ox * 0.12]
+        ],
+        [m.rgb(needleEdge), m.rgb(tone), m.rgb(needleEdge)]
+      );
+    }
   }
 }
 

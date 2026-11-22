@@ -6,29 +6,42 @@ const TAU = Math.PI * 2;
 
 function peak(m, x, z, base, w, d, H, ridges, tint, snow, haze, fade) {
   const r = m.rng,
-    n = ridges * 2,
+    n = ridges * 4,
     spin = r.range(0, TAU),
     lean = [r.range(-0.25, 0.25), r.range(-0.25, 0.25)];
-  // Ridges stick out, gullies cut in; each ridge has its own reach.
-  const spokes = Array.from({ length: n }, (_, i) => [
-    spin + (i / n) * TAU + r.range(-0.12, 0.12),
-    i % 2 ? r.range(0.48, 0.62) : r.range(0.9, 1.15)
-  ]);
+  // Main ridges stick out, a lesser rib either side, couloirs cut in between;
+  // each ridge has its own reach.
+  const spokes = Array.from({ length: n }, (_, i) => {
+    const kind = i % 4;
+    return [
+      spin + (i / n) * TAU + r.range(-0.07, 0.07),
+      kind === 0 ? r.range(0.95, 1.18) : kind === 2 ? r.range(0.46, 0.6) : r.range(0.68, 0.84),
+      kind
+    ];
+  });
   const levels = [
     [0, 1],
-    [0.22, 0.86],
-    [0.45, 0.64],
-    [0.66, 0.44],
-    [0.84, 0.22],
+    [0.1, 0.93],
+    [0.22, 0.84],
+    [0.35, 0.71],
+    [0.48, 0.58],
+    [0.61, 0.45],
+    [0.74, 0.31],
+    [0.87, 0.17],
     [1, 0]
   ];
-  const rings = levels.map(([k, s]) =>
-    spokes.map(([a, q], i) => {
-      const g = i % 2 ? Math.max(0.35, q + 0.15 * k) : q;
+  const rings = levels.map(([k, s], j) =>
+    spokes.map(([a, q, kind], i) => {
+      // Ribs hold their reach as they climb, couloirs open into bowls.
+      const g = kind === 2 ? Math.max(0.35, q + 0.2 * k) : q;
+      const rough =
+        1 + 0.11 * Math.sin(i * 2.7 + j * 1.9 + x) * (j && j < levels.length - 1 ? 1 : 0);
+      // Ridge crests step up in towers, couloirs sit lower: a serrated skyline.
+      const tower = k > 0.3 && k < 1 ? (kind === 0 ? 0.045 : kind === 2 ? -0.05 : 0) : 0;
       return [
-        x + Math.cos(a) * w * g * s + lean[0] * k * w,
-        base + k * H * (1 + (i % 2 ? -0.05 : 0.04) * Math.sin(k * Math.PI)),
-        z + Math.sin(a) * d * g * s + lean[1] * k * d
+        x + Math.cos(a) * w * g * s * rough + lean[0] * k * w,
+        base + (k + tower) * H,
+        z + Math.sin(a) * d * g * s * rough + lean[1] * k * d
       ];
     })
   );
@@ -50,15 +63,26 @@ function peak(m, x, z, base, w, d, H, ridges, tint, snow, haze, fade) {
         const up = Math.abs(ny) / Math.hypot(nx, ny, nz);
         const height = ((a[1] + b[1] + c[1]) / 3 - base) / H;
         // Snow on the gentler faces high up and in the couloirs; bare rock on
-        // the steep faces, darkest low down.
-        const gully = (j + (i % 2)) % 2 === 1 ? 0.12 : 0;
-        const hold = Math.min(1, Math.max(0, (up - 0.3 + 1.6 * gully + 0.4 * height) / 0.12));
-        const rock = m.mix(tint, haze, fade * 0.7 + 0.18 * height);
-        const white = m.mix(snow, haze, fade * 0.45);
+        // the steep faces and the rib crests, darkest low down. Sunward faces
+        // (the sun is low in the west) take a warmer white.
+        const gully = spokes[i][2] === 2 || spokes[q][2] === 2 ? 0.1 : 0,
+          rib = spokes[i][2] === 0 || spokes[q][2] === 0 ? 0.06 : 0;
+        const band = 0.04 * Math.sin(height * 23 + x);
+        const hold = Math.min(
+          1,
+          Math.max(0, (up - 0.34 + 1.6 * gully - rib + 0.42 * height + band) / 0.1)
+        );
+        const sunward = Math.max(0, -nx * Math.sign(ny || 1)) / Math.hypot(nx, ny, nz);
+        const rock = m.mix(
+          m.mix(tint, 0x2f383f, 0.25 * (1 - height)),
+          haze,
+          fade * 0.7 + 0.18 * height
+        );
+        const white = m.mix(m.mix(snow, 0xfaf3e6, sunward * 0.6), haze, fade * 0.45);
         m.face(
           tri,
-          m.mix(rock, white, height < 0.12 ? hold * 0.4 : hold),
-          0.94 + (0.08 * ((i * 3 + j) % 3)) / 2
+          m.mix(rock, white, height < 0.1 ? hold * 0.4 : hold),
+          0.92 + (0.1 * ((i * 3 + j) % 3)) / 2
         );
       }
     }
@@ -87,6 +111,27 @@ function peaks3(m, style) {
         tier ? 0.7 : 0.42
       );
     }
+  // A ring of lower snow ridges between the massif and the range: they show
+  // under the near peaks from the low cameras and give the valley a far side.
+  for (let j = 0; j < 22; j++) {
+    const a = 0.11 + (j * TAU) / 22 + r.range(-0.05, 0.05),
+      rad = 15.2 + r.range(-0.4, 0.9),
+      s = r.range(1.3, 2.1);
+    peak(
+      m,
+      Math.cos(a) * rad,
+      Math.sin(a) * rad,
+      style.level - 0.4,
+      s * 1.5,
+      s * 0.8,
+      r.range(2.4, 4.4),
+      r.pick([2, 3]),
+      0x4c5861,
+      0xf0f4f6,
+      style.horizon,
+      0.18
+    );
+  }
 }
 
 export { peaks3 };
