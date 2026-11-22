@@ -1425,11 +1425,65 @@ const HERO_STATS = {
 };
 // What a hero arrives wearing, beside the weapon in HERO_STATS.
 const STARTING_GEAR = { diYun: 'silkwormCoat' };
+// What reaching a level adds, as [攻擊, 防禦, 氣血, 內力]: levels two and three add more, later
+// ones less (raiseLevel). The wiki's hero pages read these and GROWTH_PACES.
+const LEVEL_GAINS = { novice: [3, 2, 12, 6], veteran: [2, 1, 8, 6] };
+// Paces of growth other than the common one (the producer's request, 2026-11-22). A hero on one
+// reaches the same numbers at level 12 as LEVEL_GAINS gives him, only at another pace: `start`
+// is what he already has at level 1 beyond his HERO_STATS (or, below zero, still lacks), and
+// `levels` what reaching each level from two to twelve adds, both as [攻擊, 防禦, 氣血, 內力].
+// So `start` and the eleven rows add up to the common growth's 24, 13, 96 and 66. Past level 12
+// he grows by LEVEL_GAINS.veteran.
+const GROWTH_PACES = {
+  // A whole art learned in youth: most of the growth is there by level 4, then very little.
+  early: {
+    name: '早成',
+    desc: '一級起便比尋常強，四級以前長得快，此後每級只添少許。',
+    start: [10, 5, 40, 26],
+    levels: [
+      [6, 3, 24, 16], [4, 2, 16, 10], [2, 1, 8, 6], [2, 2, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1],
+      [0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]
+    ]
+  },
+  // Slow to learn: below the common numbers to level 4, then a great deal each level from 5 to 9,
+  // so the payoff comes within the levels a run reaches (a slow learner also earns less 歷練).
+  late: {
+    name: '晚成',
+    desc: '四級以前比尋常弱，每級只長一點；五級起每級長得多，九級前後追上尋常。',
+    start: [-6, -3, -24, -16],
+    levels: [
+      [1, 0, 4, 3], [1, 1, 4, 3], [1, 0, 4, 3], [4, 2, 16, 10], [5, 3, 20, 13],
+      [5, 3, 20, 13], [4, 2, 16, 11], [3, 2, 12, 9], [3, 1, 12, 8], [2, 1, 8, 6], [1, 1, 4, 3]
+    ]
+  },
+  // Behind until a single level makes it all up at once, then the common growth.
+  surge: {
+    name: '驟進',
+    desc: '五級以前比尋常弱，升上六級時一次補足，此後照常成長。',
+    start: [-5, -3, -20, -14],
+    levels: [
+      [1, 0, 2, 1], [0, 0, 2, 1], [1, 0, 2, 1], [0, 0, 2, 1], [15, 10, 60, 40],
+      [2, 1, 8, 6], [2, 1, 8, 6], [2, 1, 8, 6], [2, 1, 8, 6], [2, 1, 8, 6], [2, 1, 8, 6]
+    ]
+  }
+};
+// Who grows at which pace, and why (the wiki's hero page shows both). A hero not listed grows by
+// LEVEL_GAINS; take an entry out and that hero grows as everyone does.
+const GROWTH_PROFILES = {
+  hu: { pace: 'early', why: '胡家刀譜他自小照著練全。' },
+  chengZhi: { pace: 'early', why: '金蛇秘笈他少年時在石洞中練全。' },
+  duan: { pace: 'late', why: '他本不會武功，六脈神劍時靈時不靈，到後來方才收發由心。' },
+  guo: { pace: 'late', why: '他資質魯鈍，學得極慢；降龍十八掌練成之後，方成中流砥柱。' },
+  xuZhu: { pace: 'surge', why: '無崖子一次將七十年內力傳入他體內。' }
+};
+const growthOf = (id) => GROWTH_PACES[GROWTH_PROFILES[id]?.pace] || null;
 const FOES = ['chief', 'blade', 'bow', 'scout'];
-const startingHero = (id) => ({
-  ...makeUnit(id, 'ally', 0, 0, ...HERO_STATS[id]),
-  gear: STARTING_GEAR[id] || null
-});
+const startingHero = (id) => {
+  const u = { ...makeUnit(id, 'ally', 0, 0, ...HERO_STATS[id]), gear: STARTING_GEAR[id] || null },
+    start = growthOf(id)?.start;
+  if (start) addGrowth(u, start);
+  return u;
+};
 function newGame(ids = ORIGINAL_PARTY) {
   if (ids.length !== 3 || new Set(ids).size !== 3 || !ids.every((id) => PARTY.includes(id)))
     throw new Error('請選擇三位不同的俠客。');
@@ -2713,17 +2767,25 @@ const GROWTH = {
   seasoned: 3, // from this level on, action experience is scaled down
   drag: 38 // percent added to the divisor for each level above `seasoned`
 };
+function levelGain(id, level) {
+  const row = growthOf(id)?.levels[level - 2];
+  return row || (level <= 3 ? LEVEL_GAINS.novice : LEVEL_GAINS.veteran);
+}
+function addGrowth(u, [atk, def, hp, mp]) {
+  u.atk += atk;
+  u.def += def;
+  u.maxHp += hp;
+  if (living(u)) u.hp = Math.min(u.maxHp, u.hp + hp);
+  u.maxMp += mp;
+  u.mp = Math.min(u.maxMp, u.mp + mp);
+}
+// Level by level, by the level being reached, so raising several levels at once gives the same
+// numbers as raising them one at a time.
 function raiseLevel(u, levels) {
-  const novice = Math.min(levels, Math.max(0, 3 - u.level));
-  const veteran = levels - novice;
-  const vitality = 12 * novice + 8 * veteran;
-  u.level += levels;
-  u.atk += 3 * novice + 2 * veteran;
-  u.def += 2 * novice + veteran;
-  u.maxHp += vitality;
-  if (living(u)) u.hp = Math.min(u.maxHp, u.hp + vitality);
-  u.maxMp += 6 * levels;
-  u.mp = Math.min(u.maxMp, u.mp + 6 * levels);
+  for (let i = 0; i < levels; i++) {
+    u.level += 1;
+    addGrowth(u, levelGain(u.id, u.level));
+  }
 }
 function settleExperience(s, u) {
   if (!Number.isSafeInteger(u.xp) || u.xp < GROWTH.levelXp) return false;
@@ -4197,4 +4259,4 @@ function nextRound(s) {
 }
 
 export { traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
-export { charmed, sideOf, immuneTo, holdsFire, drainOf, controlPlan, isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor, seatOf, seatRow, seatNumbers, twinForm };
+export { charmed, sideOf, immuneTo, holdsFire, drainOf, controlPlan, isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, LEVEL_GAINS, GROWTH_PACES, GROWTH_PROFILES, growthOf, levelGain, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor, seatOf, seatRow, seatNumbers, twinForm };

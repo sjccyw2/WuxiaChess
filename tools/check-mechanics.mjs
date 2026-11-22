@@ -5892,5 +5892,92 @@ section('leader boons of the later ten');
   }
 }
 
+// ── Growth paces (GROWTH_PACES, GROWTH_PROFILES; the producer's request of 2026-11-22) ──
+section('growth paces');
+{
+  const stats = (u) => [u.atk, u.def, u.maxHp, u.maxMp];
+  const add = (a, b) => a.map((n, i) => n + b[i]);
+  const raised = (id, level) => {
+    const u = G.startingHero(id);
+    G.raiseLevel(u, level - 1);
+    return u;
+  };
+  const { novice, veteran } = G.LEVEL_GAINS;
+  const COMMON = add(add(novice, novice), veteran.map((n) => 9 * n));
+  check('the common growth adds 24 攻擊, 13 防禦, 96 氣血 and 66 內力 from level 1 to 12', same(COMMON, [24, 13, 96, 66]), COMMON);
+  for (const [key, pace] of Object.entries(G.GROWTH_PACES)) {
+    const total = pace.levels.reduce(add, pace.start);
+    check(key + ' (' + pace.name + '): eleven rows, and with its start it adds up to the common growth', pace.levels.length === 11 && same(total, COMMON), total);
+    check('…no level takes anything away', pace.levels.every((row) => row.every((n) => n >= 0)));
+  }
+  check('the five heroes the producer named, each on a pace that exists', same(Object.keys(G.GROWTH_PROFILES).sort(), ['chengZhi', 'duan', 'guo', 'hu', 'xuZhu']) && Object.values(G.GROWTH_PROFILES).every((p) => G.GROWTH_PACES[p.pace] && p.why));
+  // A profiled hero, level by level: his starting numbers, plus `start`, plus each row reached.
+  for (const id of Object.keys(G.GROWTH_PROFILES)) {
+    const pace = G.growthOf(id),
+      bare = add(stats(G.startingHero(id)), pace.start.map((n) => -n));
+    let want = add(bare, pace.start),
+      ok = same(stats(raised(id, 1)), want);
+    for (let level = 2; level <= 12; level++) {
+      want = add(want, pace.levels[level - 2]);
+      ok = ok && same(stats(raised(id, level)), want);
+    }
+    check(id + ': at every level from 1 to 12 his numbers follow his pace', ok);
+    check('…at level 12 they are what the common growth gives him', same(stats(raised(id, 12)), add(bare, COMMON)), stats(raised(id, 12)));
+    check('…past level 12 he grows by the common veteran row', same(stats(raised(id, 13)), add(add(bare, COMMON), veteran)));
+  }
+  const hu1 = raised('hu', 1),
+    hu4 = raised('hu', 4),
+    duan6 = raised('duan', 6),
+    duan7 = raised('duan', 7),
+    xz5 = raised('xuZhu', 5),
+    xz6 = raised('xuZhu', 6);
+  check('胡斐 (早成) starts at 攻擊 27, 氣血 144 and stands at 攻擊 39 by level 4', hu1.atk === 27 && hu1.maxHp === 144 && hu4.atk === 39 && hu4.maxHp === 192, stats(hu1) + ' / ' + stats(hu4));
+  check('段譽 (晚成) climbs from 攻擊 11 at level 1 to 23 on level 6 and 28 on level 7', G.startingHero('duan').atk === 11 && duan6.atk === 23 && duan7.atk === 28, G.startingHero('duan').atk + ' / ' + duan6.atk + ' / ' + duan7.atk);
+  check('虛竹 (驟進) gains 攻擊 15, 防禦 10, 氣血 60 and 內力 40 on reaching level 6', same(add(stats(xz6), stats(xz5).map((n) => -n)), [15, 10, 60, 40]));
+  // An unprofiled hero grows exactly as before.
+  const hero1 = G.startingHero('hero'),
+    hero2 = raised('hero', 2),
+    hero4 = raised('hero', 4),
+    hero12 = raised('hero', 12);
+  check('令狐冲 (no pace) starts at his HERO_STATS', same(stats(hero1), [25, 11, 148, 74]), stats(hero1));
+  check('…gains 3, 2, 12 and 6 on level 2, and 2, 1, 8 and 6 on level 4', same(add(stats(hero2), stats(hero1).map((n) => -n)), [3, 2, 12, 6]) && same(add(stats(hero4), stats(raised('hero', 3)).map((n) => -n)), [2, 1, 8, 6]));
+  check('…and stands at 攻擊 49, 防禦 24, 氣血 244 and 內力 140 at level 12', same(stats(hero12), [49, 24, 244, 140]), stats(hero12));
+  // Several levels at once are the same as one at a time, from any level.
+  let even = true;
+  for (const id of [...Object.keys(G.GROWTH_PROFILES), 'hero', 'yang', G.YOUTH_ID])
+    for (const [from, to] of [[1, 12], [1, 6], [3, 9], [5, 7], [6, 14]]) {
+      const once = raised(id, from),
+        step = raised(id, from);
+      G.raiseLevel(once, to - from);
+      for (let n = from; n < to; n++) G.raiseLevel(step, 1);
+      even = even && same([...stats(once), once.hp, once.mp, once.level], [...stats(step), step.hp, step.mp, step.level]);
+    }
+  check('raising several levels at once gives the numbers of raising them one by one', even);
+  // 氣血 and 內力 rise with the maximum, and a fallen hero is not raised from the floor.
+  const hurt = raised('xuZhu', 5);
+  hurt.hp = 10;
+  hurt.mp = 3;
+  G.raiseLevel(hurt, 1);
+  check('a hurt hero reaching a level gains that level’s 氣血 and 內力', hurt.hp === 70 && hurt.mp === 43, hurt.hp + ' / ' + hurt.mp);
+  const fallen = raised('duan', 3);
+  fallen.hp = 0;
+  G.raiseLevel(fallen, 4);
+  check('…a fallen one stays at 0 氣血', fallen.hp === 0);
+  check('raising no levels changes nothing', same(stats(G.startingHero('hu')), stats(raised('hu', 1))));
+  // A hero saved mid-run keeps the numbers he has; only later levels follow his pace.
+  const s = board(['hu', 'duan', 'xuZhu']);
+  const hu = unit(s, 'hu');
+  Object.assign(hu, { level: 5, atk: 27, def: 16, maxHp: 144, hp: 144, maxMp: 60, mp: 60 }); // as the common growth left him
+  const back = R.restoreRun(R.migrateSave(copy(s)));
+  const again = unit(back, 'hu');
+  check('a save made before the paces keeps its hero’s numbers on loading', !!again && same([...stats(again), again.level], [27, 16, 144, 60, 5]), again && stats(again));
+  G.raiseLevel(again, 1);
+  check('…and his next level adds what his pace gives at level 6', same(stats(again), add([27, 16, 144, 60], G.growthOf('hu').levels[4])), stats(again));
+  // A hero drawn into a run later is built at his pace (recruit and 試局 raise him from level 1).
+  const late = G.startingHero('guo');
+  G.raiseLevel(late, 4);
+  check('a hero lent at level 5 has his pace’s numbers', same(stats(late), stats(raised('guo', 5))));
+}
+
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);

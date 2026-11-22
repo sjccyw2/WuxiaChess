@@ -128,9 +128,10 @@ function trial([id, art]) {
   };
 }
 
-// What one level adds, measured by asking the game to raise a blank hero.
+// What one level adds, measured by asking the game to raise a blank hero who grows at the
+// common pace.
 function levelGain(fromLevel) {
-  const unit = { ...G.startingHero(G.PARTY[0]), level: fromLevel },
+  const unit = { ...G.startingHero(G.PARTY.find((id) => !G.growthOf(id))), level: fromLevel },
     before = { ...unit };
   G.raiseLevel(unit, 1);
   return {
@@ -153,13 +154,20 @@ export function development() {
       rows('俠客成長', [
         ['二、三級', NOTES.levelGain(levelGain(1))],
         ['四級起', NOTES.levelGain(levelGain(growth.seasoned)) + NOTES.reserveGrowth],
+        ['另有步調', NOTES.otherPaces],
+        ...Object.entries(G.GROWTH_PACES).map(([key, pace]) => [
+          pace.name,
+          pace.desc + '（' + Object.keys(G.GROWTH_PROFILES).filter((id) => G.GROWTH_PROFILES[id].pace === key).map((id) => G.DETAILS[id].name).join('、') + '）'
+        ]),
         ['出招歷練', NOTES.actionXp(growth)],
         ['戰中參悟', NOTES.midBattleStudy],
         ['後段敵情', NOTES.lateFoes]
-      ])
+      ]),
+      links('步調不同的俠客', Object.keys(G.GROWTH_PROFILES).map((id) => link('heroes', id, G.DETAILS[id].name)))
     ],
     sources: cites(
       cite('function raiseLevel', 'src/rules/game.js'),
+      cite('const GROWTH_PACES', 'src/rules/game.js'),
       cite('function enemyAct', 'src/rules/game.js'),
       cite('function defenders', 'src/rules/journey.js')
     )
