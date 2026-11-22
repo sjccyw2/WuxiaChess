@@ -20,7 +20,7 @@ captions and balloons are placed anew for each wide composition.
 (`game/assets/prologue-film-wide.mp4`, 1600 × 900) otherwise. A screen turned mid-film switches
 cuts and keeps its place. Both are re-encoded for streaming:
 `ffmpeg -i <cut> -vf scale=<size> -c:v libx264 -profile:v high -level 4.0 -crf 28 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 128k <file>`.
-Their posters, `prologue-film.webp` and `prologue-film-wide.webp`, are the frame at 1.2 s. Replace
+Their posters, `prologue-film.webp` and `prologue-film-wide.webp`, are each film's first frame, so playback starts exactly where the poster leaves off (a later frame showed the first caption, which then appeared a second time). Replace
 all four when a cut changes.
 
 **Pacing.** About three seconds a panel on average, but each beat has its own length, and only
