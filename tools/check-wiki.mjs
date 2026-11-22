@@ -100,10 +100,44 @@ for (const [group, list] of Object.entries(catalog.groups))
     if (bad) problems.push(group + '/' + entry.id + ': shows "' + bad[0] + '"');
   }
 
+// ── 群俠比較 ─────────────────────────────────────────────────────────────────
+// The comparison page's scores: whole numbers in 0..100 on every axis, at every level of the
+// curve, with at least one hero at 100 on each axis and no axis on which everyone looks alike.
+const { compareData } = await import(new URL('wiki/src/catalog/compare.js', root));
+const comparison = compareData();
+{
+  const keys = comparison.axes.map((a) => a.key),
+    score = (n) => Number.isInteger(n) && n >= 0 && n <= 100;
+  if (keys.join() !== 'melee,ranged,vitality,inner,speed,support,burst') problems.push('compare: the axes are ' + keys.join());
+  if (comparison.heroes.map((h) => h.id).join() !== G.ROSTER.join()) problems.push('compare: the heroes are not the roster, in its order');
+  for (const h of comparison.heroes) {
+    const at = 'compare/' + h.id;
+    for (const k of keys) {
+      if (!score(h.scores[k])) problems.push(at + ': ' + k + ' scores ' + h.scores[k]);
+      if (!Number.isFinite(h.raw[k]?.value) || !h.raw[k].why?.length) problems.push(at + ': ' + k + ' has no raw value or reasons');
+    }
+    if (!score(h.composite)) problems.push(at + ': composite ' + h.composite);
+    if (h.curve.length !== comparison.levels.length || h.curve.some((c, i) => c.level !== comparison.levels[i] || !score(c.composite) || keys.some((k) => !score(c.scores[k]))))
+      problems.push(at + ': the growth curve misses a level or a score');
+    // At the top level the curve has (nearly) the radar's arts, so the two should be close.
+    if (Math.abs(h.curve.at(-1).composite - h.composite) > 15) problems.push(at + ': curve ends at ' + h.curve.at(-1).composite + ', radar says ' + h.composite);
+    for (const page of ['basic-' + h.id, 'signature-' + h.id]) if (!h.arts.some((a) => a.id === page)) problems.push(at + ': arts lack ' + page);
+    for (const a of h.arts) if (!has('skills', a.id)) problems.push(at + ': the art ' + a.id + ' has no skills page');
+    const bad = JSON.stringify(h).match(/undefined|NaN|\[object/);
+    if (bad) problems.push(at + ': shows "' + bad[0] + '"');
+  }
+  for (const k of keys) {
+    const all = comparison.heroes.map((h) => h.scores[k]);
+    if (!all.includes(100)) problems.push('compare: no hero scores 100 on ' + k);
+    if (Math.min(...all) > 75) problems.push('compare: every hero scores above 75 on ' + k + '; the axis tells them apart too little');
+  }
+}
+
 if (corpus.entries.length < 500) problems.push('text listing looks too small: ' + corpus.entries.length);
 
 console.log(Object.entries(catalog.groups).map(([g, l]) => g + ' ' + l.length).join(' · '));
 console.log('遊戲原文 ' + corpus.entries.length + ' 條，來自 ' + TEXT_FILES.length + ' 個檔案');
+console.log('群俠比較 ' + comparison.heroes.length + ' 位俠客 · ' + comparison.axes.length + ' 項 · ' + comparison.levels.length + ' 級');
 if (problems.length) {
   console.error('\n' + problems.length + ' problem(s):\n  ' + problems.slice(0, 40).join('\n  '));
   process.exit(1);

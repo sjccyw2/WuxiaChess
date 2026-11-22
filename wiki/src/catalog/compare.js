@@ -16,7 +16,7 @@ const AXES = [
   { key: 'melee', name: '近身攻擊', hint: '貼身出手的傷害：最強兩招（普攻也算）加還擊；射程兩格以上的招式貼身使用只算一半。' },
   { key: 'ranged', name: '遠程攻擊', hint: '兩格以外出手的傷害，射程越遠越高；濺射波及兩格以外的餘勁也算。' },
   { key: 'vitality', name: '氣血防禦', hint: '倒下前挨得住幾擊，再加護盾、固守、卸勁、金剛、自療、吸血與代受。' },
-  { key: 'inner', name: '內力回氣', hint: '八回合內，內力上限加每回合回氣，夠施展幾次最耗內力的三招；凝氣、回氣與領隊減耗都算。' },
+  { key: 'inner', name: '內力回氣', hint: '八回合內，內力上限加每回合回氣，夠施展幾次本門最耗內力的三招（以學全後為準）；凝氣、回氣與領隊減耗都算。' },
   { key: 'speed', name: '身法速度', hint: '移動步數，加輕身、越障身法與出招後回身。' },
   { key: 'support', name: '輔助同伴', hint: '替同伴療傷、護盾、振奮、輕身、固守、代受、號令，與壓制敵人；領隊陣法按三分之一計。' },
   { key: 'burst', name: '爆發閃避', hint: '暫代暴擊與閃避：條件全成立時的最高一擊，與閃身、金剛、免受還擊等避招之效，各佔一半。' }
@@ -147,7 +147,7 @@ function strike(u, art, lead) {
 }
 
 // ── A hero measured: every axis in its own units ──────────────────────────────
-function measure(id, level, learned, talents, lead, unit) {
+function measure(id, level, learned, talents, lead, unit, kit = learned) {
   const u = build(id, level, learned, talents),
     foe = { ...FOE },
     s = scene(u, foe, lead);
@@ -214,8 +214,15 @@ function measure(id, level, learned, talents, lead, unit) {
   const renew = (G.commandBonus(s, u, 'renew') * ROUNDS) / 2 / I;
   const vitality = u.maxHp / I + blend(known.map(guard), [1, 0.5]) + renew;
 
-  // 內力回氣: casts of his three costliest arts that the pool and the rounds' regen pay for.
-  const costs = known.map((k) => Math.max(1, G.artCost(s, u, k.art) - (k.art.recover || 0))).sort((a, b) => b - a).slice(0, 3);
+  // 內力回氣: casts of his three costliest arts that the pool and the rounds' regen pay for. The
+  // arts are those of the whole tree (`kit`) at every level, so the curve shows the pool growing
+  // into them rather than dipping each time a dear art is learned.
+  const costs = ['signature', ...kit]
+    .map((k) => (k === 'signature' ? G.artFor(u, k) : G.TECHNIQUES[k]))
+    .filter((art) => art.kind !== 'basic')
+    .map((art) => Math.max(1, G.artCost(s, u, art) - (art.recover || 0)))
+    .sort((a, b) => b - a)
+    .slice(0, 3);
   const cost = costs.reduce((a, b) => a + b, 0) / costs.length;
   const regen = REGEN + G.commandBonus(s, u, 'restoreMp');
   const inner = (u.maxMp + (ROUNDS - 1) * regen) / cost;
@@ -324,15 +331,16 @@ function boonWorth(plain, lead, unit) {
 }
 
 // Both ways of fighting, blended: led by someone else, and leading.
-function profile(id, level, learned, talents, unit) {
-  const plain = measure(id, level, learned, talents, false, unit),
-    led = measure(id, level, learned, talents, true, unit);
+function profile(id, level, learned, talents, unit, kit) {
+  const plain = measure(id, level, learned, talents, false, unit, kit),
+    led = measure(id, level, learned, talents, true, unit, kit);
   const mix = (a, b) => (1 - LEAD) * a + LEAD * b;
   const axes = {};
   for (const k of KEYS)
     axes[k] = HALVES[k] ? Object.fromEntries(HALVES[k].map((h) => [h, mix(plain.axes[k][h], led.axes[k][h])])) : mix(plain.axes[k], led.axes[k]);
-  axes.support += LEAD * 2 * boonWorth(plain, led, unit);
-  return { plain, led, axes };
+  const boon = LEAD * 2 * boonWorth(plain, led, unit);
+  axes.support += boon;
+  return { plain, led, axes, boon };
 }
 
 // ── What a run buys, level by level (tools/sim-battles.mjs spendPoints, trials taken as met) ─
@@ -398,19 +406,19 @@ function summitSet(id) {
 
 // ── Why-lines for the tooltips ───────────────────────────────────────────────
 const n0 = (n) => String(Math.round(n));
-function reasons(p, axes) {
+function reasons(p, axes, boon) {
   const { u, parts, I } = p;
   const name = (k) => k.art.name;
   const topBy = (list, f) => [...list].filter((x) => f(x) > 0).sort((a, b) => f(b) - f(a));
-  const atk = (key) => topBy(parts.attacks, (a) => a[key]).slice(0, 2).map((a) => a.name + ' 約 ' + n0(a.E));
+  const atk = (key) => topBy(parts.attacks, (a) => a[key]).slice(0, 2).map((a) => a.name + (key === 'ranged' ? ' ' + a.range + ' 格' : '') + ' 約 ' + n0(a.E));
   const by = (f) => topBy(parts.known, f).slice(0, 2).map(name);
   return {
     melee: [...atk('melee'), '還擊 約 ' + n0(p.counter)].slice(0, 3),
     ranged: [...(atk('ranged').length ? atk('ranged') : ['沒有兩格以外的攻擊']), '最遠 ' + (p.axes.ranged.reach - u.range) + ' 格，普攻 ' + u.range + ' 格'],
-    vitality: ['氣血 ' + u.maxHp + '、防禦 ' + G.stat(u, 'def', p.s), '約挨得住 ' + r1(u.maxHp / I) + ' 擊', ...by(parts.guard).map((n) => '另有' + n)].slice(0, 3),
+    vitality: ['氣血 ' + u.maxHp + '、防禦 ' + G.stat(u, 'def', p.s), '約挨得住 ' + r1(u.maxHp / I) + ' 擊', ...by(parts.guard).map((n) => n + '護身')].slice(0, 3),
     inner: ['內力 ' + u.maxMp + '，每回合回 ' + p.regen, '三招平均耗 ' + r1(p.cost), '八回合約施展 ' + r1(axes.inner) + ' 次'],
     speed: ['移動 ' + p.step + ' 步', ...by((k) => (k.art.haste && ['self', 'ally'].includes(G.targetType(k.art))) || k.art.blink ? 1 : 0), ...(parts.attacks.some((a) => a.forms.includes('glide')) ? ['出招後可回身'] : [])].slice(0, 3),
-    support: by(parts.help).length ? by(parts.help) : ['沒有助人的招式'],
+    support: [...(by(parts.help).length ? by(parts.help) : ['沒有助人的招式']), ...(boon > 0 ? ['領隊：' + G.COMMANDS[u.id].name] : [])],
     burst: [parts.top.name + ' 最高 ' + n0(parts.top.peak), ...by(parts.dodge).map((n) => n + '可避招')].slice(0, 3)
   };
 }
@@ -481,9 +489,9 @@ function compute() {
   };
   const rows = G.ROSTER.map((id) => {
     const top = summitSet(id),
-      radar = profile(id, TOP, top.learned, top.talents, unit),
+      radar = profile(id, TOP, top.learned, top.talents, unit, top.learned),
       buy = purchases(id);
-    return { id, top, radar, buy, curve: buy.steps.map((step) => ({ step, p: profile(id, step.level, step.learned, step.talents, unit) })) };
+    return { id, top, radar, buy, curve: buy.steps.map((step) => ({ step, p: profile(id, step.level, step.learned, step.talents, unit, top.learned) })) };
   });
   // The scale: the best hero at the radar's point on each axis (a two-half axis's halves each first).
   const half = Object.fromEntries(Object.entries(HALVES).map(([k, parts]) => [k, Object.fromEntries(parts.map((h) => [h, Math.max(...rows.map((r) => r.radar.axes[k][h]))]))]));
@@ -508,7 +516,7 @@ function compute() {
         p = radar.plain,
         u = p.u,
         scores = score(radar.axes),
-        why = reasons(p, radar.axes),
+        why = reasons(p, radar.axes, radar.boon),
         f = flat(radar.axes);
       return {
         id,
@@ -534,4 +542,3 @@ let cached = null;
 export function compareData() {
   return (cached ??= compute());
 }
-export { measure as _measure, summitSet as _summitSet };

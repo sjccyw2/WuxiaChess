@@ -263,14 +263,20 @@ function growthSvg(list, data, measure, width = 640) {
     levels = data.levels,
     lo = levels[0],
     hi = levels[levels.length - 1],
+    // The scale fits the heroes shown (to the nearest ten, at least thirty wide), so curves that
+    // run close together still read apart; the ticks say where it starts.
+    seen = list.length ? list.flatMap(({ hero }) => hero.curve.map((c) => valueAt(c, measure))) : [0, 100],
+    floor = Math.max(0, Math.floor(Math.min(...seen) / 10) * 10),
+    top = Math.min(100, Math.max(floor + 30, Math.ceil(Math.max(...seen) / 10) * 10)),
+    bottom = Math.min(floor, top - 30),
     X = (lv) => m.l + ((lv - lo) / (hi - lo)) * pw,
-    Y = (v) => m.t + ph - (v / 100) * ph,
+    Y = (v) => m.t + ph - ((v - bottom) / (top - bottom)) * ph,
     f = (n) => n.toFixed(1);
-  const grid = [0, 25, 50, 75, 100]
+  const grid = Array.from({ length: (top - bottom) / 10 + 1 }, (_, i) => bottom + i * 10)
     .map(
       (v) =>
         '<line class="' +
-        (v ? 'cmp-ring' : 'cmp-base') +
+        (v > bottom ? 'cmp-ring' : 'cmp-base') +
         '" x1="' +
         m.l +
         '" x2="' +
@@ -624,7 +630,7 @@ export function comparePage(p) {
     '">' +
     growthSvg(list, data, measure) +
     '<div class="cmp-tip" data-cmp-tip hidden></div></div>' +
-    '<figcaption class="cmp-hint">縱軸為所選項目的分數（0–100），橫軸為等級。移到或點選某一級，可看各人數值與當時的武學點。</figcaption></figure></section>' +
+    '<figcaption class="cmp-hint">縱軸為所選項目的分數（滿分 100，刻度隨所選俠客縮放），橫軸為等級。移到或點選某一級，可看各人數值與當時的武學點。</figcaption></figure></section>' +
     '<section class="cmp-block" aria-labelledby="cmp-arts-h"><h2 id="cmp-arts-h">滿級武學</h2>' +
     '<p class="cmp-hint">第十二級的屬性，與每位俠客學齊的全部武學，依習得等級排列。</p>' +
     artsGrid(list) +
