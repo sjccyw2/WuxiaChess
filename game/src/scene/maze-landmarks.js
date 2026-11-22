@@ -874,8 +874,8 @@ function landmarks(index, add) {
     });
   } else if (index === 9) {
     // The clock, instruments and stele stand with the terrace in landforms/instruments-9.js.
-  } else if (index === 10) {
-    // The sword mound and the eagle's boulder are in landforms/swords-10.js and eagle-10.js.
+  } else if (index === 15) {
+    // The sword mound and the eagle's boulder are in landforms/swords-15.js and eagle-15.js.
   }
 }
 

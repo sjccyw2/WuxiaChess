@@ -268,7 +268,7 @@ const stack = [
   ['win', {}, 1.8]
 ];
 const worst = await check('stack-worst', { plays: stack, seconds: 8 }, 'stack');
-for (let map = 0; map < 11; map++)
+for (let map = 0; map < 16; map++) // every board's bed (audio/ambience.js)
   await check('ambience-' + map, { plays: [], seconds: 10, ambience: map }, 'ambience');
 
 // Loudness balance: within each group nothing should sit far from the group's median.

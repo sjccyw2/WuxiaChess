@@ -33,6 +33,7 @@ const MARKET_STOCK = {
   darkIron: [31, 1],
   mingSash: [24, 1],
   foxSaber: [26, 1],
+  goldSerpentBlade: [30, 2],
   pine: [17, 1],
   staff: [16, 1],
   pole: [19, 1],

@@ -7,7 +7,7 @@ import * as G from '../rules/game.js';
 import * as R from '../rules/journey.js';
 import { mapLayout } from '../data/terrain.js';
 import { COMMANDS, commandDescription } from '../rules/battle-mastery.js';
-import { TECHNIQUES, CAPTAINS } from '../data/martial-arts.js';
+import { TECHNIQUES } from '../data/martial-arts.js';
 import { face, unitFace, btn, titleHead, profileContents, esc } from './panels.js';
 import { personalTraining } from './mastery-views.js';
 import { icon } from './icons.js';
@@ -142,8 +142,13 @@ function memberLine(s, u, ui) {
   // The next board's named stones: its master and lieutenant, or on the last board everyone it opens with.
   const foes = upcoming
     ? G.hasFour(map)
-      ? [{ id: CAPTAINS[map][0] }, { id: 'lieutenant-' + map }]
-      : G.castBoard(map, s.run.route).pieces.map((p) => ({ id: p.id }))
+      ? // The next board's named opponents: its master, and its lieutenant if it has one.
+        G.encounterKeys(map)
+          .slice(0, 2)
+          .filter((key) => G.DETAILS[key]?.rank)
+          .map((id) => ({ id }))
+      : // The last board: 求敗 and the masters who stand with him from the start.
+        G.castBoard(map, s.run.route).pieces.map((p) => ({ id: p.id }))
     : G.enemies(s).filter((v) => G.unitDetails(v).rank);
   const board = mapLayout(map);
   // The briefing in short: this board's (or, from the shop, the next board's, whose secondary

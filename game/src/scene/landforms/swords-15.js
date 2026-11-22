@@ -2,7 +2,7 @@
 // boulder on a star point of the board, and the mound of stones north of the
 // table with its carved slab.
 import { Model, circle } from '../scenery-kit.js';
-import { MOUND, ground, tuft, leafLitter, faceUp, faceOut } from './valley-10.js';
+import { MOUND, ground, tuft, leafLitter, faceUp, faceOut } from './valley-15.js';
 
 // A blade standing point-down: a prism from y = 0 up to `len`, drawn from its
 // cross-section [x, z] pairs. `bend(t)` moves it sideways as it rises.

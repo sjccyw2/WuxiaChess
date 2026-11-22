@@ -4,8 +4,10 @@ import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, cells, gameArt } from './parts.js';
 
-// A hero's portrait: the ten have a painting each; 無名 wears the picture his lines have always worn.
-export const heroPortrait = (id) => gameArt(G.DETAILS[id]?.portraitFile || 'portraits-' + G.portraits[id] + '.webp');
+// A hero painted in the roster pack wears that portrait (DETAILS[id].portraitFile), and 無名 the
+// picture his lines have always worn; the first ten have a portraits-<name>.webp.
+export const heroPortrait = (id) =>
+  gameArt(G.DETAILS[id]?.portraitFile || 'portraits-' + G.portraits[id] + '.webp');
 
 export function heroes() {
   return G.ROSTER.map((id) => {
@@ -48,7 +50,8 @@ export function heroes() {
         links('入門與武器', [
           link('skills', 'basic-' + id, d.basic),
           link('skills', 'signature-' + id, d.skill),
-          link('items', unit.weapon, G.ITEMS[unit.weapon].name),
+          // The ten from the roster pack arrive with an empty weapon slot; 狄雲 wears his coat.
+          ...[unit.weapon, unit.gear].filter(Boolean).map((item) => link('items', item, G.ITEMS[item].name)),
           ...Object.entries(G.TALENTS).map(([key, t]) => link('skills', key, t.name))
         ]),
         partner && links('合璧', [link('heroes', partner, G.DETAILS[partner].name), link('rules', 'paired', G.RULE_TERMS.paired.name)]),

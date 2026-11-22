@@ -9,6 +9,11 @@ import { landform7 } from './landforms/landform-7.js';
 import { landform8 } from './landforms/landform-8.js';
 import { landform9 } from './landforms/landform-9.js';
 import { landform10 } from './landforms/landform-10.js';
+import { landform11 } from './landforms/landform-11.js';
+import { landform12 } from './landforms/landform-12.js';
+import { landform13 } from './landforms/landform-13.js';
+import { landform14 } from './landforms/landform-14.js';
+import { landform15 } from './landforms/landform-15.js';
 import { buildVillage } from './village.js';
 import { buildLandscape } from './landscape.js';
 import { buildCourtyard, cutFerryLandscape } from './courtyard.js';
@@ -21,7 +26,7 @@ import {
   FIELD_SIZE
 } from '../data/terrain.js';
 import { mazeScenery } from './maze-scenery.js';
-import { setting, stagePlane, stageSky } from './maze-atmosphere.js';
+import { setting, stagePlane, stageSky, isNight } from './maze-atmosphere.js';
 import { buildFieldProps } from './field-props.js';
 import { POLISH } from '../polish.js';
 import { lightStage, anchorMist, kindleGlow } from './stage-light.js';
@@ -142,12 +147,17 @@ const reliefs = [
   landform7,
   landform8,
   landform9,
-  landform10
+  landform10,
+  landform11,
+  landform12,
+  landform13,
+  landform14,
+  landform15
 ];
 function finishTerrain(T, map, scenery) {
   const relief = reliefs[map](T, mapLayout(map));
   // Cutaway and the software renderer classify each immediate scenery child.
-  scenery.add(...relief.children.slice());
+  if (relief.children.length) scenery.add(...relief.children.slice());
   scenery.updateMatrixWorld(true);
   return scenery;
 }
@@ -203,7 +213,7 @@ function decorateWorld(T, scene, scenery, gpu) {
     kindleGlow(T, scene, scenery, index);
     return water;
   }
-  const night = index === 7 || index === 9;
+  const night = isNight(index);
   scene.add(
     new T.HemisphereLight(
       index

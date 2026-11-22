@@ -242,6 +242,7 @@ for (let player = 0; player < 60; player++) {
   let legacy = R.LEGACY;
   // Every sixth player plays on: twelve runs, so the last board is reached more than once.
   const span = player % 6 === 0 ? 12 : 7;
+  const been = new Set(); // the boards this player's runs have reached
   // Each player plays several runs in a row, so later runs can carry deja vu. Before each run the
   // player picks a 境界: some always the highest open, some any open one, some one not yet open
   // (which the run must refuse, starting in the highest open instead).
@@ -258,7 +259,8 @@ for (let player = 0; player < 60; player++) {
       missedBefore = legacy.missed || 0;
     const s = R.startRun(draw, legacy),
       r = s.run,
-      label = 'seed ' + draw.seed + ' run ' + run;
+      label = 'seed ' + draw.seed + ' run ' + run,
+      here = [];
     runs++;
     trios.add([...draw.ids].sort().join());
     routes.add(r.route.join());
@@ -327,8 +329,10 @@ for (let player = 0; player < 60; player++) {
       const deja = before.filter((line) => HERO_VOICES[line.person?.id]?.echoes.includes(line.text));
       echoes += deja.length;
       if (deja.length > 1) fail(at + ': more than one deja vu line');
-      if (deja.length && (run === 1 || !legacy.seen.includes(s.mapIndex) || !legacy.walked[deja[0].person.id]))
+      // `been` is this check's own record of the boards earlier runs reached, not the profile's.
+      if (deja.length && (run === 1 || !been.has(s.mapIndex) || !legacy.walked[deja[0].person.id]))
         fail(at + ': deja vu without having been here before');
+      here.push(s.mapIndex);
       if (!R.turnPage(s, true) || !R.turnPage(s, true) || !R.deployLineup(s) || !R.beginBattle(s)) {
         fail(at + ': could not deploy');
         break;
@@ -416,6 +420,11 @@ for (let player = 0; player < 60; player++) {
       }
     }
     legacy = r.chronicle;
+    // The profile has seen exactly the boards its runs reached: a run draws ten of fifteen, and
+    // a board that was not on a route was never seen.
+    for (const map of here) been.add(map);
+    if ([...legacy.seen].sort((a, b) => a - b).join() !== [...been].sort((a, b) => a - b).join())
+      fail(label + ': the profile has seen ' + legacy.seen.join() + ' but its runs reached ' + [...been].join());
     if (legacy.returns !== run) fail(label + ': the run was not counted');
     // A run won marks its 境界 won; won in the highest open 境界, it opens the next; won in the
     // fifth, the last battle follows. A run lost changes none of it.

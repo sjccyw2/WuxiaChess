@@ -12,7 +12,7 @@ export const TITLES = {
   opening: '入夢',
   qiu: '求敗的話',
   shop: '通吃坊、盤口與三盅通吃',
-  voices: '十位俠客自己的話',
+  voices: '俠客各自的話',
   return: '請回吧與夢醒',
   archive: '霧鎖青竹渡',
   world: '少年在棋臺邊瞧明白的事',
@@ -22,8 +22,8 @@ export const TITLES = {
 const REALMS = '一二三四五';
 // A 境界 is named for its sword: 利劍境界, 軟劍境界, ….
 const realmName = (i) => G.WAKES[i].sword + '境界';
-// The tenth board: the last of the ten a run shuffles. The last board (終局) follows it in 無劍境界.
-const LAST = TEN.at(-1);
+// The tenth board: the last of the ten a run draws. The last board (終局) follows it in 無劍境界.
+const LAST = G.FINAL_MAP;
 const said = (speaker, text, note) => ({ ...(note ? { note } : {}), ...(speaker ? { speaker } : {}), text });
 
 // Who a line of a board's script belongs to.
@@ -261,7 +261,8 @@ function stage(i) {
     sections: [
       rows('這一局', [
         ['局主', boss.name],
-        ['副手', second.name],
+        // A board built round one villain has no lieutenant: his troop type fills the seats.
+        second ? ['副手', second.name] : ['兵卒', G.DETAILS[G.GARRISONS[i]].name],
         ['支線', missionLabel(i)]
       ]),
       speech('戰前', beats(script.before, i)),
@@ -290,7 +291,7 @@ function stage(i) {
       links('同局條目', [
         link('maps', i, stageName(i)),
         link('foes', 'enc-' + i + '-0', boss.name),
-        link('foes', 'enc-' + i + '-1', second.name),
+        second ? link('foes', 'enc-' + i + '-1', second.name) : link('foes', G.GARRISONS[i], G.DETAILS[G.GARRISONS[i]].name),
         link('missions', 'map-' + i, missionLabel(i))
       ])
     ],

@@ -235,9 +235,14 @@ function guide() {
           '記號',
           Object.entries(G.STATUS_SIGNS).map(([kind, sign]) => [sign, G.CONDITION_NAMES[kind] || G.RULE_TERMS.zone.name])
         ),
+        // The states that hold a piece also change how it looks on the board.
+        rows(
+          '棋上的樣貌',
+          Object.entries(G.STATUS_LOOKS).map(([kind, look]) => [G.CONDITION_NAMES[kind], look])
+        ),
         links('相關條目', [groupPage(G.RULE_GROUPS.find((g) => g.id === 'condition')), link('rules', 'group-forms', '戰鬥效果')])
       ],
-      sources: cites(cite('const STATUS_SIGNS', 'src/actors/tokens.js'))
+      sources: cites(cite('const STATUS_SIGNS', 'src/actors/tokens.js'), cite('const STATUS_LOOKS', 'src/actors/tokens.js'))
     }
   ];
 }

@@ -348,3 +348,11 @@
   border-radius: 50%;
   border: 1px solid #b58f7a;
 }
+/* On an upright phone the plaque sits beside the tool buttons: its reinforcement line is set a
+   little tighter so the plaque does not run under them. */
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  .phase-readout .reinforce {
+    font-size: 11px;
+    letter-spacing: -0.045em;
+  }
+}

@@ -9,7 +9,8 @@ const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const TAU = Math.PI * 2;
 const INK = '#07110f';
 // The line drawn round a figure: jade for the player's side, vermilion for the enemy.
-const OUTLINES = { ally: '#a5ffe0', enemy: '#ff9b7a', spent: '#6f7f7a' };
+// statusLooks: an enemy under 受制 is outlined green-gold.
+const OUTLINES = { ally: '#a5ffe0', enemy: '#ff9b7a', spent: '#6f7f7a', turned: '#e4ef8a' };
 // Heights, in device pixels, at which a sheet cell is cached.
 const HEIGHTS = [48, 64, 84, 110, 144, CELL_HEIGHT, 216, 264, 320];
 const BUDGET = 9e6; // pixels of cached copies kept before idle ones are dropped (36 MB)
@@ -108,7 +109,12 @@ function stepsFor(filter) {
   return stepCache.get(filter);
 }
 
-function recolour(d, steps, grey) {
+// statusLooks: 定身 turns the figure frost-white; 金剛's sheen is a gold copy laid over it.
+const FINISHES = {
+  frost: (light) => [light * 0.62 + 62, light * 0.76 + 70, light * 0.8 + 100],
+  gold: (light) => [light * 0.95 + 70, light * 0.78 + 46, light * 0.25 + 6]
+};
+function recolour(d, steps, grey, finish) {
   for (let i = 0; i < d.length; i += 4) {
     if (!d[i + 3]) continue;
     let r = d[i],
@@ -130,6 +136,7 @@ function recolour(d, steps, grey) {
       g = (light * 0.82 + g * 0.18) * 0.62 + 19;
       b = (light * 0.82 + b * 0.18) * 0.62 + 20;
     }
+    if (finish) [r, g, b] = FINISHES[finish](0.3 * r + 0.59 * g + 0.11 * b);
     d[i] = r;
     d[i + 1] = g;
     d[i + 2] = b;
@@ -146,6 +153,7 @@ function atlasFor(sheet, look, cell, edge) {
     look.robe || '',
     look.team || '',
     look.grey ? 1 : 0,
+    look.finish || '',
     cell,
     edge
   ].join('|');
@@ -217,10 +225,10 @@ function bake(atlas, sheet, look, row, frame) {
     ch
   );
   if (!steps) f.filter = 'none';
-  const tinting = look.grey || steps?.length,
+  const tinting = look.grey || look.finish || steps?.length,
     pixels = tinting || look.team ? f.getImageData(0, 0, w, h) : null;
   if (tinting) {
-    recolour(pixels.data, steps || [], look.grey);
+    recolour(pixels.data, steps || [], look.grey, look.finish);
     f.putImageData(pixels, 0, 0);
   }
   const a = atlas.ctx;
@@ -260,8 +268,9 @@ function bake(atlas, sheet, look, row, frame) {
 
 // Draws one sheet frame from its cached copy, placed exactly as the layer's own drawImage
 // places it: `w` and `h` are the on-screen size of a sheet cell and the origin is the
-// piece's foot point. `look` is { robe, team, grey }: a CSS filter list or '', 'ally' or
-// 'enemy' for an outline (null for none), and whether the copy is the grey one.
+// piece's foot point. `look` is { robe, team, grey, finish }: a CSS filter list or '', 'ally',
+// 'enemy' or 'turned' for an outline (null for none), whether the copy is the grey one, and
+// 'frost' or 'gold' for a statusLooks finish (or none).
 function paintFrame(layer, sheet, row, frame, w, h, look, alpha = 1) {
   const c = layer.ctx,
     ratio = layer.canvas.width / layer.width || 1,

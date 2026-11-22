@@ -36,12 +36,19 @@ const RULE_GROUPS = [
       { id: 'safe', name: '免受還擊', art: 'safe', text: '此招出手，敵人無法還擊' },
       { id: 'pierce', name: '穿透', art: 'pierce', text: '計算傷害時無視目標一部分防禦' },
       { id: 'splash', name: '濺射', art: 'splash', text: '主目標四鄰的其他敵人也受到一部分傷害' },
+      { id: 'radius', name: '廣及', art: 'radius', text: '濺射不限四鄰，主目標數格之內的其他敵人都受波及' },
       { id: 'hits', name: '連擊', art: 'hits', text: '一招分成數段，各段分別計算傷害' },
       { id: 'push', name: '擊退', art: 'push', text: '把存活的目標推開一格，背後須有空位' },
       { id: 'blink', name: '身法', art: 'blink', text: '越過障礙移至射程內可站立的空格，隨即結束行動' },
       { id: 'heal', name: '療傷', art: 'heal', text: '替友軍或自身回復氣血；內傷者所受療傷減半' },
       { id: 'aura', name: '範圍', art: 'aura', text: '效果及於目標及其周圍數格內的友軍' },
       { id: 'recover', name: '回氣', art: 'recover', text: '命中後回復自身內力' },
+      {
+        id: 'drain',
+        name: '吸元',
+        art: 'drain',
+        text: '依主目標此擊實際損失的氣血，回復自身一部分氣血，有上限；內傷者減半，波及與器物不算'
+      },
       { id: 'hpCost', name: '自耗氣血', art: 'hpCost', text: '施展時先扣自身氣血；氣血不足以支付時不能施展' },
       {
         id: 'brace',
@@ -149,7 +156,15 @@ const RULE_GROUPS = [
       { id: 'evade', name: '閃身', art: 'evade', text: '下一次受到的直接攻擊落空' },
       { id: 'redirect', name: '挪移', art: 'redirect', text: '下一次受擊傷害減半，並把一部分反震給出手者' },
       { id: 'retort', name: '後發', art: 'retort', text: '還擊不按五成半，改按此招所定的比例計算' },
-      { id: 'shield', name: '護勁', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護勁取較強者' }
+      { id: 'shield', name: '護勁', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護勁取較強者' },
+      { id: 'fortify', name: '固守', art: 'fortify', condition: 'fortify', text: '受術者防禦提高，到期恢復；多重固守取較強者' },
+      {
+        id: 'immune',
+        name: '金剛',
+        art: 'immune',
+        condition: 'immune',
+        text: '至所定的敵方回合結束，敵人的攻擊、還擊與波及都傷不了受術者，也附不上狀態；毒傷與自身的代價照舊'
+      }
     ]
   },
   {
@@ -161,6 +176,16 @@ const RULE_GROUPS = [
       { id: 'wound', name: '內傷', art: 'wound', condition: 'wound', guide: true, text: '療傷減半，每次出手攻擊後自損氣血' },
       { id: 'daze', name: '失神', art: 'daze', condition: 'daze', guide: true, text: '失去下一次行動；局主受過後，下一回合可抵抗' },
       { id: 'disarm', name: '纏械', art: 'disarm', condition: 'disarm', guide: true, text: '攻擊降低，普攻與絕技只能攻擊相鄰一格' },
+      { id: 'freeze', name: '定身', art: 'freeze', condition: 'freeze', guide: true, text: '數回合不能移動、出手、施展絕技或還擊；局主只受一回合，下一回合可抵抗' },
+      { id: 'mute', name: '閉穴', art: 'mute', condition: 'mute', guide: true, text: '數回合不能出手、施展絕技或還擊，仍可移動；局主只受一回合，下一回合可抵抗' },
+      {
+        id: 'charm',
+        name: '受制',
+        art: 'charm',
+        condition: 'charm',
+        guide: true,
+        text: '尋常敵人倒戈數個敵方回合，走向最近的同夥以普攻出手；我方不攻擊他，他仍算敵人。局主與副手不受制，改為失神'
+      },
       { id: 'poison', name: '中毒', art: 'poison', condition: 'poison', text: '每回合失去氣血，到期自解' },
       { id: 'weak', name: '攻勢受挫', condition: 'weak', text: '攻擊降低，到期恢復' },
       { id: 'exposed', name: '破防', condition: 'exposed', text: '防禦降低，到期恢復' },
@@ -220,7 +245,7 @@ const RULE_GROUPS = [
         id: 'prefers',
         name: '偏好',
         trait: (t) => !!(t.prefers || t.phase?.prefers),
-        text: '選擇目標時另有所好：傷重者、落單者、領隊、療傷者、內力深厚者，或離得最近的人'
+        text: '選擇目標時另有所好：傷重者、落單者、領隊、療傷者、內力深厚者、離得最近的人，或倚仗掩體、有人代受的人'
       },
       { id: 'contact', name: '化功', trait: 'contact', text: '貼身打中他的俠客損失內力；封穴時無效' },
       { id: 'banner', name: '盟令', trait: 'banner', text: '存活時其餘敵人攻擊提高，倒下後即失效' },
@@ -265,6 +290,41 @@ const RULE_GROUPS = [
         trait: (t) => t.cover === 'kin',
         text: '相鄰的同袍氣血較多時，替他承受俠客的直接攻擊'
       },
+      {
+        id: 'flurry',
+        name: '分刺',
+        trait: 'flurry',
+        text: '每次出手之後，再刺射程內另一名俠客，威力較前一擊為輕；這一刺無人可代受，閃身與挪移也攔不住，且不受還擊'
+      },
+      {
+        id: 'bend',
+        name: '轉折',
+        trait: 'bend',
+        text: '出手不走直路：無視目標所在地形的防禦加成，旁人也無法替目標代受'
+      },
+      {
+        id: 'pull',
+        name: '擒拿',
+        trait: 'pull',
+        text: '絕技命中後，將目標扯到自己身旁的空格；目標已在身旁，或身旁沒有空格，便扯不動'
+      },
+      { id: 'fleet', name: '水上飄', trait: 'fleet', text: '每一格只消耗 1 步，淺水與林叢都拖不慢他' },
+      {
+        id: 'twin',
+        name: '陰陽倒亂',
+        trait: 'twin',
+        text: '兩件兵刃輪著使：單數回合攻擊提高，雙數回合射程多一格'
+      },
+      { id: 'prowl', name: '獨行', trait: 'lone', text: '身旁沒有其他敵人時，出手或還擊攻擊提高' },
+      { id: 'pincer', name: '夾衛', trait: 'pincer', text: '目標身旁另有敵人時，出手或還擊攻擊提高' },
+      {
+        id: 'stepPoison',
+        name: '步裡藏毒',
+        trait: 'stepPoison',
+        text: '走動之後的普攻令目標中毒；原地出手與還擊不帶毒'
+      },
+      { id: 'lastStand', name: '沉樁', trait: 'lastStand', text: '氣血降到一定程度以下時，受到的傷害減少' },
+      { id: 'snare', name: '墜網', trait: 'snare', text: '普攻令目標絆足，移動減少；還擊不帶網' },
       {
         id: 'unfelled',
         name: '不敗',

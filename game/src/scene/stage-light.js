@@ -2,7 +2,7 @@
 // folded into tone mapping (no extra pass), view-anchored mist and lantern glow.
 // Everything here is behind POLISH.lighting; with it off none of this runs.
 import { fieldSize } from '../data/terrain.js';
-import { setting } from './maze-atmosphere.js';
+import { setting, isNight } from './maze-atmosphere.js';
 
 // The grade replaces three's CustomToneMapping hook, so it costs a few
 // instructions per fragment instead of a full-screen pass and a render target.
@@ -51,6 +51,11 @@ const rigs = [
   { warm: 0, key: 2.9, fill: 1.2, cool: 0.2, rim: 1.0, exposure: 1.02, mist: 0.5 }, // 寒玉石室: jade glow in the dark
   { warm: 0.25, key: 2.9, fill: 1.1, cool: 0.55 }, // 倒影天街: lavender dusk
   { warm: 0.1, key: 3.0, fill: 1.3, cool: 0.3, rim: 1.0, exposure: 0.82, mist: 0.5 }, // 無刻漏臺: lamplight under stars
+  { warm: 0.28, key: 2.9, fill: 1.12, cool: 0.5 }, // 神龍竹堂: humid sea light
+  { warm: 0.36, key: 2.9, fill: 1.08, cool: 0.4, mist: 0.48 }, // 絕情花徑: soft light in a closed valley
+  { warm: 0.3, key: 3.1, fill: 1.06, cool: 0.5 }, // 鐵掌溪灘: clear mountain light on water
+  { warm: 0.16, key: 2.9, fill: 1.3, cool: 0.3, rim: 1.0, exposure: 0.86, mist: 0.5 }, // 西夏夜苑: lantern light
+  { warm: 0.3, key: 3.0, fill: 1.1, cool: 0.45, mist: 0.5 }, // 黑木繡閣: bright air above the cloud
   // 谷底棋臺: late sun over the west cliff, cool shade. Its base colour is the pond's, so the bounce is given: earth.
   { warm: 0.3, key: 2.4, fill: 1.08, cool: 0.7, rim: 0.7, exposure: 0.95, mist: 0.6, ground: 0x6f6a58 }
 ];
@@ -61,7 +66,7 @@ function stageRig(index) {
 function lightStage(T, scene, index, sun) {
   const profile = setting(index),
     rig = stageRig(index),
-    night = index === 7 || index === 9;
+    night = isNight(index);
   const horizon = new T.Color(index ? profile.horizon : 0xbcc7b9),
     zenith = new T.Color(index ? profile.zenith : 0x7fa7ae),
     ground = new T.Color(rig.ground ?? (index ? profile.base : 0x809a89));
@@ -142,7 +147,7 @@ function anchorMist(scene, water) {
 
 // Glowing parts take their own painted colour as light, and get a soft halo.
 function kindleGlow(T, scene, scenery, index) {
-  const night = index === 7 || index === 9;
+  const night = isNight(index);
   const cell = 0.55,
     clusters = new Map(),
     p = new T.Vector3(),

@@ -6,8 +6,8 @@
 // 韋小寶's stall on the south-east corner.
 import { circle } from '../scenery-kit.js';
 import { oldPine } from './peaks-4.js';
-import { FLOOR, fbm, hash, mix, noise, smooth, leafLitter, faceUp, faceOut } from './valley-10.js';
-import { swordStone } from './swords-10.js';
+import { FLOOR, fbm, hash, mix, noise, smooth, leafLitter, faceUp, faceOut } from './valley-15.js';
+import { swordStone } from './swords-15.js';
 
 const TOP = 0.039; // the walking face, level with the flags of every other map
 const GROOVE = 0.024; // half the width of a cut line

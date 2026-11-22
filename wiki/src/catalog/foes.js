@@ -28,12 +28,14 @@ export const extraPieces = (map) => [
   ...G.castBoard(map).pieces.map((piece) => ({ piece, wave: null })),
   ...G.castBoard(map).waves.flatMap((wave) => wave.pieces.map((piece) => ({ piece, wave })))
 ];
-// The ten boards a run shuffles, and the last board that follows them in 無劍境界.
+// The boards a run draws its ten from, and the last board that follows them in 無劍境界.
 export const TEN = [...G.MAP_LAYOUTS.keys()].filter((map) => G.hasFour(map));
 export const FINAL = G.LAST_MAP;
-// The boards a troop type or villain stands on, with its first piece there.
+// The boards a troop type or villain stands on, with its first piece there. On a board built round
+// one villain his troop type fills the fixed seats: its first piece is the seat beside him.
 export const boardsOf = (key) =>
   TEN.flatMap((map) => {
+    if (G.GARRISONS[map] === key) return [{ map, piece: { id: G.SLOTS[1] }, wave: null }];
     const found = extraPieces(map).find(({ piece }) => piece.id.split('#')[0] === key);
     return found ? [{ map, ...found }] : [];
   });
@@ -41,7 +43,7 @@ export const boardsOf = (key) =>
 export function foePage(key) {
   for (const stage of TEN)
     for (const seat of [0, 1])
-      if (G.refKey(stage, G.SLOTS[seat]) === key) return 'enc-' + stage + '-' + seat;
+      if (G.ENCOUNTERS[stage][seat] && G.refKey(stage, G.SLOTS[seat]) === key) return 'enc-' + stage + '-' + seat;
   if (G.VILLAINS[key]) return 'enc-' + key;
   if (G.BOARD_OBJECTS[key]) return key;
   return troopIds().includes(key) ? key : key.split('-')[0];
@@ -51,7 +53,11 @@ export const foeLink = (key) => link('foes', foePage(key), G.DETAILS[key].name);
 // On the last board: 求敗, then the ten masters who stand with him.
 export const namedOn = (map) =>
   G.hasFour(map)
-    ? [G.refKey(map, 'master'), G.refKey(map, 'lieutenant'), ...Object.keys(G.VILLAINS).filter((id) => G.VILLAINS[id].map === map)]
+    ? [
+        G.refKey(map, 'master'),
+        ...(G.ENCOUNTERS[map][1] ? [G.refKey(map, 'lieutenant')] : []),
+        ...Object.keys(G.VILLAINS).filter((id) => G.VILLAINS[id].map === map)
+      ]
     : extraPieces(map).map(({ piece }) => piece.id);
 // 求敗 is neither: he keeps the role his lines have always had.
 export const villainRank = (id) => G.VILLAINS[id].role || RANKS[G.VILLAINS[id].rank === 'boss' ? 0 : 1];
@@ -82,7 +88,7 @@ export function foes() {
       name: foe.name,
       tag: RANKS[seat],
       summary: foe.bio,
-      image: gameArt((seat ? 'lieutenant-' : 'captain-') + stage + '.webp'),
+      image: gameArt(G.DETAILS[G.refKey(stage, G.SLOTS[seat])].portraitFile),
       sections: [
         rows('人物誌', [
           ['門派', foe.school],

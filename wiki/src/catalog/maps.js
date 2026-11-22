@@ -5,9 +5,16 @@ import { rows, links, link, wikiArt } from './parts.js';
 import { stageName, namedOn, foeLink, extraPieces } from './foes.js';
 import { missionLabel } from './missions.js';
 
-// The tenth board is the last of the ten a run shuffles; the last board (終局) follows it in 無劍境界.
-const orderOf = (stage) =>
-  stage === G.LAST_MAP ? '終局：無劍境界十局皆勝之後' : stage === 0 ? '第一局' : stage === G.LAST_MAP - 1 ? '第十局，十局之末' : '中間的局，次序每輪不同';
+const LAST = G.FINAL_MAP;
+// Where a board falls in a run: the stages its tier can be drawn at (journey.js routeFor). The
+// tenth board closes the ten; the last board (終局) follows it in 無劍境界.
+function orderOf(stage) {
+  if (stage === G.LAST_MAP) return '終局：無劍境界十局皆勝之後';
+  if (stage === 0) return '第一局';
+  if (stage === LAST) return '第十局，十局之末';
+  const at = G.mapStages(stage).map((n) => '第' + G.NUMERALS[n] + '局');
+  return at.join('或') + '，每輪抽換：一輪十局，取自十五局';
+}
 const point = ({ x, y }) => ({ x, y });
 
 function map(stage) {

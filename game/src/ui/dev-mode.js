@@ -17,7 +17,6 @@ import { DEV_TEST, mapStages, stageTitle } from '../rules/journey.js';
 
 const DEV_KEY = 'jianying.dev-mode.v1';
 const PICK_KEY = 'jianying.dev-test.v1';
-const BOARDS = MAP_LAYOUTS.length;
 
 // Reads ?dev from the address and remembers it; every storage access may fail (private
 // windows, blocked storage), and then only the address counts.
@@ -60,7 +59,7 @@ function loadPick() {
   } catch {}
   const heroes = Array.isArray(pick?.heroes) ? [...new Set(pick.heroes.filter((id) => PARTY.includes(id)))] : [];
   return {
-    map: Number.isInteger(pick?.map) && pick.map >= 0 && pick.map < BOARDS ? pick.map : 0,
+    map: Number.isInteger(pick?.map) && pick.map >= 0 && pick.map < MAP_LAYOUTS.length ? pick.map : 0,
     realm: Number.isInteger(pick?.realm) && pick.realm >= 1 && pick.realm <= REALMS.length ? pick.realm : 1,
     heroes: heroes.length ? heroes : PARTY.slice(0, 5)
   };
@@ -74,7 +73,7 @@ function keepPick(pick) {
 // leaves the order; an added one goes to the end). Returns the new pick.
 function changePick(pick, what, id) {
   const next = { ...pick, heroes: [...pick.heroes] };
-  if (what === 'map') next.map = Math.min(BOARDS - 1, Math.max(0, Number(id) || 0));
+  if (what === 'map') next.map = Math.min(MAP_LAYOUTS.length - 1, Math.max(0, Number(id) || 0));
   if (what === 'realm') next.realm = Math.min(REALMS.length, Math.max(1, Number(id) || 1));
   if (what === 'hero' && PARTY.includes(id))
     next.heroes = next.heroes.includes(id) ? next.heroes.filter((h) => h !== id) : [...next.heroes, id];
@@ -85,9 +84,14 @@ function changePick(pick, what, id) {
 function devTestView(pick) {
   const chip = (action, id, label, on, extra = '') =>
     btn(action, label, 'dev-chip' + (on ? ' on' : ''), `data-id="${id}" aria-pressed="${on}" ${extra}`);
-  const boards = Array.from({ length: BOARDS }, (_, i) =>
-    chip('dev-test-map', i, `<small>${stageTitle(mapStages(i)[0] ?? 0, '')}</small>${esc(mapLayout(i).name)}`, pick.map === i)
-  ).join('');
+  // Every board, in the order a run can meet them (the boards of a stage side by side), the
+  // last board after them.
+  const boards = MAP_LAYOUTS.map((_, i) => i)
+    .sort((a, b) => (mapStages(a)[0] ?? 0) - (mapStages(b)[0] ?? 0) || a - b)
+    .map((i) =>
+      chip('dev-test-map', i, `<small>${stageTitle(mapStages(i)[0] ?? 0, '')}</small>${esc(mapLayout(i).name)}`, pick.map === i)
+    )
+    .join('');
   const realms = REALMS.map((r, i) => chip('dev-test-realm', i + 1, `${esc(r.sword)}境界`, pick.realm === i + 1)).join('');
   const heroes = PARTY.map((id) => {
     const at = pick.heroes.indexOf(id),

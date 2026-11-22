@@ -188,7 +188,7 @@ const opponent = (stage, seat) =>
     stage,
     second: seat,
     page: 'enc-' + stage + '-' + seat,
-    image: gameArt((seat ? 'lieutenant-' : 'captain-') + stage + '.webp'),
+    image: gameArt(G.DETAILS[seat ? 'lieutenant-' + stage : G.CAPTAINS[stage][0]].portraitFile),
     unitId: seat ? 'lieutenant-' + stage : G.CAPTAINS[stage][0]
   });
 const villain = ([id, foe]) =>

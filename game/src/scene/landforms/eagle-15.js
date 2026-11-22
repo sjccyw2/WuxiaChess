@@ -3,7 +3,7 @@
 // brown-black feathers with bare patches, wings too short to fly, a bald
 // wrinkled neck and head with a red wen on the crown, and a great hooked beak.
 import { Model, circle } from '../scenery-kit.js';
-import { PERCH, ground, tuft, leafLitter, faceUp, faceOut } from './valley-10.js';
+import { PERCH, ground, tuft, leafLitter, faceUp, faceOut } from './valley-15.js';
 
 const plume = [0x3a322a, 0x2f2924, 0x463c31, 0x51453a],
   skin = 0x8f7166,
