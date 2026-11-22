@@ -1601,3 +1601,28 @@
     bottom: 44px;
   }
 }
+
+/* Skill names (2026-11-22): the art a new art belongs to, or 普攻精進 for an upgrade, in small type. */
+.mj-node-family {
+  font-size: 10px;
+  line-height: 1.1;
+  color: #9fb09b;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.mj-family {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.62em;
+  font-weight: 500;
+  opacity: 0.72;
+  letter-spacing: 0.04em;
+}
+.mj-kind-note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: 0.8;
+}
+.mj-nowrap {
+  white-space: nowrap;
+}
