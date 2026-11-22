@@ -93,7 +93,7 @@ function shopkeeper() {
       speech('賭局何時出現', v.rules),
       speech('把局規說穿', said(v.name, t.ruleTold)),
       speech('求敗瞧不見他', t.unseen.map((b) => said(G.QIUBAI.name, b.text, b.note))),
-      speech('只有一句真話', t.close[4].filter((b) => b.who === 'wei').map((b) => said(v.name, b.text, '第五境界收局，求敗終於瞧見他。'))),
+      speech('只有一句真話', t.close[4].filter((b) => b.who === 'wei').map((b) => said(v.name, b.text, '無劍境界收局，求敗終於瞧見他。'))),
       links('全部對白', [link('story', 'shop', TITLES.shop), link('story', 'opening', TITLES.opening)])
     ],
     sources: cites(cite(v.name, 'src/rules/ferry-market.js'))

@@ -46,7 +46,7 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
     realm = REALMS[realmAt - 1];
   return `<section class="run-view run-roll">
     ${titleHead('scroll', '抓子')}
-    <p class="run-kicker realm-kicker">${icon('flag', 14)}第${'一二三四五'[realmAt - 1]}境界・${text(realm.sword)}　${text(realm.note)}</p>
+    <p class="run-kicker realm-kicker">${icon('flag', 14)}${text(realm.sword)}境界　${text(realm.note)}</p>
     <div class="run-lacquer">
       ${scene(TALE_ART.board, 'run-scene')}
       <details class="hud-disclosure draw-tale"><summary>局規</summary><p>${text(MAZE_TALE.draw)}</p><p>棋臺沿上刻著：「${text(MAZE_TALE.rule)}」</p></details>

@@ -24,7 +24,7 @@ function realmView(profile, picked) {
     return `<li class="realm-card${shut ? ' shut' : ''}${won ? ' won' : ''}${chosen ? ' chosen' : ''}">
       ${btn(
         'realm-pick',
-        `<span class="realm-seal">${NUMERAL[i]}</span><span class="realm-name"><strong>第${NUMERAL[i]}境界・${esc(realm.sword)}</strong><small>${esc(WAKES[i].title)}</small></span><span class="realm-state">${state}</span><span class="realm-note">${esc(shut ? '先勝第' + NUMERAL[i - 1] + '境界，此重境界方開。' : realm.note)}</span>`,
+        `<span class="realm-seal">${NUMERAL[i]}</span><span class="realm-name"><strong>${esc(realm.sword)}境界</strong><small>${esc(WAKES[i].title)}</small></span><span class="realm-state">${state}</span><span class="realm-note">${esc(shut ? '先勝第' + NUMERAL[i - 1] + '境界，此重境界方開。' : realm.note)}</span>`,
         'realm-choice',
         `data-id="${n}" aria-pressed="${chosen}" ${shut ? 'disabled' : ''}`
       )}
@@ -35,7 +35,7 @@ function realmView(profile, picked) {
     ${titleHead('scroll', '選境界')}
     <p class="realm-lead">棋臺邊的石上刻著五柄劍的來歷。每勝一輪，求敗便放下一樣，他的黑子便多一分自己，也多一分難纏。選一重境界入夢。勝了已開的最高一重境界，下一重境界方開；五重境界皆勝，便有最後一局。</p>
     <ol class="realm-list" aria-label="五重境界">${cards}</ol>
-    <footer class="run-footer">${btn('close', '返回', 'outline-btn')}<span class="realm-actions">${finale ? btn('finale-replay', '重看終局', 'outline-btn') : ''}${btn('realm-go', '入夢・第' + NUMERAL[picked - 1] + '境界', 'gold-btn')}</span></footer>
+    <footer class="run-footer">${btn('close', '返回', 'outline-btn')}<span class="realm-actions">${finale ? btn('finale-replay', '重看終局', 'outline-btn') : ''}${btn('realm-go', '入夢・' + REALMS[picked - 1].sword + '境界', 'gold-btn')}</span></footer>
   </section>`;
 }
 

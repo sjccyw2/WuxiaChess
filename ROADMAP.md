@@ -200,8 +200,6 @@ All questions waiting on the producer. IDs are stable; do not renumber. Prefix: 
 | Q-N75 | Rules | A save made mid-fight before the objects arrived. | Default taken: it finishes under the old rules (and on 無刻漏臺 without the old ward). Recommendation: accept. | board objects | 2026-11-21 |
 | Q-N76 | Story | Replaying a 境界 already won. | Default taken: 求敗 speaks that 境界's lines again; no new line is carved by the table. Alternative: a shorter "already cut" close. Recommendation: keep. | 境界 build | 2026-11-21 |
 | Q-N77 | Story | The last battle after the first time. | Default taken: winning the fifth 境界 again shows the placeholder again, and 重看終局 replays it. Recommendation: keep while it is a placeholder; decide with the real last battle. Also: the developer button 開五重境界 counts the first four as won so the last battle can be reached. | 境界 build | 2026-11-21 |
-| Q-N78 | Story | The world view still tells 求敗's history with 仙 words: 「以劍解成仙」, 三條仙規, 仙規一 to 三. After Q-N69 (金庸 has no 仙俠), should these go too? | (a) keep them as the world view's own working terms, not shown in the game; (b) replace them (for example 劍解 alone, without 成仙, and 局規 for 仙規). Recommendation: (b), but only the producer can say. Asked in the session; not yet answered. | this session | 2026-11-21 |
-| Q-N79 | Story | Counting the levels: 五重境界 (with the measure word) and 第一境界 (ordinals) are used. | Default taken as written. Alternative: 五境界 throughout. Recommendation: keep. | 境界 rename | 2026-11-21 |
 | Q-N9 | Art | The ten pictures of the bystanders who used to be saved (`game/assets/npc-tale-0.webp` to `npc-tale-9.webp`) are no longer used. Delete them, or keep them for 1.1? | Recommendation: keep until 1.1 decides whether side objectives get their own story. | story rewrite (PR #12) | 2026-11-20 |
 
 ## 6. Decisions
@@ -210,11 +208,13 @@ Answers from the producer, newest first. Earlier decisions are listed in §0 of 
 
 | Date | ID | Decision |
 | --- | --- | --- |
+| 2026-11-22 | Q-N78 | 仙 stays: the producer introduces 仙 to this world on purpose, knowing 金庸's novels have none. 求敗 became a 仙 by 劍解, and the realm keeps its three 仙規. `check-story` no longer refuses 成仙 or 飛升; it still refuses 破碎虛空 (Q-N69). World view §0. |
+| 2026-11-22 | Q-N79 | Each 境界 is named for its sword: 利劍境界, 軟劍境界, 重劍境界, 木劍境界, 無劍境界, in that order (the order of the tomb's swords). The numbered names (第一境界…) are gone from the game, the wiki and the design documents; 五重境界 stays for the count. Keeping 軟劍 as the second was assumed. |
 | 2026-11-21 | Q-W7 | The five 境界 are difficulty levels the player picks before each run (1.2). What each changes in play is a default for now (Q-N70). |
 | 2026-11-21 | — | The five levels are called 境界, not 境. |
 | 2026-11-21 | Q-R3 | Retired. In the dream the youth cannot recall his name and has to make one up: that is the name the player types (one page in the prologue, and the page after the film). Done in `maze-tale.js` (`YOUTH_FORGETS`, `YOUTH_NAMES`); run script §3.1, §3.2 and world view §0 follow. |
 | 2026-11-21 | Q-R7 | Retired. There is no 階盡 scene; a run ends at the table (1.4) and the producer designs the last battle. |
-| 2026-11-21 | Q-N69 | 「破碎虛空」 is not used: it is 黃易's idea, and 金庸's novels have no 仙俠 elements. When 求敗 lets go he 「撒手而去，不知所終」. Both design documents changed; no game text used the old phrase. |
+| 2026-11-21 | Q-N69 | 「破碎虛空」 is not used: it is an idea borrowed from 黃易, and other words can say the same. When 求敗 lets go he 「撒手而去，不知所終」. Both design documents changed; no game text used the old phrase. |
 | 2026-11-21 | — | The five 境界 are difficulty levels. The player picks one before each run from those unlocked; the next unlocks only when a run is won at the highest unlocked level; only after all five are beaten comes the last battle (the eleventh map, the youth and 求敗 on the board themselves) and 求敗's 放下 ending, both placeholders until the producer designs them (1.2, 2.5). |
 | 2026-11-21 | — | Heroes need not speak to 求敗 for now (1.9 b). |
 | 2026-11-21 | — | The producer tested the game on a phone and a desktop: both work well (0.7). |

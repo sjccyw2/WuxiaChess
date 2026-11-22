@@ -56,8 +56,9 @@ const finaleTale = MAZE_TALE.finale;
 if (!finaleTale?.board?.length || !finaleTale?.letGo?.length || !finaleTale?.wake) fail('the last battle has no lines');
 for (const line of [...(finaleTale?.board || []), ...(finaleTale?.letGo || [])])
   if (!(line.note || (['qiu', 'youth'].includes(line.who) && line.text))) fail('a line of the last battle has no speaker or no text');
-// He lets go and leaves as a man would: no 仙俠 words (the producer's ruling).
-for (const word of ['破碎虛空', '飛升', '成仙'])
+// 破碎虛空 is 黃易's phrase and is not used (Q-N69); he 撒手而去. 仙 itself is the producer's own
+// addition to the world and is allowed (Q-N78).
+for (const word of ['破碎虛空'])
   if (JSON.stringify(MAZE_TALE).includes(word)) fail('the spine says ' + word);
 // A profile from before the 境界 could be picked: one more than the runs won is open, the rest won.
 {

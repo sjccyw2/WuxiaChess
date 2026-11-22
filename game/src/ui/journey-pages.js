@@ -105,7 +105,7 @@ function journeyEnding(s) {
     '</p></section>' +
     // Winning the highest open 境界 opens the next; winning the fifth brings the last battle.
     (r.last?.opened
-      ? '<p class="realm-opened">' + icon('spark', 15) + '<span>第' + '一二三四五'[r.last.opened - 1] + '境界已開。下一輪入夢之前，可以選它。</span></p>'
+      ? '<p class="realm-opened">' + icon('spark', 15) + '<span>' + WAKES[r.last.opened - 1].sword + '境界已開。下一輪入夢之前，可以選它。</span></p>'
       : '') +
     wakeJournal(r.chronicle, r.voyage) +
     '<div class="modal-foot right">' +
