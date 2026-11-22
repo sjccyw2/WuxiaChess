@@ -28,7 +28,18 @@ const ROSTER_ART = [
   'xiaGuard',
   'shenLong',
   'ironPalm',
-  'netHand'
+  'netHand',
+  // the ten heroes: their portrait is 588 x 588, and they have a figure-<id>.webp as well
+  'qiaoFeng',
+  'xuZhu',
+  'hongQi',
+  'yaoShi',
+  'sanFeng',
+  'zhaoMin',
+  'lingSu',
+  'diYun',
+  'chengZhi',
+  'aQing'
 ];
 const rosterPortrait = (id) => (ROSTER_ART.includes(id) ? 'npc-' + id + '.webp' : null);
 

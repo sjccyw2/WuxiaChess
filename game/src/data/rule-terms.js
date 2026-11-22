@@ -36,12 +36,19 @@ const RULE_GROUPS = [
       { id: 'safe', name: '免受還擊', art: 'safe', text: '此招出手，敵人無法還擊' },
       { id: 'pierce', name: '穿透', art: 'pierce', text: '計算傷害時無視目標一部分防禦' },
       { id: 'splash', name: '濺射', art: 'splash', text: '主目標四鄰的其他敵人也受到一部分傷害' },
+      { id: 'radius', name: '廣及', art: 'radius', text: '濺射不限四鄰，主目標數格之內的其他敵人都受波及' },
       { id: 'hits', name: '連擊', art: 'hits', text: '一招分成數段，各段分別計算傷害' },
       { id: 'push', name: '擊退', art: 'push', text: '把存活的目標推開一格，背後須有空位' },
       { id: 'blink', name: '身法', art: 'blink', text: '越過障礙移至射程內可站立的空格，隨即結束行動' },
       { id: 'heal', name: '療傷', art: 'heal', text: '替友軍或自身回復氣血；內傷者所受療傷減半' },
       { id: 'aura', name: '範圍', art: 'aura', text: '效果及於目標及其周圍數格內的友軍' },
       { id: 'recover', name: '回氣', art: 'recover', text: '命中後回復自身內力' },
+      {
+        id: 'drain',
+        name: '吸元',
+        art: 'drain',
+        text: '依主目標此擊實際損失的氣血，回復自身一部分氣血，有上限；內傷者減半，波及與器物不算'
+      },
       { id: 'hpCost', name: '自耗氣血', art: 'hpCost', text: '施展時先扣自身氣血；氣血不足以支付時不能施展' },
       {
         id: 'brace',
@@ -149,7 +156,15 @@ const RULE_GROUPS = [
       { id: 'evade', name: '閃身', art: 'evade', text: '下一次受到的直接攻擊落空' },
       { id: 'redirect', name: '挪移', art: 'redirect', text: '下一次受擊傷害減半，並把一部分反震給出手者' },
       { id: 'retort', name: '後發', art: 'retort', text: '還擊不按五成半，改按此招所定的比例計算' },
-      { id: 'shield', name: '護勁', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護勁取較強者' }
+      { id: 'shield', name: '護勁', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護勁取較強者' },
+      { id: 'fortify', name: '固守', art: 'fortify', condition: 'fortify', text: '受術者防禦提高，到期恢復；多重固守取較強者' },
+      {
+        id: 'immune',
+        name: '金剛',
+        art: 'immune',
+        condition: 'immune',
+        text: '至所定的敵方回合結束，敵人的攻擊、還擊與波及都傷不了受術者，也附不上狀態；毒傷與自身的代價照舊'
+      }
     ]
   },
   {
@@ -161,6 +176,16 @@ const RULE_GROUPS = [
       { id: 'wound', name: '內傷', art: 'wound', condition: 'wound', guide: true, text: '療傷減半，每次出手攻擊後自損氣血' },
       { id: 'daze', name: '失神', art: 'daze', condition: 'daze', guide: true, text: '失去下一次行動；局主受過後，下一回合可抵抗' },
       { id: 'disarm', name: '纏械', art: 'disarm', condition: 'disarm', guide: true, text: '攻擊降低，普攻與絕技只能攻擊相鄰一格' },
+      { id: 'freeze', name: '定身', art: 'freeze', condition: 'freeze', guide: true, text: '數回合不能移動、出手、施展絕技或還擊；局主只受一回合，下一回合可抵抗' },
+      { id: 'mute', name: '閉穴', art: 'mute', condition: 'mute', guide: true, text: '數回合不能出手、施展絕技或還擊，仍可移動；局主只受一回合，下一回合可抵抗' },
+      {
+        id: 'charm',
+        name: '受制',
+        art: 'charm',
+        condition: 'charm',
+        guide: true,
+        text: '尋常敵人倒戈數個敵方回合，走向最近的同夥以普攻出手；我方不攻擊他，他仍算敵人。局主與副手不受制，改為失神'
+      },
       { id: 'poison', name: '中毒', art: 'poison', condition: 'poison', text: '每回合失去氣血，到期自解' },
       { id: 'weak', name: '攻勢受挫', condition: 'weak', text: '攻擊降低，到期恢復' },
       { id: 'exposed', name: '破防', condition: 'exposed', text: '防禦降低，到期恢復' },

@@ -126,14 +126,24 @@ function contactPlan(s, u, t, art, forms, step, boss) {
     notes
   };
 }
+// 廣及: how far a splash reaches from the impact — its four neighbours, or every tile within
+// `radius` (counted in steps along the grid).
+const splashRadius = (art) => (art?.radius > 1 ? Math.floor(art.radius) : 1);
+// Whether a piece at p is within the splash of an impact at `center`.
+const inSplash = (art, center, p) => {
+  const d = distance(center, p);
+  return d >= 1 && d <= splashRadius(art);
+};
+// A piece under 受制 fights for the heroes for now: no collateral of theirs falls on it.
+const swayed = (v) => !!v.conditions?.charm;
 // All collateral is simultaneous around the impact; a foe struck by two patterns takes the stronger blow once.
 function secondaryTargets(s, u, t, center, art, forms, passable) {
   const targets = new Map(),
     add = (v, ratio) => {
-      if (v && v !== t && v.side !== u.side && v.side !== 'prop' && v.hp > 0)
+      if (v && v !== t && v.side !== u.side && v.side !== 'prop' && v.hp > 0 && !swayed(v))
         targets.set(v, Math.max(targets.get(v) || 0, ratio));
     };
-  if (art?.splash) for (const v of s.units) if (distance(center, v) === 1) add(v, art.splash);
+  if (art?.splash) for (const v of s.units) if (inSplash(art, center, v)) add(v, art.splash);
   if (forms.includes('line') && (u.x === t.x || u.y === t.y)) {
     const dx = Math.sign(t.x - u.x),
       dy = Math.sign(t.y - u.y);
@@ -150,7 +160,8 @@ function secondaryTargets(s, u, t, center, art, forms, passable) {
   }
   if (forms.includes('arc')) {
     const near = s.units.filter(
-      (v) => v !== t && v.side !== u.side && v.side !== 'prop' && v.hp > 0 && distance(t, v) <= 2
+      (v) =>
+        v !== t && v.side !== u.side && v.side !== 'prop' && v.hp > 0 && !swayed(v) && distance(t, v) <= 2
     );
     near.sort((a, b) => distance(t, a) - distance(t, b) || a.y - b.y || a.x - b.x);
     add(near[0], 0.32);
@@ -168,4 +179,4 @@ function supportEntry(forms, u, v, power) {
   };
 }
 
-export { FORM_RULES, AILMENTS, weaponFormText, actionForms, forcedStep, contactPlan, secondaryTargets, supportEntry };
+export { FORM_RULES, AILMENTS, splashRadius, inSplash, weaponFormText, actionForms, forcedStep, contactPlan, secondaryTargets, supportEntry };

@@ -3,7 +3,10 @@ import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, cells, gameArt } from './parts.js';
 
-export const heroPortrait = (id) => gameArt('portraits-' + G.portraits[id] + '.webp');
+// A hero painted in the roster pack wears that portrait (DETAILS[id].portraitFile); the first ten
+// have a portraits-<name>.webp.
+export const heroPortrait = (id) =>
+  gameArt(G.DETAILS[id].portraitFile || 'portraits-' + G.portraits[id] + '.webp');
 
 export function heroes() {
   return G.PARTY.map((id) => {
@@ -44,7 +47,8 @@ export function heroes() {
         links('入門與武器', [
           link('skills', 'basic-' + id, d.basic),
           link('skills', 'signature-' + id, d.skill),
-          link('items', unit.weapon, G.ITEMS[unit.weapon].name),
+          // The ten from the roster pack arrive with an empty weapon slot; 狄雲 wears his coat.
+          ...[unit.weapon, unit.gear].filter(Boolean).map((item) => link('items', item, G.ITEMS[item].name)),
           ...Object.entries(G.TALENTS).map(([key, t]) => link('skills', key, t.name))
         ]),
         partner && links('合璧', [link('heroes', partner, G.DETAILS[partner].name), link('rules', 'paired', G.RULE_TERMS.paired.name)]),

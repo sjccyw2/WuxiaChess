@@ -1081,6 +1081,52 @@ function useItem(id) {
   );
 }
 const uName = (u) => G.unitDetails(u).name;
+// 定身, 閉穴, 受制, 金剛, 固守: who holds which, just before the round turns.
+const HELD_ENDS = { freeze: '解凍', mute: '穴道已解', charm: '回歸本陣', immune: '金剛已散', fortify: '固守已收' };
+function heldStates() {
+  return state.units
+    .filter((u) => G.living(u) && u.conditions)
+    .map((u) => [u, Object.keys(HELD_ENDS).filter((k) => u.conditions[k])]);
+}
+// The line saying which of them ended as the round turned, or ''.
+function endedStates(holding) {
+  return holding
+    .flatMap(([u, kinds]) =>
+      G.living(u) ? kinds.filter((k) => !u.conditions?.[k]).map((k) => uName(u) + HELD_ENDS[k]) : []
+    )
+    .join('，');
+}
+// The name of a hero whose 金剛 turned a blow of this action to nothing, or ''.
+function voidedBy(effects) {
+  const hit = effects.find(([id, value]) => value === '−0' && G.immuneTo(G.find(state, id)));
+  return hit ? uName(G.find(state, hit[0])) : '';
+}
+// After a hero's strike: what it laid on (定身, 閉穴, 受制, 金剛, 固守), a counter 金剛 voided,
+// what 吸元 drew back.
+const HELD_WORDS = {
+  定身: (n) => ' 定身，' + n + ' 回合動彈不得',
+  閉穴: (n) => ' 被點中穴道，' + n + ' 回合不能出手',
+  受制: (n) => ' 受制倒戈，' + n + ' 回合為我所用',
+  金剛: (n) => ' 金剛護體，' + n + ' 回合刀槍不入',
+  固守: (n, power) => ' 固守，防禦 ＋' + power
+};
+const HELD_KIND = { 定身: 'freeze', 閉穴: 'mute', 受制: 'charm', 金剛: 'immune', 固守: 'fortify' };
+function strikeTip(u, effects, skill) {
+  const lines = [];
+  for (const [id, value, reason] of effects) {
+    const t = G.find(state, id),
+      c = t?.conditions?.[HELD_KIND[value]];
+    if (reason !== 'status' || !HELD_WORDS[value] || !c) continue;
+    const line = uName(t) + HELD_WORDS[value](Math.max(1, c.through - state.round + 1), c.power);
+    if (!lines.includes(line)) lines.push(line);
+  }
+  const voided = voidedBy(effects);
+  if (voided) lines.push(voided + ' 金剛護體，還擊無功');
+  const art = skill ? G.artFor(u) : null,
+    mend = art && G.drainOf(art) && effects.find(([id, value]) => id === u.id && value.startsWith('+'));
+  if (mend) lines.push(uName(u) + ' 吸元，回復 ' + mend[1].slice(1) + ' 氣血');
+  if (lines.length) mapTip(lines.join('；'), 3200);
+}
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function runEnemy() {
   const token = ++aiRun;
@@ -1090,12 +1136,15 @@ async function runEnemy() {
   while (token === aiRun && screen === 'battle' && state.phase === 'enemy' && !state.result) {
     const e = G.enemies(state).find((u) => G.living(u) && !u.acted);
     if (!e) {
-      const before = new Set(state.units.map((u) => u.id));
+      const before = new Set(state.units.map((u) => u.id)),
+        holding = heldStates();
       G.nextRound(state);
       mode = 'move';
       // 援軍: the pieces that entered as the round began.
       const came = state.units.filter((u) => !before.has(u.id));
-      if (!state.result) mapTip('第 ' + state.round + ' 回合 · 我方行動');
+      const ended = endedStates(holding);
+      if (!state.result && ended) heldTip('第 ' + state.round + ' 回合 · ' + ended, 3400); // after any tip held
+      else if (!state.result) mapTip('第 ' + state.round + ' 回合 · 我方行動');
       update();
       board.watch(false); // combat feel: hand the camera back
       if (came.length) {
@@ -1108,15 +1157,24 @@ async function runEnemy() {
       }
       return;
     }
-    const dazed = !!e.conditions?.daze; // 失神: the piece loses its action, and says so
+    // 失神 and 定身: the piece loses its action, and says so.
+    const dazed = e.conditions?.daze ? '失神' : e.conditions?.freeze ? '定身' : '';
+    // 受制 turns it on its own side; 閉穴 lets it walk but not strike.
+    const turned = !dazed && !!e.conditions?.charm,
+      muted = !dazed && !turned && !!e.conditions?.mute;
     const pulls = state.tally?.fired?.pull || 0;
     const effects = G.enemyAct(state, e);
     audio(effects.length && !dazed ? 'ready' : 'move'); // footfalls and blows follow as board cues
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
+    const struck = effects[0] && G.find(state, effects[0][0]);
     // 擒拿: who was dragged in, said once the blow and the drag have played.
     const dragged = (state.tally?.fired?.pull || 0) > pulls && effects[0] ? G.find(state, effects[0][0]) : null;
-    if (dazed) mapTip(uName(e) + ' 失神，錯過了這一手');
+    if (dazed) mapTip(uName(e) + ' ' + dazed + '，錯過了這一手');
+    else if (turned)
+      mapTip(uName(e) + (struck ? ' 受制倒戈，出手打向同夥' + uName(struck) : ' 受制倒戈，不向我方出手'), 3000);
+    else if (muted && !effects.length) mapTip(uName(e) + ' 穴道受制，只走不出手');
+    else if (voidedBy(effects)) mapTip(voidedBy(effects) + ' 金剛護體，這一擊無功', 3000);
     // 續命: a mend is no blow, so the board says what it did.
     else if (effects[0]?.[1].startsWith('+'))
       mapTip(
@@ -1931,6 +1989,7 @@ function command(action, id, data = {}, keyboard = false) {
         hit.from
       );
       board.showEffects(hit.effects);
+      strikeTip(u, hit.effects, skill);
       advanceAfterStrike(u.id, hit);
       if (hit.leveled) {
         audio('level');

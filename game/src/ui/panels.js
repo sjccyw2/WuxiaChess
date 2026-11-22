@@ -1047,6 +1047,14 @@ function objectPage(s, u) {
     '</p>'
   );
 }
+// 定身, 閉穴, 受制: what holds the piece this turn and for how many more of its turns, or ''.
+function heldLine(s, u) {
+  const left = (kind) => Math.max(1, u.conditions[kind].through - s.round + 1) + ' 回合';
+  if (u.conditions?.freeze) return '定身 · 尚餘 ' + left('freeze') + '，不能行動，也不施展絕技';
+  if (u.conditions?.charm) return '受制 · 倒戈尚餘 ' + left('charm') + '，攻擊同夥，不施展絕技';
+  if (u.conditions?.mute) return '閉穴 · 尚餘 ' + left('mute') + '，只走不出手，也不施展絕技';
+  return '';
+}
 function enemyPage(s, id) {
   if (isProp(find(s, id))) return objectPage(s, find(s, id));
   const waiting = find(s, id) ? null : waitingPiece(s, id);
@@ -1074,14 +1082,15 @@ function enemyPage(s, id) {
       ? '<div class="enemy-forecast"><strong>' +
         special.name +
         '</strong><span>' +
-        (u.conditions?.seal
+        (heldLine(s, u) ||
+          (u.conditions?.seal
           ? '本回合封穴，無法施展絕技'
           : u.conditions?.daze
             ? '本回合失神，不會出手'
             : turns === 0
               ? CHARGED[special.style] ||
                 (traitsOf(u).stance ? CHARGED.stance : '本回合蓄勢，正是破綻')
-              : '距蓄勢 ' + turns + ' 回合') +
+              : '距蓄勢 ' + turns + ' 回合')) +
         '</span><p>' +
         // A mend or a mirror is no blow, so it has no strength against the normal strike.
         (special.strikes ? '普攻傷害 × ' + special.factor + '。' : '') +
@@ -1102,6 +1111,7 @@ function enemyPage(s, id) {
     reach(s, u) +
     ' 格' +
     (u.conditions?.disarm ? '（纏械）' : '') +
+    (u.conditions?.freeze ? '（定身）' : u.conditions?.mute ? '（閉穴）' : u.conditions?.charm ? '（倒戈）' : '') +
     '</b></span></div>' +
     enemyTraitLines(s, u)
       .concat(
