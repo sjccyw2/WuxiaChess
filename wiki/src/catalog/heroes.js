@@ -9,6 +9,31 @@ import { rows, speech, links, link, cells, gameArt } from './parts.js';
 export const heroPortrait = (id) =>
   gameArt(G.DETAILS[id]?.portraitFile || 'portraits-' + G.portraits[id] + '.webp');
 
+// What each level adds, read from the game's own growth tables (rules/game.js).
+const named = (row, sign) =>
+  [['攻擊', row[0]], ['防禦', row[1]], ['氣血', row[2]], ['內力', row[3]]]
+    .filter(([, n]) => n)
+    .map(([k, n]) => k + ' ' + (sign ? '＋' : '') + Math.abs(n))
+    .join('、');
+const gains = (row) => named(row, true);
+function growthRows(id) {
+  const pace = G.growthOf(id),
+    common = G.LEVEL_GAINS;
+  if (!pace)
+    return rows('成長', [
+      ['步調', '尋常'],
+      ['二、三級', '每級 ' + gains(common.novice)],
+      ['四級起', '每級 ' + gains(common.veteran)]
+    ]);
+  return rows('成長', [
+    ['步調', pace.name + '：' + pace.desc],
+    ['緣由', G.GROWTH_PROFILES[id].why],
+    ['一級', '比尋常' + (pace.start.some((n) => n < 0) ? '少 ' : '多 ') + named(pace.start, false) + '（已算在初始屬性裡）'],
+    ...pace.levels.map((row, i) => [G.NUMERALS[i + 1] + '級', gains(row)]),
+    ['到十二級', '屬性與照尋常成長時相同；此後每級 ' + gains(common.veteran)]
+  ]);
+}
+
 export function heroes() {
   return G.ROSTER.map((id) => {
     const d = G.DETAILS[id],
@@ -39,6 +64,7 @@ export function heroes() {
           ['移動', cells(unit.step)],
           ['普攻射程', cells(unit.range)]
         ]),
+        growthRows(id),
         speech('領隊陣法 · ' + command.name, G.commandDescription(id)),
         speech(path.title, path.origin),
         {

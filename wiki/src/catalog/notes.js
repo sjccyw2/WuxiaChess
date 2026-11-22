@@ -45,6 +45,7 @@ export const NOTES = {
 
   // Plain statements of behaviour that lives in code only.
   reserveGrowth: '候補入隊沿用同一成長。',
+  otherPaces: '有幾位俠客成長的步調與眾不同，各頁「成長」一欄列出每級所得；到十二級時，屬性與照尋常成長時相同。',
   midBattleStudy: '剛參悟的絕技會填入空格。三格皆滿時，可選一格替換一次。',
   lateFoes:
     '第七局起，敵軍會衡量現有護盾，並留意身旁無人且沒有地形掩護的領隊。第八局起局主可走四步，斥候能攻兩格。'
