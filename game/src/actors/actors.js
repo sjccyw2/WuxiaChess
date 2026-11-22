@@ -50,10 +50,13 @@ import {
 import { inSplash } from '../rules/form-rules.js';
 import { CONDITION_NAMES } from '../rules/battle-mastery.js';
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+// The title's three fighters on the first board (青竹渡). Each stands at the centre of an open
+// paved tile on the east bank, clear of the channel's holes, the rock and the crates, so no foot
+// hangs over a gap. 令狐冲 faces north-east; 小龍女 and 郭靖 stand to his north-east, facing him.
 const openingActors = [
-  { id: 'hero', x: 5.1, y: 5.25, side: 'ally', hp: 1 },
-  { id: 'xiao', x: 7.0, y: 3.45, side: 'ally', hp: 1 },
-  { id: 'guo', x: 7.4, y: 6.5, side: 'ally', hp: 1 }
+  { id: 'hero', x: 7, y: 7, side: 'ally', hp: 1 },
+  { id: 'xiao', x: 8, y: 5, side: 'ally', hp: 1 },
+  { id: 'guo', x: 8, y: 3, side: 'ally', hp: 1 }
 ];
 const drive = [-0.025, -0.045, -0.058, -0.025, 0.11, 0.15, 0.076, 0];
 const recoil = [0, -0.03, -0.073, -0.105, -0.089, -0.054, -0.024, 0];

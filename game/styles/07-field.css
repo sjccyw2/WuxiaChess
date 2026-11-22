@@ -589,8 +589,6 @@ body.in-battle {
   top: calc(var(--top) + 61px);
 }
 
-.viewport-focus .opening .opening-foot,
-.viewport-focus .opening .opening-description,
 .viewport-focus .opening .opening-tools > :not(.title-fullscreen) {
   display: none;
 }
