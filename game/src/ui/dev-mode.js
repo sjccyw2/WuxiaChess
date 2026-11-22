@@ -10,13 +10,12 @@
 // page to start a test battle: any board, any 境界, the heroes picked (journey.js devTestRun).
 import { btn, titleHead, esc } from './panels.js';
 import { DETAILS, PARTY } from '../rules/game.js';
-import { mapLayout } from '../data/terrain.js';
+import { mapLayout, MAP_LAYOUTS } from '../data/terrain.js';
 import { REALMS } from '../data/realms.js';
 import { DEV_TEST, mapStages } from '../rules/journey.js';
 
 const DEV_KEY = 'jianying.dev-mode.v1';
 const PICK_KEY = 'jianying.dev-test.v1';
-const BOARDS = 10;
 const NUMERAL = '一二三四五六七八九十';
 
 // Reads ?dev from the address and remembers it; every storage access may fail (private
@@ -57,7 +56,7 @@ function loadPick() {
   } catch {}
   const heroes = Array.isArray(pick?.heroes) ? [...new Set(pick.heroes.filter((id) => PARTY.includes(id)))] : [];
   return {
-    map: Number.isInteger(pick?.map) && pick.map >= 0 && pick.map < BOARDS ? pick.map : 0,
+    map: Number.isInteger(pick?.map) && pick.map >= 0 && pick.map < MAP_LAYOUTS.length ? pick.map : 0,
     realm: Number.isInteger(pick?.realm) && pick.realm >= 1 && pick.realm <= REALMS.length ? pick.realm : 1,
     heroes: heroes.length ? heroes : PARTY.slice(0, 5)
   };
@@ -71,7 +70,7 @@ function keepPick(pick) {
 // leaves the order; an added one goes to the end). Returns the new pick.
 function changePick(pick, what, id) {
   const next = { ...pick, heroes: [...pick.heroes] };
-  if (what === 'map') next.map = Math.min(BOARDS - 1, Math.max(0, Number(id) || 0));
+  if (what === 'map') next.map = Math.min(MAP_LAYOUTS.length - 1, Math.max(0, Number(id) || 0));
   if (what === 'realm') next.realm = Math.min(REALMS.length, Math.max(1, Number(id) || 1));
   if (what === 'hero' && PARTY.includes(id))
     next.heroes = next.heroes.includes(id) ? next.heroes.filter((h) => h !== id) : [...next.heroes, id];
@@ -82,9 +81,13 @@ function changePick(pick, what, id) {
 function devTestView(pick) {
   const chip = (action, id, label, on, extra = '') =>
     btn(action, label, 'dev-chip' + (on ? ' on' : ''), `data-id="${id}" aria-pressed="${on}" ${extra}`);
-  const boards = Array.from({ length: BOARDS }, (_, i) =>
-    chip('dev-test-map', i, `<small>第${NUMERAL[mapStages(i)[0] ?? 0]}局</small>${esc(mapLayout(i).name)}`, pick.map === i)
-  ).join('');
+  // Every board, in the order a run can meet them (the boards of a stage side by side).
+  const boards = MAP_LAYOUTS.map((_, i) => i)
+    .sort((a, b) => (mapStages(a)[0] ?? 0) - (mapStages(b)[0] ?? 0) || a - b)
+    .map((i) =>
+      chip('dev-test-map', i, `<small>第${NUMERAL[mapStages(i)[0] ?? 0]}局</small>${esc(mapLayout(i).name)}`, pick.map === i)
+    )
+    .join('');
   const realms = REALMS.map((r, i) => chip('dev-test-realm', i + 1, `${esc(r.sword)}境界`, pick.realm === i + 1)).join('');
   const heroes = PARTY.map((id) => {
     const at = pick.heroes.indexOf(id),

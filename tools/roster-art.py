@@ -28,7 +28,9 @@ OUT = os.path.join(ROOT, 'game', 'assets')
 CELL_W, CELL_H, FOOT_Y = 144, 176, 162
 # The horizontal centre of each face in the pack's portrait, as a share of its width.
 FACE_X = dict(fengTiannan=.44, zhaoZhong=.52, wanYan=.55, xianYu=.52, wanZhen=.55,
-              fiveTiger=.45, qingShield=.5, jinBow=.5, huaBlade=.55, wanDisciple=.55)
+              fiveTiger=.45, qingShield=.5, jinBow=.5, huaBlade=.55, wanDisciple=.55,
+              dongFang=.55, liQiu=.51, hongAn=.57, qiuRen=.55, gongSun=.57,
+              heiMuGuard=.55, xiaGuard=.53, shenLong=.55, ironPalm=.53, netHand=.59)
 
 
 def cleaned(path):

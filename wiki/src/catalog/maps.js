@@ -1,12 +1,18 @@
-// 十局輿圖: each battlefield, drawn from the game's layout tables.
+// 棋局輿圖: each battlefield, drawn from the game's layout tables.
 import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, links, link, wikiArt } from './parts.js';
 import { stageName, namedOn, foeLink, extraPieces } from './foes.js';
 import { missionLabel } from './missions.js';
 
-const LAST = G.MAP_LAYOUTS.length - 1;
-const orderOf = (stage) => (stage === 0 ? '第一局' : stage === LAST ? '最後一局' : '中間的局，次序每輪不同');
+const LAST = G.FINAL_MAP;
+// Where a board falls in a run: the stages its tier can be drawn at (journey.js routeFor).
+function orderOf(stage) {
+  if (stage === 0) return '第一局';
+  if (stage === LAST) return '最後一局';
+  const at = G.mapStages(stage).map((n) => '第' + G.NUMERALS[n] + '局');
+  return at.join('或') + '，每輪抽換：一輪十局，取自十五局';
+}
 const point = ({ x, y }) => ({ x, y });
 
 function map(stage) {

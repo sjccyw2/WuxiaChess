@@ -9,6 +9,11 @@ import { hewnSide, iceTile, snowTile } from './landforms/shelf-3.js';
 import { pavilionCrag } from './landforms/crags-3.js';
 import { peaks3 } from './landforms/peaks-3.js';
 import { farMarsh } from './landforms/distance-2.js';
+import { tiles10 } from './landforms/landform-10.js';
+import { tiles11 } from './landforms/landform-11.js';
+import { tiles12 } from './landforms/landform-12.js';
+import { tiles13 } from './landforms/landform-13.js';
+import { tiles14 } from './landforms/landform-14.js';
 
 const stonework = [
   null,
@@ -20,21 +25,32 @@ const stonework = [
   [0x8b887f, 0xa29d91, 0x57544d, 0x6c6558, 0x8f8a7e, 0x5d6763],
   [0x728e89, 0x9ab6a1, 0x4e6468, 0x5d7475, 0x9abaa3, 0x4f8b86],
   [0x939aa8, 0xc4beb1, 0x6c7586, 0x898c98, 0xc8ad84, 0x8295ad],
-  [0x4d606a, 0x778381, 0x394954, 0x475b61, 0xd0ad6a, 0x527f82]
+  [0x4d606a, 0x778381, 0x394954, 0x475b61, 0xd0ad6a, 0x527f82],
+  [0x9a9a7a, 0xc4b98e, 0x66705a, 0x7f8a6a, 0xb9a878, 0x4f8a80], // 神龍竹堂: sand and sea grass
+  [0x8f8a76, 0xb3a98c, 0x69685a, 0x7d7c68, 0xb98f7a, 0x5a8a7c], // 絕情花徑: warm valley stone
+  [0x8a8780, 0xaaa596, 0x5c5d58, 0x74746a, 0x9c917c, 0x4f8791], // 鐵掌溪灘: river rock
+  [0x5d6b80, 0x8792a0, 0x3e4860, 0x4f5a70, 0xc9a560, 0x3f6f86], // 西夏夜苑: palace marble by lantern
+  [0x9b958c, 0xc2b8a6, 0x6e6b66, 0x868078, 0xb8947e, 0x6f9aa0] // 黑木繡閣: garden paths
 ];
+// The boards built round one villain (10 on) borrow the tile language of an earlier board (how
+// its ground, sides and rims are cut) and dress the tiles that are theirs alone through their own
+// landform module: { cover, bamboo, herbs, rock, crate, reeds }, each (m, p, cell) drawn in the
+// tile's own frame after its ground. Their palette, depth, surroundings and landmarks are their own.
+const LOOKS = { 10: 2, 11: 1, 12: 2, 13: 8, 14: 1 };
+const OWN_TILES = { 10: tiles10, 11: tiles11, 12: tiles12, 13: tiles13, 14: tiles14 };
+const lookOf = (index) => LOOKS[index] ?? index;
 const directions = [
   [0, -1],
   [1, 0],
   [0, 1],
   [-1, 0]
 ];
-const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32];
+const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32, 1.1, 1.3, 1.0, 1.6, 3.2];
 // Each side is measured in local coordinates. The first and last point of
 // every course meet the neighbouring side even along a re-entrant corner.
-function exposedSide(m, index, p, cell, salt) {
-  if (index === 3) return hewnSide(m, cell, salt, landDepth[index]);
-  const r = m.rng,
-    depth = landDepth[index];
+function exposedSide(m, index, p, cell, salt, depth = landDepth[index]) {
+  if (index === 3) return hewnSide(m, cell, salt, depth);
+  const r = m.rng;
   const masonry = [1, 4, 6, 8, 9].includes(index);
   const levels = masonry
     ? [
@@ -187,7 +203,7 @@ function exposedSide(m, index, p, cell, salt) {
 }
 // A playable bridge has a deck and open air or water below it. Every other
 // actual tile contributes one top; walls are emitted only along exposed sides.
-function shapedShelf(m, index, p, layout) {
+function shapedShelf(m, index, p, layout, depth = landDepth[index]) {
   // 桃花石陣 lays its own ground and well shaft in landforms/landform-5.js.
   if (index === 5) return;
   const { width, height, cells, mask } = layout;
@@ -215,7 +231,7 @@ function shapedShelf(m, index, p, layout) {
       if (mask[tz]?.[tx] === '#' && !decks.has(tz * width + tx)) continue;
       const salt = 31 * cell.x + 53 * cell.y + n * 17 + index;
       m.frame(x + dx * 0.5, 0, z + dz * 0.5, Math.atan2(dx, dz), 1, () =>
-        exposedSide(m, index, p, cell, salt)
+        exposedSide(m, index, p, cell, salt, depth)
       );
     }
   }
@@ -647,7 +663,7 @@ function obstacle(m, index, p, crate) {
   );
   m.rock(0.24, 0.05, 0.16, 0.15, 0.27, 0.13, p[3], p[0], 7);
 }
-function field(m, index, cells, p, size) {
+function field(m, index, cells, p, size, own = null) {
   // 桃花石陣 dresses its tiles in landforms/formation-5.js.
   if (index === 5) return;
   const centerX = (size.width - 1) / 2;
@@ -662,7 +678,9 @@ function field(m, index, cells, p, size) {
     // 空山琴臺 dresses its own tiles in landforms/props-4.js.
     if (index === 4) continue;
     m.frame(x, 0, z, 0, 1, () => {
-      if (k === 'cover') cover(m, index, p);
+      // A board built round one villain dresses the tiles that are its own.
+      if (own?.[k]) own[k](m, p, cell);
+      else if (k === 'cover') cover(m, index, p);
       else if (k === 'bamboo') brush(m, index, p);
       else if (k === 'herbs') herbs(m, index, p);
       else if (k === 'rock' || k === 'crate') obstacle(m, index, p, k === 'crate');
@@ -1323,13 +1341,19 @@ function mazeScenery(T, index, cells) {
     count: size.count
   };
   const p = stonework[index],
-    seed = 4099 + 7919 * index;
+    seed = 4099 + 7919 * index,
+    look = lookOf(index);
   const bank = new Model(T, seed);
-  shapedShelf(bank, index, p, size);
+  shapedShelf(bank, look, p, size, landDepth[index]);
   scenery.add(bank.finish('場地與峭岸'));
   const floor = new Model(T, seed + 51);
-  field(floor, index, cells, p, size);
+  field(floor, look, cells, p, size, OWN_TILES[index]);
   scenery.add(floor.finish('可行走地形與掩體'));
+  // Past the tiles, such a board is all its own landform module's (environment.js).
+  if (look !== index) {
+    scenery.updateMatrixWorld(true);
+    return scenery;
+  }
   const air = new Model(T, seed + 79);
   innerWaterAndStars(air, index, size);
   lowerLandscape(air, index, p, size);

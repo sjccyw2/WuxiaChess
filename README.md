@@ -119,7 +119,7 @@ Each goes through the game's own settling (`devFinish` in `game/src/rules/journe
 rewards, the next hero, the story and the end of the run follow as in play. Outside a battle,
 開五重境界 opens all five 境界 (the first four counted as won) and 跳至終局 shows the last battle.
 
-試局, always there, sets up a test battle: pick any of the ten boards, any 境界 (open or not) and
+試局, always there, sets up a test battle: pick any of the fifteen boards, any 境界 (open or not) and
 any heroes, in order (the first leads, the first five fight, the rest wait on the bench). The run
 starts at that board's 軍情 page, its enemies as strong as at the board's usual place in a run and
 in the 境界 picked; every hero has 20 武學點 and the purse 1000 兩 (`DEV_TEST` and `devTestRun` in
@@ -137,7 +137,7 @@ Heroes are drawn at random and the boards come in a different order each run, so
 | The boards | `game/src/data/encounter-script.js` | one map: its black stones, on whom 求敗 has pressed a 戰意 that makes them fight, the named stones he sets down beside them, and the things on the board (`objects`: the qin, the drum, the star posts) |
 | The heroes | `game/src/data/hero-voices.js` | one hero: arrival, deja vu, night talk, the art that made their name coming back, farewell |
 
-To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`, and the world behind it in `wiki/content/世界觀設定.md`.
+To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere (what else a new board needs is under "The fifteen boards" below). `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`, and the world behind it in `wiki/content/世界觀設定.md`.
 
 All story text is written in 金庸's manner: plain classical mixed with vernacular, forms of address that fit each speaker, no modern words. The rules and worked examples are in `wiki/content/單輪劇本.md` §15.
 
@@ -146,6 +146,22 @@ The one who set the boards is 求敗 (`QIUBAI` in `maze-tale.js`), who sits acro
 Prompts for the pictures the story still needs are in `asset-gen/prompts.md`, with each file's name, size and where its subject must sit. Pictures the game already shows (its group A) are all in place; the rest are new scenes that are text-only today.
 
 The marked stone is six files, `stone-marks-0.webp` to `stone-marks-5.webp`, showing none to five marks. They were made from one painting by covering the later marks with bare stone from the same picture, so the journal can show exactly as many marks as runs have been finished.
+
+## The fifteen boards
+
+A run is ten boards drawn from fifteen (`routeFor` in `game/src/rules/journey.js`). 青竹渡 is always the first and 無刻漏臺 the last; the eight between stand in tiers of like strength, and each tier holds one of the five boards added on 2026-11-22, so about three of them turn up in a run:
+
+| Stage of the run | Drawn from |
+| --- | --- |
+| 2nd and 3rd | two of 紅楓驛, 蘆花汀, **神龍竹堂** (洪安通) |
+| 4th and 5th | two of 聽雪棧, 空山琴臺, **絕情花徑** (公孫止) |
+| 6th and 7th | two of 桃花石陣, 襄陽殘垣, **鐵掌溪灘** (裘千仞) |
+| 8th | 寒玉石室 or **西夏夜苑** (李秋水) |
+| 9th | 倒影天街 or **黑木繡閣** (東方不敗) |
+
+A run saved before then has no `routes` field and keeps the route its seed made at the time (the first ten boards only).
+
+The five added boards are each built round one villain: he is the 局主, there is no lieutenant, and the other three of the board's fixed four pieces are his troop type (`GARRISONS` in `game/src/data/encounters.js`). A board needs an entry in each of these, by map index: `data/terrain.js` (layout), `data/encounters.js` (`ENCOUNTERS`, `RANKS`, and `GARRISONS` if it has no lieutenant), `data/martial-arts.js` (`CAPTAINS`), `data/battles.js`, `data/encounter-script.js`, `data/maze-tale.js` (`CHAMBER_TALES`), a tier in `routeFor`, `scene/maze-atmosphere.js` (sky and the plane below), `scene/stage-light.js` (light rig), `audio/ambience.js` (sound bed), `scene/maze-scenery.js` (palette, depth and, for boards 10 on, the earlier board whose tile language it borrows) and a landform module `scene/landforms/landform-N.js` listed in `scene/environment.js`, plus a picture `wiki/assets/map-N.webp`.
 
 ## How the wiki stays in step with the game
 
@@ -160,7 +176,7 @@ The wiki holds no copy of the game's data. When the page opens it imports the ga
 | 江湖人物 | `catalog/folk.js` | the youth, the eagle and 韋小寶 |
 | 任務簿 | `catalog/missions.js` | each board's battle (how it is won, its enemies and reinforcements, its pool of secondaries) and the heroes' trials |
 | 戰鬥規則 | `catalog/rules.js` | every rule word (`data/rule-terms.js`) with the arts, items and enemies that carry it; the kinds of secondary; growth numbers; the in-game guide and its keys |
-| 十局輿圖 | `catalog/maps.js` | map layouts and terrain |
+| 棋局輿圖 | `catalog/maps.js` | map layouts and terrain |
 | 局中紀事 | `catalog/story.js` | all scripted dialogue and narration |
 | 遊戲原文 | `corpus/` | every Chinese string in the game's source, found by parsing the files |
 
@@ -173,7 +189,7 @@ What is written by hand in the wiki:
 - `wiki/src/catalog/notes.js` — a few sentences explaining rules that exist only as code (how medicine is used, when a boss charges its signature art, late-stage enemy behaviour). Revisit this file if those rules change.
 - Page titles and section headings in `wiki/src/catalog/`.
 - `wiki/src/corpus/sections.js` — which heading each line of game text is filed under. New game code that is not listed still appears, under its function name.
-- The ten map pictures in `wiki/assets/`. The clickable terrain grid beside them is live.
+- The fifteen map pictures in `wiki/assets/`. The clickable terrain grid beside them is live.
 
 When the wiki needs something new from the game, export it from the game module and add that module to `game-data.js`. Do not copy values into the wiki.
 
@@ -230,13 +246,13 @@ A fixed, deterministic headless player fights whole runs with the real rules and
 Two more tools help when the scenery or the sound changes. Both need Playwright with Chromium, and neither needs a web server:
 
 ```bash
-node tools/shoot-map.mjs 3 pictures/     # map 3 from nine camera angles, with draw calls and triangles
+node tools/shoot-map.mjs 3 pictures/     # map 3 (0 to 14) from nine camera angles, with draw calls and triangles
 node tools/sound-check.mjs               # every sound: no clipping, clean start and end, balanced loudness
 ```
 
 A character from the roster pack enters the game with `python3 tools/roster-art.py <id>`, which writes its sheets, still and portrait into `game/assets/`; its id is then added to `game/src/data/roster-art.js`. A piece then becomes that character by naming the id as its `mini`. To check how a sheet draws, `node tools/shoot-roster.mjs pictures/ --ids <id> --beside chief` saves every frame of its five rows on a real board beside a piece already in the game (add `--mobile` for a phone), and `tools/roster-preview.html?ids=<id>,chief` shows them playing. Both need Playwright with Chromium, and no web server.
 
-The ten map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
+The fifteen map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
 
 ## Fonts
 

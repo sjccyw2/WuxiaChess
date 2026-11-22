@@ -11,13 +11,14 @@ import {
 import {
   ENCOUNTERS,
   RANKS,
+  GARRISONS,
   STATUS_POWER,
   SIGNATURE_RULES,
   VILLAIN_FORMS,
   VILLAINS,
   TROOPS
 } from '../data/encounters.js';
-import { BATTLES } from '../data/battles.js';
+import { BATTLES, FINAL_MAP } from '../data/battles.js';
 import { BOARD_OBJECTS } from '../data/board-objects.js';
 import { NEW_HEROES } from '../data/new-heroes.js';
 import { inRealm } from '../data/realms.js';
@@ -346,20 +347,36 @@ for (const [index, [boss, second]] of ENCOUNTERS.entries()) {
   DETAILS[id] = {
     ...DETAILS[id],
     ...boss,
-    role: index === 9 ? '最後一局・局主' : '局主',
+    role: index === FINAL_MAP ? '最後一局・局主' : '局主',
     portraitFile: 'captain-' + index + '.webp',
     rank: 'boss'
   };
-  DETAILS['lieutenant-' + index] = {
-    ...second,
-    role: '副手',
-    portraitFile: 'lieutenant-' + index + '.webp',
-    rank: 'mini'
-  };
+  // A board built round one villain has no lieutenant (GARRISONS).
+  if (second)
+    DETAILS['lieutenant-' + index] = {
+      ...second,
+      role: '副手',
+      portraitFile: 'lieutenant-' + index + '.webp',
+      rank: 'mini'
+    };
 }
 // The DETAILS keys of a board's four enemies, in the order of its layout's spawn tiles.
+// On a board built round one villain the other three are his troop type.
 function encounterKeys(map) {
-  return [CAPTAINS[map][0], 'lieutenant-' + map, 'bow-' + map, 'scout-' + map];
+  const troop = GARRISONS[map];
+  return troop
+    ? [CAPTAINS[map][0], troop, troop, troop]
+    : [CAPTAINS[map][0], 'lieutenant-' + map, 'bow-' + map, 'scout-' + map];
+}
+// The fixed seat (0 to 3) an actor id fills on a board, or -1 for an extra piece.
+const seatOf = (map, id) => SLOTS.findIndex((slot) => slotId(map, slot) === id);
+// The stage row a fixed seat's numbers come from: the seat's own, or its troop type's.
+const seatRow = (map, i) => DETAILS[encounterKeys(map)[i]]?.row || SLOTS[i];
+// The numbers of a board's fixed four at a stage and 境界, each with its type's mods.
+function seatNumbers(map, depth, realm = 1) {
+  const rows = stageRows(map, depth, realm),
+    keys = encounterKeys(map);
+  return SLOTS.map((_, i) => withMods(rows[seatRow(map, i)], DETAILS[keys[i]]?.traits?.mods));
 }
 // Actor ids never change, so saves stay valid; what each piece is on this board is recomputed.
 // A troop copy ('fiveTiger#1', 'bow-2#1') is the DETAILS entry named before its '#'.
@@ -454,7 +471,7 @@ function stageBase(map, depth) {
       bow: [48, 18, 5, 2, 3],
       scout: [56, 19, 8, 3, 1]
     };
-  const boss = map === 9,
+  const boss = map === FINAL_MAP,
     veteran = Math.max(0, depth - 4),
     seasoned = Math.max(0, depth - 3);
   return {
@@ -591,7 +608,13 @@ function applySiphon(s, u, t, plan) {
 // How far a unit strikes and counters. Every test of an enemy's range goes through here, so 纏械
 // only has to set its condition.
 function reach(s, u) {
-  return u.conditions?.disarm ? 1 : u.range;
+  return u.conditions?.disarm ? 1 : u.range + (twinForm(s, u) === 'sword' ? 1 : 0);
+}
+// 陰陽倒亂: which of its two weapons a `twin` villain leads with this round — the sabre on odd
+// rounds, the sword on even ones. Null for anyone else, or with no game to count rounds in.
+function twinForm(s, u) {
+  if (!s?.round || !u || ally(u) || !unitDetails(u)?.traits?.twin) return null;
+  return s.round % 2 ? 'sabre' : 'sword';
 }
 // How far an enemy strikes this turn: when its signature is due, with the signature's own reach.
 function strikeReach(s, u) {
@@ -610,8 +633,12 @@ function counterRatio(s, defender) {
 // stance condition; a villain's 蓄勢反擊 cuts by its own `cut` while charged.
 function stanceCut(s, v) {
   if (v.conditions?.stance) return v.conditions.stance.power;
-  const stance = unitDetails(v)?.traits?.stance;
-  return stance && stanceHolds(s, v) ? stance.cut || 0 : 0;
+  const traits = unitDetails(v)?.traits,
+    stance = traits?.stance;
+  const held = stance && stanceHolds(s, v) ? stance.cut || 0 : 0;
+  // 沉樁: at or below its share of 氣血 a piece with `lastStand` takes less from every blow.
+  const last = traits?.lastStand;
+  return Math.max(held, last && !ally(v) && v.hp <= v.maxHp * last.below ? last.cut : 0);
 }
 // Whether a villain's `stance` is up now: 'charged' while its signature is due; 'posted' (盾牆)
 // while it stands exactly on its post, unwoken. A push off the tile ends it until it walks back.
@@ -743,8 +770,7 @@ function postTile(s, u, post) {
   if (post.tile === 'spawn') {
     const home = homeTile(s, u);
     if (home) return home;
-    const i = encounterKeys(s.mapIndex).indexOf(u.encounterId || u.id);
-    return mapLayout(s.mapIndex).enemies[i] || null;
+    return mapLayout(s.mapIndex).enemies[seatOf(s.mapIndex, u.id)] || null;
   }
   return post.tile || null;
 }
@@ -800,7 +826,8 @@ const PREFERS = {
   leader: '專挑領隊',
   healer: '專挑療傷者',
   mp: '專挑內力深厚者',
-  nearest: '見人就撲'
+  nearest: '見人就撲',
+  sheltered: '專挑倚仗掩體或有人代受的俠客'
 };
 const tileName = (p) => '（' + (p.x + 1) + '，' + (p.y + 1) + '）';
 const COUNTS = ['', '一', '兩', '三', '四', '五'];
@@ -826,11 +853,11 @@ function boardLines(map, seat, stage) {
 // the ref's own wave piece as it enters, stand as ghosts at their tiles.
 function pieceLines(map, ref, stage) {
   const s = { mapIndex: map, round: 1, run: { stage }, units: [] };
-  const rows = stageRows(map, stage),
-    keys = encounterKeys(map),
-    layout = mapLayout(map);
+  const keys = encounterKeys(map),
+    layout = mapLayout(map),
+    numbers = seatNumbers(map, stage);
   SLOTS.forEach((slot, i) => {
-    const [hp, atk, def, step, range] = withMods(rows[slot], DETAILS[keys[i]]?.traits?.mods);
+    const [hp, atk, def, step, range] = numbers[i];
     const p = layout.enemies[i];
     const u = makeUnit(slotId(map, slot), 'enemy', p.x, p.y, hp, 0, atk, def, step, range);
     if (i) u.encounterId = keys[i];
@@ -943,6 +970,49 @@ function enemyTraitLines(s, u) {
     );
   if (t.execute) say('斬殘', '對氣血不過半的俠客出手或還擊時，攻擊 ＋' + executeBonus(s, t) + '。');
   if (t.cover === 'kin') say('刀陣', '相鄰的另一名' + info.name + '氣血較多時，替他承受俠客的直接攻擊。');
+  if (t.flurry)
+    say(
+      '分刺',
+      '每次出手之後，針影再刺射程內另一名俠客，威力為前一擊的 ' +
+        Math.round(t.flurry.share * 100) +
+        '%；這一刺無人可代受，也不受還擊。'
+    );
+  if (t.bend) say('轉折', '掌力曲直如意：無視目標所在地形的防禦加成，旁人也無法替目標代受。');
+  if (t.pull) say('擒拿', '絕技命中後，將目標扯到自己身旁最近的空格；已在身旁或無空格時不動。');
+  if (t.fleet) say('水上飄', '踏水如履平地：每一格只消耗 1 步，不受地形拖累。');
+  if (t.twin) {
+    const form = twinForm(s, u);
+    say(
+      '陰陽倒亂',
+      '單數回合使金刀，攻擊 ＋' +
+        (t.twin.atk + halfStage(s)) +
+        '；雙數回合使黑劍，射程 ＋1。' +
+        (form && s.units?.includes(u) && s.logs ? '本回合：' + (form === 'sabre' ? '金刀' : '黑劍') + '。' : '')
+    );
+  }
+  if (t.lone) say('獨行', '身旁沒有其他敵人時，出手或還擊攻擊 ＋' + (t.lone.atk + halfStage(s)) + '。');
+  if (t.pincer)
+    say('夾擊', '目標身旁另有敵人時，出手或還擊攻擊 ＋' + (t.pincer.atk + halfStage(s)) + '。');
+  if (t.stepPoison)
+    say(
+      '步裡藏毒',
+      '走動之後的普攻令目標中毒，' +
+        (t.stepPoison.turns === 2 || !t.stepPoison.turns ? '兩' : t.stepPoison.turns) +
+        '次毒發各損 ' +
+        (t.stepPoison.power + halfStage(s)) +
+        ' 氣血；原地出手與還擊不帶毒。'
+    );
+  if (t.lastStand)
+    say(
+      '沉樁',
+      '氣血不過' +
+        (t.lastStand.below === 0.5 ? '半' : Math.round(t.lastStand.below * 100) + '%') +
+        '時，受到的傷害減 ' +
+        t.lastStand.cut +
+        '%。'
+    );
+  if (t.snare)
+    say('墜網', '普攻令目標絆足，移動減 ' + t.snare.power + '，持續至下回合；還擊不帶網。');
   if (t.prefers) say('偏好', PREFERS[t.prefers] + '。');
   const phase = info.traits?.phase;
   if (phase)
@@ -1011,6 +1081,7 @@ for (const [id, o] of Object.entries(BOARD_OBJECTS))
 // The stage row each board's own pieces take their numbers from (stageRows).
 for (let map = 0; map < CAPTAINS.length; map++) {
   DETAILS[CAPTAINS[map][0]].row = 'master';
+  if (GARRISONS[map]) continue; // its other three are a troop type, with that type's row
   DETAILS['lieutenant-' + map].row = 'lieutenant';
   DETAILS['bow-' + map].row = 'bow';
   DETAILS['scout-' + map].row = 'scout';
@@ -1515,6 +1586,9 @@ function movementField(s, u, origins, limit = Infinity, reverse = false) {
   // search measures how far a tile is from striking over several turns: to it, going on through
   // a formation costs a turn (the walk stops there), and a turn begun on one starts 2 short.
   const pause = reverse && s.zones?.length ? stat(u, 'step', s) : 0;
+  // 水上飄: a `fleet` villain pays one step for every tile it can walk.
+  const fleet = !ally(u) && !!unitDetails(u)?.traits?.fleet;
+  const toll = (x, y) => (fleet ? 1 : tileInfo(x, y, s.mapIndex).cost);
   for (const p of queue) {
     if (p.n !== costs.get(key(p.x, p.y))) continue;
     const halted = p.n > 0 && zoneHalts(s, u, p);
@@ -1528,7 +1602,7 @@ function movementField(s, u, origins, limit = Infinity, reverse = false) {
         p.n +
         (halted ? pause : 0) +
         (pause && zoneHalts(s, u, { x, y }) ? 2 : 0) +
-        (reverse ? tileInfo(p.x, p.y, s.mapIndex).cost : tileInfo(x, y, s.mapIndex).cost);
+        (reverse ? toll(p.x, p.y) : toll(x, y));
       if (n > limit || n >= (costs.get(k) ?? Infinity)) continue;
       const occupant = at(s, x, y);
       if (occupant && occupant.side !== u.side) continue;
@@ -1757,8 +1831,20 @@ function traitEdge(s, u, target, struckHp = target?.hp) {
   let edge = 0;
   if (t.crowded && distance(u, target) <= t.crowded.within) edge += t.crowded.atk;
   if (t.execute && struckHp <= target.maxHp / 2) edge -= executeBonus(s, t);
+  if (t.lone && alone(s, u)) edge -= t.lone.atk + halfStage(s);
+  if (t.pincer && flanked(s, u, target)) edge -= t.pincer.atk + halfStage(s);
+  if (t.twin && twinForm(s, u) === 'sabre') edge -= t.twin.atk + halfStage(s);
   return edge;
 }
+const halfStage = (s) => Math.floor((s?.run?.stage || 0) / 2);
+// 獨行: no other living black stone stands beside this one.
+const alone = (s, u) =>
+  !(s?.units || []).some((v) => v !== u && living(v) && v.side === 'enemy' && distance(v, u) === 1);
+// 夾擊: another living black stone stands beside the hero this one strikes.
+const flanked = (s, u, target) =>
+  (s?.units || []).some(
+    (v) => v !== u && living(v) && v.side === 'enemy' && distance(v, target) === 1
+  );
 const executeBonus = (s, t) => t.execute.atk + Math.floor((s?.run?.stage || 0) / 2);
 function damage(
   u,
@@ -1770,7 +1856,9 @@ function damage(
   basic = basicFor(u),
   struckHp = t.hp
 ) {
-  const protection = stat(t, 'def', s) + tileInfo(t.x, t.y, map).defense + (t.brace ? 4 : 0);
+  // 轉折: a `bend` villain's blows pass the defence the ground gives.
+  const ground = !ally(u) && unitDetails(u)?.traits?.bend ? 0 : tileInfo(t.x, t.y, map).defense;
+  const protection = stat(t, 'def', s) + ground + (t.brace ? 4 : 0);
   const pierce = art ? art.pierce || 0 : commandBonus(s, u, 'pierce') / 100;
   return Math.max(
     3,
@@ -3002,7 +3090,7 @@ function taunters(s, u, cells = null, range = strikeReach(s, u)) {
 // his 氣血 as the cut makes it last. A covered hero is scored as the one who would take the blow.
 function aimCost(s, u, t, friends, walk) {
   const lean = preference(s, u, t, friends, walk); // 偏好: whom this villain looks for
-  t = coverer(s, t) || t;
+  t = (!traitsOf(u).bend && coverer(s, t)) || t; // 轉折: no one takes its blow for another
   const hp = t.hp / (1 - stanceCut(s, t) / 100);
   if (!(s.run?.stage >= 6)) return hp * 0.6 + wariness(s, u, t) + lean;
   const protectedByAlly = friends.some((v) => v !== t && distance(v, t) === 1);
@@ -3046,6 +3134,8 @@ function preference(s, u, t, friends, walk = 20) {
       return -0.5 * t.mp;
     case 'nearest':
       return -8 * (20 - Math.min(20, walk));
+    case 'sheltered':
+      return tileInfo(t.x, t.y, s.mapIndex).defense > 0 || coverer(s, t) ? -35 : 0;
     default:
       return 0;
   }
@@ -3142,7 +3232,8 @@ function enemyAction(s, u) {
   }
   wakePost(s, u, false); // 坐鎮: a piece that wakes on striking leaves its post for good
   // 代受: the piece it chose may have someone beside it who takes the blow instead.
-  const t = isProp(best.t) ? best.t : takeCover(s, best.t);
+  // 轉折: a `bend` villain's blow lands on the one it chose.
+  const t = isProp(best.t) || traitsOf(u).bend ? best.t : takeCover(s, best.t);
   if (t.conditions?.taunt) progress(t, 'protects', 1); // 挑釁: the blow he drew
   const art = strikingSignature(s, u);
   const raw = damage(u, t, false, s.mapIndex, s);
@@ -3187,9 +3278,14 @@ function enemyAction(s, u) {
       if (art.extra === 'wound') applyCondition(s, t, { kind: 'wound', power: 5, turns: 2 }, u);
       if (art.extra === 'pin') applyCondition(s, t, { kind: 'pin', power: 2, turns: 2 }, u);
       log(s, 'combat', art.note, unitDetails(u).name);
+      if (traitsOf(u).pull) dragNear(s, u, t); // 擒拿
     }
     if (lineKind(art)) lineThrough(s, u, t, strikePower, effects); // 穿行
-  } else if (living(t) && !blow.void && !isProp(t)) basicPoison(s, u, t, effects); // 蛇毒
+  } else if (living(t) && !blow.void && !isProp(t)) {
+    basicPoison(s, u, t, effects); // 蛇毒
+    basicRiders(s, u, t, effects); // 步裡藏毒, 墜網
+  }
+  secondNeedle(s, u, t, strikePower, friends, effects); // 分刺
   reflectStrike(s, t, u, n, effects);
   if (barbsOf(t) && !blow.void && distance(u, t) === 1)
     barbStrike(s, t, u, afterWard(barbsOf(t), wardPercent(s, u)), effects); // 反刺
@@ -3332,6 +3428,66 @@ function basicPoison(s, u, t, effects) {
   const power = venom.power + Math.floor((s.run?.stage || 0) / 2);
   putEffects(s, u, t, [{ kind: 'poison', power, turns: venom.turns || 2 }], effects);
 }
+// 步裡藏毒 (`stepPoison`): a plain blow struck after walking poisons, stronger by half the stage; one
+// struck from where the piece stood does not. 墜網 (`snare`): a plain blow leaves the hero 絆足.
+// Neither rides a counter or a signature.
+function basicRiders(s, u, t, effects) {
+  const { stepPoison, snare } = traitsOf(u);
+  if (stepPoison && u.moved)
+    putEffects(
+      s,
+      u,
+      t,
+      [{ kind: 'poison', power: stepPoison.power + halfStage(s), turns: stepPoison.turns || 2 }],
+      effects
+    );
+  if (snare) putEffects(s, u, t, [{ kind: 'pin', power: snare.power, turns: snare.turns || 2 }], effects);
+}
+// 分刺 (`flurry`): after its blow, plain or signature, the villain strikes one more hero within its
+// reach of where it stands — the one it would rather strike, never the one just struck — for its
+// share of the first blow. Like a blow that passes through, no 代受, 閃身 or 挪移 meets it and it
+// draws no counter; the hero's 卸勁 and shield do meet it.
+function secondNeedle(s, u, first, strikePower, friends, effects) {
+  const flurry = traitsOf(u).flurry;
+  if (!flurry || !living(u)) return;
+  const range = reach(s, u);
+  const others = friends.filter((v) => v !== first && living(v) && distance(u, v) <= range);
+  if (!others.length) return;
+  const v = others.reduce((a, b) => (aimCost(s, u, b, friends, 0) < aimCost(s, u, a, friends, 0) ? b : a));
+  const n = wound(
+    s,
+    v,
+    afterCut(Math.max(1, Math.round(strikePower * flurry.share)), stanceCut(s, v)),
+    u
+  );
+  if (n) v.hurtRound = s.round;
+  effects.push([v.id, '−' + n]);
+  noteFired(s, 'flurry');
+  log(s, 'combat', '針影一分，再刺' + unitDetails(v).name + '，造成 ' + n + ' 點傷害。', unitDetails(u).name);
+  if (!living(v)) log(s, 'combat', '負傷退場。', unitDetails(v).name);
+}
+// 擒拿 (`pull`): the signature drags the hero it landed on to the free tile beside the villain that
+// is nearest where the hero stood. A hero already beside it, or with no free tile to come to, stays.
+function dragNear(s, u, t) {
+  if (!living(t) || !living(u) || distance(u, t) <= 1) return;
+  let best = null;
+  for (const [dx, dy] of adjacent) {
+    const p = { x: u.x + dx, y: u.y + dy };
+    if (!walkable(p.x, p.y, s.mapIndex) || at(s, p.x, p.y)) continue;
+    if (!best || distance(p, t) < distance(best, t)) best = p;
+  }
+  if (!best) return;
+  const from = { x: t.x, y: t.y },
+    path = movementPath(s, t, from, best);
+  if (routeConnects(path, from, best, s.mapIndex)) followRoute(t, path);
+  else {
+    delete t.route;
+    t.x = best.x;
+    t.y = best.y;
+  }
+  noteFired(s, 'pull');
+  log(s, 'combat', '給一把扯到' + unitDetails(u).name + '身前。', unitDetails(t).name);
+}
 // 游擊: a villain with `glide: n` walks, after its blow, up to n of the steps it has left (out of
 // `step`, its step as the action began) to the free tile farthest from the nearest hero (then the
 // fewer steps, then the better cover). The walk draws no counter. A walk that ended on a 布陣
@@ -3400,4 +3556,4 @@ function nextRound(s) {
   return true;
 }
 
-export { isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor };
+export { seatOf, seatRow, seatNumbers, twinForm, isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor };

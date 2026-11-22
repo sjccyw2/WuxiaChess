@@ -18,7 +18,17 @@ const ROSTER_ART = [
   'qingShield',
   'jinBow',
   'huaBlade',
-  'wanDisciple'
+  'wanDisciple',
+  'dongFang',
+  'liQiu',
+  'hongAn',
+  'qiuRen',
+  'gongSun',
+  'heiMuGuard',
+  'xiaGuard',
+  'shenLong',
+  'ironPalm',
+  'netHand'
 ];
 const rosterPortrait = (id) => (ROSTER_ART.includes(id) ? 'npc-' + id + '.webp' : null);
 

@@ -15,6 +15,16 @@
 //   execute  { atk }: 斬殘, its blows and counters on a hero at or below half are stronger
 //   ward     the share (percent) a living piece takes off its master's blows (星索護陣; today only
 //            the board objects carry it, board-objects.js)
+//   flurry   { share }: 分刺, after its blow a second on another hero in reach, at that share
+//   bend     true: 轉折, its blows pass terrain defence and no 代受 can take them
+//   pull     true: 擒拿, its signature drags the hero it lands on to the tile before it
+//   fleet    true: 水上飄, every tile it can walk costs it one step
+//   twin     { atk }: 陰陽倒亂, odd rounds the sabre (攻擊 up), even rounds the sword (射程 +1)
+//   lone     { atk }: 獨行, stronger with no other black stone beside it
+//   pincer   { atk }: 夾擊, stronger on a hero another black stone stands beside
+//   stepPoison { power, turns }: 步裡藏毒, a blow struck after walking poisons
+//   lastStand  { below, cut }: 沉樁, at or below that share of its 氣血 it takes less from blows
+//   snare    { power, turns }: 墜網, its plain blow leaves the hero 絆足
 // A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
 // without traits plays exactly as before the redesign.
 function adversary(name, school, book, basic, skill, style, visual, bio, mini, robe, traits = {}) {
@@ -400,8 +410,107 @@ const ENCOUNTERS = [
       'sepia(.65) hue-rotate(-8deg) saturate(1.25)',
     { sig: { reach: 4 }, prefers: 'mp' }
     )
+  ],
+  // The boards built round one villain (maps 10 on): the villain is the 局主 and there is no
+  // lieutenant; the other three of the fixed four are his troop type (GARRISONS).
+  [
+    adversary(
+      '洪安通',
+      '神龍教',
+      '鹿鼎記',
+      '神龍擒拿',
+      '鎖脈擒龍',
+      'drain',
+      'guard',
+      '神龍教教主，教眾開口先得祝他仙福永享、壽與天齊。他號令旁人慣了，今日卻有一個念頭越過他去號令他的一雙手。擒拿手隔著數步將人扯到身前，鎖住脈門，削人內力。',
+      'hongAn',
+      '',
+      {
+        mods: { hp: 1.15, step: 3, range: 1 },
+        sig: { reach: 3 },
+        pull: true,
+        post: {
+          tile: 'spawn',
+          tether: 2,
+          wake: 'struck',
+          note: '守在臺前{tile}兩格內，叫教眾上前；受到攻擊後才下臺。'
+        }
+      }
+    )
+  ],
+  [
+    adversary(
+      '公孫止',
+      '絕情谷',
+      '神鵰俠侶',
+      '金刀黑劍',
+      '陰陽倒亂刃法',
+      'weak',
+      'hu',
+      '絕情谷谷主，左手金刀，右手黑劍，一生替旁人作主。今日有一個念頭替他作了主，他臉上的斯文便有些掛不住。刀使劍招，劍使刀招，一回合重、一回合長，教人算不準他下一招。',
+      'gongSun',
+      '',
+      { mods: { hp: 1.5, atk: 6, def: 2, range: 1 }, twin: { atk: 7 } }
+    )
+  ],
+  [
+    adversary(
+      '裘千仞',
+      '鐵掌幫',
+      '射鵰英雄傳',
+      '鐵掌探手',
+      '鐵掌',
+      'exposed',
+      'guo',
+      '鐵掌幫幫主，人稱鐵掌水上飄，掌力裂石，踏水如履平地。他一生只認強弱二字；給一道戰意按著動手，於他倒不算委屈，只是每出一掌，心裡總有個聲音問他：這一掌該不該打。鐵掌專破對手的守勢。',
+      'qiuRen',
+      '',
+      { mods: { hp: 1.4, atk: 8, def: 2, step: 4, range: 1 }, fleet: true }
+    )
+  ],
+  [
+    adversary(
+      '李秋水',
+      '逍遙派・西夏宮廷',
+      '天龍八部',
+      '逍遙掌',
+      '白虹掌力',
+      'sweep',
+      'guo',
+      '逍遙派高手，西夏皇太妃，面上常垂一幅白綢。她同師姊鬥了一世，為的是一個不曾將她放在心上的人；今日心裡這一個「戰」字，竟不是為他。白虹掌力曲直如意，繞過山石與擋在前面的人，打到料想不到之處。',
+      'liQiu',
+      '',
+      {
+        mods: { hp: 1.2, atk: 3, step: 4, range: 2 },
+        sig: { reach: 3, sweep: 0.4 },
+        bend: true,
+        prefers: 'sheltered'
+      }
+    )
+  ],
+  [
+    adversary(
+      '東方不敗',
+      '日月神教',
+      '笑傲江湖',
+      '繡針疾刺',
+      '葵花飛針',
+      'pin',
+      'duan',
+      '日月神教教主，練成《葵花寶典》，天下再無抗手，自此只在花園小舍之中繡花。旁人求了一世的「不敗」二字，於他不過是個名字。一枚繡花針，身形如鬼如魅，一出手便是兩人。',
+      'dongFang',
+      '',
+      {
+        mods: { hp: 1.5, atk: 6, step: 5, range: 2 },
+        sig: { reach: 3 },
+        flurry: { share: 0.8 }
+      }
+    )
   ]
 ];
+// The troop type that fills the other three fixed seats of a board built round one villain, by
+// map index. Those boards have no lieutenant, archer or scout of their own.
+const GARRISONS = { 10: 'shenLong', 11: 'netHand', 12: 'ironPalm', 13: 'xiaGuard', 14: 'heiMuGuard' };
 // The rank and file of each board, by board: { bow: {...}, scout: {...} }, each with the fields
 // of a DETAILS entry (name, role, school, mini, basic, bio) and optionally `traits` (only `mods`,
 // `post`, `cover`, `prefers`, `basicPoison`, `glide`, `crowded`, `execute` and `stance` with
@@ -604,7 +713,13 @@ const RANKS = [
       bio: '守著另一根索樁的人。',
       traits: { post: { tile: 'spawn', tether: 1, wake: false, note: '守在索樁一格內，不離位。' } }
     }
-  }
+  },
+  // ── boards 10 to 14: their rank and file are the villain's troop type (GARRISONS)
+  {},
+  {},
+  {},
+  {},
+  {}
 ];
 // How strong a signature's status is at each stage of the run. At stage 0 these are the numbers
 // every villain used before the redesign.
@@ -677,12 +792,17 @@ const VILLAIN_FORMS = {
   凝碧截腕: [1.18, 'shangYang'],
   趙府令旗: [1.1, 'foxFeint'],
   金蠶蠱毒: [1.12, 'blackNeedle'],
-  唐詩劍法: [1.2, 'snowPursuit']
+  唐詩劍法: [1.2, 'snowPursuit'],
+  鎖脈擒龍: [1.12, 'beggarBind'],
+  陰陽倒亂刃法: [1.22, 'foxTwinChange'],
+  鐵掌: [1.34, 'breakPalm'],
+  白虹掌力: [1.24, 'vacantFist'],
+  葵花飛針: [1.28, 'iceSoulNeedle']
 };
 
 // The villains added to the existing boards (battles.js). `rank` 'boss' is a 局主, 'mini' a 副手;
 // `row` the stage row their numbers come from (game.js stageRows); `map` the one board each
-// stands on. Their bios are placeholders that say who they are and how they fight, no story.
+// stands on. The five villains with boards of their own are in ENCOUNTERS instead.
 const VILLAINS = {
   fengTiannan: {
     map: 0,
@@ -783,6 +903,57 @@ const TROOPS = {
     basic: '連步遞劍',
     bio: '萬震山念中的門下弟子。見對手傷重，出劍便更狠。',
     traits: { mods: { hp: 0.8, range: 1 }, execute: { atk: 6 }, prefers: 'wounded' }
+  },
+  // The troop types of the boards built round one villain (GARRISONS).
+  shenLong: {
+    row: 'scout',
+    name: '神龍教青龍門眾',
+    role: '短刃',
+    school: '神龍教青龍門',
+    mini: 'shenLong',
+    basic: '青龍短刀',
+    bio: '洪安通念中的教眾，口裡念著「教主仙福永享」，搶步上前。藥藏在袖底，移步之時方才抹上刀背；站定了接戰，反而用它不上。',
+    traits: { mods: { step: 3, range: 1 }, stepPoison: { power: 2, turns: 2 } }
+  },
+  netHand: {
+    row: 'scout',
+    name: '絕情谷網手',
+    role: '漁網',
+    school: '絕情谷',
+    mini: 'netHand',
+    basic: '張網罩身',
+    bio: '公孫止念中的綠衣弟子。漁網四角拴著鉛墜，一撒開便貼地罩人；網手走不快，網卻罩得到兩步之外。',
+    traits: { mods: { hp: 1.15, atk: -1, step: 2, range: 2 }, snare: { power: 2, turns: 2 } }
+  },
+  ironPalm: {
+    row: 'scout',
+    name: '鐵掌幫拳手',
+    role: '拳手',
+    school: '鐵掌幫',
+    mini: 'ironPalm',
+    basic: '踏樁掌',
+    bio: '裘千仞念中的幫眾，在溪石上練出一身沉樁功夫。氣血過半之後，他將最後一口勁沉在胸前，硬挺對手的招數。',
+    traits: { mods: { hp: 1.2, def: 1, range: 1 }, lastStand: { below: 0.5, cut: 50 } }
+  },
+  xiaGuard: {
+    row: 'scout',
+    name: '西夏宮禁衛',
+    role: '近衛',
+    school: '西夏宮廷',
+    mini: 'xiaGuard',
+    basic: '護駕短刺',
+    bio: '李秋水念中的宮廷禁衛。兩人一前一後出刺，一個撥開護身的兵刃，一個便遞進去；落了單，便尋不著下手的角度。',
+    traits: { mods: { hp: 1.1, def: 2, range: 1 }, pincer: { atk: 8 } }
+  },
+  heiMuGuard: {
+    row: 'scout',
+    name: '黑木崖侍衛',
+    role: '游衛',
+    school: '日月神教',
+    mini: 'heiMuGuard',
+    basic: '窄刀切腕',
+    bio: '東方不敗念中的黑木崖侍衛。獨自繞行園中，專切對手持兵刃的手腕；有同夥擠到身旁，刀路便得收窄。',
+    traits: { mods: { step: 4, range: 1 }, lone: { atk: 8 } }
   }
 };
 // One line per villain and troop type, by DETAILS key: the rule each plays by, never story. The
@@ -827,7 +998,17 @@ const GISTS = {
   qingShield: '守在門前不動；站在原位時受到的傷害減四成。',
   jinBow: '射程四格；兩格以內的目標打得較輕。',
   huaBlade: '相鄰的同門中，氣血較多者替對方受招。',
-  wanDisciple: '對氣血不過半者出手更重；專挑傷重者。'
+  wanDisciple: '對氣血不過半者出手更重；專挑傷重者。',
+  hongAn: '守在臺前，受擊才下臺；擒拿手隔三格將人扯到身前，並削去內力。',
+  gongSun: '單數回合使金刀，攻擊提高；雙數回合使黑劍，射程多一格；絕技令目標攻擊降低。',
+  qiuRen: '踏水如平地，移動不受地形拖累；鐵掌令目標防禦降低。',
+  liQiu: '掌力轉折，無視掩體，旁人代受不了；絕技波及身旁；專挑倚仗掩體的人。',
+  dongFang: '每次出手之後，再刺射程內另一人；飛針隔三格令目標絆足。',
+  shenLong: '走動之後出手，令目標中毒；站定出手則否。',
+  netHand: '隔兩格撒網，普攻令目標絆足。',
+  ironPalm: '氣血不過半時，受到的傷害減半。',
+  xiaGuard: '目標身旁另有黑子時，出手更重。',
+  heiMuGuard: '身旁沒有同夥時，出手更重。'
 };
 
-export { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS, VILLAINS, TROOPS, GISTS };
+export { ENCOUNTERS, RANKS, GARRISONS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS, VILLAINS, TROOPS, GISTS };
