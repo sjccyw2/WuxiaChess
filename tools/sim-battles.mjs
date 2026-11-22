@@ -2,7 +2,7 @@
 // so the game's difficulty can be compared before and after a change.
 //
 //   node tools/sim-battles.mjs [--runs N] [--seed S] [--boards A-B] [--realm 1-5] [--json out.json]
-//                              [--trace | --trace-map M]
+//                              [--trace | --trace-map M] [--arts]
 //   node tools/sim-battles.mjs --compare before.json after.json
 //
 // Runs are built the way the game builds them (draw three heroes, start the run, deploy, settle
@@ -46,6 +46,19 @@ const W = {
   foeEffectDefault: 1.2,
   allyEffect: { rally: 1.2, haste: 3 },
   allyEffectDefault: 0.8,
+  // 失神, 定身, 閉穴, 受制: per point of the blow the held foe would have struck, per turn it is held
+  // beyond what already holds it (a 閉穴 foe still walks, so a little less); a 受制 one also strikes
+  // its own side, for this share of its blow. Its first turn on the striker himself is in his
+  // place score instead (the danger where he ends leaves the held foe out).
+  hold: { freeze: 1.0, daze: 1.0, charm: 1.0, mute: 0.85 },
+  holdIdle: 0.4, // ...of the blow it could strike on someone, when it has no hero in reach now
+  turncoat: 0.6,
+  // 金剛 and 固守 on whoever a support art reaches: per point of the next enemy phase's expected
+  // damage voided (金剛) or taken off by the 防禦 (固守); later turns count at holdLater.
+  immune: 1.0,
+  fortify: 0.9,
+  holdLater: 0.5,
+  equipHold: 0.5, // choosing arts: a turn a foe is held, in basic attacks (W.hold weights the kinds)
   medicineAt: 0.4, // drink medicine below this fraction of health (leader: + 0.15)
   // 守: the object the heroes keep
   keepThreat: 1.7, // a point of damage on a foe that could strike the kept object next turn
@@ -70,6 +83,8 @@ const JSON_OUT = opt('--json', null);
 // --realm N plays every run in the Nth 境界 (data/realms.js), as if it were open.
 const REALM = Math.min(5, Math.max(1, Number(opt('--realm', 1)) || 1));
 const QUIET = args.includes('--quiet');
+// --arts also prints, per art, the boards it was equipped on and how often it was used there.
+const ARTS = args.includes('--arts');
 // --trace prints the battle log of the first run, board by board, to see how the player plays.
 const TRACE = args.includes('--trace');
 // --trace-map M prints the battle log of the first board fought on map M, in whichever run.
@@ -123,7 +138,8 @@ function fieldFrom(map, p) {
 function threatMap(s) {
   const ghosts = G.arrivalGhosts(s, s.round + 1);
   const seen = ghosts.length ? { ...s, units: [...s.units, ...ghosts] } : s;
-  return [...G.enemies(s).filter(G.living), ...ghosts]
+  // A piece held by 失神, 定身, 閉穴 or 受制 strikes no hero next enemy phase (G.holdsFire).
+  return [...G.enemies(s).filter((e) => G.living(e) && !G.holdsFire(e)), ...ghosts]
     .map((e) => {
       // Where the rules say it may end its action (a posted or charged piece stays put).
       const stand = G.standCells(seen, e);
@@ -214,9 +230,12 @@ function reachOf(u) {
   return r;
 }
 // Where the hero ends: danger, cover, the way to the master and to the marker.
-function placeScore(s, u, ctx, hpAfter, gone) {
+// `after` is what the option itself changes about the coming enemy phase: the foes it holds
+// (`held`, left out of the danger like the fallen) and the guard it leaves on the hero (`guard`:
+// 金剛 voids the blows, 固守's 防禦 is counted in them).
+function placeScore(s, u, ctx, hpAfter, gone, after = null) {
   const leader = u.id === s.leader;
-  const d = dangerAt(s, u, ctx.threats, gone);
+  const d = guardedDanger(s, u, ctx.threats, after?.held ? new Set([...gone, ...after.held]) : gone, after?.guard);
   let score = -d.expected * W.danger * (leader ? leaderCare(ctx) : 1);
   if (d.total >= hpAfter) score -= leader ? W.leaderLethal : W.lethal * (ctx.sidePolicy.lethal || 1) + u.maxHp / 2;
   else if (leader && d.total >= hpAfter * 0.75) score -= W.leaderLethal / 20;
@@ -245,6 +264,68 @@ function placeScore(s, u, ctx, hpAfter, gone) {
   return score;
 }
 const leaderCare = (ctx) => W.leaderCare * (ctx.sidePolicy.leaderDanger || 1);
+// The danger on u with a guard laid on him for the coming enemy phase: under 金剛 the direct
+// blows do nothing; 固守 is a condition the rules' damage reads, so it is laid on for the count.
+function guardedDanger(s, u, threats, gone, guard) {
+  if (guard?.immune) return { total: 0, expected: 0 };
+  if (!guard?.fortify) return dangerAt(s, u, threats, gone);
+  const had = u.conditions;
+  u.conditions = { ...(had || {}), fortify: { power: Math.max(guard.fortify, had?.fortify?.power || 0), through: s.round + 1 } };
+  try {
+    return dangerAt(s, u, threats, gone);
+  } finally {
+    u.conditions = had;
+  }
+}
+// The guard an art leaves on its own caster (rules/battle-mastery.js selfEffectsOf: 金剛 and
+// 固守 on a strike guard the striker).
+function selfGuard(art) {
+  if (!art || G.isSupport(art)) return null;
+  if (!art.immune && !art.fortify) return null;
+  return { immune: !!art.immune, fortify: art.fortify?.power || 0 };
+}
+// The blow foe t would strike next enemy phase: on the hero it would hurt most among those it can
+// reach (`except` left out), or, with none in reach, a share of its blow on the softest hero.
+function foeBlow(s, t, ctx, except = null) {
+  const th = ctx.threats.find((x) => x.e === t);
+  let best = 0,
+    any = 0;
+  for (const v of G.party(s).filter(G.living)) {
+    const d = Math.round(G.damage(t, v, false, s.mapIndex, s) * (th?.factor || 1));
+    any = Math.max(any, d);
+    if (v !== except && th?.hits.has(key(v.x, v.y))) best = Math.max(best, d);
+  }
+  return { reach: best, idle: any * W.holdIdle };
+}
+// The last round t is held through already (失神 lasts until its next action).
+function heldThrough(s, t) {
+  const c = t.conditions || {};
+  let n = s.round - 1;
+  for (const k of ['freeze', 'mute', 'charm']) if (c[k]) n = Math.max(n, c[k].through);
+  if (c.daze) n = Math.max(n, s.round);
+  return n;
+}
+// What holding t is worth: the blows it is kept from, per turn beyond what holds it already. The
+// first turn's blow on the striker is left to his place score (placeScore's `held`).
+function holdValue(s, u, t, f, ctx) {
+  const was = heldThrough(s, t);
+  let best = 0;
+  for (const e of f.effects) {
+    if (!(e.kind in W.hold)) continue;
+    const through = e.kind === 'daze' ? s.round : s.round + (e.turns || 1) - 1;
+    const turns = Math.max(0, through - was);
+    if (!turns) continue;
+    const first = s.round > was; // the coming enemy phase is newly held
+    const blow = foeBlow(s, t, ctx, u),
+      later = foeBlow(s, t, ctx);
+    const now = first ? blow.reach || (later.reach ? 0 : blow.idle) : 0;
+    const rest = (turns - (first ? 1 : 0)) * (later.reach || later.idle);
+    let v = (now + rest) * W.hold[e.kind];
+    if (e.kind === 'charm') v += turns * (later.reach || later.idle) * W.turncoat;
+    best = Math.max(best, v * foeValue(s, t, ctx));
+  }
+  return best;
+}
 
 // ── Secondary objectives: one policy row per kind (journey.js SIDE_KINDS), never per board ──
 // A row may give: `fell(s, side, blow)` → { score, holdWin } for a blow that fells `blow.gone`
@@ -343,9 +424,15 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
   const dealt = Math.min(f.amount, victim.hp);
   score += dealt * foeValue(s, victim, ctx);
   if (dealt > 0 && ctx.sidePolicy.hit) score += ctx.sidePolicy.hit(s, ctx.side, victim);
+  const held = new Set();
   if (f.amount >= victim.hp) gone.add(victim);
-  else
-    for (const e of f.effects) score += (W.foeEffect[e.kind] ?? W.foeEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
+  else if (!G.immuneTo(victim)) {
+    for (const e of f.effects)
+      if (!(e.kind in W.hold)) score += (W.foeEffect[e.kind] ?? W.foeEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
+    const hold = holdValue(s, u, victim, f, ctx);
+    score += hold;
+    if (hold > 0 || f.effects.some((e) => e.kind in W.hold)) held.add(victim);
+  }
   for (const hit of f.splash) {
     const v = G.find(s, hit.id);
     if (!v || !G.living(v) || gone.has(v)) continue;
@@ -369,7 +456,9 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
     // A secondary may hold back a winning blow (by the wrong hand, in the wrong order) until late.
     score += blow.wins && !side.holdWin ? W.win : kills;
   }
-  score += (f.reflected || 0) * 0.8 + (f.selfHeal || 0) * 0.8;
+  // 吸元 and 回生: forecast already caps the heal at what the caster is missing; it is worth more
+  // the more he is hurt, as a heal is (supportScore).
+  score += (f.reflected || 0) * 0.8 + (f.selfHeal || 0) * W.heal * (0.6 + 1.6 * (1 - u.hp / u.maxHp));
   // A blow a charged reaction turns back (斗轉星移) does nothing to the foe but spends the charge,
   // which opens it to the blows after; the share turned back is paid like a counter.
   if (f.turned && !f.turned.ward.source) score += (ctx.sidePolicy.breakCharge?.(s, ctx.side, victim) ?? W.breakCharge) * foeValue(s, victim, ctx);
@@ -379,7 +468,7 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
   score -= (f.rebound || 0) * W.counter * (leader ? leaderCare(ctx) : 1);
   score -= f.counter * W.counter * (leader ? leaderCare(ctx) : 1);
   if (hpAfter <= 0) score -= leader ? W.leaderLethal * 10 : W.lethal * 3 * (ctx.sidePolicy.lethal || 1);
-  return { score, hpAfter, gone };
+  return { score, hpAfter, gone, after: { held, guard: selfGuard(art) } };
 }
 function supportScore(s, u, t, f, ctx, mp) {
   let score = -mp * W.mp - f.hpCost * W.hpCost;
@@ -392,8 +481,18 @@ function supportScore(s, u, t, f, ctx, mp) {
     score += (r.mp || 0) * W.channelMp + (r.clean?.length || 0) * W.cleanse;
     const shield = (r.overflow || 0) + f.effects.filter((e) => e.kind === 'shield').reduce((n, e) => n + e.power, 0);
     if (shield) score += Math.min(shield, threat) * W.shieldAgainstThreat * (vLeader ? 1.6 : 1) + shield * W.shieldIdle;
-    for (const e of f.effects)
-      if (e.kind !== 'shield') score += (W.allyEffect[e.kind] ?? W.allyEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
+    for (const e of f.effects) {
+      if (e.kind === 'shield') continue;
+      // 金剛 and 固守: what they take off the blows coming at this recipient where it stands.
+      if (e.kind === 'immune' || e.kind === 'fortify') {
+        const d = dangerAt(s, v, ctx.threats).expected;
+        const cut = e.kind === 'immune' ? d : d - guardedDanger(s, v, ctx.threats, new Set(), { fortify: e.power }).expected;
+        const turns = Math.max(1, e.turns || 1);
+        score += cut * W[e.kind] * (1 + (turns - 1) * W.holdLater) * (vLeader ? 1.6 : 1);
+        continue;
+      }
+      score += (W.allyEffect[e.kind] ?? W.allyEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
+    }
   }
   return { score, hpAfter: u.hp - f.hpCost, gone: new Set() };
 }
@@ -430,7 +529,7 @@ function bestOption(s, u, ctx) {
       if (!G.targetOK(s, u, t, false)) continue;
       const f = G.forecast(u, t, false, s);
       const r = strikeScore(s, u, t, f, ctx, 0);
-      consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone), P, act: 'basic', t });
+      consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone, r.after), P, act: 'basic', t });
     }
     // Every equipped art the rules let the hero pay for, on every target the rules accept.
     for (const id of G.equippedArts(u)) {
@@ -467,7 +566,7 @@ function bestOption(s, u, ctx) {
           continue;
         }
         r = f.support ? supportScore(s, u, t, f, ctx, mp) : strikeScore(s, u, t, f, ctx, mp, art);
-        consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone), P, act: 'art', id, t });
+        consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone, r.after), P, act: 'art', id, t });
       }
     }
   }
@@ -552,6 +651,10 @@ function execute(s, o, rec) {
     if (G.canAct(s, u)) G.waitUnit(s, u);
   }
   rec.usage[ok ? usageKey(u, o) : 'wait']++;
+  if (ok && o.act === 'art') {
+    const A = (rec.arts[u.id + '/' + o.id] ??= { equipped: 0, used: 0 });
+    A.used++;
+  }
   credit(rec, before, s, u.id);
 }
 // 回身: a hero the rules still let walk after his strike takes the best place within the steps
@@ -597,8 +700,11 @@ function enemyPhase(s, rec) {
 }
 function fight(s) {
   const rec = { stage: s.run.stage, map: s.mapIndex, usage: { basic: 0, start: 0, tier1: 0, tier2: 0, tier3: 0, tier4: 0, manual: 0, wait: 0 }, heroes: {}, misfires: 0 };
-  for (const u of G.party(s))
+  rec.arts = {};
+  for (const u of G.party(s)) {
     rec.heroes[u.id] = { dealt: 0, taken: 0, kills: 0, level: u.level, sp: u.sp, spent: spentPoints(u) };
+    for (const id of G.equippedArts(u)) (rec.arts[u.id + '/' + id] ??= { equipped: 0, used: 0 }).equipped = 1;
+  }
   // The battle log keeps only its last lines; a traced board keeps its own copy.
   const lines = (TRACE && tracing) || (TRACE_MAP === s.mapIndex && !traced.has(s.mapIndex)) ? [] : null;
   // What the villains did, read from the battle log as it is written (the log keeps only its
@@ -707,7 +813,11 @@ function worth(heroId, id, level) {
     base = Math.max(1, artProfile(heroId, 'basic', level).avgDamage);
   const scale = { strike: 1, safe: 1.05, ranged: 1, area: 0.9, debuff: 0.9, heal: 0.8, shield: 0.6, buff: 0.5, mobility: 0.4 }[p.job] ?? 0.5;
   const amount = p.job === 'mobility' ? base : p.job === 'debuff' ? p.avgDamage + p.mid.foeEffect : p.measure;
-  return { job: p.job, value: (amount / base) * scale };
+  // 失神, 定身, 閉穴, 受制: the turns a foe is kept from striking, which the damage measure leaves out.
+  const art = id === 'basic' ? null : id === 'signature' ? G.artFor(G.startingHero(heroId), 'signature') : TECHNIQUES[id];
+  let held = art?.daze ? W.hold.daze : 0;
+  for (const k of ['freeze', 'mute', 'charm']) if (art?.[k]) held += (art[k].turns || 1) * W.hold[k] * (k === 'charm' ? 1 + W.turncoat : 1);
+  return { job: p.job, value: (amount / base) * scale + held * W.equipHold };
 }
 function equipArts(s, u) {
   const known = ['signature', ...u.learned.filter((id) => TECHNIQUES[id] && TECHNIQUES[id].kind !== 'basic')];
@@ -852,7 +962,8 @@ function aggregate(runs) {
     board: i + 1, reached: 0, wins: 0, rounds: 0, hpLeft: 0, downed: 0, side: 0, leaderFell: 0, timeout: 0,
     usage: { basic: 0, start: 0, tier1: 0, tier2: 0, tier3: 0, tier4: 0, manual: 0, wait: 0 }, maps: {}
   }));
-  const heroes = {};
+  const heroes = {},
+    arts = {};
   // The same, by map: each board's villains fight their own way, whichever stage meets them.
   const maps = Array.from({ length: 10 }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {}, kind: null, sides: {}, side: 0, arrived: 0, enemies: 0, blocked: 0, lossLeader: 0, lossTime: 0, goalLeft: 0, objectLeft: 0, objectLost: 0, heldOut: 0 }));
   let misfires = 0;
@@ -899,6 +1010,11 @@ function aggregate(runs) {
       B.downed += b.downed;
       if (b.side) B.side++;
       for (const [k, n] of Object.entries(b.usage)) B.usage[k] += n;
+      for (const [k, a] of Object.entries(b.arts || {})) {
+        const A = (arts[k] ??= { equipped: 0, used: 0 });
+        A.equipped += a.equipped;
+        A.used += a.used;
+      }
       const totalKills = Object.values(b.heroes).reduce((n, h) => n + h.kills, 0),
         totalDealt = Object.values(b.heroes).reduce((n, h) => n + h.dealt, 0);
       for (const [id, h] of Object.entries(b.heroes)) {
@@ -973,6 +1089,14 @@ function aggregate(runs) {
         }
       ])
     ),
+    // Per hero and art: boards it was equipped on, and uses per such board.
+    arts: Object.fromEntries(
+      Object.entries(arts).sort().map(([k, A]) => {
+        const [hero, id] = k.split('/');
+        const name = id === 'signature' ? G.DETAILS[hero].skill : TECHNIQUES[id]?.name || id;
+        return [k, { name, equipped: A.equipped, used: A.used, perBoard: A.equipped ? r1(A.used / A.equipped) : null }];
+      })
+    ),
     misfires
   };
 }
@@ -1020,6 +1144,10 @@ function print(out) {
       pad(id, 7) + pad(h.name, 5) + lpad(h.boards, 6) + lpad(h.dealtPerBoard, 7) + lpad(h.takenPerBoard, 7) + lpad(pc(h.killShare), 7) + lpad(pc(h.damageShare), 6) + '   ' +
         h.levelAt.map((v) => lpad(v == null ? '-' : Math.round(v), 2)).join(' ') + '  /  ' + h.spentAt.map((v) => lpad(v == null ? '-' : Math.round(v), 2)).join(' ')
     );
+  if (ARTS && out.arts) {
+    console.log('\nPer art (boards fought with it equipped, uses, uses per such board)');
+    for (const [k, a] of Object.entries(out.arts)) console.log(pad(k, 28) + pad(a.name, 8) + lpad(a.equipped, 5) + lpad(a.used, 6) + lpad(a.perBoard, 6));
+  }
   if (out.misfires) console.log('\n' + out.misfires + ' chosen option(s) the rules then refused (counted as waits).');
 }
 function compare(a, b) {
