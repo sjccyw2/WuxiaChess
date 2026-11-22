@@ -210,15 +210,19 @@ function schoolContents(model, ui) {
   const recall = model.recallNote ? `<p class="mj-recall">${text(model.recallNote)}</p>` : '';
   return `${recall}<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
 }
-function guideContents(model, ui) {
+// In the team page (inTeam) the company's spare manuals are listed under this page, so the empty
+// page points down to them instead of away to the team.
+function guideContents(model, ui, inTeam = false) {
   const nodes = list(model.guides),
     current = chooseNode(nodes, ui.node);
   if (!current) {
     const remaining = whole(model.pending ?? model.pendingGuides ?? model.unassignedCount);
-    const action = remaining
-      ? btn('team-guides', glyph('book', 15) + '分配公庫武譜', 'mj-action')
-      : '';
-    return `<div class="mj-blank">${glyph('book', 33)}<h4>尚未獲授武譜</h4><p>在隊伍的「武譜招式」將武譜交予${text(model.name)}，便可在此修習。</p>${remaining ? `<small>尚有 ${remaining} 冊待授。</small>` : ''}${action}</div>`;
+    const action =
+      remaining && !inTeam ? btn('team-guides', glyph('book', 15) + '分配公庫武譜', 'mj-action') : '';
+    const how = inTeam
+      ? `將下方公庫的武譜授予${text(model.name)}，便可在此修習。`
+      : `在隊伍的「武學」頁將武譜交予${text(model.name)}，便可在此修習。`;
+    return `<div class="mj-blank">${glyph('book', 33)}<h4>尚未獲授武譜</h4><p>${how}</p>${remaining ? `<small>尚有 ${remaining} 冊待授。</small>` : ''}${action}</div>`;
   }
   const choices = nodes
     .map((n) =>
@@ -285,15 +289,20 @@ function loadout(model, ui) {
   return `<div class="mj-slot-bar${basicBox ? ' mj-with-basic' : ''}" role="group" aria-label="基本攻擊與三格出戰招式">${basicBox}${slotControls}</div><div class="mj-subhead"><div><h4>可用招式</h4><p>${model.fieldStudy ? '可將剛參悟的招式配置一次。' : model.canConfigure === false ? '可於戰前整備、通吃坊，或全隊尚未行動時換招。' : `選擇招式，裝入${slotName(index)}。`}</p></div>${clear}</div>${entries ? `<ul class="mj-library">${entries}</ul>` : '<p class="mj-empty">尚未習得可配置的招式。</p>'}<div class="mj-study-links">${studyLinks.join('')}</div>`;
 }
 
-function personalTraining(model, ui) {
+// The hero's 武學: tree, manuals and slots. `more` adds a page's own lines under a sub-tab (the
+// team page's spare manuals under 授業武譜), and `more.team` says it is drawn in the team page.
+function personalTraining(model, ui, more = {}) {
   const tab = skillTabs.some(([id]) => id === ui.tab) ? ui.tab : 'school';
   const body =
     tab === 'school'
       ? schoolContents(model, ui)
       : tab === 'guides'
-        ? guideContents(model, ui)
+        ? guideContents(model, ui, more.team)
         : loadout(model, ui);
-  return tabs('skill', skillTabs, tab) + tabPanel(tab, skillHeading(model) + body, skillTabs);
+  return (
+    tabs('skill', skillTabs, tab) +
+    tabPanel(tab, skillHeading(model) + body + (more[tab] || ''), skillTabs)
+  );
 }
 function treeView(model, ui = {}) {
   return (

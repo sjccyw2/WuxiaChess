@@ -97,6 +97,8 @@ Styles for these features live in `styles/12-combat.css` and `styles/13-panels.c
 rule there is scoped under an `html.polish-…` class that the switch controls.
 
 The briefing page (軍情) and the deployment step before round one are game flow, not polish:
+
+整備 (and the team page in battle and in the shop) has three tabs, 陣容 · 武學 · 裝備物資. Each 陣容 card shows the hero's numbers, equipped arts and unspent 武學點; tapping a card opens a pane beside the line-up with the whole sheet, the line-up buttons and 習武, which opens the 武學 tab (the skill tree, the slots and the manuals) for that hero. This is game flow, not polish: its styles are in `styles/17-preparation.css`, with no switch.
 they have no switch. Their styles are in `styles/14-battles.css`.
 
 ## The five 境界 (difficulty)
