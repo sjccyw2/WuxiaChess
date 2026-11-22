@@ -18,6 +18,7 @@ export const FILE_GROUP = {
   'src/app.js': '系統與提示',
   'src/data/battles.js': '目標與棋路',
   'src/actors/battle-marks.js': '戰盤與指令',
+  'src/data/board-objects.js': '目標與棋路',
   'src/ui/board-plan.js': '目標與棋路',
   'src/ui/field-extras.js': '戰盤與指令',
   'src/ui/phase-banner.js': '戰盤與指令',
@@ -37,6 +38,9 @@ export const FILE_GROUP = {
   'src/data/hero-voices.js': '劇情、對白與旁白',
   'index.html': '開場與操作',
   'src/ui/journey-pages.js': '目標與棋路',
+  'src/data/realms.js': '開場與操作',
+  'src/ui/realm-views.js': '開場與操作',
+  'src/ui/dev-mode.js': '系統與提示',
   'src/rules/journey.js': '目標與棋路',
   'src/data/martial-arts.js': '行裝與商肆',
   'src/data/mastery-catalog.js': '武學與效果',
@@ -262,7 +266,7 @@ export const PLACES = {
     'MAZE_TALE.packUp': ['劇情、對白與旁白', '眼破'],
     'MAZE_TALE.release': ['劇情、對白與旁白', '請回吧'],
     'MAZE_TALE.close': ['劇情、對白與旁白', '請回吧'],
-    'MAZE_TALE.closeAgain': ['劇情、對白與旁白', '請回吧'],
+    'MAZE_TALE.finale': ['劇情、對白與旁白', '最後一局（暫代）'],
     'MAZE_TALE.win': ['劇情、對白與旁白', '請回吧'],
     'MAZE_TALE.winNote': ['劇情、對白與旁白', '請回吧'],
     'MAZE_TALE.loss': ['劇情、對白與旁白', '眼破'],
@@ -360,8 +364,17 @@ export const PLACES = {
     'FRAGMENTS': ['劇情、對白與旁白', '夢醒'],
     'CLOSING': ['劇情、對白與旁白', '夢醒'],
     'WAKES': ['劇情、對白與旁白', '臺邊的五行字'],
-    'NO_MARK': ['劇情、對白與旁白', '臺邊的五行字'],
-    'FULL_MARK': ['劇情、對白與旁白', '臺邊的五行字']
+    'NO_MARK': ['劇情、對白與旁白', '臺邊的五行字']
+  },
+  'src/data/realms.js': {
+    'REALMS': ['開場與操作', '五重境界']
+  },
+  'src/ui/realm-views.js': {
+    'realmView': ['開場與操作', '五重境界'],
+    'finaleView': ['劇情、對白與旁白', '最後一局（暫代）']
+  },
+  'src/ui/dev-mode.js': {
+    'devPanel': ['系統與提示', '開發者模式']
   },
   'src/ui/wake-views.js': {
     'wakeJournal': ['系統與提示', '介面用語'],

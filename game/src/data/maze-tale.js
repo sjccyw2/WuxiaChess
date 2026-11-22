@@ -1,7 +1,7 @@
 // The story of one run, in three layers that never depend on one another:
 //
 //   the spine   MAZE_TALE: what happens at a position in the run (falling asleep into the valley,
-//               the first board, the night talk, the end) and in which 境 (how many runs the
+//               the first board, the night talk, the end) and in which 境界 (how many runs the
 //               youth has won). Told by 求敗, the youth, 韋小寶 and narration, who are there
 //               whoever was drawn. Everything 求敗 says is here.
 //   the boards  CHAMBER_TALES here, ENCOUNTER_SCRIPT in encounter-script.js: one board and its
@@ -28,6 +28,17 @@ const TALE_ART = {
 };
 
 // {name} in a line is replaced by the youth's name.
+// The youth reaches for his name and cannot find it (in the dream he has forgotten it), then
+// makes one up. Shared by the pages and the page after the film.
+const YOUTH_FORGETS = {
+  who: 'youth',
+  note: '少年張口便要報上名字，那兩個字卻似到了嘴邊，又滑了回去。在這夢裡，他竟記不起自己叫甚麼。',
+  text: '我叫……我叫……'
+};
+const YOUTH_NAMES = {
+  who: 'youth',
+  text: '怪了，自己的名字，怎地想不起來？……那便叫{name}罷。我在家裡睡覺，一睜眼便到了這裡。老伯，你又是誰？'
+};
 const MAZE_TALE = {
   title: '劍影江湖・一念江湖',
   // Shown before the draw. A step is narration (note), a line (who, text), or both; `ask` marks
@@ -47,13 +58,14 @@ const MAZE_TALE = {
       {
         who: 'qiu',
         note: '那老者手中的黑子停在半空，緩緩抬起頭來，臉上微現詫異之色。',
-        text: '咦。老夫這劍境之中，幾百年來不曾有人闖得進來。……奇了。你身上半點功夫也無，老夫怎地瞧得見你？你是甚麼人？',
-        ask: true
+        text: '咦。老夫這劍境之中，幾百年來不曾有人闖得進來。……奇了。你身上半點功夫也無，老夫怎地瞧得見你？你是甚麼人？'
       },
-      { who: 'youth', text: '我叫{name}。我在家裡睡覺，一睜眼便到了這裡。老伯，你又是誰？' },
+      // In the dream he cannot recall his own name, so he makes one up: the name the player types.
+      { ...YOUTH_FORGETS, ask: true },
+      { ...YOUTH_NAMES },
       {
         who: 'qiu',
-        text: '{name}？這兩個字倒有些耳熟。……想不起了。老夫自己的姓名，也早已忘了。世人叫我「求敗」。'
+        text: '{name}？這名字倒有些耳熟。……想不起了。想不起自己的名字，也不打緊。老夫自己的姓名，也早已忘了。世人叫我「求敗」。'
       },
       { who: 'youth', text: '求敗？天下哪有人盼著打敗仗的？' },
       {
@@ -69,27 +81,27 @@ const MAZE_TALE = {
       { who: 'youth', text: '我不會下棋。', afterFilm: true },
       { who: 'qiu', text: '這不是尋常的棋。子自己會走，自己會打。你只須告訴他們往哪裡去。' }
     ],
-    // Every later run: he has slept again. `greeting` is 求敗's by 境 (index 0 is the first 境,
-    // reached again only after a lost run); `beyond` once the fifth 境 has been won.
+    // Every later run: he has slept again. `greeting` is 求敗's by the 境界 the player picked
+    // (index 0 is the first 境界, which may be picked again at any time).
     // The first visit opens with a film (asset-gen/prologue-video), in a 9:16 cut for screens taller
     // than wide and a 16:9 cut otherwise: it tells the pages above up to 「抓三枚」, and in it the
-    // youth is cut off before he can say his name. So after it the player finishes his sentence,
-    // and the pages resume at `afterFilm`.
+    // youth is cut off before he can say his name. So after it he finds he cannot recall it and the
+    // player makes one up for him (`name`, `named`), and the pages resume at `afterFilm`.
     film: {
       tall: { file: 'prologue-film.mp4', poster: 'prologue-film.webp' },
       wide: { file: 'prologue-film-wide.mp4', poster: 'prologue-film-wide.webp' },
-      name: { who: 'youth', text: '我……我叫……', ask: true }
+      name: { ...YOUTH_FORGETS, ask: true },
+      named: YOUTH_NAMES
     },
     again: {
       note: '少年又睡著了。再睜開眼來，仍是那座山谷，那方青石棋臺。他說不出幾時來過，腳下卻自己認得路，逕自走到臺前。那頭大鵰向他點了點頭。',
       greeting: [
-        '又是你，{name}。上一盤你沒有下完。坐。',
+        '你又來了，{name}。坐，隨便下一盤。',
         '又是你，{name}。坐。',
         '你來了。坐。這一輪，老夫不讓。',
         '你來了，{name}。老夫有一事不明，要向你請教。先下棋，下完了再問。',
         '坐罷。這是最後一盤了。'
       ],
-      beyond: '你又來了。那最後一局，老夫還沒有想好怎生下法。且照舊下一盤。',
       youth: '老伯，我好像來過這裡。同你下過棋，是不是？',
       reply: '下過。你醒了便忘，老夫卻一手也沒有忘。抓三枚。'
     }
@@ -104,8 +116,8 @@ const MAZE_TALE = {
   },
   ruleTold:
     '瞧不明白是不是？我說給你們聽。贏足十場，這老兒便放你們回去；輸了一場，統統收進盒子裡，不見天日。辣塊媽媽，這叫做上了賊船，要下船，只有划到對岸。',
-  // From the second 境 the heroes are told that they are copies: by 求敗, coldly, in the second
-  // and third 境; by the youth himself in the fourth and fifth.
+  // From the second 境界 the heroes are told that they are copies: by 求敗, coldly, in the second
+  // and third 境界; by the youth himself in the fourth and fifth.
   told: {
     cold: [
       {
@@ -142,6 +154,9 @@ const MAZE_TALE = {
     slay: '這一局的戰意，只壓在一個人眉心。打醒了他，他心裡帶來的人自然散去。',
     slayTwo: '這一局的戰意壓著兩個人。醒了一個不算，須得兩個都醒。',
     rout: '這一局的戰意不在一人身上，散在每一個人身上。須得一個一個打醒。',
+    // Boards whose 戰意 is in a thing (battles.js `objects`).
+    keep: '這一局的戰意不壓在人身上，對著的是我們這邊的一件東西。守住它，撐到那一念自己散了；打醒了局主，也是一樣。',
+    break: '這一局的戰意不壓在人身上，釘在東西上。毀了它，人人都醒。',
     side: '韋小寶另開盤口',
     // The white stone 求敗 has set by the board: who comes if this board is won.
     next: '盤邊擱著一枚白子：這一局勝了，求敗便借出{hero}。'
@@ -167,7 +182,7 @@ const MAZE_TALE = {
       '這一回我不騙你。……我也不曉得。你別問，問了我又要騙你。'
     ]
   },
-  // 求敗 cannot see or hear 韋小寶. What he says when the youth talks to him, by 境.
+  // 求敗 cannot see or hear 韋小寶. What he says when the youth talks to him, by 境界.
   unseen: [
     { note: '求敗抬起頭來。', text: '你同誰說話？……這谷中除了你我，便只一頭鵰。小孩子家，睡得迷糊了。' },
     { note: '求敗眼也不抬。', text: '又同那塊空地說話。……由得你。' },
@@ -177,7 +192,7 @@ const MAZE_TALE = {
   ],
   // Before the fifth board 求敗 thinks long, and the company sits down by the shop's lamp.
   night: '求敗拈著一枚黑子，久久不落，竟自閉上了眼。韋小寶道：「老兒要想上半天。來來來，都過來坐。」',
-  // What 求敗 says after a board is won, by 境 and by how many boards have been won this run
+  // What 求敗 says after a board is won, by 境界 and by how many boards have been won this run
   // (the last board has its own close). He never names a board or a hero.
   after: [
     [
@@ -257,7 +272,7 @@ const MAZE_TALE = {
     note: '兩股索斷了。求敗依著局規，將白子一枚一枚翻轉。子上的人影漸漸淡了。',
     text: '十局皆勝。老夫說過的話算數：這幾位，放還本尊。'
   },
-  // What 求敗 saw this run, by 境; then he sends the youth home.
+  // What 求敗 saw this run, by 境界; then he sends the youth home.
   close: [
     [{ text: '老夫的子，開局是多少斤兩，收局仍是多少斤兩。你的子卻是越鬥越強。這是甚麼道理？……好棋。容老夫想一想。請回吧。' }],
     [
@@ -285,8 +300,25 @@ const MAZE_TALE = {
       { text: '小兄弟，多謝你。……還有最後一局，老夫要同你一齊下到盤上去。容老夫備一備。請回吧。' }
     ]
   ],
-  // The fifth 境 won again, while the last battle is not yet built.
-  closeAgain: [{ text: '好棋。那最後一局，老夫要同你一齊下到盤上去，只是還沒有備好。請回吧，改日再來。' }],
+  // After the fifth 境界 is won (every 境界 won): the last battle, then 求敗 lets go. Both are
+  // placeholders until the producer designs them (ROADMAP workstream 2): `board` stands for the
+  // eleventh board, `letGo` for the ending film, `wake` for the youth's last waking.
+  finale: {
+    board: [
+      { note: '五重境界走完。盤上的子一枚一枚收回盒中，棋盤空了。求敗站起身來，繞過棋臺，走到盤邊。' },
+      { who: 'qiu', text: '這最後一局，老夫不在盤外下了。你也不在盤外。咱們兩個，都到盤上去。' },
+      { who: 'youth', text: '到盤上去？……好，老伯，我陪你下。' }
+    ],
+    letGo: [
+      { note: '一局下罷。求敗拈著最後一枚黑子，懸在盤上，良久不落。' },
+      { note: '他將那枚子輕輕擱在盤邊。不是落子，是放下。' },
+      { note: '盤上的黑子一枚一枚暗了，白子一枚一枚亮了。盒裡收了幾百年的子，也都亮了起來。' },
+      { who: 'qiu', text: '原來如此。老夫求了一輩子，求的便是這一放。……{name}，多謝你。' },
+      { who: 'qiu', text: '你這孩子，倒有幾分像老夫年輕時候。' },
+      { note: '他向少年拱了拱手，轉身往谷口走去，大袖飄飄，撒手而去，不知所終。那頭大鵰望著他的背影，沒有跟去。' }
+    ],
+    wake: '少年醒了。天剛濛濛亮，他提了枕邊那柄劍，到屋後空地上練了一回。練罷抬頭，牆頭立著一頭大鵰，正側著頭瞧他。'
+  },
   // The run's last page.
   win: '十局下完，同行的人各歸本尊。棋臺上只剩兩個人，一頭鵰。求敗望著空盤，說道：「好棋。容老夫想一想。請回吧。」',
   winNote: '買下的東西寄在通吃坊，下一輪照舊取用。',

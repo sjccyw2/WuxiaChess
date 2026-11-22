@@ -1,0 +1,357 @@
+/* 選境 (the five 境 as difficulty levels), the placeholder last battle and its ending, and the
+   developer-mode panel. */
+dialog:has(.run-realm) {
+  width: min(720px, calc(100% - 32px));
+}
+dialog:has(.run-finale) {
+  width: min(760px, calc(100% - 32px));
+}
+.realm-lead {
+  margin: 0 0 14px;
+  color: var(--run-soft);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.realm-list {
+  display: grid;
+  gap: 8px;
+}
+.realm-choice {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  grid-template-areas: 'seal name state' 'seal note note';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 2px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--run-line);
+  border-radius: 6px;
+  background: rgba(8, 18, 18, 0.55);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.realm-choice:hover:not(:disabled),
+.realm-choice:focus-visible {
+  border-color: #8d7a52;
+}
+.realm-card.chosen .realm-choice {
+  border-color: var(--run-bronze);
+  background: linear-gradient(90deg, rgba(126, 96, 46, 0.32), rgba(8, 18, 18, 0.55));
+  box-shadow: inset 3px 0 0 var(--run-bronze);
+}
+.realm-card.shut .realm-choice {
+  cursor: not-allowed;
+}
+.realm-seal {
+  grid-area: seal;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #8d7a52;
+  border-radius: 50%;
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--run-bronze);
+}
+.realm-card.won .realm-seal {
+  background: #6e2a1f;
+  border-color: #b5503b;
+  color: #f2dcc0;
+}
+.realm-name {
+  grid-area: name;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+.realm-name strong {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--run-paper);
+}
+.realm-name small {
+  color: var(--run-soft);
+  font-size: 12px;
+}
+.realm-state {
+  grid-area: state;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #dbc18d;
+}
+.realm-card.shut .realm-state {
+  color: #8c958b;
+}
+.realm-note {
+  grid-area: note;
+  font-size: 13px;
+  color: var(--run-soft);
+}
+.realm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.realm-kicker {
+  margin: -6px 0 10px;
+}
+.realm-opened {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0;
+  color: #dbc18d;
+}
+
+/* The placeholder last battle. */
+.finale-cast {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.finale-cast figure {
+  margin: 0;
+}
+.finale-cast img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid #8d7a52;
+  border-radius: 6px;
+}
+.finale-cast figcaption {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--run-paper);
+}
+.finale-cast figcaption small {
+  font-family: inherit;
+  font-size: 12px;
+  color: #dbc18d;
+}
+.finale-versus {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--run-bronze);
+}
+.finale-lines,
+.finale-captions {
+  margin-top: 14px;
+}
+.finale-note,
+.finale-said {
+  margin: 0 0 10px;
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.8;
+}
+.finale-note {
+  color: var(--run-soft);
+}
+.finale-said strong {
+  margin-right: 6px;
+  color: var(--run-bronze);
+}
+.finale-placeholder {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border: 1px dashed #7b6a48;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #c9b894;
+}
+.finale-wake-scene {
+  width: 100%;
+  max-height: 34vh;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+/* 放下: the captions come one at a time; the black stones go dark, the white ones light, the
+   stone in his hand is set down, and he leaves. Every step is a CSS animation keyed to the
+   caption it goes with (--n), so nothing waits on script. */
+.finale-letgo {
+  --beat: 3.2s;
+}
+.finale-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+.finale-elder {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #8d7a52;
+  animation: finale-leave 2.4s ease-in calc(var(--beat) * 5) both;
+}
+.finale-goban {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 calc(12.5% - 1px), #5b4325 calc(12.5% - 1px) 12.5%),
+    repeating-linear-gradient(90deg, transparent 0 calc(12.5% - 1px), #5b4325 calc(12.5% - 1px) 12.5%),
+    #c8a46a;
+  box-shadow: inset 0 0 0 6px #b48f55, 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+.finale-stone {
+  position: absolute;
+  left: calc(var(--x) * 12.5% - 5%);
+  top: calc(var(--y) * 12.5% - 5%);
+  width: 10%;
+  height: 10%;
+  border-radius: 50%;
+}
+.finale-stone.b {
+  background: radial-gradient(circle at 35% 30%, #555 0, #111 60%);
+  animation: finale-dark 1.6s ease calc(var(--beat) * 2 + var(--i) * 0.08s) both;
+}
+.finale-stone.w {
+  background: radial-gradient(circle at 35% 30%, #fff 0, #cfcfc8 70%);
+  animation: finale-light 1.6s ease calc(var(--beat) * 2 + var(--i) * 0.08s) both;
+}
+/* The last black stone, held above the board, then set down at its edge. */
+.finale-held {
+  position: absolute;
+  right: -2%;
+  top: 46%;
+  width: 10%;
+  height: 10%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #555 0, #111 60%);
+  animation: finale-set 1.4s ease var(--beat) both;
+}
+.finale-caption {
+  opacity: 0;
+  animation: finale-line 0.9s ease calc(var(--beat) * var(--n)) both;
+}
+.finale-done {
+  animation: finale-line 0.9s ease calc(var(--beat) * var(--steps)) both;
+}
+@keyframes finale-line {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes finale-dark {
+  to {
+    opacity: 0.18;
+    filter: grayscale(1);
+  }
+}
+@keyframes finale-light {
+  to {
+    box-shadow: 0 0 12px 4px rgba(255, 236, 170, 0.85);
+  }
+}
+@keyframes finale-set {
+  from {
+    transform: translate(-260%, -320%) scale(1.25);
+    box-shadow: 0 12px 10px rgba(0, 0, 0, 0.45);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes finale-leave {
+  to {
+    opacity: 0;
+    transform: translateX(-12%);
+    filter: blur(2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .finale-letgo * {
+    animation-duration: 0.01s !important;
+    animation-delay: 0s !important;
+  }
+}
+@media (max-width: 560px) {
+  .finale-stage {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .finale-note,
+  .finale-said {
+    font-size: 15px;
+  }
+  .realm-choice {
+    padding: 9px 10px;
+    column-gap: 10px;
+  }
+}
+
+/* Developer mode (?dev): a small tab at the left edge, halfway down, clear of the dialogs'
+   footers and the battle screen's corners. */
+.dev-panel {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 60;
+  font-size: 12px;
+  color: #e9e2cf;
+  opacity: 0.9;
+}
+.dev-panel .dev-fold {
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+}
+.dev-fold {
+  border: 1px solid #7b6a48;
+  border-radius: 6px;
+  background: rgba(10, 18, 18, 0.88);
+}
+.dev-fold summary {
+  padding: 4px 9px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  list-style: none;
+}
+.dev-fold summary::-webkit-details-marker {
+  display: none;
+}
+.dev-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 260px;
+  padding: 0 8px 8px;
+}
+.dev-btn {
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid #8d7a52;
+  border-radius: 4px;
+  background: #2a2a20;
+  color: #f1e3c0;
+  font: inherit;
+  cursor: pointer;
+}
+.dev-btn:hover {
+  background: #4a3d24;
+}

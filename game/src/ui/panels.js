@@ -55,7 +55,11 @@ import {
   arrivalGhosts,
   pieceUnit,
   waveList,
-  boardOf
+  boardOf,
+  isProp,
+  propKind,
+  holdLeft,
+  masterIds
 } from '../rules/game.js';
 import { icon } from './icons.js';
 import { itemPicture } from './item-art.js';
@@ -709,20 +713,29 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     const ward = (m) => {
       const u = find(s, m.id);
       if (!u || !(wardEscorts(s).length || s.units.some((v) => unitDetails(v)?.traits?.ward))) return '';
+      const posts = s.units.some((v) => isProp(v) && unitDetails(v)?.traits?.ward);
       return (
         '　星索護陣・' +
         wardEscorts(s).length +
         ' / ' +
         s.units.filter((v) => unitDetails(v)?.traits?.ward).length +
-        ' 名護陣者，減傷 ' +
+        (posts ? ' 根星索樁，減傷 ' : ' 名護陣者，減傷 ') +
         wardShare(s, u) +
         '%'
       );
     };
-    const rows =
+    // 守 and 破: each object's 氣血 (and on 守 the rounds still to hold) before the masters.
+    const things = (L.objects || []).map(
+      (o) =>
+        '<li class="' + (o.broken ? (o.kind === 'break' ? 'done' : 'lost') : '') + '">' + icon(o.broken && o.kind === 'break' ? 'check' : 'flag', 14) + '<span>' + esc(o.line) + '</span></li>'
+    );
+    if (L.hold) things.push('<li>' + icon('flag', 14) + '<span>' + esc(L.hold) + '</span></li>');
+    const rows = [...things, ...(
       model.kind === 'rout'
         ? [L.remaining, L.waiting].filter(Boolean).map((t) => '<li>' + esc(t) + '</li>')
-        : L.masters.map(
+        : model.kind === 'break'
+          ? []
+          : L.masters.map(
             (m) =>
               '<li class="' +
               (m.fallen ? 'done' : '') +
@@ -732,7 +745,7 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
               esc(m.line) +
               esc(m.fallen ? '' : ward(m)) +
               '</span></li>'
-          );
+          ))];
     progress = rows.length ? '<ul class="brief-progress">' + rows.join('') + '</ul>' : '';
   }
   const sd = model.side;
@@ -997,7 +1010,45 @@ function waitingPiece(s, id) {
   }
   return null;
 }
+// A board object's page: what it is, its 氣血, and what it means for the board.
+function objectPage(s, u) {
+  const i = unitDetails(u),
+    keep = propKind(u) === 'keep',
+    left = holdLeft(s),
+    masters = masterIds(s).map((id) => DETAILS[id.split('#')[0]]?.name || unitDetails(find(s, id))?.name).filter(Boolean);
+  const rule = keep
+    ? '守住它：撐過第' + NUMERALS[(boardOf(s).hold || LIMIT) - 1] + '回合，或擊敗' + masters.join('與') + '。它一毀，這一局便輸了。' + (left ? '尚須守 ' + left + ' 回合。' : '')
+    : '毀了它。盤上的' + i.name + '盡數倒下，這一局便勝了。它不還手，也不閃避。';
+  const ward = i.traits?.ward ? '星索護陣 · 立著一日，' + (unitDetails(find(s, commanderId(s)))?.name || '局主') + '所受之傷便減 ' + i.traits.ward + '%。' : '';
+  return (
+    titleHead('target', keep ? '守物' : '破物') +
+    '<div class="enemy-summary"><img class="enemy-face object-face" src="' +
+    unitFace(u) +
+    '" alt=""><div><small>' +
+    esc(i.school + ' · ' + i.role) +
+    '</small><h3>' +
+    esc(i.name) +
+    '</h3><p>' +
+    esc(i.bio) +
+    '</p></div></div>' +
+    bar('氣血', Math.max(0, u.hp), u.maxHp, 'hp', 'heart') +
+    '<div class="detail-list"><span>防禦 <b>' +
+    stat(u, 'def', s) +
+    '</b></span><span>' +
+    (keep ? '我方守護' : '我方可擊') +
+    '</span></div>' +
+    [rule, ward]
+      .filter(Boolean)
+      .map((line) => '<p class="footnote">' + icon('flag', 15) + '<span>' + esc(line) + '</span></p>')
+      .join('') +
+    '<p class="footnote">' +
+    icon('stone', 15) +
+    esc('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。不行動、不還擊，不受招式附帶之效，也推不動。') +
+    '</p>'
+  );
+}
 function enemyPage(s, id) {
+  if (isProp(find(s, id))) return objectPage(s, find(s, id));
   const waiting = find(s, id) ? null : waitingPiece(s, id);
   const u = waiting ? waiting.u : find(s, id),
     i = unitDetails(u),

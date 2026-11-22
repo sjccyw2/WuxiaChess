@@ -10,7 +10,7 @@
 //   echoes    deja vu: the board keeps what happened on it. Only on later runs, on a board
 //             reached before.
 //   night     the mid-run talk: [what they will go back to, how they take being a copy].
-//             The second is said from the second 境, once 求敗 has told them.
+//             The second is said from the second 境界, once 求敗 has told them.
 //   summit    said when the art that made their name comes back to them, with what it cost.
 //   farewell  their last words after the tenth board, as their copy is returned.
 const HERO_VOICES = {

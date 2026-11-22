@@ -22,6 +22,8 @@ import { codexPage } from './ui/gates.js';
 import * as R from './rules/journey.js';
 import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
 import { playFilm } from './ui/intro-film.js';
+import { realmView, finaleView } from './ui/realm-views.js';
+import { devMode, devPanel } from './ui/dev-mode.js';
 import { MAZE_TALE } from './data/maze-tale.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
@@ -46,9 +48,12 @@ let hasSave = !!saved,
 let state = saved || R.startRun(R.drawLots(0));
 let draft = null,
   codexId = 'hero';
-// The prologue shown before the draw: which page it is on, the name typed so far, and whether the
-// opening film told its first pages.
-let prologue = { step: 0, name: '', film: false };
+// The prologue shown before the draw: which page it is on, the name typed so far, whether the
+// opening film told its first pages, and the 境界 picked for the run.
+let prologue = { step: 0, name: '', film: false, realm: 1 };
+// The 境界 picker's choice (選境界), and which part of the placeholder last battle is showing.
+let realmPick = 0,
+  finalePhase = 'board';
 let prefs = Object.assign(
   {
     sound: false,
@@ -319,7 +324,9 @@ function paint() {
         : '我方行動';
   const phase =
     `<small>第 <b>${state.round}</b> 回合</small><strong class="${state.phase === 'enemy' ? 'enemy' : ''}">${side}</strong>` +
-    (coming ? `<em class="reinforce">敵援 · 下回合 ${coming} 名</em>` : '');
+    (coming ? `<em class="reinforce">敵援 · 下回合 ${coming} 名</em>` : '') +
+    // 守: the rounds still to hold, this one included.
+    (!state.result && G.holdLeft(state) ? `<em class="reinforce hold">守 · 尚須 ${G.holdLeft(state)} 回合</em>` : '');
   board.layers.pick = deploying() ? deployPick : null;
   if ($('round-badge').dataset.phase !== phase) {
     $('round-badge').innerHTML = phase;
@@ -378,6 +385,7 @@ function update() {
   save();
   paint();
   notePhases();
+  refreshDev();
 }
 // 敵援 and 支線: the lines the rules log about reinforcements become board tips, held long
 // enough to read; a change in the secondary's state is a tip once (and a failure a log line).
@@ -407,6 +415,8 @@ function noteBoard() {
     if (seenLogs.has(l)) continue;
     seenLogs.add(l);
     if (l.who === '敵援' && screen === 'battle') heldTip(...waveTip(l.text));
+    // 守 and 破: an object first struck, at half, broken.
+    if ((l.who === '守物' || l.who === '破物') && screen === 'battle') heldTip(l.who + ' · ' + l.text.replace(/。$/, ''), 3600);
   }
   const now = R.sideState(state);
   if (now === notedSide) return;
@@ -686,11 +696,15 @@ function pageHtml() {
     case 'wake':
       return journalPage(state);
     case 'prologue':
-      return prologuePage(state.run.chronicle, prologue.step, prologue.name, prologue.film);
+      return prologuePage(state.run.chronicle, prologue.step, prologue.name, prologue.film, prologue.realm);
+    case 'realm':
+      return realmView(state.run.chronicle, realmPick);
+    case 'finale':
+      return finaleView(R.youthName(state), finalePhase);
     case 'formation':
       return rollView(
         draft.ids,
-        { ...state.run.chronicle, parcelCount: R.parcelCount(state.run.chronicle) },
+        { ...state.run.chronicle, parcelCount: R.parcelCount(state.run.chronicle), realm: prologue.realm },
         hasSave,
         draft.leaderId
       );
@@ -802,6 +816,7 @@ function drawModal(keepScroll = false) {
     dialog.dataset.shown = shown;
   }
   X.dockForecast(dialog, board?.layers, state, strikeData, dialogState);
+  refreshDev();
   // 布陣: the board outlines the formation the open preview would lay.
   if (board?.layers)
     board.layers.aim =
@@ -841,6 +856,7 @@ function openPage(name, heroId) {
       dialog.querySelector('button')
     )?.focus({ preventScroll: true });
   }
+  refreshDev();
 }
 function closePage() {
   if (dialog.open) dialog.close();
@@ -900,6 +916,7 @@ dialog.addEventListener('close', () => {
   if (board?.layers) board.layers.aim = null;
   board.uncover();
   (screen === 'battle' ? $('field') : document.body).append($('toast'));
+  refreshDev();
   const opener = returnControl && $(returnControl);
   if (opener && !opener.disabled && !opener.closest('[hidden]'))
     opener.focus({ preventScroll: true });
@@ -1169,7 +1186,7 @@ function openFormation() {
 // film (a 9:16 or 16:9 cut, by the screen's shape), and the pages pick up where it ends.
 function openPrologue() {
   const film = firstVisit(state.run.chronicle);
-  prologue = { step: 0, name: prologue.name, film };
+  prologue = { ...prologue, step: 0, film };
   if (!film) return openPage('prologue');
   closePage();
   playFilm({
@@ -1180,6 +1197,47 @@ function openPrologue() {
       openPage('prologue');
     }
   });
+}
+// A new run: the 境界 is picked first (選境界) once more than one is open or the last battle has
+// been reached; otherwise the run is in the first 境界 and the prologue opens at once.
+function beginNewRun() {
+  const profile = state.run.chronicle,
+    open = R.openRealms(profile);
+  realmPick = realmPick >= 1 && realmPick <= open ? realmPick : open;
+  if (open > 1 || profile.finale > 0) return openPage('realm');
+  prologue.realm = 1;
+  openPrologue();
+}
+// The placeholder last battle, then 求敗 letting go, then the youth waking (realm-views.js).
+function openFinale(phase = 'board') {
+  finalePhase = phase;
+  openPage('finale');
+  audio('page');
+}
+// Developer mode (?dev): a small panel, kept inside the open dialog so it stays clickable.
+const dev = devMode() ? document.createElement('aside') : null;
+if (dev) {
+  dev.className = 'dev-panel';
+  dev.setAttribute('aria-label', '開發者模式');
+  dev.innerHTML = '<details class="dev-fold"><summary>開發</summary><div class="dev-buttons"></div></details>';
+}
+function refreshDev() {
+  if (!dev) return;
+  const battle = screen === 'battle' && state.run.status === 'battle' && !state.result;
+  const html = devPanel({ battle });
+  const list = dev.querySelector('.dev-buttons');
+  if (list.innerHTML !== html) list.innerHTML = html;
+  const host = dialog.open ? dialog : document.body;
+  if (dev.parentElement !== host) host.append(dev);
+}
+function devFinish(won, side = false) {
+  if (screen !== 'battle' || !R.devFinish(state, won, side)) return notice('此刻不能這樣做。');
+  ++aiRun;
+  strikeData = null;
+  closePage();
+  mapTip(null);
+  update();
+  result();
 }
 // Keeps what was typed when the page is redrawn or left.
 function keepName() {
@@ -1211,6 +1269,7 @@ function openTitle() {
             : '繼續第' + R.NUMERALS[state.run.stage] + '局'
     : '入夢';
   $('title-new').hidden = !hasSave;
+  refreshDev();
   window.scrollTo({ top: 0, behavior: 'instant' });
   paint();
   syncZoom();
@@ -1411,17 +1470,53 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'start-primary':
       if (hasSave) enterBattle(false);
-      else openPrologue();
+      else beginNewRun();
       break;
     case 'title-new':
+      beginNewRun();
+      break;
+    case 'realm-pick': {
+      const n = Number(id);
+      if (dialogState !== 'realm' || !(n >= 1 && n <= R.openRealms(state.run.chronicle))) break;
+      realmPick = n;
+      drawModal(true);
+      audio('select');
+      break;
+    }
+    case 'realm-go':
+      if (dialogState !== 'realm') break;
+      prologue.realm = realmPick;
       openPrologue();
+      break;
+    case 'finale-open':
+    case 'finale-replay':
+      if (action === 'finale-open' ? state.run.last?.finale : state.run.chronicle.finale > 0) openFinale('board');
+      break;
+    case 'finale-next':
+      if (dialogState === 'finale') openFinale(finalePhase === 'board' ? 'letGo' : 'wake');
+      break;
+    case 'dev-win':
+    case 'dev-win-side':
+    case 'dev-lose':
+      if (dev) devFinish(action !== 'dev-lose', action === 'dev-win-side');
+      break;
+    case 'dev-unlock':
+      if (!dev) break;
+      state.run.chronicle.realms = R.REALM_NUMBERS.length;
+      state.run.chronicle.cleared = [...new Set([...state.run.chronicle.cleared, 1, 2, 3, 4])].sort();
+      if (hasSave) save();
+      notice('五重境界皆已開，前四重境界記作已勝。');
+      if (dialogState === 'realm') drawModal(true);
+      break;
+    case 'dev-finale':
+      if (dev) openFinale('board');
       break;
     case 'prologue-prev':
     case 'prologue-next':
     case 'prologue-skip': {
       if (dialogState !== 'prologue') break;
       keepName();
-      const steps = prologueSteps(state.run.chronicle, prologue.name, prologue.film),
+      const steps = prologueSteps(state.run.chronicle, prologue.name, prologue.film, prologue.realm),
         ask = steps.findIndex((step) => step.ask);
       if (action === 'prologue-prev') prologue.step = Math.max(0, prologue.step - 1);
       // Skipping still stops at the name the first time, since it has to be given once.
@@ -1476,8 +1571,8 @@ function command(action, id, data = {}, keyboard = false) {
     case 'deploy':
       if (dialogState !== 'formation' || !draft) break;
       ++aiRun;
-      state = R.startRun({ ...draft, name: prologue.name }, state.run.chronicle);
-      prologue = { step: 0, name: '' };
+      state = R.startRun({ ...draft, name: prologue.name, realm: prologue.realm }, state.run.chronicle);
+      prologue = { step: 0, name: '', film: false, realm: 1 };
       draft = null;
       try {
         localStorage.removeItem(drawKey);

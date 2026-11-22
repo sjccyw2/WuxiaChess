@@ -1,6 +1,6 @@
 // What carries over from one run to the next. The heroes are copied afresh each run and the
 // youth wakes with only a shadow of the dream; 求敗 remembers every stone. Each run the youth
-// wins is one 境, and for each 求敗 cuts a line in the stone beside the table: the story of one
+// wins is one 境界, and for each 求敗 cuts a line in the stone beside the table: the story of one
 // of the swords he laid down.
 //
 // WORLD is what the youth can read and work out for himself, in the journal.
@@ -27,7 +27,7 @@ const WORLD = [
   },
   {
     name: '臺邊的五行字',
-    text: '少年每勝一輪，求敗便在臺邊的石上刻一行字，是他從前一柄劍的來歷。輸掉的一輪，石上不添字。'
+    text: '少年在已開的最高境界每勝一輪，求敗便在臺邊的石上刻一行字，是他從前一柄劍的來歷。輸掉的一輪，或重下已勝過的境界，石上不添字。'
   },
   {
     name: '十局之後',
@@ -39,7 +39,7 @@ const WORLD = [
   }
 ];
 
-// What he wakes to at the end of a run, by 境: his real life, where he has been lying asleep.
+// What he wakes to at the end of a run, by 境界: his real life, where he has been lying asleep.
 // Sound, smell and touch, and what his hands do before he remembers anything.
 const FRAGMENTS = [
   '有甚麼濕熱的東西在舔他的臉，一下，又一下。是家裡的狗。夢只剩一點影子：一張棋臺，一個老人。他的手指還拈著，像拈著一枚棋子。',
@@ -58,8 +58,8 @@ const closingFor = (realm, won) =>
 // One picture per fragment, in the same order (asset-gen/prompts.md, B6).
 const fragmentArt = (realm) => 'fragment-' + Math.min(FRAGMENTS.length, Math.max(1, realm)) + '.webp';
 
-// The five 境. Index 0 is the first: no run won yet.
-//   mark   the line cut in the stone when this 境 is won
+// The five 境界. Index 0 is the first: no run won yet.
+//   mark   the line cut in the stone when this 境界 is won
 //   echo   what the youth says at the night talk (before the fifth board)
 //   carve  how the line came to be cut, told when the run is won
 const wake = (realm, entry) => ({
@@ -124,8 +124,7 @@ const WAKES = [
     carve: '石上還空著一行的地方。求敗提起那柄刻字的劍，瞧了一瞧，沒有刻，將劍輕輕放在石旁。最後一行，他沒有刻。'
   })
 ];
-// A lost run cuts no line; and once the fifth 境 is won there is no line left to cut.
+// A lost run cuts no line.
 const NO_MARK = '這一輪沒有下完。臺邊的石上，沒有多一行字。';
-const FULL_MARK = '臺邊的石上，四行字底下空著一行。那柄刻字的劍，仍舊放在石旁。';
 
-export { WORLD, WAKES, FRAGMENTS, NO_MARK, FULL_MARK, closingFor, fragmentArt };
+export { WORLD, WAKES, FRAGMENTS, NO_MARK, closingFor, fragmentArt };

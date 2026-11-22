@@ -4,7 +4,7 @@ import { factBadge } from './panels.js';
 import * as G from '../rules/game.js';
 import { MAZE_TALE, TALE_ART } from '../data/maze-tale.js';
 import { art } from './artwork.js';
-import { WAKES, NO_MARK, FULL_MARK, closingFor, fragmentArt } from '../data/wake-tale.js';
+import { WAKES, NO_MARK, closingFor, fragmentArt } from '../data/wake-tale.js';
 import { titleHead, btn, esc } from './panels.js';
 import { icon } from './icons.js';
 
@@ -60,8 +60,8 @@ function journeyEnding(s) {
     won = s.result === 'win',
     realm = Math.min(WAKES.length, Math.max(1, r.realm || 1)),
     wake = WAKES[realm - 1],
-    // Past the fifth 境 there is no line left to cut.
-    carved = won && (r.realm || 1) <= WAKES.length;
+    // Every 境界 won tells how its line came to be cut.
+    carved = won;
   return (
     titleHead(won ? 'flag' : 'scroll', won ? '好棋' : '眼破') +
     '<div class="result-banner"><div class="result-seal">' +
@@ -96,17 +96,21 @@ function journeyEnding(s) {
     '<section class="wake-choice wake-closing"><h3>' +
     (carved ? esc(wake.name) : '臺邊的石') +
     '</h3><p>' +
-    esc(carved ? wake.carve : won ? FULL_MARK : NO_MARK) +
+    esc(carved ? wake.carve : NO_MARK) +
     '</p></section>' +
     '<section class="wake-choice wake-closing"><h3>夢醒</h3><img class="tale-scene wake-fragment" src="' +
     esc(art(fragmentArt(realm))) +
     '" alt="" decoding="async"><p>' +
     esc(closingFor(realm, won)) +
     '</p></section>' +
+    // Winning the highest open 境界 opens the next; winning the fifth brings the last battle.
+    (r.last?.opened
+      ? '<p class="realm-opened">' + icon('spark', 15) + '<span>' + WAKES[r.last.opened - 1].sword + '境界已開。下一輪入夢之前，可以選它。</span></p>'
+      : '') +
     wakeJournal(r.chronicle, r.voyage) +
     '<div class="modal-foot right">' +
     btn('home', '返回主畫面', 'outline-btn') +
-    btn('title-new', '再入夢', 'gold-btn') +
+    (r.last?.finale ? btn('finale-open', '最後一局', 'gold-btn') : btn('title-new', '再入夢', 'gold-btn')) +
     '</div>'
   );
 }

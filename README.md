@@ -96,14 +96,37 @@ rule there is scoped under an `html.polish-…` class that the switch controls.
 The briefing page (軍情) and the deployment step before round one are game flow, not polish:
 they have no switch. Their styles are in `styles/14-battles.css`.
 
+## The five 境界 (difficulty)
+
+The five 境界 are difficulty levels, listed in `game/src/data/realms.js` with what each does to
+the enemies' numbers (the first 境界 changes nothing). Before each run the player picks one from
+those open (選境界). The first is open from the start; winning a run in the highest open 境界 opens
+the next. Winning the fifth means every 境界 has been won, and the last battle follows: today a
+placeholder (`MAZE_TALE.finale`, `game/src/ui/realm-views.js`) for the eleventh board, 求敗
+letting go and the youth waking. The profile keeps `realms` (highest open), `cleared` (won) and
+`finale` (times the last battle was reached); saves from before work these out from the runs won.
+
+## Developer mode
+
+`game/?dev` turns on a small panel (bottom left, folded under 開發); the browser remembers it,
+and `game/?dev=off` turns it off. In a battle, from its story, briefing or 整備 as well:
+
+- 速勝 wins the board now, its secondary missed;
+- 速勝・支線 wins it with the secondary met, whatever its kind;
+- 速敗 loses it.
+
+Each goes through the game's own settling (`devFinish` in `game/src/rules/journey.js`), so
+rewards, the next hero, the story and the end of the run follow as in play. Outside a battle,
+開五重境界 opens all five 境界 (the first four counted as won) and 跳至終局 shows the last battle.
+
 ## How the story is put together
 
 Heroes are drawn at random and the boards come in a different order each run, so the story text is kept in three layers that never refer to one another:
 
 | Layer | File | Tied to |
 | --- | --- | --- |
-| The spine | `game/src/data/maze-tale.js`, `wake-tale.js` | a position in the run and its 境 (how many runs the youth has won): falling asleep into the valley, the first board, the night talk, what 求敗 says after each board, the end. Everything 求敗 and 韋小寶 say is here |
-| The boards | `game/src/data/encounter-script.js` | one map: its black stones, on whom 求敗 has pressed a 戰意 that makes them fight, and the named stones he sets down beside them |
+| The spine | `game/src/data/maze-tale.js`, `wake-tale.js` | a position in the run and its 境界 (the difficulty the player picked for the run): falling asleep into the valley, the first board, the night talk, what 求敗 says after each board, the end. Everything 求敗 and 韋小寶 say is here |
+| The boards | `game/src/data/encounter-script.js` | one map: its black stones, on whom 求敗 has pressed a 戰意 that makes them fight, the named stones he sets down beside them, and the things on the board (`objects`: the qin, the drum, the star posts) |
 | The heroes | `game/src/data/hero-voices.js` | one hero: arrival, deja vu, night talk, the art that made their name coming back, farewell |
 
 To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`, and the world behind it in `wiki/content/世界觀設定.md`.
@@ -163,7 +186,7 @@ node tools/check-story.mjs
 
 Builds the catalog and the text listing from the game sources and fails if a page links to something that does not exist, a picture is missing, or a fact has no source reference. Run it after changing game data.
 
-`check-story.mjs` plays several hundred runs without a browser, with different heroes and board orders, through all five 境 and past them, and fails if any scene has a line with no speaker or text, if a hero lacks one of their own lines, if a board's script mentions another board, if a named black stone has no lines or a hero answers one from another series of books, if 求敗 or 韋小寶 misses a line the story promises (after each board, the side bet, 請回吧), or if a save made mid-run no longer loads. Run it after changing story text.
+`check-story.mjs` plays several hundred runs without a browser, with different heroes and board orders, through all five 境界 (picked, opened and won in every order) and on to the last battle, and fails if any scene has a line with no speaker or text, if a hero lacks one of their own lines, if a board's script mentions another board, if a named black stone has no lines or a hero answers one from another series of books, if 求敗 or 韋小寶 misses a line the story promises (after each board, the side bet, 請回吧), or if a save made mid-run no longer loads. Run it after changing story text.
 
 ### Mechanics
 

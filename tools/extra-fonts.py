@@ -23,6 +23,11 @@ font-weight 必須與各自頁面裡原字型的宣告完全相同，否則瀏�
 
 原字型不動。不跑本腳本也不影響內容：缺的字會改用瀏覽器的後備字型顯示。
 
+    python3 tools/extra-fonts.py --check
+
+只列出原字型與現有補字都沒有的字，有則以非零結束；Noto 本身也沒有的字另列，
+不算缺字。找不到 Noto 原字型時，本腳本不寫任何檔案，以免把現有的補字丟掉。
+
 需要 fonttools 與 brotli（pip install fonttools brotli），以及
 Noto Serif CJK Bold 與 Noto Sans CJK Regular 兩個 .ttc
 （Debian/Ubuntu 的 fonts-noto-cjk 套件；或以 --serif、--sans 指定路徑）。
@@ -118,6 +123,13 @@ def main() -> None:
         sys.exit('未安裝 fonttools（pip install fonttools brotli）')
 
     given = {'RiverSerif': args.serif, 'RiverSans': args.sans}
+    # Writing without the Noto sources would drop the supplements already in place.
+    if not args.check:
+        lacking = [noto for family, (_, _, noto, _) in FACES.items() if not (p := locate(noto, given[family])) or not p.exists()]
+        if lacking:
+            sys.exit(f'找不到 {"、".join(lacking)}（apt-get install fonts-noto-cjk，或以 --serif、--sans 指定路徑）。未寫任何檔案。')
+    # --check: characters that neither the base font nor its current supplement has
+    unfixed = 0
     # (set, family) -> (font file, unicode-range) for every supplement that was written
     written = {}
     for family, (base, noto_family, noto_file, suffix) in FACES.items():
@@ -126,6 +138,19 @@ def main() -> None:
         for name, (patterns, out) in SETS.items():
             missing = sorted(c for c in shown_text(patterns) if ord(c) not in have)
             target = out.format(suffix)
+            if args.check:
+                # The supplement in place already covers part of the list.
+                if (ROOT / target).exists():
+                    have |= set(TTFont(str(ROOT / target)).getBestCmap())
+                missing = [c for c in missing if ord(c) not in have]
+                # Characters Noto itself lacks fall back to the reader's fonts whatever is done.
+                if path and path.exists():
+                    noto = set(find_face(path, noto_family).getBestCmap())
+                    fallback = [c for c in missing if ord(c) not in noto]
+                    missing = [c for c in missing if ord(c) in noto]
+                    if fallback:
+                        print(f'{family}・{name}：Noto 也沒有，用後備字型：{"".join(fallback)}')
+                unfixed += len(missing)
             if not missing:
                 print(f'{family}・{name}：沒有缺字')
                 continue
@@ -154,6 +179,8 @@ def main() -> None:
             if absent:
                 print(f'  Noto 也沒有這些字，改用後備字型：{"".join(absent)}')
     if args.check:
+        if unfixed:
+            sys.exit('有缺字：重跑 python3 tools/extra-fonts.py 補上。')
         return
     for sheet, (sets, weights) in SHEETS.items():
         blocks = [

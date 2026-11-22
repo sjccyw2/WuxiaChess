@@ -20,6 +20,7 @@ import { GISTS } from '../data/encounters.js';
 import { BATTLES, SIDE_REWARDS } from '../data/battles.js';
 import { WEAPON_FORMS } from '../data/form-catalog.js';
 import { HERO_VOICES } from '../data/hero-voices.js';
+import { REALM_COUNT, realmIndex } from '../data/realms.js';
 
 const LEGACY = {
   best: 0,
@@ -33,15 +34,24 @@ const LEGACY = {
   // how many runs each hero has walked, and which boards have been reached.
   name: '',
   walked: {},
-  seen: []
+  seen: [],
+  // The 境界 as difficulty levels (data/realms.js): the highest open, the ones won, and how many
+  // times the last battle has been reached.
+  realms: 1,
+  cleared: [],
+  finale: 0
 };
 const MAPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 // A name typed by the player: no spaces or line breaks, at most eight characters.
 const cleanName = (value) => [...String(value ?? '').replace(/\s+/g, '')].slice(0, 8).join('');
 const youthName = (s) => s.run?.chronicle?.name || YOUTH.name;
-// The 境 a run is played in: one more than the runs won before it began. Five are written; past
-// the fifth, the fifth is played again until the last battle is built.
+// The 境界 a run is played in: the one the player picked before it began, from those open.
 const realmOf = (r) => Math.min(WAKES.length, Math.max(1, r?.realm || 1));
+const REALM_NUMBERS = Array.from({ length: REALM_COUNT }, (_, i) => i + 1);
+// The 境界 open to a profile: the first always; each further one once the one before it is won.
+const openRealms = (profile) => Math.min(REALM_COUNT, Math.max(1, profile?.realms || 1));
+// Whether a profile has won every 境界, which is what brings the last battle.
+const allCleared = (profile) => REALM_NUMBERS.every((n) => profile?.cleared?.includes(n));
 // A line with its {name} (the youth) and any other {keys} filled in.
 const fill = (text, s, more = {}) =>
   Object.entries({ name: youthName(s), ...more }).reduce((line, [k, v]) => line.replaceAll('{' + k + '}', v), String(text ?? ''));
@@ -53,6 +63,12 @@ function fillProfile(chronicle) {
   chronicle.name ??= '';
   chronicle.walked ??= {};
   chronicle.seen ??= [];
+  // Profiles from before the 境界 could be picked: the 境界 a run was played in was one more than
+  // the runs won, so every 境界 up to that one is open and those below it are won.
+  const won = Math.min(REALM_COUNT, chronicle.wins || 0);
+  chronicle.realms ??= Math.min(REALM_COUNT, won + 1);
+  chronicle.cleared ??= REALM_NUMBERS.slice(0, won);
+  chronicle.finale ??= 0;
   return chronicle;
 }
 const copy = (value) => JSON.parse(JSON.stringify(value));
@@ -88,7 +104,7 @@ function parcelCount(profile) {
     Object.values(profile.parcel.stock).reduce((n, v) => n + v, 0) + profile.parcel.manuals.length
   );
 }
-function initialRun(ids, seed, legacy) {
+function initialRun(ids, seed, legacy, realm) {
   const chronicle = copy(legacy);
   chronicle.returns ??= chronicle.wins;
   fillProfile(chronicle);
@@ -96,7 +112,8 @@ function initialRun(ids, seed, legacy) {
     trees: TREES_EDITION,
     battles: BATTLES_EDITION,
     voyage: chronicle.returns + 1,
-    realm: chronicle.wins + 1,
+    // The 境界 picked; one not yet open (or none given) is the highest open.
+    realm: realm >= 1 && realm <= openRealms(chronicle) ? realmIndex(realm) : openRealms(chronicle),
     priorFate: chronicle.lastFate,
     seed,
     route: routeFor(seed),
@@ -145,12 +162,13 @@ function startRun(draw = drawLots(), legacy = LEGACY) {
   const s = G.newGame(ids);
   s.version = 5;
   s.mapIndex = 0;
-  s.run = initialRun(ids, draw.seed, legacy);
+  s.run = initialRun(ids, draw.seed, legacy, draw.realm);
   if (cleanName(draw.name)) s.run.chronicle.name = cleanName(draw.name);
   s.logs = [];
   s.stock = { remedy: 2 + (legacy.best >= 7 ? 1 : 0), elixir: 2, travelBlade: 1, bracer: 1 };
   s.run.manuals.push('softPalm');
-  s.units.push(...G.boardOf(s).pieces.map((piece) => G.pieceUnit(s, piece)));
+  // The first board's black stones, in the run's 境界 (the first 境界 has them as newGame made them).
+  s.units = [...G.party(s), ...defenders(s)];
   G.identifyEncounter(s);
   setUpBoard(s);
   for (const [id, n] of Object.entries(legacy.parcel.stock)) s.stock[id] = (s.stock[id] || 0) + n;
@@ -178,6 +196,9 @@ function validProfile(p) {
           ([id, n]) => G.PARTY.includes(id) && Number.isSafeInteger(n) && n >= 0
         ))) &&
     (p.seen == null || uniqueMembers(p.seen, MAPS)) &&
+    (p.realms == null || (Number.isInteger(p.realms) && p.realms >= 1 && p.realms <= REALM_COUNT)) &&
+    (p.cleared == null || uniqueMembers(p.cleared, REALM_NUMBERS)) &&
+    (p.finale == null || (Number.isSafeInteger(p.finale) && p.finale >= 0)) &&
     p.parcel?.stock &&
     Object.entries(p.parcel.stock).every(
       ([id, n]) => Object.hasOwn(G.ITEMS, id) && Number.isInteger(n) && n >= 0
@@ -545,8 +566,10 @@ function restoreRun(raw) {
   fillProfile(r.chronicle);
   r.voyage ??= Math.max(1, r.chronicle.returns + (closed ? 0 : 1));
   r.priorFate ??= null;
-  // Runs saved before the 境 was kept: one more than the runs won before this one began.
+  // Runs saved before the 境界 was kept: one more than the runs won before this one began. Runs
+  // saved past the fifth 境界 (when it was played again) are in the fifth.
   r.realm ??= Math.max(1, r.chronicle.wins + 1 - (closed && r.last.won ? 1 : 0));
+  if (Number.isSafeInteger(r.realm)) r.realm = Math.min(REALM_COUNT, r.realm);
   if (
     !Number.isSafeInteger(r.voyage) ||
     r.voyage < 1 ||
@@ -633,7 +656,7 @@ function echoBeat(s) {
 // The lines of one scene: before a battle, or after it.
 //
 // Three layers are put together here, and none of them knows about the others:
-//   the spine   what belongs to this position in the run and to its 境 (the first board, the
+//   the spine   what belongs to this position in the run and to its 境界 (the first board, the
 //               night talk, what 求敗 says after each board, the end)
 //   the board   ENCOUNTER_SCRIPT for the map being played
 //   the heroes  HERO_VOICES for whoever happens to be in the company
@@ -658,7 +681,7 @@ function dialogue(s, scene = s.run.scene) {
       for (const u of G.company(s)) beats.push({ who: u.id, ...HERO_VOICES[u.id].arrival });
       beats.push({ who: 'youth', ...MAZE_TALE.ruleRead });
       beats.push({ who: 'wei', text: MAZE_TALE.ruleTold });
-      // From the second 境 the heroes are told what they are.
+      // From the second 境界 the heroes are told what they are.
       if (realm >= 2) beats.push(...(realm >= 4 ? MAZE_TALE.told.plain : MAZE_TALE.told.cold));
       beats.push({ who: 'youth', ...MAZE_TALE.command });
       beats.push({ who: captain.id, text: HERO_VOICES[captain.id].obey });
@@ -716,8 +739,7 @@ function dialogue(s, scene = s.run.scene) {
       // Ten boards won: the white stones go home, and 求敗 says what he saw.
       beats.push({ who: 'qiu', ...MAZE_TALE.release });
       for (const u of G.party(s)) beats.push({ who: u.id, text: HERO_VOICES[u.id].farewell });
-      for (const beat of r.realm > WAKES.length ? MAZE_TALE.closeAgain : MAZE_TALE.close[realm - 1])
-        beats.push({ who: 'qiu', ...beat });
+      for (const beat of MAZE_TALE.close[realm - 1]) beats.push({ who: 'qiu', ...beat });
     }
   } else {
     beats.push(...script.loss);
@@ -778,7 +800,7 @@ function deployLineup(s) {
     )
   );
   r.bench = all.filter((u) => !ids.includes(u.id));
-  s.units = [...active, ...G.enemies(s)];
+  s.units = [...active, ...s.units.filter((u) => !G.ally(u))]; // the black stones and the board objects
   s.selected = s.leader = ids[0];
   r.scene = 'fight';
   r.deploying = true; // the deployment step: swaps on the board until 開戰
@@ -809,6 +831,23 @@ function beginBattle(s) {
   s.run.deploying = false;
   G.log(s, 'system', '起陣已定。', '我方回合');
   G.announce(s);
+  return true;
+}
+// Developer mode (game/?dev): ends the board now, won (its secondary met if `side`) or lost, as if
+// its objective had been met or the board lost, whatever its kind. From the story, the briefing
+// or 整備 it deploys first. The result is settled by the game's own path (settle), so rewards,
+// recruits, the story and the end of the run follow as in play.
+function devFinish(s, won, side = false) {
+  const r = s.run;
+  if (r.status !== 'battle' || s.result) return false;
+  while (r.scene !== 'fight' && r.scene !== 'prep') if (!turnPage(s, true)) return false;
+  if (r.scene === 'prep' && !deployLineup(s)) return false;
+  if (deploying(s)) beginBattle(s);
+  s.result = won ? 'win' : 'loss';
+  s.reason = won ? CHAMBER_TALES[s.mapIndex].victory : '（開發者模式）這一局作負。';
+  if (won && side) r.devSide = true;
+  s.phase = 'done';
+  G.log(s, 'story', s.reason, won ? '破關' : '敗退');
   return true;
 }
 // ── Secondary objectives ─────────────────────────────────────────────────
@@ -859,6 +898,7 @@ const SIDE_KINDS = {
     // On 殲滅 a wave due after the limit would make it impossible.
     eligible: (s, e) =>
       G.boardOf(s).kind !== 'rout' || !G.boardOf(s).waves.some((w) => w.when.round > e.by),
+    // (On 守 the hold ends after it, so only felling every master meets it; no 守 pool has it.)
     detail: (s, side) => '在第' + NUMERALS[side.by - 1] + '回合結束前取勝。',
     state: (s, side) => (s.round > side.by ? 'failed' : 'open'),
     progress: (s, side) => '第 ' + s.round + '／' + side.by + ' 回合',
@@ -893,8 +933,11 @@ const SIDE_KINDS = {
     name: () => '先折羽翼',
     sort: 'reach',
     eligible: () => true,
+    // On 守 and 破 the masters need not fall at all: only not before the one named.
     detail: (s, side, map) =>
-      '先擊倒' + pieceName(map, side.first) + '，再擊倒' + masterNames(map, s ? G.boardOf(s) : BATTLES[map]) + '。',
+      ['slay', 'rout'].includes(s ? G.boardKind(s) : BATTLES[map].kind)
+        ? '先擊倒' + pieceName(map, side.first) + '，再擊倒' + masterNames(map, s ? G.boardOf(s) : BATTLES[map]) + '。'
+        : '擊倒' + pieceName(map, side.first) + '，且' + masterNames(map, s ? G.boardOf(s) : BATTLES[map]) + '不可先他而倒。',
     state: (s, side) => {
       const first = fallIndex(s, G.refId(s.mapIndex, side.first));
       const masters = G.masterIds(s).map((id) => fallIndex(s, id)).filter((i) => i >= 0);
@@ -1015,6 +1058,8 @@ function sideBenched(s, side = s.run.side) {
 // 'open', 'met' or 'failed', now; a keep kind still open when the board is won is met.
 function sideState(s, side = s.run.side) {
   if (!side) return 'open';
+  // Developer mode's 速勝・支線 (devFinish) meets it whatever its kind.
+  if (s.run.devSide && s.result === 'win' && side === s.run.side) return 'met';
   if (s.run.status !== 'battle') return s.run.last?.optional ? 'met' : 'failed';
   if (sideBenched(s, side)) return 'failed';
   const kind = SIDE_KINDS[side.kind],
@@ -1081,8 +1126,9 @@ function waveLine(map, wave) {
   const masters = wave.when.halved.map((ref) => pieceName(map, ref)).join('或');
   return masters + '氣血首次過半，兩回合後，' + list + '自' + wave.place + '入場。';
 }
-const KIND_NAMES = { slay: '斬將', rout: '殲滅' };
+const KIND_NAMES = { slay: '斬將', rout: '殲滅', keep: '守', break: '破' };
 const SIDE_MARKS = { open: '◇', met: '✓', failed: '✕' };
+const COUNT_WORDS = ['', '一', '兩', '三', '四'];
 // Everything the briefing page shows, for a board at a stage. `s` is the run on this board
 // (with its drawn secondary), or null for a look at a board without one (the wiki, the shop's
 // look at the next board), which lists the pool instead. `live` adds the state of the fight.
@@ -1091,18 +1137,32 @@ function boardModel(map, stage, s = null, live = false) {
     layout = mapLayout(map),
     r = s?.run;
   const masters = board.masters.map((ref) => pieceName(map, ref));
-  const kind = board.kind;
+  const kind = s ? G.boardKind(s) : board.kind;
+  // The board's objects, by kind of thing: '七弦琴', '星索樁兩根'.
+  const things = [...new Set((board.objects || []).map((o) => o.id.split('#')[0]))].map((key) => {
+    const n = board.objects.filter((o) => o.id.split('#')[0] === key).length;
+    return G.DETAILS[key].name + (n > 1 ? COUNT_WORDS[n] + '根' : '');
+  });
   // The kind of battle, as the youth reads it from the table: where the 戰意 sits.
   const battle =
     kind === 'rout'
       ? '殲滅 · ' + MAZE_TALE.brief.rout
-      : masters.length > 1
-        ? '斬將 · ' + MAZE_TALE.brief.slayTwo
-        : '斬將 · ' + MAZE_TALE.brief.slay;
+      : kind === 'keep'
+        ? '守 · ' + MAZE_TALE.brief.keep
+        : kind === 'break'
+          ? '破 · ' + MAZE_TALE.brief.break
+          : masters.length > 1
+            ? '斬將 · ' + MAZE_TALE.brief.slayTwo
+            : '斬將 · ' + MAZE_TALE.brief.slay;
+  const hold = board.hold ? '第' + NUMERALS[board.hold - 1] + '回合' : '';
   const win =
     kind === 'rout'
       ? '在第十二回合結束前擊敗全部敵人。' + (board.waves.length ? '援軍亦須擊敗。' : '')
-      : '在第十二回合結束前擊敗' + masters.join('與') + '。';
+      : kind === 'keep'
+        ? '守住' + things.join('、') + '，撐到' + hold + '結束；或在此之前擊敗' + masters.join('與') + '。'
+        : kind === 'break'
+          ? '在第十二回合結束前擊毀' + things.join('、') + '。'
+          : '在第十二回合結束前擊敗' + masters.join('與') + '。';
   const leader = s ? heroName(r.scene === 'fight' ? s.leader : r.next[0]) : '領隊';
   // 敵情: each 局主, then each 副手; the board's own first, then the leaders of its waves.
   const villain = (key) => G.DETAILS[key]?.rank;
@@ -1173,7 +1233,13 @@ function boardModel(map, stage, s = null, live = false) {
     kindName: KIND_NAMES[kind],
     battle,
     win,
-    loss: leader + '倒下，或第十二回合結束仍未取勝。',
+    loss: kind === 'keep' ? leader + '倒下，或' + things.join('、') + '被毀。' : leader + '倒下，或第十二回合結束仍未取勝。',
+    // The board's objects for the plan and the page: each with its picture and what it is.
+    objects: (board.objects || []).map((o) => {
+      const key = o.id.split('#')[0],
+        d = G.DETAILS[key];
+      return { id: o.id, key, name: d.name, kind: d.kind, kindName: d.role, art: d.portraitFile, x: o.at[0], y: o.at[1] };
+    }),
     side: r?.side ? sideRow(r.side, live) : null,
     pool: s ? [] : board.sides.map((e) => sideRow(e, false)),
     sideNote: s ? '' : '支線於入局時抽定。',
@@ -1203,7 +1269,13 @@ function boardModel(map, stage, s = null, live = false) {
         return { id, name, hp, maxHp: u?.maxHp || 0, fallen: !left.masters.includes(id), line: name + ' 氣血 ' + hp + '／' + (u?.maxHp || 0) };
       }),
       remaining: kind === 'rout' ? '尚餘敵人 ' + left.foes + ' 名' : '',
-      waiting: kind === 'rout' && left.waiting ? '援軍未到 ' + left.waiting + ' 名' : ''
+      waiting: kind === 'rout' && left.waiting ? '援軍未到 ' + left.waiting + ' 名' : '',
+      // 守 and 破: each object's 氣血, and on 守 the rounds still to hold.
+      objects: left.objects.map((o) => {
+        const name = G.unitDetails(G.find(s, o.id))?.name || '';
+        return { ...o, name, line: name + (o.broken ? ' 已毀' : ' 氣血 ' + o.hp + '／' + o.maxHp) };
+      }),
+      hold: left.hold != null ? (left.hold ? '尚須守 ' + left.hold + ' 回合' : '已守滿') : ''
     };
     for (const w of model.waves) {
       const wave = board.waves.find((x) => x.id === w.id);
@@ -1258,6 +1330,7 @@ function settle(s) {
     r.chronicle.best = Math.max(r.chronicle.best, r.stage + 1);
     r.chronicle.embers += r.stage === 9 ? 3 : 1;
     if (r.stage === 9) r.chronicle.wins++;
+    if (r.stage === 9) clearRealm(r);
     for (const u of G.company(s)) u.sp++;
     if (optional)
       for (const u of G.party(s).filter(G.living))
@@ -1271,6 +1344,7 @@ function settle(s) {
     past.seen = MAPS.filter((map) => past.seen.includes(map) || r.route.indexOf(map) <= r.stage);
   }
   const bonus = optional ? paySide(s) : null;
+  delete r.devSide;
   if (bonus?.reward === 'coins') reward += bonus.amount;
   // Every win but the last brings the next hero, whatever the secondary.
   const newcomer = won && !terminal ? recruit(s) : '';
@@ -1281,8 +1355,10 @@ function settle(s) {
     reward,
     recruit: newcomer,
     survivors: G.party(s).filter(G.living).length,
-    ...(bonus ? { side: bonus } : {})
+    ...(bonus ? { side: bonus } : {}),
+    ...(won && terminal ? r.cleared : {})
   };
+  delete r.cleared;
   r.shop = makeOffers(s);
   r.last.visit = makeVisit(s);
   r.status = 'camp';
@@ -1291,13 +1367,25 @@ function settle(s) {
   if (won && r.stage === 0) G.log(s, 'story', MAZE_TALE.shop, WEI.name);
   if (won) {
     // On a 斬將 board the rank and file were only in the master's thought.
-    if (G.boardOf(s).kind === 'slay' && G.enemies(s).some((v) => G.living(v) && !G.unitDetails(v).rank))
+    if (G.boardKind(s) === 'slay' && G.enemies(s).some((v) => G.living(v) && !G.unitDetails(v).rank))
       G.log(s, 'story', MAZE_TALE.fade, '戰意');
     G.log(s, 'grow', '分得彩頭 ' + (reward - (bonus?.reward === 'coins' ? bonus.amount : 0)) + ' 兩，同行俠客各得 1 武學點。', '通吃坊');
     G.log(s, 'story', MAZE_TALE.step, YOUTH.role);
   }
   if (bonus) G.log(s, 'grow', '支線達成，' + rewardText(r.side, r.stage, bonus.manual) + '。', '支線');
   return true;
+}
+// A run won: its 境界 is marked won, and winning the highest open 境界 opens the next. Winning the
+// fifth means every 境界 has been won, and the last battle follows (r.last.finale). Kept on the
+// run until settle writes it into r.last.
+function clearRealm(r) {
+  const p = r.chronicle,
+    realm = realmOf(r);
+  if (!p.cleared.includes(realm)) p.cleared = [...p.cleared, realm].sort((a, b) => a - b);
+  const opened = realm === p.realms && p.realms < REALM_COUNT ? ++p.realms : 0;
+  const finale = realm === REALM_COUNT && allCleared(p);
+  if (finale) p.finale++;
+  r.cleared = { ...(opened ? { opened } : {}), ...(finale ? { finale: true } : {}) };
 }
 // The secondary's reward, paid as the board is settled: silver, a 武學點 to each fielded hero
 // still standing (silver instead on the last board), or a manual into the store (the parcel for
@@ -1395,14 +1483,14 @@ function appointLeader(s, id) {
 function defenders(s) {
   const map = s.mapIndex,
     layout = mapLayout(map),
-    rows = G.stageRows(map, s.run.stage),
+    rows = G.stageRows(map, s.run.stage, s.run.realm),
     keys = G.encounterKeys(map);
   const fixed = G.SLOTS.map((slot, i) => {
     const [hp, atk, def, step, range] = G.withMods(rows[slot], G.DETAILS[keys[i]]?.traits?.mods),
       p = layout.enemies[i];
     return G.makeUnit(G.slotId(map, slot), 'enemy', p.x, p.y, hp, 0, atk, def, step, range);
   });
-  return [...fixed, ...G.boardOf(s).pieces.map((piece) => G.pieceUnit(s, piece))];
+  return [...fixed, ...G.boardOf(s).pieces.map((piece) => G.pieceUnit(s, piece)), ...G.propUnits(s)];
 }
 function advance(s) {
   const r = s.run;
@@ -1733,4 +1821,4 @@ function campModel(s) {
   };
 }
 
-export { SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { devFinish, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

@@ -6,6 +6,7 @@ import { icon } from './icons.js';
 import { BOOKS, DETAILS } from '../rules/game.js';
 import { MAZE_TALE, YOUTH, WEI, QIUBAI, TALE_ART } from '../data/maze-tale.js';
 import { art } from './artwork.js';
+import { REALMS } from '../data/realms.js';
 
 const EAGLE_PICTURE = 'npc-eagle.webp';
 
@@ -41,8 +42,11 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
   if (best >= 7) benefits.push(`<span>${icon('bottle', 15)}傷藥 <strong>＋1</strong></span>`);
   if (parcel)
     benefits.push(`<span>${icon('bag', 15)}通吃坊寄存 <strong>${parcel} 件</strong></span>`);
+  const realmAt = Math.min(REALMS.length, Math.max(1, meta.realm || 1)),
+    realm = REALMS[realmAt - 1];
   return `<section class="run-view run-roll">
     ${titleHead('scroll', '抓子')}
+    <p class="run-kicker realm-kicker">${icon('flag', 14)}${text(realm.sword)}境界　${text(realm.note)}</p>
     <div class="run-lacquer">
       ${scene(TALE_ART.board, 'run-scene')}
       <details class="hud-disclosure draw-tale"><summary>局規</summary><p>${text(MAZE_TALE.draw)}</p><p>棋臺沿上刻著：「${text(MAZE_TALE.rule)}」</p></details>
@@ -64,17 +68,18 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
 
 // The prologue: the youth falls asleep and finds himself beside the stone table, where an old
 // man is playing himself. The first time, 求敗 asks who he is and the player types the name. On
-// later runs 求敗 remembers him, and greets him by the 境 he has reached.
+// later runs 求敗 remembers him, and greets him by the 境界 he has reached.
 //   profile  the chronicle (name, returns, wins)
 //   step     which page is showing
 //   name     the name as typed so far (first run only)
 //   film     the film has just told the first pages (first visit): start at
 //            the name, then resume where the film ends
-function prologueSteps(profile, name = '', film = false) {
+//   realm    the 境界 picked for this run: 求敗 greets him by it
+function prologueSteps(profile, name = '', film = false, realm = 1) {
   const tale = MAZE_TALE.prologue,
     known = profile.name || '',
     called = known || name || YOUTH.name,
-    wins = profile.wins ?? 0;
+    greetings = tale.again.greeting;
   const people = { youth: { ...YOUTH, name: called }, qiu: QIUBAI, wei: WEI };
   const named = (line) => String(line).replaceAll('{name}', called);
   const page = (step) => ({
@@ -88,12 +93,12 @@ function prologueSteps(profile, name = '', film = false) {
   const steps = again
     ? [
         { note: tale.again.note, picture: EAGLE_PICTURE },
-        { who: 'qiu', text: wins >= 5 ? tale.again.beyond : tale.again.greeting[Math.min(4, wins)] },
+        { who: 'qiu', text: greetings[Math.min(greetings.length, Math.max(1, realm)) - 1] },
         { who: 'youth', text: tale.again.youth },
         { who: 'qiu', text: tale.again.reply }
       ]
     : film
-      ? [...(known ? [] : [tale.film.name]), ...tale.first.slice(tale.first.findIndex((step) => step.afterFilm))]
+      ? [...(known ? [] : [tale.film.name, tale.film.named]), ...tale.first.slice(tale.first.findIndex((step) => step.afterFilm))]
       : tale.first.map((step) => (step.ask && known ? { ...step, ask: false } : step));
   // Until he has said his name, the page calls him only 少年.
   const asked = known ? -1 : steps.findIndex((step) => step.ask);
@@ -103,8 +108,8 @@ function prologueSteps(profile, name = '', film = false) {
     return { ...p, view: i === 0 && !film ? TALE_ART.wake : '', last: i === steps.length - 1 };
   });
 }
-function prologuePage(profile, step = 0, name = '', film = false) {
-  const steps = prologueSteps(profile, name, film),
+function prologuePage(profile, step = 0, name = '', film = false, realm = 1) {
+  const steps = prologueSteps(profile, name, film, realm),
     at = Math.max(0, Math.min(step, steps.length - 1)),
     p = steps[at];
   // A page has a picture when someone speaks, or when the narration comes with one.
@@ -113,7 +118,7 @@ function prologuePage(profile, step = 0, name = '', film = false) {
     ? `<img class="fy-speaker-portrait" alt="" src="${text(art(picture))}">`
     : '';
   const entry = p.ask
-    ? `<label class="youth-name"><span>你的名字</span><input id="youth-name" type="text" maxlength="8" autocomplete="off" spellcheck="false" enterkeyhint="done" value="${text(name)}" placeholder="${text(YOUTH.name)}"></label><p class="footnote">最多八個字。留空便叫「${text(YOUTH.name)}」。這個名字會一直跟著你。</p>`
+    ? `<label class="youth-name"><span>起個名字</span><input id="youth-name" type="text" maxlength="8" autocomplete="off" spellcheck="false" enterkeyhint="done" value="${text(name)}" placeholder="${text(YOUTH.name)}"></label><p class="footnote">夢裡記不起自己的名字，便替他起一個。最多八個字。留空便叫「${text(YOUTH.name)}」。這個名字會一直跟著你。</p>`
     : '';
   const said = p.speaker
     ? `<div class="fy-byline"><strong>${text(p.speaker.name)}</strong><small>${text(p.speaker.role)}</small></div><blockquote>${text(p.text)}</blockquote>`
