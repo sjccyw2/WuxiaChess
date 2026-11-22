@@ -1,4 +1,5 @@
-// Ink strokes for the 72 active arts, and six that only villain signatures still borrow.
+// Ink strokes for the active arts, and six that only villain signatures still borrow. The ten
+// heroes from the roster pack borrow the marks of the first ten; each has its own note.
 // The action's stable ID owns its paint, even when the same manual is used by different
 // heroes. Coordinates in the recipes are tile units.
 const RECIPES = {
@@ -75,6 +76,78 @@ const RECIPES = {
   miaoSword: ['苗家劍法','pearl','thrust','swordBind','snap','劍鋒相交，一線從對方的護手旁穿出。'],
   heartCut: ['纏身摘心刀','cinnabar','draw','foxFeint','double','先出半道斷刀影，再從另一側翻腕出鋒。'],
   cliffCut: ['懸崖一刀','frost','draw','foxMask','heavy','一道反向刀彎劈出雪狐的耳尖與雙眼。'],
+
+  'signature:qiaoFeng': ['太祖長拳','bronze','palm','lonelyPalm','heavy','一記直拳獨落，拳鋒帶出飄散的墨灰。'],
+  qfDragonGrab: ['擒龍功','bronze','return','returnHook','return','兩道鉤力凌空回卷，將人沿原路攝回。'],
+  qfRegret: ['亢龍有悔','gold','dragon','dragonHead','heavy','金龍昂首出掌，龍鬚卷向受掌之人。'],
+  qfField: ['見龍在田','bamboo','lattice','scaleWard','gather','龍鱗逐排合起，結成低伏的掌牆。'],
+  qfWine: ['烈酒添勁','ember','halo','sunShell','gather','一團暖意從三重氣弧中升起，九線護住心口。'],
+  qfWild: ['龍戰於野','gold','plunge','skyDragon','heavy','龍首從高處折下，三道雲痕往下壓。'],
+  qfEighteen: ['降龍廿八掌','bronze','dragon','dragonEcho','echo','前龍甩首後，第二道小龍影從反面折回。'],
+
+  'signature:xuZhu': ['韋陀掌','gold','palm','lonelyPalm','heavy','一枚金掌端正落下，指尖帶出飄散的墨灰。'],
+  xzNorthQi: ['渡氣','sea','beam','healingPoint','pulse','一束真氣只落在一處穴位，三圈暖暈回應。'],
+  xzPlum: ['天山折梅手','pearl','thrust','wristHook','snap','彎鉤扣住一道腕環，短白勁橫過圓心。'],
+  xzSixYang: ['天山六陽掌','ember','wave','cottonPalm','glide','掌影沉進層疊的雲氣，掌邊陽和之力外散。'],
+  xzHeal: ['化符','gold','blossom','springTune','glide','一枝春花沿著掌風次第展開。'],
+  xzLifeDeath: ['生死符','frost','frost','iceCrystal','quick','一片薄冰直入，六角晶枝向四周裂開。'],
+
+  'signature:hongQi': ['逍遙遊','bamboo','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。'],
+  hqTail: ['神龍擺尾','bronze','dragon','dragonEcho','echo','前龍甩首後，第二道小龍影從反面折回。'],
+  hqSeal: ['封字訣','bamboo','coil','staffSnare','return','一道棒圈封住來路，竹節反向一攪。'],
+  hqShock: ['震驚百里','gold','plunge','skyDragon','heavy','龍首從高處折下，三道雲痕往下壓。'],
+  hqTurn: ['轉字訣','bamboo','lash','bambooStaff','sweep','青竹杖節分明，紅穗在橫掃的杖尾收住。'],
+  hqThirtySix: ['打狗棒法','bamboo','fan','staffFan','echo','五道竹杖扇開，最重的一杖橫掃扇骨。'],
+
+  'signature:yaoShi': ['落英神劍掌','peach','blossom','orchidPoint','quick','三片落英拂過，一點實掌在瓣根亮起。'],
+  ysPalm: ['劈空掌','jade','wave','cottonPalm','glide','掌影沉進層疊的雲氣，掌邊勁力凌空外散。'],
+  ysFlute: ['玉簫劍法','jade','beam','fluteSword','snap','碧玉橫簫越過斜出的細劍，孔眼一線分明。'],
+  ysMaze: ['五行布陣','peach','lattice','peachLattice','gather','桃花落在五角陣眼，格紋在花下鎖合。'],
+  ysSnap: ['彈指神通','bamboo','pebble','flickStone','quick','一枚帶稜青石脫指而出，身後拖著三道短波。'],
+  ysWhirl: ['旋風掃葉腿','jade','mist','grievingCloud','sweep','兩層落葉般的雲影裂開，一腿從縫隙掃下。'],
+  ysTide: ['碧海潮生曲','sea','strings','qinXiao','echo','簫聲化作兩道弦波交織，一浪疊著一浪。'],
+
+  'signature:sanFeng': ['羅漢拳','bronze','plunge','earthRoot','heavy','下沉的勁線壓入層岩，石脊從兩側隆起。'],
+  sfPureYang: ['純陽無極功','gold','halo','sunShell','gather','朝陽從三重護脈氣弧中升起，九線護住心口。'],
+  sfSword: ['太極劍','steel','coil','taijiBlade','sweep','一輪墨痕圓弧留有缺口，實劍從缺口出鋒。'],
+  sfSeven: ['真武七截陣','jade','banner','warPennant','gather','繫著三枚指令帶的令旗下展，陣線隨旗立起。'],
+  sfCloud: ['雲手','jade','coil','shiftCircle','glide','一陰一陽兩股墨弧在掌前互換位置。'],
+  sfTaiji: ['太極拳','pearl','coil','shiftCircle','echo','一陰一陽兩股墨弧在掌前互換位置，圓轉不斷。'],
+
+  'signature:zhaoMin': ['萬安寺劍招','steel','thrust','swordBind','snap','一招偷學來的殺著一線穿出，劍鋒從護手旁掠過。'],
+  zmPowder: ['十香軟筋散','peach','wave','cottonPalm','glide','藥粉散作層疊的雲絮，綿綿外散。'],
+  zmJade: ['玉碎崑岡','pearl','thrust','swordBind','snap','劍鋒相交，一線從對方的護手旁穿出。'],
+  zmYitian: ['倚天劍','frost','draw','snowSaber','snap','倚天劍橫過，留下一道冰白劍痕。'],
+  zmGhost: ['人鬼同途','cinnabar','thrust','gateSpike','heavy','赤色劍鋒從傾倒的關柵間直出。'],
+  zmHeaven: ['天地同壽','cinnabar','beam','cutVein','pulse','朱紅劍線刺破三層斷開的氣環。'],
+
+  'signature:lingSu': ['藥王方脈','bamboo','pulse','valleyPulse','pulse','雙葉之間的一段脈線由紊亂轉為平緩。'],
+  lsScorpion: ['赤蠍粉','cinnabar','dart','blackQuiver','quick','五點赤芒成束疾出，尾後留下一點暗紅。'],
+  lsGold: ['金針刺穴','gold','beam','healingPoint','quick','一束金線只落在一處穴位，三圈光暈回應。'],
+  lsBlue: ['藍花辟毒','sea','steps','peachGate','glide','兩枝藍花向兩側打開，花下露出生路。'],
+  lsTihu: ['醍醐香','violet','mist','grievingCloud','sweep','兩層香霧裂開，一縷醉意從縫隙墜下。'],
+  lsSeven: ['七心海棠','obsidian','blossom','springTune','glide','一枝海棠沿著燭煙次第展開。'],
+
+  'signature:diYun': ['躺屍劍法','slate','thrust','swordBind','snap','笨拙的一劍直直穿出，劍鋒從護手旁掠過。'],
+  dySlap: ['耳光式','slate','draw','foxFeint','double','先晃半道劍影，再從另一側翻腕出手。'],
+  dyBlade: ['批紙削腐','cinnabar','draw','snowSaber','snap','一柄血刀橫過，留下一道暗紅刀痕。'],
+  dyDisarm: ['去劍式','steel','coil','staffSnare','return','一條劍圈纏住兵刃，反向一攪。'],
+  dySweep: ['流星經天','cinnabar','draw','foxFeint','double','先出半道斷刀影，再從另一側翻腕出鋒。'],
+  dyShenZhao: ['神照經','gold','palm','sevenCracks','heavy','一掌落下，數道勁力裂紋放射開來。'],
+
+  'signature:chengZhi': ['伏虎掌','bronze','palm','lonelyPalm','heavy','一掌沉沉落下，指尖帶出飄散的墨灰。'],
+  czSteps: ['神行百變','jade','steps','baguaStep','glide','足尖交錯踏過數處方位，再從另一端現身。'],
+  czCone: ['金蛇錐','gold','beam','narrowPoint','quick','一枚金錐直行，穿過菱形氣眼。'],
+  czFist: ['金蛇游身拳','gold','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。'],
+  czSword: ['游身','gold','thrust','swordBind','snap','金色劍鋒相交，一線從對方的護手旁穿出。'],
+  czSerpent: ['金蛇劍法','gold','lash','whipArc','sweep','蛇形劍身節節甩開，倒鉤掠過一道長弧。'],
+
+  'signature:aQing': ['白猿竹枝','bamboo','beam','narrowPoint','quick','一點竹影如錐直行，穿過菱形氣眼。'],
+  aqThread: ['竹枝穿陣','bamboo','beam','cutVein','pulse','青白竹影刺破三層斷開的氣環。'],
+  aqEyes: ['竹枝點目','bamboo','ripple','marshPoint','snap','細竹尖撇開蘆葉，三滴水珠向旁迸出。'],
+  aqApe: ['白猿步','bamboo','steps','foxTracks','quick','三組足印由密至疏，最後一步帶起碎草。'],
+  aqChain: ['竹枝連環','bamboo','twins','crossedHands','double','左右各走一條棒路，前直後橫，交擊有別。'],
+  aqYue: ['越女劍','bamboo','fan','nineFan','snap','九道竹影張扇，棒尖同指一處。'],
 
   fingerFlick: ['彈指神通','bamboo','pebble','flickStone','quick','一枚帶稜青石脫指而出，身後拖著三道短波。'],
   softPalm: ['綿掌','pearl','wave','cottonPalm','glide','掌影沉進層疊的棉絮雲，掌邊綿力外散。'],

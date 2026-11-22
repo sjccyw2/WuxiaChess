@@ -137,7 +137,9 @@ Heroes are drawn at random and the boards come in a different order each run, so
 | The boards | `game/src/data/encounter-script.js` | one map: its black stones, on whom 求敗 has pressed a 戰意 that makes them fight, the named stones he sets down beside them, and the things on the board (`objects`: the qin, the drum, the star posts) |
 | The heroes | `game/src/data/hero-voices.js` | one hero: arrival, deja vu, night talk, the art that made their name coming back, farewell |
 
-To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`, and the world behind it in `wiki/content/世界觀設定.md`.
+To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere. (A hero from the same series of books as a board's master may also be given a line on that board; that is optional.)
+
+A hero is the same id in seven tables: the entry in `data/new-heroes.js` (name, bio, starting art; `role` is the class the player is not shown), starting numbers and the starting art's rule in `rules/game.js` (`HERO_STATS`, `SIGNATURE_RULES_BY_HERO`; `PARTNERS` for a 合璧 partner, `STARTING_GEAR` for what they arrive wearing), the leader's boon in `rules/battle-mastery.js` (`COMMANDS`), the tree in `data/mastery-catalog.js` (`HERO_PATHS`, `MASTERY_ARTS`), each art's form tags in `data/form-catalog.js`, its ink stroke in `fx/technique-strokes.js`, and the lines in `data/hero-voices.js`. The wiki, the draw and 試局 follow from those. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`, and the world behind it in `wiki/content/世界觀設定.md`.
 
 All story text is written in 金庸's manner: plain classical mixed with vernacular, forms of address that fit each speaker, no modern words. The rules and worked examples are in `wiki/content/單輪劇本.md` §15.
 
@@ -234,7 +236,7 @@ node tools/shoot-map.mjs 3 pictures/     # map 3 from nine camera angles, with d
 node tools/sound-check.mjs               # every sound: no clipping, clean start and end, balanced loudness
 ```
 
-A character from the roster pack enters the game with `python3 tools/roster-art.py <id>`, which writes its sheets, still and portrait into `game/assets/`; its id is then added to `game/src/data/roster-art.js`. A piece then becomes that character by naming the id as its `mini`. To check how a sheet draws, `node tools/shoot-roster.mjs pictures/ --ids <id> --beside chief` saves every frame of its five rows on a real board beside a piece already in the game (add `--mobile` for a phone), and `tools/roster-preview.html?ids=<id>,chief` shows them playing. Both need Playwright with Chromium, and no web server.
+A character from the roster pack enters the game with `python3 tools/roster-art.py <id>`, which writes its sheets, still and portrait into `game/assets/`; its id is then added to `game/src/data/roster-art.js`. A piece then becomes that character by naming the id as its `mini`. For one of the pack's heroes the tool also writes the standing figure the 整備 wardrobe shows (`figure-<id>.webp`, the first idle frame enlarged) and keeps the portrait at the heroes' size. To check how a sheet draws, `node tools/shoot-roster.mjs pictures/ --ids <id> --beside chief` saves every frame of its five rows on a real board beside a piece already in the game (add `--mobile` for a phone), and `tools/roster-preview.html?ids=<id>,chief` shows them playing. Both need Playwright with Chromium, and no web server.
 
 The ten map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
 

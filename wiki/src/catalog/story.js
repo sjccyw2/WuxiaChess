@@ -12,7 +12,7 @@ export const TITLES = {
   opening: '入夢',
   qiu: '求敗的話',
   shop: '通吃坊、盤口與三盅通吃',
-  voices: '十位俠客自己的話',
+  voices: '俠客各自的話',
   return: '請回吧與夢醒',
   archive: '霧鎖青竹渡',
   world: '少年在棋臺邊瞧明白的事',

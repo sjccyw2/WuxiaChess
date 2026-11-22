@@ -47,7 +47,53 @@ const COMMANDS = {
     power: 3,
     text: '出招少耗 3 點內力，最低消耗 2 點。',
     icon: 'drop'
-  }
+  },
+  qiaoFeng: { name: '一呼百應', stat: 'atk', power: 4, text: '攻擊增加 4。', icon: 'flag' },
+  xuZhu: {
+    name: '靈鷲慈心',
+    stat: 'renew',
+    power: 8,
+    text: '我方回合結束時回復 8 點氣血。',
+    icon: 'leaf'
+  },
+  hongQi: {
+    name: '九指點撥',
+    stat: 'basic',
+    power: 6,
+    text: '普攻與還擊的基礎傷害增加 6。',
+    icon: 'sword'
+  },
+  yaoShi: { name: '東邪奇學', stat: 'power', power: 7, text: '絕技威力增加 7。', icon: 'star' },
+  sanFeng: { name: '真武鎮山', stat: 'def', power: 5, text: '防禦增加 5。', icon: 'shield' },
+  zhaoMin: {
+    name: '郡主妙算',
+    stat: 'economy',
+    power: 3,
+    text: '出招少耗 3 點內力，最低消耗 2 點。',
+    icon: 'drop'
+  },
+  lingSu: {
+    name: '藥王調息',
+    stat: 'restoreMp',
+    power: 5,
+    text: '我方新回合額外回復 5 點內力。',
+    icon: 'drop'
+  },
+  diYun: {
+    name: '血刀破甲',
+    stat: 'pierce',
+    power: 30,
+    text: '普攻與還擊穿透三成防禦。',
+    icon: 'sword'
+  },
+  chengZhi: {
+    name: '金蛇追影',
+    stat: 'pursuit',
+    power: 8,
+    text: '擊中氣血不過半的敵人時，傷害增加 8。',
+    icon: 'target'
+  },
+  aQing: { name: '越女輕步', stat: 'step', power: 1, text: '移動力增加 1 步。', icon: 'feather' }
 };
 function commandDescription(id) {
   return '領隊與距離兩格內的友軍' + COMMANDS[id].text;

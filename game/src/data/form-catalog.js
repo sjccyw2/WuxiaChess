@@ -95,6 +95,98 @@ const ART_FORMS = {
   heartCut: ['exploit', 'again'],
   cliffCut: ['exploit', 'mark'],
 
+  // 蕭峰
+  'signature:qiaoFeng': ['collision'],
+  qfSeize: ['pin'],
+  qfDragonGrab: ['pull', 'collision'],
+  qfRegret: ['collision'],
+  qfField: [],
+  qfWine: [],
+  qfWild: [],
+  qfEighteen: [],
+
+  // 虛竹
+  'signature:xuZhu': ['still'],
+  xzArhat: ['mark'],
+  xzNorthQi: ['channel'],
+  xzPlum: [],
+  xzSixYang: [],
+  xzHeal: ['cleanse', 'overflow'],
+  xzLifeDeath: [],
+
+  // 洪七公
+  'signature:hongQi': [],
+  hqTap: ['pin'],
+  hqTail: [],
+  hqSeal: ['seal'],
+  hqShock: [],
+  hqTurn: ['pin'],
+  hqThirtySix: ['seal'],
+
+  // 黃藥師
+  'signature:yaoShi': ['mark'],
+  ysFlick: ['arc'],
+  ysPalm: [],
+  ysFlute: [],
+  ysMaze: [],
+  ysSnap: [],
+  ysWhirl: ['pin'],
+  ysTide: [],
+
+  // 張三丰
+  'signature:sanFeng': [],
+  sfSoft: [],
+  sfPureYang: [],
+  sfSword: ['pull'],
+  sfSeven: [],
+  sfCloud: ['collision'],
+  sfTaiji: [],
+
+  // 趙敏
+  'signature:zhaoMin': [],
+  zmSwift: ['exploit'],
+  zmPowder: ['pin'],
+  zmJade: [],
+  zmYitian: [],
+  zmGhost: [],
+  zmHeaven: [],
+
+  // 程靈素
+  'signature:lingSu': ['cleanse'],
+  lsNeedle: ['distill'],
+  lsScorpion: [],
+  lsGold: ['seal'],
+  lsBlue: ['cleanse'],
+  lsTihu: [],
+  lsSeven: [],
+
+  // 狄雲
+  'signature:diYun': [],
+  dyShoulder: ['mark'],
+  dySlap: ['seal'],
+  dyBlade: ['leech'],
+  dyDisarm: [],
+  dySweep: ['leech'],
+  dyShenZhao: ['leech'],
+
+  // 袁承志
+  'signature:chengZhi': ['pin'],
+  czHunyuan: ['still'],
+  czSteps: [],
+  czCone: ['mark'],
+  czFist: ['glide'],
+  czSword: ['exploit', 'glide'],
+  czSerpent: ['exploit'],
+
+  // 阿青
+  'signature:aQing': ['glide'],
+  aqPoint: ['mark'],
+  aqThread: ['line'],
+  aqEyes: [],
+  aqApe: [],
+  aqChain: ['again', 'glide'],
+  aqYue: ['line'],
+
   // 可分授給俠客的八部武譜
   fingerFlick: [],
   softPalm: ['pin'],
@@ -123,7 +215,8 @@ const WEAPON_FORMS = {
   silkWhip: ['pull', 'pin'],
   travelBlade: ['arc'],
   starSteel: ['line'],
-  dragonSaber: ['still']
+  dragonSaber: ['still'],
+  goldSerpentBlade: ['arc']
 };
 
 const COMBINATIONS = [

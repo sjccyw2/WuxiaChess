@@ -23,6 +23,7 @@ import { NEW_HEROES } from '../data/new-heroes.js';
 import { inRealm } from '../data/realms.js';
 import { rosterPortrait } from '../data/roster-art.js';
 import {
+  COMMANDS,
   commandBonus,
   effectsOf,
   selfEffectsOf,
@@ -139,6 +140,24 @@ const ITEMS = {
     atk: 6,
     icon: 'sword',
     desc: '關外長刀，利於翻腕連斬。'
+  },
+  // Held for these two since the item art came in (ROADMAP Q-N25): 袁承志 finds the sword on
+  // 韋小寶's shelf once he is in the company; 狄雲 arrives wearing the coat (STARTING_GEAR).
+  goldSerpentBlade: {
+    name: '金蛇劍',
+    kind: 'weapon',
+    owner: 'chengZhi',
+    atk: 8,
+    icon: 'sword',
+    desc: '劍身彎曲如蛇，劍尖分叉，金光之中隱隱透著一道血痕。'
+  },
+  silkwormCoat: {
+    name: '烏蠶衣',
+    kind: 'gear',
+    owner: 'diYun',
+    def: 5,
+    icon: 'shield',
+    desc: '大雪山烏蠶絲所織的貼身軟甲，刀劍不入。防禦增加 5。'
   },
   ...WARES,
   pine: {
@@ -1154,10 +1173,28 @@ const HERO_STATS = {
   guard: [148, 44, 23, 17, 3, 1, 'pole'],
   guo: [146, 50, 23, 15, 3, 1, 'wraps'],
   xiao: [102, 66, 23, 9, 4, 1, 'twins'],
-  duan: [92, 82, 20, 7, 4, 2, 'fan']
+  duan: [92, 82, 20, 7, 4, 2, 'fan'],
+  // The ten from the roster pack carry no weapon of their own yet (ROADMAP, open questions): the
+  // slot starts empty. Their attack sits a little above the first ten's bare numbers and below
+  // their armed ones, since the first weapon they buy adds its whole bonus.
+  qiaoFeng: [146, 50, 25, 13, 4, 1],
+  xuZhu: [122, 80, 21, 12, 3, 1],
+  hongQi: [128, 60, 25, 12, 4, 1],
+  yaoShi: [102, 80, 22, 9, 4, 2],
+  sanFeng: [136, 72, 23, 15, 3, 1],
+  zhaoMin: [100, 62, 24, 8, 5, 1],
+  lingSu: [90, 84, 19, 7, 4, 2],
+  diYun: [136, 54, 28, 9, 4, 1],
+  chengZhi: [112, 60, 23, 10, 5, 1],
+  aQing: [90, 58, 24, 6, 5, 1]
 };
+// What a hero arrives wearing, beside the weapon in HERO_STATS.
+const STARTING_GEAR = { diYun: 'silkwormCoat' };
 const FOES = ['chief', 'blade', 'bow', 'scout'];
-const startingHero = (id) => makeUnit(id, 'ally', 0, 0, ...HERO_STATS[id]);
+const startingHero = (id) => ({
+  ...makeUnit(id, 'ally', 0, 0, ...HERO_STATS[id]),
+  gear: STARTING_GEAR[id] || null
+});
 function newGame(ids = ORIGINAL_PARTY) {
   if (ids.length !== 3 || new Set(ids).size !== 3 || !ids.every((id) => PARTY.includes(id)))
     throw new Error('請選擇三位不同的俠客。');
@@ -1178,7 +1215,7 @@ function newGame(ids = ORIGINAL_PARTY) {
     logs: [],
     stats: { damage: 0, healed: 0, kills: 0 },
     units: [
-      ...ids.map((id, index) => makeUnit(id, 'ally', ...posts[index], ...HERO_STATS[id])),
+      ...ids.map((id, index) => ({ ...startingHero(id), x: posts[index][0], y: posts[index][1] })),
       ...SLOTS.map((slot) => stageRows(0, 0)[slot]).map((numbers, i) => {
         const [hp, atk, def, step, range] = withMods(
           numbers,
@@ -1425,7 +1462,17 @@ const SIGNATURE_RULES_BY_HERO = {
   huang: { factor: 1.15, visual: 'guard' },
   yang: { factor: 1.32, visual: 'guo' },
   zhang: { visual: 'medic', heal: 30, target: 'ally' },
-  hu: { factor: 1.3, visual: 'xiao' }
+  hu: { factor: 1.3, visual: 'xiao' },
+  qiaoFeng: { factor: 1.2, push: true, visual: 'guo' },
+  xuZhu: { factor: 1.3, visual: 'guo' },
+  hongQi: { factor: 1.2, safe: true, visual: 'guo' },
+  yaoShi: { factor: 1.25, visual: 'guo' },
+  sanFeng: { factor: 1.2, stance: 20, visual: 'guo' },
+  zhaoMin: { factor: 1.2, pierce: 0.5, visual: 'hero' },
+  lingSu: { visual: 'medic', heal: 28, target: 'ally' },
+  diYun: { factor: 1.3, visual: 'hero' },
+  chengZhi: { factor: 1.25, visual: 'guo' },
+  aQing: { factor: 1.25, visual: 'xiao' }
 };
 function artFor(u, key = u.activeArt || 'signature') {
   if (u.learned?.includes(key) && TECHNIQUES[key]) return TECHNIQUES[key];
@@ -1688,7 +1735,15 @@ function targetOK(s, u, t, skill) {
   });
 }
 // Partners: each one's 合璧 arts are strongest with the other beside them.
-const PARTNERS = { xiao: 'yang', yang: 'xiao' };
+// Who a hero's 合璧 art is strongest beside. Only 楊過 and 小龍女 name each other; the rest are
+// one-way, read by the one art of theirs that carries `paired`.
+const PARTNERS = {
+  xiao: 'yang',
+  yang: 'xiao',
+  zhaoMin: 'zhang',
+  lingSu: 'hu',
+  xuZhu: 'qiaoFeng'
+};
 const ANSWERS = { close: '近身兵刃', ranged: '遠攻', master: '首領' };
 const plus = (n) => '＋' + n.toFixed(2);
 // An art's factor for one strike: its own, with every conditional bonus that holds added (§4).
@@ -3395,8 +3450,14 @@ function nextRound(s) {
   }
   s.selected = leader(s);
   log(s, 'system', '俠客重整步法，內力各回復 6 點。', '我方回合');
-  if (s.leader === 'zhang' && s.run?.status === 'battle')
-    log(s, 'combat', '九陽護元：領隊與兩格內友軍額外回復 5 點內力。', DETAILS.zhang.name);
+  const boon = COMMANDS[s.leader];
+  if (boon?.stat === 'restoreMp' && s.run?.status === 'battle')
+    log(
+      s,
+      'combat',
+      boon.name + '：領隊與兩格內友軍額外回復 ' + boon.power + ' 點內力。',
+      DETAILS[s.leader].name
+    );
   return true;
 }
 
