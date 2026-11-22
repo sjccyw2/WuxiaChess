@@ -568,15 +568,16 @@ function stageRows(map, depth, realm = 1) {
 // The last board's two rows: 求敗 himself ('master'), and each of the run's ten masters as he
 // stands there ('guest'): no 戰意 on him and no men of his own, a good deal less than on his own
 // board. A guest's own `mods` still apply. Measured with `node tools/sim-battles.mjs --last`: with
-// these the simulated player, who is far weaker than a person, wins about two boards in three in
-// some nine or ten rounds at hero level 11 (59%, 68% and 83% at levels 10, 11 and 12, with a
-// company of twelve drawn from the twenty heroes), losing about as often by 無名 falling as by
-// the round limit. These are the numbers for the board as the producer set it on 2026-11-22: all
-// ten masters come (five, then two and three at 求敗's side), they guard him, he falls back, and
-// 無名 is stronger (journey.js LAST_BOON). Before that 求敗 had 2130 氣血 and each master 365.
+// these the simulated player, who is far weaker than a person, wins about two boards in five in
+// some ten rounds at hero level 11 (22%, 39% and 54% at levels 10, 11 and 12, with a company of
+// twelve drawn from the twenty heroes), losing about as often by 無名 falling as by the round
+// limit. The board is meant to be a challenge (the producer, 2026-11-22: an even chance or less).
+// These are the numbers for the board as the producer set it that day: all ten masters come
+// (five, then two and three at 求敗's side), they guard him, he falls back, and 無名 is stronger
+// (journey.js LAST_BOON). At 求敗 1600 / 60 and each master 260 / 56 the same player won 68%.
 const LAST_ROWS = {
-  master: [1600, 60, 28, 3, 2],
-  guest: [260, 56, 20, 3, 1]
+  master: [1700, 64, 28, 3, 2],
+  guest: [280, 60, 20, 3, 1]
 };
 function stageBase(map, depth) {
   if (map === 0 && depth === 0)
