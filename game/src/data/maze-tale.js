@@ -125,7 +125,8 @@ const MAZE_TALE = {
   },
   // The rule cut into the edge of the table. Every stone that wins ten boards goes home.
   rule: '白子勝滿十局，放還本尊。中道而敗，收子入盒。',
-  draw: '少年伸手入盒，抓了三枚白子，放在盤上。三枚白子一沾棋盤，登時亮了，子上各自立起一個人影。',
+  // 求敗 says 「抓三枚」 (the film says it too); the youth's hand comes up with five, and he keeps three.
+  draw: '少年伸手入盒，一把抓起五枚白子，攤在盤上。五枚白子一沾棋盤，登時亮了，子上各自立起一個人影。求敗道：「說了三枚。留下三枚，餘下的放回盒裡。」',
   // First board, after the three have arrived.
   ruleRead: {
     note: '棋臺沿上刻著兩行小字，筆劃深入石理：「白子勝滿十局，放還本尊。中道而敗，收子入盒。」',
@@ -251,8 +252,8 @@ const MAZE_TALE = {
       { text: '最後一局。這一回，老夫想聽聽他們還說些甚麼。' }
     ],
     [
-      { text: '老夫有一事不明。你抓子之時，怎地瞧也不瞧？' },
-      { text: '老夫揀子，向來只揀最強的。你卻是抓著誰便用誰。' },
+      { text: '老夫有一事不明。你留子之時，怎地不先掂掂子力？' },
+      { text: '老夫揀子，向來只揀最強的。你揀子，倒像是在揀朋友。' },
       { text: '適才那一子，老夫盒中有比他強十倍的。你用他，竟也勝了。' },
       { text: '你不嫌他弱？……「來的都是朋友。」這句話，老夫幾百年沒聽人說過。' },
       { text: '老夫今日鬆了手，由得黑子自己去打。他們倒打得比老夫按著時好看。' },

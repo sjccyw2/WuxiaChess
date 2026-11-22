@@ -183,7 +183,7 @@ any run.
 
 ## How the story is put together
 
-Heroes are drawn at random and the boards come in a different order each run, so the story text is kept in three layers that never refer to one another:
+Heroes are drawn at random (five are drawn and the player keeps three; the two put back may be lent later, `drawLots` and `keptLots` in `rules/journey.js`) and the boards come in a different order each run, so the story text is kept in three layers that never refer to one another:
 
 | Layer | File | Tied to |
 | --- | --- | --- |

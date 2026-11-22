@@ -17,14 +17,25 @@ const coin = '<i class="run-coin" aria-hidden="true"></i>';
 const playerImage = (id) => `<img src="${esc(face(id))}" alt="" decoding="async">`;
 const scene = (file, cls) => `<img class="tale-scene ${cls}" src="${text(art(file))}" alt="" decoding="async">`;
 
-function drawPortrait(id, captain) {
+// One of the five drawn. The card itself keeps the stone or puts it back (three are kept); a kept
+// stone that is not the leader carries a small 立為領隊 button above the card.
+function drawPortrait(id, captain, kept, full) {
   const hero = DETAILS[id];
   if (!hero) return '';
-  return `<li class="run-lot ${id === captain ? 'lead-lot' : ''}">
-    <div class="run-lot-image">${playerImage(id)}${id === captain ? '<span class="run-lot-role">領隊</span>' : ''}</div>
+  const keep = kept.includes(id),
+    lead = keep && id === captain,
+    blocked = !keep && full;
+  const choice = keep
+    ? '放回' + text(hero.name)
+    : blocked
+      ? '已留下三枚：先放回一枚，才能留下' + text(hero.name)
+      : '留下' + text(hero.name);
+  return `<li class="run-lot ${lead ? 'lead-lot' : ''} ${keep ? 'kept-lot' : 'back-lot'}">
+    <div class="run-lot-image">${playerImage(id)}${lead ? '<span class="run-lot-role">領隊</span>' : keep ? '<span class="run-lot-role kept-role">留下</span>' : ''}</div>
     <div class="run-lot-name"><small>${bookCitation(BOOKS[id])}</small><h3>${text(hero.name)}</h3>
-    <span class="run-lot-skill">${icon(hero.skillIcon, 15)}${text(hero.skill)}</span></div>
-  ${btn('lead-lot', '<span class="sr-only">選擇' + text(hero.name) + '為領隊</span>', 'lot-choice', idAttr(id) + ' aria-pressed="' + (id === captain) + '"')}
+    <span class="run-lot-skill">${icon(hero.skillIcon, 15)}${text(hero.skill)}</span>
+    ${keep && !lead ? btn('lead-lot', '立為領隊', 'lot-lead', idAttr(id) + ' aria-label="選擇' + text(hero.name) + '為領隊"') : ''}</div>
+  ${btn('keep-lot', '<span class="sr-only">' + choice + '</span>', 'lot-choice', idAttr(id) + ' aria-pressed="' + keep + '"' + (blocked ? ' aria-disabled="true"' : ''))}
   </li>`;
 }
 
@@ -32,7 +43,7 @@ function record(label, value, suffix) {
   return `<div><dt>${label}</dt><dd>${amount(value)}<small>${suffix}</small></dd></div>`;
 }
 
-function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
+function rollView(ids, meta = {}, hasSave = false, captain = ids[0], kept = ids.slice(0, 3)) {
   const best = amount(meta.best),
     embers = amount(meta.embers);
   const silver = 24 + 4 * Math.min(embers, 12);
@@ -50,11 +61,11 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
     <div class="run-lacquer">
       ${scene(TALE_ART.board, 'run-scene')}
       <details class="hud-disclosure draw-tale"><summary>局規</summary><p>${text(MAZE_TALE.draw)}</p><p>棋臺沿上刻著：「${text(MAZE_TALE.rule)}」</p></details>
-      <p class="lot-instruction">選一枚先落的子作領隊，是為這一輪的「眼」。領隊倒下，這一輪便結束。</p>
-      <ul class="run-lots" aria-label="這一輪抓到的三位俠客">${ids.map((id) => drawPortrait(id, captain)).join('')}</ul>
+      <p class="lot-instruction">抓起五枚：點選留下三枚，另兩枚放回盒裡，日後求敗或會再借出。留下的三枚中選一枚先落的子作領隊，是為這一輪的「眼」。領隊倒下，這一輪便結束。<strong class="lot-count">已留 ${kept.length}／3</strong></p>
+      <ul class="run-lots run-lots-five${meta.settled ? ' settled' : ''}" aria-label="這一輪抓到的五位俠客，留下三位">${ids.map((id) => drawPortrait(id, captain, kept, kept.length >= 3)).join('')}</ul>
       ${meta.ended > 0 ? `<p class="lot-plus"><img src="${text(art(YOUTH.portrait))}" alt="" decoding="async"><span><strong>${text(MAZE_TALE.finale.plus.title)}</strong>${text(MAZE_TALE.finale.plus.draw.replaceAll('{name}', YOUTH.name))}</span></p>` : ''}
     </div>
-    ${rollLeaderInfo(captain, COMMANDS[captain].name, commandDescription(captain))}
+    ${captain && COMMANDS[captain] ? rollLeaderInfo(captain, COMMANDS[captain].name, commandDescription(captain)) : ''}
     <details class="hud-disclosure draw-records"><summary>歷輪紀錄與開局資源</summary><div class="run-draw-ledger">
       <dl class="run-records" aria-label="歷輪紀錄">
         ${record('最遠走到', best, '局')}${record('走完十局', meta.wins, '次')}${record('累積的悟', embers, '點')}
@@ -63,7 +74,7 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
     </div></details>
     ${wakeJournal(meta, meta.returns ?? meta.wins ?? 0)}
     ${hasSave ? `<p class="run-save-note">${icon('info', 15)}<span>按下「落子」時，這一輪會取代目前的存檔。</span></p>` : ''}
-    <footer class="run-footer run-roll-footer">${btn('close', '返回', 'outline-btn')}${btn('deploy', '落子', 'gold-btn')}</footer>
+    <footer class="run-footer run-roll-footer">${btn('close', '返回', 'outline-btn')}${btn('deploy', kept.length === 3 ? '落子' : '先留下三枚', 'gold-btn', kept.length === 3 ? '' : 'disabled')}</footer>
   </section>`;
 }
 

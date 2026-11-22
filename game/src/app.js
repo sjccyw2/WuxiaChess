@@ -720,9 +720,10 @@ function pageHtml() {
     case 'formation':
       return rollView(
         draft.ids,
-        { ...state.run.chronicle, parcelCount: R.parcelCount(state.run.chronicle), realm: prologue.realm },
+        { ...state.run.chronicle, parcelCount: R.parcelCount(state.run.chronicle), realm: prologue.realm, settled: draft.settled },
         hasSave,
-        draft.leaderId
+        draft.leaderId,
+        draft.picks
       );
     case 'encounter':
       return encounterPage(state, state.run.scene, state.run.beat);
@@ -1264,15 +1265,22 @@ function openFormation() {
     const seed =
       pending?.source === source && Number.isInteger(pending.seed) ? pending.seed : R.newSeed();
     draft = { ...R.drawLots(seed), source };
-    draft.leaderId =
-      pending?.source === source && pending.seed === seed && draft.ids.includes(pending.leaderId)
-        ? pending.leaderId
-        : draft.ids[0];
-    try {
-      localStorage.setItem(drawKey, JSON.stringify({ source, seed, leaderId: draft.leaderId }));
-    } catch {}
+    const same = pending?.source === source && pending.seed === seed;
+    // Five drawn, three kept: a pick remembered for this draw if it still fits, else the first three.
+    draft.picks = R.keptLots({ seed, picks: same ? pending.picks : null });
+    draft.leaderId = same && draft.picks.includes(pending.leaderId) ? pending.leaderId : draft.picks[0];
+    rememberDraw();
   }
   openPage('formation');
+}
+// The draw being set up survives a reload: its seed, the three kept and the leader.
+function rememberDraw() {
+  try {
+    localStorage.setItem(
+      drawKey,
+      JSON.stringify({ source: draft.source, seed: draft.seed, leaderId: draft.leaderId, picks: draft.picks })
+    );
+  } catch {}
 }
 // A new run starts with the youth opening his eyes, then the draw. A first visit opens with the
 // film (a 9:16 or 16:9 cut, by the screen's shape), and the pages pick up where it ends.
@@ -1702,20 +1710,32 @@ function command(action, id, data = {}, keyboard = false) {
       board.rotate(1);
       break;
     case 'lead-lot':
-      if (dialogState === 'formation' && draft?.ids.includes(id)) {
+      if (dialogState === 'formation' && draft?.picks.includes(id)) {
         draft.leaderId = id;
-        try {
-          localStorage.setItem(
-            drawKey,
-            JSON.stringify({ source: draft.source, seed: draft.seed, leaderId: id })
-          );
-        } catch {}
+        draft.settled = true; // the cards have been dealt: no second deal on redrawing
+        rememberDraw();
+        drawModal(true);
+        audio('select');
+      }
+      break;
+    // Keep a drawn stone or put it back: three are kept. The leader is one of the three.
+    case 'keep-lot':
+      if (dialogState === 'formation' && draft?.ids.includes(id)) {
+        if (draft.picks.includes(id)) draft.picks = draft.picks.filter((p) => p !== id);
+        else if (draft.picks.length < R.KEPT) draft.picks = draft.ids.filter((p) => p === id || draft.picks.includes(p));
+        else {
+          notice('已留下三枚：先放回一枚。');
+          break;
+        }
+        if (!draft.picks.includes(draft.leaderId)) draft.leaderId = draft.picks[0] ?? null;
+        draft.settled = true;
+        rememberDraw();
         drawModal(true);
         audio('select');
       }
       break;
     case 'deploy':
-      if (dialogState !== 'formation' || !draft) break;
+      if (dialogState !== 'formation' || !draft || draft.picks.length !== R.KEPT) break;
       ++aiRun;
       state = R.startRun({ ...draft, realm: prologue.realm }, state.run.chronicle);
       prologue = { step: 0, film: false, realm: 1 };
