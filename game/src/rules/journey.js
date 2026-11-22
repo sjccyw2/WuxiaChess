@@ -920,6 +920,16 @@ function beginBattle(s) {
 // its objective had been met or the board lost, whatever its kind. From the story, the briefing
 // or 整備 it deploys first. The result is settled by the game's own path (settle), so rewards,
 // recruits, the story and the end of the run follow as in play.
+// Developer mode: the board's master loses half the 氣血 he has, as if a blow had taken it: his
+// 變招 follows, and on the last board those who wait on his 氣血 step to his side. Never his last
+// point: 速勝 ends a board.
+function devPress(s) {
+  const m = G.find(s, G.commanderId(s));
+  if (!m || !G.living(m) || s.result || s.run.status !== 'battle' || s.run.scene !== 'fight' || m.hp <= 2) return false;
+  m.hp = Math.max(2, Math.ceil(m.hp / 2));
+  G.check(s);
+  return true;
+}
 function devFinish(s, won, side = false) {
   const r = s.run;
   if (r.status !== 'battle' || s.result) return false;
@@ -1187,6 +1197,8 @@ const sideTale = (side) => SIDE_TALES[side?.kind] || SIDE_TALES.done;
 function drawSide(s) {
   const r = s.run,
     pool = G.boardOf(s).sides;
+  // The last board has no pool: 韋小寶 opens no book on it, and `run.side` is null there.
+  if (!pool.length && G.boardOf(s).last) return null;
   const rand = random((r.seed ^ Math.imul(r.stage + 1, 0x2545f491) ^ 0x5eed51de) >>> 0);
   for (const i of shuffled(
     pool.map((_, i) => i),
@@ -1276,6 +1288,12 @@ function waveLine(map, wave) {
   const list = G.waveList(wave.pieces);
   if (wave.when.round)
     return '第' + NUMERALS[wave.when.round - 1] + '回合，' + list + '自' + wave.place + '入場。';
+  // The last board: they come to the master's side the moment his 氣血 is down to a share.
+  if (wave.when.below) {
+    const share = { 0.5: '一半', 0.25: '四分之一' }[wave.when.below] || Math.round(wave.when.below * 100) + '%';
+    const liege = G.DETAILS[BATTLES[map].commander]?.name || pieceName(map, BATTLES[map].commander);
+    return liege + '氣血只剩' + share + '時，' + list + '趕到他身旁。';
+  }
   const masters = wave.when.halved.map((ref) => pieceName(map, ref)).join('或');
   return masters + '氣血首次過半，兩回合後，' + list + '自' + wave.place + '入場。';
 }
@@ -1305,7 +1323,7 @@ function boardModel(map, stage, s = null, live = false, route = null) {
         : kind === 'break'
           ? '破 · ' + MAZE_TALE.brief.break
           : kind === 'yield'
-            ? '問劍 · ' + MAZE_TALE.brief.yield
+            ? '問劍 · ' + MAZE_TALE.brief.yield + boonLine()
             : masters.length > 1
               ? '斬將 · ' + MAZE_TALE.brief.slayTwo
               : '斬將 · ' + MAZE_TALE.brief.slay;
@@ -1402,7 +1420,9 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     }),
     side: r?.side ? sideRow(r.side, live) : null,
     pool: s ? [] : board.sides.map((e) => sideRow(e, false)),
-    sideNote: s ? '' : '支線於入局時抽定。',
+    // The last board has no secondary: its pages show no 支線 at all.
+    noSide: !board.sides.length,
+    sideNote: s || !board.sides.length ? '' : '支線於入局時抽定。',
     lead: MAZE_TALE.brief.lead,
     sideLead: MAZE_TALE.brief.side,
     recruit: recruitId ? MAZE_TALE.brief.next.replace('{hero}', heroName(recruitId)) : '',
@@ -1690,6 +1710,12 @@ function defenders(s) {
 // The last board: 無名 steps onto it himself, as its 眼 (he joins at the company's highest level if
 // he was not a piece already); every stone remembers every art of its tree, gates waived, since
 // 求敗 holds nothing back at the root any more; and everyone goes on rested.
+// What 無名 gains as he steps onto the last board: he is the one who held the stones, not a copy
+// (the producer, 2026-11-22: stronger when he reaches the last board). Added once, to the piece.
+const LAST_BOON = { hp: 100, mp: 40, atk: 10, def: 6, step: 1 };
+// The same, as the briefing says it.
+const boonLine = () =>
+  YOUTH.name + '親自入盤，比盤上拓來的人都強：氣血 ＋' + LAST_BOON.hp + '、內力 ＋' + LAST_BOON.mp + '、攻擊 ＋' + LAST_BOON.atk + '、防禦 ＋' + LAST_BOON.def + '、移動 ＋' + LAST_BOON.step + '。';
 function musterLast(s) {
   const r = s.run;
   let youth = G.company(s).find((u) => u.id === G.YOUTH_ID);
@@ -1697,6 +1723,14 @@ function musterLast(s) {
     youth = prepareHero(G.startingHero(G.YOUTH_ID));
     G.raiseLevel(youth, Math.max(...G.company(s).map((u) => u.level)) - youth.level);
     r.bench.push(youth);
+  }
+  if (!youth.boon) {
+    youth.boon = true;
+    youth.maxHp += LAST_BOON.hp;
+    youth.maxMp += LAST_BOON.mp;
+    youth.atk += LAST_BOON.atk;
+    youth.def += LAST_BOON.def;
+    youth.step += LAST_BOON.step;
   }
   for (const u of G.company(s)) {
     for (const id of HERO_PATHS[u.id].layout.flat().filter(Boolean)) if (!u.learned.includes(id)) u.learned.push(id);
@@ -2019,7 +2053,7 @@ function campModel(s) {
     coins: r.coins,
     reward: last.reward,
     recruit: G.DETAILS[last.recruit]?.name || '',
-    objective: !last.won
+    objective: !last.won || !r.side
       ? ''
       : last.optional
         ? '支線達成：' + sideName(r.side) + '。' + rewardText(r.side, r.stage, last.side?.manual, r) + '。'
@@ -2061,5 +2095,5 @@ function campModel(s) {
   };
 }
 
-export { stagesOf, nextMap, TENTH, LAST_STAGE, endsWithLast, finalStage, mapAt, plusRun, enterLast, fixedLead, stageTitle, KIND_NAMES };
+export { LAST_BOON, devPress, stagesOf, nextMap, TENTH, LAST_STAGE, endsWithLast, finalStage, mapAt, plusRun, enterLast, fixedLead, stageTitle, KIND_NAMES };
 export { routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

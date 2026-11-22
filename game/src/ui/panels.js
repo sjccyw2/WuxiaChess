@@ -788,7 +788,7 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     sect('brief-kind', '戰局', p(model.battle)) +
     sect('brief-win', '勝利', p(model.win) + progress) +
     sect('brief-loss', '敗退', p(model.loss)) +
-    sect('brief-side', '支線', (model.sideLead ? p(model.sideLead + '：', 'brief-small') : '') + side) +
+    (model.noSide ? '' : sect('brief-side', '支線', (model.sideLead ? p(model.sideLead + '：', 'brief-small') : '') + side)) +
     (model.recruit ? sect('brief-recruit', '入局', p(model.recruit)) : '') +
     '</div></div>' +
     extra +

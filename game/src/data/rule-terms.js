@@ -331,7 +331,13 @@ const RULE_GROUPS = [
         trait: 'unfelled',
         text: '無論攻擊、還擊或毒傷，氣血都不會低於 1 點；他不會倒下'
       },
-      { id: 'formless', name: '無招', trait: 'formless', text: '沒有招式可破：任何一式的破招對他都不成' }
+      { id: 'formless', name: '無招', trait: 'formless', text: '沒有招式可破：任何一式的破招對他都不成' },
+      {
+        id: 'withdraw',
+        name: '退守',
+        trait: 'withdraw',
+        text: '氣血降到一定程度以下時，退到離俠客較遠、身旁有同伴之處；退定之後，攻擊範圍內有人才出手'
+      }
     ]
   },
   {

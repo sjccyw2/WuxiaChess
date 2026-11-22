@@ -26,6 +26,7 @@
 //   lastStand  { below, cut }: 沉樁, at or below that share of its 氣血 it takes less from blows
 //   snare    { power, turns }: 墜網, its plain blow leaves the hero 絆足
 //   unfelled 不敗: no blow, counter or poison brings its 氣血 below 1 (求敗, on the last board)
+//   withdraw { below }: 退守, at or below that share of its 氣血 it falls back among its own
 //   formless 無招: no 破招 answers it, whatever it holds
 // A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
 // without traits plays exactly as before the redesign. `phase.say` is a line the piece speaks as it
@@ -872,6 +873,7 @@ const VILLAINS = {
         sig: { reach: 2, sweep: 0.5, cadence: 3 },
         unfelled: true,
         formless: true,
+        withdraw: { below: 0.25 },
         prefers: 'leader',
         post: { tile: 'spawn', tether: 0, wake: true, note: '立在天元{tile}；有俠客踏入攻擊範圍或受到攻擊後，才離位。' },
         phase: {
@@ -1046,7 +1048,7 @@ const GISTS = {
   ironPalm: '氣血不過半時，受到的傷害減半。',
   xiaGuard: '目標身旁另有黑子時，出手更重。',
   heiMuGuard: '身旁沒有同夥時，出手更重。',
-  qiubai: '立在天元，有人近身或打他才離位；專挑領隊；氣血不會低於 1，任何破招對他都不成。'
+  qiubai: '立在天元，有人近身或打他才離位；專挑領隊；氣血不會低於 1，任何破招對他都不成。氣血過半，兩位局主趕到他身旁，此後身旁的局主替他受招；只剩四分之一，再來三位，他退到眾人身後。'
 };
 // The same for a board's master as a guest on the last board, where he keeps no post, has no men
 // of his own and does not change at half: only what he still does there. A master with no entry

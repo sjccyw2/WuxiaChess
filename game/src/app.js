@@ -383,8 +383,21 @@ function update() {
   noteBoard();
   save();
   paint();
+  showArrivals();
   notePhases();
   refreshDev();
+}
+// 護駕 (the last board): pieces that step on in the middle of a turn are flagged and the camera
+// goes to them, as it does for a wave that enters as a round begins (runEnemy shows those itself).
+let notedUnits = null,
+  arrivals = null,
+  roundArrivals = false;
+function showArrivals() {
+  const came = arrivals;
+  arrivals = null;
+  if (!came?.length || roundArrivals || screen !== 'battle' || state.result) return;
+  board.showEffects(came.map((u) => [u.id, '援軍', 'status']));
+  board.follow(...came);
 }
 // 敵援 and 支線: the lines the rules log about reinforcements become board tips, held long
 // enough to read; a change in the secondary's state is a tip once (and a failure a log line).
@@ -406,10 +419,14 @@ function noteBoard() {
   if (where !== notedBoard || notedRun !== state) {
     notedBoard = where;
     notedRun = state;
+    notedUnits = new Set(state.units.map((u) => u.id));
     for (const l of state.logs) seenLogs.add(l);
     notedSide = R.sideState(state);
     return;
   }
+  const came = state.units.filter((u) => !notedUnits.has(u.id));
+  for (const u of came) notedUnits.add(u.id);
+  if (came.length) arrivals = came.filter((u) => !G.ally(u) && G.living(u));
   for (const l of state.logs) {
     if (seenLogs.has(l)) continue;
     seenLogs.add(l);
@@ -1154,7 +1171,9 @@ async function runEnemy() {
       const ended = endedStates(holding);
       if (!state.result && ended) heldTip('第 ' + state.round + ' 回合 · ' + ended, 3400); // after any tip held
       else if (!state.result) mapTip('第 ' + state.round + ' 回合 · 我方行動');
+      roundArrivals = true;
       update();
+      roundArrivals = false;
       board.watch(false); // combat feel: hand the camera back
       if (came.length) {
         board.showEffects(came.map((u) => [u.id, '援軍', 'status']));
@@ -1299,7 +1318,7 @@ if (dev) {
 function refreshDev() {
   if (!dev) return;
   const battle = screen === 'battle' && state.run.status === 'battle' && !state.result;
-  const html = devPanel({ battle });
+  const html = devPanel({ battle, side: !!state.run.side, fight: battle && state.run.scene === 'fight' && !state.run.deploying });
   const list = dev.querySelector('.dev-buttons');
   if (list.innerHTML !== html) list.innerHTML = html;
   const host = dialog.open ? dialog : document.body;
@@ -1577,6 +1596,10 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-win-side':
     case 'dev-lose':
       if (dev) devFinish(action !== 'dev-lose', action === 'dev-win-side');
+      break;
+    case 'dev-press':
+      // The board's master loses half the 氣血 he has, as a blow would take it.
+      if (dev && state.phase === 'ally' && R.devPress(state)) update();
       break;
     case 'dev-unlock':
       if (!dev) break;
