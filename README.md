@@ -82,7 +82,7 @@ Every visual upgrade layered on the original look has a switch in `game/src/poli
 pieces, combat effects, lighting and water, panel finish, the loading veil, and the added
 controls (danger zone, `Tab` to the next hero, the side-docked strike forecast, and the
 action flow that replaces the four-button command bar), the painted skill effects, and the
-marks for reinforcements and the secondary objective on the board. Set a switch to
+marks for reinforcements and the secondary objective on the board. `statusLooks` draws the states that hold a piece on the board: 定身 freezes the figure frost-white, 閉穴 hangs a sealed talisman at its hands, 受制 turns its base, outline and health bar green-gold, 金剛 puts a gold ring and sheen on the hero and shows 無功 for a voided blow, and 固守 raises a stone ward, each with a short flourish as it starts and ends. (The outline of the tiles a two- or three-tile splash will catch is a rule the player needs, so it has no switch.) Set a switch to
 `false` to turn that one feature off; nothing else needs to change.
 
 To compare without editing the file:

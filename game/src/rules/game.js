@@ -2148,8 +2148,14 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   result.siphon = siphonPlan(s, u, t, result);
   if (result.siphon) result.notes.push(result.siphon.note);
   const share = counterRatio(s, afterSiphon(t, result.siphon));
+  // 定身, 閉穴 and 受制 land with the blow: a piece this strike holds does not answer it. (A master
+  // who resists is not held, and answers as usual.)
+  const held = result.effects.find((e) => ['freeze', 'mute', 'charm'].includes(e.kind));
+  if (held && share && !plan.safe && !blow.silent && t.hp > result.amount)
+    result.notes.push(CONDITION_NAMES[held.kind] + ' · 無從還擊');
   if (
     share &&
+    !held &&
     !plan.safe &&
     !blow.silent &&
     t.hp > result.amount &&

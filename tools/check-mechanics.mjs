@@ -2534,6 +2534,36 @@ section('freeze');
   }
 }
 
+// ── a blow that holds its target is not answered ─────────────────────────
+section('held, so no counter');
+{
+  for (const [kind, name] of [['freeze', '定身'], ['mute', '閉穴'], ['charm', '受制']]) {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, 'scout', 5, 7);
+    const plain = teach(u, defineArt({ mp: 2, factor: 0.2 }));
+    const before = G.forecast(u, t, true, s);
+    check(name + ': without it the scout answers a blow from beside', before.counterRaw > 0, before.counterRaw);
+    u.learned = u.learned.filter((id) => id !== plain);
+    teach(u, defineArt({ [kind]: { turns: 1 }, mp: 2, factor: 0.2 }));
+    const f = G.forecast(u, t, true, s);
+    check(name + ': the blow that lays it is not answered, and the preview says so', f.counterRaw === 0 && f.counter === 0 && f.notes.includes(name + ' · 無從還擊'), [f.counterRaw, f.notes]);
+    const hp = u.hp;
+    G.resolve(s, u, t, true);
+    check(name + ': the strike takes nothing back', u.hp === hp && !!t.conditions?.[kind], [hp, u.hp]);
+  }
+  {
+    // A master who has just been frozen resists the next one, so he answers it.
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, 'chief', 5, 7);
+    teach(u, defineArt({ freeze: { turns: 1 }, mp: 2, factor: 0.2 }));
+    t.lastFreezeRound = s.round - 1;
+    const f = G.forecast(u, t, true, s);
+    check('a master who resists the 定身 still answers', !f.effects.some((e) => e.kind === 'freeze') && f.counterRaw > 0, [f.effects, f.counterRaw]);
+  }
+}
+
 // ── 閉穴 mute ────────────────────────────────────────────────────────────
 section('mute');
 {
