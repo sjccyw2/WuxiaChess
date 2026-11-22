@@ -1,6 +1,10 @@
 import { Model } from '../scenery-kit.js';
 import { pines3 } from './pines-3.js';
 import { crag, crags3 } from './crags-3.js';
+import { cliffs3 } from './cliffs-3.js';
+import { forest3 } from './forest-3.js';
+import { camp3 } from './camp-3.js';
+import { gallery3 } from './gallery-3.js';
 
 // The trail is a cut into one massif. The service walks and the bell pavilion
 // sit on secondary spurs, while the snowmelt channel leaves the trail to the west.
@@ -654,13 +658,14 @@ function talus(m, surface, land) {
 
 function landform3(T, layout) {
   const ground = new Model(T, 39031);
-  const surface = massif(ground, layout);
+  const surface = massif(ground, layout),
+    land = measureLand(layout);
   valleyFloor(ground);
   snowCornices(ground, layout, surface);
   const stream = new Model(T, 39203);
   packedTrail(stream, layout, surface);
   runoff(stream, surface);
-  talus(stream, surface, measureLand(layout));
+  talus(stream, surface, land);
   const trestles = new Model(T, 39439);
   mountainWalks(trestles, surface);
   const group = new T.Group();
@@ -670,7 +675,13 @@ function landform3(T, layout) {
     stream.finish('西流雪水與坡積石'),
     trestles.finish('落岩懸棧與雪溝支架', { occluder: true }),
     ...pines3(T, surface),
-    ...crags3(T)
+    ...crags3(T),
+    // Bedding ledges, ice and fallen blocks on the faces; the snow forest; the
+    // sect's camp; the old hanging road below the shelf.
+    ...cliffs3(T, surface, land),
+    ...forest3(T, surface, land),
+    ...camp3(T, surface),
+    ...gallery3(T, surface)
   );
   return group;
 }

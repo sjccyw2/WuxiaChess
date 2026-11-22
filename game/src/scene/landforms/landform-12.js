@@ -1,5 +1,66 @@
 import { Model } from '../scenery-kit.js';
 import { mapLayout } from '../../data/terrain.js';
+import {
+  TAU,
+  flagstone,
+  clamp,
+  smooth,
+  lerp,
+  stone,
+  wetStone,
+  pebble,
+  moss,
+  river,
+  cloth,
+  timber,
+  rope,
+  hash,
+  fbm,
+  boulder,
+  column,
+  crag,
+  pine,
+  scrub,
+  tuft,
+  palm,
+  blackBanner
+} from './kit-12.js';
+import {
+  runLength,
+  falls,
+  level,
+  poolLevel,
+  width,
+  pointAt,
+  lowWater,
+  lowerBoulders,
+  pathX,
+  gate,
+  makeValley,
+  layGround
+} from './valley-12.js';
+import { fallenTrunk } from './flora-12.js';
+import { streamGround, inStream } from './stepping-12.js';
+import {
+  foamRings,
+  lowerWater,
+  cascadeLedges,
+  chuteRock,
+  cobbles,
+  driftJams,
+  cutBanks
+} from './streambed-12.js';
+import {
+  gateMasonry,
+  finial,
+  guardHut,
+  weaponRack,
+  goodsPile,
+  sandPan,
+  ashlar
+} from './gang-12.js';
+import { fingers, standingFinger } from './peaks-12.js';
+import { bankCover } from './banks-12.js';
 
 // 鐵掌溪灘 only: the foot of 鐵掌山. A fast stream comes down the mountain's west skirt in
 // steps, crosses the board from west to east and spills off its east edge into the widening
@@ -8,657 +69,15 @@ import { mapLayout } from '../../data/terrain.js';
 // fingers of an open hand. The game's camera stands to the south-east, so the south and east
 // sides are kept low and everything tall is north or west.
 
-const TAU = Math.PI * 2;
-const clamp = (n) => Math.max(0, Math.min(1, n));
-const smooth = (v) => {
-  const t = clamp(v);
-  return t * t * (3 - 2 * t);
-};
-// Rises fast from zero and levels off: the profile of a bank leaving the water.
-const rise = (v) => {
-  const t = clamp(v);
-  return t * (2 - t);
-};
-const lerp = (a, b, t) => a + (b - a) * t;
-
-const stone = { dark: 0x45484a, mid: 0x5f6061, warm: 0x6b655e, pale: 0x918f86, rust: 0x76604f },
-  wetStone = 0x30393b,
-  pebble = [0x8a8780, 0xaaa596],
-  turf = [0x5c6650, 0x74795a],
-  earth = 0x7b7566,
-  moss = 0x6c7a52,
-  river = { water: 0x4f8791, dark: 0x53787c, foam: 0xe6eeea, spray: 0xbcd6d6 },
-  needles = [0x33503f, 0x3f5d47, 0x4a684c],
-  needleEdge = 0x5d7a55,
-  needleLight = 0x7c9263,
-  scrubLeaf = [0x4a5a40, 0x596845, 0x68714b],
-  bark = 0x4b3b31,
-  barkLight = 0x6a5646,
-  cloth = 0x202328,
-  clothEdge = 0x33373d,
-  palmWhite = 0xd9d3c1,
-  timber = 0x6b4d36,
-  rope = 0xc9b88c;
-
-// Value noise for the relief and its colour patches; the same map every time.
-function hash(x, z) {
-  const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
-  return s - Math.floor(s);
-}
-function noise(x, z) {
-  const ix = Math.floor(x),
-    iz = Math.floor(z);
-  const fx = x - ix,
-    fz = z - iz;
-  const u = fx * fx * (3 - 2 * fx),
-    v = fz * fz * (3 - 2 * fz);
-  const a = hash(ix, iz),
-    b = hash(ix + 1, iz),
-    c = hash(ix, iz + 1),
-    d = hash(ix + 1, iz + 1);
-  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
-}
-function fbm(x, z) {
-  return (
-    0.55 * noise(x, z) +
-    0.3 * noise(x * 2.1 + 5.2, z * 2.1 - 1.7) +
-    0.15 * noise(x * 4.3 - 3.1, z * 4.3 + 7.9)
-  );
-}
-
-// The upper stream: its centre line from the board's west edge up to the plunge pool, as a
-// smooth run of points [x, z, distance upstream].
-const knots = [
-  [-4, 0],
-  [-6, 0],
-  [-8, 0],
-  [-9.8, -0.6],
-  [-11.2, -2.2],
-  [-12, -4.3],
-  [-12.3, -6.2],
-  [-12.4, -7.8]
-];
-const run = [];
-for (let i = 1; i < knots.length - 2; i++)
-  for (let k = 0; k < 8; k++) {
-    const t = k / 8,
-      [a, b, c, d] = [knots[i - 1], knots[i], knots[i + 1], knots[i + 2]];
-    run.push(
-      [0, 1].map(
-        (n) =>
-          0.5 *
-          (2 * b[n] +
-            (c[n] - a[n]) * t +
-            (2 * a[n] - 5 * b[n] + 4 * c[n] - d[n]) * t * t +
-            (3 * b[n] - a[n] - 3 * c[n] + d[n]) * t * t * t)
-      )
-    );
-  }
-run.push(knots.at(-2).slice());
-run[0][2] = 0;
-for (let i = 1; i < run.length; i++)
-  run[i][2] = run[i - 1][2] + Math.hypot(run[i][0] - run[i - 1][0], run[i][1] - run[i - 1][1]);
-const runLength = run.at(-1)[2];
-// Where the stream steps down: [distance upstream, height of the step].
-const falls = [
-  [1.9, 0.4],
-  [4.2, 0.5],
-  [6.5, 0.55],
-  [8.45, 0.45]
-];
-const boardWater = -0.016;
-function level(u) {
-  let y = boardWater;
-  for (const [at, drop] of falls) y += drop * smooth((u - at + 0.13) / 0.26);
-  return y;
-}
-const poolLevel = level(runLength);
-const width = (u) => 2 - 0.95 * smooth(u / 7) + 0.35 * smooth((u - 8.2) / 1.6);
-// Distance from the centre line and how far upstream the nearest point lies.
-function along(x, z) {
-  let best = Infinity,
-    at = 0;
-  for (let i = 1; i < run.length; i++) {
-    const [ax, az, au] = run[i - 1],
-      [bx, bz, bu] = run[i];
-    const dx = bx - ax,
-      dz = bz - az;
-    const t = clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz));
-    const d = Math.hypot(x - ax - t * dx, z - az - t * dz);
-    if (d < best) {
-      best = d;
-      at = au + (bu - au) * t;
-    }
-  }
-  return [best, at];
-}
-// The point of the centre line at a distance upstream, with the direction it runs in.
-function pointAt(u) {
-  let i = 1;
-  while (i < run.length - 1 && run[i][2] < u) i++;
-  const [ax, az, au] = run[i - 1],
-    [bx, bz, bu] = run[i];
-  const len = bu - au,
-    tx = (bx - ax) / len,
-    tz = (bz - az) / len;
-  return [ax + tx * (u - au), az + tz * (u - au), tx, tz];
-}
-// The lower stream leaves the board's east edge and widens toward the river.
-const lowWater = -0.5;
-const lowerMid = (x) => {
-  const t = Math.max(0, x - 6);
-  return 0.1 * t + 0.018 * t * t;
-};
-const lowerHalf = (x) => {
-  const t = Math.max(0, x - 6);
-  return 2.15 + 0.3 * t + 0.022 * t * t;
-};
-// Gravel bars left in the lower stream: [x, z, length, breadth, height over the bed].
-const bars = [
-  [9.3, 2.3, 1.5, 0.6, 0.66],
-  [10.7, -1.0, 1.3, 0.55, 0.64],
-  [8.2, -1.55, 0.9, 0.42, 0.58],
-  [14.6, 3.6, 2.6, 1.3, 0.7]
-];
-// Boulders standing in the lower stream, the first three on the brink where the water leaves
-// the board: [x, z, radius, height from the bed].
-const lowerBoulders = [
-  [6.46, -1.52, 0.4, 1.12],
-  [6.5, 0.3, 0.34, 1.02],
-  [6.44, 1.74, 0.3, 1.05],
-  [7.6, -0.6, 0.42, 0.95],
-  [8.4, 0.9, 0.55, 1.1],
-  [9.5, -0.2, 0.36, 0.86],
-  [10.6, 1.0, 0.6, 1.2],
-  [11.9, 2.9, 0.45, 0.95],
-  [12.4, -1.9, 0.5, 1.05],
-  [13.6, 0.9, 0.7, 1.3],
-  [16.2, -1.4, 0.5, 1.0],
-  [18.5, 3.4, 0.8, 1.35],
-  [7.3, 2.5, 0.3, 0.8]
-];
-// The mountain path winds north from the gate.
-const pathX = (z) => 0.6 + 0.55 * Math.sin(Math.max(0, -z - 7.9) * 0.62);
-const gate = [0.6, -7.7];
-
-// The ground beyond the board as one height function, with the measures the dressing needs.
-function makeValley(layout) {
-  const cx = (layout.width - 1) / 2,
-    cz = (layout.height - 1) / 2;
-  const tiles = layout.cells.map(({ x, y }) => [x - cx, y - cz]);
-  const onBoard = (x, z) =>
-    layout.mask[Math.floor(z + cz + 0.5)]?.[Math.floor(x + cx + 0.5)] === '#';
-  // Distance beyond the edge of the board; 0 on it.
-  function outside(x, z) {
-    // Far off, the board's stepped corners no longer matter.
-    const fx = Math.abs(x) - layout.width / 2,
-      fz = Math.abs(z) - layout.height / 2;
-    if (fx > 3 || fz > 3) return Math.hypot(Math.max(fx, 0), Math.max(fz, 0));
-    let best = Infinity;
-    for (const [tx, tz] of tiles) {
-      const dx = Math.max(Math.abs(x - tx) - 0.5, 0),
-        dz = Math.max(Math.abs(z - tz) - 0.5, 0),
-        d = dx * dx + dz * dz;
-      if (d < best) best = d;
-    }
-    return Math.sqrt(best);
-  }
-  // The lie of the land before the stream is cut into it.
-  function region(x, z) {
-    const broad = fbm(x * 0.19 + 3.1, z * 0.19 - 7.7),
-      fine = fbm(x * 0.8 - 11.3, z * 0.8 + 5.9);
-    let h = -0.04 + (fine - 0.5) * 0.12;
-    // The mountain: a level apron behind the board, then spurs either side of the path's gully.
-    const q = -z - 6.7 + 0.3 * Math.max(0, -x - 4) - 0.32 * Math.max(0, x - 5);
-    if (q > 0) {
-      const off = x - pathX(z),
-        wide = Math.max(0, Math.abs(off) - 0.6);
-      const gully = smooth(wide / 3.2),
-        across = pathX(z) + Math.sign(off) * wide;
-      const spur = 0.5 + 0.5 * Math.cos(across * 0.62 + broad * 3);
-      const steep = 0.42 + gully * (0.5 + 0.5 * spur) + 0.25 * broad;
-      const climb = Math.max(0, q - 2) * steep,
-        cap = 9 + 5 * broad;
-      h += 0.08 * Math.min(q, 2) + cap * (1 - Math.exp(-climb / cap));
-      h += smooth(q / 4) * gully * (fbm(across * 0.8 - 11.3, z * 0.8 + 5.9) - 0.5) * 1.6;
-    }
-    // The west skirt the stream comes down, and the crag its last fall drops from.
-    h += Math.max(0, -x - 7.3) * 0.3 * smooth((3.2 - z) / 5) * (0.8 + 0.5 * broad);
-    h += 4.2 * Math.exp(-((x + 12.9) ** 2 / 6 + (z + 9.4) ** 2 / 4));
-    // The south bank lies low and only lifts into hills far behind the party.
-    const south = z - 6;
-    if (south > 0) h += 0.015 * south + smooth((south - 10) / 12) * (1 + 3.5 * broad);
-    return h;
-  }
-  // How far a point lies outside the nearest water's edge (negative in the stream), and
-  // that water's level.
-  function reach(x, z) {
-    if (x > 5) return [Math.abs(z - lowerMid(x)) - lowerHalf(x), lowWater];
-    if (x < -5) {
-      const [d, u] = along(x, z);
-      return [d - width(u), level(u)];
-    }
-    return [9, -9];
-  }
-  function surface(x, z) {
-    const base = region(x, z),
-      [e, water] = reach(x, z);
-    let h = base;
-    if (x > 5) {
-      if (e < 0) {
-        h = lowWater - 0.45 * rise(-e / 0.9);
-        for (const [bx, bz, rx, rz, top] of bars) {
-          const k = 1 - ((x - bx) / rx) ** 2 - ((z - bz) / rz) ** 2;
-          if (k > 0) h += top * smooth(k * 1.6);
-        }
-      } else h = lerp(lowWater, base, rise(e / 1.5));
-    } else if (x < -5) {
-      if (e < 0) h = water - 0.3 * rise(-e / 0.6);
-      else {
-        // Where the land lies lower than a pool, a shoulder of rock holds the water in.
-        const shoulder = water + 0.16 + 0.2 * smooth(water / 0.5) - 0.55 * Math.max(0, e - 1.3);
-        h = lerp(water, Math.max(base, shoulder), rise(e / 1.1));
-      }
-    }
-    // The banks meet the board just under its rim.
-    if (e > 0.3) h = lerp(-0.02, h, smooth(outside(x, z) / 0.9));
-    // The land sinks away at the edge of the world.
-    const border = Math.min(x + 34, 30 - x, z + 36, 30 - z);
-    if (h > -0.8) h = lerp(-0.8, h, smooth(border / 6));
-    return h;
-  }
-  return { onBoard, outside, reach, surface };
-}
-
-// Ground colour: wet stone at the water, shingle on the strand and round the board, stony
-// soil with patches of thin turf beyond, bare iron-grey rock where it is steep.
-function tone(m, valley, x, z, y) {
-  const s = 0.35,
-    slope =
-      Math.hypot(
-        valley.surface(x + s, z) - valley.surface(x - s, z),
-        valley.surface(x, z + s) - valley.surface(x, z - s)
-      ) /
-      (2 * s);
-  const broad = fbm(x * 0.5 + 1.7, z * 0.5 - 4.2),
-    patch = fbm(x * 1.3 - 6.1, z * 1.3 + 2.4),
-    speck = hash(Math.round(x * 3.1) + 0.5, Math.round(z * 2.9) + 0.5);
-  const [e, water] = valley.reach(x, z),
-    over = y - water;
-  const strand = smooth(1 - over / 0.6) * smooth(1 - e / 2.4),
-    // The ground is trodden bare round the board and along the trail up from the south.
-    trail = z > 6 ? smooth(1 - Math.abs(x - 0.4 - 0.9 * Math.sin(z * 0.35)) / 0.8) : 0,
-    trodden = Math.max(smooth(1 - valley.outside(x, z) / 2.6), trail);
-  const shingle = m.mix(pebble[0], pebble[1], speck * 0.8),
-    soil = m.mix(m.mix(0x696458, earth, smooth(patch / 0.45)), shingle, 0.2 + 0.5 * patch),
-    grass = m.mix(turf[0], turf[1], patch);
-  const green =
-    smooth((broad - 0.4) / 0.2) *
-    (0.55 + 0.45 * smooth((patch - 0.35) / 0.3)) *
-    (1 - strand) *
-    (1 - 0.85 * trodden);
-  let c = m.mix(m.mix(soil, shingle, Math.max(strand, trodden * 0.8)), grass, green);
-  // Bars and beaches stay shingle however they slope.
-  const bare =
-    Math.max(smooth((slope - 0.5) / 0.5), smooth((y - 4) / 6) * 0.5) *
-    (e < 1.5 ? smooth((over - 0.25) / 0.4) : 1);
-  const crag = m.mix(
-    m.mix(stone.dark, stone.mid, broad),
-    stone.rust,
-    smooth((speck - 0.55) / 0.45) * 0.4
-  );
-  c = m.mix(c, crag, bare);
-  if (e < 1.2) c = m.mix(c, wetStone, smooth(1 - (over + 0.04) / 0.14) * 0.7);
-  return c;
-}
-
-const ticks = (...spans) => {
-  const out = [spans[0][0]];
-  for (const [, to, step] of spans) while (out.at(-1) < to - 1e-6) out.push(out.at(-1) + step);
-  return out;
-};
-// Lays the ground as a grid, fine round the board and the upper stream and coarse far off;
-// the high ground goes to the mountain's own group so the cutaway can open it. Returns the
-// height of the laid ground at any point, for seating things on it.
-function layGround(low, high, valley) {
-  const xs = ticks([-34, -18, 2], [-18, 12, 0.5], [12, 18, 1], [18, 30, 2]),
-    zs = ticks([-36, -16, 2], [-16, -11, 1], [-11, 9, 0.5], [9, 16, 1], [16, 30, 2]);
-  const grid = zs.map((z, j) =>
-    xs.map((x, i) => {
-      let px = x,
-        pz = z;
-      // Off the board's edge the corners are nudged so the facets do not line up.
-      if (valley.outside(x, z) > 0.45) {
-        px += (hash(i, j) - 0.5) * 0.44 * ((xs[i + 1] ?? x + 2) - x);
-        pz += (hash(i + 71, j + 13) - 0.5) * 0.44 * ((zs[j + 1] ?? z + 2) - z);
-      }
-      const y = valley.surface(px, pz);
-      return { p: [px, y, pz], c: tone(low, valley, px, pz, y) };
-    })
-  );
-  for (let j = 0; j < zs.length - 1; j++)
-    for (let i = 0; i < xs.length - 1; i++) {
-      if (valley.onBoard((xs[i] + xs[i + 1]) / 2, (zs[j] + zs[j + 1]) / 2)) continue;
-      const q = [grid[j][i], grid[j + 1][i], grid[j + 1][i + 1], grid[j][i + 1]];
-      (Math.max(...q.map((v) => v.p[1])) > 1.3 ? high : low).face(
-        q.map((v) => v.p),
-        q.map((v) => v.c)
-      );
-    }
-  const find = (list, v) => {
-    let i = 0;
-    while (i < list.length - 2 && list[i + 1] < v) i++;
-    return i;
-  };
-  return (x, z) => {
-    const i0 = find(xs, x),
-      j0 = find(zs, z);
-    for (let j = Math.max(0, j0 - 1); j <= Math.min(zs.length - 2, j0 + 1); j++)
-      for (let i = Math.max(0, i0 - 1); i <= Math.min(xs.length - 2, i0 + 1); i++) {
-        const a = grid[j][i].p,
-          b = grid[j + 1][i].p,
-          c = grid[j + 1][i + 1].p,
-          d = grid[j][i + 1].p;
-        for (const [p, q, r] of [
-          [a, b, c],
-          [a, c, d]
-        ]) {
-          const det = (q[2] - r[2]) * (p[0] - r[0]) + (r[0] - q[0]) * (p[2] - r[2]);
-          const u = ((q[2] - r[2]) * (x - r[0]) + (r[0] - q[0]) * (z - r[2])) / det,
-            v = ((r[2] - p[2]) * (x - r[0]) + (p[0] - r[0]) * (z - r[2])) / det;
-          if (u >= -1e-6 && v >= -1e-6 && u + v <= 1 + 1e-6)
-            return u * p[1] + v * q[1] + (1 - u - v) * r[1];
-        }
-      }
-    return valley.surface(x, z);
-  };
-}
-
-// A water-worn boulder: a dark wet foot, grey flanks and a pale rounded crown.
-function boulder(m, x, y, z, rx, h, rz, { wet = 0.2, green = 0, n = 8, turn = 0 } = {}) {
-  const r = m.rng,
-    spokes = Array.from({ length: n }, (_, i) => [
-      turn + (i / n) * TAU + r.range(-0.14, 0.14),
-      r.range(0.86, 1.12)
-    ]);
-  const body = m.mix(stone.mid, stone.warm, r.next()),
-    crown = m.mix(m.mix(stone.pale, body, 0.25), moss, green),
-    foot = m.mix(body, wetStone, wet > 0.1 ? 0.8 : 0.3);
-  const levels = [
-    [0, 0.82],
-    [0.17, 1],
-    [0.5, 0.96],
-    [0.8, 0.72],
-    [0.95, 0.4]
-  ];
-  const tones = levels.map(([k]) => (k <= wet ? foot : k > 0.7 ? crown : body));
-  let last;
-  for (let j = 0; j < levels.length; j++) {
-    const [k, wide] = levels[j];
-    const ring = spokes.map(([a, q], i) => [
-      x + Math.cos(a) * rx * q * wide,
-      y + h * (k + (j && j < 4 ? 0.05 * Math.sin(i * 2.3 + j) : 0)),
-      z + Math.sin(a) * rz * q * wide
-    ]);
-    if (last)
-      for (let i = 0; i < n; i++) {
-        const q = (i + 1) % n;
-        m.face(
-          [last[i], ring[i], ring[q], last[q]],
-          [tones[j - 1], tones[j], tones[j], tones[j - 1]],
-          0.92 + 0.08 * Math.abs(Math.cos(i * 1.7))
-        );
-      }
-    last = ring;
-  }
-  for (let i = 0; i < n; i++) m.face([[x, y + h, z], last[(i + 1) % n], last[i]], crown);
-}
-
-// A standing stone with straight sides and a flat, bevelled top.
-function column(m, x, y, z, rad, h, n, foot, body, top) {
-  const r = m.rng,
-    turn = r.range(0, TAU),
-    low = [],
-    high = [],
-    cap = [];
-  for (let i = 0; i < n; i++) {
-    const a = turn + (i / n) * TAU + r.range(-0.12, 0.12),
-      k = r.range(0.9, 1.08);
-    const u = Math.cos(a) * rad * k,
-      v = Math.sin(a) * rad * k;
-    low.push([x + u * 1.08, y, z + v * 1.08]);
-    high.push([x + u, y + h - Math.min(0.04, h * 0.1), z + v]);
-    cap.push([x + u * 0.84, y + h, z + v * 0.84]);
-  }
-  const bevel = m.mix(body, top, 0.6);
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n;
-    m.face(
-      [low[i], high[i], high[j], low[j]],
-      [foot, body, body, foot],
-      0.9 + (0.1 * ((i * 5) % 3)) / 2
-    );
-    m.face([high[i], cap[i], cap[j], high[j]], bevel);
-  }
-  m.face([...cap].reverse(), top);
-}
-
-// A crag of jointed iron-grey rock: stacked blocks that narrow upward, pale on their ledges.
-function crag(m, x, z, bottom, top, rx, rz) {
-  const r = m.rng,
-    tints = [stone.dark, stone.mid, stone.warm, 0x525456];
-  let y = bottom,
-    k = 0;
-  while (y < top - 0.05) {
-    const h = Math.min(top - y, r.range(0.5, 0.95)),
-      t = (y - bottom) / Math.max(0.01, top - bottom),
-      s = 1.1 - 0.3 * t,
-      n = 5,
-      turn = r.range(0, TAU),
-      ox = x + r.range(-0.08, 0.08) * rx,
-      oz = z + r.range(-0.08, 0.08) * rz;
-    const low = [],
-      high = [],
-      cap = [];
-    for (let i = 0; i < n; i++) {
-      const a = turn + (i / n) * TAU + r.range(-0.2, 0.2),
-        q = r.range(0.85, 1.1);
-      const u = Math.cos(a) * rx * s * q,
-        v = Math.sin(a) * rz * s * q;
-      low.push([ox + u, y, oz + v]);
-      high.push([ox + u * 0.96, y + h * r.range(0.9, 1.03), oz + v * 0.96]);
-      cap.push([ox + u * 0.8, y + h + 0.05, oz + v * 0.8]);
-    }
-    const body = m.mix(tints[k % 4], stone.rust, r.next() < 0.3 ? 0.35 : 0),
-      last = y + h >= top - 0.05,
-      ledge = m.mix(stone.pale, moss, last ? 0.45 : 0.15);
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n;
-      m.face([low[i], high[i], high[j], low[j]], body, 0.88 + (0.12 * ((i * 7) % 3)) / 2);
-      m.face([high[i], cap[i], cap[j], high[j]], m.mix(body, ledge, 0.6));
-    }
-    m.face([...cap].reverse(), ledge);
-    y += h;
-    k++;
-  }
-}
-
-// One pad of pine needles: dark underneath, lighter toward its crown.
-function pad(m, x, y, z, rad, rich, tones = needles, edge = needleEdge, light = needleLight) {
-  const r = m.rng,
-    n = 6,
-    tint = m.rgb(r.pick(tones)),
-    rim = [],
-    inner = [];
-  const turn = r.range(0, TAU),
-    squash = r.range(0.75, 1);
-  for (let i = 0; i < n; i++) {
-    const a = turn + (i / n) * TAU + r.range(-0.18, 0.18),
-      k = r.range(0.82, 1.14);
-    const u = Math.cos(a) * rad * k,
-      v = Math.sin(a) * rad * k * squash;
-    rim.push([x + u, y - 0.12 * rad * r.range(0.5, 1.3), z + v]);
-    inner.push([x + u * 0.55, y + 0.17 * rad, z + v * 0.55]);
-  }
-  const crown = [x, y + 0.3 * rad, z],
-    low = [x, y - 0.3 * rad, z],
-    rimTone = m.rgb(edge),
-    top = m.mix(edge, light, 0.7);
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n;
-    m.face([low, rim[i], rim[j]], tint, 0.8);
-    if (rich) {
-      m.face([rim[j], rim[i], inner[i], inner[j]], [tint, tint, rimTone, rimTone]);
-      m.face([inner[j], inner[i], crown], [rimTone, rimTone, top]);
-    } else m.face([rim[j], rim[i], crown], [tint, tint, rimTone]);
-  }
-}
-
-// A crooked mountain pine with level pads of needles, of height h.
-function pine(m, x, y, z, h, { lean = 0.5, yaw = 0, boughs = 7, rich = true, spread = 1 } = {}) {
-  const r = m.rng;
-  m.frame(x, y, z, yaw, h, () => {
-    const trunk = [
-      [0, -0.12, 0],
-      [0.03 * lean, 0.28, 0.02],
-      [0.17 * lean, 0.55, -0.03],
-      [0.1 * lean, 0.8, 0.02],
-      [0.16 * lean, 1, 0]
-    ];
-    const girth = [0.062, 0.05, 0.038, 0.026, 0.012];
-    for (let j = 0; j < 4; j++)
-      m.tube(
-        trunk[j],
-        trunk[j + 1],
-        girth[j],
-        girth[j + 1],
-        j % 2 ? bark : barkLight,
-        rich ? 6 : 4
-      );
-    for (let j = 0; j < boughs; j++) {
-      const t = j / Math.max(1, boughs - 1),
-        a = j * 2.4 + r.range(-0.3, 0.3),
-        k = 1.1 + t * 2.5,
-        i = Math.min(3, Math.floor(k)),
-        f = k - i;
-      const from = trunk[i].map((v, n) => lerp(v, trunk[i + 1][n], f)),
-        len = (0.36 - 0.2 * t) * r.range(0.85, 1.15);
-      const tip = [from[0] + Math.cos(a) * len, from[1] + 0.04, from[2] + Math.sin(a) * len];
-      m.tube(from, tip, 0.02 - 0.008 * t, 0.007, bark, rich ? 4 : 3);
-      const size = (0.2 - 0.08 * t) * r.range(0.85, 1.15) * spread;
-      pad(m, tip[0], tip[1] + 0.03, tip[2], size, rich);
-      if (rich && j % 3 === 0)
-        pad(
-          m,
-          (from[0] + tip[0]) / 2 + Math.sin(a) * size * 0.5,
-          tip[1] + 0.02,
-          (from[2] + tip[2]) / 2 - Math.cos(a) * size * 0.5,
-          size * 0.7,
-          rich
-        );
-    }
-    pad(m, trunk[4][0], 1.02, trunk[4][2], 0.13 * spread, rich);
-  });
-}
-
-// Low scrub: a few olive cushions on short twigs.
-function scrub(m, x, y, z, s) {
-  const r = m.rng;
-  for (let i = 0; i < 3; i++) {
-    const a = r.range(0, TAU),
-      d = i ? s * r.range(0.3, 0.6) : 0,
-      top = [x + Math.cos(a) * d, y + s * r.range(0.4, 0.75), z + Math.sin(a) * d];
-    m.tube([x, y - 0.03, z], top, 0.02 * s, 0.01 * s, bark, 4);
-    pad(m, top[0], top[1], top[2], s * r.range(0.4, 0.6), false, scrubLeaf, 0x66734c, 0x8c9063);
-  }
-}
-
-// A tuft of dry grass.
-function tuft(m, x, y, z, s) {
-  const r = m.rng;
-  for (let i = 0; i < 4; i++) {
-    const a = r.range(0, TAU),
-      l = s * r.range(0.6, 1.1);
-    m.leaf(
-      [x, y, z],
-      [x + Math.cos(a) * l * 0.5, y + l, z + Math.sin(a) * l * 0.5],
-      l * 0.07,
-      r.pick([0x7d8556, 0x8f8f60, 0x6f7c50]),
-      0xa3a06c,
-      l * 0.12
-    );
-  }
-}
-
-// The open palm of 鐵掌幫, drawn on an upright plane facing south or north.
-function palm(m, x, y, z, s, col) {
-  const part = (points) =>
-    m.face(
-      points.map(([u, v]) => [x + u * s, y + v * s, z]),
-      col
-    );
-  part([
-    [-0.25, -0.42],
-    [0.25, -0.42],
-    [0.29, -0.2],
-    [0.27, 0],
-    [-0.27, 0],
-    [-0.29, -0.2]
-  ]);
-  for (const [u, len, splay] of [
-    [-0.2, 0.36, -0.1],
-    [-0.068, 0.45, -0.03],
-    [0.068, 0.42, 0.03],
-    [0.2, 0.3, 0.12]
-  ])
-    part([
-      [u - 0.054, -0.02],
-      [u + 0.054, -0.02],
-      [u + splay * len + 0.045, len],
-      [u + splay * len - 0.045, len]
-    ]);
-  part([
-    [-0.27, -0.32],
-    [-0.27, -0.13],
-    [-0.52, 0.07],
-    [-0.59, -0.02]
-  ]);
-}
-
-// A black banner hanging from a yard at height top, its foot cut to a swallowtail, with the
-// pale palm on both faces.
-function blackBanner(m, x, top, z, w, len, mark) {
-  const rows = 6,
-    grid = [];
-  for (let j = 0; j <= rows; j++) {
-    const v = j / rows,
-      sway = v > 0.6 ? 0.09 * Math.sin((v - 0.6) * 5) : 0;
-    grid.push(
-      [-1, 0, 1].map((k) => [
-        x + (k * w) / 2,
-        top - len * (v - (j === rows && !k ? 0.13 : 0)),
-        z + sway + (k ? 0 : 0.01 * v)
-      ])
-    );
-  }
-  for (let j = 0; j < rows; j++)
-    for (let k = 0; k < 2; k++)
-      m.face(
-        [grid[j][k], grid[j][k + 1], grid[j + 1][k + 1], grid[j + 1][k]],
-        (j + k) % 2 ? cloth : m.mix(cloth, clothEdge, 0.5)
-      );
-  m.box(x, top - 0.02, z, w + 0.02, 0.05, 0.03, clothEdge);
-  for (const side of [0.016, -0.012])
-    palm(m, x + 0.04 * mark, top - len * 0.36, z + side, mark, palmWhite);
-}
-
 // ---------------------------------------------------------------------------------------
 // The surroundings.
 
 // Loose stone along both streams and about the banks, the trail's flat stones, boulders at
 // every step of the water, drift logs on the bars.
 function streamStones(m, valley, ground) {
-  const r = m.rng;
+  const r = m.rng,
+    // Every stone the current breaks on, for the foam round it: [x, z, radius, water level].
+    wetRocks = [];
   for (let i = 0; i < 210; i++) {
     const x = r.range(-15, 21),
       z = r.range(-9, 12),
@@ -687,12 +106,22 @@ function streamStones(m, valley, ground) {
     const rad = r.range(0.06, 0.2);
     m.rock(x, y - rad * 0.3, z, rad, rad * r.range(0.6, 1), rad * 0.8, stone.mid, pebble[1], 5, i);
   }
-  // The trail the party came up by: flat stones trodden into the south bank.
-  for (let i = 0; i < 14; i++) {
-    const z = 6.5 + i * 0.62,
-      x = 0.4 + 0.9 * Math.sin(z * 0.35) + r.range(-0.18, 0.18);
-    m.frame(x, ground(x, z), z, r.range(0, TAU), 1, () =>
-      m.rock(0, -0.03, 0, r.range(0.2, 0.3), 0.07, r.range(0.15, 0.22), stone.mid, pebble[1], 6)
+  // The trail the party came up by: worn flags trodden into the south bank, two abreast where
+  // it is wide, running up to the board's edge.
+  for (let i = 0; i < 26; i++) {
+    const z = 6.45 + i * 0.36,
+      x = 0.4 + 0.9 * Math.sin(z * 0.35),
+      off = i % 3 === 1 ? 0 : (i % 2 ? 1 : -1) * r.range(0.14, 0.24);
+    if (r.next() < 0.12) continue;
+    const px = x + off + r.range(-0.06, 0.06);
+    flagstone(
+      m,
+      px,
+      ground(px, z),
+      z,
+      r.range(0.22, 0.34),
+      r.range(0.16, 0.24),
+      r.range(-0.5, 0.5)
     );
   }
   // Heaps of boulders left on the south bank by old floods.
@@ -731,24 +160,23 @@ function streamStones(m, valley, ground) {
       const k = s + r.range(-0.08, 0.08),
         back = r.range(-0.1, 0.25),
         rad = r.range(0.28, 0.45);
-      boulder(
-        m,
-        x - tz * half * k + tx * back,
-        foot,
-        z + tx * half * k + tz * back,
-        rad,
-        drop + 0.3 + r.range(0.2, 0.55),
-        rad * r.range(0.75, 1),
-        { wet: 0.5, green: Math.abs(k) > 0.9 ? 0.4 : 0, turn: r.range(0, TAU) }
-      );
+      const bx = x - tz * half * k + tx * back,
+        bz = z + tx * half * k + tz * back;
+      boulder(m, bx, foot, bz, rad, drop + 0.3 + r.range(0.2, 0.55), rad * r.range(0.75, 1), {
+        wet: 0.5,
+        green: Math.abs(k) > 0.9 ? 0.4 : 0,
+        turn: r.range(0, TAU)
+      });
     }
   }
-  for (const [x, z, rad, h] of lowerBoulders)
+  for (const [x, z, rad, h] of lowerBoulders) {
+    if (x > 6.7) wetRocks.push([x, z, rad, lowWater]);
     boulder(m, x, lowWater - 0.5, z, rad, h, rad * r.range(0.75, 0.95), {
       wet: 0.5,
       turn: r.range(0, TAU),
       n: 9
     });
+  }
   // Boulders standing in the pools of the upper stream.
   for (const [u, s, rad] of [
     [0.7, -0.55, 0.3],
@@ -761,6 +189,7 @@ function streamStones(m, valley, ground) {
   ]) {
     const [x, z, tx, tz] = pointAt(u),
       half = width(u);
+    wetRocks.push([x - tz * half * s, z + tx * half * s, rad, level(u)]);
     boulder(
       m,
       x - tz * half * s,
@@ -775,26 +204,15 @@ function streamStones(m, valley, ground) {
       }
     );
   }
-  // Drift logs stranded on the gravel.
-  for (const [x, z, len, yaw] of [
-    [9.3, 2.3, 1.7, 0.25],
-    [10.7, -1.0, 1.4, -0.15],
-    [7.4, 4.6, 1.4, 1.1],
-    [-7.2, 2.7, 1.5, 0.5]
-  ]) {
-    const y = ground(x, z) + 0.07,
-      dx = (Math.cos(yaw) * len) / 2,
-      dz = (Math.sin(yaw) * len) / 2;
-    m.tube([x - dx, y, z - dz], [x + dx, y + 0.05, z + dz], 0.09, 0.06, 0x8f8676, 6);
-    m.tube(
-      [x + dx * 0.2, y + 0.03, z + dz * 0.2],
-      [x + dx * 0.5 - dz * 0.3, y + 0.3, z + dz * 0.5 + dx * 0.3],
-      0.035,
-      0.012,
-      0x8f8676,
-      4
-    );
-  }
+  // Trunks the floods stranded on the gravel.
+  for (const [x, z, len, yaw, rad] of [
+    [9.3, 2.3, 1.7, 0.25, 0.08],
+    [10.7, -1.0, 1.4, -0.15, 0.07],
+    [7.4, 4.6, 1.4, 1.1, 0.07],
+    [-7.2, 2.7, 1.5, 0.5, 0.075]
+  ])
+    fallenTrunk(m, x, ground(x, z) - 0.02, z, len, yaw, rad, { roots: true });
+  return wetRocks;
 }
 
 // How white the upper stream runs at a point: the falls themselves and the churn below them.
@@ -835,7 +253,12 @@ function upperStream(m) {
           s = edge ? (k ? 1 : -1) * (1 + 0.25 / half) : ((k - 1) / (K - 2)) * 2 - 1,
           px = x - tz * half * s,
           pz = z + tx * half * s;
-        const deep = m.mix(river.water, river.dark, hash(k + 0.5, Math.round(u * 3) + 0.5));
+        // A deeper green channel runs down the middle of each pool.
+        const deep = m.mix(
+          m.mix(river.water, river.dark, hash(k + 0.5, Math.round(u * 3) + 0.5)),
+          0x3c6a68,
+          0.55 * (1 - s * s)
+        );
         return {
           p: [px, y - (edge ? 0.08 : 0), pz],
           c: m.mix(deep, river.foam, froth(u, s, px, pz))
@@ -905,7 +328,7 @@ function brinkFall(m) {
     }
     // The churn: tongues of white water running out from the foot of the curtain.
     const reach = r.range(0.3, 0.85),
-      y = lowWater + 0.014;
+      y = lowWater + 0.02;
     m.face(
       [
         [6.72, y, z0 - 0.02],
@@ -944,21 +367,6 @@ function brinkFall(m) {
       [...profile.map(([x, y]) => [x, y - 0.01, z]), [6.8, -0.62, z], [6, -0.62, z]],
       m.mix(stone.dark, wetStone, 0.5)
     );
-  // The thin wake each boulder trails downstream.
-  for (const [x, z, rad] of lowerBoulders) {
-    const y = lowWater + 0.012,
-      len = rad * r.range(2.6, 3.6),
-      w = rad * 0.34,
-      from = x + rad * 0.75;
-    m.face(
-      [
-        [from, y, z - w],
-        [from, y, z + w],
-        [from + len, y, z + len * 0.12]
-      ],
-      [spray, spray, faint]
-    );
-  }
 }
 
 // The high fall at the head of the stream: the water comes out of a cleft between two
@@ -1031,15 +439,21 @@ function highFall(m, ground) {
 // two back corners of the board.
 function footCrags(m, ground) {
   const r = m.rng;
-  // Behind the gate five tall crags stand in a row like the mountain's own five peaks, the
-  // middle one tallest and the thumb set apart; the path climbs between two of them.
+  // Behind the gate five rock fingers stand in a row like the mountain's own five peaks (see
+  // peaks-12.js), with crags at their feet; the path climbs between two of them.
+  for (const [x, z, h, w, lean] of fingers) {
+    standingFinger(m, ground, x, z, h, w, lean);
+    for (let i = 0; i < 2; i++) {
+      const a = r.range(0, TAU),
+        d = w * r.range(0.9, 1.3),
+        px = x + Math.cos(a) * d,
+        pz = z + Math.sin(a) * d,
+        y = ground(px, pz);
+      crag(m, px, pz, y - 0.6, y + r.range(0.6, 1.3), w * 0.6, w * r.range(0.45, 0.6));
+    }
+  }
   // [x, z, height, breadth, how far its lesser blocks rise]
   for (const [x, z, h, w, lesser] of [
-    [-4.4, -9.3, 2.7, 0.7, 0.4],
-    [-2.3, -10.4, 4.3, 0.66, 0.4],
-    [-0.5, -10.9, 5.5, 0.7, 0.4],
-    [2.7, -10.7, 4.6, 0.66, 0.4],
-    [4.6, -10.1, 3.4, 0.6, 0.4],
     [-1.6, -8.4, 1.5, 0.5, 0.8],
     [2.9, -8.4, 1.7, 0.5, 0.8],
     [-0.9, -13.4, 3.6, 0.9, 0.8],
@@ -1077,8 +491,8 @@ function gangWorks(m, ground) {
     foot = m.mix(stone.dark, wetStone, 0.2),
     top = m.mix(stone.pale, moss, 0.2);
   m.frame(gx, gy, gz, 0, 1, () => {
+    gateMasonry(m);
     for (const s of [-1, 1]) {
-      column(m, s * 1.2, -0.3, 0, 0.34, 3.05, 5, foot, grey, top);
       // Packing stones at the foot of each post.
       for (let i = 0; i < 3; i++)
         m.rock(
@@ -1093,10 +507,7 @@ function gangWorks(m, ground) {
           6
         );
     }
-    // The lintel, a single rough slab, and the pole the banner hangs from.
-    m.frame(0, 2.92, 0, 0, [1.72, 0.2, 0.36], () =>
-      column(m, 0, -1, 0, 1, 2, 6, m.rgb(stone.dark), grey, top)
-    );
+    // The pole the banner hangs from under the lintel.
     m.tube([-1.02, 2.5, 0.12], [1.02, 2.5, 0.12], 0.035, 0.035, timber, 6);
     for (const s of [-0.5, 0.5]) m.tube([s, 2.5, 0.12], [s, 2.74, 0.05], 0.012, 0.012, rope, 4);
     blackBanner(m, 0, 2.48, 0.12, 1.25, 1.02, 0.66);
@@ -1116,6 +527,7 @@ function gangWorks(m, ground) {
         5
       );
       blackBanner(m, x, y + 4.1, z + 0.05, 0.66, 2.15, 0.56);
+      finial(m, x, y + 4.3, z);
     }
     // Iron braziers on three legs.
     for (const s of [-1, 1]) {
@@ -1155,9 +567,23 @@ function gangWorks(m, ground) {
     const z = -6.24 - i * 0.34,
       x = pathX(z) + r.range(-0.05, 0.05),
       yaw = Math.atan2(pathX(z - 0.3) - pathX(z + 0.3), -0.6);
-    m.frame(x, ground(x, z), z, yaw, 1, () =>
-      m.box(0, -0.02, 0, r.range(0.8, 1.05), 0.16, 0.3, m.mix(pebble[0], pebble[1], r.next()))
-    );
+    // Each step a dressed block, worn pale and hollow along the middle where feet fall.
+    const tread = m.mix(pebble[0], pebble[1], r.next()),
+      span = r.range(0.8, 1.05);
+    m.frame(x, ground(x, z), z, yaw, 1, () => {
+      ashlar(m, 0, -0.02, 0, span, 0.16, 0.3, tread, 0.03);
+      m.face(
+        [
+          [-span * 0.22, 0.065, -0.1],
+          [-span * 0.3, 0.065, 0],
+          [-span * 0.22, 0.065, 0.1],
+          [span * 0.22, 0.065, 0.1],
+          [span * 0.3, 0.065, 0],
+          [span * 0.22, 0.065, -0.1]
+        ],
+        m.mix(tread, 0xd0c8b4, 0.3)
+      );
+    });
     if (i % 4 === 2 && i > 5) {
       const side = i % 8 === 2 ? 0.66 : -0.66,
         sx = x + side * Math.cos(yaw);
@@ -1223,6 +649,13 @@ function gangWorks(m, ground) {
       m.tube([px, py + h * 0.55, pz], [px, py + h * 0.86, pz], 0.1, 0.1, rope, 7);
     }
   }
+  // Two lesser pans for the novices, the guards' shelter, goods waiting to go up the mountain
+  // and a rack of spears by the striking posts.
+  sandPan(m, ground, -4.35, -6.75, 0.85);
+  sandPan(m, ground, -2.3, -7.35, 0.75);
+  guardHut(m, ground, -2.95, -8.6, 0.12);
+  goodsPile(m, ground, -4.25, -8.05, 0.5);
+  weaponRack(m, ground, 4.9, -6.65, -0.35);
   // The log bridge: three trunks laid from bank to bank on boulder piers above the third step.
   const [bx, bz, tx, tz] = pointAt(5.4),
     half = width(5.4) + 0.5,
@@ -1263,7 +696,7 @@ function gangWorks(m, ground) {
 function cragPines(m, valley, ground) {
   const r = m.rng;
   for (const [x, z, h, lean] of [
-    [-3.9, -7.9, 2.5, 0.8],
+    [-4.95, -7.35, 2.5, 0.8],
     [-5.5, -8.2, 3.0, -0.6],
     [4.7, -7.7, 2.3, -0.9],
     [5.4, -8.3, 3.1, 0.7],
@@ -1295,9 +728,9 @@ function cragPines(m, valley, ground) {
     pine(m, x, y, z, r.range(1.6, 3), {
       lean: r.range(-1, 1),
       yaw: r.range(0, TAU),
-      boughs: 5,
+      boughs: 4,
       rich: false,
-      spread: 1.3
+      spread: 1.35
     });
   }
 }
@@ -1329,7 +762,7 @@ function lowGrowth(m, valley, ground) {
       rich: false,
       spread: 1.3
     });
-  for (let i = 0; i < 330; i++) {
+  for (let i = 0; i < 200; i++) {
     const x = r.range(-14, 16),
       z = r.range(-9, 15),
       out = valley.outside(x, z),
@@ -1475,7 +908,6 @@ function fiveFingers(m, haze) {
 // ---------------------------------------------------------------------------------------
 // The tiles that are this board's own.
 
-const inStream = (cell) => cell.y >= 4 && cell.y <= 7;
 let kinds = null;
 // Whether the tile next to this one, dx east and dy south, is anything but stream water.
 function dryBeside(cell, dx, dy) {
@@ -1770,7 +1202,39 @@ function yamPatch(m, p) {
   }
 }
 
+// Open ground on the banks: now and then a tuft of grass or a few washed stones in a corner
+// of the tile, its middle left bare to stand on. The stepping stones need nothing more.
+function bankEdges(m, p, cell) {
+  if (inStream(cell)) return;
+  const r = m.rng;
+  for (const [x, z] of [
+    [-0.4, -0.4],
+    [0.4, -0.4],
+    [0.4, 0.4],
+    [-0.4, 0.4]
+  ]) {
+    const roll = r.next();
+    if (roll < 0.22)
+      tuft(m, x + r.range(-0.04, 0.04), 0.014, z + r.range(-0.04, 0.04), r.range(0.1, 0.16));
+    else if (roll < 0.32)
+      for (let i = 0; i < 3; i++)
+        m.rock(
+          x + r.range(-0.06, 0.06),
+          0.008,
+          z + r.range(-0.06, 0.06),
+          r.range(0.025, 0.045),
+          0.03,
+          0.03,
+          p[2],
+          p[1],
+          5
+        );
+  }
+}
+
 const tiles12 = {
+  ground: streamGround,
+  plain: bankEdges,
   cover: stonePosts,
   rock: greatBoulder,
   bamboo: pineClump,
@@ -1787,16 +1251,25 @@ function landform12(T, layout) {
     works = new Model(T, 51257),
     pines = new Model(T, 51263),
     growth = new Model(T, 51283),
-    far = new Model(T, 51307);
+    far = new Model(T, 51307),
+    cover = new Model(T, 51341);
   const ground = layGround(banks, mountain, valley);
-  streamStones(banks, valley, ground);
+  const wetRocks = streamStones(banks, valley, ground);
+  cobbles(banks, valley, ground);
+  driftJams(banks);
+  cutBanks(banks, ground);
   footCrags(mountain, ground);
   highFall(mountain, ground);
+  cascadeLedges(mountain);
   upperStream(water);
   brinkFall(water);
+  lowerWater(water);
+  foamRings(water, wetRocks);
+  chuteRock(banks, ground);
   gangWorks(works, ground);
   cragPines(pines, valley, ground);
   lowGrowth(growth, valley, ground);
+  bankCover(cover, valley, ground);
   fiveFingers(far, 0xbfc8c0);
   const group = new T.Group();
   group.name = '鐵掌溪灘・山門與五指峰';
@@ -1807,6 +1280,7 @@ function landform12(T, layout) {
     works.finish('山門黑旗與石磴木橋', { occluder: true }),
     pines.finish('崖上松', { occluder: true }),
     growth.finish('南岸矮松灌叢與界石', { occluder: true }),
+    cover.finish('兩岸草叢蘆葦與倒木', { occluder: true }),
     far.finish('五指峰遠景', { distant: true, cast: false })
   );
   return group;

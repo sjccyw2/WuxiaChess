@@ -34,8 +34,10 @@ const stonework = [
 ];
 // The boards built round one villain (10 on) borrow the tile language of an earlier board (how
 // its ground, sides and rims are cut) and dress the tiles that are theirs alone through their own
-// landform module: { cover, bamboo, herbs, rock, crate, reeds }, each (m, p, cell) drawn in the
-// tile's own frame after its ground. Their palette, depth, surroundings and landmarks are their own.
+// landform module: { plain, cover, bamboo, herbs, rock, crate, reeds }, each (m, p, cell) drawn in
+// the tile's own frame after its ground, and `ground` (m, p, cell), which may lay a dry tile's
+// ground itself (it returns true when it has). Their palette, depth, surroundings and landmarks
+// are their own.
 const LOOKS = { 10: 2, 11: 1, 12: 2, 13: 8, 14: 1 };
 const OWN_TILES = { 10: tiles10, 11: tiles11, 12: tiles12, 13: tiles13, 14: tiles14 };
 const lookOf = (index) => LOOKS[index] ?? index;
@@ -674,7 +676,16 @@ function field(m, index, cells, p, size, own = null) {
       k = cell.kind;
     if (index === 7 && k === 'reeds') continue;
     if (k === 'reeds' || k === 'bridge') puddle(m, x, z, index, p, k === 'bridge');
-    else if (index !== 4) plain(m, x, z, index, p);
+    else if (index !== 4) {
+      // A board built round one villain may lay a dry tile's ground itself: its `ground` hook,
+      // drawn in the tile's frame, returns true when it has.
+      let laid = false;
+      if (own?.ground)
+        m.frame(x, 0, z, 0, 1, () => {
+          laid = own.ground(m, p, cell) === true;
+        });
+      if (!laid) plain(m, x, z, index, p);
+    }
     // 空山琴臺 dresses its own tiles in landforms/props-4.js.
     if (index === 4) continue;
     m.frame(x, 0, z, 0, 1, () => {

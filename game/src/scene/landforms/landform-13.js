@@ -5,6 +5,20 @@
 // flower gate, and a causeway to a moon gate. Everything is lit by its own lanterns, whose
 // light is painted into the stone around them.
 import { Model, circle } from '../scenery-kit.js';
+import { paveTile } from './paving-13.js';
+import { tiledRoof, bracketRow } from './roof-13.js';
+import {
+  oldPine,
+  cypress,
+  trailingWillow,
+  plumTree,
+  bamboo,
+  peonyBed,
+  pottedPine,
+  taihuRock,
+  stoneTable,
+  pleasureBoat
+} from './garden-13.js';
 
 const marble = 0xb3bac6; // 漢白玉 under lamplight
 const marbleShade = 0x7f8a9c;
@@ -13,6 +27,7 @@ const flagLight = 0x65718a;
 const mortar = 0x2a3140;
 const masonry = 0x414c5f;
 const coping = 0x8a93a3;
+const stepDark = 0x4b5466; // 青石 of the hall steps
 const turf = 0x263238;
 const lacquer = 0xa23c2c;
 const lacquerDark = 0x6a2722;
@@ -23,6 +38,8 @@ const glaze = [0x111e23, 0x1b3236, 0x30544f]; // green-glazed tile: shadow, body
 const ridgeTone = 0x1b2e31;
 const gilt = 0xcfa85c;
 const giltDark = 0x9a7a3e;
+const bronze = 0x5f5236; // old bronze, dark with patina
+const bronzeDark = 0x3f3a2c;
 const ink = 0x20232c;
 const paper = 0xf4c57a;
 const lampRed = 0xee6a3a;
@@ -93,10 +110,11 @@ function pave(m, x0, x1, z0, z1, y, size = 0.74, tone = flag, vary = flagLight) 
   const dx = (x1 - x0) / nx,
     dz = (z1 - z0) / nz,
     gap = 0.017;
-  for (let i = 0; i < nx; i++)
-    for (let j = 0; j < nz; j++) {
-      const a = x0 + i * dx + gap,
-        b = a + dx - 2 * gap,
+  for (let j = 0; j < nz; j++)
+    for (let i = 0; i < nx + (j % 2); i++) {
+      const shift = j % 2 ? -dx / 2 : 0,
+        a = Math.max(x0, x0 + i * dx + shift) + gap,
+        b = Math.min(x1, x0 + (i + 1) * dx + shift) - gap,
         c = z0 + j * dz + gap,
         d = c + dz - 2 * gap;
       put(
@@ -178,14 +196,23 @@ function stoneRail(m, ax, az, bx, bz, y, h = 0.4, spacing = 0.8) {
         h,
         0,
         [
-          [0, 0.034],
-          [0.03, 0.05],
-          [0.07, 0.036],
-          [0.1, 0]
+          [0, 0.036],
+          [0.02, 0.05],
+          [0.05, 0.054],
+          [0.08, 0.04],
+          [0.11, 0]
         ],
         marble,
-        5
+        7
       );
+      // 華板: each panel carries a raised, paler cartouche on both faces.
+      if (i < n) {
+        const cx = x + len / n / 2,
+          pw = len / n - 0.2;
+        if (pw > 0.12)
+          for (const f of [-1, 1])
+            m.box(cx, h * 0.37, f * 0.02, pw, h * 0.3, 0.008, m.mix(marble, marbleShade, 0.3));
+      }
     }
   });
 }
@@ -332,155 +359,6 @@ function lattice(m, w, h, nx = 4, ny = 4, lit = paper, bars = lacquerDark) {
   }
 }
 
-// A tiled roof in its own frame, ridge along x, eaves w by d at height `eave`. `hip` is how
-// far the ridge is shorter than the eave (1 makes a pyramid, 0 with `gable` a plain gable);
-// the corners curl up by `lift`.
-function tiledRoof(m, w, d, eave, rise, options = {}) {
-  const { hip = d / w, lift = 0.3, tile = 0.26, tones = glaze, gable = false } = options;
-  const [dark, mid, hi] = tones,
-    rows = 4;
-  const prof = (t) => rise * (0.2 * t + 0.8 * t * t);
-  const curl = (s, t) => lift * Math.pow(Math.abs(s), 3.2) * (1 - t) * (1 - t);
-  const slope = (side) => (s, t) => [
-    s * (w / 2) * (1 - hip * t),
-    eave + prof(t) + curl(s, t),
-    side * (d / 2) * (1 - t)
-  ];
-  const end = (side) => (s, t) => [
-    side * (w / 2) * (1 - hip * t),
-    eave + prof(t) + curl(s, t),
-    s * (d / 2) * (1 - t)
-  ];
-  const same = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) < 1e-5;
-  // One slope: rows of tile, a rib along every seam and a painted fascia under the eave.
-  function sheet(at, n, across, out, narrow) {
-    for (let i = 0; i < n; i++) {
-      const s0 = -1 + (2 * i) / n,
-        s1 = -1 + (2 * (i + 1)) / n;
-      for (let k = 0; k < rows; k++) {
-        const t0 = k / rows,
-          t1 = (k + 1) / rows,
-          pts = [at(s0, t0), at(s1, t0), at(s1, t1), at(s0, t1)];
-        if (same(pts[2], pts[3])) pts.pop();
-        put(m, pts, m.mix(mid, hi, ((i * 3 + k * 2) % 7) * 0.065));
-      }
-      const a = at(s0, 0),
-        b = at(s1, 0),
-        drop = (p, h, inset) => [p[0] - out[0] * inset, p[1] - h, p[2] - out[2] * inset];
-      put(m, [a, b, drop(b, 0.055, 0), drop(a, 0.055, 0)], hi, out);
-      put(
-        m,
-        [drop(a, 0.055, 0), drop(b, 0.055, 0), drop(b, 0.15, 0.03), drop(a, 0.15, 0.03)],
-        lacquerDark,
-        out
-      );
-    }
-    // The ribs narrow with the tiles toward a hip or an apex.
-    const [ex, ez] = across;
-    for (let i = 1; i < n; i++) {
-      const s = -1 + (2 * i) / n;
-      for (let k = 0; k < rows; k++) {
-        const t0 = k / rows,
-          t1 = (k + 1) / rows,
-          a = at(s, t0),
-          b = at(s, t1),
-          wa = 0.03 * narrow(t0),
-          wb = 0.03 * narrow(t1),
-          ra = [a[0], a[1] + 0.035, a[2]],
-          rb = [b[0], b[1] + 0.035, b[2]];
-        put(
-          m,
-          [[a[0] - ex * wa, a[1], a[2] - ez * wa], ra, rb, [b[0] - ex * wb, b[1], b[2] - ez * wb]],
-          dark
-        );
-        put(
-          m,
-          [ra, [a[0] + ex * wa, a[1], a[2] + ez * wa], [b[0] + ex * wb, b[1], b[2] + ez * wb], rb],
-          hi
-        );
-      }
-    }
-  }
-  const nx = Math.max(4, Math.round(w / tile)),
-    nz = Math.max(3, Math.round(d / tile));
-  for (const side of [-1, 1]) sheet(slope(side), nx, [1, 0], [0, 0, side], (t) => 1 - hip * t);
-  const top = eave + rise,
-    half = (w / 2) * (1 - hip);
-  if (gable) {
-    // Plastered gable ends under a barge board.
-    for (const side of [-1, 1]) {
-      const line = [];
-      for (let k = 0; k <= rows; k++) line.push(slope(1)(side, k / rows));
-      for (let k = rows - 1; k >= 0; k--) line.push(slope(-1)(side, k / rows));
-      for (let k = 0; k < rows; k++)
-        put(
-          m,
-          [line[k], line[k + 1], line[2 * rows - k - 1], line[2 * rows - k]],
-          plaster,
-          [side, 0, 0]
-        );
-      m.line(
-        line.map(([x, y, z]) => [x + side * 0.03, y + 0.02, z]),
-        0.04,
-        ridgeTone,
-        4
-      );
-    }
-  } else {
-    for (const side of [-1, 1]) sheet(end(side), nz, [0, 1], [side, 0, 0], (t) => 1 - t);
-    // Hip ridges run down to the corners and turn up past the eave.
-    for (const e of [-1, 1])
-      for (const f of [-1, 1]) {
-        const pts = [];
-        for (let k = rows; k >= 0; k--) {
-          const p = slope(f)(e, k / rows);
-          pts.push([p[0], p[1] + 0.045, p[2]]);
-        }
-        const c = pts.at(-1),
-          tail = [c[0] + e * 0.2, c[1] + 0.2 + lift * 0.3, c[2] + f * 0.2];
-        m.line([...pts, tail], 0.05, ridgeTone, 5);
-        m.tube(tail, [tail[0] + e * 0.05, tail[1] + 0.1, tail[2] + f * 0.05], 0.032, 0.01, gilt, 5);
-      }
-  }
-  if (half > 0.05) {
-    // Main ridge under a cap course, with an upswept ornament at each end.
-    m.box(0, top + 0.06, 0, half * 2 + 0.14, 0.17, 0.13, ridgeTone);
-    m.box(0, top + 0.16, 0, half * 2 + 0.16, 0.035, 0.16, hi);
-    if (!gable)
-      for (const e of [-1, 1]) {
-        const x = e * (half + 0.03);
-        m.line(
-          [
-            [x, top + 0.08, 0],
-            [x + e * 0.08, top + 0.26, 0],
-            [x, top + 0.46, 0],
-            [x - e * 0.14, top + 0.44, 0]
-          ],
-          0.06,
-          ridgeTone,
-          5
-        );
-        m.tube([x + e * 0.02, top + 0.4, 0], [x + e * 0.13, top + 0.5, 0], 0.03, 0.008, gilt, 5);
-      }
-  } else {
-    // A gilt finial closes a pointed roof.
-    m.lathe(
-      0,
-      top - 0.04,
-      0,
-      [
-        [0, 0.16],
-        [0.07, 0.17],
-        [0.12, 0.07],
-        [0.2, 0.11],
-        [0.3, 0.06],
-        [0.44, 0]
-      ],
-      gilt,
-      8
-    );
-  }
-}
 // A plain tile coping for a garden wall, along x of its own frame.
 function wallCoping(m, len, y, half, rise) {
   const n = Math.max(1, Math.round(len / 1.3));
@@ -514,9 +392,17 @@ function wallCoping(m, len, y, half, rise) {
   m.box(0, y + rise + 0.02, 0, len, 0.07, 0.09, ridgeTone);
 }
 // A painted architrave with a row of bracket blocks, running along x of its own frame.
-function beam(m, len, y = 0, depth = 0.14) {
+function beam(m, len, y = 0, depth = 0.14, blocks = true) {
   m.box(0, y + 0.09, 0, len, 0.18, depth, teal);
   m.box(0, y + 0.012, 0, len, 0.03, depth + 0.02, gilt);
+  // 旋子彩畫: painted roundels and a gilt-edged panel at the middle of the beam.
+  const bands = Math.max(1, Math.round(len / 1.4));
+  for (let i = 0; i < bands; i++) {
+    const x = -len / 2 + ((i + 0.5) * len) / bands;
+    m.box(x, y + 0.09, depth / 2 + 0.004, 0.32, 0.12, 0.008, i % 2 ? 0x2b4f7a : 0x3f7f6f);
+    m.box(x, y + 0.09, depth / 2 + 0.009, 0.12, 0.07, 0.006, gilt);
+  }
+  if (!blocks) return;
   const n = Math.max(1, Math.round(len / 0.46));
   for (let i = 0; i <= n; i++)
     m.box(
@@ -845,19 +731,16 @@ function hall(m) {
   face(-side, back, -side, FRONT, [-1, 0, 0]);
   face(side, FRONT, side, back, [1, 0, 0]);
   face(-side, back, side, back, [0, 0, -1]);
-  // Six steps from the board's edge, in two flights beside a carved ramp.
+  // Six steps from the board's edge, in two flights beside a carved ramp. They are dark 青石,
+  // paling only toward the top, so a white figure standing before them reads at once.
   for (let i = 1; i <= 6; i++) {
     const top = 0.04 + 0.14 * i,
-      z0 = -5.5 - 0.22 * (i - 1);
-    m.box(
-      0,
-      (top + FLOOR) / 2,
-      (z0 + FRONT) / 2,
-      5,
-      top - FLOOR,
-      z0 - FRONT,
-      i % 2 ? marble : m.mix(marble, marbleShade, 0.5)
-    );
+      z0 = -5.5 - 0.22 * (i - 1),
+      tone = i <= 4 ? (i % 2 ? stepDark : m.mix(stepDark, mortar, 0.25)) : m.mix(stepDark, marbleShade, 0.4);
+    m.box(0, (top + FLOOR) / 2, (z0 + FRONT) / 2, 5, top - FLOOR, z0 - FRONT, tone);
+    // A worn nosing along the outer flights, clear of the ramp.
+    for (const s of [-1, 1])
+      m.box(s * 1.56, top + 0.004, z0 - 0.03, 1.8, 0.012, 0.05, m.mix(stepDark, marbleShade, 0.35));
   }
   const ramp = (x0, x1, lift, col) =>
     put(
@@ -870,8 +753,8 @@ function hall(m) {
       ],
       col
     );
-  ramp(-0.62, 0.62, 0.035, marbleShade);
-  ramp(-0.5, 0.5, 0.045, marble);
+  ramp(-0.62, 0.62, 0.035, m.mix(stepDark, mortar, 0.35));
+  ramp(-0.5, 0.5, 0.045, m.mix(stepDark, mortar, 0.15));
   for (const s of [-1, 1]) {
     put(
       m,
@@ -955,7 +838,7 @@ function hall(m) {
         [0, y + 0.075, z - 0.12],
         [-0.3, y, z]
       ],
-      k % 2 ? coping : marbleShade
+      k % 2 ? m.mix(stepDark, marbleShade, 0.25) : m.mix(stepDark, mortar, 0.45)
     );
   }
   // The hall stands on its own low plinth.
@@ -970,7 +853,7 @@ function hall(m) {
   // Body: red walls round the back and sides, a dark core up under the roof.
   m.box(0, floor + high / 2, (wallZ + rear) / 2 - 0.02, 10, high, wallZ - rear - 0.04, wallRed);
   m.box(0, floor + 0.2, (wallZ + rear) / 2 - 0.02, 10.06, 0.4, wallZ - rear, marbleShade);
-  m.box(0, floor + high + 0.28, -9.3, 8.6, 0.56, 1.8, 0x1c2026);
+  m.box(0, floor + high + 0.36, -9.3, 9.7, 0.72, 2.6, 0x1c2026);
   for (const x of posts) column(m, x, colZ, floor, high, 0.1);
   for (const s of [-1, 1]) {
     column(m, s * 5, rear, floor, high, 0.1);
@@ -1018,7 +901,8 @@ function hall(m) {
         lattice(m, w - 0.06, top - sill - 0.06, door ? 4 : 5, door ? 6 : 4)
       );
   }
-  m.frame(0, floor + high - 0.12, colZ, 0, 1, () => beam(m, 10.3));
+  m.frame(0, floor + high - 0.12, colZ, 0, 1, () => beam(m, 10.3, 0, 0.14, false));
+  m.frame(0, floor + high - 0.12, rear, 0, 1, () => beam(m, 10.3, 0, 0.14, false));
   for (const s of [-1, 1])
     m.frame(
       s * 5,
@@ -1026,19 +910,33 @@ function hall(m) {
       (colZ + rear) / 2,
       Math.PI / 2,
       1,
-      () => beam(m, colZ - rear)
+      () => beam(m, colZ - rear, 0, 0.14, false)
     );
+  // 斗拱: bracket sets over every column and in every bay carry the deep eaves.
+  const tier = floor + high + 0.07,
+    sides = [colZ, (colZ + rear) / 2, rear];
+  bracketRow(m, posts, tier, colZ, 1, 0.9);
+  bracketRow(m, posts, tier, -rear, 1, 0.9, Math.PI);
+  bracketRow(m, sides.map((z) => -z), tier, 5, 1, 0.9, Math.PI / 2);
+  bracketRow(m, sides.reverse(), tier, 5, 1, 0.9, -Math.PI / 2);
   // The roof, and a row of lanterns hung from its front eave.
-  const eave = floor + high + 0.15,
+  const eave = floor + high + 0.52,
     roofZ = -9.3,
     depth = 4.4,
     width = 11.7;
-  m.frame(0, 0, roofZ, 0, 1, () => tiledRoof(m, width, depth, eave, 1.75, { lift: 0.4 }));
+  m.frame(0, 0, roofZ, 0, 1, () =>
+    tiledRoof(m, width, depth, eave, 1.75, { lift: 0.4, rows: 6, beasts: 5 })
+  );
+  // Bronze cranes on the porch and great bronze water vats on the terrace beside the hall.
+  for (const s of [-1, 1]) {
+    m.frame(s * 4.32, floor, -7.42, s * 0.5, 1, () => bronzeCrane(m));
+    for (const z of [-8.6, -10.4]) m.frame(s * 6.38, TERRACE, z, 0, 1, () => waterVat(m));
+  }
   for (let i = 0; i < 7; i++) {
     const x = (posts[i] + posts[i + 1]) / 2,
       s = x / (width / 2),
       y = eave + 0.4 * Math.pow(Math.abs(s), 3.2);
-    palaceLamp(m, x * 1.04, y - 0.62, roofZ + depth / 2 - 0.02, i === 3 ? 1.05 : 0.9);
+    palaceLamp(m, x * 1.04, y - 0.78, roofZ + depth / 2 + 0.12, i === 3 ? 1.05 : 0.9);
   }
 }
 
@@ -1210,11 +1108,31 @@ function eastDyke(m) {
       () => tiledRoof(m, 2.5, 1.3, 2.0, 0.5, { hip: 0, gable: true, lift: 0.16, tile: 0.25 })
     );
   });
-  scholarRock(m, 9.35, 1.9, 1);
-  scholarRock(m, 9.5, -8.6, 1.15);
-  blossomTree(m, 9.3, 4.5, 0.9);
-  blossomTree(m, 9.2, -6.2, 1.0);
-  blossomTree(m, 8.75, -10.2, 1.1);
+  taihuRock(m, 9.35, 1.9, 0.85);
+  taihuRock(m, 9.5, -8.6, 1.0);
+  plumTree(m, 9.3, 4.5, 0.95);
+  plumTree(m, 9.2, -6.2, 1.0);
+  plumTree(m, 8.75, -10.2, 1.15);
+  // Peony beds and potted pines along the dyke, all kept below the eye.
+  peonyBed(m, 9.45, 7.0, 0.8, 1.0);
+  peonyBed(m, 9.45, -3.95, 0.75, 0.95);
+  peonyBed(m, 8.9, -11.25, 1.3, 0.6);
+  for (const [x, z] of [
+    [9.7, 2.65],
+    [9.7, -7.35],
+    [7.95, -7.35],
+    [9.7, -0.5]
+  ])
+    pottedPine(m, x, z, 1, m.rng.range(0, circle));
+  // The pleasure boat, moored in the outer water off the dyke.
+  m.frame(11.05, 0, 2.6, -Math.PI / 2, 1, () =>
+    pleasureBoat(
+      m,
+      (w, d, eave, rise) =>
+        tiledRoof(m, w, d, eave, rise, { hip: 0, gable: true, lift: 0.12, tile: 0.2, rows: 4 }),
+      (x, y, z) => palaceLamp(m, x, y, z, 0.5)
+    )
+  );
 }
 
 // South, nearest the eye: the causeway's lamp pillars, and across the dyke a low tiled wall
@@ -1327,6 +1245,8 @@ function southGate(m) {
     m.frame(cx, 0, z, 0, 1, () => wallCoping(m, len, GROUND + 1.0, 0.31, 0.2));
     m.frame(s * 8.55, GROUND, z, 0, 1, () => stoneLamp(m, 1));
     m.frame(s * 2.45, GROUND, z - 0.75, 0, 1, () => stoneLamp(m, 0.8));
+    peonyBed(m, s * 4.3, z - 0.55, 1.5, 0.48);
+    peonyBed(m, s * 6.5, z - 0.55, 1.5, 0.48);
   }
 }
 
@@ -1382,6 +1302,27 @@ function lotusBloom(m, x, y, z, open) {
     );
   }
   m.box(x, y + 0.035, z, 0.03, 0.03, 0.03, 0xe6c15a);
+}
+// A lotus seed head left when the petals have fallen, its flat face dotted with seeds.
+function seedHead(m, x, y, z) {
+  m.tube([x - 0.02, WATER - 0.05, z], [x, y, z], 0.01, 0.009, 0x4a7450, 3);
+  m.lathe(
+    x,
+    y,
+    z,
+    [
+      [0, 0.012],
+      [0.03, 0.04],
+      [0.055, 0.052],
+      [0.06, 0]
+    ],
+    0x7f8f55,
+    7
+  );
+  for (let i = 0; i < 4; i++) {
+    const a = (i * circle) / 4;
+    m.box(x + Math.cos(a) * 0.025, y + 0.062, z + Math.sin(a) * 0.025, 0.012, 0.006, 0.012, 0x4b5634);
+  }
 }
 // 河燈: a paper lotus set adrift with a candle in it.
 function riverLamp(m, x, z) {
@@ -1442,7 +1383,14 @@ function lotusWater(m) {
     [-3.6, 7.1, 1.4, 0.7, 12],
     [3.9, 7.0, 1.5, 0.75, 13],
     [-4.6, -6.25, 1.2, 0.32, 7],
-    [4.6, -6.25, 1.2, 0.32, 7]
+    [4.6, -6.25, 1.2, 0.32, 7],
+    // Out in the open water beyond the dykes.
+    [12.4, 6.6, 0.9, 1.2, 12],
+    [12.6, -1.6, 0.8, 0.9, 9],
+    [-3.2, 12.0, 1.4, 0.8, 12],
+    [5.4, 12.2, 1.2, 0.8, 11],
+    [12.2, 11.6, 1.0, 0.9, 10],
+    [-9.0, 12.4, 1.2, 0.7, 9]
   ];
   for (const [cx, cz, rx, rz, n] of drifts) {
     for (let i = 0; i < n; i++) {
@@ -1460,6 +1408,7 @@ function lotusWater(m) {
         high ? r.range(-0.25, 0.25) : 0
       );
       if (i % 4 === 1) lotusBloom(m, x + 0.2, WATER + r.range(0.3, 0.55), z + 0.1, i % 8 === 1);
+      if (i % 5 === 3) seedHead(m, x - 0.15, WATER + r.range(0.35, 0.6), z - 0.12);
     }
   }
   for (const [x, z] of [
@@ -1520,13 +1469,31 @@ function palaceGrounds(m) {
     [0.6, -15.6, 1.4],
     [-17.2, 8.2, 1.2]
   ])
-    pine(m, x, z, s);
-  willow(m, -9.6, 8.9, 1.05, 2.4);
-  willow(m, -11.6, -7.9, 0.9, 0.4);
-  blossomTree(m, -9.0, -10.4, 1.15);
-  blossomTree(m, -11.3, 5.9, 1.0);
-  blossomTree(m, -11.4, -3.0, 0.95);
-  scholarRock(m, -11.2, 0.2, 1.2);
+    oldPine(m, x, z, s);
+  trailingWillow(m, -9.6, 8.9, 1.05, 2.4);
+  trailingWillow(m, -11.6, -7.9, 0.9, 0.4);
+  trailingWillow(m, -12.4, 9.6, 0.95, 3.0, 18);
+  plumTree(m, -9.0, -10.4, 1.2);
+  plumTree(m, -11.3, 5.9, 1.05);
+  plumTree(m, -11.4, -3.0, 1.0);
+  taihuRock(m, -11.2, 0.2, 1.15);
+  taihuRock(m, -13.6, 3.0, 0.9);
+  // Cypress in pairs before the lesser halls, bamboo behind the gallery, a stone table.
+  for (const [x, z] of [
+    [-13.2, -7.6],
+    [-13.2, -10.8],
+    [-5.6, -15.4],
+    [-0.8, -15.4]
+  ])
+    cypress(m, x, z, 1.1);
+  for (const [x, z, s] of [
+    [-11.2, -5.6, 1],
+    [-11.0, 3.4, 0.9],
+    [-11.4, -1.6, 0.85],
+    [-6.8, -12.6, 1]
+  ])
+    bamboo(m, x, z, s);
+  stoneTable(m, -14.0, -2.6, 1);
   sideHall(m, -15.2, -9.2, Math.PI / 2, 4.6, 2.6, 1.9, 3);
   sideHall(m, -3.2, -17.2, 0, 5.2, 2.6, 2.0, 3);
   // Inner wall under a tile coping, with a lamp pillar at each turn.
@@ -1647,6 +1614,66 @@ function farPalace(m) {
   for (let k = 0; k < 3; k++)
     farHall(m, -22, -33, 0, 7 - k * 1.4, 6 - k * 1.2, 3, 2.0, WATER + 1 + k * 3.7);
   m.box(-22, WATER + 0.5, -33, 12, 1.0, 11, stone);
+  // An octagonal brick pagoda of eleven storeys rising over the north roofs, and a
+  // drum tower on its tall terrace to the north-east, both dark against the night sky.
+  m.frame(10, WATER, -37, 0.2, 1, () => {
+    m.box(0, 0.6, 0, 7, 1.2, 7, stone);
+    let y = 1.2,
+      r = 2.1;
+    for (let k = 0; k < 11; k++) {
+      const h = k ? 1.05 - k * 0.03 : 2.2;
+      m.lathe(
+        0,
+        y,
+        0,
+        [
+          [0, r],
+          [h, r * 0.97]
+        ],
+        0x1a2238,
+        8
+      );
+      m.lathe(
+        0,
+        y + h,
+        0,
+        [
+          [-0.05, r * 0.97],
+          [0.05, r + 0.75],
+          [0.22, r + 0.68],
+          [0.42, r * 0.82]
+        ],
+        k % 2 ? 0x222c47 : 0x26304c,
+        8
+      );
+      y += h + 0.32;
+      r *= 0.93;
+    }
+    m.lathe(
+      0,
+      y,
+      0,
+      [
+        [0, 0.5],
+        [0.5, 0.36],
+        [0.8, 0.12],
+        [2.2, 0.04],
+        [2.4, 0]
+      ],
+      0x3b3a3a,
+      8
+    );
+    m.glow(() => {
+      for (const k of [3, 6]) m.box(0, 1.2 + 2.5 + k * 1.2, 1.9 - k * 0.1, 0.32, 0.42, 0.1, 0xe9b060);
+    });
+  });
+  m.frame(27, WATER, -20, -0.6, 1, () => {
+    m.box(0, 3, 0, 8, 6, 6, stone);
+    m.box(0, 6.15, 0, 8.4, 0.3, 6.4, cap);
+    m.glow(() => m.box(0, 2.2, 3.02, 1.4, 2.2, 0.06, 0x9a6a3a));
+  });
+  farHall(m, 27, -20, -0.6, 5.6, 3.8, 2.4, 2.0, WATER + 6.3);
+  farHall(m, 27, -20, -0.6, 4.2, 2.8, 1.8, 1.8, WATER + 9.6);
   // A few windows still lit.
   m.glow(() => {
     for (const [x, y, z] of [
@@ -1687,6 +1714,96 @@ function farPalace(m) {
   }
 }
 
+// A bronze crane on a rock base, neck raised, its crown picked out in red.
+function bronzeCrane(m) {
+  m.lathe(
+    0,
+    0,
+    0,
+    [
+      [0, 0.17],
+      [0.06, 0.16],
+      [0.1, 0.11],
+      [0.12, 0]
+    ],
+    bronzeDark,
+    8
+  );
+  for (const s of [-1, 1])
+    m.line(
+      [
+        [s * 0.04, 0.11, 0],
+        [s * 0.045, 0.32, 0.02],
+        [s * 0.04, 0.5, 0]
+      ],
+      0.012,
+      bronzeDark,
+      4
+    );
+  m.frame(0, 0.6, 0, 0, [1, 0.8, 1.6], () =>
+    m.lathe(
+      0,
+      -0.1,
+      0,
+      [
+        [0, 0.02],
+        [0.05, 0.09],
+        [0.12, 0.1],
+        [0.19, 0.06],
+        [0.22, 0]
+      ],
+      bronze,
+      8
+    )
+  );
+  m.line(
+    [
+      [0, 0.66, 0.12],
+      [0, 0.82, 0.16],
+      [0, 1.0, 0.12],
+      [0, 1.08, 0.17]
+    ],
+    0.022,
+    bronze,
+    5
+  );
+  m.tube([0, 1.08, 0.17], [0, 1.06, 0.33], 0.025, 0.004, giltDark, 5);
+  m.box(0, 1.105, 0.17, 0.035, 0.03, 0.04, 0x8a3a2c);
+  m.tube([0, 0.62, -0.18], [0, 0.66, -0.36], 0.05, 0.01, bronzeDark, 5);
+}
+// A great bronze water vat on a stone stand, with ring handles.
+function waterVat(m) {
+  m.box(0, 0.06, 0, 0.66, 0.12, 0.66, marbleShade);
+  m.lathe(
+    0,
+    0.12,
+    0,
+    [
+      [0, 0.22],
+      [0.05, 0.27],
+      [0.2, 0.33],
+      [0.38, 0.31],
+      [0.46, 0.28],
+      [0.49, 0.3],
+      [0.47, 0.26],
+      [0.43, 0]
+    ],
+    bronze,
+    14
+  );
+  m.lathe(
+    0,
+    0.55,
+    0,
+    [
+      [0, 0.26],
+      [0.004, 0.26]
+    ],
+    0x1e2a33,
+    14
+  );
+  for (const s of [-1, 1]) m.hoop(s * 0.33, 0.42, 0, 0.05, 0.012, giltDark, 8, 'yz', Math.PI / 2);
+}
 // 鎏金香爐: a three-legged gilt bronze censer with a domed lid, embers showing under the lid's
 // rim and a thread of incense rising from it. It stands on a stone drum at the foot of the steps.
 function censer(m) {
@@ -1734,7 +1851,7 @@ function censer(m) {
       [0.325, 0.26],
       [0.345, 0.26]
     ],
-    gilt,
+    bronze,
     12
   );
   m.hoop(0, 0.68, 0, 0.3, 0.014, giltDark, 12);
@@ -1744,10 +1861,10 @@ function censer(m) {
       0.845,
       0,
       [
-        [0, 0.235],
-        [0.03, 0.235]
+        [0, 0.2],
+        [0.018, 0.2]
       ],
-      0xf0843a,
+      0xc0582c,
       10
     )
   );
@@ -1764,25 +1881,23 @@ function censer(m) {
       [0.23, 0.05],
       [0.27, 0]
     ],
-    giltDark,
+    bronzeDark,
     10
   );
-  for (const s of [-1, 1]) m.hoop(s * 0.29, 0.9, 0, 0.075, 0.018, gilt, 7, 'xy');
-  // The thread of smoke catches the light of the embers.
-  m.glow(() =>
-    m.line(
-      [
-        [0, 1.14, 0],
-        [0.03, 1.32, 0.01],
-        [-0.02, 1.5, -0.02],
-        [0.04, 1.7, 0],
-        [0, 1.9, 0.03],
-        [0.05, 2.1, 0.01]
-      ],
-      0.009,
-      0xb4bcc9,
-      4
-    )
+  for (const s of [-1, 1]) m.hoop(s * 0.29, 0.9, 0, 0.075, 0.018, giltDark, 7, 'xy');
+  // A thin thread of smoke, grey against the dark steps.
+  m.line(
+    [
+      [0, 1.14, 0],
+      [0.03, 1.32, 0.01],
+      [-0.02, 1.5, -0.02],
+      [0.04, 1.7, 0],
+      [0, 1.9, 0.03],
+      [0.05, 2.1, 0.01]
+    ],
+    0.008,
+    0x6f7888,
+    4
   );
 }
 // 白石欄: a short run of white stone balustrade along the back of the tile, between two
@@ -1879,6 +1994,7 @@ function physicBed(m) {
     }
 }
 const tiles13 = {
+  ground: (m, p, cell) => paveTile(m, p, cell),
   cover: (m) => balustrade(m),
   bamboo: (m) => gardenTree(m),
   herbs: (m) => physicBed(m),

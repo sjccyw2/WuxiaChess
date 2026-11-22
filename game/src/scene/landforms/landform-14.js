@@ -1,5 +1,8 @@
 import { Model, circle, midway } from '../scenery-kit.js';
 import { lantern, roof } from '../maze-models.js';
+import { ground, fallenPetals } from './paving-14.js';
+import { houseDetail } from './house-14.js';
+import { gardenFurnishings, gardenLayer, cloudPine, taihuStone } from './garden-14.js';
 
 // 黑木繡閣: the hidden garden on the very top of 黑木崖. The paved court stands on a
 // crag of black rock that drops sheer into the cloud; garden ground lies behind it to
@@ -187,7 +190,7 @@ function groundTone(m, x, z, garden, edge) {
 
 // A dark peak: sheer ribbed sides, a broken crown with a little green on it, paler
 // toward its foot where the cloud takes it. Far ones are hazier all over.
-function peak(m, x, z, base, w, d, H, haze, horizon, n = 10) {
+function peak(m, x, z, base, w, d, H, haze, horizon, n = 14) {
   const r = m.rng,
     spin = r.range(0, circle),
     lean = [r.range(-0.2, 0.2), r.range(-0.2, 0.2)];
@@ -198,17 +201,22 @@ function peak(m, x, z, base, w, d, H, haze, horizon, n = 10) {
   ]);
   const levels = [
     [0, 1],
-    [0.32, 0.85],
-    [0.6, 0.72],
-    [0.8, 0.56],
-    [0.93, 0.38],
+    [0.18, 0.92],
+    [0.34, 0.84],
+    [0.5, 0.77],
+    [0.64, 0.69],
+    [0.77, 0.58],
+    [0.87, 0.46],
+    [0.94, 0.33],
     [1, 0.15]
   ];
-  const rings = levels.map(([k, s]) =>
+  // Each level is pushed in or out a little of its own, so the sides step and bulge.
+  const bulge = levels.map(() => r.range(0.93, 1.07));
+  const rings = levels.map(([k, s], j) =>
     spokes.map(([a, q, crest]) => [
-      x + Math.cos(a) * w * q * s + lean[0] * k * w,
+      x + Math.cos(a) * w * q * s * bulge[j] + lean[0] * k * w,
       base + k * H * (k > 0.9 ? crest : 1),
-      z + Math.sin(a) * d * q * s + lean[1] * k * d
+      z + Math.sin(a) * d * q * s * bulge[j] + lean[1] * k * d
     ])
   );
   const rock = m.mix(0x1b1e24, 0x30353d, r.next()),
@@ -231,10 +239,14 @@ function peak(m, x, z, base, w, d, H, haze, horizon, n = 10) {
   const last = rings[levels.length - 1],
     tip = [x + lean[0] * w, base + H * 1.03, z + lean[1] * d];
   for (let i = 0; i < n; i++) m.face([tip, last[(i + 1) % n], last[i]], tone(1, 0));
+  // Where a tree could root on its crown.
+  return [tip[0], Math.min(...last.map((p) => p[1])), tip[2]];
 }
 
 // The crag itself: the ground round the court, the fluted cliff under it and the
 // pinnacles that have come away from its south and east faces.
+// Bedding planes across each stretch of the section, the same at every spoke.
+const bedding = [0, 1, 0, 2, 0, 2, 0, 1, 0];
 function crag(m, land, sections) {
   const stations = 6;
   const apron = [],
@@ -264,25 +276,53 @@ function crag(m, land, sections) {
         [tones[i][j], tones[i][j + 1], tones[n][j + 1], tones[n][j]]
       );
   }
+  // The sheer faces are banded with beds of rock: at each bedding plane the face
+  // above stands a little proud and steps back under a thin dark seam, so the
+  // strata read across the columns.
   const wall = [],
     shade = [];
   for (let i = 0; i < SPOKES; i++) {
     const a = (i * circle) / SPOKES,
       c = Math.cos(a),
-      s = Math.sin(a);
-    wall.push(sections[i].map(([r, y]) => [c * r, y, s * r]));
-    shade.push(sections[i].map(([, y], k) => rockTone(m, land, i, k, y)));
+      s = Math.sin(a),
+      sec = sections[i],
+      row = [],
+      tone = [];
+    for (let k = 0; k < sec.length; k++) {
+      const [r, y] = sec[k];
+      row.push([c * r, y, s * r]);
+      tone.push(rockTone(m, land, i, k, y));
+      if (k === sec.length - 1) break;
+      const [r1, y1] = sec[k + 1],
+        beds = bedding[k];
+      for (let b = 1; b <= beds; b++) {
+        const t = b / (beds + 1) + 0.06 * (hash(Math.floor(i / 5), k * 7 + b) - 0.5),
+          rr = lerp(r, r1, t),
+          yy = lerp(y, y1, t) + 0.05 * Math.sin(a * 5 + b + k),
+          proud = 0.04 + 0.05 * hash(Math.floor(i / 3), k * 11 + b),
+          base = rockTone(m, land, i, k, yy),
+          band = m.mix(base, b % 2 ? 0x45484c : 0x121316, 0.3);
+        row.push([c * (rr + proud), yy, s * (rr + proud)]);
+        tone.push(m.mix(band, 0x6a6c6c, 0.2));
+        row.push([c * (rr - 0.03), yy - 0.05, s * (rr - 0.03)]);
+        tone.push(m.mix(base, 0x0c0d0f, 0.45));
+      }
+    }
+    wall.push(row);
+    shade.push(tone);
   }
   for (let i = 0; i < SPOKES; i++) {
     const n = (i + 1) % SPOKES;
-    for (let k = 0; k < strata.length - 1; k++)
+    for (let k = 0; k < wall[i].length - 1; k++)
       m.face(
         [wall[i][k], wall[n][k], wall[n][k + 1], wall[i][k + 1]],
         [shade[i][k], shade[n][k], shade[n][k + 1], shade[i][k + 1]],
         0.93 + 0.07 * hash(i, k)
       );
   }
-  // Pinnacles: [bearing, how far off the lip, top, girth].
+  // Pinnacles: [bearing, how far off the lip, top, girth]. The crowns of the higher
+  // ones are kept, for the pines that grow on them.
+  const crowns = [];
   for (const [bearing, off, top, girth] of [
     [61, 3.0, -1.5, 0.85],
     [68, 3.9, -3.1, 0.6],
@@ -296,7 +336,88 @@ function crag(m, land, sections) {
     const i = Math.round(degrees(bearing)) % SPOKES,
       a = (i * circle) / SPOKES,
       d = land.top[i] + off;
-    peak(m, Math.cos(a) * d, Math.sin(a) * d, -8, girth, girth * 0.9, top + 8, 0, mistTone, 8);
+    const crown = peak(
+      m,
+      Math.cos(a) * d,
+      Math.sin(a) * d,
+      -8,
+      girth,
+      girth * 0.9,
+      top + 8,
+      0,
+      mistTone,
+      12
+    );
+    if (top > -2) crowns.push(crown);
+  }
+  return crowns;
+}
+
+// Life on the ledges: tufts of grass and fern on the narrow shelves, and creepers
+// hanging from their lips down the face below.
+function ledgeGrowth(m, sections) {
+  const r = m.rng;
+  for (let j = 0; j < 64; j++) {
+    const k = j % 2 ? 3 : 5,
+      f = (j * 4.5 + r.range(0, 3)) % SPOKES,
+      i = Math.floor(f),
+      a = (f * circle) / SPOKES,
+      [r0, y0] = sections[i][k - 1],
+      [r1, y1] = sections[i][k],
+      t = r.range(0.45, 0.8),
+      rr = lerp(r0, r1, t),
+      y = lerp(y0, y1, t),
+      c = Math.cos(a),
+      s = Math.sin(a);
+    const green = r.pick([0x3c5a34, 0x4a6a3a, 0x56703e]);
+    m.rock(
+      c * rr,
+      y - 0.06,
+      s * rr,
+      r.range(0.12, 0.22),
+      r.range(0.08, 0.16),
+      r.range(0.1, 0.18),
+      m.mix(green, 0x1d2a1c, 0.5),
+      green,
+      6,
+      r.range(0, 3)
+    );
+    for (let l = 0; l < 4; l++) {
+      const turn = r.range(0, circle),
+        len = r.range(0.12, 0.22),
+        base = [c * rr, y + 0.02, s * rr];
+      m.leaf(
+        base,
+        [base[0] + Math.cos(turn) * len, y + len * 0.5, base[2] + Math.sin(turn) * len],
+        0.025,
+        0x3f6a3a,
+        0x7a9a50,
+        0.03
+      );
+    }
+    // A creeper from every other tuft, down over the lip of the ledge.
+    if (j % 2 === 0) {
+      const drop = r.range(0.7, 1.4),
+        pts = [];
+      for (let q = 0; q <= 6; q++) {
+        const yy = y1 - (drop * q) / 6,
+          out = faceRadius(sections, f, yy) + 0.04 + 0.03 * Math.sin(q * 1.7);
+        pts.push([c * out + s * 0.04 * Math.sin(q), yy, s * out - c * 0.04 * Math.sin(q)]);
+      }
+      m.line(pts, 0.008, 0x3d4a2c, 3);
+      for (let q = 1; q <= 6; q++) {
+        const p = pts[q],
+          turn = a + r.range(-1.2, 1.2);
+        m.leaf(
+          p,
+          [p[0] + Math.cos(turn) * 0.08, p[1] - 0.03, p[2] + Math.sin(turn) * 0.08],
+          0.03,
+          0x355a30,
+          0x6a8c48,
+          0.01
+        );
+      }
+    }
   }
 }
 
@@ -362,15 +483,46 @@ function plumTree(m, x, y, z, size, yaw) {
   m.frame(x, y, z, yaw, size, () => {
     const trunk = [
       [0, -0.12, 0],
-      [0.11, 0.36, 0.03],
-      [-0.05, 0.72, -0.05],
+      [0.06, 0.14, 0.04],
+      [0.12, 0.38, 0.02],
+      [0.02, 0.56, -0.06],
+      [-0.05, 0.74, -0.04],
       [0.13, 1.02, 0.02]
     ];
-    const girth = [0.125, 0.105, 0.085, 0.06];
+    const girth = [0.14, 0.12, 0.105, 0.095, 0.08, 0.06];
     for (let k = 1; k < trunk.length; k++)
-      m.tube(trunk[k - 1], trunk[k], girth[k - 1], girth[k], k % 2 ? bark : barkLit, 6);
-    for (let k = 0; k < 6; k++) {
-      const from = trunk[k === 0 ? 1 : k < 3 ? 2 : 3],
+      m.tube(trunk[k - 1], trunk[k], girth[k - 1], girth[k], k % 2 ? bark : barkLit, 8);
+    // Old wood: burrs and a hollow on the trunk, a flare of root into the moss.
+    for (const [k, side] of [
+      [1, 1],
+      [3, -1]
+    ])
+      m.rock(
+        trunk[k][0] + side * 0.07,
+        trunk[k][1] - 0.06,
+        trunk[k][2],
+        0.06,
+        0.1,
+        0.055,
+        bark,
+        barkLit,
+        6
+      );
+    m.face(
+      [
+        [0.13, 0.42, 0.075],
+        [0.17, 0.5, 0.06],
+        [0.13, 0.58, 0.07],
+        [0.09, 0.5, 0.085]
+      ],
+      0x120e0d
+    );
+    for (let k = 0; k < 4; k++) {
+      const a = (k * circle) / 4 + 0.5;
+      m.tube([0, 0.02, 0], [Math.cos(a) * 0.24, -0.08, Math.sin(a) * 0.24], 0.06, 0.02, bark, 5);
+    }
+    for (let k = 0; k < 8; k++) {
+      const from = trunk[[2, 3, 3, 4, 4, 5, 5, 5][k]],
         a = k * 2.4 + r.range(-0.4, 0.4),
         len = r.range(0.75, 1.15);
       const elbow = [
@@ -384,8 +536,12 @@ function plumTree(m, x, y, z, size, yaw) {
         elbow[1] + len * r.range(0.15, 0.5),
         elbow[2] + Math.sin(turn) * len * 0.55
       ];
-      m.tube(from, elbow, 0.05, 0.034, bark, 5);
-      m.tube(elbow, tip, 0.034, 0.011, barkLit, 4);
+      m.tube(from, elbow, 0.05, 0.034, bark, 6);
+      m.tube(elbow, tip, 0.034, 0.011, barkLit, 5);
+      for (let q = 1; q < 3; q++) {
+        const at = midway(from, elbow, 0.35 + q * 0.25);
+        bloom(m, [at[0] + r.range(-0.05, 0.05), at[1] + 0.04, at[2] + r.range(-0.05, 0.05)], 0.09);
+      }
       for (let q = 1; q < 4; q++) {
         const at = midway(elbow, tip, q / 3.3);
         bloom(m, [at[0] + r.range(-0.06, 0.06), at[1] + 0.03, at[2] + r.range(-0.06, 0.06)], 0.1);
@@ -588,11 +744,6 @@ function roundWindow(m, x, y, radius, wood, warm, pink) {
     drape.map((k) => point(k, 0.04, 0.97)),
     drape.map((k) => m.rgb(k % 2 ? pink : 0xf0b3c2))
   );
-  const chord = 2 * Math.sqrt(radius * radius - (radius * 0.36) ** 2);
-  for (const k of [-1, 1]) {
-    m.box(x + k * radius * 0.36, y, 0.052, 0.022, chord, 0.02, wood);
-    m.box(x, y + k * radius * 0.36, 0.052, chord, 0.022, 0.02, wood);
-  }
   m.hoop(x, y, 0.05, radius, 0.034, wood, n, 'xy');
 }
 // A square lattice window with the same lamplight and curtain.
@@ -675,7 +826,14 @@ function embroideryHouse(m) {
     m.box(0, floor + 0.04, s * front, W + 0.12, 0.08, 0.1, wood);
     for (const z of [-front, front])
       m.tube([s * half, floor, z], [s * half, eave - 0.03, z], 0.066, 0.06, wood, 7);
-    m.tube([s * 0.5, floor, front + 0.02], [s * 0.5, eave - 0.03, front + 0.02], 0.055, 0.05, wood, 6);
+    m.tube(
+      [s * 0.5, floor, front + 0.02],
+      [s * 0.5, eave - 0.03, front + 0.02],
+      0.055,
+      0.05,
+      wood,
+      6
+    );
   }
 
   // The open door: lamplight within, both leaves folded back, curtains tied
@@ -696,7 +854,8 @@ function embroideryHouse(m) {
   );
   // A table and a vase glimpsed inside.
   m.box(0.06, sill + 0.22, z + 0.04, 0.3, 0.035, 0.012, 0x6a3f2c);
-  for (const s of [-1, 1]) m.box(0.06 + s * 0.12, sill + 0.11, z + 0.04, 0.03, 0.22, 0.012, 0x6a3f2c);
+  for (const s of [-1, 1])
+    m.box(0.06 + s * 0.12, sill + 0.11, z + 0.04, 0.03, 0.22, 0.012, 0x6a3f2c);
   m.box(0.08, sill + 0.3, z + 0.04, 0.06, 0.13, 0.012, 0x7fa0a8);
   for (const s of [-1, 1]) {
     m.box(s * 0.42, floor + 0.54, z + 0.05, 0.07, 1.08, 0.07, wood);
@@ -759,12 +918,13 @@ function embroideryHouse(m) {
   for (const s of [-1, 1]) {
     flowerPot(m, s * 0.7, 0.22, plinthFront + 0.2, 1.25, petals[s > 0 ? 0 : 2]);
     flowerPot(m, s * 0.7, 0.22, plinthFront + 0.5, 1.0, petals[s > 0 ? 1 : 3], 0x8a5f4a);
-    flowerPot(m, s * 1.15, floor, plinthFront - 0.14, 1.0, petals[s > 0 ? 3 : 1]);
-    flowerPot(m, s * 1.5, floor, plinthFront - 0.14, 0.9, petals[s > 0 ? 2 : 4], 0x8a5f4a);
+    flowerPot(m, s * 0.85, floor, front + 0.1, 1.0, petals[s > 0 ? 3 : 1]);
+    flowerPot(m, s * 1.25, floor, front + 0.1, 0.9, petals[s > 0 ? 2 : 4], 0x8a5f4a);
     flowerPot(m, s * 2.0, -0.06, plinthFront + 0.3, 1.6, petals[s > 0 ? 4 : 0], 0x3f5560);
   }
   flowerPot(m, half + 0.18, floor, 0.45, 1.0, petals[0], 0x8a5f4a);
   flowerPot(m, half + 0.18, floor, -0.5, 0.9, petals[1]);
+  houseDetail(m);
 }
 
 // Whitewashed garden wall with a ridge of dark tile, following the lip of the
@@ -795,11 +955,59 @@ function gardenWall(m, land) {
       post(thick, h),
       post(thick, 0)
     ];
+    // Whitewash stained grey-green with damp toward the foot.
+    const damp = m.mix(white, 0x8a8e7e, 0.55 + 0.2 * Math.sin(i * 0.7));
+    const shade = [[damp, m.rgb(white)], null, null, null, null, [m.rgb(white), damp]];
     if (last)
-      for (let k = 0; k < 6; k++) m.face([last[k], last[k + 1], row[k + 1], row[k]], tones[k]);
+      for (let k = 0; k < 6; k++)
+        m.face(
+          [last[k], last[k + 1], row[k + 1], row[k]],
+          shade[k] ? [shade[k][0], shade[k][1], shade[k][1], shade[k][0]] : tones[k]
+        );
     if (!last || i === to) m.face(row, white);
+    // A rib of rounded tiles across the coping at every spoke.
+    m.line(
+      [post(-thick - 0.05, h + 0.006), post(0, h + 0.1), post(thick + 0.05, h + 0.006)],
+      0.009,
+      0x5d6468,
+      4
+    );
+    // Lattice windows (漏窗) let into the high wall behind the plums.
+    if (h > 0.84 && !pier && i % 18 === 9)
+      leakWindow(m, post, h, thick, Math.atan2(c, s), (i / 18) % 3);
     last = row;
   }
+}
+// One window of grey tile lattice in the garden wall, drawn on both faces: a round,
+// a hexagonal or a fan-shaped frame round a pattern of linked coins.
+function leakWindow(m, post, h, thick, yaw, shape) {
+  const [x, , z] = post(0, 0),
+    y = post(0, h * 0.52)[1],
+    frame = 0x6c7275,
+    fill = 0x3b4043,
+    n = shape === 1 ? 6 : 12,
+    rad = shape === 2 ? 0.2 : 0.17;
+  m.frame(x, y, z, yaw, 1, () => {
+    for (const side of [-1, 1]) {
+      const zz = side * (thick + 0.006),
+        rim = [];
+      for (let k = 0; k < n; k++) {
+        const a = (k * circle) / n + (shape === 1 ? Math.PI / 6 : 0);
+        // The fan is a ring's upper part cut flat across its foot.
+        const ry = shape === 2 ? Math.max(Math.sin(a), -0.7) * rad : Math.sin(a) * rad;
+        rim.push([Math.cos(a) * rad * (shape === 2 ? 1.25 : 1), ry, zz]);
+      }
+      m.face(side > 0 ? rim : [...rim].reverse(), fill);
+      m.line([...rim, rim[0]], 0.022, frame, 4);
+      for (const [cx, cy] of [
+        [-0.07, 0.0],
+        [0.07, 0.0],
+        [0.0, 0.07],
+        [0.0, -0.07]
+      ])
+        m.hoop(cx, cy, zz + side * 0.004, 0.07, 0.008, 0xb9bdb8, 8, 'xy');
+    }
+  });
 }
 
 // The garden behind the court: plum trees, bamboo, cypress, a few garden rocks.
@@ -810,31 +1018,18 @@ function gardenPlants(m, land) {
     [-2.5, -7.85, 1.25, 3.3],
     [-4.35, -6.75, 1.1, 5.0],
     [-6.0, -5.0, 1.1, 1.2],
-    [-7.2, -2.0, 0.85, 4.1],
-    [-7.15, 1.1, 0.85, 2.7]
+    [-7.1, -2.4, 0.85, 4.1],
+    [-7.1, 1.7, 0.85, 2.7]
   ])
     plumTree(m, ...set(x, z), size, yaw);
   bambooStand(m, ...set(-1.25, -9.0), 8, 0.55, 2.7);
   bambooStand(m, ...set(-3.9, -8.3), 6, 0.5, 2.4);
   bambooStand(m, ...set(-6.2, -6.0), 5, 0.45, 2.2);
-  bambooStand(m, ...set(-7.05, -0.35), 4, 0.35, 1.9);
   bambooStand(m, ...set(-6.9, 2.5), 4, 0.3, 1.7);
   cypress(m, ...set(1.1, -9.6), 3.6);
   cypress(m, ...set(0.3, -9.3), 2.9);
   cypress(m, ...set(-5.0, -6.6), 3.1);
-  // Garden rocks set among the trees.
-  const r = m.rng;
-  for (const [x, z, size] of [
-    [-1.0, -7.75, 0.3],
-    [-3.3, -7.5, 0.34],
-    [-5.3, -5.6, 0.28],
-    [-6.6, -3.0, 0.3],
-    [1.2, -7.7, 0.3]
-  ]) {
-    const y = land.ground(x, z) - 0.04;
-    m.rock(x, y, z, size, size * 1.7, size * 0.75, 0x8f918a, 0xcfcdc2, 7, r.range(0, 3));
-    m.rock(x + size * 0.8, y, z + 0.1, size * 0.55, size * 0.7, size * 0.5, 0x8f918a, 0xc3c1b6, 6);
-  }
+  gardenLayer(m, land);
 }
 
 // Stone posts and an iron chain along the open edge of the court, south and east.
@@ -1192,6 +1387,143 @@ function pond(m) {
       }
     }
   }
+  // Pebbles seen through the clear water near the shore.
+  for (let k = 0; k < 60; k++) {
+    const side = k % 4,
+      t = r.range(-0.95, 0.95),
+      d = r.range(0.84, 1.03),
+      x = side < 2 ? t : side === 2 ? d : -d,
+      z = side < 2 ? (side ? d : -d) : t,
+      rad = r.range(0.014, 0.03),
+      col = m.mix(r.pick([0xd8d2c4, 0x8f8a80, 0xb9a58a]), 0x9cc4ae, 0.45),
+      ring = [];
+    for (let i = 0; i < 6; i++) {
+      const a = (i * circle) / 6 + k;
+      ring.push([x + Math.cos(a) * rad, pondLevel + 0.002, z + Math.sin(a) * rad * 0.75]);
+    }
+    m.face(ring.reverse(), col);
+  }
+  // Carp turning just under the surface: red, gold and white.
+  for (const [x, z, yaw, col, spot] of [
+    [0.25, 0.45, 0.6, 0xe0602c, 0xf3efe6],
+    [0.38, 0.52, 2.2, 0xf1ece0, 0xd9372c],
+    [-0.62, 0.05, -1.4, 0xe8a03a, 0xe8a03a],
+    [0.62, -0.05, 3.6, 0xd9372c, 0xf3efe6],
+    [-0.1, -0.35, 1.0, 0xf1ece0, 0xe0602c]
+  ])
+    m.frame(x, pondLevel + 0.004, z, yaw, 1, () => {
+      m.face(
+        [
+          [0.07, 0, 0],
+          [0.03, 0, 0.022],
+          [-0.03, 0, 0.016],
+          [-0.06, 0, 0],
+          [-0.03, 0, -0.016],
+          [0.03, 0, -0.022]
+        ].reverse(),
+        col
+      );
+      m.face(
+        [
+          [0.05, 0.001, 0],
+          [0.015, 0.001, 0.012],
+          [-0.01, 0.001, 0]
+        ].reverse(),
+        spot
+      );
+      m.face(
+        [
+          [-0.055, 0, 0],
+          [-0.1, 0, 0.03],
+          [-0.085, 0, 0],
+          [-0.1, 0, -0.03]
+        ].reverse(),
+        m.mix(col, 0xffffff, 0.3)
+      );
+    });
+  // Open lotus flowers on their stalks, petals in two rings about a golden pod.
+  for (const [x, z, h] of [
+    [-0.45, 0.66, 0.11],
+    [0.62, 0.32, 0.09],
+    [0.28, -0.7, 0.12],
+    [-0.75, -0.15, 0.08]
+  ]) {
+    m.tube([x, pondLevel, z], [x, pondLevel + h, z], 0.006, 0.005, 0x5f8450, 4);
+    const top = [x, pondLevel + h, z];
+    for (let ring = 0; ring < 2; ring++)
+      for (let i = 0; i < 8; i++) {
+        const a = (i * circle) / 8 + ring * 0.4,
+          l = ring ? 0.045 : 0.065;
+        m.leaf(
+          top,
+          [x + Math.cos(a) * l, top[1] + (ring ? 0.05 : 0.025), z + Math.sin(a) * l],
+          l * 0.42,
+          ring ? 0xf3c4cf : 0xe58aa8,
+          0xfbe4ea,
+          0.015
+        );
+      }
+    m.lathe(
+      x,
+      top[1],
+      z,
+      [
+        [0, 0.012],
+        [0.02, 0.018],
+        [0.022, 0.001]
+      ],
+      0xd8b84e,
+      6
+    );
+  }
+  // Big lotus leaves held up above the water, cupped.
+  for (const [x, z, rad] of [
+    [-0.6, 0.48, 0.12],
+    [0.5, 0.6, 0.1],
+    [0.45, -0.75, 0.11],
+    [-0.8, -0.35, 0.1],
+    [0.78, 0.1, 0.09]
+  ]) {
+    const y = pondLevel + 0.06,
+      rim = [];
+    m.tube([x, pondLevel, z], [x, y, z], 0.005, 0.005, 0x5f8450, 4);
+    for (let i = 0; i <= 12; i++) {
+      const a = (i * circle) / 12;
+      rim.push([x + Math.cos(a) * rad, y + 0.025 + 0.008 * Math.sin(a * 3), z + Math.sin(a) * rad]);
+    }
+    for (let i = 0; i < 12; i++)
+      m.face([[x, y, z], rim[i + 1], rim[i]], [m.rgb(0x8fae62), m.rgb(0x4f7a42), m.rgb(0x4f7a42)]);
+  }
+  // Irises in the two north corners, below the paving's edge.
+  for (const [x, z] of [
+    [-0.86, -0.86],
+    [0.88, -0.6],
+    [-0.88, 0.75]
+  ])
+    for (let i = 0; i < 9; i++) {
+      const a = (i * circle) / 9 + r.range(-0.2, 0.2),
+        l = r.range(0.1, 0.17),
+        base = [x + Math.cos(a) * 0.03, pondLevel, z + Math.sin(a) * 0.03];
+      m.leaf(
+        base,
+        [base[0] + Math.cos(a) * 0.05, pondLevel + l, base[2] + Math.sin(a) * 0.05],
+        0.01,
+        0x3f6a3c,
+        0x6b9450,
+        0.01
+      );
+      if (i % 3 === 0)
+        m.crystal(
+          base[0] + Math.cos(a) * 0.04,
+          pondLevel + l * 0.9,
+          base[2] + Math.sin(a) * 0.04,
+          0.02,
+          0.03,
+          0x6a4fa8,
+          0xc4b2e8,
+          5
+        );
+    }
   // Three pairs, each drake close by his hen.
   for (const [x, z, yaw] of [
     [-0.28, 0.12, 0.35],
@@ -1277,7 +1609,7 @@ function farPeaks(m, land) {
           h * r.range(0.4, 0.75),
           haze,
           horizon,
-          8
+          10
         );
       }
       if (j % 3 === 0) cloudBank(m, x, -6.7, z, w * 3.4, w * 1.1, -a + Math.PI / 2, 5);
@@ -1385,33 +1717,10 @@ function plumAndBamboo(m, p, cell) {
     }
   }
 }
-// 玲瓏湖石: a pale garden rock stood on end at the back of the tile, worn through:
-// two legs, a waist between them and a heavier head.
+// 玲瓏湖石: a pale Taihu stone stood on end at the back of the tile, worn through.
 function piercedRock(m, p, cell) {
-  const r = m.rng,
-    side = (cell.x * 5 + cell.y * 3) % 2 ? 1 : -1,
-    pale = 0xe6e4da,
-    shade = 0xb4b3a9;
-  m.frame(side * 0.04, 0.035, -0.26, side * r.range(0.05, 0.3), 1.2, () => {
-    m.rock(-0.15, 0, 0, 0.085, 0.3, 0.08, shade, pale, 5, r.range(0, 3));
-    m.rock(0.14, 0, 0.01, 0.075, 0.26, 0.075, shade, pale, 5, r.range(0, 3));
-    m.rock(0, 0.21, 0, 0.24, 0.14, 0.085, shade, pale, 6, r.range(0, 3));
-    m.rock(-side * 0.06, 0.3, 0, 0.15, 0.24, 0.08, shade, pale, 6, r.range(0, 3));
-    m.rock(side * 0.16, 0.3, 0.01, 0.075, 0.15, 0.06, shade, 0xf0eee5, 5, r.range(0, 3));
-  });
-  // A tuft of grass at its foot.
-  for (let k = 0; k < 4; k++) {
-    const x = -side * 0.36 + r.range(-0.05, 0.05),
-      a = r.range(0, circle);
-    m.leaf(
-      [x, 0.045, -0.36],
-      [x + Math.cos(a) * 0.08, 0.13, -0.36 + Math.sin(a) * 0.05],
-      0.014,
-      0x5f7d4a,
-      0x8aa364,
-      0.03
-    );
-  }
+  const side = (cell.x * 5 + cell.y * 3) % 2 ? 1 : -1;
+  taihuStone(m, side * 0.08, 0.035, -0.25, 0.6, side * m.rng.range(0.1, 0.5), 5);
 }
 // 假山: a rockery piled to a peak, moss in its hollows and a little pine growing
 // from its shoulder.
@@ -1625,6 +1934,8 @@ function embroideryFrame(m) {
 }
 
 const tiles14 = {
+  ground,
+  plain: fallenPetals,
   cover: piercedRock,
   bamboo: plumAndBamboo,
   herbs: peonyBed,
@@ -1639,7 +1950,7 @@ function landform14(T, layout) {
   group.name = '黑木繡閣';
 
   const rock = new Model(T, 140101);
-  crag(rock, land, sections);
+  const crowns = crag(rock, land, sections);
   steppingStones(rock, land);
 
   const water = new Model(T, 140203);
@@ -1651,6 +1962,9 @@ function landform14(T, layout) {
   const plants = new Model(T, 140411);
   gardenWall(plants, land);
   gardenPlants(plants, land);
+
+  const things = new Model(T, 140823);
+  gardenFurnishings(things, land);
 
   const path = new Model(T, 140513);
   cliffPath(path, land, sections);
@@ -1680,6 +1994,10 @@ function landform14(T, layout) {
     );
   }
 
+  for (const [x, y, z] of crowns)
+    cloudPine(pines, x, y - 0.12, z, 0.75, pines.rng.range(0, circle));
+  ledgeGrowth(pines, sections);
+
   const far = new Model(T, 140719);
   farPeaks(far, land);
 
@@ -1688,6 +2006,7 @@ function landform14(T, layout) {
     water.finish('鴛鴦池', { cast: false }),
     home.finish('繡閣', { occluder: true }),
     plants.finish('紅梅翠竹與粉牆', { occluder: true }),
+    things.finish('石桌湖石燈鼎', { occluder: true }),
     path.finish('崖道絞架與鐵索', { occluder: true }),
     pines.finish('崖壁蒼松', { occluder: true }),
     far.finish('雲海遠峰', { distant: true, cast: false })
@@ -1695,4 +2014,4 @@ function landform14(T, layout) {
   return group;
 }
 
-export { landform14, tiles14 };
+export { landform14, tiles14, bloom, flowerPot, needlePad };

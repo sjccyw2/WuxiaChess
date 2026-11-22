@@ -524,4 +524,21 @@ function stair(m, light, { a, turn }) {
   put(m, cap, cap.map((p, k) => light(k < 2 ? 0x6b726d : dark, p[0], p[1], p[2])), [Math.sin(start) * turn, 0, -Math.cos(start) * turn]);
 }
 
-export { TOP, BED, FOOT, edgeRadius, gateLamps, painter, paving, drum, parapet, footing, spillAngle };
+export {
+  TOP,
+  BED,
+  FOOT,
+  edgeRadius,
+  gateLamps,
+  painter,
+  paving,
+  drum,
+  parapet,
+  footing,
+  spillAngle,
+  gates,
+  gateHalf,
+  at,
+  put,
+  flag
+};
