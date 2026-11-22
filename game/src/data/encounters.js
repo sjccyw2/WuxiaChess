@@ -422,7 +422,7 @@ const ENCOUNTERS = [
       '鎖脈擒龍',
       'drain',
       'guard',
-      '神龍教教主，教眾開口先得祝他仙福永享、壽與天齊。他號令旁人慣了，今日卻有一個念頭越過他去號令他的一雙手。擒拿手隔著數步將人扯到身前，鎖住脈門，削人內力。',
+      '神龍教教主，教眾開口先得祝他仙福永享，壽與天齊。他號令旁人慣了，今日卻有一個念頭越過他去號令他的一雙手。擒拿手隔著數步將人扯到身前，鎖住脈門，削人內力。',
       'hongAn',
       '',
       {
@@ -462,7 +462,7 @@ const ENCOUNTERS = [
       '鐵掌',
       'exposed',
       'guo',
-      '鐵掌幫幫主，人稱鐵掌水上飄，掌力裂石，踏水如履平地。他一生只認強弱二字；給一道戰意按著動手，於他倒不算委屈，只是每出一掌，心裡總有個聲音問他：這一掌該不該打。鐵掌專破對手的守勢。',
+      '鐵掌幫幫主，人稱鐵掌水上飄，掌力裂石，踏水如履平地。他一生只認強弱二字；給一道戰意按著動手，他心裡不服，每出一掌，心裡又總有個聲音問他：這一掌該不該打。鐵掌專破對手的守勢。',
       'qiuRen',
       '',
       { mods: { hp: 1.4, atk: 8, def: 2, step: 4, range: 1 }, fleet: true }
@@ -477,7 +477,7 @@ const ENCOUNTERS = [
       '白虹掌力',
       'sweep',
       'guo',
-      '逍遙派高手，西夏皇太妃，面上常垂一幅白綢。她同師姊鬥了一世，為的是一個不曾將她放在心上的人；今日心裡這一個「戰」字，竟不是為他。白虹掌力曲直如意，繞過山石與擋在前面的人，打到料想不到之處。',
+      '逍遙派高手，西夏皇太妃，面上常垂一幅白綢。她同師姊鬥了一世，為的是一個心裡另有旁人的人；今夜心裡這一個「戰」字，竟不是為他。白虹掌力曲直如意，繞過石欄花樹與擋在前面的人，打到料想不到之處。',
       'liQiu',
       '',
       {
@@ -736,6 +736,13 @@ const STATUS_POWER = {
 };
 const lasting = (turns) => (turns === 2 ? '持續至下回合。' : '持續 ' + turns + ' 回合。');
 const SHARES = { 2: '二', 3: '三', 4: '四', 5: '五' };
+// A share as the text says it: 三分之一 for a third or a quarter, 四成 for a share that is no such
+// fraction (0.4).
+function shareOf(share) {
+  const parts = Math.round(1 / share);
+  if (SHARES[parts] && Math.abs(1 / parts - share) < 0.02) return SHARES[parts] + '分之一';
+  return '一二三四五六七八九'[Math.round(share * 10) - 1] + '成';
+}
 // What a signature's rider adds to its note (`sig.extra`, or the style itself).
 const EXTRAS = {
   wound: '，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。',
@@ -753,7 +760,7 @@ const SIGNATURE_RULES = {
   drain: ({ power, extra }) => riding('另外削去目標 ' + power + ' 點內力。', extra),
   sweep: ({ sweep, extra }) =>
     riding(
-      '相鄰的其他我方俠客也會受到' + (SHARES[Math.round(1 / sweep)] || '') + '分之一傷害。',
+      '相鄰的其他我方俠客也會受到' + shareOf(sweep) + '傷害。',
       extra
     ),
   pin: ({ power, turns, extra }) =>
@@ -912,7 +919,7 @@ const TROOPS = {
     school: '神龍教青龍門',
     mini: 'shenLong',
     basic: '青龍短刀',
-    bio: '洪安通念中的教眾，口裡念著「教主仙福永享」，搶步上前。藥藏在袖底，移步之時方才抹上刀背；站定了接戰，反而用它不上。',
+    bio: '洪安通念中的教眾，口裡念著「教主仙福永享」，搶步上前。藥藏在袖底，移步之時方才抹上刀口；站定了接戰，反而用它不上。',
     traits: { mods: { step: 3, range: 1 }, stepPoison: { power: 2, turns: 2 } }
   },
   netHand: {
@@ -932,7 +939,7 @@ const TROOPS = {
     school: '鐵掌幫',
     mini: 'ironPalm',
     basic: '踏樁掌',
-    bio: '裘千仞念中的幫眾，在溪石上練出一身沉樁功夫。氣血過半之後，他將最後一口勁沉在胸前，硬挺對手的招數。',
+    bio: '裘千仞念中的幫眾，在溪石上練出一身沉樁功夫。氣血折了一半之後，他將最後一口勁沉在胸前，硬挺對手的招數。',
     traits: { mods: { hp: 1.2, def: 1, range: 1 }, lastStand: { below: 0.5, cut: 50 } }
   },
   xiaGuard: {
@@ -1002,7 +1009,7 @@ const GISTS = {
   hongAn: '守在臺前，受擊才下臺；擒拿手隔三格將人扯到身前，並削去內力。',
   gongSun: '單數回合使金刀，攻擊提高；雙數回合使黑劍，射程多一格；絕技令目標攻擊降低。',
   qiuRen: '踏水如平地，移動不受地形拖累；鐵掌令目標防禦降低。',
-  liQiu: '掌力轉折，無視掩體，旁人代受不了；絕技波及身旁；專挑倚仗掩體的人。',
+  liQiu: '掌力轉折，無視地形防禦，旁人代受不了；絕技波及身旁；專挑倚仗掩體或有人代受的人。',
   dongFang: '每次出手之後，再刺射程內另一人；飛針隔三格令目標絆足。',
   shenLong: '走動之後出手，令目標中毒；站定出手則否。',
   netHand: '隔兩格撒網，普攻令目標絆足。',

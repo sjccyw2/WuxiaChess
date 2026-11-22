@@ -220,7 +220,7 @@ const RULE_GROUPS = [
         id: 'prefers',
         name: '偏好',
         trait: (t) => !!(t.prefers || t.phase?.prefers),
-        text: '選擇目標時另有所好：傷重者、落單者、領隊、療傷者、內力深厚者、離得最近的人，或倚仗掩體的人'
+        text: '選擇目標時另有所好：傷重者、落單者、領隊、療傷者、內力深厚者、離得最近的人，或倚仗掩體、有人代受的人'
       },
       { id: 'contact', name: '化功', trait: 'contact', text: '貼身打中他的俠客損失內力；封穴時無效' },
       { id: 'banner', name: '盟令', trait: 'banner', text: '存活時其餘敵人攻擊提高，倒下後即失效' },
@@ -269,7 +269,7 @@ const RULE_GROUPS = [
         id: 'flurry',
         name: '分刺',
         trait: 'flurry',
-        text: '每次出手之後，再刺射程內另一名俠客，威力較前一擊為輕；這一刺無人可代受，也不受還擊'
+        text: '每次出手之後，再刺射程內另一名俠客，威力較前一擊為輕；這一刺無人可代受，閃身與挪移也攔不住，且不受還擊'
       },
       {
         id: 'bend',

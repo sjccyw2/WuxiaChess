@@ -4425,8 +4425,11 @@ for (const [map, b] of BATTLES.entries())
 // ── Boards built round one villain (maps 10 to 14) ────────────────────────
 section('boards built round one villain');
 {
-  const { GARRISONS } = await load('data/encounters.js');
+  const { GARRISONS, SIGNATURE_RULES } = await load('data/encounters.js');
   const { CAPTAINS } = await load('data/martial-arts.js');
+  // A sweep's share is worded as it is: a third stays 三分之一, 李秋水's 0.4 reads 四成.
+  check('a sweep’s note states its own share', SIGNATURE_RULES.sweep({ sweep: 0.33 }).includes('三分之一') && SIGNATURE_RULES.sweep({ sweep: 0.25 }).includes('四分之一') && SIGNATURE_RULES.sweep({ sweep: 0.4 }).includes('四成'));
+  check('西夏夜苑: 李秋水’s page says her sweep takes 四成', G.pieceLines(13, 'master', 7)[0] === '相鄰的其他我方俠客也會受到四成傷害。', G.pieceLines(13, 'master', 7)[0]);
   const { FINAL_MAP } = await load('data/battles.js');
   const NEW = [10, 11, 12, 13, 14];
   const TIERS = { 1: [1, 2, 10], 2: [1, 2, 10], 3: [3, 4, 11], 4: [3, 4, 11], 5: [5, 6, 12], 6: [5, 6, 12], 7: [7, 13], 8: [8, 14] };
