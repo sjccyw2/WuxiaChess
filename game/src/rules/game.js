@@ -1390,30 +1390,30 @@ function makeUnit(id, side, x, y, hp, mp, atk, def, step, range, weapon = null) 
   };
 }
 const HERO_STATS = {
-  huang: [96, 74, 20, 8, 4, 2, 'jadeCane'],
-  yang: [128, 54, 27, 10, 4, 1, 'tombSword'],
-  zhang: [132, 76, 22, 14, 3, 1, 'mingSash'],
-  hu: [110, 58, 25, 9, 5, 1, 'foxSaber'],
-  hero: [112, 48, 27, 10, 3, 1, 'pine'],
-  medic: [94, 76, 18, 7, 3, 2, 'staff'],
-  guard: [148, 44, 23, 17, 3, 1, 'pole'],
-  guo: [146, 50, 23, 15, 3, 1, 'wraps'],
-  xiao: [102, 66, 23, 9, 4, 1, 'twins'],
-  duan: [92, 82, 20, 7, 4, 2, 'fan'],
+  huang: [70, 40, 16, 8, 3, 2, 'jadeCane'],
+  yang: [184, 76, 26, 14, 5, 1, 'tombSword'],
+  zhang: [166, 92, 21, 19, 3, 1, 'mingSash'],
+  hu: [104, 36, 17, 9, 5, 1, 'foxSaber'],
+  hero: [148, 74, 25, 11, 4, 1, 'pine'],
+  medic: [64, 46, 15, 7, 3, 2, 'staff'],
+  guard: [166, 34, 19, 16, 3, 1, 'pole'],
+  guo: [180, 76, 24, 19, 3, 1, 'wraps'],
+  xiao: [102, 66, 21, 9, 4, 1, 'twins'],
+  duan: [76, 70, 17, 7, 4, 2, 'fan'],
   // The ten from the roster pack carry no weapon of their own yet (ROADMAP, open questions): the
   // slot starts empty. Their attack sits a little above the first ten's bare numbers and below
   // their armed ones, since the first weapon they buy adds its whole bonus.
-  qiaoFeng: [146, 50, 25, 13, 4, 1],
-  xuZhu: [122, 80, 21, 12, 3, 1],
-  hongQi: [128, 60, 25, 12, 4, 1],
-  yaoShi: [102, 80, 22, 9, 4, 2],
-  sanFeng: [136, 72, 23, 15, 3, 1],
-  zhaoMin: [100, 62, 24, 8, 5, 1],
-  lingSu: [90, 84, 19, 7, 4, 2],
-  diYun: [136, 54, 28, 9, 4, 1],
-  chengZhi: [112, 60, 23, 10, 5, 1],
-  aQing: [90, 58, 24, 6, 5, 1],
-  youth: [108, 56, 25, 9, 4, 1, 'keenSword']
+  qiaoFeng: [156, 60, 23, 13, 4, 1],
+  xuZhu: [134, 100, 18, 12, 3, 1],
+  hongQi: [146, 60, 27, 12, 5, 1],
+  yaoShi: [102, 80, 20, 9, 4, 2],
+  sanFeng: [136, 96, 27, 19, 4, 1],
+  zhaoMin: [70, 34, 13, 7, 4, 1],
+  lingSu: [72, 42, 16, 7, 3, 2],
+  diYun: [176, 82, 25, 13, 4, 1],
+  chengZhi: [86, 38, 18, 10, 5, 1],
+  aQing: [130, 78, 25, 9, 5, 1],
+  youth: [104, 70, 26, 9, 4, 1, 'keenSword']
 };
 // What a hero arrives wearing, beside the weapon in HERO_STATS.
 const STARTING_GEAR = { diYun: 'silkwormCoat' };
@@ -1753,7 +1753,7 @@ const SIGNATURE_RULES_BY_HERO = {
   duan: { factor: 1.1, safe: true },
   huang: { factor: 1.05, mute: { turns: 1 }, visual: 'guard' },
   yang: { factor: 1.32, visual: 'guo' },
-  zhang: { visual: 'medic', heal: 30, target: 'ally' },
+  zhang: { visual: 'medic', heal: 40, target: 'ally' },
   hu: { factor: 1.3, visual: 'xiao' },
   qiaoFeng: { factor: 1.2, push: true, visual: 'guo' },
   xuZhu: { factor: 1.3, visual: 'guo' },
@@ -1761,7 +1761,7 @@ const SIGNATURE_RULES_BY_HERO = {
   yaoShi: { factor: 1.25, visual: 'guo' },
   sanFeng: { factor: 1.2, stance: 20, visual: 'guo' },
   zhaoMin: { factor: 1.2, pierce: 0.5, visual: 'hero' },
-  lingSu: { visual: 'medic', heal: 28, target: 'ally' },
+  lingSu: { visual: 'medic', heal: 22, target: 'ally' },
   diYun: { factor: 1.3, visual: 'hero' },
   chengZhi: { factor: 1.25, visual: 'guo' },
   aQing: { factor: 1.25, visual: 'xiao' },

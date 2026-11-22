@@ -21,7 +21,7 @@ const ART_FORMS = {
   breakArrow: [],
   starSuction: [],
   breakQi: ['seal'],
-  ninefoldIntent: ['exploit'],
+  ninefoldIntent: ['exploit', 'again'],
 
   // 任盈盈
   'signature:medic': ['cleanse'],
@@ -130,10 +130,10 @@ const ART_FORMS = {
   'signature:hongQi': [],
   hqTap: ['pin'],
   hqTail: [],
-  hqSeal: ['seal'],
+  hqSeal: [],
   hqShock: [],
   hqTurn: ['pin'],
-  hqThirtySix: ['seal'],
+  hqThirtySix: [],
 
   // 黃藥師
   'signature:yaoShi': ['mark'],
@@ -148,7 +148,7 @@ const ART_FORMS = {
   // 張三丰
   'signature:sanFeng': [],
   sfSoft: [],
-  sfPureYang: [],
+  sfPureYang: ['cleanse'],
   sfSword: ['pull'],
   sfSeven: [],
   sfCloud: ['collision'],

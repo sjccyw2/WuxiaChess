@@ -1444,7 +1444,7 @@ section('glide');
   BM.applyCondition(p, pinned, { kind: 'pin', power: 2, turns: 1 }, pinned);
   check('絆足 shortens it', G.resolve(p, pinned, unit(p, 'blade'), true).glide === 2);
   const full = board(['hero', 'xiao', 'medic']);
-  const h = put(full, 'hero', 3, 7);
+  const h = Object.assign(put(full, 'hero', 3, 7), { step: 3 }); // three steps to (6,7), whatever his own
   put(full, 'blade', 7, 7);
   teach(h, defineArt({ forms: ['glide'], mp: 2, safe: true }));
   G.move(full, h, 6, 7);
@@ -3109,6 +3109,11 @@ section('prefers');
       const s = board();
       s.run.stage = stage;
       const chief = put(s, 'chief', 5, 3);
+      // The three heroes as these checks were written for (氣血 and 內力), so a rebalance of their
+      // numbers does not decide who is struck.
+      Object.assign(unit(s, 'medic'), { hp: 94, maxHp: 94, mp: 76, maxMp: 76 });
+      Object.assign(unit(s, 'guard'), { hp: 148, maxHp: 148, mp: 44, maxMp: 44 });
+      Object.assign(unit(s, 'hero'), { hp: 112, maxHp: 112 });
       setup(s);
       const before = new Map(G.party(s).map((v) => [v.id, v.hp]));
       G.startEnemy(s);
@@ -3212,7 +3217,7 @@ section('phase');
     const s = board();
     const hero = put(s, 'hero', 4, 3),
       chief = put(s, 'chief', 5, 3);
-    teach(hero, defineArt({ hits: [0.5, 0.5], factor: 2 }));
+    teach(hero, defineArt({ hits: [0.5, 0.5], factor: 1.5 }));
     hero.mp = 40;
     chief.hp = Math.floor(chief.maxHp / 2) + 10;
     const f = G.forecast(hero, chief, true, s);
@@ -3871,7 +3876,7 @@ section('board 7 寒玉石室: the venom that stops the healing');
   s.round = 2;
   const ring = mapLayout(7).cells.filter((p) => G.distance(p, li) === 3 && G.walkable(p.x, p.y, 7) && !G.at(s, p.x, p.y));
   for (const v of G.party(s)) if (['hero', 'medic', 'guard'].includes(v.id)) Object.assign(v, { x: -9, y: -9 }); else v.hp = 0; // the three are put again below; a recruit sits out
-  put(s, 'medic', ring[0].x, ring[0].y);
+  Object.assign(put(s, 'medic', ring[0].x, ring[0].y), { hp: 94, maxHp: 94 }); // as written for: one volley does not fell her
   const guardAt = ring.find((p) => G.distance(p, ring[0]) > 2);
   put(s, 'guard', guardAt.x, guardAt.y).hp = 60;
   put(s, 'hero', mapLayout(7).allies[0].x, mapLayout(7).allies[0].y);
