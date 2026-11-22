@@ -6,6 +6,14 @@ import { toggleSection } from './sections.js';
 import { gameArt, wikiArt } from '../catalog/parts.js';
 import { BASELINE_ATTACK } from '../catalog/skills.js';
 import { loreShelf, featured } from './lore.js';
+import { compareData } from '../catalog/compare.js';
+
+// 群俠列傳 shows each hero's 綜合 score from 俠客對照 (level 12, every art learned) and its place.
+function heroScores() {
+  const list = compareData().heroes,
+    order = [...list].sort((a, b) => b.composite - a.composite);
+  return new Map(list.map((h) => [h.id, { score: h.composite, rank: order.findIndex((o) => o.composite === h.composite) + 1 }]));
+}
 
 function detailHead(r, g) {
   return (
@@ -33,10 +41,27 @@ function card(g, r) {
       esc(r.tag) +
       '</small><strong>' +
       esc(r.name) +
-      '</strong></span>',
+      '</strong></span>' +
+      (g === 'heroes' && r.score != null
+        ? '<em class="card-score" title="' +
+          esc('綜合評分 ' + r.score + '，全員第 ' + r.rank + ' 名') +
+          '"><small>綜合</small>' +
+          r.score +
+          '</em>'
+        : ''),
     'card'
   );
 }
+// 俠客對照 sits beside 群俠列傳 on the home page: it is a tool over the heroes, not a group.
+const compareShelf = () =>
+  anchor(
+    '#compare',
+    image(gameArt('portraits-guo.webp')) +
+      '<span><strong>俠客對照</strong><small>' +
+      store.entries.heroes.length +
+      ' 人並列 · 評分與成長</small></span><i aria-hidden="true">›</i>',
+    'shelf'
+  );
 export function home() {
   const shelf = (g, file) => {
     const c = categories[g];
@@ -103,11 +128,11 @@ export function home() {
       ['missions', 'run-meridians.webp'],
       ['rules', 'wake-gauge.webp']
     ]
-      .map(([g, f]) => shelf(g, f))
+      .map(([g, f]) => shelf(g, f) + (g === 'heroes' ? compareShelf() : ''))
       .join('') +
     '</div>' +
-    '<div class="home-title"><h2>十局輿圖</h2>' +
-    anchor('#maps', '查看十局 →') +
+    '<div class="home-title"><h2>棋局輿圖</h2>' +
+    anchor('#maps', '查看各局 →') +
     '</div><div class="atlas-strip">' +
     [0, 5, 9].map(artCard).join('') +
     '</div>' +
@@ -118,7 +143,8 @@ export function home() {
 }
 function filters(g, p, values, textGroup = false) {
   const q = p.get('q') || '',
-    t = p.get('tag') || '';
+    t = p.get('tag') || '',
+    sort = p.get('sort') || '';
   return (
     '<form class="filters" data-filter="' +
     g +
@@ -130,8 +156,14 @@ function filters(g, p, values, textGroup = false) {
     values
       .map((v) => '<option' + (v === t ? ' selected' : '') + '>' + esc(v) + '</option>')
       .join('') +
-    '</select><button type="submit">篩選</button>' +
-    (q || t ? anchor(href(g), '清除', 'more') : '') +
+    '</select>' +
+    (g === 'heroes'
+      ? '<label class="sr" for="filter-sort">排序</label><select id="filter-sort" name="sort"><option value="">預設排序</option><option value="score"' +
+        (sort === 'score' ? ' selected' : '') +
+        '>綜合評分由高到低</option></select>'
+      : '') +
+    '<button type="submit">篩選</button>' +
+    (q || t || sort ? anchor(href(g), '清除', 'more') : '') +
     '</form>'
   );
 }
@@ -154,8 +186,14 @@ export function listPage(g, p) {
   const t = p.get('tag') || '',
     q = p.get('q') || '',
     textGroup = g === 'text';
-  const rows = textGroup ? store.corpus.entries : store.entries[g],
+  const scores = g === 'heroes' ? heroScores() : null,
+    rows = textGroup
+      ? store.corpus.entries
+      : scores
+        ? store.entries[g].map((r) => ({ ...r, ...scores.get(r.id) }))
+        : store.entries[g],
     values = textGroup ? Object.keys(store.corpus.groups) : [...new Set(rows.map((r) => r.tag))];
+  if (scores && p.get('sort') === 'score') rows.sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
   const matched = rows.filter(
     (r) =>
       (!t || (textGroup ? r.groups.includes(t) : r.tag === t)) &&
@@ -172,6 +210,11 @@ export function listPage(g, p) {
     categories[g][2] +
     '</span></div>' +
     filters(g, p, values, textGroup) +
+    (scores
+      ? '<p class="list-note">右側數字為綜合評分（第十二級、武學全數習得，最高者 100 為準的六項平均）。' +
+        anchor('#compare', '到俠客對照看六項評分與全員排名 →', 'more') +
+        '</p>'
+      : '') +
     (textGroup ? '<p class="revision">〔　〕標示遊戲執行時代入的姓名、數值或選項。</p>' : '') +
     (page.portion.length
       ? '<div class="' +
@@ -187,10 +230,17 @@ export function entry(g, id) {
   const r = store.tables[g].get(id);
   if (!r) return lost();
   const audit = href('text', '', { q: r.name });
+  const score = g === 'heroes' && heroScores().get(r.id);
   return (
     '<article class="entry">' +
     crumb(g, r.name) +
     detailHead(r, g) +
+    (g === 'heroes'
+      ? '<p class="entry-tools">' +
+        (score ? '<span>綜合評分 <b>' + score.score + '</b>（全員第 ' + score.rank + ' 名，共 ' + store.entries.heroes.length + ' 人）</span> ' : '') +
+        anchor('#compare?h=' + encodeURIComponent(r.id), '與他人對照 →', 'more') +
+        '</p>'
+      : '') +
     (g === 'skills' && r.sections[0]?.title === '招式數值'
       ? '<p class="revision">比較基準採攻擊 ' +
         BASELINE_ATTACK +

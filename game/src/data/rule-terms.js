@@ -36,12 +36,19 @@ const RULE_GROUPS = [
       { id: 'safe', name: '免受還擊', art: 'safe', text: '此招出手，敵人無法還擊' },
       { id: 'pierce', name: '穿透', art: 'pierce', text: '計算傷害時無視目標一部分防禦' },
       { id: 'splash', name: '濺射', art: 'splash', text: '主目標四鄰的其他敵人也受到一部分傷害' },
+      { id: 'radius', name: '廣及', art: 'radius', text: '濺射不限四鄰，主目標數格之內的其他敵人都受波及' },
       { id: 'hits', name: '連擊', art: 'hits', text: '一招分成數段，各段分別計算傷害' },
       { id: 'push', name: '擊退', art: 'push', text: '把存活的目標推開一格，背後須有空位' },
       { id: 'blink', name: '身法', art: 'blink', text: '越過障礙移至射程內可站立的空格，隨即結束行動' },
       { id: 'heal', name: '療傷', art: 'heal', text: '替友軍或自身回復氣血；內傷者所受療傷減半' },
       { id: 'aura', name: '範圍', art: 'aura', text: '效果及於目標及其周圍數格內的友軍' },
       { id: 'recover', name: '回氣', art: 'recover', text: '命中後回復自身內力' },
+      {
+        id: 'drain',
+        name: '吸元',
+        art: 'drain',
+        text: '依主目標此擊實際損失的氣血，回復自身一部分氣血，有上限；內傷者減半，波及與器物不算'
+      },
       { id: 'hpCost', name: '自耗氣血', art: 'hpCost', text: '施展時先扣自身氣血；氣血不足以支付時不能施展' },
       {
         id: 'brace',
@@ -98,7 +105,7 @@ const RULE_GROUPS = [
         id: 'answer',
         name: '破招',
         art: 'answer',
-        text: '每一式專破一路：近身、遠攻，或局主與副手。目標合於所破的一路時，倍率 ＋0.30'
+        text: '每一式專破一路：近身、遠攻、局主與副手，或一類兵刃（刀、長兵、短兵、軟兵、拳掌）。目標合於所破的一路時，倍率 ＋0.30'
       },
       { id: 'lone', name: '孤行', art: 'lone', text: '出手時四鄰沒有同伴，倍率提高' },
       {
@@ -149,7 +156,15 @@ const RULE_GROUPS = [
       { id: 'evade', name: '閃身', art: 'evade', text: '下一次受到的直接攻擊落空' },
       { id: 'redirect', name: '挪移', art: 'redirect', text: '下一次受擊傷害減半，並把一部分反震給出手者' },
       { id: 'retort', name: '後發', art: 'retort', text: '還擊不按五成半，改按此招所定的比例計算' },
-      { id: 'shield', name: '護勁', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護勁取較強者' }
+      { id: 'shield', name: '護勁', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護勁取較強者' },
+      { id: 'fortify', name: '固守', art: 'fortify', condition: 'fortify', text: '受術者防禦提高，到期恢復；多重固守取較強者' },
+      {
+        id: 'immune',
+        name: '金剛',
+        art: 'immune',
+        condition: 'immune',
+        text: '至所定的敵方回合結束，敵人的攻擊、還擊與波及都傷不了受術者，也附不上狀態；毒傷與自身的代價照舊'
+      }
     ]
   },
   {
@@ -161,6 +176,16 @@ const RULE_GROUPS = [
       { id: 'wound', name: '內傷', art: 'wound', condition: 'wound', guide: true, text: '療傷減半，每次出手攻擊後自損氣血' },
       { id: 'daze', name: '失神', art: 'daze', condition: 'daze', guide: true, text: '失去下一次行動；局主受過後，下一回合可抵抗' },
       { id: 'disarm', name: '纏械', art: 'disarm', condition: 'disarm', guide: true, text: '攻擊降低，普攻與絕技只能攻擊相鄰一格' },
+      { id: 'freeze', name: '定身', art: 'freeze', condition: 'freeze', guide: true, text: '數回合不能移動、出手、施展絕技或還擊；局主只受一回合，下一回合可抵抗' },
+      { id: 'mute', name: '閉穴', art: 'mute', condition: 'mute', guide: true, text: '數回合不能出手、施展絕技或還擊，仍可移動；局主只受一回合，下一回合可抵抗' },
+      {
+        id: 'charm',
+        name: '受制',
+        art: 'charm',
+        condition: 'charm',
+        guide: true,
+        text: '尋常敵人倒戈數個敵方回合，走向最近的同夥以普攻出手；我方不攻擊他，他仍算敵人。局主與副手不受制，改為失神'
+      },
       { id: 'poison', name: '中毒', art: 'poison', condition: 'poison', text: '每回合失去氣血，到期自解' },
       { id: 'weak', name: '攻勢受挫', condition: 'weak', text: '攻擊降低，到期恢復' },
       { id: 'exposed', name: '破防', condition: 'exposed', text: '防禦降低，到期恢復' },
@@ -181,6 +206,30 @@ const RULE_GROUPS = [
       },
       { id: 'medicine', name: '服藥', text: '藥箱全隊共用。每次扣一份，不耗移動或行動，一回合內可連用' },
       { id: 'weaponForm', name: '兵器效果', text: '有些兵器替普攻或護持招式添上一種戰鬥效果，寫在各兵器的條目' }
+    ]
+  },
+  {
+    // The leader boons (rules/battle-mastery.js COMMANDS). Each hero's own is on his page; these
+    // are the rules a boon's one line leaves out.
+    id: 'lead',
+    title: '領隊陣法',
+    icon: 'flag',
+    terms: [
+      {
+        id: 'command',
+        name: '領隊陣法',
+        text: '每位俠客領隊時各有一種陣法，作用於自身與兩格內的友軍；軟筋餘香反過來削弱領隊兩格內的敵人。領隊倒下，陣法即失效；整備時按各人的起陣格計算'
+      },
+      {
+        id: 'opening',
+        name: '越女試劍',
+        text: '每回合頭一次會招來還擊的出手，敵人不能還擊；本來就不受還擊的出手不算，下一回合又有一次'
+      },
+      {
+        id: 'spare',
+        name: '雪谷回生',
+        text: '陣法所及的俠客將要倒下時，留住 1 點氣血，毒發也算；一局只救頭一個，下一局重新算起'
+      }
     ]
   },
   {
@@ -220,7 +269,7 @@ const RULE_GROUPS = [
         id: 'prefers',
         name: '偏好',
         trait: (t) => !!(t.prefers || t.phase?.prefers),
-        text: '選擇目標時另有所好：傷重者、落單者、領隊、療傷者、內力深厚者，或離得最近的人'
+        text: '選擇目標時另有所好：傷重者、落單者、領隊、療傷者、內力深厚者、離得最近的人，或倚仗掩體、有人代受的人'
       },
       { id: 'contact', name: '化功', trait: 'contact', text: '貼身打中他的俠客損失內力；封穴時無效' },
       { id: 'banner', name: '盟令', trait: 'banner', text: '存活時其餘敵人攻擊提高，倒下後即失效' },
@@ -247,7 +296,7 @@ const RULE_GROUPS = [
         id: 'ward',
         name: '護陣',
         trait: 'ward',
-        text: '存活時各替局主抵擋一部分傷害；擊倒一人，局主的護陣便弱一分'
+        text: '存活（或立著）時各替局主抵擋一部分傷害；倒下一個，局主的護陣便弱一分'
       },
       { id: 'skirmish', name: '游擊', trait: 'glide', text: '出手後退開數步，離俠客越遠越好' },
       { id: 'venom', name: '毒手', trait: 'basicPoison', text: '普攻令目標中毒' },
@@ -264,6 +313,54 @@ const RULE_GROUPS = [
         name: '刀陣',
         trait: (t) => t.cover === 'kin',
         text: '相鄰的同袍氣血較多時，替他承受俠客的直接攻擊'
+      },
+      {
+        id: 'flurry',
+        name: '分刺',
+        trait: 'flurry',
+        text: '每次出手之後，再刺射程內另一名俠客，威力較前一擊為輕；這一刺無人可代受，閃身與挪移也攔不住，且不受還擊'
+      },
+      {
+        id: 'bend',
+        name: '轉折',
+        trait: 'bend',
+        text: '出手不走直路：無視目標所在地形的防禦加成，旁人也無法替目標代受'
+      },
+      {
+        id: 'pull',
+        name: '擒拿',
+        trait: 'pull',
+        text: '絕技命中後，將目標扯到自己身旁的空格；目標已在身旁，或身旁沒有空格，便扯不動'
+      },
+      { id: 'fleet', name: '水上飄', trait: 'fleet', text: '每一格只消耗 1 步，淺水與林叢都拖不慢他' },
+      {
+        id: 'twin',
+        name: '陰陽倒亂',
+        trait: 'twin',
+        text: '兩件兵刃輪著使：單數回合攻擊提高，雙數回合射程多一格'
+      },
+      { id: 'prowl', name: '獨行', trait: 'lone', text: '身旁沒有其他敵人時，出手或還擊攻擊提高' },
+      { id: 'pincer', name: '夾衛', trait: 'pincer', text: '目標身旁另有敵人時，出手或還擊攻擊提高' },
+      {
+        id: 'stepPoison',
+        name: '步裡藏毒',
+        trait: 'stepPoison',
+        text: '走動之後的普攻令目標中毒；原地出手與還擊不帶毒'
+      },
+      { id: 'lastStand', name: '沉樁', trait: 'lastStand', text: '氣血降到一定程度以下時，受到的傷害減少' },
+      { id: 'snare', name: '墜網', trait: 'snare', text: '普攻令目標絆足，移動減少；還擊不帶網' },
+      {
+        id: 'unfelled',
+        name: '不敗',
+        trait: 'unfelled',
+        text: '無論攻擊、還擊或毒傷，氣血都不會低於 1 點；他不會倒下'
+      },
+      { id: 'formless', name: '無招', trait: 'formless', text: '沒有招式可破：任何一式的破招對他都不成' },
+      {
+        id: 'withdraw',
+        name: '退守',
+        trait: 'withdraw',
+        text: '氣血降到一定程度以下時，退到離俠客較遠、身旁有同伴之處；退定之後，攻擊範圍內有人才出手'
       }
     ]
   },
@@ -278,6 +375,24 @@ const RULE_GROUPS = [
         text: '擊敗局主即勝，其餘敵人不必全滅；有兩名局主的局，兩人都倒下才算取勝'
       },
       { id: 'rout', name: '殲滅', kind: 'rout', text: '場上敵人須全數擊敗，尚未入場的援軍也算在內' },
+      {
+        id: 'keep',
+        name: '守',
+        kind: 'keep',
+        text: '盤上有一件我方的東西（守物），黑子要毀它。守到該局指定的回合結束，或擊敗局主，便勝；守物一毀，這一局便輸。守物不行動、不還擊，推不動，也不受招式附帶之效'
+      },
+      {
+        id: 'break',
+        name: '破',
+        kind: 'break',
+        text: '戰意釘在盤上的東西（破物）上。把破物盡數擊毀便勝，局主倒不倒都一樣。破物不還擊、不閃避，招式的附帶之效與波及都不及其身'
+      },
+      {
+        id: 'yield',
+        name: '問劍',
+        kind: 'yield',
+        text: '終局的打法。對面的人不敗，不會倒下；把他的氣血削至 1 點便勝，其餘的人不必擊敗。無名是這一局的眼，他倒下便輸'
+      },
       { id: 'loss', name: '敗退', text: '領隊倒下，或第十二回合結束仍未取勝，這一輪便結束' },
       {
         id: 'waves',
@@ -305,7 +420,7 @@ const RULE_GROUPS = [
 // number every art has, or something its own page already shows as a figure.
 const PLAIN_FIELDS = {
   // debuff and shield are carried by the terms 攻勢受挫, 破防 and 護勁 through the state they leave.
-  art: ['name', 'owner', 'root', 'kind', 'tier', 'needs', 'points', 'icon', 'visual', 'basicBonus', 'desc', 'source', 'forms', 'mp', 'range', 'target', 'factor', 'gate', 'debuff', 'shield', 'price', 'stock', 'manual'],
+  art: ['name', 'family', 'owner', 'root', 'kind', 'tier', 'needs', 'points', 'icon', 'visual', 'basicBonus', 'desc', 'source', 'forms', 'mp', 'range', 'target', 'factor', 'gate', 'debuff', 'shield', 'price', 'stock', 'manual'],
   item: ['name', 'kind', 'owner', 'atk', 'icon', 'desc', 'forms', 'power', 'def', 'step', 'hp', 'mp'],
   // mods and sig are numbers; the rest are read by a term's own test above (護駕, 刀陣, 盾牆 …).
   trait: ['mods', 'sig', 'cover', 'stance', 'post', 'prefers']
@@ -341,7 +456,7 @@ function guideEntries({ actionFlow = true } = {}) {
     [
       'scroll',
       '一念江湖',
-      '你在夢裡同求敗對弈。每一輪開局抓三枚白子，三位俠客入局，由你執子。十局各有局主，給求敗的一道戰意壓著心神，非戰不可；勝了，他才醒得過來。白子勝滿十局，放還本尊。每局另有一道支線，是韋小寶另開的盤口，達成並取勝另有獎賞。不是最後一局時，每勝一局，求敗便再借出一位同伴。每局至多五人上盤。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。'
+      '你在夢裡同求敗對弈。每一輪開局抓五枚白子，留下三枚，三位俠客入局，由你執子。十局各有局主，給求敗的一道戰意壓著心神，非戰不可；勝了，他才醒得過來。白子勝滿十局，放還本尊。每局另有一道支線，是韋小寶另開的盤口，達成並取勝另有獎賞。不是最後一局時，每勝一局，求敗便再借出一位同伴。每局至多五人上盤。領隊是這一輪的「眼」，倒下便結束這一輪；其他人倒下，下一局仍會回來。'
     ],
     [
       'bag',
@@ -399,7 +514,7 @@ function guideEntries({ actionFlow = true } = {}) {
       (actionFlow
         ? '每人每回合可移動一次，並出招一次。未出招的俠客在回合結束時自動待命，防禦暫時提升 4 點。'
         : '每人每回合可移動一次，並出招或待命一次。') +
-        '服藥每次扣一份，可連用並保留移動與行動。領隊陣法作用於自身與兩格內的友軍。結束回合後敵方會行動。每滿 100 歷練升一級，獲 1 點武學點數。三級後出招所得歷練逐級遞減。'
+        '服藥每次扣一份，可連用並保留移動與行動。領隊陣法作用於自身與兩格內的友軍，也有削弱兩格內敵人的；領隊倒下即失效。結束回合後敵方會行動。每滿 100 歷練升一級，獲 1 點武學點數。三級後出招所得歷練逐級遞減。'
     ]
   ];
 }

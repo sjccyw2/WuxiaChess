@@ -1,21 +1,21 @@
 import { COMBINATIONS } from '../data/form-catalog.js';
 import { art } from './artwork.js';
-import { armory, formationCards, planningMap } from './armory-views.js';
+import { armory, formationCards, heroStats, planningMap } from './armory-views.js';
 import { moveFacts } from '../rules/move-facts.js';
 import { factBadge } from './panels.js';
 import * as G from '../rules/game.js';
 import * as R from '../rules/journey.js';
 import { mapLayout } from '../data/terrain.js';
 import { COMMANDS, commandDescription } from '../rules/battle-mastery.js';
-import { TECHNIQUES, CAPTAINS } from '../data/martial-arts.js';
+import { TECHNIQUES } from '../data/martial-arts.js';
 import { face, unitFace, btn, titleHead, profileContents, esc } from './panels.js';
 import { personalTraining } from './mastery-views.js';
 import { icon } from './icons.js';
 
 const teamTabs = [
   ['line', 'people', '陣容'],
-  ['stores', 'bag', '裝備物資'],
-  ['arts', 'book', '武譜招式']
+  ['arts', 'tree', '武學'],
+  ['stores', 'bag', '裝備物資']
 ];
 const personTabs = [
   ['sheet', 'person', '人物'],
@@ -56,9 +56,15 @@ function picker(s, id, gearTargets = false) {
       .map((u) =>
         btn(
           'view-unit',
-          '<img alt="" src="' + face(u.id) + '"><span>' + name(u) + '</span>',
+          '<img alt="" src="' +
+            face(u.id) +
+            '"><span>' +
+            name(u) +
+            '</span>' +
+            (u.sp > 0 ? '<b class="mj-picker-points" title="武學點 ' + u.sp + '">' + u.sp + '</b>' : ''),
           'mj-picker-unit',
           tag(u.id) +
+            (u.sp > 0 ? ' aria-label="' + name(u) + '，武學點 ' + u.sp + '"' : '') +
             (gearTargets ? ' data-drop="gear" data-dest="hero-' + u.id + '"' : '') +
             ' aria-pressed="' +
             (u.id === id) +
@@ -116,47 +122,155 @@ function footprint(layout) {
     '</span>'
   );
 }
-function memberLine(s, u, ui) {
-  const line = positions(s),
-    active = line.includes(u.id),
+// The pane beside the 陣容 cards: the picked hero's numbers, rank and points, the leader's boon,
+// the arts carried, and what can be done with them here (seat, bench, appoint, 習武).
+function heroPane(s, u, line) {
+  const active = line.includes(u.id),
     chief = line[0] === u.id;
   const role = chief ? '領隊' : active ? '出陣' : '候補';
   const manage = G.managesCompany(s);
+  // On the last board the lead is 無名's: he is not benched, and no one else is appointed.
+  const held = R.fixedLead(s, line[0]);
   const edit = manage
     ? [
         action(
           'lineup',
           active ? '轉為候補' : '加入出陣',
           u.id,
-          active ? line.length > 1 : line.length < 5
+          active ? line.length > 1 && !(held && chief) : line.length < 5
         ),
-        action('appoint', chief ? '現任領隊' : '任為領隊', u.id, active && !chief)
+        action('appoint', chief ? '現任領隊' : '任為領隊', u.id, active && !chief && !held)
       ].join('')
     : active && G.living(u) && s.run.scene === 'fight'
       ? action('field-control', '操控此俠客', u.id)
       : '';
+  const stats = heroStats(s, u)
+    .map(
+      ([k, label, value, max]) =>
+        '<div class="fy-stat-' +
+        k +
+        '"><dt>' +
+        label +
+        '</dt><dd>' +
+        value +
+        (max ? '<small>／' + max + '</small>' : k === 'step' ? '<small> 步</small>' : k === 'range' ? '<small> 格</small>' : '') +
+        '</dd></div>'
+    )
+    .join('');
+  const slots = (u.slots || []).map((key, i) => {
+    const a = key ? G.artFor(u, key) : null;
+    return (
+      '<li' +
+      (a ? '' : ' class="fy-art-empty"') +
+      '>' +
+      icon(a ? a.icon || 'diamond' : 'plus', 15) +
+      '<small>第' +
+      ['一', '二', '三'][i] +
+      '格</small><span>' +
+      (a ? esc(a.name) : '空位') +
+      '</span></li>'
+    );
+  });
+  const gear = ['weapon', 'gear']
+    .map((k) => (u[k] ? G.ITEMS[u[k]]?.name : ''))
+    .filter(Boolean)
+    .join('、');
+  return (
+    '<aside class="fy-pane" aria-label="' +
+    name(u) +
+    '的資料"><header class="fy-pane-head"><img src="' +
+    face(u.id) +
+    '" alt=""><div><small>' +
+    role +
+    ' · ' +
+    G.DETAILS[u.id].school +
+    '</small><h3>' +
+    name(u) +
+    '</h3><p>等級 ' +
+    u.level +
+    ' · 歷練 ' +
+    u.xp +
+    '／100</p></div>' +
+    '<span class="fy-pane-points' +
+    (u.sp > 0 ? ' has-points' : '') +
+    '"><b>' +
+    u.sp +
+    '</b><small>武學點</small></span></header>' +
+    '<dl class="fy-pane-stats">' +
+    stats +
+    '</dl>' +
+    (edit ? '<div class="fo-captain-actions">' + edit + '</div>' : '') +
+    '<div class="fy-boon">' +
+    icon('flag', 18) +
+    '<div><strong>' +
+    COMMANDS[u.id].name +
+    '</strong><p>領隊效果 · ' +
+    commandDescription(u.id) +
+    '</p></div></div>' +
+    '<section class="fy-pane-arts" aria-label="出戰招式"><h4>出戰招式</h4><ul><li class="fy-art-basic">' +
+    icon('sword', 15) +
+    '<small>普攻</small><span>' +
+    esc(G.basicFor(u).name) +
+    '</span></li>' +
+    slots.join('') +
+    '</ul>' +
+    (gear ? '<p class="fy-pane-gear">' + icon('shield', 14) + esc(gear) + '</p>' : '') +
+    '</section><footer class="fy-pane-foot">' +
+    btn(
+      'hero-train',
+      icon('tree', 16) + '習武' + (u.sp > 0 ? '<b>' + u.sp + '</b>' : ''),
+      'mj-action fy-train',
+      tag(u.id) + ' title="在「武學」頁為' + name(u) + '修習與配招"'
+    ) +
+    action('hero-details', '俠客詳情', u.id) +
+    '</footer></aside>'
+  );
+}
+function memberLine(s, u, ui) {
+  const line = positions(s);
   const map = planningMap(s);
   const upcoming = map !== s.mapIndex;
+  // The next board's named stones: its master and lieutenant, or on the last board everyone it opens with.
   const foes = upcoming
-    ? [{ id: CAPTAINS[map][0] }, { id: 'lieutenant-' + map }]
+    ? G.hasFour(map)
+      ? // The next board's named opponents: its master, and its lieutenant if it has one.
+        G.encounterKeys(map)
+          .slice(0, 2)
+          .filter((key) => G.DETAILS[key]?.rank)
+          .map((id) => ({ id }))
+      : // The last board: 求敗 and the masters who stand with him from the start.
+        G.castBoard(map, s.run.route).pieces.map((p) => ({ id: p.id }))
     : G.enemies(s).filter((v) => G.unitDetails(v).rank);
   const board = mapLayout(map);
   // The briefing in short: this board's (or, from the shop, the next board's, whose secondary
-  // is not drawn yet). 軍情 opens the whole briefing.
-  const model = upcoming ? R.boardBrief(map, s.run.stage + 1) : R.briefing(s);
+  // is not drawn yet). 軍情 opens the whole briefing; the brief folds away to leave room.
+  const model = upcoming ? R.boardBrief(map, s.run.stage + 1, s.run.route) : R.briefing(s);
   const side = model.side;
+  const shut = !!ui.missionShut;
   const row = (term, body) => '<div><dt>' + term + '</dt><dd>' + body + '</dd></div>';
   const brief =
-    '<section class="wake-mission" aria-label="作戰目標"><header>' +
+    '<section class="wake-mission' +
+    (shut ? ' folded' : '') +
+    '" aria-label="作戰目標"><header>' +
     icon('flag', 19) +
     '<h3>作戰目標</h3><span>' +
     esc(board.name) +
     '</span>' +
     btn('brief-open', icon('flag', 14) + '軍情', 'mj-action brief-open', 'title="軍情"') +
-    '</header><dl>' +
+    btn(
+      'mission-fold',
+      icon('down', 14) + (shut ? '展開' : '收起'),
+      'mj-action fy-fold',
+      'aria-expanded="' + !shut + '" aria-controls="fy-mission-body"'
+    ) +
+    '</header><dl id="fy-mission-body"' +
+    (shut ? ' hidden' : '') +
+    '>' +
     row('勝利', esc(model.win)) +
     row('敗退', esc(model.loss)) +
-    row(
+    (model.noSide
+      ? ''
+      : row(
       '支線',
       side
         ? '<strong>' +
@@ -168,37 +282,15 @@ function memberLine(s, u, ui) {
             '</small>' +
             (side.warning ? '<small class="warn">' + esc(side.warning) + '</small>' : '')
         : esc(model.sideNote)
-    ) +
+    )) +
     (model.recruit ? row('入局', esc(model.recruit)) : '') +
     '</dl></section>';
   return (
     brief +
+    '<div class="fy-lineup">' +
     formationCards(s, u, ui) +
-    '<div class="fy-member"><img src="' +
-    face(u.id) +
-    '" alt=""><div><small>' +
-    role +
-    ' · ' +
-    G.DETAILS[u.id].school +
-    '</small><h3>' +
-    name(u) +
-    '</h3><p>等級 ' +
-    u.level +
-    '　武學點 ' +
-    u.sp +
-    '</p></div>' +
-    action('hero-details', '俠客詳情', u.id) +
+    heroPane(s, u, line) +
     '</div>' +
-    '<div class="fo-captain-actions">' +
-    edit +
-    '</div>' +
-    '<div class="fy-boon">' +
-    icon('flag', 18) +
-    '<div><strong>' +
-    COMMANDS[u.id].name +
-    '</strong><p>領隊效果 · ' +
-    commandDescription(u.id) +
-    '</p></div></div>' +
     '<details class="hud-disclosure fy-brief"><summary>' +
     footprint(board) +
     '<span><strong>' +
@@ -228,51 +320,10 @@ function memberLine(s, u, ui) {
     '</p></details>'
   );
 }
+// The 武學 tab: the picked hero's tree, manuals and slots (the hero panel's own view), with the
+// company's spare manuals to hand out under 授業武譜 and the 合招譜 under 招式配置.
 function arts(s, u, ui) {
-  const model = R.treeModel(s, u),
-    slot = ui.slot;
-  const slots =
-    '<div class="mj-slot-bar fy-slots" role="group" aria-label="三格出戰招式">' +
-    u.slots
-      .map((id, i) =>
-        btn(
-          'slot-select',
-          '<small>第' +
-            ['一', '二', '三'][i] +
-            '格</small><strong>' +
-            (id ? G.artFor(u, id).name : '空位') +
-            '</strong>',
-          'mj-slot',
-          tag(i) + ' aria-pressed="' + (i === slot) + '"'
-        )
-      )
-      .join('') +
-    '</div>';
-  const known = model.library.map((n) =>
-    row(
-      n.name + factBadge(n.facts),
-      (u.slots.includes(n.id) ? '已配置 · ' : '') + '內力 ' + n.mp + ' · ' + n.range + ' 格',
-      action(
-        'slot-set',
-        '裝入第' + (slot + 1) + '格',
-        n.id,
-        n.canEquip && u.slots[slot] !== n.id,
-        'data-slot="' + slot + '"'
-      ),
-      n.icon
-    )
-  );
-  const assigned = model.guides.map((n) =>
-    row(
-      '《' + n.name + '》' + factBadge(moveFacts(s, u, n.id)),
-      n.learned
-        ? '已參悟'
-        : n.cost + ' 武學點 · ' + [n.status, n.requirement].filter(Boolean).join(' · '),
-      n.learned ? '' : action('learn', '參悟', n.id, n.canLearn),
-      'book'
-    )
-  );
-  const library = R.guideInventory(s).map((n) =>
+  const shelf = R.guideInventory(s).map((n) =>
     row(
       '《' + n.name + '》' + factBadge(moveFacts(s, u, n.id)),
       '公庫 ×' + n.count + ' · 參悟 ' + TECHNIQUES[n.id].points + ' 點',
@@ -286,28 +337,20 @@ function arts(s, u, ui) {
       'scroll'
     )
   );
-  return (
-    '<div class="fy-sectionhead"><h3>出戰招式</h3><small>武學點 ' +
-    u.sp +
-    '</small></div>' +
-    '<div class="fo-basic"><small>普通攻擊</small><strong>' +
-    esc(G.basicFor(u).name) +
-    '</strong>' +
-    factBadge(moveFacts(s, u)) +
-    '</div>' +
-    slots +
-    list('已習招式', known, '尚無可用招式。') +
-    (u.slots[slot]
-      ? action('slot-clear', '卸下第' + (slot + 1) + '格', slot, model.canConfigure)
-      : '') +
-    list('已授武譜', assigned, '此俠客尚未獲授武譜。') +
-    list('公庫武譜', library, '公庫目前沒有抄本。') +
-    action('hero-school', '查看門派武學', u.id) +
+  const combos =
     '<details class="hud-disclosure wake-combinations"><summary>合招譜</summary>' +
     COMBINATIONS.map(
       (c) => '<details><summary>' + esc(c.name) + '</summary><p>' + esc(c.text) + '</p></details>'
     ).join('') +
-    '</details>'
+    '</details>';
+  return personalTraining(
+    R.treeModel(s, u),
+    { tab: ui.skill, node: ui.node, slot: ui.slot },
+    {
+      team: true,
+      guides: list('公庫武譜', shelf, '公庫目前沒有抄本。'),
+      loadout: combos
+    }
   );
 }
 function teamPage(s, u, ui) {
@@ -334,7 +377,9 @@ function teamPage(s, u, ui) {
         action('hero-details', '俠客詳情', u.id) +
         '</div>';
   return (
-    '<section class="mj-view fy-team">' +
+    '<section class="mj-view fy-team' +
+    (ui.tab === 'arts' ? ' mj-mastery' : '') +
+    '">' +
     titleHead('people', title) +
     '<div class="mj-tools" data-frame-tools>' +
     tabs('team-tab', teamTabs, ui.tab) +
@@ -381,14 +426,14 @@ function encounterPage(s, scene, beat, archive = false) {
   const opening = scene === 'before',
     last = current === lines.length - 1;
   const label = opening ? '臨陣' : s.result === 'win' ? '戰後 · 勝' : '戰後 · 敗';
-  const dest = opening ? '進入整備' : '前往通吃坊';
+  // (After the last board is won there is no shop: the ending follows.)
+  const dest = opening ? '進入整備' : s.run.last?.ended ? '放下' : '前往通吃坊';
   const next = archive ? (last ? '返回' : '下一句') : last ? dest : '下一句';
   const head =
     '<header class="modal-head"><div class="modal-title">' +
     icon('scroll', 20) +
-    '<h2>第' +
-    R.NUMERALS[s.run.stage] +
-    '局 · ' +
+    '<h2>' +
+    R.stageTitle(s.run.stage) +
     map.name +
     '</h2></div><small>' +
     label +

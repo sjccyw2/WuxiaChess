@@ -1,14 +1,22 @@
-import { FORM_RULES } from './form-rules.js';
+import { FORM_RULES, splashRadius } from './form-rules.js';
 import { STROKE_NOTES } from '../fx/technique-strokes.js';
 import * as G from './game.js';
 import { TECHNIQUES } from '../data/martial-arts.js';
-import { commandBonus, effectsOf, effectDescription } from './battle-mastery.js';
+import { leaderBoon, commandBonus, effectsOf, effectDescription } from './battle-mastery.js';
 
+// The leader's boons (COMMANDS) that change what a hero's blow does, beyond its numbers.
+const STRIKE_BOONS = ['held', 'absorb', 'venom', 'linger', 'bend', 'opening'];
 const percent = (fraction) => Math.round(fraction * 100) + '%';
 const roots = { force: '攻擊 ＋3', guard: '防禦 ＋2', breath: '絕技威力 ＋5、內力消耗 −2' };
 
 const plus = (n) => '＋' + n.toFixed(2);
-const ANSWERED = { close: '近身（射程 1）', ranged: '遠攻（射程 2 以上）', master: '局主或副手' };
+const ANSWERED = {
+  close: '近身（射程 1）',
+  ranged: '遠攻（射程 2 以上）',
+  master: '局主或副手',
+  // A kind of weapon (無名's forms): 使劍, 使刀, 使長兵 …
+  ...Object.fromEntries(Object.entries(G.ARM_NAMES).map(([arm, name]) => [arm, (arm === 'hand' ? '以' : '使') + name + '者']))
+};
 // The conditional bonuses of an art, as rules rather than as this strike's numbers.
 function bonusLines(u, art) {
   const lines = [];
@@ -47,6 +55,8 @@ function conditionLines(art) {
   if (art.backlash) lines.push('反噬 · 每次施展積一層亂氣，第三層時自損兩成最大氣血並清空');
   if (art.daze === 'setup') lines.push('失神 · 目標兵刃遭纏或站在陣中時，失去下一次行動');
   if (art.daze) lines.push('局主失神後，下一回合可抵抗');
+  if (art.freeze || art.mute) lines.push('局主只受一回合，下一回合可抵抗');
+  if (art.charm) lines.push('局主與副手不受制，改為失神');
   if (art.zone)
     lines.push(
       '布陣 · 以' +
@@ -94,7 +104,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
           ? target === u
           : kind === 'ally'
             ? target.side === u.side
-            : target.side !== u.side));
+            : G.hostile(u, target)));
   const forecast = legal
     ? G.forecast(u, target, !basic, s, art, basic ? definition : G.basicFor(u))
     : null;
@@ -116,12 +126,21 @@ function moveFacts(s, u, id = 'basic', target = null) {
       );
     const pierce = art ? art.pierce : commandBonus(s, u, 'pierce') / 100;
     if (pierce) lines.push('穿透 ' + percent(pierce) + ' 防禦');
-    if (art?.splash) lines.push('四鄰濺射 ' + percent(art.splash));
+    if (art?.splash)
+      lines.push(
+        (splashRadius(art) > 1 ? splashRadius(art) + ' 格內濺射 ' : '四鄰濺射 ') + percent(art.splash)
+      );
+    const drain = G.drainOf(art);
+    if (drain)
+      lines.push('吸元 · 回復主目標損血的 ' + percent(drain.share) + '，最多 ' + drain.cap + ' 氣血');
     if (art?.push) lines.push('擊退 1 格，須有空位');
     if (art?.safe) lines.push('敵人無法反擊');
     if (art?.recover) lines.push('命中回復 ' + art.recover + ' 內力');
     const bonus = commandBonus(s, u, 'pursuit');
     if (bonus) lines.push('敵方半血以下威力 ＋' + bonus);
+    // The leader's boons that change a blow, in their own words.
+    for (const stat of STRIKE_BOONS)
+      if (commandBonus(s, u, stat)) lines.push(leaderBoon(s).name + ' · ' + leaderBoon(s).text.replace(/。$/, ''));
     if (basic && definition.basicBonus) lines.push('普攻威力 ＋' + definition.basicBonus);
     if (!lines.length && !effectsOf(art).length) lines.push('單體攻擊，射程內可受反擊');
   } else if (art.heal) {
@@ -145,10 +164,14 @@ function moveFacts(s, u, id = 'basic', target = null) {
     const entry = {
       shield: ['護盾', ' 傷害'],
       rally: ['攻擊增益', ' 攻擊'],
-      haste: ['移動增益', ' 步']
+      haste: ['移動增益', ' 步'],
+      fortify: ['防禦增益', ' 防禦'],
+      immune: ['金剛', ' 回合']
     }[effect?.kind];
     powerLabel = entry?.[0] || '增益';
-    powerText = effect ? String(effect.power) + (entry?.[1] || '') : '自身';
+    // 金剛 has no strength, only a span.
+    const amount = effect?.kind === 'immune' ? effect.turns : effect?.power;
+    powerText = effect ? String(amount) + (entry?.[1] || '') : '自身';
   }
   for (const effect of effectsOf(art))
     lines.push(effectDescription(effect.kind, effect.power, effect.turns));

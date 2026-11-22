@@ -1,8 +1,14 @@
 // A headless player that fights the real boards with the real rules and the real enemy code,
 // so the game's difficulty can be compared before and after a change.
 //
-//   node tools/sim-battles.mjs [--runs N] [--seed S] [--boards A-B] [--json out.json]
-//                              [--trace | --trace-map M]
+//   node tools/sim-battles.mjs [--runs N] [--seed S] [--boards A-B] [--realm 1-5] [--json out.json]
+//                              [--trace | --trace-map M] [--arts]
+//
+// Boards are 1 to 11. The eleventh is the last board (終局), which a run reaches only in 無劍境界
+// after its ten are won: `--realm 5 --boards 1-11` plays whole runs to it. This player seldom
+// gets that far in 無劍境界, so `--last [--level N]` measures the last board on its own: each run
+// takes twelve heroes at level N (default 11, what the runs that do get there have), wins the
+// tenth board at once, visits the shop with a test purse, and fights the last board.
 //   node tools/sim-battles.mjs --compare before.json after.json
 //
 // Runs are built the way the game builds them (draw three heroes, start the run, deploy, settle
@@ -13,7 +19,7 @@
 import fs from 'node:fs';
 import { G, R, TECHNIQUES, HERO_PATHS, profile, classify, mainMeasure, FAMILY, heroTree, ancestors } from './lib/skill-measure.mjs';
 const FM = await import(new URL('../game/src/rules/ferry-market.js', import.meta.url));
-const { mapLayout, fieldCells, tileInfo } = await import(new URL('../game/src/data/terrain.js', import.meta.url));
+const { mapLayout, fieldCells, tileInfo, MAP_LAYOUTS } = await import(new URL('../game/src/data/terrain.js', import.meta.url));
 
 // ── Policy weights: the player's whole character in one place ─────────────
 const W = {
@@ -46,11 +52,29 @@ const W = {
   foeEffectDefault: 1.2,
   allyEffect: { rally: 1.2, haste: 3 },
   allyEffectDefault: 0.8,
+  // 失神, 定身, 閉穴, 受制: per point of the blow the held foe would have struck, per turn it is held
+  // beyond what already holds it (a 閉穴 foe still walks, so a little less); a 受制 one also strikes
+  // its own side, for this share of its blow. Its first turn on the striker himself is in his
+  // place score instead (the danger where he ends leaves the held foe out).
+  hold: { freeze: 1.0, daze: 1.0, charm: 1.0, mute: 0.85 },
+  holdIdle: 0.4, // ...of the blow it could strike on someone, when it has no hero in reach now
+  turncoat: 0.6,
+  // 金剛 and 固守 on whoever a support art reaches: per point of the next enemy phase's expected
+  // damage voided (金剛) or taken off by the 防禦 (固守); later turns count at holdLater.
+  immune: 1.0,
+  fortify: 0.9,
+  holdLater: 0.5,
+  equipHold: 0.5, // choosing arts: a turn a foe is held, in basic attacks (W.hold weights the kinds)
   medicineAt: 0.4, // drink medicine below this fraction of health (leader: + 0.15)
+  // 守: the object the heroes keep
+  keepThreat: 1.7, // a point of damage on a foe that could strike the kept object next turn
+  keepNear: 5, // per tile a hero stands beyond two of the kept object (the leader: half)
+  keepBlock: 10, // a hero standing on a tile beside the kept object
   // Spending between boards
   reserveSummitUntilStage: 7
 };
 const COMPARE_FLAG = 0.1; // flag a board whose win rate moves by more than this
+const STAGES = 11; // the ten boards of a run, and the last board after them in 無劍境界
 
 // ── Arguments ───────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
@@ -63,7 +87,14 @@ const RUNS = Number(opt('--runs', 100));
 const SEED = Number(opt('--seed', 1));
 const [FIRST, LAST] = String(opt('--boards', '1-10')).split('-').map(Number).concat([NaN]).map((v, i, a) => (i === 1 && Number.isNaN(v) ? a[0] : v));
 const JSON_OUT = opt('--json', null);
+// --realm N plays every run in the Nth 境界 (data/realms.js), as if it were open.
+const REALM = Math.min(5, Math.max(1, Number(opt('--realm', 1)) || 1));
 const QUIET = args.includes('--quiet');
+// --last: only the last board, with a company as a run in 無劍境界 brings to it (see the header).
+const LAST_ONLY = args.includes('--last');
+const LEVEL = Math.max(1, Number(opt('--level', 11)) || 11);
+// --arts also prints, per art, the boards it was equipped on and how often it was used there.
+const ARTS = args.includes('--arts');
 // --trace prints the battle log of the first run, board by board, to see how the player plays.
 const TRACE = args.includes('--trace');
 // --trace-map M prints the battle log of the first board fought on map M, in whichever run.
@@ -117,7 +148,8 @@ function fieldFrom(map, p) {
 function threatMap(s) {
   const ghosts = G.arrivalGhosts(s, s.round + 1);
   const seen = ghosts.length ? { ...s, units: [...s.units, ...ghosts] } : s;
-  return [...G.enemies(s).filter(G.living), ...ghosts]
+  // A piece held by 失神, 定身, 閉穴 or 受制 strikes no hero next enemy phase (G.holdsFire).
+  return [...G.enemies(s).filter((e) => G.living(e) && !G.holdsFire(e)), ...ghosts]
     .map((e) => {
       // Where the rules say it may end its action (a posted or charged piece stays put).
       const stand = G.standCells(seen, e);
@@ -147,13 +179,21 @@ function dangerAt(s, u, threats, gone = new Set()) {
 // ── Scoring ─────────────────────────────────────────────────────────────
 // The pieces whose fall wins the board: the masters still standing on 斬將, every living enemy
 // on 殲滅 (G.objectiveLeft). The approach is measured to the nearest of them.
+// On 破 it is the objects still standing; on 守 every living enemy, as on 殲滅 (the player keeps
+// the object by meeting what comes for it, see placeScore and foeValue).
 function objectiveTargets(s) {
-  if (G.boardOf(s).kind === 'slay')
+  const kind = G.boardKind(s);
+  // 問劍 (the last board) is won on its master too, by bringing him to 1 氣血.
+  if (kind === 'slay' || kind === 'yield')
     return G.objectiveLeft(s)
       .masters.map((id) => G.find(s, id))
       .filter((u) => u && G.living(u));
+  if (kind === 'break') return breakables(s);
   return G.enemies(s).filter(G.living);
 }
+// The board objects a hero may strike, and those the heroes keep.
+const breakables = (s) => G.props(s).filter((v) => G.living(v) && G.propKind(v) === 'break');
+const keeps = (s) => G.props(s).filter((v) => G.living(v) && G.propKind(v) === 'keep');
 function nearestField(map, targets) {
   if (!targets.length) return null;
   if (targets.length === 1) return fieldFrom(map, targets[0]);
@@ -176,8 +216,12 @@ function boardContext(s) {
     marker,
     markerField: marker ? fieldFrom(s.mapIndex, marker) : null,
     escorts: new Set(G.wardEscorts(s)),
+    // 守: the objects to keep, and the foes that could strike one next turn.
+    keeps: keeps(s),
+    raiders: new Set(),
     runner: null
   };
+  for (const th of ctx.threats) if (ctx.keeps.some((o) => th.hits.has(key(o.x, o.y)))) ctx.raiders.add(th.e);
   ctx.speed = !!ctx.sidePolicy.speed;
   if (marker) {
     // The runner: whichever living hero not leading is nearest the marker (the leader if alone).
@@ -197,9 +241,12 @@ function reachOf(u) {
   return r;
 }
 // Where the hero ends: danger, cover, the way to the master and to the marker.
-function placeScore(s, u, ctx, hpAfter, gone) {
+// `after` is what the option itself changes about the coming enemy phase: the foes it holds
+// (`held`, left out of the danger like the fallen) and the guard it leaves on the hero (`guard`:
+// 金剛 voids the blows, 固守's 防禦 is counted in them).
+function placeScore(s, u, ctx, hpAfter, gone, after = null) {
   const leader = u.id === s.leader;
-  const d = dangerAt(s, u, ctx.threats, gone);
+  const d = guardedDanger(s, u, ctx.threats, after?.held ? new Set([...gone, ...after.held]) : gone, after?.guard);
   let score = -d.expected * W.danger * (leader ? leaderCare(ctx) : 1);
   if (d.total >= hpAfter) score -= leader ? W.leaderLethal : W.lethal * (ctx.sidePolicy.lethal || 1) + u.maxHp / 2;
   else if (leader && d.total >= hpAfter * 0.75) score -= W.leaderLethal / 20;
@@ -218,10 +265,78 @@ function placeScore(s, u, ctx, hpAfter, gone) {
   }
   const lead = G.find(s, s.leader);
   if (!leader && lead && G.living(lead) && G.distance(u, lead) === 1 && dangerAt(s, lead, ctx.threats, gone).total > 0) score += W.guardLeader;
+  // 守: stay by what is kept, and stand in the way of the blows aimed at it.
+  for (const o of ctx.keeps) {
+    const d = G.distance(u, o);
+    score -= Math.max(0, d - 2) * W.keepNear * (leader ? 0.5 : 1);
+    if (d === 1 && !leader) score += W.keepBlock;
+  }
   if (ctx.sidePolicy.place) score += ctx.sidePolicy.place(s, ctx.side, u);
   return score;
 }
 const leaderCare = (ctx) => W.leaderCare * (ctx.sidePolicy.leaderDanger || 1);
+// The danger on u with a guard laid on him for the coming enemy phase: under 金剛 the direct
+// blows do nothing; 固守 is a condition the rules' damage reads, so it is laid on for the count.
+function guardedDanger(s, u, threats, gone, guard) {
+  if (guard?.immune) return { total: 0, expected: 0 };
+  if (!guard?.fortify) return dangerAt(s, u, threats, gone);
+  const had = u.conditions;
+  u.conditions = { ...(had || {}), fortify: { power: Math.max(guard.fortify, had?.fortify?.power || 0), through: s.round + 1 } };
+  try {
+    return dangerAt(s, u, threats, gone);
+  } finally {
+    u.conditions = had;
+  }
+}
+// The guard an art leaves on its own caster (rules/battle-mastery.js selfEffectsOf: 金剛 and
+// 固守 on a strike guard the striker).
+function selfGuard(art) {
+  if (!art || G.isSupport(art)) return null;
+  if (!art.immune && !art.fortify) return null;
+  return { immune: !!art.immune, fortify: art.fortify?.power || 0 };
+}
+// The blow foe t would strike next enemy phase: on the hero it would hurt most among those it can
+// reach (`except` left out), or, with none in reach, a share of its blow on the softest hero.
+function foeBlow(s, t, ctx, except = null) {
+  const th = ctx.threats.find((x) => x.e === t);
+  let best = 0,
+    any = 0;
+  for (const v of G.party(s).filter(G.living)) {
+    const d = Math.round(G.damage(t, v, false, s.mapIndex, s) * (th?.factor || 1));
+    any = Math.max(any, d);
+    if (v !== except && th?.hits.has(key(v.x, v.y))) best = Math.max(best, d);
+  }
+  return { reach: best, idle: any * W.holdIdle };
+}
+// The last round t is held through already (失神 lasts until its next action).
+function heldThrough(s, t) {
+  const c = t.conditions || {};
+  let n = s.round - 1;
+  for (const k of ['freeze', 'mute', 'charm']) if (c[k]) n = Math.max(n, c[k].through);
+  if (c.daze) n = Math.max(n, s.round);
+  return n;
+}
+// What holding t is worth: the blows it is kept from, per turn beyond what holds it already. The
+// first turn's blow on the striker is left to his place score (placeScore's `held`).
+function holdValue(s, u, t, f, ctx) {
+  const was = heldThrough(s, t);
+  let best = 0;
+  for (const e of f.effects) {
+    if (!(e.kind in W.hold)) continue;
+    const through = e.kind === 'daze' ? s.round : s.round + (e.turns || 1) - 1;
+    const turns = Math.max(0, through - was);
+    if (!turns) continue;
+    const first = s.round > was; // the coming enemy phase is newly held
+    const blow = foeBlow(s, t, ctx, u),
+      later = foeBlow(s, t, ctx);
+    const now = first ? blow.reach || (later.reach ? 0 : blow.idle) : 0;
+    const rest = (turns - (first ? 1 : 0)) * (later.reach || later.idle);
+    let v = (now + rest) * W.hold[e.kind];
+    if (e.kind === 'charm') v += turns * (later.reach || later.idle) * W.turncoat;
+    best = Math.max(best, v * foeValue(s, t, ctx));
+  }
+  return best;
+}
 
 // ── Secondary objectives: one policy row per kind (journey.js SIDE_KINDS), never per board ──
 // A row may give: `fell(s, side, blow)` → { score, holdWin } for a blow that fells `blow.gone`
@@ -307,21 +422,31 @@ function foeValue(s, t, ctx) {
   let v = 1;
   if (ctx.targets.has(t)) v = W.bossDamage * (ctx.speed ? W.speedBoss : 1);
   if (ctx.escorts.has(t)) v = W.escort;
+  if (ctx.raiders.has(t)) v = Math.max(v, W.keepThreat);
   return v;
 }
 // What an option is worth, read entirely from the rules' forecast. A blow at a covered piece
 // lands on its coverer (forecast's coveredBy), so that is the piece it may fell.
 function strikeScore(s, u, t, f, ctx, mp, art = null) {
-  let score = -mp * W.mp - f.hpCost * W.hpCost;
+  // 北冥真氣 (a leader's boon) gives back 內力 for a blow that lands, as if it cost that much less.
+  let score = -(mp - (f.absorb || 0)) * W.mp - f.hpCost * W.hpCost;
   const gone = new Set();
   const leader = u.id === s.leader;
   const victim = (f.coveredBy && G.find(s, f.coveredBy)) || t;
   const dealt = Math.min(f.amount, victim.hp);
   score += dealt * foeValue(s, victim, ctx);
   if (dealt > 0 && ctx.sidePolicy.hit) score += ctx.sidePolicy.hit(s, ctx.side, victim);
+  // 問劍: the blow that leaves the board's master at 1 氣血 wins it; no one falls.
+  if (G.boardKind(s) === 'yield' && G.masterIds(s).includes(victim.id) && victim.hp - dealt <= 1) score += W.win;
+  const held = new Set();
   if (f.amount >= victim.hp) gone.add(victim);
-  else
-    for (const e of f.effects) score += (W.foeEffect[e.kind] ?? W.foeEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
+  else if (!G.immuneTo(victim)) {
+    for (const e of f.effects)
+      if (!(e.kind in W.hold)) score += (W.foeEffect[e.kind] ?? W.foeEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
+    const hold = holdValue(s, u, victim, f, ctx);
+    score += hold;
+    if (hold > 0 || f.effects.some((e) => e.kind in W.hold)) held.add(victim);
+  }
   for (const hit of f.splash) {
     const v = G.find(s, hit.id);
     if (!v || !G.living(v) || gone.has(v)) continue;
@@ -345,7 +470,9 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
     // A secondary may hold back a winning blow (by the wrong hand, in the wrong order) until late.
     score += blow.wins && !side.holdWin ? W.win : kills;
   }
-  score += (f.reflected || 0) * 0.8 + (f.selfHeal || 0) * 0.8;
+  // 吸元 and 回生: forecast already caps the heal at what the caster is missing; it is worth more
+  // the more he is hurt, as a heal is (supportScore).
+  score += (f.reflected || 0) * 0.8 + (f.selfHeal || 0) * W.heal * (0.6 + 1.6 * (1 - u.hp / u.maxHp));
   // A blow a charged reaction turns back (斗轉星移) does nothing to the foe but spends the charge,
   // which opens it to the blows after; the share turned back is paid like a counter.
   if (f.turned && !f.turned.ward.source) score += (ctx.sidePolicy.breakCharge?.(s, ctx.side, victim) ?? W.breakCharge) * foeValue(s, victim, ctx);
@@ -355,7 +482,7 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
   score -= (f.rebound || 0) * W.counter * (leader ? leaderCare(ctx) : 1);
   score -= f.counter * W.counter * (leader ? leaderCare(ctx) : 1);
   if (hpAfter <= 0) score -= leader ? W.leaderLethal * 10 : W.lethal * 3 * (ctx.sidePolicy.lethal || 1);
-  return { score, hpAfter, gone };
+  return { score, hpAfter, gone, after: { held, guard: selfGuard(art) } };
 }
 function supportScore(s, u, t, f, ctx, mp) {
   let score = -mp * W.mp - f.hpCost * W.hpCost;
@@ -368,8 +495,18 @@ function supportScore(s, u, t, f, ctx, mp) {
     score += (r.mp || 0) * W.channelMp + (r.clean?.length || 0) * W.cleanse;
     const shield = (r.overflow || 0) + f.effects.filter((e) => e.kind === 'shield').reduce((n, e) => n + e.power, 0);
     if (shield) score += Math.min(shield, threat) * W.shieldAgainstThreat * (vLeader ? 1.6 : 1) + shield * W.shieldIdle;
-    for (const e of f.effects)
-      if (e.kind !== 'shield') score += (W.allyEffect[e.kind] ?? W.allyEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
+    for (const e of f.effects) {
+      if (e.kind === 'shield') continue;
+      // 金剛 and 固守: what they take off the blows coming at this recipient where it stands.
+      if (e.kind === 'immune' || e.kind === 'fortify') {
+        const d = dangerAt(s, v, ctx.threats).expected;
+        const cut = e.kind === 'immune' ? d : d - guardedDanger(s, v, ctx.threats, new Set(), { fortify: e.power }).expected;
+        const turns = Math.max(1, e.turns || 1);
+        score += cut * W[e.kind] * (1 + (turns - 1) * W.holdLater) * (vLeader ? 1.6 : 1);
+        continue;
+      }
+      score += (W.allyEffect[e.kind] ?? W.allyEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
+    }
   }
   return { score, hpAfter: u.hp - f.hpCost, gone: new Set() };
 }
@@ -381,7 +518,8 @@ function bestOption(s, u, ctx) {
   const tiles = [{ x: u.x, y: u.y }];
   // The rules say whether he may walk (立樁 holds him; a hero who has moved has moved).
   if (G.canMove(s, u)) for (const k of G.reachable(s, u).keys()) tiles.push(unkey(k));
-  const foes = G.enemies(s).filter(G.living),
+  // 破: the objects to break are struck like foes (the rules' forecast says how).
+  const foes = [...G.enemies(s).filter(G.living), ...breakables(s)],
     friends = G.party(s).filter(G.living);
   let best = null,
     bestWait = null;
@@ -405,7 +543,7 @@ function bestOption(s, u, ctx) {
       if (!G.targetOK(s, u, t, false)) continue;
       const f = G.forecast(u, t, false, s);
       const r = strikeScore(s, u, t, f, ctx, 0);
-      consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone), P, act: 'basic', t });
+      consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone, r.after), P, act: 'basic', t });
     }
     // Every equipped art the rules let the hero pay for, on every target the rules accept.
     for (const id of G.equippedArts(u)) {
@@ -442,7 +580,7 @@ function bestOption(s, u, ctx) {
           continue;
         }
         r = f.support ? supportScore(s, u, t, f, ctx, mp) : strikeScore(s, u, t, f, ctx, mp, art);
-        consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone), P, act: 'art', id, t });
+        consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone, r.after), P, act: 'art', id, t });
       }
     }
   }
@@ -527,6 +665,10 @@ function execute(s, o, rec) {
     if (G.canAct(s, u)) G.waitUnit(s, u);
   }
   rec.usage[ok ? usageKey(u, o) : 'wait']++;
+  if (ok && o.act === 'art') {
+    const A = (rec.arts[u.id + '/' + o.id] ??= { equipped: 0, used: 0 });
+    A.used++;
+  }
   credit(rec, before, s, u.id);
 }
 // 回身: a hero the rules still let walk after his strike takes the best place within the steps
@@ -572,8 +714,11 @@ function enemyPhase(s, rec) {
 }
 function fight(s) {
   const rec = { stage: s.run.stage, map: s.mapIndex, usage: { basic: 0, start: 0, tier1: 0, tier2: 0, tier3: 0, tier4: 0, manual: 0, wait: 0 }, heroes: {}, misfires: 0 };
-  for (const u of G.party(s))
+  rec.arts = {};
+  for (const u of G.party(s)) {
     rec.heroes[u.id] = { dealt: 0, taken: 0, kills: 0, level: u.level, sp: u.sp, spent: spentPoints(u) };
+    for (const id of G.equippedArts(u)) (rec.arts[u.id + '/' + id] ??= { equipped: 0, used: 0 }).equipped = 1;
+  }
   // The battle log keeps only its last lines; a traced board keeps its own copy.
   const lines = (TRACE && tracing) || (TRACE_MAP === s.mapIndex && !traced.has(s.mapIndex)) ? [] : null;
   // What the villains did, read from the battle log as it is written (the log keeps only its
@@ -610,7 +755,7 @@ function fight(s) {
   rec.leaderFell = !G.living(G.find(s, s.leader));
   // What kind of board it was, and what came onto it.
   const board = G.boardOf(s);
-  rec.kind = board.kind;
+  rec.kind = G.boardKind(s);
   rec.sideKind = s.run.side?.kind || null;
   rec.sideState = R.sideState(s);
   const wavePieces = board.waves.flatMap((w) => w.pieces.map((p) => p.id));
@@ -618,7 +763,11 @@ function fight(s) {
   rec.enemies = G.enemies(s).length + wavePieces.length - rec.arrived;
   rec.blocked = rec.events.blocked || 0;
   // How much of the objective still stood at the end (masters on 斬將, every enemy on 殲滅).
-  const goal = board.kind === 'slay' ? G.masterIds(s).map((id) => G.find(s, id)).filter(Boolean) : G.enemies(s);
+  // (守 and 破: the objects still standing; on 守 a share left is good, so it is reported as is.)
+  const goal = ['slay', 'keep', 'yield'].includes(rec.kind) ? G.masterIds(s).map((id) => G.find(s, id)).filter(Boolean) : rec.kind === 'break' ? G.props(s) : G.enemies(s);
+  rec.objectLost = !!G.brokenKeep(s);
+  rec.heldOut = rec.won && rec.kind === 'keep' && !G.masterIds(s).every((id) => !G.living(G.find(s, id) || { hp: 0 }));
+  rec.objectLeft = G.props(s).length ? G.props(s).reduce((n, u) => n + Math.max(0, u.hp), 0) / G.props(s).reduce((n, u) => n + u.maxHp, 0) : null;
   rec.goalLeft = goal.reduce((n, u) => n + Math.max(0, u.hp), 0) / Math.max(1, goal.reduce((n, u) => n + u.maxHp, 0));
   const show = () => {
     for (const l of lines) if (l.type !== 'grow') console.log('  r' + l.round + ' ' + l.phase + ' ' + l.who + ': ' + l.text);
@@ -648,7 +797,10 @@ const EVENTS = [
   ['lineHit', (e) => e.text.startsWith('被穿透的勁力擊中')],
   ['mirrored', (e) => e.text.startsWith('斗轉星移反震')],
   ['ropeBroke', (e) => e.who === '星索護陣'],
+  ['objectBroke', (e) => (e.who === '守物' || e.who === '破物') && /(毀了|倒了|盡數倒了)/.test(e.text)],
   ['glidedOff', (e) => /^出手後退開/.test(e.text)],
+  ['dragged', (e) => e.text.startsWith('給一把扯到')],
+  ['secondNeedle', (e) => e.text.startsWith('針影一分')],
   // Reinforcements: a wave entering, and a piece whose entry tile was taken (moved or delayed).
   ['arrive', (e) => e.who === '敵援' && /自.+入場。$/.test(e.text) && !/^(下一回合|第.+回合，)/.test(e.text) && !e.text.includes('氣血過半') && !e.text.includes('入場處有人')],
   ['blocked', (e) => e.who === '敵援' && (e.text.endsWith('入場受阻，延至下一回合。') || e.text.includes('入場處有人，改由'))]
@@ -677,7 +829,11 @@ function worth(heroId, id, level) {
     base = Math.max(1, artProfile(heroId, 'basic', level).avgDamage);
   const scale = { strike: 1, safe: 1.05, ranged: 1, area: 0.9, debuff: 0.9, heal: 0.8, shield: 0.6, buff: 0.5, mobility: 0.4 }[p.job] ?? 0.5;
   const amount = p.job === 'mobility' ? base : p.job === 'debuff' ? p.avgDamage + p.mid.foeEffect : p.measure;
-  return { job: p.job, value: (amount / base) * scale };
+  // 失神, 定身, 閉穴, 受制: the turns a foe is kept from striking, which the damage measure leaves out.
+  const art = id === 'basic' ? null : id === 'signature' ? G.artFor(G.startingHero(heroId), 'signature') : TECHNIQUES[id];
+  let held = art?.daze ? W.hold.daze : 0;
+  for (const k of ['freeze', 'mute', 'charm']) if (art?.[k]) held += (art[k].turns || 1) * W.hold[k] * (k === 'charm' ? 1 + W.turncoat : 1);
+  return { job: p.job, value: (amount / base) * scale + held * W.equipHold };
 }
 function equipArts(s, u) {
   const known = ['signature', ...u.learned.filter((id) => TECHNIQUES[id] && TECHNIQUES[id].kind !== 'basic')];
@@ -797,7 +953,7 @@ function deploy(s) {
 // ── A run ───────────────────────────────────────────────────────────────
 function playRun(seed) {
   const draw = R.drawLots(seed);
-  const s = R.startRun(draw, R.LEGACY);
+  const s = R.startRun({ ...draw, realm: REALM }, { ...R.LEGACY, realms: REALM });
   const run = { seed, heroes: [...draw.ids], leader: s.leader, boards: [] };
   for (;;) {
     R.turnPage(s, true); // the story
@@ -816,15 +972,42 @@ function playRun(seed) {
   return run;
 }
 
+// The last board alone (--last): the twelve heroes a run has by then (three drawn and one more
+// for each of nine boards won), in a seeded order, the first four beside 無名.
+function playLast(seed) {
+  const ids = [...G.PARTY]
+    .map((id, i) => [id, hash(seed, 100 + i)])
+    .sort((a, b) => a[1] - b[1])
+    .map(([id]) => id)
+    .slice(0, 12);
+  const s = R.devTestRun({ map: 9, realm: 5, heroes: ids, seed }, { ...R.LEGACY, realms: 5 });
+  for (const u of G.company(s)) G.raiseLevel(u, LEVEL - u.level);
+  R.devFinish(s, true);
+  R.settle(s);
+  R.turnPage(s, true);
+  shop(s);
+  if (!R.advance(s)) throw new Error('could not advance to the last board, seed ' + seed);
+  const run = { seed, heroes: ids.slice(0, 4), leader: s.leader, boards: [] };
+  R.turnPage(s, true);
+  R.turnPage(s, true);
+  prepare(s);
+  if (!R.deployLineup(s)) throw new Error('could not deploy, seed ' + seed);
+  deploy(s);
+  run.boards.push(fight(s));
+  R.settle(s);
+  return run;
+}
+
 // ── Aggregation ─────────────────────────────────────────────────────────
 function aggregate(runs) {
-  const boards = Array.from({ length: 10 }, (_, i) => ({
+  const boards = Array.from({ length: STAGES }, (_, i) => ({
     board: i + 1, reached: 0, wins: 0, rounds: 0, hpLeft: 0, downed: 0, side: 0, leaderFell: 0, timeout: 0,
     usage: { basic: 0, start: 0, tier1: 0, tier2: 0, tier3: 0, tier4: 0, manual: 0, wait: 0 }, maps: {}
   }));
-  const heroes = {};
+  const heroes = {},
+    arts = {};
   // The same, by map: each board's villains fight their own way, whichever stage meets them.
-  const maps = Array.from({ length: 10 }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {}, kind: null, sides: {}, side: 0, arrived: 0, enemies: 0, blocked: 0, lossLeader: 0, lossTime: 0, goalLeft: 0 }));
+  const maps = Array.from({ length: MAP_LAYOUTS.length }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {}, kind: null, sides: {}, side: 0, arrived: 0, enemies: 0, blocked: 0, lossLeader: 0, lossTime: 0, goalLeft: 0, objectLeft: 0, objectLost: 0, heldOut: 0 }));
   let misfires = 0;
   for (const run of runs)
     for (const b of run.boards) {
@@ -835,9 +1018,12 @@ function aggregate(runs) {
       M.kind = b.kind;
       if (!b.won) {
         if (b.leaderFell) M.lossLeader++;
-        else M.lossTime++;
+        else if (!b.objectLost) M.lossTime++;
         M.goalLeft += b.goalLeft;
       }
+      if (b.objectLeft != null) M.objectLeft += b.objectLeft;
+      if (b.objectLost) M.objectLost++;
+      if (b.heldOut) M.heldOut++;
       M.arrived += b.arrived;
       M.enemies += b.enemies;
       M.blocked += b.blocked;
@@ -866,10 +1052,15 @@ function aggregate(runs) {
       B.downed += b.downed;
       if (b.side) B.side++;
       for (const [k, n] of Object.entries(b.usage)) B.usage[k] += n;
+      for (const [k, a] of Object.entries(b.arts || {})) {
+        const A = (arts[k] ??= { equipped: 0, used: 0 });
+        A.equipped += a.equipped;
+        A.used += a.used;
+      }
       const totalKills = Object.values(b.heroes).reduce((n, h) => n + h.kills, 0),
         totalDealt = Object.values(b.heroes).reduce((n, h) => n + h.dealt, 0);
       for (const [id, h] of Object.entries(b.heroes)) {
-        const H = (heroes[id] ??= { boards: 0, dealt: 0, taken: 0, kills: 0, teamKills: 0, teamDealt: 0, at: Array.from({ length: 10 }, () => ({ n: 0, level: 0, sp: 0, spent: 0 })) });
+        const H = (heroes[id] ??= { boards: 0, dealt: 0, taken: 0, kills: 0, teamKills: 0, teamDealt: 0, at: Array.from({ length: STAGES }, () => ({ n: 0, level: 0, sp: 0, spent: 0 })) });
         H.boards++;
         H.dealt += h.dealt;
         H.taken += h.taken;
@@ -886,7 +1077,7 @@ function aggregate(runs) {
   const r1 = (n) => Math.round(n * 10) / 10,
     r2 = (n) => Math.round(n * 100) / 100;
   return {
-    boards: boards.filter((B) => B.board >= FIRST && B.board <= LAST).map((B) => {
+    boards: boards.filter((B) => (LAST_ONLY ? B.board === STAGES : B.board >= FIRST && B.board <= LAST)).map((B) => {
       const acts = Object.values(B.usage).reduce((a, b) => a + b, 0) || 1;
       return {
         board: B.board,
@@ -919,7 +1110,10 @@ function aggregate(runs) {
       sides: Object.fromEntries(Object.entries(M.sides).sort().map(([k, S]) => [k, { ...S, rate: r2(S.met / S.drawn) }])),
       arrived: r1(M.arrived / M.reached),
       enemies: r1(M.enemies / M.reached),
-      blocked: r1(M.blocked / M.reached)
+      blocked: r1(M.blocked / M.reached),
+      // Boards with objects: the share of their 氣血 left at the end, boards lost to one broken
+      // (守), and boards won by holding to the last round rather than felling the masters.
+      ...(['keep', 'break'].includes(M.kind) ? { objectLeft: r2(M.objectLeft / M.reached), lossObject: M.objectLost, heldOut: M.heldOut } : {})
     })),
     heroes: Object.fromEntries(
       Object.entries(heroes).sort().map(([id, H]) => [
@@ -937,6 +1131,14 @@ function aggregate(runs) {
         }
       ])
     ),
+    // Per hero and art: boards it was equipped on, and uses per such board.
+    arts: Object.fromEntries(
+      Object.entries(arts).sort().map(([k, A]) => {
+        const [hero, id] = k.split('/');
+        const name = id === 'signature' ? G.DETAILS[hero].skill : TECHNIQUES[id]?.name || id;
+        return [k, { name, equipped: A.equipped, used: A.used, perBoard: A.equipped ? r1(A.used / A.equipped) : null }];
+      })
+    ),
     misfires
   };
 }
@@ -946,7 +1148,7 @@ const pad = (v, n) => String(v ?? '-').padEnd(n);
 const lpad = (v, n) => String(v ?? '-').padStart(n);
 const pc = (v) => (v == null ? '-' : Math.round(v * 100) + '%');
 function print(out) {
-  console.log('Simulated ' + out.meta.runs + ' runs, seed ' + out.meta.seed + ', boards ' + out.meta.boards + '.');
+  console.log('Simulated ' + out.meta.runs + ' runs, seed ' + out.meta.seed + ', boards ' + out.meta.boards + ', 境界 ' + (out.meta.realm || 1) + '.');
   console.log('\nPer board (won: rounds and health left are over won boards; usage is the share of hero actions)');
   console.log(pad('board', 6) + lpad('runs', 5) + lpad('win', 6) + lpad('rnds', 6) + lpad('hp', 6) + lpad('down', 6) + lpad('side', 6) + lpad('L:ldr', 6) + lpad('L:time', 7) + '   usage: ' + ['basic', 'start', 'tier1', 'tier2', 'tier3', 'tier4', 'manual', 'wait'].map((k) => pad(k, 7)).join(''));
   for (const b of out.boards)
@@ -969,16 +1171,25 @@ function print(out) {
       pad(m.map, 4) + pad(m.name, 6) + pad(m.kind, 6) + lpad(pc(m.sideRate), 6) + lpad(m.arrived, 6) + lpad(m.enemies, 6) + lpad(m.blocked, 6) + '   ' +
         Object.entries(m.sides || {}).map(([k, S]) => k + ' ' + pc(S.rate) + ' (' + S.met + '/' + S.failed + '/' + S.open + ' of ' + S.drawn + ')').join(', ')
     );
+  const objects = out.maps.filter((m) => m.objectLeft != null);
+  if (objects.length) {
+    console.log('\nBoards with objects (obj: share of their 氣血 left at the end; L:obj lost to one broken; held: won by holding)');
+    for (const m of objects) console.log(pad(m.map, 4) + pad(m.name, 8) + pad(m.kind, 7) + lpad(pc(m.winRate), 6) + '  obj ' + lpad(pc(m.objectLeft), 5) + '  L:obj ' + lpad(m.lossObject, 3) + '  held ' + lpad(m.heldOut, 3) + ' of ' + m.reached);
+  }
   console.log('\nVillain behaviour per board fought (log events per board, averaged over its runs)');
   for (const m of out.maps || [])
     console.log(pad(m.map, 4) + pad(m.name, 6) + '  ' + (Object.entries(m.events || {}).map(([k, n]) => k + ' ' + n).join(', ') || '-'));
   console.log('\nPer hero (per board fought; shares are of the team on the boards the hero fought)');
-  console.log(pad('hero', 7) + pad('name', 5) + lpad('boards', 7) + lpad('dealt', 7) + lpad('taken', 7) + lpad('kills', 7) + lpad('dmg', 6) + '   level at board 1..10  /  points spent at board 1..10');
+  console.log(pad('hero', 7) + pad('name', 5) + lpad('boards', 7) + lpad('dealt', 7) + lpad('taken', 7) + lpad('kills', 7) + lpad('dmg', 6) + '   level at board 1..' + STAGES + '  /  points spent at board 1..' + STAGES);
   for (const [id, h] of Object.entries(out.heroes))
     console.log(
       pad(id, 7) + pad(h.name, 5) + lpad(h.boards, 6) + lpad(h.dealtPerBoard, 7) + lpad(h.takenPerBoard, 7) + lpad(pc(h.killShare), 7) + lpad(pc(h.damageShare), 6) + '   ' +
         h.levelAt.map((v) => lpad(v == null ? '-' : Math.round(v), 2)).join(' ') + '  /  ' + h.spentAt.map((v) => lpad(v == null ? '-' : Math.round(v), 2)).join(' ')
     );
+  if (ARTS && out.arts) {
+    console.log('\nPer art (boards fought with it equipped, uses, uses per such board)');
+    for (const [k, a] of Object.entries(out.arts)) console.log(pad(k, 28) + pad(a.name, 8) + lpad(a.equipped, 5) + lpad(a.used, 6) + lpad(a.perBoard, 6));
+  }
   if (out.misfires) console.log('\n' + out.misfires + ' chosen option(s) the rules then refused (counted as waits).');
 }
 function compare(a, b) {
@@ -1024,11 +1235,11 @@ const runs = [];
 let tracing = false;
 for (let i = 0; i < RUNS; i++) {
   tracing = TRACE && i === 0;
-  runs.push(playRun(hash(SEED, i)));
+  runs.push(LAST_ONLY ? playLast(hash(SEED, i)) : playRun(hash(SEED, i)));
   if (!QUIET && process.stderr.isTTY && i % 10 === 9) process.stderr.write('\r' + (i + 1) + '/' + RUNS + ' runs');
 }
 if (!QUIET && process.stderr.isTTY) process.stderr.write('\r');
-const out = { meta: { runs: RUNS, seed: SEED, boards: FIRST + '-' + LAST, seconds: Math.round((Date.now() - started) / 1000) }, ...aggregate(runs) };
+const out = { meta: { runs: RUNS, seed: SEED, boards: LAST_ONLY ? '11-11' : FIRST + '-' + LAST, realm: LAST_ONLY ? 5 : REALM, seconds: Math.round((Date.now() - started) / 1000) }, ...aggregate(runs) };
 print(out);
 if (JSON_OUT) {
   fs.writeFileSync(JSON_OUT, JSON.stringify(out, null, 1) + '\n');

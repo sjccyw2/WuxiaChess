@@ -18,13 +18,24 @@ const glyph = (name, size = 17) => icon(name || 'diamond', size);
 const tiers = ['根基', '一階', '二階', '三階', '四階', '五階', '六階'];
 const tierName = (n) => tiers[whole(n)] || `第 ${whole(n)} 階`;
 const slotName = (i) => ['第一格', '第二格', '第三格'][i];
+// What a node does when learned. Only 普攻精進 upgrades something (the basic attack, and its name
+// is written 「本招・式名」); a 新招 or the 成名絕技 is an art of its own in a slot.
 const kindNames = {
   root: '根基',
-  basic: '基本招式',
+  basic: '普攻精進',
   signature: '根基',
-  active: '主動招式',
-  refinement: '絕技精修'
+  active: '新招',
+  refinement: '成名絕技'
 };
+const kindNotes = {
+  basic: '取代原本的普攻。',
+  active: '另成一招，配入招式欄的一格。',
+  refinement: '另成一招，配入招式欄的一格。'
+};
+// The small line above a node's name in the tree: the art it belongs to, or 普攻 for an upgrade.
+const nodeKicker = (node) => (node.kind === 'basic' ? '普攻精進' : node.family || '');
+// An upgrade's name breaks only at its 「・」, never inside 南山掌法.
+const nodeTitle = (name) => String(name).split('・').map((part) => `<span class="mj-nowrap">${text(part)}</span>`).join('・<wbr>');
 const skillTabs = [
   ['school', 'tree', '門派武學'],
   ['guides', 'book', '授業武譜'],
@@ -144,7 +155,7 @@ function schoolMap(nodes, selected) {
         active = node.id === selected.id;
       return btn(
         'skill-node',
-        `<span class="mj-node-title">${text(node.name)}</span><span class="mj-node-state">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 10)}${text(rootRank(node) ? `${rootRank(node)} 重` : node.learned ? '已習' : node.canLearn ? '可修' : '未習')}</span>`,
+        `${nodeKicker(node) ? `<span class="mj-node-family">${text(nodeKicker(node))}</span>` : ''}<span class="mj-node-title">${nodeTitle(node.name)}</span><span class="mj-node-state">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 10)}${text(rootRank(node) ? `${rootRank(node)} 重` : node.learned ? '已習' : node.canLearn ? '可修' : '未習')}</span>`,
         `mj-node mj-${state}`,
         `${data(node.id)} data-tab="school" aria-controls="mj-inspector" ${pressed(active)} style="grid-column:${col + 1};grid-row:${row + 1}" aria-label="${text(node.name)}，${tierName(node.tier)}，${text(statusOf(node))}"`
       );
@@ -190,7 +201,7 @@ function nodeDetails(node, tab, nodes, library) {
     );
   else if (inLibrary)
     action = btn('skill-tab', glyph('swords', 15) + '前往招式配置', 'mj-action', data('loadout'));
-  return `<section class="mj-detail" id="mj-inspector" tabindex="-1" aria-label="招式詳情"><div class="mj-detail-top"><span class="mj-seal">${glyph(node.icon, 22)}</span><small>${tab === 'guides' ? '授業武譜' : text(kindNames[node.kind] || '門派武學')} · ${tierName(node.tier)}</small></div><h4>${text(node.name)}</h4><div class="mj-state mj-state-${nodeState(node)}">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 13)}${text(statusOf(node))}</div>${factBadge(node.facts)}${node.description ? `<details class="fo-lore"><summary>招式解說</summary><p>${text(node.description)}</p>${(node.facts?.formRules || []).map((rule) => '<p>' + text(rule) + '</p>').join('')}${node.facts?.factor ? '<p>攻擊倍率 × ' + text(node.facts.factor) + '</p>' : ''}${node.facts?.animation ? '<p>' + text(node.facts.animation) + '</p>' : ''}</details>` : ''}${facts.length ? `<dl class="mj-facts">${facts.join('')}</dl>` : ''}${node.sourceNote ? `<p class="mj-source">${text(node.sourceNote)}</p>` : ''}${action ? `<div class="mj-detail-action">${action}</div>` : ''}<button type="button" class="mj-return-map mj-text-button" data-frame-return>回看${tab === 'guides' ? '武譜' : '脈絡'}</button></section>`;
+  return `<section class="mj-detail" id="mj-inspector" tabindex="-1" aria-label="招式詳情"><div class="mj-detail-top"><span class="mj-seal">${glyph(node.icon, 22)}</span><small>${tab === 'guides' ? '授業武譜' : text(kindNames[node.kind] || '門派武學')} · ${tierName(node.tier)}</small></div><h4>${text(node.name)}${node.family ? `<small class="mj-family">${text(node.family)}</small>` : ''}</h4>${kindNotes[node.kind] ? `<p class="mj-kind-note">${text((kindNames[node.kind] || '') + '：' + kindNotes[node.kind])}</p>` : ''}<div class="mj-state mj-state-${nodeState(node)}">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 13)}${text(statusOf(node))}</div>${factBadge(node.facts)}${node.description ? `<details class="fo-lore"><summary>招式解說</summary><p>${text(node.description)}</p>${(node.facts?.formRules || []).map((rule) => '<p>' + text(rule) + '</p>').join('')}${node.facts?.factor ? '<p>攻擊倍率 × ' + text(node.facts.factor) + '</p>' : ''}${node.facts?.animation ? '<p>' + text(node.facts.animation) + '</p>' : ''}</details>` : ''}${facts.length ? `<dl class="mj-facts">${facts.join('')}</dl>` : ''}${node.sourceNote ? `<p class="mj-source">${text(node.sourceNote)}</p>` : ''}${action ? `<div class="mj-detail-action">${action}</div>` : ''}<button type="button" class="mj-return-map mj-text-button" data-frame-return>回看${tab === 'guides' ? '武譜' : '脈絡'}</button></section>`;
 }
 function schoolContents(model, ui) {
   const nodes = list(model.school),
@@ -199,15 +210,19 @@ function schoolContents(model, ui) {
   const recall = model.recallNote ? `<p class="mj-recall">${text(model.recallNote)}</p>` : '';
   return `${recall}<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
 }
-function guideContents(model, ui) {
+// In the team page (inTeam) the company's spare manuals are listed under this page, so the empty
+// page points down to them instead of away to the team.
+function guideContents(model, ui, inTeam = false) {
   const nodes = list(model.guides),
     current = chooseNode(nodes, ui.node);
   if (!current) {
     const remaining = whole(model.pending ?? model.pendingGuides ?? model.unassignedCount);
-    const action = remaining
-      ? btn('team-guides', glyph('book', 15) + '分配公庫武譜', 'mj-action')
-      : '';
-    return `<div class="mj-blank">${glyph('book', 33)}<h4>尚未獲授武譜</h4><p>在隊伍的「武譜招式」將武譜交予${text(model.name)}，便可在此修習。</p>${remaining ? `<small>尚有 ${remaining} 冊待授。</small>` : ''}${action}</div>`;
+    const action =
+      remaining && !inTeam ? btn('team-guides', glyph('book', 15) + '分配公庫武譜', 'mj-action') : '';
+    const how = inTeam
+      ? `將下方公庫的武譜授予${text(model.name)}，便可在此修習。`
+      : `在隊伍的「武學」頁將武譜交予${text(model.name)}，便可在此修習。`;
+    return `<div class="mj-blank">${glyph('book', 33)}<h4>尚未獲授武譜</h4><p>${how}</p>${remaining ? `<small>尚有 ${remaining} 冊待授。</small>` : ''}${action}</div>`;
   }
   const choices = nodes
     .map((n) =>
@@ -257,7 +272,7 @@ function loadout(model, ui) {
             ? '根基'
             : '門派武學';
       const label = here ? '已配置' : used >= 0 ? '移至此格' : '配置此格';
-      return `<li class="mj-library-row"><span class="mj-item-symbol">${glyph(a.icon, 20)}</span><div><small>${what}${used >= 0 ? ` · ${slotName(used)}` : ''}</small><h4>${text(a.name)}</h4>${reach(a.facts)}${factBadge(a.facts)}</div>${btn('slot-set', label, 'mj-action mj-compact', `${data(a.id)} data-slot="${index}" ${here || a.canEquip === false ? 'disabled' : ''} aria-label="${text(a.name)}${here ? '已配置於' : '配置到'}${slotName(index)}"`)}</li>`;
+      return `<li class="mj-library-row"><span class="mj-item-symbol">${glyph(a.icon, 20)}</span><div><small>${what}${used >= 0 ? ` · ${slotName(used)}` : ''}</small><h4>${text(a.name)}${a.family ? `<small class="mj-family">${text(a.family)}</small>` : ''}</h4>${reach(a.facts)}${factBadge(a.facts)}</div>${btn('slot-set', label, 'mj-action mj-compact', `${data(a.id)} data-slot="${index}" ${here || a.canEquip === false ? 'disabled' : ''} aria-label="${text(a.name)}${here ? '已配置於' : '配置到'}${slotName(index)}"`)}</li>`;
     })
     .join('');
   const clear = slots[index]
@@ -274,15 +289,20 @@ function loadout(model, ui) {
   return `<div class="mj-slot-bar${basicBox ? ' mj-with-basic' : ''}" role="group" aria-label="基本攻擊與三格出戰招式">${basicBox}${slotControls}</div><div class="mj-subhead"><div><h4>可用招式</h4><p>${model.fieldStudy ? '可將剛參悟的招式配置一次。' : model.canConfigure === false ? '可於戰前整備、通吃坊，或全隊尚未行動時換招。' : `選擇招式，裝入${slotName(index)}。`}</p></div>${clear}</div>${entries ? `<ul class="mj-library">${entries}</ul>` : '<p class="mj-empty">尚未習得可配置的招式。</p>'}<div class="mj-study-links">${studyLinks.join('')}</div>`;
 }
 
-function personalTraining(model, ui) {
+// The hero's 武學: tree, manuals and slots. `more` adds a page's own lines under a sub-tab (the
+// team page's spare manuals under 授業武譜), and `more.team` says it is drawn in the team page.
+function personalTraining(model, ui, more = {}) {
   const tab = skillTabs.some(([id]) => id === ui.tab) ? ui.tab : 'school';
   const body =
     tab === 'school'
       ? schoolContents(model, ui)
       : tab === 'guides'
-        ? guideContents(model, ui)
+        ? guideContents(model, ui, more.team)
         : loadout(model, ui);
-  return tabs('skill', skillTabs, tab) + tabPanel(tab, skillHeading(model) + body, skillTabs);
+  return (
+    tabs('skill', skillTabs, tab) +
+    tabPanel(tab, skillHeading(model) + body + (more[tab] || ''), skillTabs)
+  );
 }
 function treeView(model, ui = {}) {
   return (

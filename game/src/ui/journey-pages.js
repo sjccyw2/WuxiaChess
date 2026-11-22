@@ -2,9 +2,9 @@ import { wakeJournal } from './wake-views.js';
 import { moveFacts } from '../rules/move-facts.js';
 import { factBadge } from './panels.js';
 import * as G from '../rules/game.js';
-import { MAZE_TALE, TALE_ART } from '../data/maze-tale.js';
+import { MAZE_TALE, TALE_ART, YOUTH, QIUBAI } from '../data/maze-tale.js';
 import { art } from './artwork.js';
-import { WAKES, NO_MARK, FULL_MARK, closingFor, fragmentArt } from '../data/wake-tale.js';
+import { WAKES, NO_MARK, closingFor, fragmentArt } from '../data/wake-tale.js';
 import { titleHead, btn, esc } from './panels.js';
 import { icon } from './icons.js';
 
@@ -55,30 +55,78 @@ function equippedMoves(s, u) {
 // The end of a run. Won: the white stones have gone home, 求敗 says what he saw this run, cuts a
 // line in the stone beside the table and sends the youth home. Lost: the white stones go back in
 // the box. Either way the youth wakes, with only a shadow of the dream and something in his hands.
+// The ending: the last board won. 求敗 has let go and is gone; the film has told it, and its
+// words are here to read again, with what the ending opens (無名 on the board).
+function endingPage(s) {
+  const r = s.run,
+    tale = MAZE_TALE.finale,
+    name = YOUTH.name;
+  const fill = (t) => esc(String(t ?? '').replaceAll('{name}', name));
+  const words = tale.ending
+    .map(
+      (line) =>
+        (line.note ? '<p class="ending-note">' + fill(line.note) + '</p>' : '') +
+        (line.text ? '<p class="ending-said"><strong>' + esc(QIUBAI.name) + '</strong>「' + fill(line.text) + '」</p>' : '')
+    )
+    .join('');
+  return (
+    titleHead('scroll', '放下') +
+    '<div class="result-banner ending-banner"><div class="result-seal">終</div><h3>撒手而去</h3><p>' +
+    fill(tale.closed) +
+    '</p></div>' +
+    '<section class="wake-choice ending-words"><h3>終局</h3>' +
+    words +
+    '<p class="ending-name">' +
+    esc(tale.name) +
+    '</p><p class="ending-after">' +
+    fill(tale.epilogue) +
+    '</p></section>' +
+    '<section class="wake-choice wake-closing ending-plus"><h3>' +
+    icon('spark', 15) +
+    esc(tale.plus.title) +
+    '</h3><p>' +
+    fill(tale.plus.text) +
+    '</p></section>' +
+    '<p class="wake-manifest">終局同行　' +
+    G.company(s)
+      .map((u) => esc(G.unitDetails(u).name))
+      .join('、') +
+    '</p>' +
+    wakeJournal(r.chronicle, r.voyage) +
+    '<div class="modal-foot right">' +
+    btn('home', '返回主畫面', 'outline-btn') +
+    btn('ending-replay', '重看終局', 'outline-btn') +
+    btn('title-new', '再入夢', 'gold-btn') +
+    '</div>'
+  );
+}
 function journeyEnding(s) {
   const r = s.run,
     won = s.result === 'win',
+    // The last board, fought and lost: the ten boards were won, so the 境界's line still stands.
+    missed = !!r.last?.lastBoard && !won,
     realm = Math.min(WAKES.length, Math.max(1, r.realm || 1)),
     wake = WAKES[realm - 1],
-    // Past the fifth 境 there is no line left to cut.
-    carved = won && (r.realm || 1) <= WAKES.length;
+    // Every 境界 won tells how its line came to be cut.
+    carved = won || missed;
+  if (r.last?.ended) return endingPage(s);
   return (
-    titleHead(won ? 'flag' : 'scroll', won ? '好棋' : '眼破') +
+    titleHead(won ? 'flag' : 'scroll', won ? '好棋' : missed ? '終局未成' : '眼破') +
     '<div class="result-banner"><div class="result-seal">' +
-    (won ? '勝' : '破') +
+    (won ? '勝' : missed ? '缺' : '破') +
     '</div><h3>' +
-    (won ? '請回吧' : '白子俱暗') +
+    (won ? '請回吧' : missed ? '還差著一點' : '白子俱暗') +
     '</h3><p>' +
-    esc(won ? MAZE_TALE.win : MAZE_TALE.loss) +
+    esc(won ? MAZE_TALE.win : missed ? MAZE_TALE.finale.missed : MAZE_TALE.loss) +
     '</p></div>' +
     // After a lost run the white stones have gone dark and go back into the box.
-    (won
+    (won || missed
       ? ''
       : '<figure class="ending-figure ending-scene"><img class="tale-scene" src="' +
         esc(art(TALE_ART.loss)) +
         '" alt="" decoding="async"></figure>') +
     '<div class="result-stats"><span>此輪破局<b>' +
-    (r.stage + (won ? 1 : 0)) +
+    Math.min(10, r.stage + (won ? 1 : 0)) +
     ' / 10</b></span>' +
     '<span>累積的悟<b>' +
     r.chronicle.embers +
@@ -96,17 +144,22 @@ function journeyEnding(s) {
     '<section class="wake-choice wake-closing"><h3>' +
     (carved ? esc(wake.name) : '臺邊的石') +
     '</h3><p>' +
-    esc(carved ? wake.carve : won ? FULL_MARK : NO_MARK) +
+    esc(carved ? wake.carve : NO_MARK) +
     '</p></section>' +
     '<section class="wake-choice wake-closing"><h3>夢醒</h3><img class="tale-scene wake-fragment" src="' +
     esc(art(fragmentArt(realm))) +
     '" alt="" decoding="async"><p>' +
-    esc(closingFor(realm, won)) +
+    esc(closingFor(realm, won || missed)) +
     '</p></section>' +
+    // Winning the highest open 境界 opens the next; winning the fifth brings the last battle.
+    (r.last?.opened
+      ? '<p class="realm-opened">' + icon('spark', 15) + '<span>' + WAKES[r.last.opened - 1].sword + '境界已開。下一輪入夢之前，可以選它。</span></p>'
+      : '') +
     wakeJournal(r.chronicle, r.voyage) +
     '<div class="modal-foot right">' +
     btn('home', '返回主畫面', 'outline-btn') +
-    btn('title-new', '再入夢', 'gold-btn') +
+    // A save that ended at the tenth board of 無劍境界 before the last board was built goes on to it.
+    (r.last?.finale && !r.last?.lastBoard ? btn('last-enter', '入終局', 'gold-btn') : btn('title-new', '再入夢', 'gold-btn')) +
     '</div>'
   );
 }

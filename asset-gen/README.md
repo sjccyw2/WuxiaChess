@@ -8,9 +8,11 @@ planned for each pack and which decisions are waiting on the producer.
 | Path | What it holds |
 | --- | --- |
 | `prompts.md` | Prompts for the story's pictures: file name, size, where it appears. |
-| `story-characters/` | The youth and 求敗 (`qiubai`): a character card (`cards/`, 1024 × 1024) and a sprite sheet (`sprites/`, the roster pack's 8 × 5 format) each. 求敗's card is also his portrait in the game (`npc-qiubai.webp`); the sheets are not in the game yet (roadmap 2.3). 求敗 holds a twig, not a sword. |
+| `story-characters/` | The youth and 求敗 (`qiubai`): a character card (`cards/`, 1024 × 1024) and a sprite sheet (`sprites/`, the roster pack's 8 × 5 format) each. 求敗's card is also his portrait in the game (`npc-qiubai.webp`). Both sheets are in the game since 2026-11-22, cut by `tools/roster-art.py --story youth qiubai`: the two stand on the last board, and the youth on every board after the ending. 求敗 holds a twig, not a sword. `make/` paints, and `full/` keeps, the two further pictures the youth needs as a piece: his full-length figure (`game/assets/figure-youth.webp`) and his sword, 利劍 (`game/assets/item-keenSword.webp`). |
 | `prologue-video/` | The 45-second manga-style prologue film lettered like a Hong Kong comic, in an upright (9:16) and a wide (16:9) cut, the painted panels of each, and the scripts that paint and cut them (`make/`). |
+| `finale-video/` | The 59-second manga-style ending film (放下, and the name the youth will take), made as the prologue film was and lettered like a Hong Kong comic, in an upright (9:16) and a wide (16:9) cut, the painted panels of each, and the scripts that paint and cut them (`make/`). |
 | `story-art/` | Story pictures painted for the old story that the v1.0 story has no place for (`prompts.md` B4, B7). |
+| `battle-objects/` | The board objects of the 守 and 破 boards: 七弦琴 (空山琴臺), 城頭戰鼓 (襄陽殘垣) and 星索樁 (無刻漏臺), each intact and broken, with the script that painted them and the one that cuts the game's files. All are in the game (`game/assets/object-*.webp`). |
 | `jianying-roster-art/` | Thirty characters: a portrait and a sprite sheet each. |
 | `jianying-item-art/` | Eight skill effects and thirty-two item pictures, all animated. |
 
@@ -24,21 +26,22 @@ from the repository root (see the main README), not as a file.
 - `sprites/<id>.png`, 1152 × 880: 8 columns × 5 rows of 144 × 176 cells, foot at y 162. The rows
   are idle, walk, attack, hurt and special (絕技). The game's own sheets have the first four rows
   only, stored at half size; reading the fifth row is roadmap item 3.6.
-- The ten sheets in the game (the five villains on the existing boards and their troops) are not as
+- Ten of the twenty sheets in the game (the five villains on the first ten boards and their troops) are not as
   the pack came: on 2026-11-21 every strike and hurt row was repainted, and the special rows of
   萬震山, 完顏洪烈, 鮮于通 and 趙王府弓手; 萬門劍徒 was repainted whole at the height of the other troops
   (roadmap Q-N34). Both manifests carry the new checksums.
 - `manifest.json` gives each character's name, book, school, technique and bio. The bios were
   written for an earlier version of the story and are not to be copied into the game as they
-  stand (roadmap 3.2).
+  stand (roadmap 3.2). The ten heroes' bios in the game were rewritten for world view v1.0; the
+  manifest still holds the old ones.
 
 Who may be used, by the producer's ruling of 2026-11-21:
 
 | Group | Characters | Status |
 | --- | --- | --- |
 | Villains to join the existing boards now, each with a troop type | 鳳天南 `fengTiannan` + 五虎門棍徒 `fiveTiger` (青竹渡); 張召重 `zhaoZhong` + 清營刀盾兵 `qingShield` (紅楓驛); 完顏洪烈 `wanYan` + 趙王府弓手 `jinBow` (襄陽殘垣); 鮮于通 `xianYu` + 華山刀陣弟子 `huaBlade` (倒影天街); 萬震山 `wanZhen` + 萬門劍徒 `wanDisciple` (無刻漏臺) | In the game since 2026-11-21, on the boards named (`game/src/data/battles.js`), with placeholder text (roadmap 0.12). |
-| Villains kept for new stages, each with a troop type | 東方不敗 `dongFang` + 黑木崖侍衛 `heiMuGuard`; 李秋水 `liQiu` + 西夏宮禁衛 `xiaGuard`; 洪安通 `hongAn` + 神龍教青龍門眾 `shenLong`; 裘千仞 `qiuRen` + 鐵掌幫拳手 `ironPalm`; 公孫止 `gongSun` + 絕情谷網手 `netHand` | Do not use on the existing boards. |
-| New heroes | 蕭峰 `qiaoFeng`, 虛竹 `xuZhu`, 洪七公 `hongQi`, 黃藥師 `yaoShi`, 張三丰 `sanFeng`, 趙敏 `zhaoMin`, 程靈素 `lingSu`, 狄雲 `diYun`, 袁承志 `chengZhi`, 阿青 `aQing` | Do not use. The producer will add them (roadmap 3.3). |
+| Villains kept for new stages, each with a troop type | 東方不敗 `dongFang` + 黑木崖侍衛 `heiMuGuard` (黑木繡閣); 李秋水 `liQiu` + 西夏宮禁衛 `xiaGuard` (西夏夜苑); 洪安通 `hongAn` + 神龍教青龍門眾 `shenLong` (神龍竹堂); 裘千仞 `qiuRen` + 鐵掌幫拳手 `ironPalm` (鐵掌溪灘); 公孫止 `gongSun` + 絕情谷網手 `netHand` (絕情花徑) | In the game since 2026-11-22, each as the 局主 of a board of his own with his troop type (roadmap 3.4). Not used on the first ten boards. Their sheets are as the pack came. |
+| New heroes | 蕭峰 `qiaoFeng`, 虛竹 `xuZhu`, 洪七公 `hongQi`, 黃藥師 `yaoShi`, 張三丰 `sanFeng`, 趙敏 `zhaoMin`, 程靈素 `lingSu`, 狄雲 `diYun`, 袁承志 `chengZhi`, 阿青 `aQing` | In the game since 2026-11-22 as playable heroes, under these ids (roadmap 3.3). The pack has no full-length painting of them, so the wardrobe's standing figure is the first idle frame enlarged, and none has a weapon picture of their own. |
 
 ## `jianying-item-art/`: effects and items
 
@@ -48,11 +51,12 @@ a suggested time for each frame.
 
 - `effects/`, 1536 × 512 (cells of 384 × 256): 蛤蟆功, 降龍十八掌, 六脈神劍, 獨孤九劍, 彈指神通,
   打狗棒法, 黯然銷魂掌 and 金蛇劍法. The game ids in the manifest predate the skill redesign;
-  match by the art's name. 金蛇劍法 belongs to 袁承志, a new hero, and waits for him.
+  match by the art's name. 金蛇劍法 plays for 袁承志's summit and the form below it.
 - `weapons/`, `gear/`, `consumables/`, 1024 × 512 (cells of 256 × 256): one sheet for every item.
-  All are in the game except 金蛇劍 `goldSerpentBlade` and 烏蠶衣 `silkwormCoat`, which wait for
-  袁承志 and 狄雲. The producer may later set some powerful weapons aside for quests rather than
-  the shop (roadmap 0.14).
-- In the game: seven effects are `game/assets/fx-<name>.webp` (which art plays which is `ARTS` in
+  All are in the game. 金蛇劍 `goldSerpentBlade` and 烏蠶衣 `silkwormCoat` came in with 袁承志 and
+  狄雲 on 2026-11-22: the sword is on the shop's shelf when 袁承志 is in the company, and 狄雲
+  arrives wearing the coat. The producer may later set some powerful weapons aside for quests
+  rather than the shop (roadmap 0.14).
+- In the game: eight effects are `game/assets/fx-<name>.webp` (which art plays which is `ARTS` in
   `game/src/fx/painted-effects.js`); each item is a still `item-<id>.webp`, the first frame
   of its sheet, cut by `tools/item-art.py`. Items are shown still, so the other frames are not used.

@@ -1,6 +1,6 @@
 // Saves pictures of one battlefield from a set of camera angles, using tools/map-preview.html.
 //
-//   node tools/shoot-map.mjs <map 0-9> <output folder> [--bare] [--size 1440x900]
+//   node tools/shoot-map.mjs <map 0-15> <output folder> [--bare] [--size 1440x900]
 //                            [--only name,name] [--view name:yaw:pitch:zoom[:x,y]]
 //
 // It needs Playwright with Chromium, and no web server: the page's requests are answered
@@ -38,8 +38,8 @@ const flags = (name) => args.flatMap((a, i) => (a === '--' + name ? [args[i + 1]
 const flag = (name, fallback = null) => flags(name)[0] ?? fallback;
 const map = Number(args[0]),
   out = args[1];
-if (!Number.isInteger(map) || map < 0 || map > 9 || !out || out.startsWith('--')) {
-  console.error('usage: node tools/shoot-map.mjs <map 0-9> <output folder> [--bare] [--only a,b]');
+if (!Number.isInteger(map) || map < 0 || map > 15 || !out || out.startsWith('--')) {
+  console.error('usage: node tools/shoot-map.mjs <map 0-15> <output folder> [--bare] [--only a,b]');
   process.exit(2);
 }
 const bare = args.includes('--bare'),

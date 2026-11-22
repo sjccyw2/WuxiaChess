@@ -1,5 +1,8 @@
 import { Model, circle } from '../scenery-kit.js';
 import { paving, caveWalls, caveFeatures, caveFloor, lightField, tileProps } from './cave-7.js';
+import { wallDressing } from './wall-7.js';
+import { lakeDressing } from './lake-7.js';
+import { tombDressing } from './tomb-7.js';
 
 // A shallow spring has dissolved a neck through the floor of two chambers.
 // The same limestone bed also carries the west tomb and the four wall groups.
@@ -598,6 +601,12 @@ function landform7(T, layout) {
   tileProps(m, layout);
   group.add(m.finish('石樑、泉眼與藥池'));
   group.add(caveWalls(T, ground, layout), caveFeatures(T, ground, layout, flame));
+  // The wall's dripstone, jade seams and side passages (wall-7.js).
+  group.add(wallDressing(T, layout));
+  // Ice, stalagmites and stepping stones on the black lake (lake-7.js).
+  group.add(lakeDressing(T, ground));
+  // The jade bed, the altar and what else the tomb's people left (tomb-7.js).
+  group.add(...tombDressing(T, ground));
   return group;
 }
 

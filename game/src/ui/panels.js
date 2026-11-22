@@ -7,7 +7,7 @@ import {
 } from '../rules/battle-mastery.js';
 import { art } from './artwork.js';
 import { fieldSize, fieldCells, terrainTypes, mapLayout, tileInfo } from '../data/terrain.js';
-import { NUMERALS, guideInventory, acceptsGuide, briefing, boardBrief, sideForecast } from '../rules/journey.js';
+import { NUMERALS, guideInventory, acceptsGuide, briefing, boardBrief, sideForecast, mapAt, stagesOf, stageTitle, TENTH } from '../rules/journey.js';
 import { seatsFor } from '../rules/formation.js';
 import { POSTS, boardPlan, planGrid, planKey } from './board-plan.js';
 import {
@@ -55,7 +55,11 @@ import {
   arrivalGhosts,
   pieceUnit,
   waveList,
-  boardOf
+  boardOf,
+  isProp,
+  propKind,
+  holdLeft,
+  masterIds
 } from '../rules/game.js';
 import { icon } from './icons.js';
 import { itemPicture } from './item-art.js';
@@ -684,8 +688,8 @@ function logPage(s, filter) {
 // board from the shop, with no secondary drawn yet. `back` names the page the footer returns to.
 function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {}) {
   const r = s.run,
-    model = ahead ? boardBrief(r.route[r.stage + 1], r.stage + 1) : briefing(s, { live });
-  const plan = boardPlan(model.map, ahead ? null : s);
+    model = ahead ? boardBrief(mapAt(r, r.stage + 1), r.stage + 1, r.route) : briefing(s, { live });
+  const plan = boardPlan(model.map, ahead ? null : s, r.route);
   const seats = ahead ? [] : seatsFor(r);
   const post = (i, x, y, at) =>
     '<b class="plan-post' +
@@ -709,20 +713,29 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     const ward = (m) => {
       const u = find(s, m.id);
       if (!u || !(wardEscorts(s).length || s.units.some((v) => unitDetails(v)?.traits?.ward))) return '';
+      const posts = s.units.some((v) => isProp(v) && unitDetails(v)?.traits?.ward);
       return (
         '　星索護陣・' +
         wardEscorts(s).length +
         ' / ' +
         s.units.filter((v) => unitDetails(v)?.traits?.ward).length +
-        ' 名護陣者，減傷 ' +
+        (posts ? ' 根星索樁，減傷 ' : ' 名護陣者，減傷 ') +
         wardShare(s, u) +
         '%'
       );
     };
-    const rows =
+    // 守 and 破: each object's 氣血 (and on 守 the rounds still to hold) before the masters.
+    const things = (L.objects || []).map(
+      (o) =>
+        '<li class="' + (o.broken ? (o.kind === 'break' ? 'done' : 'lost') : '') + '">' + icon(o.broken && o.kind === 'break' ? 'check' : 'flag', 14) + '<span>' + esc(o.line) + '</span></li>'
+    );
+    if (L.hold) things.push('<li>' + icon('flag', 14) + '<span>' + esc(L.hold) + '</span></li>');
+    const rows = [...things, ...(
       model.kind === 'rout'
         ? [L.remaining, L.waiting].filter(Boolean).map((t) => '<li>' + esc(t) + '</li>')
-        : L.masters.map(
+        : model.kind === 'break'
+          ? []
+          : L.masters.map(
             (m) =>
               '<li class="' +
               (m.fallen ? 'done' : '') +
@@ -732,7 +745,7 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
               esc(m.line) +
               esc(m.fallen ? '' : ward(m)) +
               '</span></li>'
-          );
+          ))];
     progress = rows.length ? '<ul class="brief-progress">' + rows.join('') + '</ul>' : '';
   }
   const sd = model.side;
@@ -775,7 +788,7 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     sect('brief-kind', '戰局', p(model.battle)) +
     sect('brief-win', '勝利', p(model.win) + progress) +
     sect('brief-loss', '敗退', p(model.loss)) +
-    sect('brief-side', '支線', (model.sideLead ? p(model.sideLead + '：', 'brief-small') : '') + side) +
+    (model.noSide ? '' : sect('brief-side', '支線', (model.sideLead ? p(model.sideLead + '：', 'brief-small') : '') + side)) +
     (model.recruit ? sect('brief-recruit', '入局', p(model.recruit)) : '') +
     '</div></div>' +
     extra +
@@ -789,17 +802,19 @@ function goalsPage(s) {
     return briefPage(s, {
       live: true,
       extra:
-      '<details class="hud-disclosure brief-route"><summary>十局次序 · ' +
+      '<details class="hud-disclosure brief-route"><summary>棋局次序 · ' +
       (s.run.stage + 1) +
-      '／10</summary><ol class="journey-route">' +
-      s.run.route
+      '／' +
+      stagesOf(s.run).length +
+      '</summary><ol class="journey-route">' +
+      stagesOf(s.run)
         .map(
           (map, i) =>
             '<li class="' +
             (i === s.run.stage ? 'current' : i < s.run.stage ? 'cleared' : '') +
-            '"><small>第' +
-            NUMERALS[i] +
-            '局</small><strong>' +
+            '"><small>' +
+            stageTitle(i, '') +
+            '</small><strong>' +
             mapLayout(map).name +
             ' · ' +
             mapLayout(map).shapeName +
@@ -811,9 +826,11 @@ function goalsPage(s) {
               ? '目前所在'
               : i < s.run.stage
                 ? '已破局'
-                : i === 9
-                  ? '最後一局'
-                  : '未抵達') +
+                : i === TENTH
+                  ? '第十局，十局之末'
+                  : i > TENTH
+                    ? '十局皆勝之後'
+                    : '未抵達') +
             '</span></li>'
         )
         .join('') +
@@ -997,7 +1014,53 @@ function waitingPiece(s, id) {
   }
   return null;
 }
+// A board object's page: what it is, its 氣血, and what it means for the board.
+function objectPage(s, u) {
+  const i = unitDetails(u),
+    keep = propKind(u) === 'keep',
+    left = holdLeft(s),
+    masters = masterIds(s).map((id) => DETAILS[id.split('#')[0]]?.name || unitDetails(find(s, id))?.name).filter(Boolean);
+  const rule = keep
+    ? '守住它：撐過第' + NUMERALS[(boardOf(s).hold || LIMIT) - 1] + '回合，或擊敗' + masters.join('與') + '。它一毀，這一局便輸了。' + (left ? '尚須守 ' + left + ' 回合。' : '')
+    : '毀了它。盤上的' + i.name + '盡數倒下，這一局便勝了。它不還手，也不閃避。';
+  const ward = i.traits?.ward ? '星索護陣 · 立著一日，' + (unitDetails(find(s, commanderId(s)))?.name || '局主') + '所受之傷便減 ' + i.traits.ward + '%。' : '';
+  return (
+    titleHead('target', keep ? '守物' : '破物') +
+    '<div class="enemy-summary"><img class="enemy-face object-face" src="' +
+    unitFace(u) +
+    '" alt=""><div><small>' +
+    esc(i.school + ' · ' + i.role) +
+    '</small><h3>' +
+    esc(i.name) +
+    '</h3><p>' +
+    esc(i.bio) +
+    '</p></div></div>' +
+    bar('氣血', Math.max(0, u.hp), u.maxHp, 'hp', 'heart') +
+    '<div class="detail-list"><span>防禦 <b>' +
+    stat(u, 'def', s) +
+    '</b></span><span>' +
+    (keep ? '我方守護' : '我方可擊') +
+    '</span></div>' +
+    [rule, ward]
+      .filter(Boolean)
+      .map((line) => '<p class="footnote">' + icon('flag', 15) + '<span>' + esc(line) + '</span></p>')
+      .join('') +
+    '<p class="footnote">' +
+    icon('stone', 15) +
+    esc('立於' + tileInfo(u.x, u.y, s.mapIndex).name + '。不行動、不還擊，不受招式附帶之效，也推不動。') +
+    '</p>'
+  );
+}
+// 定身, 閉穴, 受制: what holds the piece this turn and for how many more of its turns, or ''.
+function heldLine(s, u) {
+  const left = (kind) => Math.max(1, u.conditions[kind].through - s.round + 1) + ' 回合';
+  if (u.conditions?.freeze) return '定身 · 尚餘 ' + left('freeze') + '，不能行動，也不施展絕技';
+  if (u.conditions?.charm) return '受制 · 倒戈尚餘 ' + left('charm') + '，攻擊同夥，不施展絕技';
+  if (u.conditions?.mute) return '閉穴 · 尚餘 ' + left('mute') + '，只走不出手，也不施展絕技';
+  return '';
+}
 function enemyPage(s, id) {
+  if (isProp(find(s, id))) return objectPage(s, find(s, id));
   const waiting = find(s, id) ? null : waitingPiece(s, id);
   const u = waiting ? waiting.u : find(s, id),
     i = unitDetails(u),
@@ -1023,14 +1086,15 @@ function enemyPage(s, id) {
       ? '<div class="enemy-forecast"><strong>' +
         special.name +
         '</strong><span>' +
-        (u.conditions?.seal
+        (heldLine(s, u) ||
+          (u.conditions?.seal
           ? '本回合封穴，無法施展絕技'
           : u.conditions?.daze
             ? '本回合失神，不會出手'
             : turns === 0
               ? CHARGED[special.style] ||
                 (traitsOf(u).stance ? CHARGED.stance : '本回合蓄勢，正是破綻')
-              : '距蓄勢 ' + turns + ' 回合') +
+              : '距蓄勢 ' + turns + ' 回合')) +
         '</span><p>' +
         // A mend or a mirror is no blow, so it has no strength against the normal strike.
         (special.strikes ? '普攻傷害 × ' + special.factor + '。' : '') +
@@ -1051,6 +1115,7 @@ function enemyPage(s, id) {
     reach(s, u) +
     ' 格' +
     (u.conditions?.disarm ? '（纏械）' : '') +
+    (u.conditions?.freeze ? '（定身）' : u.conditions?.mute ? '（閉穴）' : u.conditions?.charm ? '（倒戈）' : '') +
     '</b></span></div>' +
     enemyTraitLines(s, u)
       .concat(
@@ -1240,7 +1305,7 @@ function attackPage(s, source, target, skill) {
   // 代受 and 號令 change who the action is for: each gets its own row.
   for (const note of f.notes)
     lines.push(
-      /^(代受|號令|化功) · /.test(note)
+      /^(代受|號令|化功|不敗|無招|問劍) · /.test(note)
         ? line(note.slice(0, 2), esc(note.slice(5)))
         : line('招式連攜', esc(note))
     );

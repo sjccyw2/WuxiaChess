@@ -47,34 +47,121 @@ const COMMANDS = {
     power: 3,
     text: '出招少耗 3 點內力，最低消耗 2 點。',
     icon: 'drop'
-  }
+  },
+  // The ten who came later each lead in a way of their own.
+  // 聚賢莊: the more foes press round him, the harder he hits.
+  qiaoFeng: {
+    name: '聚賢豪氣',
+    stat: 'throng',
+    power: 3,
+    most: 2,
+    text: '每有一名敵人相鄰，攻擊增加 3，至多增加 6。',
+    icon: 'flag'
+  },
+  xuZhu: {
+    name: '北冥真氣',
+    stat: 'absorb',
+    power: 3,
+    text: '出手擊中敵人時，回復 3 點內力。',
+    icon: 'drop'
+  },
+  hongQi: {
+    name: '打狗陣法',
+    stat: 'held',
+    power: 8,
+    text: '擊中絆足、封穴、纏械、失神、定身或閉穴的敵人時，傷害增加 8。',
+    icon: 'target'
+  },
+  yaoShi: {
+    name: '桃花迷陣',
+    stat: 'linger',
+    power: 2,
+    text: '出手加在敵人身上的中毒、攻勢受挫、破防、絆足、破綻、內傷與纏械，多留 2 回合。',
+    icon: 'star'
+  },
+  sanFeng: {
+    name: '太極圓轉',
+    stat: 'retort',
+    power: 20,
+    text: '還擊的比例加兩成，至多全力。',
+    icon: 'shield'
+  },
+  // 十香軟筋散: it is the foes near her who are weakened, so the boon names them (commandDescription).
+  zhaoMin: { name: '軟筋餘香', stat: 'sap', power: 3, foes: true, text: '攻擊減少 3。', icon: 'drop' },
+  lingSu: {
+    name: '碧蠶毒蠱',
+    stat: 'venom',
+    power: 4,
+    turns: 2,
+    text: '出手擊中的敵人中毒兩回合，每回合失去 4 氣血。',
+    icon: 'leaf'
+  },
+  diYun: {
+    name: '雪谷回生',
+    stat: 'spare',
+    power: 1,
+    text: '將要倒下時留住 1 點氣血；每局只有一次。',
+    icon: 'shield'
+  },
+  chengZhi: {
+    name: '金蛇轉鋒',
+    stat: 'bend',
+    power: 1,
+    text: '出手與還擊無視目標所在地形的防禦，旁人也不能替目標代受。',
+    icon: 'sword'
+  },
+  aQing: {
+    name: '越女試劍',
+    stat: 'opening',
+    power: 1,
+    text: '每回合頭一次會招來還擊的出手，敵人不能還擊。',
+    icon: 'feather'
+  },
+  // 無名: he does not give up a stone.
+  youth: { name: '不棄一子', stat: 'def', power: 4, text: '防禦增加 4。', icon: 'shield' }
 };
+// What 打狗陣法 counts as a held foe, and what 桃花迷陣 keeps on a foe longer (by its power).
+const HELD_KINDS = ['pin', 'seal', 'disarm', 'daze', 'freeze', 'mute'];
+const LINGER_KINDS = ['poison', 'weak', 'exposed', 'pin', 'mark', 'wound', 'disarm'];
 function commandDescription(id) {
-  return '領隊與距離兩格內的友軍' + COMMANDS[id].text;
+  return (COMMANDS[id].foes ? '距離領隊兩格內的敵人' : '領隊與距離兩格內的友軍') + COMMANDS[id].text;
 }
-function commandBonus(s, unit, stat) {
+const apart = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+// Where a hero stands for the boon in 整備: his seat's post, since the posts are not yet walked.
+function prepPost(s, id) {
+  const seat = seatsFor(s.run).indexOf(id);
+  return seat < 0 ? null : mapLayout(s.mapIndex).allies[seat];
+}
+// The leader's boon and where it is centred: in 整備 the first seat's post, in the fight the
+// living leader. Null when no boon is in force.
+function boonSource(s) {
   if (s?.run?.scene === 'prep') {
-    const seats = seatsFor(s.run),
-      seat = seats.indexOf(unit.id),
-      boon = COMMANDS[s.run.next[0]];
-    if (seat < 0 || boon?.stat !== stat) return 0;
-    const posts = mapLayout(s.mapIndex).allies,
-      a = posts[seats.indexOf(s.run.next[0])],
-      b = posts[seat];
-    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) <= 2 ? boon.power : 0;
+    const boon = COMMANDS[s.run.next[0]],
+      at = boon && prepPost(s, s.run.next[0]);
+    return at ? { boon, at } : null;
   }
-  if (
-    s?.run?.status !== 'battle' ||
-    unit.side !== 'ally' ||
-    unit.hp <= 0 ||
-    !s.units.includes(unit)
-  )
-    return 0;
+  if (s?.run?.status !== 'battle') return null;
   const captain = s.units.find((v) => v.id === s.leader && v.hp > 0);
-  const boon = captain && COMMANDS[captain.id];
-  return boon?.stat === stat && Math.abs(captain.x - unit.x) + Math.abs(captain.y - unit.y) <= 2
-    ? boon.power
-    : 0;
+  return captain && COMMANDS[captain.id] ? { boon: COMMANDS[captain.id], at: captain } : null;
+}
+// The boon in force now, or null.
+const leaderBoon = (s) => boonSource(s)?.boon || null;
+// What the leader's boon gives this hero for `stat`: its power if he is the leader or within two
+// tiles of him, else 0.
+function commandBonus(s, unit, stat) {
+  const prep = s?.run?.scene === 'prep';
+  if (!prep && (unit.side !== 'ally' || unit.hp <= 0 || !s?.units?.includes(unit))) return 0;
+  const from = boonSource(s);
+  if (!from || from.boon.stat !== stat || from.boon.foes) return 0;
+  const at = prep ? prepPost(s, unit.id) : unit;
+  return at && apart(from.at, at) <= 2 ? from.boon.power : 0;
+}
+// What a boon that names the foes (軟筋餘香) takes off this enemy for `stat`: its power while he
+// stands within two tiles of the leader. Asked of a copy of the piece too (a forecast's counter).
+function commandAura(s, foe, stat) {
+  if (foe?.side !== 'enemy' || foe.hp <= 0) return 0;
+  const from = boonSource(s);
+  return from?.boon.foes && from.boon.stat === stat && apart(from.at, foe) <= 2 ? from.boon.power : 0;
 }
 const CONDITION_NAMES = {
   poison: '中毒',
@@ -99,8 +186,18 @@ const CONDITION_NAMES = {
   backlash: '亂氣',
   wound: '內傷',
   daze: '失神',
-  disarm: '纏械'
+  disarm: '纏械',
+  fortify: '固守',
+  immune: '金剛',
+  freeze: '定身',
+  mute: '閉穴',
+  charm: '受制'
 };
+// Whether an art is aimed at a companion or at its caster (rules/game.js targetType says the same).
+const supportArt = (art) => art.target === 'ally' || art.target === 'self' || (!art.target && !!art.heal);
+// 固守 and 金剛 guard whoever a support art reaches; on any other art they guard its caster
+// (selfEffectsOf), never the foe it strikes.
+const GUARDS = ['fortify', 'immune'];
 // What an art puts on whoever receives it.
 function effectsOf(art) {
   if (!art) return [];
@@ -113,8 +210,19 @@ function effectsOf(art) {
   // `daze: 'setup'` depends on the target at the moment of the strike, so it is decided there.
   if (art.daze === true) effects.push({ kind: 'daze', power: 1, turns: 1 });
   if (art.redirect) effects.push({ kind: 'redirect', power: art.redirect.cap, turns: 1 });
+  if (supportArt(art)) for (const kind of GUARDS) if (art[kind]) effects.push(guardEffect(art, kind));
+  // 定身, 閉穴 and 受制 as the art's page states them; the strike decides what a master takes
+  // (rules/game.js controlPlan).
+  for (const kind of ['freeze', 'mute', 'charm'])
+    if (art[kind]) effects.push({ kind, power: 1, turns: art[kind].turns || 1 });
   return effects;
 }
+// 金剛 has no strength of its own: its power is 1, kept so a save's condition check passes.
+const guardEffect = (art, kind) => ({
+  kind,
+  power: kind === 'immune' ? 1 : art[kind].power,
+  turns: art[kind].turns || 1
+});
 // What an art puts on its caster once it resolves, whatever it was aimed at. One turn lasts until
 // the caster's next turn; two turns cover that next turn too. 亂氣 lasts the rest of the board, so
 // its `turns` is left for the caller, who knows the round limit.
@@ -131,6 +239,8 @@ function selfEffectsOf(art) {
   if (art.rooted) put('rooted', 1, 2);
   if (art.spent) put('spent', 1, 2);
   if (art.backlash) put('backlash', 1, null);
+  if (!supportArt(art))
+    for (const kind of GUARDS) if (art[kind]) effects.push(guardEffect(art, kind));
   return effects;
 }
 function effectDescription(kind, power, turns) {
@@ -157,7 +267,12 @@ function effectDescription(kind, power, turns) {
     backlash: power + '／3 層',
     wound: '療傷減半，出手後自損 ' + power,
     daze: '失去下一次行動',
-    disarm: '攻擊 −' + power + '，只能攻擊相鄰'
+    disarm: '攻擊 −' + power + '，只能攻擊相鄰',
+    fortify: '防禦 ＋' + power,
+    immune: '直接攻擊無功，不受其附帶之效',
+    freeze: '不能移動、出手、施展絕技或還擊',
+    mute: '不能出手、施展絕技或還擊，仍可移動',
+    charm: '倒戈，以普攻攻擊同夥'
   };
   // 亂氣 stays until it bursts or the board ends; a count of rounds would mislead.
   const span = kind === 'backlash' ? '本局' : turns + ' 回合';
@@ -169,10 +284,13 @@ function activeEffects(unit, round) {
   );
 }
 function applyCondition(s, target, effect, caster) {
+  if (target?.side === 'prop') return; // a board object takes no condition
   const { kind, power, turns } = effect;
   const held = (target.conditions ??= {});
   const old = held[kind];
-  const extra = (kind === 'haste' || kind === 'rally') && target.acted ? 1 : 0;
+  // 金剛: a foe's blow puts nothing on its holder (its own and its companions' effects still do).
+  if (held.immune && caster && caster !== target && caster.side !== target.side) return;
+  const extra = ['haste', 'rally', 'fortify'].includes(kind) && target.acted ? 1 : 0;
   const through = s.round + turns - 1 + extra;
   const owner = old && old.power > power ? old.source : caster.id;
   // 亂氣 counts casts: each application adds a layer instead of keeping the stronger.
@@ -189,4 +307,4 @@ function progress(unit, metric, delta) {
   if (unit?.mastery && delta > 0) unit.mastery[metric] += delta;
 }
 
-export { COMMANDS, commandDescription, commandBonus, CONDITION_NAMES, effectsOf, selfEffectsOf, effectDescription, activeEffects, applyCondition, blankRecord, progress };
+export { COMMANDS, HELD_KINDS, LINGER_KINDS, commandDescription, commandBonus, commandAura, leaderBoon, prepPost, CONDITION_NAMES, effectsOf, selfEffectsOf, effectDescription, activeEffects, applyCondition, blankRecord, progress };

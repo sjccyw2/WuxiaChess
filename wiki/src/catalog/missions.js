@@ -46,27 +46,42 @@ function stageMission(stage) {
     image: wikiArt('map-' + stage + '.webp'),
     sections: [
       rows('勝負與獎勵', [
+        // The last board is no part of the shuffle: it follows the tenth board in 無劍境界 only.
+        ...(G.hasFour(stage) ? [] : [['何時', '在無劍境界勝了第十局之後，同一輪接著下。黑子是那一輪十局的十位局主；此處按十局本來的次序列出。']]),
         ['勝利', m.win],
         ['敗退', m.loss],
         ['兵力', m.force.line],
+        // 守 and 破: the board's objects.
+        ...[...new Set(m.objects.map((o) => o.key))].map((key) => {
+          const o = m.objects.find((x) => x.key === key),
+            n = m.objects.filter((x) => x.key === key).length;
+          return [o.kindName, o.name + (n > 1 ? ' × ' + n : '')];
+        }),
         ...(m.waves.length ? m.waves.map((w) => ['援軍', w.line]) : [['援軍', m.noWaves]]),
-        ['通關獎勵', NOTES.clearReward(G.REWARDS)]
+        ['通關獎勵', G.hasFour(stage) ? NOTES.clearReward(G.REWARDS) : '沒有賞銀：勝了這一局，便是結局。']
       ]),
       rows('敵方', [
         ...m.foes.map((f) => [f.rank + ' · ' + f.name, f.gist || NOTES.noGist]),
         ...m.force.chips.map((c) => [c.name + ' × ' + c.count, c.gist || NOTES.noGist])
       ]),
-      rows('支線（每輪抽出一道）', [
-        ...pool.map((side) => [side.name, side.detail + '獎勵：' + side.reward + '。']),
-        ['支線獎勵', NOTES.sideReward(G.REWARDS)]
-      ]),
-      speech('支線紀事', ...[...new Set(pool.map((side) => sideTale(side.kind)))]),
+      // The last board has no secondary: 韋小寶 opens no book on it.
+      ...(pool.length
+        ? [
+            rows('支線（每輪抽出一道）', [
+              ...pool.map((side) => [side.name, side.detail + '獎勵：' + side.reward + '。']),
+              ['支線獎勵', NOTES.sideReward(G.REWARDS)]
+            ]),
+            speech('支線紀事', ...[...new Set(pool.map((side) => sideTale(side.kind)))])
+          ]
+        : [rows('支線', [['沒有', '終局沒有支線：莊家自己下了場，韋小寶不開盤口。']])]),
       links('同局條目', [
         link('maps', stage, stageName(stage)),
         ...namedOn(stage).map(foeLink),
+        ...[...new Set(m.objects.map((o) => o.key))].map(foeLink),
         link('rules', m.kind, m.kindName),
         ...pool.map((side) => link('rules', 'side-' + side.kind, side.name)),
-        link('story', 'map-' + stage, stageName(stage) + '對白')
+        link('story', 'map-' + stage, stageName(stage) + '對白'),
+        ...(G.hasFour(stage) ? [] : [link('story', 'finale', '終局與放下'), link('heroes', G.YOUTH_ID, G.DETAILS[G.YOUTH_ID].name)])
       ])
     ],
     sources: cites(
@@ -113,9 +128,10 @@ function trial([id, art]) {
   };
 }
 
-// What one level adds, measured by asking the game to raise a blank hero.
+// What one level adds, measured by asking the game to raise a blank hero who grows at the
+// common pace.
 function levelGain(fromLevel) {
-  const unit = { ...G.startingHero(G.PARTY[0]), level: fromLevel },
+  const unit = { ...G.startingHero(G.PARTY.find((id) => !G.growthOf(id))), level: fromLevel },
     before = { ...unit };
   G.raiseLevel(unit, 1);
   return {
@@ -138,13 +154,20 @@ export function development() {
       rows('俠客成長', [
         ['二、三級', NOTES.levelGain(levelGain(1))],
         ['四級起', NOTES.levelGain(levelGain(growth.seasoned)) + NOTES.reserveGrowth],
+        ['另有步調', NOTES.otherPaces],
+        ...Object.entries(G.GROWTH_PACES).map(([key, pace]) => [
+          pace.name,
+          pace.desc + '（' + Object.keys(G.GROWTH_PROFILES).filter((id) => G.GROWTH_PROFILES[id].pace === key).map((id) => G.DETAILS[id].name).join('、') + '）'
+        ]),
         ['出招歷練', NOTES.actionXp(growth)],
         ['戰中參悟', NOTES.midBattleStudy],
         ['後段敵情', NOTES.lateFoes]
-      ])
+      ]),
+      links('步調不同的俠客', Object.keys(G.GROWTH_PROFILES).map((id) => link('heroes', id, G.DETAILS[id].name)))
     ],
     sources: cites(
       cite('function raiseLevel', 'src/rules/game.js'),
+      cite('const GROWTH_PACES', 'src/rules/game.js'),
       cite('function enemyAct', 'src/rules/game.js'),
       cite('function defenders', 'src/rules/journey.js')
     )

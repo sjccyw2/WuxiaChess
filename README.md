@@ -64,6 +64,9 @@ asset-gen/            art not yet in the game (see asset-gen/README.md)
   prompts.md          prompts for the art the story still needs
   jianying-roster-art/  thirty characters: portrait and sprite sheet each
   jianying-item-art/    eight skill effects and thirty-two item pictures
+  story-characters/     the youth and 求敗: cards, sprite sheets, the youth's figure and sword
+  prologue-video/       the opening film and everything it is made from
+  finale-video/         the ending film and everything it is made from
 tools/
   check-wiki.mjs      builds the wiki outside a browser and checks its links
   check-story.mjs     plays hundreds of shuffled runs and checks the story holds
@@ -82,7 +85,7 @@ Every visual upgrade layered on the original look has a switch in `game/src/poli
 pieces, combat effects, lighting and water, panel finish, the loading veil, and the added
 controls (danger zone, `Tab` to the next hero, the side-docked strike forecast, and the
 action flow that replaces the four-button command bar), the painted skill effects, and the
-marks for reinforcements and the secondary objective on the board. Set a switch to
+marks for reinforcements and the secondary objective on the board. `statusLooks` draws the states that hold a piece on the board: 定身 freezes the figure frost-white, 閉穴 hangs a sealed talisman at its hands, 受制 turns its base, outline and health bar green-gold, 金剛 puts a gold ring and sheen on the hero and shows 無功 for a voided blow, and 固守 raises a stone ward, each with a short flourish as it starts and ends. (The outline of the tiles a two- or three-tile splash will catch is a rule the player needs, so it has no switch.) Set a switch to
 `false` to turn that one feature off; nothing else needs to change.
 
 To compare without editing the file:
@@ -94,27 +97,129 @@ Styles for these features live in `styles/12-combat.css` and `styles/13-panels.c
 rule there is scoped under an `html.polish-…` class that the switch controls.
 
 The briefing page (軍情) and the deployment step before round one are game flow, not polish:
+
+整備 (and the team page in battle and in the shop) has three tabs, 陣容 · 武學 · 裝備物資. Each 陣容 card shows the hero's numbers, equipped arts and unspent 武學點; tapping a card opens a pane beside the line-up with the whole sheet, the line-up buttons and 習武, which opens the 武學 tab (the skill tree, the slots and the manuals) for that hero. This is game flow, not polish: its styles are in `styles/17-preparation.css`, with no switch.
 they have no switch. Their styles are in `styles/14-battles.css`.
+
+## The five 境界 (difficulty)
+
+The five 境界 are difficulty levels, listed in `game/src/data/realms.js` with what each does to
+the enemies' numbers (the first 境界 changes nothing). Before each run the player picks one from
+those open (選境界). The first is open from the start; winning a run in the highest open 境界 opens
+the next. The profile keeps `realms` (highest open), `cleared` (won), `finale` (times the last
+board was reached) and `ended` (times it was won); saves from before work these out from the runs
+won.
+
+## The last board (終局) and the ending
+
+A run in the fifth 境界 does not end with its tenth board. 求敗 asks every stone to stay one board
+more, and the run goes on to an eleventh: 谷底棋臺, the valley's own stone table (map 15, after the
+fifteen boards a run draws from; the entry marked `last` in `game/src/data/battles.js`, `LAST_MAP`.
+`FINAL_MAP` there is the tenth board, 無刻漏臺).
+
+- **Who is on it.** 無名, the youth, takes the field himself as its leader (眼) and cannot be
+  benched; four heroes stand with him, and every hero remembers every art of their tree. 無名 is
+  stronger there than a copied piece (`LAST_BOON` in `journey.js`: 氣血 +100, 內力 +40, 攻擊 +10,
+  防禦 +6, a step more), added once as the company is mustered. Across the board are 求敗, at the
+  centre with a dry twig, and the masters of the ten boards the run met (`guest` pieces): the
+  first five from the start; two more step to his side the moment he is at half his 氣血, and
+  the last three when a quarter is left (waves with `when: { below }`, `rally` in `game.js`;
+  they enter at once on the free tiles nearest him, with no round's notice).
+- **How they guard him.** From half on, a master beside 求敗 takes the heroes' direct blows for
+  him (`coverer`), and the masters keep to his side. With a quarter left he falls back
+  (`withdraw` in his traits): to the tile in his walk farthest from the heroes with most of his
+  own beside it, striking from there only if someone is in reach.
+- **No secondary.** 韋小寶 opens no book on the last board (`sides: []`, `run.side` is null),
+  and its pages show no 支線.
+- **How it is won (問劍, kind `yield`).** 求敗 is 不敗 and never falls: bring him to 1 氣血. No 破招
+  answers him (無招), and he does not counter the blow that ends it. If 無名 falls or the twelve
+  rounds run out the board is lost, and the ten boards of 無劍境界 must be won again to reach it.
+  The masters there are their own men: no post, no change at half, and their traits as strong as
+  when the run met their boards.
+- **無名's arts.** Nine forms (`HERO_PATHS.youth`). The four 令狐冲 learns too are the same arts for both: 破劍式,
+  破箭式 and 破氣式 are copied from his (`SHARED_FORMS`), and 無名's starting 總訣式 reads his; the other five each answer one kind of
+  weapon (`ARM_OF` in `game/src/data/encounters.js` gives each enemy its kind; archers, 完顏洪烈 and
+  求敗 have none).
+- **The ending.** Winning it plays a 59-second film (`game/assets/finale-film*.mp4`, made in
+  `asset-gen/finale-video/`), then the run's last page, which carries the film's words as text
+  (`MAZE_TALE.finale.ending`). There is no shop after it, so the board pays no silver.
+- **Afterwards (無名入盤).** Once it has been won, every run starts with four pieces: the three
+  drawn and 無名, an ordinary piece who grows his nine forms from the first like anyone. 求敗 has
+  left the world and does not return: the one across the table in these runs is his shadow
+  (`QIUBAI_SHADOW` in `maze-tale.js`), which says what he said; the speaker's name and the
+  narration change with `run.plus`, the lines do not. The last board is earned again each time,
+  and 重看終局 on the 選境界 page replays the film.
+
+Its numbers are its own (`LAST_ROWS` in `game/src/rules/game.js`), measured with
+`node tools/sim-battles.mjs --last`. The design is in `wiki/content/世界觀設定.md` §8.4 and
+`wiki/content/單輪劇本.md` §9.5.
+
+## Developer mode
+
+`game/?dev` turns on a small panel (at the left edge, folded under 開發); the browser remembers it,
+and `game/?dev=off` turns it off. In a battle, from its story, briefing or 整備 as well:
+
+- 速勝 wins the board now, its secondary missed;
+- 速勝・支線 wins it with the secondary met, whatever its kind (not shown on the last board, which
+  has none);
+- 速敗 loses it;
+- 局主半血, once the fight is on, takes half of what 氣血 the board's master has, as a blow would
+  (`devPress`): his 變招 follows, and on the last board two presses bring all ten masters on.
+
+Each goes through the game's own settling (`devFinish` in `game/src/rules/journey.js`), so
+rewards, the next hero, the story and the end of the run follow as in play. 跳至終局, always
+there, starts the last board at once with the heroes last picked on the 試局 page, against the ten
+masters of a run of ten boards drawn at random. Outside a battle, 開五重境界 opens all five 境界
+(the first four counted as won); 看終局影片 plays the ending film; and 開無名入盤 opens what the
+ending opens, so the next run starts with 無名 on the board.
+
+試局, always there, sets up a test battle: pick any of the fifteen boards or the last board, any
+境界 (open or not) and any heroes, in order (the first leads, the first five fight, the rest wait on
+the bench; the last board is always in the fifth 境界, with 無名 leading and the first four heroes
+beside him). The run
+starts at that board's 軍情 page, its enemies as strong as at the board's usual place in a run and
+in the 境界 picked; every hero has 20 武學點 and the purse 1000 兩 (`DEV_TEST` and `devTestRun` in
+`game/src/rules/journey.js`). After the board the run goes on as usual. The last pick is
+remembered. Starting a test battle replaces the save, and its result counts in the profile like
+any run.
 
 ## How the story is put together
 
-Heroes are drawn at random and the boards come in a different order each run, so the story text is kept in three layers that never refer to one another:
+Heroes are drawn at random (five are drawn and the player keeps three; the two put back may be lent later, `drawLots` and `keptLots` in `rules/journey.js`) and the boards come in a different order each run, so the story text is kept in three layers that never refer to one another:
 
 | Layer | File | Tied to |
 | --- | --- | --- |
-| The spine | `game/src/data/maze-tale.js`, `wake-tale.js` | a position in the run and its 境 (how many runs the youth has won): falling asleep into the valley, the first board, the night talk, what 求敗 says after each board, the end. Everything 求敗 and 韋小寶 say is here |
-| The boards | `game/src/data/encounter-script.js` | one map: its black stones, on whom 求敗 has pressed a 戰意 that makes them fight, and the named stones he sets down beside them |
+| The spine | `game/src/data/maze-tale.js`, `wake-tale.js` | a position in the run and its 境界 (the difficulty the player picked for the run): falling asleep into the valley, the first board, the night talk, what 求敗 says after each board, the end, and the last board and the ending (`finale`). Everything 求敗 and 韋小寶 say is here |
+| The boards | `game/src/data/encounter-script.js` | one map: its black stones, on whom 求敗 has pressed a 戰意 that makes them fight, the named stones he sets down beside them, the things on the board (`objects`: the qin, the drum, the star posts), and what its master says on the last board, where he stands of his own accord (`guest`) |
 | The heroes | `game/src/data/hero-voices.js` | one hero: arrival, deja vu, night talk, the art that made their name coming back, farewell |
 
-To add a board, write its own entry; to add a hero, write their own lines. Neither needs changes elsewhere. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`, and the world behind it in `wiki/content/世界觀設定.md`.
+To add a board, write its own entry (with its master's `guest` line for the last board, which is about himself only); to add a hero, write their own lines. Neither needs changes elsewhere (what else a new board needs is under "The fifteen boards" below). (A hero from the same series of books as a board's master may also be given a line on that board; that is optional.)
+
+A hero is the same id in seven tables: the entry in `data/new-heroes.js` (name, bio, starting art; `role` is the class the player is not shown), starting numbers and the starting art's rule in `rules/game.js` (`HERO_STATS`, `SIGNATURE_RULES_BY_HERO`; `PARTNERS` for a 合璧 partner, `STARTING_GEAR` for what they arrive wearing), the leader's boon in `rules/battle-mastery.js` (`COMMANDS`), the tree in `data/mastery-catalog.js` (`HERO_PATHS`, `MASTERY_ARTS`), each art's form tags in `data/form-catalog.js`, its ink stroke in `fx/technique-strokes.js`, and the lines in `data/hero-voices.js`. The wiki, the draw and 試局 follow from those. 無名 has no lines in the heroes' layer: his are the spine's, on the board or off it. `rules/journey.js` (`dialogue`) assembles a scene from the three. The design is described in `wiki/content/單輪劇本.md`, and the world behind it in `wiki/content/世界觀設定.md`.
 
 All story text is written in 金庸's manner: plain classical mixed with vernacular, forms of address that fit each speaker, no modern words. The rules and worked examples are in `wiki/content/單輪劇本.md` §15.
 
-The one who set the boards is 求敗 (`QIUBAI` in `maze-tale.js`), who sits across the table from the first scene. His picture, `game/assets/npc-qiubai.webp`, is a placeholder (a black go stone) until a portrait is painted; the prompt is in `asset-gen/prompts.md`.
+The one who set the boards is 求敗 (`QIUBAI` in `maze-tale.js`), who sits across the table from the first scene; his portrait is `game/assets/npc-qiubai.webp`. On the last board he is a piece (`qiubai` in `VILLAINS`), drawn with his own sheet.
 
 Prompts for the pictures the story still needs are in `asset-gen/prompts.md`, with each file's name, size and where its subject must sit. Pictures the game already shows (its group A) are all in place; the rest are new scenes that are text-only today.
 
 The marked stone is six files, `stone-marks-0.webp` to `stone-marks-5.webp`, showing none to five marks. They were made from one painting by covering the later marks with bare stone from the same picture, so the journal can show exactly as many marks as runs have been finished.
+
+## The fifteen boards
+
+A run is ten boards drawn from fifteen (`routeFor` in `game/src/rules/journey.js`). 青竹渡 is always the first and 無刻漏臺 the last; the eight between stand in tiers of like strength, and each tier holds one of the five boards added on 2026-11-22, so about three of them turn up in a run:
+
+| Stage of the run | Drawn from |
+| --- | --- |
+| 2nd and 3rd | two of 紅楓驛, 蘆花汀, **神龍竹堂** (洪安通) |
+| 4th and 5th | two of 聽雪棧, 空山琴臺, **絕情花徑** (公孫止) |
+| 6th and 7th | two of 桃花石陣, 襄陽殘垣, **鐵掌溪灘** (裘千仞) |
+| 8th | 寒玉石室 or **西夏夜苑** (李秋水) |
+| 9th | 倒影天街 or **黑木繡閣** (東方不敗) |
+
+A run saved before then has no `routes` field and keeps the route its seed made at the time (the first ten boards only).
+
+The five added boards are each built round one villain: he is the 局主, there is no lieutenant, and the other three of the board's fixed four pieces are his troop type (`GARRISONS` in `game/src/data/encounters.js`). A board needs an entry in each of these, by map index: `data/terrain.js` (layout), `data/encounters.js` (`ENCOUNTERS`, `RANKS`, and `GARRISONS` if it has no lieutenant), `data/martial-arts.js` (`CAPTAINS`), `data/battles.js`, `data/encounter-script.js`, `data/maze-tale.js` (`CHAMBER_TALES`), a tier in `routeFor`, `scene/maze-atmosphere.js` (sky and the plane below), `scene/stage-light.js` (light rig), `audio/ambience.js` (sound bed), `scene/maze-scenery.js` (palette, depth and, for boards 10 on, the earlier board whose tile language it borrows) and a landform module `scene/landforms/landform-N.js` listed in `scene/environment.js`, plus a picture `wiki/assets/map-N.webp`. For the last board it also needs its master's `guest` line (`data/encounter-script.js`, said when he walks onto 谷底棋臺 of his own accord), his `GUEST_GISTS` note if his own board's note speaks of things only that board has, and a kind of weapon in `ARM_OF` for each of its enemies (`data/encounters.js`; what 無名's nine forms answer). The last board itself is map 15 and stays there: a new board takes the next free index after it (16 on), and nothing reads the last board as the last index (`LAST_MAP` finds it by its `last` mark).
 
 ## How the wiki stays in step with the game
 
@@ -122,14 +227,15 @@ The wiki holds no copy of the game's data. When the page opens it imports the ga
 
 | Wiki section | Built by | Read from the game |
 | --- | --- | --- |
-| 群俠列傳 | `catalog/heroes.js` | hero details, starting stats, leader commands, art trees |
+| 群俠列傳 | `catalog/heroes.js` | hero details, starting stats, leader commands, art trees: the ten heroes and 無名 |
+| 俠客對照 | `catalog/compare.js`, `view/compare.js` | up to five heroes side by side (`#compare?h=guo,huang`): six aspects scored bare-handed (no weapon or gear) with the game's own `forecast` and `damage` at level 12, a growth curve by level, every art at level 12, and a ranking of every hero (`&s=<aspect>` to sort). 群俠列傳 shows each hero's 綜合 from the same module. Its weights are named at the top of `catalog/compare.js` |
 | 武學總譜 | `catalog/skills.js` | every technique; numbers come from the game's own `moveFacts()` |
 | 百物譜 | `catalog/items.js` | items, shop prices, manuals |
-| 群敵錄 | `catalog/foes.js` | each board's master and lieutenant, the villains who join them, and troop types |
+| 群敵錄 | `catalog/foes.js` | each board's master and lieutenant, the villains who join them, 求敗 on the last board, and troop types |
 | 江湖人物 | `catalog/folk.js` | the youth, the eagle and 韋小寶 |
 | 任務簿 | `catalog/missions.js` | each board's battle (how it is won, its enemies and reinforcements, its pool of secondaries) and the heroes' trials |
 | 戰鬥規則 | `catalog/rules.js` | every rule word (`data/rule-terms.js`) with the arts, items and enemies that carry it; the kinds of secondary; growth numbers; the in-game guide and its keys |
-| 十局輿圖 | `catalog/maps.js` | map layouts and terrain |
+| 棋局輿圖 | `catalog/maps.js` | map layouts and terrain: the fifteen boards and the last board |
 | 局中紀事 | `catalog/story.js` | all scripted dialogue and narration |
 | 遊戲原文 | `corpus/` | every Chinese string in the game's source, found by parsing the files |
 
@@ -142,7 +248,7 @@ What is written by hand in the wiki:
 - `wiki/src/catalog/notes.js` — a few sentences explaining rules that exist only as code (how medicine is used, when a boss charges its signature art, late-stage enemy behaviour). Revisit this file if those rules change.
 - Page titles and section headings in `wiki/src/catalog/`.
 - `wiki/src/corpus/sections.js` — which heading each line of game text is filed under. New game code that is not listed still appears, under its function name.
-- The ten map pictures in `wiki/assets/`. The clickable terrain grid beside them is live.
+- The sixteen map pictures in `wiki/assets/`. The clickable terrain grid beside them is live.
 
 When the wiki needs something new from the game, export it from the game module and add that module to `game-data.js`. Do not copy values into the wiki.
 
@@ -163,7 +269,7 @@ node tools/check-story.mjs
 
 Builds the catalog and the text listing from the game sources and fails if a page links to something that does not exist, a picture is missing, or a fact has no source reference. Run it after changing game data.
 
-`check-story.mjs` plays several hundred runs without a browser, with different heroes and board orders, through all five 境 and past them, and fails if any scene has a line with no speaker or text, if a hero lacks one of their own lines, if a board's script mentions another board, if a named black stone has no lines or a hero answers one from another series of books, if 求敗 or 韋小寶 misses a line the story promises (after each board, the side bet, 請回吧), or if a save made mid-run no longer loads. Run it after changing story text.
+`check-story.mjs` plays several hundred runs without a browser, with different heroes and board orders, through all five 境界 (picked, opened and won in every order), on to the last board (won and lost) and into the runs after the ending with 無名 on the board, and fails if any scene has a line with no speaker or text, if a hero lacks one of their own lines, if a board's script mentions another board, if a named black stone has no lines or a hero answers one from another series of books, if 求敗 or 韋小寶 misses a line the story promises (after each board, the side bet, 請回吧), if the last board is not cast from the run's ten masters or one of them has no line there, if the ending's words or the film's files are missing, or if a save made mid-run no longer loads. Run it after changing story text.
 
 ### Mechanics
 
@@ -171,7 +277,7 @@ Builds the catalog and the text listing from the game sources and fails if a pag
 node tools/check-mechanics.mjs
 ```
 
-Builds small battles with the real rules and checks each mechanic of the skill and villain redesign against its specification: conditions from application to expiry, conditional bonuses on and off, use restrictions and their reasons, villain traits, and old saves loading. One line per check; exits 1 on any failure. Each mechanic is its own block in the file, so a new mechanic adds a block.
+Builds small battles with the real rules and checks each mechanic of the skill and villain redesign against its specification: conditions from application to expiry, conditional bonuses on and off, use restrictions and their reasons, villain traits, the last board (問劍, 不敗, 無招, the forms that answer a weapon, 無名 joining and leading, new game plus), and old saves loading. One line per check; exits 1 on any failure. Each mechanic is its own block in the file, so a new mechanic adds a block.
 
 ### Skill trees
 
@@ -181,31 +287,34 @@ node tools/check-skills.mjs --report   # the same listing, always exits 0
 node tools/check-skills.mjs --verbose hero guo   # only these heroes, and why each comparison passed
 ```
 
-Prints each hero's tree as a table and then every problem it finds against the skill-redesign rules: the tree's structure (layout and `MASTERY_ARTS` agree, tiers, prerequisites in earlier tiers, everything reachable, one basic upgrade, a single gated summit that costs the most, total points), R2 (no node weaker than an ancestor at that ancestor's job unless it adds reach, safety, an effect or a lower cost), R4 (the summit is the hero's best at its job; the starting art does not out-damage later strikes), R5 (no two nodes doing the same job equally well) and, as warnings only, R9 (each art's plain strike equivalent against its tier band). It also lists the shop manuals in the same measures and warns where one duplicates a node of the hero most likely to buy it. Every number is the game's own `forecast` on a small scene on a real board, against enemies taken from real boards, including a favourable case for arts whose power depends on the situation. An art with conditional power (破招, 孤行, 合璧, 黯然, 還報, 斬殘, 傾力) is measured twice, with its condition unmet and in the situation its rule describes laid out on the board, and is an upgrade where it is at least as strong in that situation and not much weaker outside it; a later strike bought for a capability (吸勁, 失神, 纏械, 代受, 挑釁 …) is not held to the starting art's damage; prices (露空, 無守, 立樁, 留力, 調息, 反噬, 壓箱) are deducted in R9. How each field is read (bookkeeping, measured, conditional, capability, price) is in one block at the top of `tools/lib/skill-measure.mjs`; any other field counts as a mechanic, so new mechanics need no change to the tool. Thresholds, prices and the reference levels are in one block at the top of `check-skills.mjs`.
+Prints each hero's tree as a table and then every problem it finds against the skill-redesign rules: the tree's structure (layout and `MASTERY_ARTS` agree, tiers, prerequisites in earlier tiers, everything reachable, one basic upgrade, a single gated summit that costs the most, total points), R2 (no node weaker than an ancestor at that ancestor's job unless it adds reach, safety, an effect or a lower cost), R4 (the summit is the hero's best at its job; the starting art does not out-damage later strikes), R5 (no two nodes doing the same job equally well) and, as warnings only, R9 (each art's plain strike equivalent against its tier band). It also lists the shop manuals in the same measures and warns where one duplicates a node of the hero most likely to buy it. Every number is the game's own `forecast` on a small scene on a real board, against enemies taken from real boards, including a favourable case for arts whose power depends on the situation. An art with conditional power (破招, 孤行, 合璧, 黯然, 還報, 斬殘, 傾力) is measured twice, with its condition unmet and in the situation its rule describes laid out on the board, and is an upgrade where it is at least as strong in that situation and not much weaker outside it; a later strike bought for a capability (吸勁, 失神, 纏械, 代受, 挑釁 …) is not held to the starting art's damage; prices (露空, 無守, 立樁, 留力, 調息, 反噬, 壓箱) are deducted in R9. The effects that hold an enemy or guard a hero (定身, 閉穴, 受制, 金剛, 固守) and 吸元 are capabilities too, priced by how many turns they last; a splash that reaches two or three tiles (廣及) is measured on a scene with enemies standing that far out. How each field is read (bookkeeping, measured, conditional, capability, price) is in one block at the top of `tools/lib/skill-measure.mjs`; any other field counts as a mechanic, so new mechanics need no change to the tool. Thresholds, prices and the reference levels are in one block at the top of `check-skills.mjs`.
 
 ### Battle simulator
 
 ```bash
 node tools/sim-battles.mjs --runs 200 --seed 1 --json before.json
 node tools/sim-battles.mjs --boards 1-4 --runs 50      # only the first four boards
+node tools/sim-battles.mjs --realm 5 --boards 1-11     # whole runs in 無劍境界, on to the last board
+node tools/sim-battles.mjs --last --runs 200           # the last board alone, heroes at level 11
 node tools/sim-battles.mjs --compare before.json after.json
 node tools/sim-battles.mjs --runs 1 --trace            # the battle log of one run
+node tools/sim-battles.mjs --runs 40 --arts            # also: how often each art was equipped and used
 ```
 
-A fixed, deterministic headless player fights whole runs with the real rules and enemy code: it draws heroes, starts the run, spends points (cheapest node toward the summit, spare points into talents), equips its three strongest arts with distinct jobs, buys medicine and gear, and on every turn scores each legal move-and-action with `forecast` (kills, damage minus counter, cover, the enemy reach it ends in, the leader's safety, the board's marker or time limit). Per board it reports win rate, rounds to win, health left, heroes downed, side objectives and how often the basic attack, the starting art and each tier were used; per hero, damage dealt and taken, share of kills and damage, and level and points at each board. `--compare` prints what moved between two saved runs and flags boards whose win rate changed by more than ten points. The same seed always gives the same result, so compare runs made with the same `--runs` and `--seed`.
+A fixed, deterministic headless player fights whole runs with the real rules and enemy code: it draws heroes, starts the run, spends points (cheapest node toward the summit, spare points into talents), equips its three strongest arts with distinct jobs, buys medicine and gear, and on every turn scores each legal move-and-action with `forecast` (kills, damage minus counter, cover, the enemy reach it ends in, the leader's safety, the board's marker or time limit), with a value for every enemy turn an art takes away (失神, 定身, 閉穴, 受制) and every blow a guard voids (金剛, 固守). Per board it reports win rate, rounds to win, health left, heroes downed, side objectives and how often the basic attack, the starting art and each tier were used; per hero, damage dealt and taken, share of kills and damage, and level and points at each board. `--compare` prints what moved between two saved runs and flags boards whose win rate changed by more than ten points. The same seed always gives the same result, so compare runs made with the same `--runs` and `--seed`.
 
 ### Scenery and sound
 
 Two more tools help when the scenery or the sound changes. Both need Playwright with Chromium, and neither needs a web server:
 
 ```bash
-node tools/shoot-map.mjs 3 pictures/     # map 3 from nine camera angles, with draw calls and triangles
+node tools/shoot-map.mjs 3 pictures/     # map 3 (0 to 15; 15 is the last board) from nine camera angles, with draw calls and triangles
 node tools/sound-check.mjs               # every sound: no clipping, clean start and end, balanced loudness
 ```
 
-A character from the roster pack enters the game with `python3 tools/roster-art.py <id>`, which writes its sheets, still and portrait into `game/assets/`; its id is then added to `game/src/data/roster-art.js`. A piece then becomes that character by naming the id as its `mini`. To check how a sheet draws, `node tools/shoot-roster.mjs pictures/ --ids <id> --beside chief` saves every frame of its five rows on a real board beside a piece already in the game (add `--mobile` for a phone), and `tools/roster-preview.html?ids=<id>,chief` shows them playing. Both need Playwright with Chromium, and no web server.
+A character from the roster pack enters the game with `python3 tools/roster-art.py <id>`, which writes its sheets, still and portrait into `game/assets/`; its id is then added to `game/src/data/roster-art.js`. The youth and 求敗 come from `asset-gen/story-characters/` instead (`python3 tools/roster-art.py --story youth qiubai`). A piece then becomes that character by naming the id as its `mini`. For one of the pack's heroes the tool also writes the standing figure the 整備 wardrobe shows (`figure-<id>.webp`, the first idle frame enlarged) and keeps the portrait at the heroes' size. To check how a sheet draws, `node tools/shoot-roster.mjs pictures/ --ids <id> --beside chief` saves every frame of its five rows on a real board beside a piece already in the game (add `--mobile` for a phone), and `tools/roster-preview.html?ids=<id>,chief` shows them playing. Both need Playwright with Chromium, and no web server.
 
-The ten map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
+The sixteen map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
 
 ## Fonts
 

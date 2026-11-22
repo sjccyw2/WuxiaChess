@@ -48,6 +48,9 @@ const T = {
   // R8: total points in a tree, and nodes in it (the basic upgrade included).
   POINTS_BAND: [11, 15],
   NODE_BAND: [6, 7],
+  // 無名's tree is the nine forms of 獨孤九劍 (the producer's ruling of 2026-11-22): the starting
+  // form, eight more and the basic upgrade, so it is held to bands of its own.
+  OWN_BANDS: { youth: { points: [17, 17], nodes: [9, 9] } },
   // The summit must cost at least as much as any other node (true: a tie is enough).
   SUMMIT_TIE_OK: true,
   // R9: plain-strike-equivalent bands per tier ('start' is the starting art), from FRAMEWORK.md.
@@ -71,13 +74,38 @@ const T = {
     // 0.20, the area pin it replaced on 天下無狗. 代受 had no factor price: it is priced as 卸勁,
     // the other guard a strike leaves until the hero's next turn. 連環 has none and is listed.
     riders: { siphon: 0.2, stance: 0.2, disarm: 0.3, daze: 0.5, wound: 0.15, glide: 0.2, zone: 0.2, cover: 0.2 },
+    // Riders that last, as [first turn, each further turn] (this tool's pricing, after 失神 0.50
+    // and 纏械 0.30). 定身 1 turn = 失神's 0.50 (the foe loses its turn and, besides, its counter);
+    // later turns at half, since a master takes one turn only and the rest land on its men. 閉穴
+    // leaves the foe its feet: 0.35, between 纏械 and 失神, then 0.20. 受制 turns the piece's
+    // blows on its own side as well (a master takes 失神 instead): 0.60, then 0.30. 金剛 on a
+    // strike: 架勢 (stance, 0.20) cuts each blow on the caster by a share, 金剛 voids every blow and
+    // what it would lay, so twice that per enemy phase.
+    turnRiders: { freeze: [0.5, 0.25], mute: [0.35, 0.2], charm: [0.6, 0.3], immune: [0.4, 0.4] },
+    // 固守 on a strike guards its caster: a point of 防禦 takes 0.65 off each blow (rules/game.js
+    // damage), about one blow and a half an enemy phase, ≈ 1 氣血 a point a turn; a point of
+    // factor deals ~30 at mid level (a 1.5 strike deals ~45 in the tables below), so ≈ 0.033,
+    // taken at 0.02 because the striker is not always the one the enemy phase hits.
+    fortifyPointTurn: 0.02,
+    // 吸元: 氣血 the caster gets back, priced at half of what 自損 costs (hpCost 0.25 for the 10-14
+    // it takes, ≈ 0.021 a point) since it is only worth anything when the caster is hurt, on a
+    // blow of 45 (a tier-2 strike at mid level in the tables below), up to the art's cap.
+    drain: { perHp: 0.0105, refDamage: 45 },
     // What a price takes off a strike: 有攻無守 0.30 for 無守 and 露空 together, 露空 alone 0.15,
     // 立樁 0.15, 留力 0.30, 調息 0.20, 反噬 0.15 (design-*.md). 壓箱 had none: at least 留力's,
     // since it allows one use a board.
     costs: { openGuard: 0.15, recoil: 0.15, rooted: 0.15, poised: 0.3, cooldown: 0.2, backlash: 0.15, once: 0.3 },
     // A guard that a support art lays, in 氣血: 代受 ≈ a 30-point shield on the companion it
     // covers (郭靖's designer); 挑釁 took 代受's place on 鐵索並肩 (RULINGS A) and is priced alike.
-    guards: { cover: 30, taunt: 30 }
+    // 金剛 (per turn) voids every direct blow on its holder and what the blow would lay, where a
+    // shield stops only its power: half again 代受's 30.
+    guards: { cover: 30, taunt: 30, immune: 45 },
+    // A lasting stat a support art lays, in 氣血 per point per turn on each person reached. 固守:
+    // a point of 防禦 takes 0.65 off each blow, about one and a half blows an enemy phase on whoever
+    // stands in front ≈ 1. 鼓舞 (rally): a point of 攻擊 adds one to the recipient's blow on its
+    // turn (more on an art's factor, nothing if it does not strike) ≈ 1, damage dealt being taken
+    // as worth 氣血 kept.
+    supportPointTurn: { fortify: 1, rally: 1 }
   },
   // Shop manuals: a manual duplicates a node of its likely buyer when the jobs match, reach is
   // within TWIN_REACH and the main measures are within this fraction.
@@ -207,10 +235,12 @@ function checkHero(heroId) {
     if (a && dearer.length) fail('structure', 'the summit costs ' + a.points + ' but ' + dearer.join(', ') + ' cost as much or more');
   }
   const total = present.reduce((n, id) => n + (MASTERY_ARTS[id].points || 0), 0);
-  if (total < T.POINTS_BAND[0] || total > T.POINTS_BAND[1])
-    fail('structure', 'total ' + total + ' points, outside ' + T.POINTS_BAND.join('-'));
-  if (present.length < T.NODE_BAND[0] || present.length > T.NODE_BAND[1])
-    warn('structure', present.length + ' nodes; the framework asks for ' + T.NODE_BAND.join(' or ') + ' (basic upgrade included)');
+  const pointsBand = T.OWN_BANDS[heroId]?.points || T.POINTS_BAND,
+    nodeBand = T.OWN_BANDS[heroId]?.nodes || T.NODE_BAND;
+  if (total < pointsBand[0] || total > pointsBand[1])
+    fail('structure', 'total ' + total + ' points, outside ' + pointsBand.join('-'));
+  if (present.length < nodeBand[0] || present.length > nodeBand[1])
+    warn('structure', present.length + ' nodes; the framework asks for ' + nodeBand.join(' or ') + ' (basic upgrade included)');
 
   // ── Measures ──
   const arts = ['signature', ...present];
@@ -334,7 +364,7 @@ function checkHero(heroId) {
   }
 
   // ── Print ──
-  const hdr = G.DETAILS[heroId].name + ' ' + heroId + ' · ' + path.title + ' · ' + total + ' points (band ' + T.POINTS_BAND.join('-') + ') · summit ' + (summit || '?');
+  const hdr = G.DETAILS[heroId].name + ' ' + heroId + ' · ' + path.title + ' · ' + total + ' points (band ' + pointsBand.join('-') + ') · summit ' + (summit || '?');
   console.log('\n' + hdr);
   console.log(
     '  ' + pad('id', 18) + pad('T', 3) + lpad('pts', 3) + lpad('mp', 4) + lpad('rng', 4) + '  ' + pad('job', 9) +
@@ -423,7 +453,7 @@ console.log(
       return r.label + ' = board ' + (r.stage + 1) + ', hero level ' + r.level + ', soft ' + b.soft.id + ' def ' + b.soft.def + ', hard ' + b.boss.id + ' def ' + b.boss.def;
     }).join('; ')
 );
-console.log('Columns: early/mid/late = damage to the hard foe (support: heal+shield+buff on the cluster); area = avg damage incl. splash on two neighbours; ctr = counter taken at full reach (mid); main = the job\'s main measure; PSE = plain strike equivalent (support: heal+shield x people) beside its R9 band.');
+console.log('Columns: early/mid/late = damage to the hard foe (support: heal+shield+buff on the cluster); area = avg damage incl. splash on two neighbours (a 廣及 splash: and one foe in each further ring); ctr = counter taken at full reach (mid); main = the job\'s main measure; PSE = plain strike equivalent (support: heal, shield and guards, in 氣血, x people) beside its R9 band.');
 const results = heroes.map(checkHero);
 if (!only.length) checkManuals(results);
 console.log('\nSummary');

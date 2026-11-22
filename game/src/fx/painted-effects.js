@@ -25,29 +25,41 @@ const SHEETS = {
   'lone-palm': { file: 'fx-lone-palm.webp', frames: [120, 105, 100, 80, 125, 100, 105, 135], hit: 4, at: [0.55, 0.52], width: 1.9, tilt: 0, still: 4 },
   'bamboo-staff': { file: 'fx-bamboo-staff.webp', frames: [105, 90, 85, 75, 100, 85, 85, 115], hit: 4, at: [0.52, 0.52], width: 2, tilt: 0, still: 4 },
   'toad-qi': { file: 'fx-toad-qi.webp', frames: [110, 100, 100, 70, 110, 85, 90, 115], hit: 5, at: [0.82, 0.47], width: 2.3, tilt: 0.4, still: 4 },
-  'jade-flick': { file: 'fx-jade-flick.webp', frames: [105, 95, 65, 60, 110, 75, 85, 120], hit: 4, at: [0.66, 0.5], width: 1.9, tilt: 1, still: 4 }
+  'jade-flick': { file: 'fx-jade-flick.webp', frames: [105, 95, 65, 60, 110, 75, 85, 120], hit: 4, at: [0.66, 0.5], width: 1.9, tilt: 1, still: 4 },
+  'golden-serpent': { file: 'fx-golden-serpent.webp', frames: [100, 80, 75, 65, 105, 85, 90, 120], hit: 5, at: [0.65, 0.48], width: 2.4, tilt: 1, still: 4 }
 };
 
 // Which art plays which sheet, at what share of its full size. A famous art's summit plays it
-// whole; a form named after the art (「降龍十八掌・亢龍有悔」) shares it, smaller, so the summit
-// still reads as the grandest. Forms with their own names (破劍式, 少商劍 …) keep their own
-// strokes, as does 見龍在田, a ward raised on oneself rather than a blow. 金蛇劍法 has a sheet
-// too; it waits for 袁承志.
+// whole; a form of the same art (亢龍有悔, of 降龍十八掌) shares it, smaller, so the summit
+// still reads as the grandest. Some forms (破劍式, 少商劍 …) keep their own
+// strokes, as does 見龍在田, a ward raised on oneself rather than a blow. 蕭峰 and 洪七公 share
+// 郭靖's dragon and 黃蓉's staff, since the arts are the same ones.
 const ARTS = {
   ninefoldIntent: ['nine-swords', 1], // 獨孤九劍, 令狐冲's summit
-  ninefoldFormula: ['nine-swords', 0.78], // 獨孤九劍・總訣式
+  ninefoldFormula: ['nine-swords', 0.78], // 總訣式
   dragonReserve: ['dragon-palms', 1], // 降龍十八掌, 郭靖's summit
-  flyingDragon: ['dragon-palms', 0.88], // 降龍十八掌・飛龍在天
-  kanglongRegret: ['dragon-palms', 0.8], // 降龍十八掌・亢龍有悔
-  sixMeridians: ['six-meridians', 1], // 六脈神劍・六脈齊發, 段譽's summit
+  flyingDragon: ['dragon-palms', 0.88], // 飛龍在天
+  kanglongRegret: ['dragon-palms', 0.8], // 亢龍有悔
+  sixMeridians: ['six-meridians', 1], // 六脈齊發, 段譽's summit
   solitaryPalm: ['lone-palm', 1], // 黯然銷魂掌, 楊過's summit
-  mournfulCloud: ['lone-palm', 0.85], // 黯然銷魂掌・杞人憂天
-  staffWithoutDogs: ['bamboo-staff', 1], // 打狗棒法・天下無狗, 黃蓉's summit
-  beggarTrip: ['bamboo-staff', 0.86], // 打狗棒法・絆字訣
-  beggarBind: ['bamboo-staff', 0.8], // 打狗棒法・纏字訣
+  mournfulCloud: ['lone-palm', 0.85], // 杞人憂天
+  staffWithoutDogs: ['bamboo-staff', 1], // 天下無狗, 黃蓉's summit
+  beggarTrip: ['bamboo-staff', 0.86], // 絆字訣
+  beggarBind: ['bamboo-staff', 0.8], // 纏字訣
   'signature:yang': ['toad-qi', 0.75], // 蛤蟆功, 楊過's starting art
   toadLunge: ['toad-qi', 1], // 蛤蟆功, 歐陽鋒's signature
-  fingerFlick: ['jade-flick', 0.85] // 彈指神通, the shop manual
+  fingerFlick: ['jade-flick', 0.85], // 彈指神通, the shop manual
+  ysSnap: ['jade-flick', 0.85], // 彈指神通, in 黃藥師's own tree
+  qfEighteen: ['dragon-palms', 1], // 降龍廿八掌, 蕭峰's summit
+  qfWild: ['dragon-palms', 0.88], // 龍戰於野
+  qfRegret: ['dragon-palms', 0.8], // 亢龍有悔, the same art as 郭靖's
+  hqShock: ['dragon-palms', 0.88], // 震驚百里, 洪七公
+  hqTail: ['dragon-palms', 0.8], // 神龍擺尾
+  hqThirtySix: ['bamboo-staff', 1], // 打狗棒法, 洪七公's summit
+  hqTurn: ['bamboo-staff', 0.86], // 轉字訣
+  hqSeal: ['bamboo-staff', 0.8], // 封字訣
+  czSerpent: ['golden-serpent', 1], // 金蛇劍法, 袁承志's summit
+  czSword: ['golden-serpent', 0.85] // 游身
 };
 
 const MAX_TILT = 0.38;

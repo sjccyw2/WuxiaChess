@@ -26,7 +26,7 @@ export const NOTES = {
 
   // Sentences built around numbers the game exports (REWARDS, GROWTH, raiseLevel).
   sideReward: (r) =>
-    '賞銀 ' + r.side + ' ＋ ' + r.sidePerStage + ' ×（第幾局 − 1）兩；或出陣生還者各 1 武學點；或武譜一卷。支線成敗不影響應帖：不是最後一局、且仍有未應帖的俠客時，每次取勝另有一人前來。',
+    '賞銀 ' + r.side + ' ＋ ' + r.sidePerStage + ' ×（第幾局 − 1）兩；或出陣生還者各 1 武學點；或武譜一卷。支線成敗不影響入局：第十局之前、且仍有未入局的俠客時，每次取勝，求敗另借出一位。終局的四道支線都以武譜為賞，留待下一輪。',
   clearReward: (r) =>
     r.clear + ' ＋ ' + r.perStage + ' ×（第幾局 − 1）兩，全體同行俠客各 1 武學點。',
   levelling: (g) => '每滿 ' + g.levelXp + ' 歷練升一級，每級與每次過關各得 1 武學點。',
@@ -45,6 +45,7 @@ export const NOTES = {
 
   // Plain statements of behaviour that lives in code only.
   reserveGrowth: '候補入隊沿用同一成長。',
+  otherPaces: '有幾位俠客成長的步調與眾不同，各頁「成長」一欄列出每級所得；到十二級時，屬性與照尋常成長時相同。',
   midBattleStudy: '剛參悟的絕技會填入空格。三格皆滿時，可選一格替換一次。',
   lateFoes:
     '第七局起，敵軍會衡量現有護盾，並留意身旁無人且沒有地形掩護的領隊。第八局起局主可走四步，斥候能攻兩格。'

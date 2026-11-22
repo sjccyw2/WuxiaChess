@@ -1,4 +1,5 @@
-// One entry per board, in map order. Each board is a closed scene. Its black stones did not
+// One entry per board, in map order (the ten boards of the first edition, then the five built
+// round one villain each). Each board is a closed scene. Its black stones did not
 // choose to be here: 求敗 pressed a 戰意 on them as he set them down, and they must fight whoever
 // comes. They feel that the thought is not their own, they strain against it, and they cannot
 // see who did it; inside the board a man sees only a few steps. Beating them lifts it.
@@ -6,7 +7,7 @@
 // A board must never mention another board or where it falls in the run, because boards are
 // shuffled. It is written in 金庸's manner (wiki/content/單輪劇本.md §15).
 //
-//   who       boss, mini (the lieutenant), youth (the player's character, who sees the whole
+//   who       boss, mini (the lieutenant; a board built round one villain has none), youth (the player's character, who sees the whole
 //             board from the table), leader and ally (whichever heroes are fielded; these lines
 //             must suit anyone), or the id of a named black stone beyond those two ('zhaoZhong').
 //             A line of a stone that is not on the board is left out.
@@ -17,8 +18,22 @@
 //               reply   { who, text }: what a stone already there says to that
 //               heroes  a hero from his series of books answers him: before the battle if he
 //                       stands there from the start, as he steps on if he arrives later
+//   objects   the board's objects (battles.js `objects`), by key; each moment a { who, text } line
+//             (who as above, but no leader or ally) said as it happens:
+//               hit     the first time it is struck
+//               half    the first time it is at half its 氣血
+//               broken  as it breaks
+//               lost    a 'keep' object: the board's reason for the loss its breaking is (text only)
+//               held    a 'keep' object: the last round to hold is over and it still stands
+//   guest     what the board's master says on the last board (battles.js `last`), where he stands
+//             with no 戰意 on him, of his own accord: as the board opens if he is there from the
+//             start, as he steps on if he comes later. It is about himself only.
+//
+// The last entry is the last board itself, 谷底棋臺. 求敗 and the youth are on it; what they say
+// there is the spine's (maze-tale.js `finale`), so its own lines are only how the board looks.
 const ENCOUNTER_SCRIPT = [
   {
+    guest: '沒人按著余某，余某照樣要打。青城派的劍，向來不必旁人使喚。',
     before: [
       {
         who: 'boss',
@@ -61,12 +76,14 @@ const ENCOUNTER_SCRIPT = [
         enter: '這渡口不是鳳某的地頭，鳳某來封它作甚？……奇了，棍子倒先橫了過來。',
         reply: { who: 'boss', text: '橋那頭來的是誰？瞧他腦後拖一條辮子，是哪一路的打扮？' },
         heroes: {
-          hu: '鳳天南！你從佛山一路逃到這裡來了？……不對。你這雙眼睛，不是在逃。'
+          hu: '鳳天南！你從佛山一路逃到這裡來了？……不對。你這雙眼睛，不是在逃。',
+          lingSu: '這位便是鳳老爺了。我大哥追了你千里，說起你時，牙關咬得很緊。……你眼裡的神色不對，像是服了甚麼藥，卻又不是藥。'
         }
       }
     }
   },
   {
+    guest: '沒有人逼，田某原該一走了之。只是站在這位老前輩身邊，這一仗總算有了七分把握。',
     before: [
       {
         who: 'mini',
@@ -105,11 +122,13 @@ const ENCOUNTER_SCRIPT = [
       { who: 'youth', text: '他們贏了這一局，那道戰意卻沒有走。幾個人還立在原地，等下一個上門的。' }
     ],
     heroLines: {
-      hu: '田歸農，我爹爹的事，我有許多話要問你。可你這雙眼睛，此刻不是你自己的。先打醒了你，再問。'
+      hu: '田歸農，我爹爹的事，我有許多話要問你。可你這雙眼睛，此刻不是你自己的。先打醒了你，再問。',
+      lingSu: '田相公，苗大俠那一雙眼睛是我治好的，你下的斷腸草，出自我師叔之手。今日你這雙眼比他當日瞎得還厲害：睜著，卻作不得自己的主。'
     },
     extras: { zhaoZhong: {} }
   },
   {
+    guest: '老仙法力無邊，從來用不著旁人來按。今日便教你們見識見識真本事！',
     before: [
       {
         who: 'mini',
@@ -143,11 +162,14 @@ const ENCOUNTER_SCRIPT = [
       { who: 'youth', text: '他贏了，卻半點也不歡喜。那道戰意還壓著他。' }
     ],
     heroLines: {
-      duan: '丁老先生，在下瞧你老人家是真不想動手，這一節你我倒是同道。只可惜你的袖子不作此想。得罪了。'
+      duan: '丁老先生，在下瞧你老人家是真不想動手，這一節你我倒是同道。只可惜你的袖子不作此想。得罪了。',
+      qiaoFeng: '星宿老怪的名頭，喬某久有所聞，只道你最愛聽旁人吹捧。今日一句大話不說便動手，倒教人意外。想是有人按著你的頭了。',
+      xuZhu: '這位老先生，適才在棋局旁邊，令高徒敲鑼打鼓的頌你功德，好不熱鬧，怎地此刻一聲不響了？小僧瞧你的眼睛，倒像是給人點了穴道。'
     },
     extras: {}
   },
   {
+    guest: '嘿嘿，沒人按著，老祖這口刀照樣要見血。砍人原是老祖自己的主意！',
     before: [
       {
         who: 'mini',
@@ -181,10 +203,13 @@ const ENCOUNTER_SCRIPT = [
       },
       { who: 'youth', text: '他們贏了，刀卻收不回去。棧道還封著。' }
     ],
-    heroLines: {},
+    heroLines: {
+      diYun: '老和尚！你的手適才還在我喉頭……不對，你認不得我了。你這雙眼睛是空的，同牢裡給人打怕了的犯人一般。'
+    },
     extras: {}
   },
   {
+    guest: '左某平生不做無益之事。同這位前輩並肩過得一招，勝讀十年劍譜。',
     before: [
       {
         who: 'boss',
@@ -197,7 +222,7 @@ const ENCOUNTER_SCRIPT = [
       },
       {
         who: 'youth',
-        text: '一道戰意壓在他們眉心。連這等事事盤算的人，也算不出自己為甚麼要打。……石階只得一條，從正面上。'
+        text: '一道戰意壓在他們眉心，對著的卻是臺上那張琴。連這等事事盤算的人，也算不出自己為甚麼要打。……琴在我們這邊。守住它，撐到那一念自己散了。'
       },
       { who: 'ally', text: '號令旁人慣了的人，如今給別的甚麼號令著。打贏了他，才算幫他一把。' }
     ],
@@ -223,9 +248,19 @@ const ENCOUNTER_SCRIPT = [
       medic: '左冷禪這一世只肯聽自己的。能教他不由自主的人，我倒想見上一見。先破了這一局再說。',
       guard: '左冷禪，你也有給人當刀使的一日？老子本該大笑三聲。可惜那使刀的，連老子也一併算計在內。'
     },
-    extras: {}
+    extras: {},
+    objects: {
+      guqin: {
+        hit: { who: 'youth', text: '琴絃給震得嗡的一聲。……他們要的不是我們，是這張琴。' },
+        half: { who: 'youth', text: '琴身裂了一道縫。再挨得幾下，這一曲便沒處彈了。' },
+        broken: { who: 'boss', text: '斷了。左某恨這一曲恨了半輩子，今日斷它的，卻不是左某自己的手。' },
+        lost: '琴斷絃絕，那道戰意得了它要的東西。這一局輸了。',
+        held: { who: 'youth', text: '八合過了。借來的那一念撐不住，自己散了。琴還在。' }
+      }
+    }
   },
   {
+    guest: '我是誰？……不管了。那邊有人要打架，我便同他打！',
     before: [
       {
         who: 'mini',
@@ -263,11 +298,14 @@ const ENCOUNTER_SCRIPT = [
     heroLines: {
       huang: '歐陽伯伯，你瘋了這些年，倒比誰都老實：旁人只說「我要打」，你卻問這是誰的主意。我說與你知道，不是你的。',
       guo: '歐陽先生，你害過我恩師，這筆帳我記得。可今日要打我的不是你，是壓著你的那東西。我先打它。',
-      yang: '……爸爸。是我，過兒。你不認得我也不打緊。那個教你動手的聲音不是你，你別聽它。'
+      yang: '……爸爸。是我，過兒。你不認得我也不打緊。那個教你動手的聲音不是你，你別聽它。',
+      hongQi: '老毒物！適才你還坐在我對面想那一招的破法，怎地轉眼便動起手來？……不對，你這不是瘋，是有人在你心裡擱了東西。老叫化替你敲它出來。',
+      yaoShi: '鋒兄，你我鬥了半生，你的心計我向來佩服三分。今日你出手全無章法，是誰敢將西毒當一枚棋子來使？我瞧著很不痛快。'
     },
     extras: {}
   },
   {
+    guest: '老衲十層龍象般若功，正要尋個配得上的對手。今日這一陣，不必誰來相強。',
     before: [
       {
         who: 'boss',
@@ -280,7 +318,7 @@ const ENCOUNTER_SCRIPT = [
       },
       {
         who: 'youth',
-        text: '一個不肯受人擺佈，一個只想脫身，都給同一道戰意按在這裡。……門洞窄，他的輪子掃得開。別擠在一處。'
+        text: '一個不肯受人擺佈，一個只想脫身，都給同一道戰意按在這裡。那戰意對著的，是城頭那面鼓。……鼓在我們這邊，守住它。門洞窄，他的輪子掃得開，別擠在一處。'
       },
       { who: 'leader', text: '他不是自己要擋這道門。那就不必同他講道理，贏了再說。' }
     ],
@@ -310,7 +348,10 @@ const ENCOUNTER_SCRIPT = [
       huang: '靖哥哥守的城，我閉著眼也認得每一條巷子。大和尚今日連攻城的心思也沒有，只曉得動手。有人拿他當棋子使。',
       yang: '大和尚，你我交手不止一回，你幾時這般悶聲不響？有人捂著你的嘴呢。我替你揭開。',
       xiao: '過兒說過，這座城裡有他敬重的人。攔在門口的人不由自主，我也一樣不讓。',
-      zhang: '太師父說起過這座城。說到後來，他老人家沒有往下講。……這位大師神志受制，出手不知輕重，各位小心。'
+      zhang: '太師父說起過這座城。說到後來，他老人家沒有往下講。……這位大師神志受制，出手不知輕重，各位小心。',
+      hongQi: '這座城老叫化認得，靖兒同蓉兒守的便是它，城裡的羊肉湯是一絕。這位大和尚我卻不識。不識也罷，瞧你這模樣，是給人牽著鼻子來的。',
+      sanFeng: '襄陽……老道少年之時，識得一位從這座城裡出來的姑娘。她說起這道城牆，眼睛是亮的。大師神志受制，老道不同你計較。',
+      zhaoMin: '這座城是我曾祖一輩的人打下來的，軍中的老人說，足足攻了許多年。大和尚是我們蒙古的國師罷？今日連你也身不由己，這可有趣。'
     },
     extras: {
       wanYan: {
@@ -319,12 +360,24 @@ const ENCOUNTER_SCRIPT = [
         heroes: {
           guo: '完顏洪烈！我爹爹的血債，我記了一世。……你這雙眼睛卻是空的。今日這一掌，不算報仇。',
           huang: '趙王爺，當年你千方百計要那部兵書，到頭來一場空。今日連這面令旗，也不是你自己要舉的。',
-          yang: '聽說我爹爹叫了你十八年父王。……我該叫你甚麼？'
+          yang: '聽說我爹爹叫了你十八年父王。……我該叫你甚麼？',
+          hongQi: '完顏洪烈！你到臨安皇宮裡偷那部兵書的那一晚，老叫化正在御廚房裡偷菜吃。今日你手裡沒有兵書，眼裡也沒有神。',
+          yaoShi: '趙王爺。騙我說小女葬身大海的那個番僧，是你府上養的。這筆帳……哼。你這雙眼睛此刻是空的，我同一枚棋子算甚麼帳。'
         }
+      }
+    },
+    objects: {
+      warDrum: {
+        hit: { who: 'youth', text: '鼓面悶悶的響了一聲。……他們要的是這面鼓破。' },
+        half: { who: 'youth', text: '蒙皮裂開了。鼓一破，這座城便再沒有聲音。' },
+        broken: { who: 'boss', text: '鼓破了。……為師攻過這座城，從沒有這般容易。這一下，不是為師要打的。' },
+        lost: '鼓破了，城頭再無聲息。那道戰意得了它要的東西，這一局輸了。',
+        held: { who: 'youth', text: '九合過了，那一念散了。鼓還好端端的在架上。' }
       }
     }
   },
   {
+    guest: '沒有人逼我。我這一口怨氣，原是自己的。',
     before: [
       {
         who: 'mini',
@@ -366,6 +419,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '岳某向來以和為貴。只是老前輩有命，晚輩不敢不從，各位包涵。',
     before: [
       {
         who: 'mini',
@@ -416,17 +470,20 @@ const ENCOUNTER_SCRIPT = [
     extras: {
       xianYu: {
         heroes: {
-          zhang: '鮮于掌門，適才在光明頂上，你扇中的物事已露過一回了。這一次，可別再誤傷了自己。'
+          zhang: '鮮于掌門，適才在光明頂上，你扇中的物事已露過一回了。這一次，可別再誤傷了自己。',
+          sanFeng: '鮮于掌門也在此處？六派上光明頂去，至今沒有音信，老道正自掛心。……閣下眼中無神，只怕不是自己走來的。',
+          zhaoMin: '華山派的鮮于掌門？我請六大派的高手到萬安寺作客，點名之時獨獨少了閣下，原來是到這裡來了。'
         }
       }
     }
   },
   {
+    guest: '老夫一生只為大燕，沒有一日是為自己打的。今日這一局，算是老夫自己的。',
     before: [
       {
         who: 'youth',
         note: '無刻漏臺。兩股星索從盤外垂將下來，繫在臺心一位老者身上。到了這裡，那道戰意連藏也不藏了。',
-        text: '最後一局。壓在局主心頭的東西，在這裡瞧得見：便是那兩條索。兩條索各有人守，先斷索。'
+        text: '最後一局。壓在局主心頭的東西，在這裡瞧得見：便是那兩條索。索各繫在一根銅樁上，樁旁各有人守。樁倒了，索便斷。'
       },
       {
         who: 'mini',
@@ -466,9 +523,220 @@ const ENCOUNTER_SCRIPT = [
       { who: 'youth', text: '索還繫著。我們只差這一局。' }
     ],
     heroLines: {
-      duan: '慕容老先生，令郎與在下很有些過節。可今日同在下為難的不是慕容家，是繫在你身上的那兩根索。在下的六脈神劍時靈時不靈，但願此刻肯靈。'
+      duan: '慕容老先生，令郎與在下很有些過節。可今日同在下為難的不是慕容家，是繫在你身上的那兩根索。在下的六脈神劍時靈時不靈，但願此刻肯靈。',
+      qiaoFeng: '姑蘇慕容？「以彼之道，還施彼身」，喬某久仰了，正有幾樁命案要向慕容家問個明白。……老先生這般年紀，卻不是慕容公子。尊駕是誰？',
+      xuZhu: '這位大師適才也在棋局旁邊，同慕容公子說了好些話。大師，你眼中怎地沒有神光？阿彌陀佛，小僧得罪了。'
     },
-    extras: { wanZhen: {} }
+    extras: {
+      wanZhen: {
+        heroes: {
+          diYun: '萬……萬師伯。我在你家給人冤作了賊，坐了這許多年的牢。……你這雙眼睛是空的。先打醒了你，我再問你一句：為甚麼？'
+        }
+      }
+    },
+    objects: {
+      starPost: {
+        hit: { who: 'boss', text: '銅樁一震，繫在老夫身上的那股索跟著一緊。……打得好。' },
+        half: { who: 'youth', text: '樁身裂了，索上的光暗了一層。' },
+        broken: { who: 'boss', text: '索鬆了一股。……老夫這身子，又有一分是自己的了。' }
+      }
+    }
+  },
+  // The boards built round one villain: no lieutenant, so no 'mini' line.
+  {
+    guest: '今日心裡清清淨淨，一道號令也無。本座親自下場，這一回是本座自己的旨意。',
+    before: [
+      {
+        who: 'boss',
+        note: '神龍竹堂。海島之上好大一座竹堂，堂前高臺上端坐一個白鬚老者，臺下教眾齊聲念誦，聲震竹瓦。',
+        text: '住口！……本座叫你們住口。「仙福永享，壽與天齊」這八個字，本座聽了幾十年，今日聽來，竟像是在祝另一個人。心裡有一道號令，卻不是本座下的。'
+      },
+      {
+        who: 'youth',
+        text: '他一向坐在臺上，叫旁人去拚命。今日一道戰意壓著，連他自己也得下臺來。……他的手長，隔著幾步也抓得到人。給他扯了過去，旁邊的人要接應得上。'
+      },
+      { who: 'leader', text: '發號令的給人號令了去，底下念咒的還不曉得。先打醒了臺上那一個，臺下的自然散了。' }
+    ],
+    win: [
+      {
+        who: 'boss',
+        note: '念誦之聲忽然止歇。洪安通立在臺前，低頭瞧著自己一雙手，五指兀自作擒拿之勢。',
+        text: '散了。……都跪著作甚？適才本座親自下場，是誰的主意？哪一個說得出那人是誰，本座賞他一顆豹胎易筋丸的解藥！'
+      },
+      { who: 'youth', text: '戰意散了。他醒過來頭一件事，是查問誰敢越過他去發號令。……那個人，他是查不著的。' }
+    ],
+    loss: [
+      {
+        who: 'boss',
+        note: '臺下念誦之聲又起，一聲高過一聲。',
+        text: '勝了。念甚麼？不許念！……這一仗不是本座要打的，這仙福也不是祝給本座的。'
+      },
+      { who: 'youth', text: '他贏了，臺下念得更響，他的臉色卻更難看。那道戰意還壓著他。' }
+    ],
+    heroLines: {},
+    extras: {}
+  },
+  {
+    guest: '這一回無人替公孫某拿主意。一刀一劍，都是公孫某自己要使的，貴客休怪。',
+    before: [
+      {
+        who: 'boss',
+        note: '絕情花徑。谷中遍地奇花，嬌艷無比，枝上卻生滿小刺。花徑盡頭一人寬袍緩帶，左手金刀，右手黑劍，臉上猶帶三分笑意。',
+        text: '貴客光降，公孫某本當掃徑相迎。只是有一事好生奇怪：本谷之中，向來是公孫某替旁人拿主意，今日卻有人替公孫某拿了主意。這一刀一劍並非待客之道，也並非公孫某的本心。'
+      },
+      {
+        who: 'youth',
+        text: '他笑著說話，手上的刀劍卻一點不慢。一道戰意壓著他，也壓著他那些張網的弟子，這一局要一個個都打醒才算。……花叢有刺，走不快，小心給網罩在裡頭。'
+      },
+      { who: 'ally', text: '嘴上愈客氣的人，下手愈不容情。他那一刀一劍輪著使，一回重，一回長，瞧準了再近身。' }
+    ],
+    win: [
+      {
+        who: 'boss',
+        note: '金刀黑劍雙雙垂下。公孫止整了整衣冠，卻先回頭望了一眼石屋的門。',
+        text: '失禮，失禮。適才之事，公孫某全然作不得主。諸位請便，石屋那邊卻不必去了。'
+      },
+      { who: 'youth', text: '戰意散了。他醒過來頭一件事，是回頭瞧那扇門閂好了沒有。……他有不想給人瞧見的東西，那是他自己的事了。' }
+    ],
+    loss: [
+      {
+        who: 'boss',
+        note: '漁網四面收攏。公孫止臉上的笑意，一分一分的淡了下去。',
+        text: '客人是留下了，公孫某卻歡喜不起來。這個主意不是公孫某拿的。……收網，再張開。它還要公孫某等下一批客人。'
+      },
+      { who: 'youth', text: '他贏了，笑卻掛不住了。那道戰意還在替他拿主意。' }
+    ],
+    heroLines: {
+      yang: '公孫谷主，你我的帳本來不少。只是今日你這對刀劍來得不由自主，倒比你平日那張笑臉老實些。我先打散那個替你作主的，再同你算你自己的。',
+      xiao: '公孫先生，你救過我，也騙過我。今日攔路的不是你。我不怪你，可也不讓。',
+      huang: '這位谷主笑得斯文，手上可一點不斯文。給人算計到這步田地，連一句漂亮話也說不周全，那人手段倒高。'
+    },
+    extras: {}
+  },
+  {
+    guest: '今日沒有人替老夫點名。老夫一雙鐵掌，要打誰便打誰，這一掌是老夫自己要打的。',
+    before: [
+      {
+        who: 'boss',
+        note: '鐵掌溪灘。一道湍溪橫在山前，水聲轟轟。對岸山門之前立著一個黃葛短衫的老者，雙掌垂在身側，凝然不動。',
+        text: '老夫一雙鐵掌，要打誰便打誰，從不問第二句。今日心裡卻有人替老夫點了名，連問也不容老夫問。嘿，裘某幾時成了旁人掌上的一枚子？'
+      },
+      {
+        who: 'youth',
+        text: '他不服，可是掌已經提起來了。一道戰意壓在他眉心。……溪水急，我們涉水走不快，他卻踏著水面便過來了。別在水裡同他糾纏，佔住石頭再打。'
+      },
+      { who: 'leader', text: '掌力再重，也是給人牽著打出來的。各位先搶踏腳的石頭，在水裡是鬥他不過的。' }
+    ],
+    win: [
+      {
+        who: 'boss',
+        note: '裘千仞雙掌一垂，立在當地，再不移動半步。他將右掌翻了過來，瞧了半晌。',
+        text: '散了。適才那幾掌，不是老夫要打的。……這倒奇了。那麼老夫從前要打的那許多掌，又有幾掌是該打的？'
+      },
+      { who: 'youth', text: '戰意散了。他沒有走，也沒有發怒，只站在那裡瞧自己的手掌。……這一句他問的是自己，旁人答不上。' }
+    ],
+    loss: [
+      {
+        who: 'boss',
+        note: '溪水照舊轟轟的流。裘千仞立在溪邊，掌心的勁力一吐一收，停不下來。',
+        text: '贏了。老夫贏過的陣仗多了，從沒有一陣贏得這般不由自主。……它還要老夫守著這條溪。'
+      },
+      { who: 'youth', text: '他贏了，掌卻收不回去。那道戰意還壓在他眉心。' }
+    ],
+    heroLines: {
+      guo: '裘幫主，蓉兒當年中你一掌，險些送了性命，我沒有一日忘記。可今日這一掌不是你要打的。這筆帳，等你醒了再算。',
+      huang: '裘老兒，當年你一掌打去我半條命，這筆帳我記到如今。可你今日兩眼發直，倒像你那位愛吹牛皮的兄長給人點了穴道。先打醒了你，再同你算。',
+      yang: '這一雙鐵掌我認得。我見到他時，他已落髮為僧，法號慈恩。……原來他也有過這般不肯回頭的時候。',
+      hongQi: '裘千仞！老叫化一生殺過二百三十一人，個個是惡徒，這句話當面同你說過。今日你這雙鐵掌不由自己，老叫化不佔這個便宜，先替你將那念頭打出來。',
+      yaoShi: '鐵掌水上飄？在歸雲莊上口吐煙霧、裝神弄鬼的便是閣下罷。……不對。那人的眼神油滑，你的卻是空的。原來世上有兩個。'
+    },
+    extras: {}
+  },
+  {
+    guest: '沒有誰借我的手。我同人鬥了一世，再多鬥這一場，是我自己歡喜。',
+    before: [
+      {
+        who: 'boss',
+        note: '西夏夜苑。宮燈一盞盞亮著，蓮池無波。殿階之前立著一個白衫女子，面上垂一幅白綢，話聲輕柔婉轉。',
+        text: '我同人鬥了一世，為的是誰，自己心裡明白。今夜卻奇了：心裡這一個「戰」字，不是為他，也不是為師姊。是誰這般大膽，敢借我的手來使？'
+      },
+      {
+        who: 'youth',
+        text: '她說話好聽，掌力卻會拐彎。一道戰意壓著她。……躲在石欄後面沒有用，她的掌力繞得過來。那些禁衛喜歡兩個夾一個，別教他們圍上。'
+      },
+      { who: 'ally', text: '話聲這般柔，出手卻這般狠。她這掌力不走直路，大家不必指望誰替誰擋。' }
+    ],
+    win: [
+      {
+        who: 'boss',
+        note: '掌風一斂，宮燈不再搖晃。李秋水抬起手來，先按了按面上的白綢。',
+        text: '散了。適才那些掌，不是我要打的。……你們當中，可有人瞧見了我的臉？沒有便好。'
+      },
+      { who: 'youth', text: '戰意散了。她醒過來頭一件事，是按住面上那幅白綢，問有沒有人瞧見。……她怕的原來是這個。' }
+    ],
+    loss: [
+      {
+        who: 'boss',
+        note: '宮燈一盞一盞，自己又亮了回來。李秋水立在殿階之前，袖中的掌力吞吐不定。',
+        text: '贏了又如何？這一場不是為他打的，贏來作甚。……它還不肯走。'
+      },
+      { who: 'youth', text: '她贏了，半點也不歡喜。那道戰意還壓著她。' }
+    ],
+    heroLines: {
+      duan: '這位前輩的身形，在下好生眼熟，倒像無量山石洞之中那一尊玉像。……只是神仙姊姊決不會出手傷人。得罪了。'
+    },
+    extras: {}
+  },
+  {
+    guest: '這一回，針是我自己拈起來的。繡花繡得倦了，瞧瞧天下英雄，也是好的。',
+    before: [
+      {
+        who: 'boss',
+        note: '黑木繡閣。崖頂一座花園，紅梅翠竹，佈置得極是精雅。小舍門前坐著一人，一身粉紅衣衫，膝上擱著繃架，指間拈一枚繡花針。',
+        text: '我早已不同人動手了。天下英雄，在我眼裡不及繃架上這一朵花。偏偏今日這枚針不肯繡花，自己離了繃子，要去刺人。……是誰擾我？'
+      },
+      {
+        who: 'youth',
+        note: '少年說到這裡，棋臺對面的求敗抬了抬眼。',
+        text: '他叫不敗。旁人求了一世的東西，他拿來作了名字，轉頭便去繡花。……一道戰意壓著他，針才離了繃子。他快得瞧不清，一出手便是兩個人，別一齊擠到他身前。'
+      },
+      { who: 'leader', text: '一枚繡花針，也是給人按著手刺出來的。他身法再快，總有落腳之處。各位散開些，別擠作一堆。' }
+    ],
+    win: [
+      {
+        who: 'boss',
+        note: '繡花針叮的一聲，落在石徑之上。東方不敗俯身拾起，先去瞧那繃架。',
+        text: '繡壞了三針。……你們幾個，擾了我半日清靜。去罷，我不殺你們。適才那些針，原也不是我要刺的。'
+      },
+      { who: 'youth', text: '戰意散了。他醒過來頭一件事，是數繃架上繡壞了幾針。……勝敗二字，他是真的不放在心上。' }
+    ],
+    loss: [
+      {
+        who: 'boss',
+        note: '園中落了一地梅瓣，瓣上各有一個針孔。東方不敗坐回門前，針卻不肯往繃架上落。',
+        text: '都倒下了。……我要繡花，它偏要我等人。蓮弟若是問起，教我怎生對答？'
+      },
+      { who: 'youth', text: '他贏了，卻連一朵花也繡不成。那道戰意還壓著他的針。' }
+    ],
+    heroLines: {
+      hero: '東方教主！在下久聞大名，只道是個三頭六臂的人物，原來教主愛的是繡花。給人逼著放下針線來廝殺，這滋味想來比給人逼著戒酒還要難受。',
+      medic: '東方叔叔。……小時候你常抱我去山上採果子，我至今記得。今日教你我動手的，不是我爹爹的舊帳，是壓在你針上的那東西。',
+      guard: '東方不敗，你奪了任教主的位子，老子同你有的是帳算。可你今日連教主也不想當，只想繡花，偏有人不許。嘿，這人比老子還不講理。'
+    },
+    extras: {}
+  },
+  // The last board (谷底棋臺): only 無名 speaks for the white side.
+  {
+    before: [
+      {
+        who: 'youth',
+        note: '谷底棋臺。那方青石棋枰到了腳下，竟有一座校場大小，縱橫十三路，一路便是一步；東邊一道瀑布，落作淺潭。',
+        text: '原來盤上是這般光景。站在這裡，果然只瞧得見身邊幾步。'
+      }
+    ],
+    win: [{ who: 'youth', note: '瀑布之聲忽然清楚起來。盤上再沒有人動手。', text: '……停了。大家都停了。' }],
+    // (Lost by 無名 falling or by the twelve rounds running out: the line must fit both.)
+    loss: [{ who: 'youth', note: '瀑布聲中，盤上的人影一齊停了手。', text: '……我沒有撐住。' }]
   }
 ];
 

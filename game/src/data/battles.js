@@ -1,8 +1,21 @@
 // What each board is: how it is won, who stands on it beyond its fixed four pieces, who comes
-// later, and the pool its secondary objective is drawn from. One entry per map index.
+// later, and the pool its secondary objective is drawn from. One entry per map index: the ten
+// boards of the first edition, then the five built round one villain each.
 //
-//   kind     'slay': every master must fall; 'rout': every enemy, reinforcements included
+//   kind     'slay': every master must fall; 'rout': every enemy, reinforcements included;
+//            'keep' (守): the board's objects must stand until the end of round `hold`, or every
+//            master fall first, and it is lost if one breaks; 'break' (破): every object must break;
+//            'yield' (問劍): every master must be brought to 1 氣血 (he is 不敗 and never falls)
+//   last     the last board, which follows the ten boards of a run in 無劍境界. It has no fixed
+//            four, and its `commander` is named here
+//   guest    in place of a piece's `id` on the last board: the master of the run's n-th board
+//            (0 the first met). game.js `boardOf` turns it into that master's id, so the last
+//            board is always fought against the ten masters of the run it closes
 //   masters  piece refs of the board's 局主, 'master' first
+//   objects  the board objects (board-objects.js), { id, at }; an id is the object's key, or the
+//            key numbered on its board ('starPost#1') when there are two
+//   hold     on a 'keep' board, the last round the objects must stand through
+//   legacyKind  the kind a save from before the board had objects finishes under
 //   pieces   starting pieces beyond the fixed four, in the order they act
 //   waves    reinforcements: { id, when: { round } | { halved: [refs] }, place, pieces }; a
 //            wave's first piece leads it, and each piece's `at` is its entry tile
@@ -13,6 +26,8 @@
 // numbered on its board ('fiveTiger#1', 'bow-2#1'). `mods` on a piece apply after its type's own.
 // Ids are kept in saves, so a piece keeps its id once a board ships.
 
+// The board every run ends on (無刻漏臺), by map index.
+const FINAL_MAP = 9;
 // The reward kinds a secondary may pay (journey.js settle).
 const SIDE_REWARDS = ['coins', 'points', 'manual'];
 
@@ -99,10 +114,15 @@ const BATTLES = [
       { kind: 'swift', by: 5, reward: 'coins' }
     ]
   },
-  // 4 空山琴臺: 嵩山弟子 up both wings, east in round 3 and west in round 5.
+  // 4 空山琴臺: keep the qin on its stone seat on the open terrace, east of the steps, through
+  // round 8; 嵩山弟子 up both wings, east in round 3 and west in round 5. 左冷禪 and 費彬 hold
+  // their posts; their men go for the qin.
   {
-    kind: 'slay',
+    kind: 'keep',
+    legacyKind: 'slay',
     masters: ['master'],
+    objects: [{ id: 'guqin', at: [8, 5] }],
+    hold: 8,
     pieces: [],
     waves: [
       {
@@ -172,10 +192,16 @@ const BATTLES = [
       { kind: 'lamp', reward: 'coins' }
     ]
   },
-  // 6 襄陽殘垣: the big one; riders twice from the east, 完顏洪烈 and his archers from the west.
+  // 6 襄陽殘垣: keep the city's war drum where the one passage south opens, through round 9: whoever
+  // gets through the passage is at the drum. Riders twice from
+  // the east, 完顏洪烈 and his archers from the west. 完顏洪烈 is its second master (Q-N28): a
+  // master still to come has not fallen, so felling 金輪國師 alone does not end it.
   {
-    kind: 'slay',
-    masters: ['master'],
+    kind: 'keep',
+    legacyKind: 'slay',
+    masters: ['master', 'wanYan'],
+    objects: [{ id: 'warDrum', at: [6, 9] }],
+    hold: 9,
     pieces: [],
     waves: [
       {
@@ -211,7 +237,9 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
       { kind: 'intact', reward: 'coins' },
       { kind: 'double', reward: 'coins' },
-      { kind: 'holdLine', zone: { y: [9, 12] }, place: '南面甬道', reward: 'manual' }
+      // 南面甬道 (holdLine, y 9–12) stood here: with the drum at the passage's mouth it was the
+      // primary over again, met every time the board was won.
+      { kind: 'unhurt', reward: 'manual' }
     ]
   },
   // 7 寒玉石室: the lean board, its four pieces only.
@@ -254,10 +282,17 @@ const BATTLES = [
       { kind: 'answer', hero: 'hero', reward: 'points' }
     ]
   },
-  // 9 無刻漏臺: the final board; a second lieutenant beside the ropes, his disciples at the west gate.
+  // 9 無刻漏臺: the final board; break the two posts the star ropes are tied to, each guarded by a
+  // rope-keeper, while each standing post takes 35% off 慕容博's blows. A second lieutenant beside
+  // the ropes, his disciples at the west gate.
   {
-    kind: 'slay',
+    kind: 'break',
+    legacyKind: 'slay',
     masters: ['master'],
+    objects: [
+      { id: 'starPost#1', at: [11, 4] },
+      { id: 'starPost#2', at: [2, 11] }
+    ],
     pieces: [
       { id: 'wanZhen', at: [10, 3] },
       { id: 'wanDisciple#1', at: [9, 3] }
@@ -278,11 +313,176 @@ const BATTLES = [
       // mirror stays charged until it turns a blow. It can return once 吸勁 can hold the mirror off
       // (ROADMAP 0.8).
       { kind: 'intact', reward: 'manual' },
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'coins' },
+      // The last blow on 慕容博 stood here: the board ends when the second post falls, so it could
+      // be met only by felling him first through his ward, and almost never was.
+      { kind: 'lastBlow', hero: '*', target: 'lieutenant', reward: 'coins' },
       { kind: 'order', first: 'wanZhen', reward: 'coins' },
       { kind: 'unhurt', reward: 'coins' }
     ]
+  },
+  // Boards 10 to 14 are each built round one villain: he is the 局主, there is no lieutenant, and
+  // the other three of the fixed four are his troop type (encounters.js GARRISONS). A run meets
+  // each in place of an earlier board of the same stage (journey.js routeFor).
+  // 10 神龍竹堂: 洪安通 on the dais before his bamboo hall; two more 門眾 come up the west beach in
+  // round 3.
+  {
+    kind: 'slay',
+    masters: ['master'],
+    pieces: [],
+    waves: [
+      {
+        id: 'shore',
+        when: { round: 3 },
+        place: '西灘',
+        pieces: [
+          { id: 'shenLong#1', at: [0, 6] },
+          { id: 'shenLong#2', at: [1, 7] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'lamp', reward: 'coins' },
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'intact', reward: 'coins' },
+      { kind: 'holdLine', zone: { y: [9, 11] }, place: '南灘', reward: 'manual' }
+    ]
+  },
+  // 11 絕情花徑: defeat everyone; 公孫止 before his stone house, six 網手 along both paths round
+  // the pool.
+  {
+    kind: 'rout',
+    masters: ['master'],
+    pieces: [
+      { id: 'netHand#1', at: [10, 5] },
+      { id: 'netHand#2', at: [6, 9] },
+      { id: 'netHand#3', at: [5, 1] }
+    ],
+    waves: [],
+    sides: [
+      { kind: 'double', reward: 'coins' },
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'unhurt', reward: 'coins' },
+      { kind: 'noMedicine', reward: 'manual' }
+    ]
+  },
+  // 12 鐵掌溪灘: 裘千仞 crosses the stream as if it were dry ground; his men stand on the stepping
+  // stones, and two more come down the mountain path in round 3.
+  {
+    kind: 'slay',
+    masters: ['master'],
+    pieces: [{ id: 'ironPalm#1', at: [10, 5] }],
+    waves: [
+      {
+        id: 'trail',
+        when: { round: 3 },
+        place: '北岸山道',
+        pieces: [
+          { id: 'ironPalm#2', at: [1, 2] },
+          { id: 'ironPalm#3', at: [10, 2] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'intact', reward: 'coins' },
+      { kind: 'lamp', reward: 'coins' },
+      { kind: 'unhurt', reward: 'manual' }
+    ]
+  },
+  // 13 西夏夜苑: 李秋水 before the hall steps, a guard pair before her and one on the bridge; two
+  // more from the east and west galleries in round 4.
+  {
+    kind: 'slay',
+    masters: ['master'],
+    pieces: [],
+    waves: [
+      {
+        id: 'galleries',
+        when: { round: 4 },
+        place: '東西迴廊',
+        pieces: [
+          { id: 'xiaGuard#1', at: [0, 3] },
+          { id: 'xiaGuard#2', at: [12, 3] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'double', reward: 'manual' },
+      { kind: 'noMedicine', reward: 'coins' },
+      { kind: 'lamp', reward: 'coins' }
+    ]
+  },
+  // 14 黑木繡閣: 東方不敗 before the small house, the guards each alone about the garden; two more
+  // along the east gallery in round 4.
+  {
+    kind: 'slay',
+    masters: ['master'],
+    pieces: [{ id: 'heiMuGuard#1', at: [7, 8] }],
+    waves: [
+      {
+        id: 'east',
+        when: { round: 4 },
+        place: '東廊',
+        pieces: [
+          { id: 'heiMuGuard#2', at: [11, 7] },
+          { id: 'heiMuGuard#3', at: [11, 4] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'intact', reward: 'manual' },
+      { kind: 'unhurt', reward: 'coins' },
+      { kind: 'lamp', reward: 'coins' }
+    ]
+  },
+  // 15 谷底棋臺: the last board (world view §8.4). 求敗 stands at 天元 and is never felled: bring
+  // him to 1 氣血. The ten masters of the run stand with him of their own accord, no 戰意 on them:
+  // the first five met from the start; two more step to his side the moment he is at half, and the
+  // last three when a quarter is left (`when.below`, game.js rally). From half on a master beside
+  // him takes the heroes' blows for him, and at a quarter he falls back among them (encounters.js
+  // `withdraw`). 無名 is the 眼. There is no secondary here (the producer, 2026-11-22).
+  {
+    last: true,
+    kind: 'yield',
+    commander: 'qiubai',
+    masters: ['qiubai'],
+    pieces: [
+      { id: 'qiubai', at: [6, 6] },
+      { guest: 0, at: [4, 5] },
+      { guest: 1, at: [8, 5] },
+      { guest: 2, at: [5, 3] },
+      { guest: 3, at: [7, 3] },
+      { guest: 4, at: [6, 4] }
+    ],
+    // The tiles here are where they would stand if 求敗 had not moved: they enter beside him,
+    // wherever he is.
+    waves: [
+      {
+        id: 'guard',
+        when: { below: 0.5 },
+        place: '求敗身旁',
+        pieces: [
+          { guest: 5, at: [5, 6] },
+          { guest: 6, at: [7, 6] }
+        ]
+      },
+      {
+        id: 'ring',
+        when: { below: 0.25 },
+        place: '求敗身旁',
+        pieces: [
+          { guest: 7, at: [6, 7] },
+          { guest: 8, at: [5, 5] },
+          { guest: 9, at: [7, 5] }
+        ]
+      }
+    ],
+    sides: []
   }
 ];
+// The last board's index.
+const LAST_MAP = BATTLES.findIndex((board) => board.last);
 
-export { BATTLES, SIDE_REWARDS };
+export { BATTLES, SIDE_REWARDS, FINAL_MAP, LAST_MAP };

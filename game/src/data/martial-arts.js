@@ -137,7 +137,12 @@ const CAPTAINS = [
   'wall',
   'jadeHall',
   'mirror',
-  'murong'
+  'murong',
+  'hongAn',
+  'gongSun',
+  'qiuRen',
+  'liQiu',
+  'dongFang'
 ].map((id, index) => {
   const boss = ENCOUNTERS[index][0];
   return [id, boss.name, boss.school, boss.basic, boss.mini];

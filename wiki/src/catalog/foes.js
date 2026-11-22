@@ -1,5 +1,5 @@
-// 群敵錄: the two named opponents of each ferry stop, the villains who join them, then the
-// rank-and-file troop types.
+// 群敵錄: the two named opponents of each ferry stop, the villains who join them, the
+// rank-and-file troop types, then the board objects (守物 kept, 破物 to break).
 import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, links, link, gameArt } from './parts.js';
@@ -22,33 +22,45 @@ export function behaviour(map, ref) {
     return [label || '絕技', text];
   });
 }
-// Every piece a board fields beyond its fixed four, with the wave it comes in (if any).
+// Every piece a board fields beyond its fixed four, with the wave it comes in (if any). The last
+// board is read as the game casts it with no run: its guests are the ten masters in board order.
 export const extraPieces = (map) => [
-  ...G.BATTLES[map].pieces.map((piece) => ({ piece, wave: null })),
-  ...G.BATTLES[map].waves.flatMap((wave) => wave.pieces.map((piece) => ({ piece, wave })))
+  ...G.castBoard(map).pieces.map((piece) => ({ piece, wave: null })),
+  ...G.castBoard(map).waves.flatMap((wave) => wave.pieces.map((piece) => ({ piece, wave })))
 ];
-// The boards a troop type or villain stands on, with its first piece there.
+// The boards a run draws its ten from, and the last board that follows them in 無劍境界.
+export const TEN = [...G.MAP_LAYOUTS.keys()].filter((map) => G.hasFour(map));
+export const FINAL = G.LAST_MAP;
+// The boards a troop type or villain stands on, with its first piece there. On a board built round
+// one villain his troop type fills the fixed seats: its first piece is the seat beside him.
 export const boardsOf = (key) =>
-  G.BATTLES.flatMap((_, map) => {
+  TEN.flatMap((map) => {
+    if (G.GARRISONS[map] === key) return [{ map, piece: { id: G.SLOTS[1] }, wave: null }];
     const found = extraPieces(map).find(({ piece }) => piece.id.split('#')[0] === key);
     return found ? [{ map, ...found }] : [];
   });
 // The wiki page of the enemy a DETAILS key describes.
 export function foePage(key) {
-  for (const stage of G.MAP_LAYOUTS.keys())
+  for (const stage of TEN)
     for (const seat of [0, 1])
-      if (G.refKey(stage, G.SLOTS[seat]) === key) return 'enc-' + stage + '-' + seat;
+      if (G.ENCOUNTERS[stage][seat] && G.refKey(stage, G.SLOTS[seat]) === key) return 'enc-' + stage + '-' + seat;
   if (G.VILLAINS[key]) return 'enc-' + key;
+  if (G.BOARD_OBJECTS[key]) return key;
   return troopIds().includes(key) ? key : key.split('-')[0];
 }
 export const foeLink = (key) => link('foes', foePage(key), G.DETAILS[key].name);
 // The named opponents of a board: its master and lieutenant, then any villain who joins them.
-export const namedOn = (map) => [
-  G.refKey(map, 'master'),
-  G.refKey(map, 'lieutenant'),
-  ...Object.keys(G.VILLAINS).filter((id) => G.VILLAINS[id].map === map)
-];
-export const villainRank = (id) => RANKS[G.VILLAINS[id].rank === 'boss' ? 0 : 1];
+// On the last board: 求敗, then the ten masters who stand with him.
+export const namedOn = (map) =>
+  G.hasFour(map)
+    ? [
+        G.refKey(map, 'master'),
+        ...(G.ENCOUNTERS[map][1] ? [G.refKey(map, 'lieutenant')] : []),
+        ...Object.keys(G.VILLAINS).filter((id) => G.VILLAINS[id].map === map)
+      ]
+    : extraPieces(map).map(({ piece }) => piece.id);
+// 求敗 is neither: he keeps the role his lines have always had.
+export const villainRank = (id) => G.VILLAINS[id].role || RANKS[G.VILLAINS[id].rank === 'boss' ? 0 : 1];
 // The rank-and-file entries a board gives its own names to (bow-1 … scout-9); board 0's two
 // keep the shared 青城 pieces' text and are not listed twice.
 const ownTroop = (id) => /^(bow|scout)-\d$/.test(id) && G.DETAILS[id].name !== G.DETAILS[id.split('-')[0]]?.name;
@@ -60,7 +72,8 @@ export const stageLinks = (stage) => [
 // Troop types: every unit description that is neither a hero nor a named opponent.
 export const troopIds = () =>
   Object.keys(G.DETAILS).filter(
-    (id) => !G.PARTY.includes(id) && !G.DETAILS[id].rank && (!id.includes('-') || ownTroop(id))
+    (id) =>
+      !G.PARTY.includes(id) && !G.DETAILS[id].rank && !G.BOARD_OBJECTS[id] && (!id.includes('-') || ownTroop(id))
   );
 // Where a troop entry is written: a board's own pieces in its RANKS, the shared ones in game.js.
 export const troopSource = (id) =>
@@ -75,7 +88,7 @@ export function foes() {
       name: foe.name,
       tag: RANKS[seat],
       summary: foe.bio,
-      image: gameArt((seat ? 'lieutenant-' : 'captain-') + stage + '.webp'),
+      image: gameArt(G.DETAILS[G.refKey(stage, G.SLOTS[seat])].portraitFile),
       sections: [
         rows('人物誌', [
           ['門派', foe.school],
@@ -88,7 +101,12 @@ export function foes() {
           link('skills', 'foe-' + stage + '-' + seat, foe.skill)
         ]),
         ruleLinks(traitTerms(foe)),
-        links('出現地點', stageLinks(stage))
+        // A master also stands on the last board, of his own accord, and says so in his own words.
+        !seat && {
+          title: '終局',
+          speeches: [{ speaker: foe.name, text: G.guestLine(G.refId(stage, 'master')), note: '十局皆勝之後，他不受戰意所迫，自願留在' + stageName(FINAL) + '。' }]
+        },
+        links('出現地點', [...stageLinks(stage), ...(seat ? [] : stageLinks(FINAL))])
       ].filter(Boolean),
       sources: cites(cite(foe.name, 'src/data/encounters.js'))
     }))
@@ -141,5 +159,38 @@ export function foes() {
       sources: cites(cite(d.name, troopSource(id)))
     };
   });
-  return [...named, ...villains, ...troops];
+  return [...named, ...villains, ...troops, ...objects()];
+}
+// The board objects: what each is, where it stands, what it is measured against, and what it
+// means for its board (守: kept, 破: broken).
+function objects() {
+  return Object.entries(G.BOARD_OBJECTS).map(([id, o]) => {
+    const board = G.castBoard(o.map),
+      count = board.objects.filter((p) => p.id.split('#')[0] === id).length,
+      row = { master: '局主', lieutenant: '副手' }[o.row] || o.row;
+    const rule =
+      o.kind === 'keep'
+        ? '黑子要毀它，俠客須守住它。撐過第' + G.NUMERALS[board.hold - 1] + '回合，或擊敗局主，便勝；它一毀，這一局便輸了。'
+        : '俠客須毀了它。盤上的' + o.name + '盡數倒下，這一局便勝了，局主倒不倒都一樣。';
+    return {
+      id,
+      name: o.name,
+      tag: o.role,
+      summary: o.bio,
+      image: gameArt(G.DETAILS[id].portraitFile),
+      sections: [
+        rows('器物誌', [
+          ['所在', stageName(o.map) + (count > 1 ? '（' + count + '件）' : '')],
+          ['種類', o.role + (o.kind === 'keep' ? '：我方守護，黑子攻擊' : '：我方攻擊，黑子不碰')],
+          ['氣血', '該局所在局次' + row + '氣血的 ' + Math.round(o.hp * 100) + '%'],
+          ['防禦', '該局所在局次' + row + '的防禦' + (o.def ? ' ＋' + o.def : '')],
+          ['勝負', rule],
+          ['不受', '不行動、不還擊、不閃避，推不動，不受招式附帶之效；波及也不及其身']
+        ]),
+        ruleLinks(traitTerms(G.DETAILS[id])),
+        links('相關條目', [link('rules', o.kind, o.kind === 'keep' ? '守' : '破'), ...stageLinks(o.map)])
+      ].filter(Boolean),
+      sources: cites(cite(o.name, 'src/data/board-objects.js'))
+    };
+  });
 }

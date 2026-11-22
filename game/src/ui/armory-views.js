@@ -1,5 +1,6 @@
 import { POSTS, boardPlan, planGrid, planKey } from './board-plan.js';
 import * as G from '../rules/game.js';
+import * as R from '../rules/journey.js';
 import { seatsFor } from '../rules/formation.js';
 import { art } from './artwork.js';
 import { face, btn, esc, itemBonus, medicineIdle } from './panels.js';
@@ -18,15 +19,13 @@ const dragAttrs = (kind, id, owner) =>
   'data-drag="' + kind + '" data-id="' + id + '" data-owner="' + owner + '" draggable="false"';
 
 function planningMap(s) {
-  return s.run.scene === 'shop' && !s.run.last?.terminal && s.run.stage < 9
-    ? s.run.route[s.run.stage + 1]
-    : s.mapIndex;
+  return s.run.scene === 'shop' && !s.run.last?.terminal ? (R.nextMap(s.run) ?? s.mapIndex) : s.mapIndex;
 }
 // The 起陣圖: the board's plan with its five posts as buttons that take the picked hero; the
 // enemy pieces, the reinforcements' entry tiles and the secondary's lamp or line drawn with it.
 function planDiagram(s, seats, chief) {
   const map = planningMap(s),
-    plan = boardPlan(map, map === s.mapIndex ? s : null);
+    plan = boardPlan(map, map === s.mapIndex ? s : null, s.run.route);
   const post = (i, x, y, at) =>
     btn(
       'place-post',
@@ -56,6 +55,54 @@ function planDiagram(s, seats, chief) {
     '</details>'
   );
 }
+// A hero's numbers as the game counts them (gear and talents included), for the 陣容 cards and
+// the pane beside them. 氣血 and 內力 are what the hero has now.
+function heroStats(s, u) {
+  return [
+    ['hp', '氣血', u.hp, u.maxHp],
+    ['mp', '內力', u.mp, u.maxMp],
+    ['atk', '攻擊', G.stat(u, 'atk', s)],
+    ['def', '防禦', G.stat(u, 'def', s)],
+    ['step', '移動', G.stat(u, 'step', s)],
+    ['range', '射程', u.range]
+  ];
+}
+// The card's compact block: the six numbers, then the three arts in their slots as icons.
+function cardFacts(s, u) {
+  const stats = heroStats(s, u)
+    .map(
+      ([k, label, value, max]) =>
+        '<span class="fo-stat fo-stat-' +
+        k +
+        (max && value < max ? ' low' : '') +
+        '"><small>' +
+        label +
+        '</small><b>' +
+        value +
+        '</b></span>'
+    )
+    .join('');
+  const arts = (u.slots || [null, null, null]).map((key) => (key ? G.artFor(u, key) : null));
+  const names = arts.filter(Boolean).map((a) => a.name);
+  const marks = arts
+    .map((a) =>
+      a
+        ? '<i title="' + esc(a.name) + '">' + icon(a.icon || 'diamond', 14) + '</i>'
+        : '<i class="fo-art-empty" title="空位"></i>'
+    )
+    .join('');
+  return (
+    '<span class="fo-facts" id="fo-facts-' +
+    u.id +
+    '"><span class="fo-stats">' +
+    stats +
+    '</span><span class="fo-arts" role="img" aria-label="出戰招式：' +
+    esc(names.join('、') || '尚未配置') +
+    '">' +
+    marks +
+    '</span></span>'
+  );
+}
 function formationCards(s, u, ui) {
   const manage = G.managesCompany(s),
     company = G.company(s);
@@ -83,6 +130,7 @@ function formationCards(s, u, ui) {
     const attrs = manage ? dragAttrs('hero', id, '') : 'data-id="' + id + '"';
     const stamp = chief === id ? '<b class="fo-seal">領隊</b>' : '';
     const label = (manage && picked && picked !== id ? '放至' : '') + position;
+    const points = member.sp > 0 ? '<b class="fo-points">可參悟 ' + member.sp + '</b>' : '';
     return (
       '<article class="fo-seat' +
       (id === u.id ? ' inspected' : '') +
@@ -92,16 +140,19 @@ function formationCards(s, u, ui) {
       '>' +
       btn(
         manage ? 'formation-pick' : 'view-unit',
-        '<img draggable="false" alt="" src="' +
+        '<span class="fo-face"><img draggable="false" alt="" src="' +
           face(id) +
           '">' +
           stamp +
           (manage ? grip : '') +
-          '<span><strong>' +
+          '<span class="fo-name"><strong>' +
           who(member) +
           '</strong><small>等級 ' +
           member.level +
-          '</small></span>',
+          '</small></span>' +
+          points +
+          '</span>' +
+          cardFacts(s, member),
         'fo-portrait',
         attrs +
           ' aria-label="' +
@@ -109,6 +160,9 @@ function formationCards(s, u, ui) {
           '，' +
           position +
           (chief === id ? '，領隊' : '') +
+          (member.sp > 0 ? '，武學點 ' + member.sp : '') +
+          '" aria-describedby="fo-facts-' +
+          id +
           '" aria-pressed="' +
           (u.id === id) +
           '"'
@@ -330,4 +384,4 @@ function armory(s, u, ui) {
   );
 }
 
-export { planningMap, formationCards, canPlaceEquipment, equipmentPlacement, armory };
+export { planningMap, heroStats, formationCards, canPlaceEquipment, equipmentPlacement, armory };

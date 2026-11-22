@@ -19,7 +19,7 @@ function item(id) {
   const it = G.ITEMS[id],
     owner = it.owner && G.DETAILS[it.owner],
     // Heroes who answer the summons already holding it.
-    starts = G.PARTY.filter((hero) => [G.startingHero(hero).weapon, G.startingHero(hero).gear].includes(id));
+    starts = G.ROSTER.filter((hero) => [G.startingHero(hero).weapon, G.startingHero(hero).gear].includes(id));
   return {
     id,
     name: it.name,

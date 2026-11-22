@@ -22,6 +22,8 @@ import { codexPage } from './ui/gates.js';
 import * as R from './rules/journey.js';
 import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
 import { playFilm } from './ui/intro-film.js';
+import { realmView } from './ui/realm-views.js';
+import { devMode, devPanel, devTestView, loadPick, changePick } from './ui/dev-mode.js';
 import { MAZE_TALE } from './data/maze-tale.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
@@ -46,9 +48,11 @@ let hasSave = !!saved,
 let state = saved || R.startRun(R.drawLots(0));
 let draft = null,
   codexId = 'hero';
-// The prologue shown before the draw: which page it is on, the name typed so far, and whether the
-// opening film told its first pages.
-let prologue = { step: 0, name: '', film: false };
+// The prologue shown before the draw: which page it is on, whether the
+// opening film told its first pages, and the 境界 picked for the run.
+let prologue = { step: 0, film: false, realm: 1 };
+// The 境界 picker's choice (選境界).
+let realmPick = 0;
 let prefs = Object.assign(
   {
     sound: false,
@@ -71,7 +75,7 @@ let deployPick = null,
 // reads the next board.
 let briefFrom = null;
 let studyUI = { tab: 'school', node: null, slot: 0 };
-let teamUI = { tab: 'line', slot: 0 };
+let teamUI = { tab: 'line', slot: 0, skill: 'school', node: null };
 let heroParent = null,
   archiveScene = 'before',
   archiveReturn = null;
@@ -294,7 +298,7 @@ function paint() {
   X.syncDangerButton($('danger-toggle'), prefs.danger);
   const path = mapLayout(state.mapIndex);
   $('medicine-button').disabled = !G.canUseMedicine(state, selected());
-  $('chapter-number').textContent = '第' + R.NUMERALS[state.run.stage] + '局';
+  $('chapter-number').textContent = R.stageTitle(state.run.stage, '');
   $('map-name').textContent = path.name;
   // 敵援: how many enter at the start of next round.
   const coming = state.result
@@ -319,7 +323,9 @@ function paint() {
         : '我方行動';
   const phase =
     `<small>第 <b>${state.round}</b> 回合</small><strong class="${state.phase === 'enemy' ? 'enemy' : ''}">${side}</strong>` +
-    (coming ? `<em class="reinforce">敵援 · 下回合 ${coming} 名</em>` : '');
+    (coming ? `<em class="reinforce">敵援 · 下回合 ${coming} 名</em>` : '') +
+    // 守: the rounds still to hold, this one included.
+    (!state.result && G.holdLeft(state) ? `<em class="reinforce hold">守 · 尚須 ${G.holdLeft(state)} 回合</em>` : '');
   board.layers.pick = deploying() ? deployPick : null;
   if ($('round-badge').dataset.phase !== phase) {
     $('round-badge').innerHTML = phase;
@@ -377,7 +383,21 @@ function update() {
   noteBoard();
   save();
   paint();
+  showArrivals();
   notePhases();
+  refreshDev();
+}
+// 護駕 (the last board): pieces that step on in the middle of a turn are flagged and the camera
+// goes to them, as it does for a wave that enters as a round begins (runEnemy shows those itself).
+let notedUnits = null,
+  arrivals = null,
+  roundArrivals = false;
+function showArrivals() {
+  const came = arrivals;
+  arrivals = null;
+  if (!came?.length || roundArrivals || screen !== 'battle' || state.result) return;
+  board.showEffects(came.map((u) => [u.id, '援軍', 'status']));
+  board.follow(...came);
 }
 // 敵援 and 支線: the lines the rules log about reinforcements become board tips, held long
 // enough to read; a change in the secondary's state is a tip once (and a failure a log line).
@@ -399,20 +419,26 @@ function noteBoard() {
   if (where !== notedBoard || notedRun !== state) {
     notedBoard = where;
     notedRun = state;
+    notedUnits = new Set(state.units.map((u) => u.id));
     for (const l of state.logs) seenLogs.add(l);
     notedSide = R.sideState(state);
     return;
   }
+  const came = state.units.filter((u) => !notedUnits.has(u.id));
+  for (const u of came) notedUnits.add(u.id);
+  if (came.length) arrivals = came.filter((u) => !G.ally(u) && G.living(u));
   for (const l of state.logs) {
     if (seenLogs.has(l)) continue;
     seenLogs.add(l);
     if (l.who === '敵援' && screen === 'battle') heldTip(...waveTip(l.text));
+    // 守 and 破: an object first struck, at half, broken.
+    if ((l.who === '守物' || l.who === '破物') && screen === 'battle') heldTip(l.who + ' · ' + l.text.replace(/。$/, ''), 3600);
   }
   const now = R.sideState(state);
   if (now === notedSide) return;
   notedSide = now;
   if (r.scene !== 'fight' || state.result || screen !== 'battle') return;
-  if (now === 'met') heldTip('支線達成 · 取勝即得' + R.rewardText(r.side, r.stage), 3600);
+  if (now === 'met') heldTip('支線達成 · 取勝即得' + R.rewardText(r.side, r.stage, null, r), 3600);
   else if (now === 'failed') {
     const line = '支線已失 · ' + R.sideLost(state);
     G.log(state, 'system', line, '支線');
@@ -686,13 +712,18 @@ function pageHtml() {
     case 'wake':
       return journalPage(state);
     case 'prologue':
-      return prologuePage(state.run.chronicle, prologue.step, prologue.name, prologue.film);
+      return prologuePage(state.run.chronicle, prologue.step, prologue.film, prologue.realm);
+    case 'realm':
+      return realmView(state.run.chronicle, realmPick);
+    case 'devtest':
+      return devTestView(devPick);
     case 'formation':
       return rollView(
         draft.ids,
-        { ...state.run.chronicle, parcelCount: R.parcelCount(state.run.chronicle) },
+        { ...state.run.chronicle, parcelCount: R.parcelCount(state.run.chronicle), realm: prologue.realm, settled: draft.settled },
         hasSave,
-        draft.leaderId
+        draft.leaderId,
+        draft.picks
       );
     case 'encounter':
       return encounterPage(state, state.run.scene, state.run.beat);
@@ -802,6 +833,7 @@ function drawModal(keepScroll = false) {
     dialog.dataset.shown = shown;
   }
   X.dockForecast(dialog, board?.layers, state, strikeData, dialogState);
+  refreshDev();
   // 布陣: the board outlines the formation the open preview would lay.
   if (board?.layers)
     board.layers.aim =
@@ -818,7 +850,8 @@ function openPage(name, heroId) {
   }
   if (name === 'team' && dialogState !== 'team' && !personalPages.includes(dialogState)) {
     viewId = state.selected;
-    teamUI = { tab: 'line', slot: 0 };
+    // (A folded 作戰目標 stays folded the next time the page opens.)
+    teamUI = { tab: 'line', slot: 0, skill: 'school', node: null, missionShut: teamUI.missionShut };
   }
   if (personalPages.includes(name)) {
     if (dialogState === 'team') heroParent = 'team';
@@ -841,6 +874,7 @@ function openPage(name, heroId) {
       dialog.querySelector('button')
     )?.focus({ preventScroll: true });
   }
+  refreshDev();
 }
 function closePage() {
   if (dialog.open) dialog.close();
@@ -879,6 +913,18 @@ function dismissLayer() {
 }
 function showScene() {
   briefFrom = null;
+  // The last board won: the ending film first, once, and then the run's last page.
+  if (state.run.scene === 'ended' && state.run.last?.ended && !state.run.last.shown) {
+    const outcome = state;
+    update(); // the run is over: the battle screen's own buttons say so under the film
+    playEnding(() => {
+      if (state !== outcome) return;
+      state.run.last.shown = true;
+      save();
+      openPage('result');
+    });
+    return true;
+  }
   const page = {
     before: 'encounter',
     brief: 'brief',
@@ -900,6 +946,7 @@ dialog.addEventListener('close', () => {
   if (board?.layers) board.layers.aim = null;
   board.uncover();
   (screen === 'battle' ? $('field') : document.body).append($('toast'));
+  refreshDev();
   const opener = returnControl && $(returnControl);
   if (opener && !opener.disabled && !opener.closest('[hidden]'))
     opener.focus({ preventScroll: true });
@@ -1062,6 +1109,52 @@ function useItem(id) {
   );
 }
 const uName = (u) => G.unitDetails(u).name;
+// 定身, 閉穴, 受制, 金剛, 固守: who holds which, just before the round turns.
+const HELD_ENDS = { freeze: '解凍', mute: '穴道已解', charm: '回歸本陣', immune: '金剛已散', fortify: '固守已收' };
+function heldStates() {
+  return state.units
+    .filter((u) => G.living(u) && u.conditions)
+    .map((u) => [u, Object.keys(HELD_ENDS).filter((k) => u.conditions[k])]);
+}
+// The line saying which of them ended as the round turned, or ''.
+function endedStates(holding) {
+  return holding
+    .flatMap(([u, kinds]) =>
+      G.living(u) ? kinds.filter((k) => !u.conditions?.[k]).map((k) => uName(u) + HELD_ENDS[k]) : []
+    )
+    .join('，');
+}
+// The name of a hero whose 金剛 turned a blow of this action to nothing, or ''.
+function voidedBy(effects) {
+  const hit = effects.find(([id, value]) => value === '−0' && G.immuneTo(G.find(state, id)));
+  return hit ? uName(G.find(state, hit[0])) : '';
+}
+// After a hero's strike: what it laid on (定身, 閉穴, 受制, 金剛, 固守), a counter 金剛 voided,
+// what 吸元 drew back.
+const HELD_WORDS = {
+  定身: (n) => ' 定身，' + n + ' 回合動彈不得',
+  閉穴: (n) => ' 被點中穴道，' + n + ' 回合不能出手',
+  受制: (n) => ' 受制倒戈，' + n + ' 回合為我所用',
+  金剛: (n) => ' 金剛護體，' + n + ' 回合刀槍不入',
+  固守: (n, power) => ' 固守，防禦 ＋' + power
+};
+const HELD_KIND = { 定身: 'freeze', 閉穴: 'mute', 受制: 'charm', 金剛: 'immune', 固守: 'fortify' };
+function strikeTip(u, effects, skill) {
+  const lines = [];
+  for (const [id, value, reason] of effects) {
+    const t = G.find(state, id),
+      c = t?.conditions?.[HELD_KIND[value]];
+    if (reason !== 'status' || !HELD_WORDS[value] || !c) continue;
+    const line = uName(t) + HELD_WORDS[value](Math.max(1, c.through - state.round + 1), c.power);
+    if (!lines.includes(line)) lines.push(line);
+  }
+  const voided = voidedBy(effects);
+  if (voided) lines.push(voided + ' 金剛護體，還擊無功');
+  const art = skill ? G.artFor(u) : null,
+    mend = art && G.drainOf(art) && effects.find(([id, value]) => id === u.id && value.startsWith('+'));
+  if (mend) lines.push(uName(u) + ' 吸元，回復 ' + mend[1].slice(1) + ' 氣血');
+  if (lines.length) mapTip(lines.join('；'), 3200);
+}
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function runEnemy() {
   const token = ++aiRun;
@@ -1071,13 +1164,18 @@ async function runEnemy() {
   while (token === aiRun && screen === 'battle' && state.phase === 'enemy' && !state.result) {
     const e = G.enemies(state).find((u) => G.living(u) && !u.acted);
     if (!e) {
-      const before = new Set(state.units.map((u) => u.id));
+      const before = new Set(state.units.map((u) => u.id)),
+        holding = heldStates();
       G.nextRound(state);
       mode = 'move';
       // 援軍: the pieces that entered as the round began.
       const came = state.units.filter((u) => !before.has(u.id));
-      if (!state.result) mapTip('第 ' + state.round + ' 回合 · 我方行動');
+      const ended = endedStates(holding);
+      if (!state.result && ended) heldTip('第 ' + state.round + ' 回合 · ' + ended, 3400); // after any tip held
+      else if (!state.result) mapTip('第 ' + state.round + ' 回合 · 我方行動');
+      roundArrivals = true;
       update();
+      roundArrivals = false;
       board.watch(false); // combat feel: hand the camera back
       if (came.length) {
         board.showEffects(came.map((u) => [u.id, '援軍', 'status']));
@@ -1089,12 +1187,24 @@ async function runEnemy() {
       }
       return;
     }
-    const dazed = !!e.conditions?.daze; // 失神: the piece loses its action, and says so
+    // 失神 and 定身: the piece loses its action, and says so.
+    const dazed = e.conditions?.daze ? '失神' : e.conditions?.freeze ? '定身' : '';
+    // 受制 turns it on its own side; 閉穴 lets it walk but not strike.
+    const turned = !dazed && !!e.conditions?.charm,
+      muted = !dazed && !turned && !!e.conditions?.mute;
+    const pulls = state.tally?.fired?.pull || 0;
     const effects = G.enemyAct(state, e);
     audio(effects.length && !dazed ? 'ready' : 'move'); // footfalls and blows follow as board cues
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
-    if (dazed) mapTip(uName(e) + ' 失神，錯過了這一手');
+    const struck = effects[0] && G.find(state, effects[0][0]);
+    // 擒拿: who was dragged in, said once the blow and the drag have played.
+    const dragged = (state.tally?.fired?.pull || 0) > pulls && effects[0] ? G.find(state, effects[0][0]) : null;
+    if (dazed) mapTip(uName(e) + ' ' + dazed + '，錯過了這一手');
+    else if (turned)
+      mapTip(uName(e) + (struck ? ' 受制倒戈，出手打向同夥' + uName(struck) : ' 受制倒戈，不向我方出手'), 3000);
+    else if (muted && !effects.length) mapTip(uName(e) + ' 穴道受制，只走不出手');
+    else if (voidedBy(effects)) mapTip(voidedBy(effects) + ' 金剛護體，這一擊無功', 3000);
     // 續命: a mend is no blow, so the board says what it did.
     else if (effects[0]?.[1].startsWith('+'))
       mapTip(
@@ -1115,6 +1225,7 @@ async function runEnemy() {
     board.showEffects(effects);
     if (result(true)) return;
     await board.finished();
+    if (dragged) mapTip(uName(e) + ' · 擒拿，將' + uName(dragged) + '扯到身前', 3200);
     await sleep(prefs.motion ? 150 : 45);
   }
 }
@@ -1155,21 +1266,28 @@ function openFormation() {
     const seed =
       pending?.source === source && Number.isInteger(pending.seed) ? pending.seed : R.newSeed();
     draft = { ...R.drawLots(seed), source };
-    draft.leaderId =
-      pending?.source === source && pending.seed === seed && draft.ids.includes(pending.leaderId)
-        ? pending.leaderId
-        : draft.ids[0];
-    try {
-      localStorage.setItem(drawKey, JSON.stringify({ source, seed, leaderId: draft.leaderId }));
-    } catch {}
+    const same = pending?.source === source && pending.seed === seed;
+    // Five drawn, three kept: a pick remembered for this draw if it still fits, else the first three.
+    draft.picks = R.keptLots({ seed, picks: same ? pending.picks : null });
+    draft.leaderId = same && draft.picks.includes(pending.leaderId) ? pending.leaderId : draft.picks[0];
+    rememberDraw();
   }
   openPage('formation');
+}
+// The draw being set up survives a reload: its seed, the three kept and the leader.
+function rememberDraw() {
+  try {
+    localStorage.setItem(
+      drawKey,
+      JSON.stringify({ source: draft.source, seed: draft.seed, leaderId: draft.leaderId, picks: draft.picks })
+    );
+  } catch {}
 }
 // A new run starts with the youth opening his eyes, then the draw. A first visit opens with the
 // film (a 9:16 or 16:9 cut, by the screen's shape), and the pages pick up where it ends.
 function openPrologue() {
   const film = firstVisit(state.run.chronicle);
-  prologue = { step: 0, name: prologue.name, film };
+  prologue = { ...prologue, step: 0, film };
   if (!film) return openPage('prologue');
   closePage();
   playFilm({
@@ -1181,10 +1299,48 @@ function openPrologue() {
     }
   });
 }
-// Keeps what was typed when the page is redrawn or left.
-function keepName() {
-  const field = $('youth-name');
-  if (field) prologue.name = R.cleanName(field.value);
+// A new run: the 境界 is picked first (選境界) once more than one is open or the last battle has
+// been reached; otherwise the run is in the first 境界 and the prologue opens at once.
+function beginNewRun() {
+  const profile = state.run.chronicle,
+    open = R.openRealms(profile);
+  realmPick = realmPick >= 1 && realmPick <= open ? realmPick : open;
+  if (open > 1 || profile.ended > 0) return openPage('realm');
+  prologue.realm = 1;
+  openPrologue();
+}
+// The ending film (asset-gen/finale-video): 求敗 lets go and is gone, the youth wakes, takes up a
+// sword and meets the eagle. If it cannot play, the run's last page tells the same words.
+function playEnding(onDone) {
+  closePage();
+  playFilm({ ...MAZE_TALE.finale.film, label: '終局影片', onDone: () => onDone?.() });
+}
+// Developer mode (?dev): a small panel, kept inside the open dialog so it stays clickable.
+const dev = devMode() ? document.createElement('aside') : null;
+// The test battle being set up on the 試局 page (dev-mode.js).
+let devPick = dev ? loadPick() : null;
+if (dev) {
+  dev.className = 'dev-panel';
+  dev.setAttribute('aria-label', '開發者模式');
+  dev.innerHTML = '<details class="dev-fold"><summary>開發</summary><div class="dev-buttons"></div></details>';
+}
+function refreshDev() {
+  if (!dev) return;
+  const battle = screen === 'battle' && state.run.status === 'battle' && !state.result;
+  const html = devPanel({ battle, side: !!state.run.side, fight: battle && state.run.scene === 'fight' && !state.run.deploying });
+  const list = dev.querySelector('.dev-buttons');
+  if (list.innerHTML !== html) list.innerHTML = html;
+  const host = dialog.open ? dialog : document.body;
+  if (dev.parentElement !== host) host.append(dev);
+}
+function devFinish(won, side = false) {
+  if (screen !== 'battle' || !R.devFinish(state, won, side)) return notice('此刻不能這樣做。');
+  ++aiRun;
+  strikeData = null;
+  closePage();
+  mapTip(null);
+  update();
+  result();
 }
 function openTitle() {
   ++aiRun;
@@ -1208,9 +1364,10 @@ function openTitle() {
           ? '返回通吃坊'
           : state.run.status === 'ended'
             ? '查看本局結局'
-            : '繼續第' + R.NUMERALS[state.run.stage] + '局'
+            : '繼續' + R.stageTitle(state.run.stage, '')
     : '入夢';
   $('title-new').hidden = !hasSave;
+  refreshDev();
   window.scrollTo({ top: 0, behavior: 'instant' });
   paint();
   syncZoom();
@@ -1411,27 +1568,120 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'start-primary':
       if (hasSave) enterBattle(false);
-      else openPrologue();
+      else beginNewRun();
       break;
     case 'title-new':
+      beginNewRun();
+      break;
+    case 'realm-pick': {
+      const n = Number(id);
+      if (dialogState !== 'realm' || !(n >= 1 && n <= R.openRealms(state.run.chronicle))) break;
+      realmPick = n;
+      drawModal(true);
+      audio('select');
+      break;
+    }
+    case 'realm-go':
+      if (dialogState !== 'realm') break;
+      prologue.realm = realmPick;
       openPrologue();
       break;
+    case 'ending-replay': {
+      // From the run's last page or the 境界 picker: the film again, then back to that page.
+      const back = dialogState;
+      if (!(state.run.chronicle.ended > 0) || !['result', 'realm'].includes(back)) break;
+      playEnding(() => openPage(back));
+      break;
+    }
+    case 'last-enter':
+      // A run that ended at the tenth board of 無劍境界 before the last board was built.
+      if (dialogState !== 'result' || !R.enterLast(state)) break;
+      ++aiRun;
+      strikeData = null;
+      save();
+      enterBattle(true);
+      break;
+    case 'dev-win':
+    case 'dev-win-side':
+    case 'dev-lose':
+      if (dev) devFinish(action !== 'dev-lose', action === 'dev-win-side');
+      break;
+    case 'dev-press':
+      // The board's master loses half the 氣血 he has, as a blow would take it.
+      if (dev && state.phase === 'ally' && R.devPress(state)) update();
+      break;
+    case 'dev-unlock':
+      if (!dev) break;
+      state.run.chronicle.realms = R.REALM_NUMBERS.length;
+      state.run.chronicle.cleared = [...new Set([...state.run.chronicle.cleared, 1, 2, 3, 4])].sort();
+      if (hasSave) save();
+      notice('五重境界皆已開，前四重境界記作已勝。');
+      if (dialogState === 'realm') drawModal(true);
+      break;
+    case 'dev-finale': {
+      // The last board at once, with the heroes last picked on the 試局 page.
+      if (!dev) break;
+      const next = R.devTestRun({ ...loadPick(), map: G.LAST_MAP }, state.run.chronicle);
+      if (!next) break;
+      ++aiRun;
+      state = next;
+      save();
+      dev.querySelector('details').open = false;
+      strikeData = null;
+      logFilter = 'all';
+      enterBattle(true);
+      break;
+    }
+    case 'dev-film':
+      if (dev) playEnding(() => refreshDev());
+      break;
+    case 'dev-plus':
+      if (!dev) break;
+      state.run.chronicle.ended = Math.max(1, state.run.chronicle.ended || 0);
+      if (hasSave) save();
+      notice('無名入盤已開：下一輪入夢，無名自己也在盤上。');
+      if (dialogState === 'realm') drawModal(true);
+      break;
+    case 'dev-test':
+      if (!dev) break;
+      devPick = loadPick();
+      dev.querySelector('details').open = false;
+      openPage('devtest');
+      audio('page');
+      break;
+    case 'dev-test-map':
+    case 'dev-test-realm':
+    case 'dev-test-hero':
+    case 'dev-test-all':
+      if (!dev || dialogState !== 'devtest') break;
+      devPick = changePick(devPick, action.slice(9), id);
+      drawModal(true);
+      audio('select');
+      break;
+    case 'dev-test-go': {
+      if (!dev || dialogState !== 'devtest' || !devPick.heroes.length) break;
+      const next = R.devTestRun(devPick, state.run.chronicle);
+      if (!next) break;
+      ++aiRun;
+      state = next;
+      save();
+      dev.querySelector('details').open = false;
+      strikeData = null;
+      logFilter = 'all';
+      enterBattle(true);
+      break;
+    }
     case 'prologue-prev':
     case 'prologue-next':
     case 'prologue-skip': {
       if (dialogState !== 'prologue') break;
-      keepName();
-      const steps = prologueSteps(state.run.chronicle, prologue.name, prologue.film),
-        ask = steps.findIndex((step) => step.ask);
+      const steps = prologueSteps(state.run.chronicle, prologue.film, prologue.realm);
       if (action === 'prologue-prev') prologue.step = Math.max(0, prologue.step - 1);
-      // Skipping still stops at the name the first time, since it has to be given once.
-      else if (action === 'prologue-skip' && ask > prologue.step) prologue.step = ask;
       else if (action === 'prologue-skip' || prologue.step >= steps.length - 1) {
         openFormation();
         break;
       } else prologue.step++;
       drawModal();
-      $('youth-name')?.focus({ preventScroll: true });
       audio('page');
       break;
     }
@@ -1461,23 +1711,35 @@ function command(action, id, data = {}, keyboard = false) {
       board.rotate(1);
       break;
     case 'lead-lot':
-      if (dialogState === 'formation' && draft?.ids.includes(id)) {
+      if (dialogState === 'formation' && draft?.picks.includes(id)) {
         draft.leaderId = id;
-        try {
-          localStorage.setItem(
-            drawKey,
-            JSON.stringify({ source: draft.source, seed: draft.seed, leaderId: id })
-          );
-        } catch {}
+        draft.settled = true; // the cards have been dealt: no second deal on redrawing
+        rememberDraw();
+        drawModal(true);
+        audio('select');
+      }
+      break;
+    // Keep a drawn stone or put it back: three are kept. The leader is one of the three.
+    case 'keep-lot':
+      if (dialogState === 'formation' && draft?.ids.includes(id)) {
+        if (draft.picks.includes(id)) draft.picks = draft.picks.filter((p) => p !== id);
+        else if (draft.picks.length < R.KEPT) draft.picks = draft.ids.filter((p) => p === id || draft.picks.includes(p));
+        else {
+          notice('已留下三枚：先放回一枚。');
+          break;
+        }
+        if (!draft.picks.includes(draft.leaderId)) draft.leaderId = draft.picks[0] ?? null;
+        draft.settled = true;
+        rememberDraw();
         drawModal(true);
         audio('select');
       }
       break;
     case 'deploy':
-      if (dialogState !== 'formation' || !draft) break;
+      if (dialogState !== 'formation' || !draft || draft.picks.length !== R.KEPT) break;
       ++aiRun;
-      state = R.startRun({ ...draft, name: prologue.name }, state.run.chronicle);
-      prologue = { step: 0, name: '' };
+      state = R.startRun({ ...draft, realm: prologue.realm }, state.run.chronicle);
+      prologue = { step: 0, film: false, realm: 1 };
       draft = null;
       try {
         localStorage.removeItem(drawKey);
@@ -1493,8 +1755,23 @@ function command(action, id, data = {}, keyboard = false) {
     case 'team-guides':
       if (personalPages.includes(dialogState)) {
         openPage('team', viewId);
-        teamUI.tab = 'arts';
+        Object.assign(teamUI, { tab: 'arts', skill: 'guides', node: null });
         drawModal();
+      }
+      break;
+    // 習武 in the 陣容 pane: the 武學 tab, on the tree, for that hero.
+    case 'hero-train':
+      if (dialogState === 'team' && G.company(state).some((v) => v.id === id)) {
+        viewId = id;
+        Object.assign(teamUI, { tab: 'arts', skill: 'school', node: null, slot: 0, pickedHero: null });
+        drawModal();
+        audio('tap');
+      }
+      break;
+    case 'mission-fold':
+      if (dialogState === 'team') {
+        teamUI.missionShut = !teamUI.missionShut;
+        drawModal(true);
       }
       break;
     case 'team-tab':
@@ -1660,7 +1937,7 @@ function command(action, id, data = {}, keyboard = false) {
             ? '已寄在通吃坊，下一輪取用。'
             : G.ITEMS[id]
               ? '已收入隊伍行囊。'
-              : '抄本已入公庫，可在「隊伍・武譜招式」授予俠客。'
+              : '抄本已入公庫，可在「隊伍・武學」授予俠客。'
         );
       }
       break;
@@ -1678,11 +1955,22 @@ function command(action, id, data = {}, keyboard = false) {
         studyUI.tab = id;
         studyUI.node = null;
         drawModal();
+      } else if (
+        dialogState === 'team' &&
+        teamUI.tab === 'arts' &&
+        ['school', 'guides', 'loadout'].includes(id)
+      ) {
+        teamUI.skill = id;
+        teamUI.node = null;
+        drawModal();
       }
       break;
     case 'skill-node':
       if (dialogState === 'skills') {
         studyUI.node = id;
+        drawModal(true);
+      } else if (dialogState === 'team' && teamUI.tab === 'arts') {
+        teamUI.node = id;
         drawModal(true);
       }
       break;
@@ -1691,6 +1979,7 @@ function command(action, id, data = {}, keyboard = false) {
       if (['skills', 'team'].includes(dialogState) && R.learn(state, u, id)) {
         const chooseSlot = u.unplacedArts?.includes(id);
         if (chooseSlot && dialogState === 'skills') studyUI.tab = 'loadout';
+        if (chooseSlot && dialogState === 'team') teamUI.skill = 'loadout';
         update();
         drawModal(!chooseSlot);
         audio('grow');
@@ -1743,7 +2032,7 @@ function command(action, id, data = {}, keyboard = false) {
       if (!G.company(state).some((u) => u.id === id)) break;
       viewId = id;
       Object.assign(armState(), { item: null, owner: null, pickedHero: null });
-      studyUI.node = null;
+      studyUI.node = teamUI.node = null;
       studyUI.slot = teamUI.slot = 0;
       drawModal(false);
       audio('tap');
@@ -1809,6 +2098,7 @@ function command(action, id, data = {}, keyboard = false) {
         hit.from
       );
       board.showEffects(hit.effects);
+      strikeTip(u, hit.effects, skill);
       advanceAfterStrike(u.id, hit);
       if (hit.leveled) {
         audio('level');
@@ -1829,13 +2119,6 @@ function command(action, id, data = {}, keyboard = false) {
       break;
   }
 }
-// Enter in the name field moves on, except while an input method is still composing.
-dialog.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.target.id === 'youth-name' && !e.isComposing) {
-    e.preventDefault();
-    command('prologue-next');
-  }
-});
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-do]');
   if (b && !b.disabled) command(b.dataset.do, b.dataset.id, b.dataset, e.detail === 0);

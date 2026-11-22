@@ -11,9 +11,18 @@ const styles = [
   ['襄陽殘垣', 0xb0aa9f, 0x72818e, 0xffdcb6, 0x6a6253, 'earth', -1.0, 0.019],
   ['寒玉石室', 0x445e68, 0x182d42, 0x9cdce8, 0x315e66, 'water', -1.0, 0.021],
   ['倒影天街', 0xc0bccf, 0x747eaa, 0xffdeaf, 0x837e9d, 'water', -2.18, 0.018],
-  ['無刻漏臺', 0x414e68, 0x182137, 0xe8cfa6, 0x35435e, 'stars', -7.0, 0.017]
+  ['無刻漏臺', 0x414e68, 0x182137, 0xe8cfa6, 0x35435e, 'stars', -7.0, 0.017],
+  // The boards built round one villain. A last 'night' lights the board as a night board and
+  // puts stars in its sky, whatever lies below it.
+  ['神龍竹堂', 0xb9cdc4, 0x6f9fa4, 0xffe2b0, 0x3f7f7a, 'water', -0.62, 0.021],
+  ['絕情花徑', 0xd3c9c4, 0x93a7a6, 0xffd9b4, 0x74806a, 'earth', -0.82, 0.02],
+  ['鐵掌溪灘', 0xbfc8c0, 0x7d98a6, 0xffe6c0, 0x4d7f86, 'water', -0.5, 0.02],
+  ['西夏夜苑', 0x3d4a66, 0x151c33, 0xf0d2a0, 0x2d4a5c, 'water', -0.9, 0.018, 'night'],
+  ['黑木繡閣', 0xcfd3d6, 0x8097b0, 0xffe3c4, 0xa9b6bb, 'mist', -6.5, 0.02],
+  // The water here is the pond under the fall; its level is WATER in landforms/valley-15.js.
+  ['谷底棋臺', 0xb0b5b6, 0x71839f, 0xffcd90, 0x4f867f, 'water', -0.13, 0.021]
 ];
-const atmospheres = styles.map(([name, horizon, zenith, sun, base, mode, level, fog]) => ({
+const atmospheres = styles.map(([name, horizon, zenith, sun, base, mode, level, fog, hour]) => ({
   name,
   horizon,
   zenith,
@@ -21,8 +30,11 @@ const atmospheres = styles.map(([name, horizon, zenith, sun, base, mode, level, 
   base,
   mode,
   level,
-  fog
+  fog,
+  night: hour === 'night'
 }));
+// The boards lit as night: the jade cave, the terrace under the stars, and any marked 'night'.
+const isNight = (index) => index === 7 || index === 9 || !!atmospheres[index]?.night;
 const bytes = (h) => [(h >> 16) & 255, (h >> 8) & 255, h & 255];
 function setting(index) {
   return atmospheres[index] || atmospheres[0];
@@ -36,7 +48,7 @@ const post = `
  #include <colorspace_fragment>
 `;
 function stageSky(T, profile) {
-  const stars = profile.mode === 'stars',
+  const stars = profile.mode === 'stars' || profile.night,
     cave = profile.name === '寒玉石室';
   const mat = new T.ShaderMaterial({
     side: T.BackSide,
@@ -168,4 +180,4 @@ function stagePlane(T, p, gpu, scenery = null) {
   return mesh;
 }
 
-export { atmospheres, bytes, setting, stageSky, stagePlane };
+export { atmospheres, bytes, setting, stageSky, stagePlane, isNight };

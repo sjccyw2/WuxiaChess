@@ -54,7 +54,8 @@ for (const [id, art] of Object.entries(G.TECHNIQUES)) {
   for (const key of Object.keys(art))
     if (!named(key, 'art')) problems.push('art ' + id + ' has the field "' + key + '", which no rule term or PLAIN_FIELDS.art entry accounts for (game/src/data/rule-terms.js)');
 }
-for (const hero of G.PARTY)
+// (G.ROSTER: the ten heroes of the box, and 無名, who is a piece on the last board and after it.)
+for (const hero of G.ROSTER)
   for (const page of ['basic-' + hero, 'signature-' + hero])
     if (!has('skills', page)) problems.push('no skills page ' + page);
 for (const [id, item] of Object.entries(G.ITEMS)) {
@@ -64,7 +65,7 @@ for (const [id, item] of Object.entries(G.ITEMS)) {
 }
 for (const id of Object.keys(G.TRADE_MANUALS)) if (!has('items', 'guide-' + id)) problems.push('no items page for the manual ' + id);
 for (const [key, details] of Object.entries(G.DETAILS)) {
-  if (G.PARTY.includes(key)) {
+  if (G.ROSTER.includes(key)) {
     if (!has('heroes', key)) problems.push('no heroes page for ' + key);
     continue;
   }
@@ -72,8 +73,10 @@ for (const [key, details] of Object.entries(G.DETAILS)) {
   for (const trait of Object.keys(details.traits || {}))
     if (!named(trait, 'trait')) problems.push('enemy ' + key + ' has the trait "' + trait + '", which no rule term or PLAIN_FIELDS.trait entry accounts for');
 }
-G.BATTLES.forEach((board, map) => {
-  if (!has('missions', 'map-' + map) || !has('maps', map)) problems.push('board ' + map + ' has no missions or maps page');
+// (The last board is read as the game casts it: its guests are the masters of the ten boards.)
+G.BATTLES.forEach((_, map) => {
+  const board = G.castBoard(map);
+  if (!has('missions', 'map-' + map) || !has('maps', map) || !has('story', 'map-' + map)) problems.push('board ' + map + ' has no missions, maps or story page');
   if (!has('rules', board.kind)) problems.push('board ' + map + ' is of kind "' + board.kind + '", which has no rules page');
   for (const piece of [...board.pieces, ...board.waves.flatMap((w) => w.pieces)])
     if (!has('foes', foePage(piece.id.split('#')[0]))) problems.push('board ' + map + ': no foes page for the piece ' + piece.id);
@@ -97,10 +100,44 @@ for (const [group, list] of Object.entries(catalog.groups))
     if (bad) problems.push(group + '/' + entry.id + ': shows "' + bad[0] + '"');
   }
 
+// ── 群俠比較 ─────────────────────────────────────────────────────────────────
+// The comparison page's scores: whole numbers in 0..100 on every axis, at every level of the
+// curve, with at least one hero at 100 on each axis and no axis on which everyone looks alike.
+const { compareData } = await import(new URL('wiki/src/catalog/compare.js', root));
+const comparison = compareData();
+{
+  const keys = comparison.axes.map((a) => a.key),
+    score = (n) => Number.isInteger(n) && n >= 0 && n <= 100;
+  if (keys.join() !== 'melee,ranged,vitality,inner,speed,support') problems.push('compare: the axes are ' + keys.join());
+  if (comparison.heroes.map((h) => h.id).join() !== G.ROSTER.join()) problems.push('compare: the heroes are not the roster, in its order');
+  for (const h of comparison.heroes) {
+    const at = 'compare/' + h.id;
+    for (const k of keys) {
+      if (!score(h.scores[k])) problems.push(at + ': ' + k + ' scores ' + h.scores[k]);
+      if (!Number.isFinite(h.raw[k]?.value) || !h.raw[k].why?.length) problems.push(at + ': ' + k + ' has no raw value or reasons');
+    }
+    if (!score(h.composite)) problems.push(at + ': composite ' + h.composite);
+    if (h.curve.length !== comparison.levels.length || h.curve.some((c, i) => c.level !== comparison.levels[i] || !score(c.composite) || keys.some((k) => !score(c.scores[k]))))
+      problems.push(at + ': the growth curve misses a level or a score');
+    // At the top level the curve has (nearly) the radar's arts, so the two should be close.
+    if (Math.abs(h.curve.at(-1).composite - h.composite) > 15) problems.push(at + ': curve ends at ' + h.curve.at(-1).composite + ', radar says ' + h.composite);
+    for (const page of ['basic-' + h.id, 'signature-' + h.id]) if (!h.arts.some((a) => a.id === page)) problems.push(at + ': arts lack ' + page);
+    for (const a of h.arts) if (!has('skills', a.id)) problems.push(at + ': the art ' + a.id + ' has no skills page');
+    const bad = JSON.stringify(h).match(/undefined|NaN|\[object/);
+    if (bad) problems.push(at + ': shows "' + bad[0] + '"');
+  }
+  for (const k of keys) {
+    const all = comparison.heroes.map((h) => h.scores[k]);
+    if (!all.includes(100)) problems.push('compare: no hero scores 100 on ' + k);
+    if (Math.min(...all) > 75) problems.push('compare: every hero scores above 75 on ' + k + '; the axis tells them apart too little');
+  }
+}
+
 if (corpus.entries.length < 500) problems.push('text listing looks too small: ' + corpus.entries.length);
 
 console.log(Object.entries(catalog.groups).map(([g, l]) => g + ' ' + l.length).join(' · '));
 console.log('遊戲原文 ' + corpus.entries.length + ' 條，來自 ' + TEXT_FILES.length + ' 個檔案');
+console.log('群俠比較 ' + comparison.heroes.length + ' 位俠客 · ' + comparison.axes.length + ' 項 · ' + comparison.levels.length + ' 級');
 if (problems.length) {
   console.error('\n' + problems.length + ' problem(s):\n  ' + problems.slice(0, 40).join('\n  '));
   process.exit(1);

@@ -7,12 +7,23 @@ For each id it writes into game/assets/:
   poses-<id>.png    the same at half size, 256 colours, drawn while the full sheet loads
   mini-<id>.webp    the first idle frame, cut about the cell's centre line down to the foot
   npc-<id>.webp     the portrait, 400 x 400 head and shoulders, from the 510 x 510 painting
+and for a hero also:
+  figure-<id>.webp  the standing figure of the 整備 wardrobe, 280 x 440 on the wardrobe's paper:
+                    the first idle frame enlarged, since the pack has no full-length painting
 Then name the id in game/src/data/roster-art.js. The pack's files are only read.
+
+    python3 tools/roster-art.py --story youth qiubai
+
+reads asset-gen/story-characters instead (the youth and 求敗, for the last board). It writes the
+three sheet files only: their portraits, npc-youth.webp and npc-qiubai.webp, are in the game
+already and are left as they are.
 
 A sheet's specks of alpha 1 to 3 are cleared; the half-size sheet is averaged with colour
 weighted by alpha, so no dark fringe bleeds in from the transparent pixels round a figure.
 The pack paints villains half-length and troops closer, so a villain's portrait is cut from a
 340 square and enlarged, a troop's from a 400 square as it is. FACE_X says where each face is.
+A hero's painting is 672 x 672 and already head and shoulders: it is kept whole, at 588 x 588,
+the size of the first ten heroes' portraits.
 Needs Pillow and NumPy.
 """
 import json
@@ -24,11 +35,14 @@ from PIL import Image
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 PACK = os.path.join(ROOT, 'asset-gen', 'jianying-roster-art')
+STORY = os.path.join(ROOT, 'asset-gen', 'story-characters')
 OUT = os.path.join(ROOT, 'game', 'assets')
 CELL_W, CELL_H, FOOT_Y = 144, 176, 162
 # The horizontal centre of each face in the pack's portrait, as a share of its width.
 FACE_X = dict(fengTiannan=.44, zhaoZhong=.52, wanYan=.55, xianYu=.52, wanZhen=.55,
-              fiveTiger=.45, qingShield=.5, jinBow=.5, huaBlade=.55, wanDisciple=.55)
+              fiveTiger=.45, qingShield=.5, jinBow=.5, huaBlade=.55, wanDisciple=.55,
+              dongFang=.55, liQiu=.51, hongAn=.57, qiuRen=.55, gongSun=.57,
+              heiMuGuard=.55, xiaGuard=.53, shenLong=.55, ironPalm=.53, netHand=.59)
 
 
 def cleaned(path):
@@ -55,19 +69,37 @@ def still(sheet):
     return cell.crop((CELL_W // 2 - reach, max(0, ys.min() - 1), CELL_W // 2 + reach, FOOT_Y + 1))
 
 
-def portrait(path, face_x, villain):
+PAPER = (229, 217, 182)  # the ground of the first ten heroes' figure-<id>.webp
+
+
+def figure(sheet):
+    """The wardrobe's standing figure: the first idle frame, enlarged onto the paper."""
+    pose = still(sheet)
+    scale = min(240 / pose.width, 380 / pose.height)
+    pose = pose.resize((round(pose.width * scale), round(pose.height * scale)), Image.LANCZOS)
+    page = Image.new('RGB', (280, 440), PAPER)
+    page.paste(pose, ((280 - pose.width) // 2, 420 - pose.height), pose)
+    return page
+
+
+def portrait(path, face_x, group):
     p = Image.open(path).convert('RGB')
+    if group == 'hero':
+        return p.resize((588, 588), Image.LANCZOS)
+    villain = group == 'villain'
     side = 340 if villain else 400
     x = int(min(p.width - side, max(0, face_x * p.width - side / 2)))
     face = p.crop((x, 0, x + side, side))
     return face if side == 400 else face.resize((400, 400), Image.LANCZOS)
 
 
-def main(ids):
-    with open(os.path.join(PACK, 'manifest.json'), encoding='utf-8') as f:
-        group = {c['id']: c['group'] for c in json.load(f)['characters']}
+def main(ids, story=False):
+    group = {}
+    if not story:
+        with open(os.path.join(PACK, 'manifest.json'), encoding='utf-8') as f:
+            group = {c['id']: c['group'] for c in json.load(f)['characters']}
     for k in ids:
-        sheet = cleaned(os.path.join(PACK, 'sprites', k + '.png'))
+        sheet = cleaned(os.path.join(STORY if story else PACK, 'sprites', k + '.png'))
         assert sheet.size == (8 * CELL_W, 5 * CELL_H), (k, sheet.size)
         files = {
             'motion': ('motion-%s.webp' % k, lambda f: sheet.save(
@@ -76,10 +108,14 @@ def main(ids):
                 256, Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE).save(f, optimize=True)),
             'mini': ('mini-%s.webp' % k, lambda f: still(sheet).save(
                 f, 'WEBP', quality=88, method=6, alpha_quality=100)),
-            'npc': ('npc-%s.webp' % k, lambda f: portrait(
-                os.path.join(PACK, 'portraits', k + '.webp'), FACE_X.get(k, .5),
-                group[k] == 'villain').save(f, 'WEBP', quality=82, method=6)),
         }
+        if not story:
+            files['npc'] = ('npc-%s.webp' % k, lambda f: portrait(
+                os.path.join(PACK, 'portraits', k + '.webp'), FACE_X.get(k, .5),
+                group[k]).save(f, 'WEBP', quality=82, method=6))
+        if group.get(k) == 'hero':
+            files['figure'] = ('figure-%s.webp' % k, lambda f: figure(sheet).save(
+                f, 'WEBP', quality=88, method=6))
         for name, write in files.values():
             write(os.path.join(OUT, name))
         print(k, ' '.join('%s %d KB' % (n, os.path.getsize(os.path.join(OUT, n)) // 1024)
@@ -87,6 +123,7 @@ def main(ids):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    args = [a for a in sys.argv[1:] if a != '--story']
+    if not args:
         sys.exit(__doc__)
-    main(sys.argv[1:])
+    main(args, story='--story' in sys.argv[1:])

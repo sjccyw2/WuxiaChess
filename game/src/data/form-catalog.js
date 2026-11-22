@@ -1,15 +1,27 @@
 // Keys match the combat and mastery catalogues. A weapon's offensive forms belong
 // to deliberate normal attacks. Its support forms belong to support skills.
 const ART_FORMS = {
+  // 無名. 總訣式, 破劍式, 破箭式 and 破氣式 are 令狐冲's arts too and carry the same forms.
+  'signature:youth': ['exploit'],
+  youthKeenEdge: [],
+  youthBreakSword: [],
+  youthBreakBlade: [],
+  youthBreakPole: ['collision'],
+  youthBreakSoft: [],
+  youthBreakMace: [],
+  youthBreakArrow: [],
+  youthBreakHand: [],
+  youthBreakQi: ['seal'],
+
   // 令狐冲
   'signature:hero': ['exploit'],
   mountainOpening: ['line'],
   ninefoldFormula: ['exploit'],
   breakSword: [],
   breakArrow: [],
-  starSuction: ['siphon'],
+  starSuction: [],
   breakQi: ['seal'],
-  ninefoldIntent: ['exploit'],
+  ninefoldIntent: ['exploit', 'again'],
 
   // 任盈盈
   'signature:medic': ['cleanse'],
@@ -33,7 +45,7 @@ const ART_FORMS = {
   'signature:guo': [],
   southernStance: ['still'],
   kanglongRegret: ['collision'],
-  guoPairedHands: [],
+  guoPairedHands: ['distill'],
   fieldDragonWard: [],
   flyingDragon: [],
   armyBookRally: ['channel'],
@@ -95,6 +107,99 @@ const ART_FORMS = {
   heartCut: ['exploit', 'again'],
   cliffCut: ['exploit', 'mark'],
 
+  // 蕭峰
+  'signature:qiaoFeng': ['collision'],
+  qfSeize: ['pin'],
+  qfDragonGrab: ['pull', 'collision'],
+  qfRegret: ['collision'],
+  qfField: [],
+  qfWine: [],
+  qfWild: [],
+  qfEighteen: [],
+
+  // 虛竹
+  'signature:xuZhu': ['still'],
+  xzArhat: ['mark'],
+  xzNorthQi: ['channel'],
+  xzPlum: [],
+  xzSixYang: [],
+  xzHeal: ['cleanse', 'overflow'],
+  xzLifeDeath: [],
+
+  // 洪七公
+  'signature:hongQi': [],
+  hqTap: ['pin'],
+  hqTail: [],
+  hqSeal: [],
+  hqShock: [],
+  hqTurn: ['pin'],
+  hqThirtySix: [],
+
+  // 黃藥師
+  'signature:yaoShi': ['mark'],
+  ysFlick: ['arc'],
+  ysPalm: [],
+  ysFlute: [],
+  ysMaze: [],
+  ysSnap: [],
+  ysWhirl: ['pin'],
+  ysTide: [],
+
+  // 張三丰
+  'signature:sanFeng': [],
+  sfSoft: [],
+  sfPureYang: ['cleanse'],
+  sfSword: ['pull'],
+  sfSeven: [],
+  sfCloud: ['collision'],
+  sfTaiji: [],
+
+  // 趙敏
+  'signature:zhaoMin': [],
+  zmSwift: ['exploit'],
+  zmPowder: ['pin'],
+  zmSalve: ['cleanse'],
+  zmJade: [],
+  zmYitian: [],
+  zmGhost: [],
+  zmHeaven: [],
+
+  // 程靈素
+  'signature:lingSu': ['cleanse'],
+  lsNeedle: ['distill'],
+  lsScorpion: [],
+  lsGold: ['seal'],
+  lsBlue: ['cleanse'],
+  lsTihu: [],
+  lsSeven: [],
+
+  // 狄雲
+  'signature:diYun': [],
+  dyShoulder: ['mark'],
+  dySlap: ['seal'],
+  dyBlade: [],
+  dyDisarm: [],
+  dySweep: ['leech'],
+  dyShenZhao: ['leech'],
+
+  // 袁承志
+  'signature:chengZhi': ['pin'],
+  czHunyuan: ['still'],
+  czSteps: [],
+  czCone: ['mark'],
+  czFist: ['glide'],
+  czSword: ['exploit', 'glide'],
+  czSerpent: ['exploit'],
+
+  // 阿青
+  'signature:aQing': ['glide'],
+  aqPoint: ['mark'],
+  aqThread: ['line'],
+  aqEyes: [],
+  aqApe: [],
+  aqChain: ['again', 'glide'],
+  aqYue: ['line'],
+
   // 可分授給俠客的八部武譜
   fingerFlick: [],
   softPalm: ['pin'],
@@ -119,11 +224,13 @@ const WEAPON_FORMS = {
   foxSaber: ['flank'],
   frost: ['distill'],
   blueEdge: ['exploit'],
+  keenSword: ['mark'],
   ironFan: ['mark', 'overflow'],
   silkWhip: ['pull', 'pin'],
   travelBlade: ['arc'],
   starSteel: ['line'],
-  dragonSaber: ['still']
+  dragonSaber: ['still'],
+  goldSerpentBlade: ['arc']
 };
 
 const COMBINATIONS = [
@@ -161,7 +268,7 @@ const COMBINATIONS = [
     name: '踏浪回陣',
     skills: ['waterSkim', 'armyBookRally'],
     weapons: ['wraps'],
-    text: '讓同伴施水上漂，落在郭靖旁的空格，兩人各得 8 點護盾。郭靖戴布纏護手，接武穆遺書・合陣。同伴受令後攻擊上升，並回 6 點內力。下一次受敵人直接攻擊而損血時，可按損血數返勁，最多 9 點。'
+    text: '讓同伴施水上漂，落在郭靖旁的空格，兩人各得 8 點護盾。郭靖戴布纏護手，接合陣。同伴受令後攻擊上升，並回 6 點內力。下一次受敵人直接攻擊而損血時，可按損血數返勁，最多 9 點。'
   }
 ];
 

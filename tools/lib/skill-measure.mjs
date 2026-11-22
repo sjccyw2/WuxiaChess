@@ -16,12 +16,14 @@ export { TECHNIQUES, HERO_PATHS, MASTERY_ARTS, TRADE_MANUALS };
 // ── Field families ────────────────────────────────────────────────────────
 // Pure bookkeeping: never a mechanic. Add a field here only if it says nothing about play.
 export const BOOKKEEPING = new Set([
-  'name', 'owner', 'tier', 'needs', 'points', 'icon', 'visual', 'desc', 'source', 'root', 'kind',
+  'name', 'family', 'owner', 'tier', 'needs', 'points', 'icon', 'visual', 'desc', 'source', 'root', 'kind',
   'mp', 'range', 'target', 'gate', 'price', 'stock', 'manual', 'requires', 'forms', 'lane'
 ]);
 // Mechanics whose whole worth already shows in the measured numbers (damage, healing, people
 // reached), so they are compared by measurement rather than counted as "adds an effect".
-export const MEASURED = new Set(['factor', 'pierce', 'hits', 'basicBonus', 'aura', 'heal']);
+// 廣及 (`radius`) is one of them: the scene puts foes beyond the target's four neighbours
+// (SPLASH_SCENE below), so how much farther a splash reaches shows in the area measure.
+export const MEASURED = new Set(['factor', 'pierce', 'hits', 'basicBonus', 'aura', 'heal', 'radius']);
 // Prices the art pays rather than effects it adds. A node that adds one of these does not
 // thereby "add an effect"; one that drops one has a lower cost. Unknown fields are not prices.
 export const TRADE_OFFS = new Set([
@@ -40,7 +42,9 @@ const ANSWERED = {
   master: ['target is the master', (c, o) => {
     const rank = G.unitDetails(c.t)?.rank;
     if (rank !== 'boss' && rank !== 'mini' && o.master) c.t.encounterId = o.master.encounterId || o.master.id;
-  }]
+  }],
+  // A form that answers a kind of weapon (無名's): the target fights with that kind.
+  ...Object.fromEntries(Object.entries(G.ARM_NAMES).map(([arm, name]) => [arm, ['target fights with ' + name, (c) => { c.t.arm = arm; }]]))
 };
 export const CONDITIONAL = {
   answer: { when: (art) => ANSWERED[art.answer][0], set: (c, art, o) => ANSWERED[art.answer][1](c, o), share: 0.5 },
@@ -68,9 +72,11 @@ export const conditionalKeys = (art) => Object.keys(CONDITIONAL).filter((k) => a
 // a foe's turn, to the hero's own tempo, or to who gets hit. A later strike that carries one is
 // bought for it, so R4 does not hold it to the starting art's damage. Form tags among them are
 // counted as mechanics, not as the small riders other form tags are.
+// 定身, 閉穴 and 受制 take a foe's turns as 失神 and 纏械 do; 金剛 and 固守 on a strike guard its
+// caster as 架勢 does; 吸元 feeds the caster from the blow as 吸勁 does.
 export const CAPABILITIES = new Set([
   'siphon', 'again', 'glide', 'order', 'taunt', 'cover', 'stance', 'evade', 'redirect', 'zone',
-  'disarm', 'daze', 'wound'
+  'disarm', 'daze', 'wound', 'freeze', 'mute', 'charm', 'immune', 'fortify', 'drain'
 ].flatMap((k) => [k, 'form:' + k]));
 
 // What an art does besides its measured numbers: every mechanic field and every form tag.
@@ -125,11 +131,43 @@ export function boardFoes() {
 // ── A scene on a real board ───────────────────────────────────────────────
 // Attacker A on the same row as target T at distance d, B directly behind T (for splash and
 // anything that runs through), S beside T, and H beside A (for "a companion near the hero").
-// All on open ground with no terrain defence.
+// Beyond the neighbours, one more foe in each further ring around T (R2 two steps away, R3
+// three, both off A's row and off B's line), which only a 廣及 splash reaches: of the four
+// neighbours the scene fills two, and of the eight and twelve tiles in the next rings one each,
+// a thinner crowd farther out. All on open ground with no terrain defence.
+export const SPLASH_SCENE = { neighbours: 2, perRing: 1, rings: 3 };
+// How many foes besides the target an art's splash reaches in the scene (and so, on the same
+// assumption about a crowd, in play): what the R9 splash price is scaled by.
+export const splashFoes = (art) =>
+  SPLASH_SCENE.neighbours + SPLASH_SCENE.perRing * (Math.min(SPLASH_SCENE.rings, Math.max(1, Math.floor(art?.radius || 1))) - 1);
 const sceneCache = new Map();
 function open(map, x, y) {
   const t = tileInfo(x, y, map);
   return !!t && Number.isFinite(t.cost) && !t.defense && !t.heal;
+}
+// The farther foes, placed once the scene is chosen so they never change where it is: for each
+// ring r from 2, the first open tile r steps from T, off A's row, not on another piece's tile and
+// not beside A or H (so nothing but a wide splash can tell they are there). A ring with no such
+// tile is left empty.
+function ringFoes(map, sc) {
+  const out = [],
+    taken = [sc.T, sc.B, sc.S, sc.A, sc.H];
+  for (let r = 2; r <= SPLASH_SCENE.rings; r++) {
+    let pick = null;
+    for (let dy = r; dy >= -r && !pick; dy--) {
+      if (!dy) continue;
+      for (const dx of [r - Math.abs(dy), -(r - Math.abs(dy))]) {
+        const p = { x: sc.T.x + dx, y: sc.T.y + dy };
+        const near = (q) => Math.abs(q.x - p.x) + Math.abs(q.y - p.y) <= 1;
+        if (open(map, p.x, p.y) && ![...taken, ...out].some((q) => q.x === p.x && q.y === p.y) && !near(sc.A) && !near(sc.H)) {
+          pick = p;
+          break;
+        }
+      }
+    }
+    if (pick) out.push(pick);
+  }
+  return out;
 }
 export function sceneFor(d) {
   if (sceneCache.has(d)) return sceneCache.get(d);
@@ -146,8 +184,10 @@ export function sceneFor(d) {
           B: { x: x + 1, y },
           S: { x, y: y + 1 },
           A: { x: x - d, y },
-          H: { x: x - d, y: y - 1 }
+          H: { x: x - d, y: y - 1 },
+          rings: []
         };
+        best.rings = ringFoes(map, best);
         break;
       }
     }
@@ -229,6 +269,7 @@ function build(u, art, ref, distance) {
   if (type === 'enemy') {
     t = dummyFoe(ref, 'refT', sc.T);
     s.units.push(t, dummyFoe(ref, 'refB', sc.B), dummyFoe(ref, 'refS', sc.S));
+    sc.rings.forEach((p, i) => s.units.push(dummyFoe(ref, 'refR' + (i + 2), p)));
   } else if (type === 'self') {
     hero.maxHp += 300; // hurt enough that a self-heal lands in full
     t = hero;
@@ -388,7 +429,7 @@ export function favMeasure(job, m) {
 }
 export const MEASURE_NAMES = {
   strike: 'damage (avg of soft and hard foe, early/mid/late)',
-  area: 'damage incl. splash on two neighbours (avg)',
+  area: 'damage incl. splash on two neighbours and one foe in each further ring (avg)',
   debuff: 'condition power x turns on the foe',
   heal: 'health restored on a cluster of three hurt companions (mid level)',
   shield: 'shield on a cluster of three companions (mid level)',
@@ -473,6 +514,8 @@ const conditionalBonus = (k, art) =>
 
 // Plain strike equivalent, priced with the framework's R9 table and the prices in `prices`
 // (check-skills.mjs keeps them, with their sources). Mechanics with no price are listed.
+// Guards that only ever stand on the caster of a support art.
+const CASTER_ONLY = new Set(['cover', 'taunt']);
 // Support arts are valued in 氣血 restored or shielded: `support` is the total over the people it
 // reaches, `perHead` what each of them gets.
 export function strikeEquivalent(art, prices) {
@@ -483,13 +526,22 @@ export function strikeEquivalent(art, prices) {
     paid = [];
   if (type === 'ally' || type === 'self') {
     const people = art.aura ? prices.auraPeople : 1;
-    let each = (art.heal || 0) + (art.shield?.power || 0);
-    for (const k of effectKeys(art))
-      if (prices.guards[k]) each += prices.guards[k];
+    let each = (art.heal || 0) + (art.shield?.power || 0),
+      once = 0;
+    for (const k of effectKeys(art)) {
+      const v = art[k];
+      // A guard that lasts (金剛) is priced per turn; 代受 and 挑釁 last until the next turn.
+      // 代受 and 挑釁 sit on the caster alone whatever the art's aura (battle-mastery.js
+      // selfEffectsOf), so they are counted once, not once for each person the aura reaches.
+      if (prices.guards[k] && CASTER_ONLY.has(k)) once += prices.guards[k] * (v?.turns || 1);
+      else if (prices.guards[k]) each += prices.guards[k] * (v?.turns || 1);
+      // A lasting stat (固守's 防禦, 鼓舞's 攻擊) in 氣血 per point per turn.
+      else if (prices.supportPointTurn[k] && v?.power) each += prices.supportPointTurn[k] * v.power * (v.turns || 1);
       else if (k !== 'shield') unpriced.push(k);
+    }
     // A support art's price has no worth in 氣血; it is named, not deducted.
     for (const k of costKeys(art)) unpriced.push(k);
-    return { support: each ? Math.round(each * people) : null, perHead: each, people, unpriced, paid };
+    return { support: each || once ? Math.round(each * people + once) : null, perHead: each + once, people, unpriced, paid };
   }
   if (type === 'ground') return { value: null, note: 'mobility', unpriced: [], paid: [] };
   const hits = (art.hits || [1]).reduce((a, b) => a + b, 0);
@@ -497,15 +549,27 @@ export function strikeEquivalent(art, prices) {
   if (art.safe) v += prices.safe;
   if (art.pierce) v += (prices.pierceHalf * art.pierce) / 0.5;
   if ((art.range ?? 1) > 2) v += prices.reachTile * ((art.range ?? 1) - 2);
-  if (art.splash) v += (prices.splash * art.splash) / 0.5;
+  // 廣及: the splash price assumes the two neighbours the scene fills; a wider one is priced by
+  // how many more foes the scene puts in its further rings (SPLASH_SCENE).
+  if (art.splash) v += ((prices.splash * art.splash) / 0.5) * (splashFoes(art) / SPLASH_SCENE.neighbours);
   if (art.push) v += prices.push;
   if (art.debuff) v += (prices.debuffTwoTurns * (art.debuff.turns || 2)) / 2;
   if (art.poison) v += (prices.debuffTwoTurns * (art.poison.turns || 2)) / 2;
   if (art.hpCost) v -= prices.hpCost;
-  const riders = ['safe', 'splash', 'push', 'debuff:atk', 'debuff:def', 'poison'];
+  // 吸元: the 氣血 a blow of the reference size gives back, up to the cap.
+  if (art.drain) v += prices.drain.perHp * Math.min(art.drain.cap ?? Infinity, (art.drain.share || 0) * prices.drain.refDamage);
+  // 固守 on a strike guards its caster: per point of 防禦 per turn.
+  if (art.fortify) v += prices.fortifyPointTurn * (art.fortify.power || 0) * (art.fortify.turns || 1);
+  const riders = ['safe', 'splash', 'push', 'debuff:atk', 'debuff:def', 'poison', 'drain', 'fortify'];
   for (const k of effectKeys(art)) {
     const bare = k.replace(/^form:/, '');
     if (riders.includes(k)) continue;
+    // Riders that last (定身, 閉穴, 受制, 金剛): the first turn, then each further one.
+    const turnPrice = prices.turnRiders[bare];
+    if (turnPrice && k === bare) {
+      v += turnPrice[0] + turnPrice[1] * Math.max(0, (art[bare]?.turns || 1) - 1);
+      continue;
+    }
     if (prices.riders[bare] != null && (k === bare || CAPABILITIES.has(k))) v += prices.riders[bare];
     else if (!k.startsWith('form:') || CAPABILITIES.has(k)) unpriced.push(k);
   }

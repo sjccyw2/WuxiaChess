@@ -15,7 +15,8 @@ const BM = await load('rules/battle-mastery.js');
 const FR = await load('rules/form-rules.js');
 const FM = await load('rules/ferry-market.js');
 const { TECHNIQUES, MANUAL_PRICES } = await load('data/martial-arts.js');
-const { ENCOUNTERS, RANKS, STATUS_POWER } = await load('data/encounters.js');
+const { HERO_PATHS } = await load('data/mastery-catalog.js');
+const { ENCOUNTERS, RANKS, STATUS_POWER, GUEST_GISTS } = await load('data/encounters.js');
 const { mapLayout } = await load('data/terrain.js');
 const { MAZE_TALE } = await load('data/maze-tale.js');
 const { dangerTiles } = await load('actors/danger.js');
@@ -141,6 +142,12 @@ function quietTurn(s) {
 // Win the board (every enemy down, none still to come) and walk through the camp to the next one.
 function nextBoard(s) {
   for (const e of G.enemies(s)) e.hp = 0;
+  // 破: its objects broken too; 守: held to its last round (a master still to come never falls).
+  for (const o of G.props(s)) if (G.propKind(o) === 'break') o.hp = 0;
+  if (G.boardKind(s) === 'keep') {
+    s.round = G.boardOf(s).hold;
+    s.phase = 'enemy';
+  }
   s.arrivals = {};
   G.check(s);
   R.settle(s);
@@ -432,7 +439,7 @@ section('conditions');
 section('villain traits');
 {
   check('every villain has a traits object', ENCOUNTERS.flat().every((v) => v.traits && typeof v.traits === 'object'));
-  check('RANKS has an entry per board', RANKS.length === 10 && RANKS.every((r) => r && typeof r === 'object'));
+  check('RANKS has an entry per board', RANKS.length === ENCOUNTERS.length && RANKS.every((r) => r && typeof r === 'object'));
 
   // mods on board 0's hard-coded numbers and on a later board's stage numbers.
   const plain = G.newGame(['hero', 'medic', 'guard']);
@@ -1437,7 +1444,7 @@ section('glide');
   BM.applyCondition(p, pinned, { kind: 'pin', power: 2, turns: 1 }, pinned);
   check('絆足 shortens it', G.resolve(p, pinned, unit(p, 'blade'), true).glide === 2);
   const full = board(['hero', 'xiao', 'medic']);
-  const h = put(full, 'hero', 3, 7);
+  const h = Object.assign(put(full, 'hero', 3, 7), { step: 3 }); // three steps to (6,7), whatever his own
   put(full, 'blade', 7, 7);
   teach(h, defineArt({ forms: ['glide'], mp: 2, safe: true }));
   G.move(full, h, 6, 7);
@@ -2168,6 +2175,576 @@ section('daze');
   }
 }
 
+// ── 吸元 drain ───────────────────────────────────────────────────────────
+section('drain');
+{
+  const MF = await load('rules/move-facts.js');
+  function setup(drain, extra = {}, hurt = 60) {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    u.hp = u.maxHp - hurt;
+    const t = put(s, 'scout', 5, 7);
+    const art = teach(u, defineArt({ drain, safe: true, mp: 2, ...extra }));
+    return { s, u, t, art };
+  }
+  const half = (t, f) => Math.min(30, Math.floor(0.5 * Math.min(t.hp, f.amount)));
+  {
+    const { s, u, t, art } = setup({ share: 0.5, cap: 30 });
+    const f = G.forecast(u, t, true, s);
+    const want = half(t, f);
+    check('吸元 recovers its share of what the main target lost, rounded down', f.amount > 0 && want > 0 && f.selfHeal === want, [f.amount, f.selfHeal]);
+    check('the preview says so', f.notes.includes('吸元 · 回復 ' + want + ' 氣血'), f.notes);
+    const hp = u.hp;
+    G.resolve(s, u, t, true);
+    check('the strike gives it', u.hp === hp + want, [hp, u.hp]);
+    check('the art’s page states it', MF.moveFacts(s, u, art).effectLines.includes('吸元 · 回復主目標損血的 50%，最多 30 氣血'), MF.moveFacts(s, u, art).effectLines);
+  }
+  {
+    const { s, u, t } = setup({ share: 1, cap: 5 });
+    check('no more than its cap', G.forecast(u, t, true, s).selfHeal === 5);
+    check('a bare share, or one without a cap, has the cap 30', same(G.drainOf({ drain: 0.5 }), { share: 0.5, cap: 30 }) && same(G.drainOf({ drain: { share: 0.4 } }), { share: 0.4, cap: 30 }));
+    const bare = setup(0.5);
+    const f = G.forecast(bare.u, bare.t, true, bare.s);
+    check('…and a bare share works on a strike', f.selfHeal === half(bare.t, f) && f.selfHeal > 0);
+  }
+  {
+    const { s, u, t } = setup({ share: 1, cap: 30 }, {}, 3);
+    check('never past his greatest 氣血', G.forecast(u, t, true, s).selfHeal === 3);
+  }
+  {
+    const { s, u, t } = setup({ share: 0.5, cap: 30 });
+    BM.applyCondition(s, u, { kind: 'wound', power: 5, turns: 2 }, t);
+    const f = G.forecast(u, t, true, s);
+    check('內傷 halves it', f.selfHeal === Math.floor(half(t, f) / 2) && f.selfHeal > 0, [f.amount, f.selfHeal]);
+  }
+  {
+    // The same strike with a second foe beside its target: the splash lands, the recovery is the same.
+    const a = setup({ share: 0.5, cap: 30 }, { splash: 0.5 });
+    const alone = G.forecast(a.u, a.t, true, a.s).selfHeal;
+    put(a.s, 'bow', 6, 7);
+    const f = G.forecast(a.u, a.t, true, a.s);
+    check('the splash adds nothing to it', f.splash.some((v) => v.id === 'bow' && v.amount > 0) && f.selfHeal === alone, [alone, f.selfHeal]);
+  }
+  {
+    const { s, u, t } = setup({ share: 0.5, cap: 30 });
+    BM.applyCondition(s, t, { kind: 'evade', power: 1, turns: 1 }, t);
+    const f = G.forecast(u, t, true, s);
+    check('a blow that does no damage recovers nothing', f.amount === 0 && f.selfHeal === 0 && !f.notes.some((n) => n.startsWith('吸元')));
+  }
+  {
+    const { s, u } = setup({ share: 0.5, cap: 30 });
+    const post = G.makeUnit('starPost', 'prop', 5, 3, 60, 0, 0, 5, 0, 0);
+    s.units.push(post);
+    put(s, 'hero', 4, 3);
+    const f = G.forecast(u, post, true, s);
+    check('a blow a board object takes recovers nothing', f.amount > 0 && f.selfHeal === 0);
+  }
+}
+
+// ── 廣及 splash radius ───────────────────────────────────────────────────
+section('radius');
+{
+  const MF = await load('rules/move-facts.js');
+  const s = board();
+  const u = put(s, 'hero', 4, 7);
+  const t = put(s, 'scout', 5, 7);
+  put(s, 'bow', 6, 7); // one tile from the target
+  put(s, 'blade', 7, 7); // two
+  put(s, 'chief', 8, 7); // three
+  put(s, 'guard', 5, 6); // a hero beside the target
+  const post = G.makeUnit('starPost', 'prop', 3, 7, 60, 0, 0, 5, 0, 0); // an object two tiles off
+  s.units.push(post);
+  const hit = (radius) => {
+    teach(u, defineArt({ splash: 0.5, safe: true, mp: 2, ...(radius ? { radius } : {}) }));
+    return G.forecast(u, t, true, s).splash.map((v) => v.id).sort().join();
+  };
+  check('without it, splash reaches the four neighbours', hit(0) === 'bow', hit(0));
+  check('radius 1 is the same', hit(1) === 'bow', hit(1));
+  check('radius 2 reaches every other enemy within two tiles', hit(2) === 'blade,bow', hit(2));
+  check('radius 3 within three', hit(3) === 'blade,bow,chief', hit(3));
+  check('heroes and objects in range are left alone, as by any splash', !hit(3).includes('guard') && !hit(3).includes('starPost'));
+  check('the reach test is one helper', FR.inSplash({ radius: 2 }, t, { x: 7, y: 7 }) && !FR.inSplash({ radius: 2 }, t, { x: 8, y: 7 }) && !FR.inSplash({}, t, t) && FR.splashRadius({ radius: 3 }) === 3 && FR.splashRadius({}) === 1);
+  const art = teach(u, defineArt({ splash: 0.5, radius: 2, safe: true, mp: 2 }));
+  check('the art’s page says how far', MF.moveFacts(s, u, art).effectLines.includes('2 格內濺射 50%'), MF.moveFacts(s, u, art).effectLines);
+  const f = G.forecast(u, t, true, s);
+  const hp = Object.fromEntries(['bow', 'blade', 'chief'].map((id) => [id, unit(s, id).hp]));
+  G.resolve(s, u, t, true);
+  const lost = (id) => hp[id] - unit(s, id).hp;
+  check('the strike hits exactly those the preview named, by its amounts', lost('bow') === f.splash.find((v) => v.id === 'bow').amount && lost('blade') === f.splash.find((v) => v.id === 'blade').amount && lost('chief') === 0);
+  // 代受: a master’s escort takes direct blows for him, not splash; the same for the wider reach.
+  withTraits('lieutenant-0', { cover: 'master' }, () => {
+    const c = board();
+    const h = put(c, 'hero', 4, 7);
+    put(c, 'scout', 5, 7);
+    put(c, 'chief', 7, 7);
+    put(c, 'blade', 8, 7);
+    teach(h, defineArt({ splash: 0.5, radius: 2, safe: true, mp: 2 }));
+    const g = G.forecast(h, unit(c, 'scout'), true, c);
+    check('a master two tiles off takes the splash himself, his escort beside him or not', g.splash.some((v) => v.id === 'chief' && v.amount > 0) && !g.splash.some((v) => v.id === 'blade'));
+  });
+}
+
+// ── 固守 fortify ─────────────────────────────────────────────────────────
+section('fortify');
+{
+  const MF = await load('rules/move-facts.js');
+  const s = board(['medic', 'guard', 'hero']);
+  const m = put(s, 'medic', 4, 7),
+    g = put(s, 'guard', 5, 7),
+    h = put(s, 'hero', 7, 7);
+  const art = teach(m, defineArt({ target: 'ally', fortify: { power: 6, turns: 1 }, aura: 1, mp: 2, factor: undefined }));
+  const def = [G.stat(m, 'def', s), G.stat(g, 'def', s), G.stat(h, 'def', s)];
+  check('a support art with 固守 may be aimed at a companion', G.targetOK(s, m, g, true));
+  check('the art’s page shows its strength', MF.moveFacts(s, m, art).powerText === '6 防禦' && MF.moveFacts(s, m, art).effectLines.includes('固守 · 防禦 ＋6 · 1 回合'), JSON.stringify(MF.moveFacts(s, m, art).effectLines));
+  G.resolve(s, m, g, true);
+  check('固守 lands on everyone its aura reaches, no one else', !!g.conditions?.fortify && !!m.conditions?.fortify && !h.conditions?.fortify);
+  check('防禦 ＋power', G.stat(g, 'def', s) === def[1] + 6 && G.stat(m, 'def', s) === def[0] + 6 && G.stat(h, 'def', s) === def[2]);
+  check('the chip shows it', BM.activeEffects(g, s.round).some((l) => l.startsWith('固守 · 防禦 ＋6')));
+  check('a save keeps it', unit(R.restoreRun(copy(s)), 'guard').conditions?.fortify?.power === 6);
+  check('解厄 does not lift it', !FR.supportEntry(['cleanse'], m, g, 10).clean.includes('fortify'));
+  BM.applyCondition(s, g, { kind: 'fortify', power: 3, turns: 1 }, m);
+  check('a weaker 固守 does not replace a stronger', g.conditions.fortify.power === 6);
+  G.startEnemy(s);
+  check('it holds through the enemy phase', !!g.conditions?.fortify);
+  for (const e of G.enemies(s)) e.acted = true;
+  G.nextRound(s);
+  check('it is gone when the heroes’ next turn begins', !g.conditions?.fortify && G.stat(g, 'def', s) === def[1]);
+  // As 振奮: a companion who has acted keeps it through his own next turn.
+  h.acted = true;
+  put(s, 'hero', 5, 6);
+  m.mp = m.maxMp;
+  G.resolve(s, m, g, true);
+  check('on a companion who has acted it lasts a round longer, as 振奮 does', h.conditions?.fortify?.through === s.round + 1 && g.conditions?.fortify?.through === s.round);
+  // On a strike it guards the caster, never the foe.
+  const t = board();
+  const u = put(t, 'hero', 4, 7),
+    foe = put(t, 'scout', 5, 7);
+  teach(u, defineArt({ fortify: { power: 5, turns: 1 }, safe: true, mp: 2 }));
+  const f = G.forecast(u, foe, true, t);
+  check('on a strike the preview gives it to the caster', !f.effects.some((e) => e.kind === 'fortify') && f.notes.includes('固守 · 至下回合，自身防禦 ＋5'), f.notes);
+  G.resolve(t, u, foe, true);
+  check('…and the strike does', u.conditions?.fortify?.power === 5 && !foe.conditions?.fortify);
+  check('a save from before 固守 still loads', !!R.restoreRun(copy(board())));
+}
+
+// ── 金剛 immune ──────────────────────────────────────────────────────────
+section('immune');
+{
+  const MF = await load('rules/move-facts.js');
+  const immune = (s, v, turns = 1) => BM.applyCondition(s, v, { kind: 'immune', power: 1, turns }, v);
+  {
+    const s = board(['medic', 'guard', 'hero']);
+    const m = put(s, 'medic', 4, 7),
+      g = put(s, 'guard', 5, 7);
+    const art = teach(m, defineArt({ target: 'ally', immune: { turns: 1 }, mp: 2, factor: undefined }));
+    check('the art’s page states it', MF.moveFacts(s, m, art).effectLines.includes('金剛 · 直接攻擊無功，不受其附帶之效 · 1 回合') && MF.moveFacts(s, m, art).powerText === '1 回合', JSON.stringify(MF.moveFacts(s, m, art)));
+    G.resolve(s, m, g, true);
+    check('金剛 lands on the recipient until the end of this enemy phase', g.conditions?.immune?.through === 1 && !m.conditions?.immune);
+    check('the chip shows it', BM.activeEffects(g, s.round).some((l) => l.startsWith('金剛')));
+    check('a save keeps it', !!unit(R.restoreRun(copy(s)), 'guard').conditions?.immune);
+    // A plain blow and its poison: nothing lands; he still counters.
+    const foe = Object.assign(put(s, 'scout', 6, 7), { step: 0 });
+    withTraits('scout-0', { basicPoison: { power: 4, turns: 2 } }, () => {
+      G.startEnemy(s);
+      G.enemyAct(s, foe);
+    });
+    check('an enemy’s blow takes off nothing', g.hp === g.maxHp);
+    check('and puts nothing on him', !g.conditions?.poison && Object.keys(g.conditions).join() === 'immune', Object.keys(g.conditions || {}));
+    check('he still counters', foe.hp < foe.maxHp);
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    check('it is gone when the heroes’ next turn begins', !g.conditions?.immune);
+  }
+  {
+    // A signature: no damage, no condition; the signature is spent all the same.
+    const s = board();
+    const g = put(s, 'guard', 5, 7);
+    const chief = put(s, 'chief', 6, 7);
+    immune(s, g);
+    s.round = 3;
+    check('the master’s signature is due', G.signatureDue(s, chief));
+    G.startEnemy(s);
+    G.enemyAct(s, chief);
+    check('an enemy signature takes off nothing and lays nothing', g.hp === g.maxHp && Object.keys(g.conditions).join() === 'immune' && chief.signatureRound === 3, Object.keys(g.conditions || {}));
+  }
+  {
+    // His own blow: the counter takes nothing off him; his own price still does.
+    const s = board(['guard', 'hero', 'medic']);
+    const g = put(s, 'guard', 5, 7),
+      foe = put(s, 'scout', 6, 7);
+    immune(s, g);
+    const f = G.forecast(g, foe, false, s);
+    check('the preview shows the counter taking nothing', f.counterRaw === 0 && f.counter === 0 && f.notes.includes('金剛 · 還擊無功'), f.notes);
+    G.resolve(s, g, foe, false);
+    check('the counter takes nothing', g.hp === g.maxHp);
+    const p = board(['guard', 'hero', 'medic']);
+    const pg = put(p, 'guard', 5, 7),
+      pf = put(p, 'scout', 6, 7);
+    BM.applyCondition(p, pg, { kind: 'poison', power: 4, turns: 2 }, pf);
+    immune(p, pg);
+    teach(pg, defineArt({ hpCost: 5, safe: true, mp: 2 }));
+    G.resolve(p, pg, pf, true);
+    check('his own 氣血 price is paid', pg.hp === pg.maxHp - 5);
+    quietTurn(p);
+    check('a poison laid before still bites', pg.hp === pg.maxHp - 9 && !!pg.conditions?.poison);
+  }
+  {
+    // A blow at an immune piece: 0, nothing put on, the preview says so; splash on one is 0.
+    const s = board();
+    const u = put(s, 'hero', 4, 7),
+      t = put(s, 'scout', 5, 7),
+      v = put(s, 'bow', 6, 7);
+    immune(s, t);
+    immune(s, v);
+    teach(u, defineArt({ splash: 0.5, mp: 2, debuff: { stat: 'def', power: 3, turns: 2 }, freeze: { turns: 1 } }));
+    const f = G.forecast(u, t, true, s);
+    check('the preview of a blow at him says 金剛 and shows 0', f.amount === 0 && f.hits.every((n) => n === 0) && f.notes.includes('金剛 · 此擊無功'), f.notes);
+    check('…with none of its effects, and no line of them', !f.effects.length && !f.notes.some((n) => n.startsWith('定身')), f.notes);
+    check('…and he still counters', f.counterRaw > 0);
+    check('splash on an immune piece is 0', f.splash.every((x) => x.amount === 0 && x.raw === 0));
+    G.resolve(s, u, t, true);
+    check('the strike takes nothing and lays nothing', t.hp === t.maxHp && v.hp === v.maxHp && !t.conditions.exposed && !t.conditions.freeze);
+  }
+  {
+    // Two turns cover two enemy phases.
+    const s = board(['medic', 'guard', 'hero']);
+    const m = put(s, 'medic', 4, 7),
+      g = put(s, 'guard', 5, 7);
+    teach(m, defineArt({ target: 'ally', immune: { turns: 2 }, mp: 2, factor: undefined }));
+    G.resolve(s, m, g, true);
+    quietTurn(s);
+    check('turns 2 holds into the second enemy phase', !!g.conditions?.immune);
+    quietTurn(s);
+    check('and is gone after it', !g.conditions?.immune);
+  }
+  {
+    // On a strike it guards the caster.
+    const s = board();
+    const u = put(s, 'hero', 4, 7),
+      t = put(s, 'scout', 5, 7);
+    teach(u, defineArt({ immune: { turns: 1 }, safe: true, mp: 2 }));
+    const f = G.forecast(u, t, true, s);
+    check('on a strike the preview gives it to the caster', f.notes.includes('金剛 · 至下回合，敵人的直接攻擊對自己無功') && !f.effects.some((e) => e.kind === 'immune'), f.notes);
+    G.resolve(s, u, t, true);
+    check('…and the strike does', u.conditions?.immune?.through === 1 && !t.conditions?.immune);
+  }
+  // The enemy goes for another, as from 閃身.
+  const ai = (guarded) => {
+    const a = board(['medic', 'hero', 'guard']);
+    const foe = Object.assign(put(a, 'blade', 6, 7), { step: 0, range: 2 });
+    const weak = Object.assign(put(a, 'medic', 4, 7), { hp: 30 });
+    const other = put(a, 'hero', 8, 7);
+    if (guarded) immune(a, weak);
+    G.startEnemy(a);
+    const hp = [weak.hp, other.hp];
+    withTraits('lieutenant-0', {}, () => G.enemyAct(a, foe));
+    return { weak: weak.hp < hp[0], other: other.hp < hp[1] };
+  };
+  check('an enemy strikes the weakest when she has no 金剛', ai(false).weak);
+  const shy = ai(true);
+  check('it goes for another when she has', !shy.weak && shy.other);
+}
+
+// ── 定身 freeze ──────────────────────────────────────────────────────────
+section('freeze');
+{
+  const MF = await load('rules/move-facts.js');
+  function setup(turns, foe = 'scout') {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, foe, 5, 7);
+    const art = teach(u, defineArt({ freeze: { turns }, safe: true, mp: 2, factor: 0.2 }));
+    return { s, u, t, art };
+  }
+  {
+    const { s, u, t, art } = setup(2);
+    const f = G.forecast(u, t, true, s);
+    check('the preview says how long', f.notes.includes('定身 · 2 回合不能行動') && f.effects.some((e) => e.kind === 'freeze' && e.turns === 2), f.notes);
+    check('the art’s page states it', MF.moveFacts(s, u, art).effectLines.includes('定身 · 不能移動、出手、施展絕技或還擊 · 2 回合') && MF.moveFacts(s, u, art).effectLines.includes('局主只受一回合，下一回合可抵抗'));
+    G.resolve(s, u, t, true);
+    check('定身 lands through the second enemy phase', t.conditions?.freeze?.through === 2);
+    check('the chip shows it', BM.activeEffects(t, s.round).some((l) => l.startsWith('定身')));
+    check('a save keeps it', unit(R.restoreRun(copy(s)), 'scout').conditions?.freeze?.through === 2);
+    check('it is no ailment a hero’s 解厄 lifts', !FR.AILMENTS.includes('freeze'));
+    const guard = put(s, 'guard', 5, 6);
+    const g = G.forecast(guard, t, false, s);
+    check('a frozen piece does not counter, and the preview says so', g.counterRaw === 0 && g.notes.includes('定身 · 青城斥候本回合不能行動，不還擊'), g.notes);
+    const held = new Set(dangerTiles(s));
+    const c = t.conditions.freeze;
+    delete t.conditions.freeze;
+    const free = new Set(dangerTiles(s));
+    t.conditions.freeze = c;
+    check('the danger zone leaves it out', free.has('6,7') && !held.has('6,7'));
+    for (const round of [1, 2]) {
+      const hp = [u.hp, guard.hp],
+        at = [t.x, t.y];
+      G.startEnemy(s);
+      const effects = G.enemyAct(s, t);
+      check('enemy phase ' + round + ': it neither moves nor strikes', t.x === at[0] && t.y === at[1] && u.hp === hp[0] && guard.hp === hp[1] && t.acted && same(effects, [['scout', '定身', 'status']]));
+      for (const e of G.enemies(s)) e.acted = true;
+      G.nextRound(s);
+    }
+    check('after its two turns it is free', !t.conditions?.freeze);
+    G.startEnemy(s);
+    const hp = u.hp + guard.hp;
+    G.enemyAct(s, t);
+    check('and acts again', u.hp + guard.hp < hp);
+  }
+  {
+    // A master: one turn at most, then he shakes off the next the round after.
+    const { s, u, t } = setup(2, 'chief');
+    const f = G.forecast(u, t, true, s);
+    check('a master is frozen one turn, and the preview says so', f.effects.some((e) => e.kind === 'freeze' && e.turns === 1) && f.notes.includes('定身 · 1 回合不能行動（局主只受一回合）'), f.notes);
+    G.resolve(s, u, t, true);
+    check('…and the strike does', t.conditions?.freeze?.through === 1 && t.lastFreezeRound === 1);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    const g = G.forecast(u, t, true, s);
+    check('the round after, he resists', !g.effects.some((e) => e.kind === 'freeze') && g.notes.includes('局主已換氣，本回合抵抗定身'), g.notes);
+    G.resolve(s, u, t, true);
+    check('and is not frozen', !t.conditions?.freeze);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    G.resolve(s, u, t, true);
+    check('the round after that he can be again', !!t.conditions?.freeze && t.lastFreezeRound === 3);
+    const l = setup(1, 'blade');
+    G.resolve(l.s, l.u, l.t, true);
+    quietTurn(l.s);
+    l.u.mp = l.u.maxMp;
+    G.resolve(l.s, l.u, l.t, true);
+    check('a lieutenant is frozen two rounds running', !!l.t.conditions?.freeze);
+  }
+  {
+    // A due signature waits.
+    const { s, u, t } = setup(1, 'chief');
+    s.round = 3;
+    G.resolve(s, u, t, true);
+    check('while frozen a due signature does not fire', !G.signatureDue(s, t) && G.roundsToSignature(s, t) === 0);
+    G.startEnemy(s);
+    G.enemyAct(s, t);
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    check('and is due once he is free', G.signatureDue(s, t) && !Number.isInteger(t.signatureRound));
+  }
+  {
+    // A blow that does not land freezes no one.
+    const { s, u, t } = setup(1);
+    BM.applyCondition(s, t, { kind: 'evade', power: 1, turns: 1 }, t);
+    const f = G.forecast(u, t, true, s);
+    check('a blow 閃身 voids lays no 定身, and its line goes', !f.effects.length && !f.notes.some((n) => n.startsWith('定身')), f.notes);
+  }
+}
+
+// ── a blow that holds its target is not answered ─────────────────────────
+section('held, so no counter');
+{
+  for (const [kind, name] of [['freeze', '定身'], ['mute', '閉穴'], ['charm', '受制']]) {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, 'scout', 5, 7);
+    const plain = teach(u, defineArt({ mp: 2, factor: 0.2 }));
+    const before = G.forecast(u, t, true, s);
+    check(name + ': without it the scout answers a blow from beside', before.counterRaw > 0, before.counterRaw);
+    u.learned = u.learned.filter((id) => id !== plain);
+    teach(u, defineArt({ [kind]: { turns: 1 }, mp: 2, factor: 0.2 }));
+    const f = G.forecast(u, t, true, s);
+    check(name + ': the blow that lays it is not answered, and the preview says so', f.counterRaw === 0 && f.counter === 0 && f.notes.includes(name + ' · 無從還擊'), [f.counterRaw, f.notes]);
+    const hp = u.hp;
+    G.resolve(s, u, t, true);
+    check(name + ': the strike takes nothing back', u.hp === hp && !!t.conditions?.[kind], [hp, u.hp]);
+  }
+  {
+    // A master who has just been frozen resists the next one, so he answers it.
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, 'chief', 5, 7);
+    teach(u, defineArt({ freeze: { turns: 1 }, mp: 2, factor: 0.2 }));
+    t.lastFreezeRound = s.round - 1;
+    const f = G.forecast(u, t, true, s);
+    check('a master who resists the 定身 still answers', !f.effects.some((e) => e.kind === 'freeze') && f.counterRaw > 0, [f.effects, f.counterRaw]);
+  }
+}
+
+// ── 閉穴 mute ────────────────────────────────────────────────────────────
+section('mute');
+{
+  const MF = await load('rules/move-facts.js');
+  function setup(turns, foe = 'scout') {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, foe, 5, 7);
+    const art = teach(u, defineArt({ mute: { turns }, safe: true, mp: 2, factor: 0.2 }));
+    return { s, u, t, art };
+  }
+  {
+    const { s, u, t, art } = setup(2);
+    const f = G.forecast(u, t, true, s);
+    check('the preview says how long', f.notes.includes('閉穴 · 2 回合不能出手') && f.effects.some((e) => e.kind === 'mute' && e.turns === 2), f.notes);
+    check('the art’s page states it', MF.moveFacts(s, u, art).effectLines.includes('閉穴 · 不能出手、施展絕技或還擊，仍可移動 · 2 回合'));
+    G.resolve(s, u, t, true);
+    check('閉穴 lands through the second enemy phase', t.conditions?.mute?.through === 2);
+    check('a save keeps it', unit(R.restoreRun(copy(s)), 'scout').conditions?.mute?.through === 2);
+    const guard = put(s, 'guard', 5, 6);
+    const g = G.forecast(guard, t, false, s);
+    check('a muted piece does not counter, and the preview says so', g.counterRaw === 0 && g.notes.includes('閉穴 · 青城斥候本回合不能出手，不還擊'), g.notes);
+    const held = new Set(dangerTiles(s));
+    const c = t.conditions.mute;
+    delete t.conditions.mute;
+    const free = new Set(dangerTiles(s));
+    t.conditions.mute = c;
+    check('the danger zone shows no strike for it', free.has('6,7') && !held.has('6,7'));
+    G.startEnemy(s);
+    const hp = [u.hp, guard.hp];
+    G.enemyAct(s, t);
+    check('beside two heroes it strikes neither', u.hp === hp[0] && guard.hp === hp[1] && t.acted);
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    quietTurn(s);
+    check('after its two turns it is gone', !t.conditions?.mute);
+  }
+  {
+    // It still walks: toward the heroes as its kind does, or back to its post.
+    const s = board();
+    const h = put(s, 'hero', 3, 7);
+    const t = put(s, 'scout', 8, 7);
+    BM.applyCondition(s, t, { kind: 'mute', power: 1, turns: 1 }, h);
+    const d = G.distance(h, t);
+    soloTurn(s, t);
+    check('a muted piece still advances', G.distance(h, t) < d && h.hp === h.maxHp, [d, G.distance(h, t)]);
+    const p = board();
+    const ph = put(p, 'hero', 4, 7);
+    const chief = put(p, 'chief', 5, 7);
+    BM.applyCondition(p, chief, { kind: 'mute', power: 1, turns: 1 }, ph);
+    soloTurn(p, chief);
+    const back = p.logs.at(-1);
+    check('a muted piece on a post walks back toward it rather than strike', chief.moved && back.text === '退回崗位。' && back.who === '余滄海' && ph.hp === ph.maxHp, JSON.stringify(back));
+  }
+  {
+    const { s, u, t } = setup(2, 'chief');
+    s.round = 3;
+    const f = G.forecast(u, t, true, s);
+    check('a master is muted one turn', f.notes.includes('閉穴 · 1 回合不能出手（局主只受一回合）'), f.notes);
+    G.resolve(s, u, t, true);
+    check('…and his due signature waits', t.conditions?.mute?.through === 3 && !G.signatureDue(s, t) && t.lastMuteRound === 3);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    const g = G.forecast(u, t, true, s);
+    check('the round after, he resists', !g.effects.some((e) => e.kind === 'mute') && g.notes.includes('局主已換氣，本回合抵抗閉穴'), g.notes);
+  }
+}
+
+// ── 受制 charm ───────────────────────────────────────────────────────────
+section('charm');
+{
+  const MF = await load('rules/move-facts.js');
+  function setup(foe = 'scout', turns = 1) {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, foe, 5, 7);
+    const art = teach(u, defineArt({ charm: { turns }, safe: true, mp: 2, factor: 0.2 }));
+    return { s, u, t, art };
+  }
+  {
+    const { s, u, t, art } = setup('scout', 1);
+    const f = G.forecast(u, t, true, s);
+    check('the preview says it turns', f.notes.includes('受制 · 倒戈 1 回合') && f.effects.some((e) => e.kind === 'charm'), f.notes);
+    check('the art’s page states it', MF.moveFacts(s, u, art).effectLines.includes('受制 · 倒戈，以普攻攻擊同夥 · 1 回合') && MF.moveFacts(s, u, art).effectLines.includes('局主與副手不受制，改為失神'));
+    G.resolve(s, u, t, true);
+    check('受制 lands until the end of this enemy phase', t.conditions?.charm?.through === 1 && G.charmed(t));
+    check('a save keeps it', !!unit(R.restoreRun(copy(s)), 'scout').conditions?.charm);
+    const guard = put(s, 'guard', 5, 6);
+    check('heroes cannot strike it, with a plain blow or an art', !G.hostile(guard, t) && !G.targetOK(s, guard, t, false) && !G.targetOK(s, guard, t, true));
+    check('it still counts as an enemy', G.enemies(s).includes(t) && G.objectiveLeft(s).foes === 4);
+    const swayed = new Set(dangerTiles(s));
+    const c = t.conditions.charm;
+    delete t.conditions.charm;
+    const free = new Set(dangerTiles(s));
+    t.conditions.charm = c;
+    check('the danger zone leaves it out', free.has('6,7') && !swayed.has('6,7'));
+    const bow = put(s, 'bow', 7, 7);
+    const art2 = teach(guard, defineArt({ splash: 0.5, radius: 3, safe: true, mp: 2, range: 3 }));
+    const sf = G.forecast(guard, bow, true, s, TECHNIQUES[art2]);
+    check('no hero’s splash falls on it', sf.splash.length === 0 && G.distance(t, bow) <= 3, JSON.stringify(sf.splash));
+    // The enemy phase: it walks to the nearest uncharmed enemy and strikes it; that one counters.
+    G.startEnemy(s);
+    const hp = [bow.hp, u.hp, guard.hp];
+    const effects = G.enemyAct(s, t);
+    check('it strikes the nearest enemy with its plain attack', bow.hp < hp[0] && effects[0][0] === 'bow' && G.distance(t, bow) === 1 && !effects.signature, JSON.stringify(effects));
+    check('the log says so', s.logs.some((l) => l.who === '青城斥候' && l.text.startsWith('受制倒戈，以「快刀」擊中青城弓手')));
+    check('the piece struck counters by the ordinary rules', t.hp < t.maxHp && effects.some((e) => e[0] === 'scout'));
+    check('no hero is touched', u.hp === hp[1] && guard.hp === hp[2]);
+    const mine = t.hp;
+    G.enemyAct(s, bow);
+    check('the other enemies do not strike it', t.hp === mine);
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    check('once it wears off it is an ordinary enemy again', !G.charmed(t) && G.hostile(u, t));
+  }
+  {
+    // Masters and lieutenants are not charmed: the art takes their next action instead.
+    const { s, u, t } = setup('chief');
+    const f = G.forecast(u, t, true, s);
+    check('a master is dazed instead, and the preview says so', !f.effects.some((e) => e.kind === 'charm') && f.effects.some((e) => e.kind === 'daze') && f.notes.includes('局主不受制，改為失神') && f.notes.includes('失神 · 余滄海失去下一次行動'), f.notes);
+    G.resolve(s, u, t, true);
+    check('…by 失神’s own rule', !!t.conditions?.daze && !t.conditions?.charm && t.lastDazeRound === 1);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    const g = G.forecast(u, t, true, s);
+    check('the round after, he resists the 失神', !g.effects.some((e) => e.kind === 'daze' || e.kind === 'charm') && g.notes.includes('局主已換氣，本回合抵抗失神'), g.notes);
+    const l = setup('blade');
+    const lf = G.forecast(l.u, l.t, true, l.s);
+    check('a lieutenant is dazed instead', lf.notes.includes('副手不受制，改為失神') && lf.effects.some((e) => e.kind === 'daze') && !lf.effects.some((e) => e.kind === 'charm'), lf.notes);
+  }
+  {
+    // The board: 殲滅 still needs it down; 斬將 is won with the master down, whoever is charmed.
+    const { s, u, t } = setup();
+    G.resolve(s, u, t, true);
+    s.arrivals = {};
+    for (const e of G.enemies(s)) if (e !== t) e.hp = 0;
+    check('殲滅 is not won while a charmed piece stands', !G.KIND_RULES.rout.won(s));
+    t.hp = 0;
+    check('…and is once it falls', G.KIND_RULES.rout.won(s));
+    const w = setup();
+    G.resolve(w.s, w.u, w.t, true);
+    unit(w.s, 'chief').hp = 0;
+    G.check(w.s);
+    check('斬將 is won with the master down, a charmed piece standing', w.s.result === 'win');
+  }
+  {
+    // Alone, it stands; under 閉穴 as well, it only walks.
+    const { s, u, t } = setup();
+    G.resolve(s, u, t, true);
+    for (const e of G.enemies(s)) if (e !== t) e.hp = 0;
+    const at = [t.x, t.y];
+    G.startEnemy(s);
+    check('with no enemy left it stands still', same(G.enemyAct(s, t), []) && t.x === at[0] && t.y === at[1]);
+    const m = setup();
+    G.resolve(m.s, m.u, m.t, true);
+    BM.applyCondition(m.s, m.t, { kind: 'mute', power: 1, turns: 1 }, m.u);
+    const bow = put(m.s, 'bow', 7, 7);
+    G.startEnemy(m.s);
+    G.enemyAct(m.s, m.t);
+    check('charmed and muted, it walks up and does not strike', bow.hp === bow.maxHp && G.distance(m.t, bow) === 1);
+  }
+  {
+    // It gives and takes none of its side’s traits.
+    const { s, u, t } = setup();
+    G.resolve(s, u, t, true);
+    const bow = unit(s, 'bow');
+    const plain = [G.stat(bow, 'atk', s), G.stat(t, 'atk', s)];
+    withTraits('scout-0', { banner: { atk: 3 } }, () => check('a charmed bearer gives no 盟令', G.stat(bow, 'atk', s) === plain[0]));
+    withTraits('bow-0', { banner: { atk: 3 } }, () => check('…and a charmed piece takes none', G.stat(t, 'atk', s) === plain[1] && G.stat(unit(s, 'chief'), 'atk', s) > 0));
+    const chief = put(s, 'chief', 5, 6);
+    withTraits('scout-0', { cover: 'master' }, () => {
+      check('a charmed escort covers no master', G.distance(t, chief) === 1 && !G.coverer(s, chief));
+      const c = t.conditions.charm;
+      delete t.conditions.charm;
+      check('…as it would uncharmed', G.coverer(s, chief) === t);
+      t.conditions.charm = c;
+    });
+  }
+}
+
 // ── Where the two stages meet (§8) ───────────────────────────────────────
 section('interactions');
 {
@@ -2532,6 +3109,11 @@ section('prefers');
       const s = board();
       s.run.stage = stage;
       const chief = put(s, 'chief', 5, 3);
+      // The three heroes as these checks were written for (氣血 and 內力), so a rebalance of their
+      // numbers does not decide who is struck.
+      Object.assign(unit(s, 'medic'), { hp: 94, maxHp: 94, mp: 76, maxMp: 76 });
+      Object.assign(unit(s, 'guard'), { hp: 148, maxHp: 148, mp: 44, maxMp: 44 });
+      Object.assign(unit(s, 'hero'), { hp: 112, maxHp: 112 });
       setup(s);
       const before = new Map(G.party(s).map((v) => [v.id, v.hp]));
       G.startEnemy(s);
@@ -2635,7 +3217,7 @@ section('phase');
     const s = board();
     const hero = put(s, 'hero', 4, 3),
       chief = put(s, 'chief', 5, 3);
-    teach(hero, defineArt({ hits: [0.5, 0.5], factor: 2 }));
+    teach(hero, defineArt({ hits: [0.5, 0.5], factor: 1.5 }));
     hero.mp = 40;
     chief.hp = Math.floor(chief.maxHp / 2) + 10;
     const f = G.forecast(hero, chief, true, s);
@@ -3247,7 +3829,7 @@ for (const stage of [5, 6]) {
   const want = { 5: [[373, 47, 20, 2, 2], [156, 44, 12, 4, 2]], 6: [[452, 59, 22, 2, 2], [193, 54, 13, 4, 2]] }[stage];
   check('stage ' + stage + ': 金輪國師 and 霍都 have the spec’s numbers', same(numbersOf(jin), want[0]) && same(numbersOf(huo), want[1]), numbersOf(jin) + ' / ' + numbersOf(huo));
   check('stage ' + stage + ': 龍象般若功 is a line at 1.30 reaching 3', G.enemyTechnique(jin, s).style === 'line' && G.enemyTechnique(jin, s).factor === 1.3 && G.enemyTechnique(jin, s).reach === 3);
-  check('stage ' + stage + ': 金輪國師’s page', same(pageOf(s, jin), ['輪勢穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。', '絕技射程 3 格。']), JSON.stringify(pageOf(s, jin)));
+  check('stage ' + stage + ': 金輪國師’s page', same(pageOf(s, jin), ['輪勢穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。', '絕技射程 3 格。', '【雙局主】與完顏洪烈同為局主，兩人都倒下才算取勝（守滿回合亦勝）。']), JSON.stringify(pageOf(s, jin)));
   check('stage ' + stage + ': 霍都 holds the gateway (RULINGS F) and picks the lone hero', same(G.enemyTraitLines(s, huo), ['【坐鎮】守在門洞（6，5）一格內，不離位。', '【偏好】專挑落單者。']), JSON.stringify(G.enemyTraitLines(s, huo)));
   check('stage ' + stage + ': the archer holds the east wall; the horseman rides five', same(G.enemyTraitLines(s, bow), ['【坐鎮】守在東牆（15，6）一格內，不離位。']) && scout.step === 5);
   check('stage ' + stage + ': the posts are ground the heroes can walk to', postsReachable(s));
@@ -3294,7 +3876,7 @@ section('board 7 寒玉石室: the venom that stops the healing');
   s.round = 2;
   const ring = mapLayout(7).cells.filter((p) => G.distance(p, li) === 3 && G.walkable(p.x, p.y, 7) && !G.at(s, p.x, p.y));
   for (const v of G.party(s)) if (['hero', 'medic', 'guard'].includes(v.id)) Object.assign(v, { x: -9, y: -9 }); else v.hp = 0; // the three are put again below; a recruit sits out
-  put(s, 'medic', ring[0].x, ring[0].y);
+  Object.assign(put(s, 'medic', ring[0].x, ring[0].y), { hp: 94, maxHp: 94 }); // as written for: one volley does not fell her
   const guardAt = ring.find((p) => G.distance(p, ring[0]) > 2);
   put(s, 'guard', guardAt.x, guardAt.y).hp = 60;
   put(s, 'hero', mapLayout(7).allies[0].x, mapLayout(7).allies[0].y);
@@ -3336,11 +3918,11 @@ section('board 9 無刻漏臺: the mirror');
   const [mu, jiu, bow, scout] = foesOf(s);
   check('慕容博 and 鳩摩智 have the spec’s numbers', same(numbersOf(mu), [867, 93, 24, 4, 2]) && same(numbersOf(jiu), [337, 86, 16, 3, 2]), numbersOf(mu) + ' / ' + numbersOf(jiu));
   check('斗轉星移 is the mirror, no blow', G.enemyTechnique(mu, s).style === 'mirror' && !G.enemyTechnique(mu, s).strikes);
-  check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。', '【星索護陣】每名存活的守索人替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
+  check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。', '【星索護陣】每根立著的星索樁替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
   check('鳩摩智’s page', same(pageOf(s, jiu), ['另外削去目標 24 點內力。', '絕技射程 4 格。', '【偏好】專挑內力深厚者。']), JSON.stringify(pageOf(s, jiu)));
-  check('the rope-holders’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【坐鎮】守在索樁一格內，不離位。', '【護陣】存活時替慕容博抵擋 35% 傷害。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
+  check('the rope-holders’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【坐鎮】守在索樁一格內，不離位。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
   check('the posts are ground the heroes can walk to', postsReachable(s));
-  check('two living rope-holders take 70% off him', G.wardShare(s, mu) === 70);
+  check('two standing star posts take 70% off him', G.wardShare(s, mu) === 70);
   // The mirror: charged in round 2, the first direct blow does him nothing and turns half back.
   for (const v of G.party(s)) if (!['hero', 'medic', 'guard'].includes(v.id)) v.hp = 0;
   s.round = 2;
@@ -3356,13 +3938,123 @@ section('board 9 無刻漏臺: the mirror');
   const atk = mu.atk;
   G.check(s);
   check('at half his phase is the data’s', mu.phased && mu.atk === atk + 5 && mu.range === 3 && mu.brace && s.logs.at(-1).text === G.unitDetails(mu).traits.phase.log);
-  // A rope breaks.
-  bow.hp = 1;
-  const reach = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: bow.x + dx, y: bow.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
+  // A rope breaks: a hero fells the post it is tied to.
+  const post = unit(s, 'starPost#1');
+  post.hp = 1;
+  const reach = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: post.x + dx, y: post.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
   const hero = put(s, 'hero', reach.x, reach.y);
   hero.acted = hero.moved = false;
-  G.resolve(s, hero, bow, false);
+  G.resolve(s, hero, post, false);
   check('one rope down: the ward is 35% and the log says so', G.wardShare(s, mu) === 35 && s.logs.some((l) => l.text === '一條星索斷了。慕容博的護勁降至三成半。'));
+}
+
+// ── Board objects (roadmap 0.11 stage two): 守 the qin and the drum, 破 the star posts ─────
+section('board objects: 守 and 破');
+const { BOARD_OBJECTS } = await load('data/board-objects.js');
+const { ENCOUNTER_SCRIPT } = await load('data/encounter-script.js');
+{
+  // Every hero off the board but the leader, who is parked where no enemy will reach this turn.
+  const clearHeroes = (s) => {
+    for (const v of G.party(s)) if (v.id !== s.leader) v.hp = 0;
+  };
+  const s = realBoard(4, 3);
+  const qin = unit(s, 'guqin'),
+    zuo = unit(s, G.commanderId(s));
+  const row = G.stageRows(4, 3).master;
+  check('空山琴臺 is a 守 board, its qin on a 琴座 stone east of the steps', G.boardKind(s) === 'keep' && qin && qin.side === 'prop' && qin.x === 8 && qin.y === 5 && G.terrainInfo(8, 5, 4).name === '琴座矮石');
+  check('the qin’s 氣血 and 防禦 come from the stage’s master row', qin.maxHp === Math.round(row[0] * BOARD_OBJECTS.guqin.hp) && qin.def === row[2] + BOARD_OBJECTS.guqin.def, [qin.maxHp, qin.def]);
+  check('it is no hero’s and no foe’s piece', !G.party(s).includes(qin) && !G.enemies(s).includes(qin) && G.props(s).includes(qin));
+  const hero = unit(s, s.leader);
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: qin.x + dx, y: qin.y + dy })).find((p) => G.walkable(p.x, p.y, 4) && !G.at(s, p.x, p.y));
+  put(s, s.leader, spot.x, spot.y);
+  hero.acted = hero.moved = false;
+  check('a hero may not strike the qin, with a plain blow or an art', !G.targetOK(s, hero, qin, false) && !G.targetOK(s, hero, qin, true));
+  check('a black stone may', G.hostile(zuo, qin) && !G.hostile(zuo, zuo));
+  check('nobody walks onto or through its tile', !G.reachable(s, hero).has(G.key(qin.x, qin.y)));
+  BM.applyCondition(s, qin, { kind: 'pin', power: 2, turns: 2 }, zuo);
+  check('it takes no condition', !qin.conditions?.pin);
+  const live = R.briefing(s, { live: true });
+  check('軍情 names the kind, the hold and the qin', live.kindName === '守' && live.win.includes('七弦琴') && live.win.includes('第八回合') && live.objects.length === 1 && live.objects[0].art === 'object-qin.webp');
+  check('and the goals page has its 氣血 and the rounds to hold', live.live.objects[0].hp === qin.hp && live.live.hold === '尚須守 8 回合', JSON.stringify(live.live));
+  // A black stone beside it with no hero in reach strikes the qin, and the board says so once.
+  const raider = G.enemies(s).find((v) => v.id !== G.commanderId(s) && !G.traitsOf(v).post);
+  const near = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: qin.x + dx, y: qin.y + dy })).find((p) => G.walkable(p.x, p.y, 4) && !G.at(s, p.x, p.y));
+  Object.assign(raider, near);
+  hero.x = mapLayout(4).allies[0].x;
+  hero.y = mapLayout(4).allies[0].y;
+  clearHeroes(s);
+  G.party(s).forEach((v) => v.hp > 0 && Object.assign(v, { x: 3, y: 0 }));
+  const before = qin.hp;
+  soloTurn(s, raider);
+  check('a black stone with the qin in reach strikes it', qin.hp < before, [before, qin.hp, raider.id, raider.x, raider.y]);
+  check('the first blow on it is told by the board', s.logs.some((l) => l.text === ENCOUNTER_SCRIPT[4].objects.guqin.hit.text));
+  check('it gave no counter and the striker is unhurt', raider.hp === raider.maxHp);
+  // Holding: not won in round 7, won once round 8's enemy phase is over.
+  const hold = copy(s);
+  hold.round = 7;
+  hold.phase = 'enemy';
+  for (const e of G.enemies(hold)) e.acted = true;
+  G.check(hold);
+  check('round 7 held is not yet a win', hold.result === null);
+  hold.round = 8;
+  G.check(hold);
+  check('round 8 held: won, the board says the thought ran out', hold.result === 'win' && hold.logs.some((l) => l.text === ENCOUNTER_SCRIPT[4].objects.guqin.held.text));
+  const early = copy(s);
+  early.round = 8;
+  early.phase = 'ally';
+  G.check(early);
+  check('round 8 is not held until its enemy phase is over', early.result === null);
+  // Felling every master wins too; the qin breaking loses, whatever else.
+  const slay = copy(s);
+  unit(slay, G.commanderId(slay)).hp = 0;
+  G.check(slay);
+  check('felling 左冷禪 wins the 守 board', slay.result === 'win');
+  const lost = copy(s);
+  unit(lost, 'guqin').hp = 1;
+  const breaker = G.enemies(lost).find((v) => v.id === raider.id);
+  for (const e of G.enemies(lost)) e.acted = e !== breaker;
+  G.enemyAct(lost, breaker);
+  check('the qin broken loses the board, with the board’s own reason', lost.result === 'loss' && lost.reason === ENCOUNTER_SCRIPT[4].objects.guqin.lost, lost.reason);
+  check('and its breaking is no fall in the tally', !lost.tally.falls.some((f) => f.id === 'guqin'));
+  // A save keeps it; a save from before boards had objects plays the board as it began.
+  const kept = R.restoreRun(copy(s));
+  check('a save keeps the qin', !!kept && G.props(kept).length === 1 && G.find(kept, 'guqin').hp === qin.hp);
+  const old = copy(s);
+  old.units = old.units.filter((u) => u.side !== 'prop');
+  const restored = R.restoreRun(old);
+  check('a save from before the qin loads and plays as 斬將', !!restored && G.boardKind(restored) === 'slay');
+  // The danger zone: the qin threatens nothing, and its tile is shaded when a black stone reaches it.
+  const zone = dangerTiles(s);
+  check('the danger zone shades the qin’s tile', zone.has(G.key(qin.x, qin.y)));
+}
+{
+  const s = realBoard(6, 5);
+  const drum = unit(s, 'warDrum');
+  check('襄陽殘垣 is a 守 board, its drum where the passage south opens, held through round 9', G.boardKind(s) === 'keep' && drum && drum.x === 6 && drum.y === 9 && G.boardOf(s).hold === 9);
+  const jin = unit(s, G.commanderId(s));
+  jin.hp = 0;
+  G.check(s);
+  check('felling 金輪國師 while 完顏洪烈 has not come is no win', s.result === null && G.objectiveLeft(s).masters.includes('wanYan'));
+}
+{
+  const s = realBoard(9, 9);
+  const [a, b] = ['starPost#1', 'starPost#2'].map((id) => unit(s, id));
+  check('無刻漏臺 is a 破 board with two star posts beside the rope-keepers', G.boardKind(s) === 'break' && a && b && G.distance(a, unit(s, 'echoBow')) === 1 && G.distance(b, unit(s, 'echoScout')) === 1);
+  const hero = unit(s, s.leader);
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: a.x + dx, y: a.y + dy })).find((p) => G.walkable(p.x, p.y, 9) && !G.at(s, p.x, p.y));
+  put(s, s.leader, spot.x, spot.y);
+  hero.acted = hero.moved = false;
+  const f = G.forecast(hero, a, false, s);
+  check('a hero may strike a post: a plain blow, no counter, no push, no rider', G.targetOK(s, hero, a, false) && f.amount > 0 && f.counterRaw === 0 && !f.push && !f.effects.length && f.notes.includes(G.OBJECT_NOTE));
+  check('no black stone strikes a post', !G.hostile(unit(s, G.commanderId(s)), a));
+  check('splash and arcs pass the posts by', !FR.secondaryTargets(s, hero, unit(s, 'echoBow'), unit(s, 'echoBow'), { splash: 1 }, ['arc'], G.walkable).has(a));
+  a.hp = 1;
+  G.resolve(s, hero, a, false);
+  check('one post down: no result yet, the ward halves, the board speaks', !s.result && G.wardShare(s, unit(s, 'murong')) === 35 && s.logs.some((l) => l.text === ENCOUNTER_SCRIPT[9].objects.starPost.broken.text));
+  check('a post broken is no kill', s.stats.kills === 0 || !s.tally.falls.some((x) => x.id.startsWith('starPost')));
+  b.hp = 0;
+  G.check(s);
+  check('both down: the 破 board is won, 慕容博 standing', s.result === 'win' && G.living(unit(s, 'murong')));
 }
 
 // ── The shop's new items: 屠龍刀, 軟蝟甲 (反刺), 九花玉露丸, 玉蜂漿 ──────────
@@ -3512,15 +4204,25 @@ function withBoard(map, change, body) {
   }
 }
 const logged = (s, text, who) => s.logs.some((l) => l.text === text && (!who || l.who === who));
+// Every node of a hero's tree.
+const TREE = (id) => HERO_PATHS[id].layout.flat().filter(Boolean);
 
 section('battle data');
 {
   const kept = ['dongFang', 'liQiu', 'hongAn', 'qiuRen', 'gongSun', 'heiMuGuard', 'xiaGuard', 'shenLong', 'ironPalm', 'netHand'];
   const newHeroes = ['qiaoFeng', 'xuZhu', 'hongQi', 'yaoShi', 'sanFeng', 'zhaoMin', 'lingSu', 'diYun', 'chengZhi', 'aQing'];
-  const text = JSON.stringify([BATTLES, VILLAINS, TROOPS]);
-  check('no kept-back villain, troop or new hero appears in the boards or the new tables', [...kept, ...newHeroes].every((id) => !text.includes(id)));
-  check('ten boards, each slay or rout, masters led by the board master', BATTLES.length === 10 && BATTLES.every((b) => ['slay', 'rout'].includes(b.kind) && b.masters[0] === 'master'));
-  for (const [map, b] of BATTLES.entries()) {
+  // The five villains kept for new stages stand on the boards built round them (10 to 14) and
+  // nowhere on the first ten (the producer's ruling of 2026-11-21); the new heroes are nowhere.
+  const firstTen = JSON.stringify([BATTLES.slice(0, 10), VILLAINS]),
+    text = JSON.stringify([BATTLES, VILLAINS, TROOPS]);
+  check('no villain or troop kept for new stages appears on the first ten boards', kept.every((id) => !firstTen.includes(id)));
+  check('no new hero appears in the boards or the villain tables', newHeroes.every((id) => !text.includes(id)));
+  check('fifteen boards, each slay, rout, keep or break, masters led by the board master', BATTLES.filter((b) => !b.last).length === 15 && BATTLES.filter((b) => !b.last).every((b) => ['slay', 'rout', 'keep', 'break'].includes(b.kind) && b.masters[0] === 'master'));
+  check('and the last board after them: 問劍, its master its own commander, no fixed four', BATTLES.length === 16 && G.LAST_MAP === 15 && BATTLES[G.LAST_MAP].kind === 'yield' && same(BATTLES[G.LAST_MAP].masters, [BATTLES[G.LAST_MAP].commander]) && !G.hasFour(G.LAST_MAP) && !mapLayout(G.LAST_MAP).enemies.length);
+  check('a board with objects has a kind for saves from before them, and a keep board a hold', BATTLES.every((b) => !b.objects || (['slay', 'rout'].includes(b.legacyKind) && (b.kind !== 'keep' || (b.hold > 0 && b.hold < G.LIMIT)))));
+  // (The last board is read as a run casts it: its guests are the masters of the ten boards.)
+  for (const map of BATTLES.keys()) {
+    const b = G.castBoard(map);
     const layout = mapLayout(map),
       reach = reachableTiles(map);
     const k = (p) => p[0] + ',' + p[1];
@@ -3534,14 +4236,14 @@ section('battle data');
     check('map ' + map + ': every piece’s tile is walkable, reachable, and no post, spawn or lamp', allPieces(b).every((p) => tileOk(p.at)), JSON.stringify(allPieces(b).filter((p) => !tileOk(p.at)).map((p) => p.id)));
     check('map ' + map + ': starting pieces have tiles of their own; entry tiles miss them', new Set(starts).size === starts.length && b.waves.every((w) => w.pieces.every((p) => !starts.includes(k(p.at)))));
     check('map ' + map + ': entry tiles are distinct in their wave, with two walkable tiles within two', b.waves.every((w) => new Set(w.pieces.map((p) => k(p.at))).size === w.pieces.length && w.pieces.every((p) => layout.cells.filter((c) => G.walkable(c.x, c.y, map) && G.distance(c, at2(p.at)) >= 1 && G.distance(c, at2(p.at)) <= 2).length >= 2)));
-    check('map ' + map + ': round waves come in rounds 2 to 11; half-health waves name masters', b.waves.every((w) => (w.when.round ? w.when.round >= 2 && w.when.round <= G.LIMIT - 1 : w.when.halved.every((ref) => b.masters.includes(ref)))));
+    check('map ' + map + ': round waves come in rounds 2 to 11; half-health waves name masters; the last board’s wait on a share of its master’s 氣血', b.waves.every((w) => (w.when.round ? w.when.round >= 2 && w.when.round <= G.LIMIT - 1 : w.when.below ? !!b.last && w.when.below > 0 && w.when.below < 1 : w.when.halved.every((ref) => b.masters.includes(ref)))));
     check('map ' + map + ': ids are unique and none is a hero’s or a fixed piece’s', new Set([...ids, ...b.waves.map((w) => 'wave:' + w.id)]).size === ids.length + b.waves.length && ids.every((id) => !G.PARTY.includes(id) && !fixedIds.includes(id)));
     check('map ' + map + ': every piece is described, with a stage row, and a gist if it has traits', ids.every((id) => {
       const d = G.DETAILS[id.split('#')[0]];
       return d && d.row && (!Object.keys(d.traits || {}).length || GISTS[id.split('#')[0]]);
     }));
     check('map ' + map + ': no holdLine zone holds an entry tile; holdLine only with waves', b.sides.filter((e) => e.kind === 'holdLine').every((e) => b.waves.length && b.waves.every((w) => w.pieces.every((p) => !G.inZone(e.zone, at2(p.at))))));
-    check('map ' + map + ': a pool of 3–4 secondaries, each a known kind and reward', b.sides.length >= 3 && b.sides.length <= 4 && b.sides.every((e) => R.SIDE_KINDS[e.kind] && SIDE_REWARDS.includes(e.reward)));
+    check('map ' + map + ': a pool of 3–4 secondaries (none on the last board), each a known kind and reward', (b.last ? b.sides.length === 0 : b.sides.length >= 3 && b.sides.length <= 4) && b.sides.every((e) => R.SIDE_KINDS[e.kind] && SIDE_REWARDS.includes(e.reward)));
     check('map ' + map + ': no spare names a piece without that behaviour, no order names a master', b.sides.every((e) => e.kind !== 'order' || !b.masters.includes(e.first)) && b.sides.every((e) => e.kind !== 'spare' || ({ mend: 'lieutenant-1', herbs: 'snow', mirror: 'murong' }[e.behaviour] === (G.SLOTS.includes(e.piece) ? G.encounterKeys(map)[G.SLOTS.indexOf(e.piece)] : e.piece))));
     for (const key of G.encounterKeys(map)) if (Object.keys(G.DETAILS[key].traits || {}).length && !GISTS[key]) check('map ' + map + ': ' + key + ' has a gist', false);
   }
@@ -3549,9 +4251,9 @@ section('battle data');
     const maps = BATTLES.map((b, map) => (allPieces(b).some((p) => p.id === id) ? map : -1)).filter((m) => m >= 0);
     check(G.DETAILS[id].name + ' stands on exactly his board, ' + v.map, same(maps, [v.map]), maps);
   }
-  check('every troop type stands on one board only', Object.keys(TROOPS).every((key) => BATTLES.filter((b) => allPieces(b).some((p) => p.id.split('#')[0] === key)).length === 1));
+  check('every troop type stands on one board only', Object.keys(TROOPS).every((key) => BATTLES.filter((b) => allPieces(b).some((p) => p.id?.split('#')[0] === key)).length === 1));
   check('every villain and troop type has a gist', [...Object.keys(VILLAINS), ...Object.keys(TROOPS)].every((k) => GISTS[k]));
-  check('the 局主 and 副手 roles follow rank', Object.keys(VILLAINS).every((id) => G.DETAILS[id].role === (VILLAINS[id].rank === 'boss' ? '局主' : '副手')));
+  check('the 局主 and 副手 roles follow rank (求敗 keeps the role his lines have always had)', Object.keys(VILLAINS).every((id) => G.DETAILS[id].role === (VILLAINS[id].role || (VILLAINS[id].rank === 'boss' ? '局主' : '副手'))));
 }
 
 section('stage rows');
@@ -4212,8 +4914,9 @@ section('saves');
 }
 
 section('the ten boards, as stage one builds them');
+// (The last board is built by a run that has won ten; it has its own section below.)
 for (const [map, b] of BATTLES.entries())
-  for (const stage of R.mapStages(map)) {
+  for (const stage of b.last ? [] : R.mapStages(map)) {
     const s = realBoard(map, stage),
       tag = 'map ' + map + ' stage ' + stage + ': ';
     const start = 4 + b.pieces.length,
@@ -4297,10 +5000,1009 @@ for (const [map, b] of BATTLES.entries())
   const s9 = realBoard(9, 9);
   check('無刻漏臺: the wards still read 35% each', G.wardShare(s9, unit(s9, 'murong')) === 70);
   check('無刻漏臺: 萬門劍徒’s page', same(G.pieceLines(9, 'wanDisciple#1', 9), ['【斬殘】對氣血不過半的俠客出手或還擊時，攻擊 ＋10。', '【偏好】專挑傷重者。']));
-  check('襄陽殘垣: 完顏洪烈 is a 副手 leading the round-4 wave', R.boardBrief(6, 5).foes.some((f) => f.name === '完顏洪烈' && f.rank === '副手' && f.note === '（第四回合入場）'));
+  check('襄陽殘垣: 完顏洪烈 is its second 局主, leading the round-4 wave', R.boardBrief(6, 5).foes.some((f) => f.name === '完顏洪烈' && f.rank === '局主' && f.note === '（第四回合入場）') && BATTLES[6].masters.includes('wanYan'));
   check('寒玉石室 stays lean: four pieces, no waves, no lamp in its pool', BATTLES[7].pieces.length === 0 && !BATTLES[7].waves.length && !BATTLES[7].sides.some((e) => e.kind === 'lamp'));
 }
 
+// ── Boards built round one villain (maps 10 to 14) ────────────────────────
+section('boards built round one villain');
+{
+  const { GARRISONS, SIGNATURE_RULES } = await load('data/encounters.js');
+  const { CAPTAINS } = await load('data/martial-arts.js');
+  // A sweep's share is worded as it is: a third stays 三分之一, 李秋水's 0.4 reads 四成.
+  check('a sweep’s note states its own share', SIGNATURE_RULES.sweep({ sweep: 0.33 }).includes('三分之一') && SIGNATURE_RULES.sweep({ sweep: 0.25 }).includes('四分之一') && SIGNATURE_RULES.sweep({ sweep: 0.4 }).includes('四成'));
+  check('西夏夜苑: 李秋水’s page says her sweep takes 四成', G.pieceLines(13, 'master', 7)[0] === '相鄰的其他我方俠客也會受到四成傷害。', G.pieceLines(13, 'master', 7)[0]);
+  const { FINAL_MAP } = await load('data/battles.js');
+  const NEW = [10, 11, 12, 13, 14],
+    MAPS15 = Array.from({ length: 15 }, (_, m) => m);
+  const TIERS = { 1: [1, 2, 10], 2: [1, 2, 10], 3: [3, 4, 11], 4: [3, 4, 11], 5: [5, 6, 12], 6: [5, 6, 12], 7: [7, 13], 8: [8, 14] };
+
+  // The route: ten of fifteen, the first and the last fixed, each stage from its tier.
+  const routes = Array.from({ length: 600 }, (_, n) => R.routeFor((Math.imul(n, 2654435761) + 17) >>> 0));
+  check('a route is ten different boards, 青竹渡 first and 無刻漏臺 last', routes.every((r) => r.length === 10 && new Set(r).size === 10 && r[0] === 0 && r[9] === FINAL_MAP && FINAL_MAP === 9));
+  check('every other stage draws from its tier', routes.every((r) => r.slice(1, 9).every((map, i) => TIERS[i + 1].includes(map))));
+  check('every board built round a villain is met in some runs, and none in every run', NEW.every((map) => routes.some((r) => r.includes(map)) && routes.some((r) => !r.includes(map))));
+  const share = (map) => routes.filter((r) => r.includes(map)).length / routes.length;
+  check('a board of a three-board tier is in about two runs of three, of a two-board tier in about one of two', [1, 2, 10, 3, 4, 11, 5, 6, 12].every((m) => Math.abs(share(m) - 2 / 3) < 0.07) && [7, 13, 8, 14].every((m) => Math.abs(share(m) - 0.5) < 0.07), [1, 10, 11, 12, 13, 14].map((m) => share(m).toFixed(2)).join(' '));
+  const old = Array.from({ length: 200 }, (_, n) => R.routeFor(n * 7919 + 1, 1));
+  check('the first edition’s route holds the first ten boards only, in its three shuffled pairs', old.every((r) => r.length === 10 && r.every((m) => m < 10) && r[0] === 0 && same([...r.slice(1, 3)].sort(), [1, 2]) && same([...r.slice(3, 5)].sort(), [3, 4]) && same([...r.slice(5, 7)].sort(), [5, 6]) && same(r.slice(7), [7, 8, 9])));
+  check('mapStages: each new board at its tier’s stages', same(NEW.map((m) => R.mapStages(m)), [[1, 2], [3, 4], [5, 6], [7], [8]]));
+
+  // Saves: a run saved before the new boards keeps the route its seed made then.
+  {
+    const s = board();
+    check('a new run is marked with the route edition and restores', s.run.routes === 2 && !!R.restoreRun(copy(s)));
+    const before = copy(s);
+    delete before.run.routes;
+    before.run.route = R.routeFor(before.run.seed, 1);
+    check('a run saved before the new boards restores on its old route', !!R.restoreRun(copy(before)) && same(R.restoreRun(copy(before)).run.route, before.run.route));
+    const forged = copy(before);
+    forged.run.route = R.routeFor(forged.run.seed, 2);
+    const differs = forged.run.route.some((m, i) => m !== before.run.route[i]);
+    check('an old save with a route of the new edition is refused', !differs || R.restoreRun(forged) === null);
+    const unknown = copy(s);
+    unknown.run.routes = 3;
+    check('an unknown route edition is refused', R.restoreRun(unknown) === null);
+    check('the profile may have seen any of the fifteen boards', (() => {
+      const t = copy(s);
+      t.run.chronicle.seen = [0, 10, 14];
+      return !!R.restoreRun(t);
+    })());
+  }
+
+  // Seats: the villain is the 局主, there is no lieutenant, the other three are his troop type.
+  for (const map of NEW) {
+    const stage = R.mapStages(map)[0],
+      troop = GARRISONS[map],
+      master = CAPTAINS[map][0],
+      name = mapLayout(map).name;
+    check(name + ': one named opponent, the 局主, and no lieutenant entry', ENCOUNTERS[map].length === 1 && G.DETAILS[master].rank === 'boss' && G.DETAILS[master].role === '局主' && !G.DETAILS['lieutenant-' + map] && !G.DETAILS['bow-' + map]);
+    check(name + ': the fixed four are the master and three of his troop type', same(G.encounterKeys(map), [master, troop, troop, troop]) && !!TROOPS[troop] && !G.DETAILS[troop].rank);
+    check(name + ': he wears his own portrait and sprite', G.DETAILS[master].mini === master && G.DETAILS[master].portraitFile === 'npc-' + master + '.webp' && G.DETAILS[troop].portraitFile === 'npc-' + troop + '.webp');
+    const s = realBoard(map, stage);
+    const fixed = G.SLOTS.map((slot) => unit(s, G.slotId(map, slot)));
+    check(name + ': on the board the three are that troop type, with no rank', fixed.slice(1).every((u) => u && G.pieceKey(u) === troop && !G.unitDetails(u).rank) && G.unitDetails(fixed[0]).name === ENCOUNTERS[map][0].name);
+    const extra = G.pieceUnit(s, { id: troop + '#99', at: [0, 0] });
+    check(name + ': a troop in a fixed seat has the numbers of any other of its type', fixed.slice(1).every((u) => same([u.maxHp, u.atk, u.def, u.step, u.range], [extra.maxHp, extra.atk, extra.def, extra.step, extra.range])));
+    check(name + ': the master is its only 局主; felling him alone wins a slay board', same(G.masterIds(s), [master]) && (BATTLES[map].kind !== 'slay' || (() => {
+      const t = copy(s);
+      unit(t, master).hp = 0;
+      G.check(t);
+      return t.result === 'win';
+    })()));
+    const brief = R.boardBrief(map, stage);
+    check(name + ': the briefing names one 局主 and no 副手', brief.foes.filter((f) => f.rank === '局主').length === 1 && !brief.foes.some((f) => f.rank === '副手'), brief.foes.map((f) => f.rank + f.name).join(' '));
+    let lines = [];
+    const t = realBoard(map, stage);
+    t.run.scene = 'before';
+    try {
+      lines = R.dialogue(t, 'before');
+    } catch (e) {
+      lines = [];
+    }
+    check(name + ': the scene before it has the master’s lines and no line without a speaker', lines.length >= 3 && lines.every((l) => l.speaker && l.text) && lines.some((l) => l.speaker === ENCOUNTERS[map][0].name));
+    check(name + ': a save made on it restores', !!R.restoreRun(copy(s)));
+  }
+  // 坐鎮 on a seat: each of the three guards its own spawn tile, not the first seat's.
+  withTraits('xiaGuard', { post: { tile: 'spawn', tether: 0, wake: false } }, () => {
+    const s = realBoard(13, 7),
+      layout = mapLayout(13);
+    check('a posted troop in each fixed seat guards its own spawn tile', [1, 2, 3].every((i) => same(G.postTile(s, unit(s, G.slotId(13, G.SLOTS[i])), { tile: 'spawn' }), layout.enemies[i])));
+  });
+  check('絕情花徑 is not won until every net hand is down', (() => {
+    const s = realBoard(11, 3);
+    unit(s, 'gongSun').hp = 0;
+    G.check(s);
+    const early = s.result;
+    for (const e of G.enemies(s)) e.hp = 0;
+    G.check(s);
+    return !early && s.result === 'win';
+  })());
+  check('神龍竹堂: 洪安通 holds the dais until struck', (() => {
+    const s = realBoard(10, 1),
+      m = unit(s, 'hongAn'),
+      hold = G.holdOf(s, m);
+    return !!hold && hold.tether === 2 && same(hold.tile, mapLayout(10).enemies[0]) && G.DETAILS.hongAn.traits.post.wake === 'struck';
+  })());
+
+  // ── The ten traits. Small battles on board 0: its master as the villain, its scout as the troop.
+  const troopAs = (traits, body) =>
+    withTraits('scout-0', traits, () => {
+      Object.assign(G.DETAILS['scout-0'], { ...G.DETAILS.scout, name: '試卒', traits });
+      return body();
+    });
+  const only = (s, ...ids) => {
+    for (const u of G.party(s)) if (!ids.includes(u.id)) u.hp = 0;
+  };
+  const held = (x, y) => ({ tile: { x, y }, tether: 0, wake: false });
+
+  // 獨行 and 夾衛
+  troopAs({ lone: { atk: 6 } }, () => {
+    const s = board();
+    s.run.stage = 4;
+    const scout = put(s, 'scout', 5, 3),
+      hero = put(s, 'hero', 4, 3);
+    check('獨行: alone, its attack on a hero is 6 + ⌊stage/2⌋ higher', G.traitEdge(s, scout, hero) === -8);
+    check('獨行: its page says so, and that it is alone now', G.enemyTraitLines(s, scout).includes('【獨行】身旁沒有其他敵人時，出手或還擊攻擊 ＋8。此刻獨行。'));
+    put(s, 'blade', 5, 4);
+    check('獨行: its page says when a fellow stands beside it', G.enemyTraitLines(s, scout).includes('【獨行】身旁沒有其他敵人時，出手或還擊攻擊 ＋8。此刻有同夥在旁。'));
+    check('獨行: with another black stone beside it, nothing', G.traitEdge(s, scout, hero) === 0);
+    unit(s, 'blade').hp = 0;
+    check('獨行: a fallen neighbour does not count', G.traitEdge(s, scout, hero) === -8);
+  });
+  troopAs({ pincer: { atk: 8 } }, () => {
+    const s = board();
+    const scout = put(s, 'scout', 5, 3),
+      hero = put(s, 'hero', 4, 3);
+    check('夾衛: a hero with no other black stone beside him is struck plainly', G.traitEdge(s, scout, hero) === 0);
+    put(s, 'blade', 4, 2);
+    check('夾衛: with another beside the hero, attack ＋8', G.traitEdge(s, scout, hero) === -8);
+    check('夾衛: its page says so', G.enemyTraitLines(s, scout).includes('【夾衛】目標身旁另有敵人時，出手或還擊攻擊 ＋8。'));
+    const plain = withTraits('scout-0', {}, () => G.damage(scout, hero, false, 0, s));
+    check('夾衛: the blow is that much heavier', G.damage(scout, hero, false, 0, s) === plain + 8);
+  });
+
+  // 步裡藏毒 and 墜網
+  troopAs({ stepPoison: { power: 2, turns: 2 } }, () => {
+    const walk = board();
+    walk.run.stage = 4;
+    only(walk, 'hero');
+    const scout = put(walk, 'scout', 7, 3),
+      hero = put(walk, 'hero', 4, 3);
+    G.startEnemy(walk);
+    G.enemyAct(walk, scout);
+    check('步裡藏毒: a blow struck after walking poisons, 2 + ⌊stage/2⌋', scout.moved && G.distance(scout, hero) === 1 && hero.conditions?.poison?.power === 4, JSON.stringify(hero.conditions || {}));
+    const stand = board();
+    only(stand, 'hero');
+    const still = put(stand, 'scout', 5, 3),
+      target = put(stand, 'hero', 4, 3);
+    G.startEnemy(stand);
+    G.enemyAct(stand, still);
+    check('步裡藏毒: a blow struck from where it stood does not', !still.moved && target.hp < target.maxHp && !target.conditions?.poison);
+    check('步裡藏毒: its page says so', G.enemyTraitLines(stand, still).includes('【步裡藏毒】走動之後的普攻令目標中毒，兩次毒發各損 2 氣血；原地出手與還擊不帶毒。'));
+  });
+  troopAs({ snare: { power: 2, turns: 2 } }, () => {
+    const s = board();
+    only(s, 'hero');
+    const scout = put(s, 'scout', 5, 3),
+      hero = put(s, 'hero', 4, 3);
+    G.startEnemy(s);
+    G.enemyAct(s, scout);
+    const pin = hero.conditions?.pin;
+    check('墜網: its plain blow leaves the hero 絆足 2 until his next turn is over', pin?.power === 2 && pin.through === s.round + 1);
+    check('墜網: its page says so', G.enemyTraitLines(s, scout).includes('【墜網】普攻令目標絆足，移動減 2，持續至下回合；還擊不帶網。'));
+    const c = board();
+    only(c, 'hero');
+    const quiet = put(c, 'scout', 5, 3),
+      striker = put(c, 'hero', 4, 3);
+    striker.activeArt = null;
+    G.resolve(c, striker, quiet, false);
+    check('墜網: its counter carries no net', quiet.hp < quiet.maxHp && !striker.conditions?.pin);
+  });
+
+  // 沉樁
+  troopAs({ lastStand: { below: 0.5, cut: 40 } }, () => {
+    const s = board();
+    const scout = put(s, 'scout', 5, 3),
+      hero = put(s, 'hero', 4, 3);
+    hero.activeArt = null;
+    const full = G.forecast(hero, scout, false, s).amount;
+    check('沉樁: above half it takes blows whole', G.stanceCut(s, scout) === 0);
+    scout.hp = Math.floor(scout.maxHp / 2);
+    check('沉樁: at half or below, 40% less', G.stanceCut(s, scout) === 40 && G.forecast(hero, scout, false, s).amount === Math.round((full * 60) / 100), full + ' → ' + G.forecast(hero, scout, false, s).amount);
+    check('沉樁: the forecast names it once it cuts the blow, and not before', G.forecast(hero, scout, false, s).notes.includes('沉樁 · 傷害 −40%') && !G.forecast(hero, { ...scout, hp: scout.maxHp }, false, s).notes.some((n) => n.startsWith('沉樁')));
+    check('沉樁: its page says so, and that it is up', G.enemyTraitLines(s, scout).includes('【沉樁】氣血不過半時，受到的傷害減 40%。現已沉樁。'));
+  });
+
+  // 分刺
+  withTraits('chief', { flurry: { share: 0.5 }, post: held(3, 3) }, () => {
+    const s = board();
+    only(s, 'hero', 'medic');
+    const chief = put(s, 'chief', 3, 3),
+      hero = put(s, 'hero', 4, 3),
+      medic = put(s, 'medic', 3, 4);
+    const raw = { hero: G.damage(chief, hero, false, 0, s), medic: G.damage(chief, medic, false, 0, s) };
+    const before = { hero: hero.hp, medic: medic.hp };
+    G.startEnemy(s);
+    const effects = G.enemyAct(s, chief);
+    const first = effects[0][0],
+      second = first === 'hero' ? 'medic' : 'hero';
+    const lost = (id) => before[id] - unit(s, id).hp;
+    check('分刺: the first blow lands whole, the second on the other hero at its share', lost(first) === raw[first] && lost(second) === Math.max(1, Math.round(raw[first] * 0.5)), JSON.stringify(effects));
+    check('分刺: only the hero first struck counters', effects.filter((e) => e[0] === 'chief').length <= 1 && s.logs.filter((l) => l.text.startsWith('還擊')).length <= 1);
+    const told = s.logs.map((l) => l.text),
+      counterAt = told.findIndex((t) => t.startsWith('還擊')),
+      needleAt = told.findIndex((t) => t.startsWith('針影一分'));
+    check('分刺: the log tells the first blow’s counter before the second needle', counterAt < 0 || counterAt < needleAt, told.slice(-6).join(' / '));
+    check('分刺: the log tells it, and the board’s tally counts it', s.logs.some((l) => l.text.startsWith('針影一分')) && s.tally.fired.flurry === 1);
+    check('分刺: its page says so', G.enemyTraitLines(s, chief).some((l) => l.startsWith('【分刺】') && l.includes('50%')));
+    const one = board();
+    only(one, 'hero');
+    const lone = put(one, 'chief', 3, 3);
+    put(one, 'hero', 4, 3);
+    G.startEnemy(one);
+    const single = G.enemyAct(one, lone);
+    check('分刺: with no second hero in reach there is one blow', single.filter((e) => e[0] !== 'chief').length === 1 && !one.tally.fired.flurry);
+  });
+
+  // 轉折
+  {
+    const s = board();
+    only(s, 'hero', 'guard');
+    const chief = put(s, 'chief', 3, 3),
+      hero = put(s, 'hero', 4, 3);
+    const onPlain = withTraits('chief', {}, () => G.damage(chief, hero, false, 0, s));
+    put(s, 'hero', 2, 3); // 疏竹林: 防禦 ＋5
+    const sheltered = withTraits('chief', {}, () => G.damage(chief, hero, false, 0, s));
+    const bent = withTraits('chief', { bend: true }, () => G.damage(chief, hero, false, 0, s));
+    check('轉折: the ground’s defence does not count against it', sheltered < onPlain && bent === onPlain, [onPlain, sheltered, bent].join(' '));
+    const guard = put(s, 'guard', 2, 2);
+    BM.applyCondition(s, guard, { kind: 'cover', power: 1, turns: 2 }, guard);
+    check('（代受 would take a plain villain’s blow）', G.coverer(s, hero) === guard);
+    withTraits('chief', { bend: true, post: held(3, 3) }, () => {
+      const [a, b] = [hero.hp, guard.hp];
+      G.startEnemy(s);
+      G.enemyAct(s, chief);
+      check('轉折: no one takes its blow for another', hero.hp < a && guard.hp === b);
+      check('轉折: its page says so', G.enemyTraitLines(s, chief).some((l) => l.startsWith('【轉折】')));
+    });
+    withTraits('chief', { prefers: 'sheltered' }, () => {
+      const t = board();
+      const c = put(t, 'chief', 3, 3),
+        h = put(t, 'hero', 2, 3),
+        m = put(t, 'medic', 4, 3);
+      check('偏好 · 倚仗掩體: a hero on defensive ground is wanted more', G.preference(t, c, h, G.party(t)) === -35 && G.preference(t, c, m, G.party(t)) === 0);
+    });
+  }
+
+  // 擒拿
+  {
+    const prior = G.DETAILS.chief.style;
+    G.DETAILS.chief.style = 'drain';
+    try {
+      withTraits('chief', { sig: { reach: 3 }, pull: true, post: held(3, 3) }, () => {
+        const s = board();
+        s.round = 3;
+        only(s, 'hero');
+        const chief = put(s, 'chief', 3, 3),
+          hero = put(s, 'hero', 6, 3),
+          mp = hero.mp;
+        G.startEnemy(s);
+        G.enemyAct(s, chief);
+        check('擒拿: the signature drags the hero to the tile beside the villain nearest where he stood', hero.x === 4 && hero.y === 3 && s.tally.fired.pull === 1, hero.x + ',' + hero.y);
+        check('擒拿: and takes his 內力 as its style says', hero.mp < mp);
+        check('擒拿: the walk is recorded for the board to play', Array.isArray(hero.route) && same(hero.route.at(-1), { x: 4, y: 3 }));
+        check('擒拿: its page says so', G.enemyTraitLines(s, chief).some((l) => l.startsWith('【擒拿】')));
+        const near = board();
+        near.round = 3;
+        only(near, 'hero');
+        const c = put(near, 'chief', 3, 3),
+          h = put(near, 'hero', 4, 3);
+        G.startEnemy(near);
+        G.enemyAct(near, c);
+        check('擒拿: a hero already beside him stays', h.x === 4 && h.y === 3 && !near.tally.fired.pull);
+      });
+    } finally {
+      G.DETAILS.chief.style = prior;
+    }
+  }
+
+  // 水上飄
+  {
+    const s = board();
+    const chief = put(s, 'chief', 3, 3); // 疏竹林 at (2,3) costs two steps; his step is 2
+    const far = (traits) => withTraits('chief', traits, () => G.reachable(s, chief).has('1,3'));
+    check('水上飄: every tile costs one step', !far({}) && far({ fleet: true }));
+    check('水上飄: its page says so', withTraits('chief', { fleet: true }, () => G.enemyTraitLines(s, chief).some((l) => l.startsWith('【水上飄】'))));
+    const hero = put(s, 'hero', 4, 3),
+      walk = () => [...G.reachable(s, hero).keys()].sort().join(' ');
+    check('水上飄: a hero’s walk is as before', withTraits('chief', {}, walk) === withTraits('chief', { fleet: true }, walk));
+    const blade = put(s, 'blade', 4, 4),
+      slog = () => [...G.reachable(s, blade).keys()].sort().join(' ');
+    check('水上飄: and so is another black stone’s', withTraits('chief', {}, slog) === withTraits('chief', { fleet: true }, slog));
+  }
+
+  // 陰陽倒亂
+  withTraits('chief', { twin: { atk: 5 } }, () => {
+    const s = board();
+    s.run.stage = 3;
+    const chief = put(s, 'chief', 3, 3),
+      hero = put(s, 'hero', 4, 3);
+    check('陰陽倒亂: an odd round is the sabre’s: attack ＋5 + ⌊stage/2⌋, reach as it is', G.twinForm(s, chief) === 'sabre' && G.stat(chief, 'atk', s) === chief.atk + 6 && G.traitEdge(s, chief, hero) === 0 && G.reach(s, chief) === chief.range);
+    s.round = 2;
+    check('陰陽倒亂: an even round is the sword’s: reach ＋1, attack as it is', G.twinForm(s, chief) === 'sword' && G.stat(chief, 'atk', s) === chief.atk && G.reach(s, chief) === chief.range + 1 && G.strikeReach(s, chief) === chief.range + 1);
+    {
+      const far = put(s, 'hero', 5, 3);
+      far.range = 2;
+      far.activeArt = null;
+      check('陰陽倒亂: the forecast says the sword reaches a striker two tiles off', G.forecast(far, chief, false, s).notes.includes('陰陽倒亂 · 黑劍 · 射程 ＋1，還擊得到') && G.forecast(far, chief, false, s).counter > 0);
+      s.round = 1;
+      check('陰陽倒亂: on a sabre round that striker is out of reach, and a striker beside him is told of the sabre', !G.forecast(far, chief, false, s).counter && (() => {
+        put(s, 'hero', 4, 3);
+        return G.forecast(far, chief, false, s).notes.includes('陰陽倒亂 · 金刀 · 還擊攻擊 ＋6');
+      })());
+      s.round = 2;
+      put(s, 'hero', 4, 3);
+      far.range = 1;
+    }
+    check('陰陽倒亂: its page says which is up', G.enemyTraitLines(s, chief).some((l) => l.startsWith('【陰陽倒亂】') && l.endsWith('本回合：黑劍。')));
+    check('陰陽倒亂: a hero has no such rounds', G.twinForm(s, hero) === null && G.reach(s, hero) === hero.range);
+  });
+  withTraits('chief', { twin: { atk: 5 }, post: held(3, 3) }, () => {
+    const s = board();
+    for (const e of G.enemies(s)) if (e.id !== 'chief') e.hp = 0;
+    put(s, 'chief', 3, 3);
+    const odd = new Set(dangerTiles(s));
+    s.round = 2;
+    const even = new Set(dangerTiles(s));
+    check('陰陽倒亂: the danger zone reaches one tile further on a sword round', !odd.has('5,3') && odd.has('4,3') && even.has('5,3'));
+  });
+
+  // Found in review. The profile's `seen`: only the boards a run reached, not the five it never drew.
+  {
+    const s = board();
+    s.result = 'loss';
+    s.phase = 'done';
+    R.settle(s);
+    check('a run lost on its first board has seen that board only', same(s.run.chronicle.seen, [0]), s.run.chronicle.seen.join());
+    const t = realBoard(13, 7);
+    t.result = 'loss';
+    t.phase = 'done';
+    R.settle(t);
+    const off = MAPS15.filter((m) => !t.run.route.includes(m));
+    check('a run lost on its eighth board has seen eight, none of them off its route', t.run.chronicle.seen.length === 8 && off.length === 5 && off.every((m) => !t.run.chronicle.seen.includes(m)), t.run.chronicle.seen.join());
+  }
+  // 夾衛 and 獨行 when the forecast asks with a copy of the piece (an art that lowers its attack).
+  troopAs({ pincer: { atk: 8 } }, () => {
+    const s = board();
+    const scout = put(s, 'scout', 5, 3),
+      hero = put(s, 'hero', 4, 3);
+    const ghost = { ...scout, conditions: { weak: { power: 1, through: 9, source: 'hero' } } };
+    check('夾衛: a copy of the piece is not its own flanker', G.traitEdge(s, ghost, hero) === 0);
+    hero.activeArt = null;
+    const plain = G.forecast(hero, scout, false, s).counterRaw;
+    const art = teach(hero, defineArt({ debuff: { stat: 'atk', power: 4, turns: 2 } }));
+    const weakened = G.forecast(hero, scout, true, s, G.artFor(hero, art)).counterRaw;
+    check('夾衛: an art that lowers its attack draws a lighter counter, not a heavier one', weakened <= plain, plain + ' → ' + weakened);
+  });
+  troopAs({ lone: { atk: 6 } }, () => {
+    const s = board();
+    const scout = put(s, 'scout', 5, 3),
+      hero = put(s, 'hero', 4, 3);
+    put(s, 'blade', 5, 4);
+    check('獨行: a copy of the piece still counts its neighbour', G.traitEdge(s, { ...scout }, hero) === 0);
+    unit(s, 'blade').hp = 0;
+    hero.activeArt = null;
+    check('獨行: the forecast names it on the counter', G.forecast(hero, scout, false, s).notes.includes('獨行 · 還擊攻擊 ＋6'));
+  });
+  // 擒拿: the counter is judged from where the hero was struck, so a hero of reach 1 dragged in
+  // from three tiles away does not counter.
+  {
+    const prior = G.DETAILS.chief.style;
+    G.DETAILS.chief.style = 'drain';
+    try {
+      withTraits('chief', { sig: { reach: 3 }, pull: true, post: held(3, 3) }, () => {
+        const s = board();
+        s.round = 3;
+        only(s, 'hero');
+        const chief = put(s, 'chief', 3, 3),
+          hero = put(s, 'hero', 6, 3),
+          hp = chief.hp;
+        hero.range = 1;
+        G.startEnemy(s);
+        G.enemyAct(s, chief);
+        check('擒拿: dragged in from beyond his reach, the hero does not counter', hero.x === 4 && chief.hp === hp && !s.logs.some((l) => l.text.startsWith('還擊')));
+      });
+    } finally {
+      G.DETAILS.chief.style = prior;
+    }
+  }
+  // 兵力: the troop in the lieutenant's seat is counted with its fellows.
+  for (const map of NEW) {
+    const brief = R.boardBrief(map, R.mapStages(map)[0]),
+      troop = G.DETAILS[GARRISONS[map]].name,
+      extra = [...BATTLES[map].pieces, ...BATTLES[map].waves.flatMap((w) => w.pieces)].length;
+    const chip = brief.force.chips.find((c) => c.name === troop);
+    check(mapLayout(map).name + ': the briefing counts every ' + troop + ', the three in fixed seats included', chip?.count === 3 + extra, JSON.stringify(brief.force.chips.map((c) => [c.name, c.count])));
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────
+section('the last board (終局): 問劍, 不敗, 無招, the forms that answer a weapon, 無名');
+{
+  const HEROES = ['hero', 'guo', 'huang', 'yang', 'zhang', 'hu'];
+  // The last board as the developer mode starts it, deployed and begun.
+  const last = (seed = 11) => {
+    const s = R.devTestRun({ map: G.LAST_MAP, realm: 1, heroes: HEROES, seed }, R.LEGACY);
+    R.turnPage(s, true);
+    R.deployLineup(s);
+    R.beginBattle(s);
+    return s;
+  };
+  const s = last();
+  const qiu = unit(s, 'qiubai'),
+    youth = unit(s, 'youth');
+  check('a test of it has the heroes at the level a run brings them to it', G.party(s).every((u) => u.level === R.DEV_TEST.lastLevel));
+  check('it is played in 無劍境界 as the eleventh board, 無名 leading from the middle tile', s.run.realm === 5 && s.run.stage === R.LAST_STAGE && s.mapIndex === G.LAST_MAP && s.leader === 'youth' && youth.x === 6 && youth.y === 11);
+  check('求敗 at 天元 and the first five masters of the run, on the guest row', qiu.x === 6 && qiu.y === 6 && same(G.enemies(s).map((u) => u.id), ['qiubai', ...s.run.route.slice(0, 5).map((m) => G.refId(m, 'master'))]) && G.enemies(s).slice(1).every((u) => u.guest));
+  check('the other five wait on 求敗’s 氣血: two at half, three at a quarter, in the order the run met them', same(G.boardOf(s).waves.flatMap((w) => w.pieces.map((p) => p.id)), s.run.route.slice(5).map((m) => G.refId(m, 'master'))) && same(G.boardOf(s).waves.map((w) => [w.when.below, w.pieces.length]), [[0.5, 2], [0.25, 3]]));
+  check('the last board has no secondary, in the run or on its pages', s.run.side === null && R.briefing(s).noSide && R.briefing(s).side === null && !R.sideDone(s));
+  check('a different run casts different guests', !same(G.castBoard(G.LAST_MAP, [0, 2, 1, 4, 3, 6, 5, 7, 8, 9]).pieces.map((p) => p.id), G.castBoard(G.LAST_MAP).pieces.map((p) => p.id)));
+  check('its numbers are its own, whatever the 境界', same(G.stageRows(G.LAST_MAP, 10, 1), G.stageRows(G.LAST_MAP, 10, 5)) && qiu.maxHp === G.stageRows(G.LAST_MAP, 10).master[0]);
+  const chief = unit(s, 'chief') || G.enemies(s)[1];
+  // A guest is his own man there: no post, no 變招 at half, no standing still while he charges, and
+  // his traits as strong as when this run met his board.
+  const guestsOf = (state) => G.enemies(state).filter((u) => u.guest);
+  check('a guest has no post, no phase and no hold', guestsOf(s).every((u) => !G.traitsOf(u).post && !G.traitsOf(u).phase && !G.traitsOf(u).stance?.holds));
+  check('…and his page promises no 變招', guestsOf(s).every((u) => !G.enemyTraitLines(s, u).some((l) => l.includes('變招'))));
+  check('a guest’s traits scale by the stage this run met his board at, not by the last board’s', guestsOf(s).every((u) => G.traitStage(s, u) === s.run.route.indexOf(s.run.route.find((m) => G.refId(m, 'master') === u.id))) && G.traitStage(s, qiu) === 10);
+  check('each of the ten masters has a line for the briefing as a guest', s.run.route.every((m) => !!GUEST_GISTS[G.refId(m, 'master')]) && R.briefing(s).foes.slice(1).every((f) => f.gist === GUEST_GISTS[f.key] && !/橋|琴臺|弟子|索樁|半血/.test(f.gist)));
+  check('a guest keeps his mods and loses his post', !G.traitsOf(chief).post && !!G.unitDetails(chief).traits.post === !!G.DETAILS[chief.id].traits.post && chief.maxHp === Math.round(G.stageRows(G.LAST_MAP, 10).guest[0] * (G.DETAILS[chief.id].traits.mods?.hp ?? 1)));
+  check('the briefing: 問劍, its win and its loss', R.briefing(s).kindName === '問劍' && R.briefing(s).win.includes('削至 1 點') && R.briefing(s).loss.startsWith('無名倒下') && R.briefing(s).heading.startsWith('終局'));
+  check('ten masters and 求敗 in the briefing, the later five marked as coming', R.briefing(s).foes.length === 11 && R.briefing(s).foes[0].rank === '對弈' && R.briefing(s).foes.filter((f) => f.note).length === 5);
+  check('a wave of masters is named man by man, and by the share of 求敗’s 氣血 it waits on', /^求敗氣血只剩一半時，.+、.+趕到他身旁。$/.test(R.briefing(s).waves[0].line) && /^求敗氣血只剩四分之一時，.+、.+、.+趕到他身旁。$/.test(R.briefing(s).waves[1].line) && !R.briefing(s).waves[0].line.includes('率'));
+
+  // 不敗
+  put(s, 'youth', 6, 8);
+  qiu.hp = 10;
+  const f = G.forecast(youth, qiu, false, s);
+  check('不敗: a blow that would fell him is forecast to leave 1', f.amount === 9 && f.notes.some((n) => n.startsWith('不敗')), f.amount);
+  G.wound(s, qiu, 500, youth);
+  check('不敗: and leaves 1', qiu.hp === 1 && G.living(qiu));
+  G.wound(s, qiu, 500, youth);
+  check('不敗: nothing takes him lower', qiu.hp === 1);
+  check('不敗 and 無招 are on his page', G.enemyTraitLines(s, qiu).some((l) => l.startsWith('【不敗】')) && G.enemyTraitLines(s, qiu).some((l) => l.startsWith('【無招】')));
+  // 問劍
+  qiu.hp = 2;
+  G.check(s);
+  check('問劍: not won at 2 氣血', !s.result);
+  qiu.hp = 1;
+  G.check(s);
+  check('問劍: won at 1, though every guest stands', s.result === 'win' && G.enemies(s).slice(1).every(G.living));
+  // The blow that brings him to his last point is the last blow: he does not answer it, so it
+  // cannot fell the one who lands it.
+  const y5 = last();
+  const q5 = unit(y5, 'qiubai'),
+    frail = put(y5, 'youth', 6, 7);
+  q5.woke = true;
+  frail.hp = 3;
+  q5.hp = 400;
+  check('問劍: an ordinary blow at 求敗 draws his counter', G.forecast(frail, q5, false, y5).counter > 0);
+  q5.hp = 5;
+  const yielding = G.forecast(frail, q5, false, y5);
+  check('問劍: the forecast says this blow ends the board', yielding.notes.includes('問劍 · 此擊之後，這一局便完了') && !G.forecast(frail, { ...q5, hp: 400 }, false, y5).notes.some((n) => n.startsWith('問劍')));
+  check('問劍: the yielding blow draws none', yielding.amount === 4 && !yielding.counter, JSON.stringify([yielding.amount, yielding.counter]));
+  y5.selected = 'youth';
+  G.resolve(y5, frail, q5, false);
+  G.check(y5);
+  check('問劍: so a youth at his last breath can win it', q5.hp === 1 && G.living(frail) && y5.result === 'win', [q5.hp, frail.hp, y5.result].join());
+  // A hard stop: the board is over with that blow, and no black stone acts after it.
+  const stopped = last();
+  const sq = unit(stopped, 'qiubai'),
+    guest = G.enemies(stopped)[1],
+    was = [guest.x, guest.y];
+  G.startEnemy(stopped);
+  sq.hp = 1; // as a hero's counter leaves him, in the black stones' own turn
+  G.check(stopped);
+  check('問劍: a hard stop, in the enemy phase too: no one acts once he is at 1', stopped.result === 'win' && stopped.phase === 'done' && G.enemyAct(stopped, guest).length === 0 && same([guest.x, guest.y], was) && G.enemyAct(stopped, sq).length === 0);
+  // From above half straight to his last point: no 變招, no 「再來」; it is over.
+  const once = last();
+  unit(once, 'qiubai').hp = 1;
+  G.check(once);
+  check('問劍: brought from above half to 1 at a stroke, he does not change', once.result === 'win' && !unit(once, 'qiubai').phased && !logged(once, MAZE_TALE.finale.half));
+  const lost = last();
+  unit(lost, 'youth').hp = 0;
+  G.check(lost);
+  check('問劍: 無名 down loses it', lost.result === 'loss' && lost.reason.startsWith('無名倒下'));
+  const late = last();
+  late.round = G.LIMIT + 1;
+  G.check(late);
+  check('問劍: the round limit loses it', late.result === 'loss');
+
+  // 無招, and the forms that answer a kind of weapon
+  const t = last();
+  const y = unit(t, 'youth'),
+    q = unit(t, 'qiubai');
+  const factor = (art, target) => G.strikeFactor(t, y, TECHNIQUES[art], target);
+  check('無招: 破氣式 answers masters, but not 求敗', !factor('youthBreakQi', q).notes.some((n) => n.startsWith('破招')) && factor('youthBreakQi', q).notes.includes('無招 · 破招不成'));
+  const swordsman = G.enemies(t).find((u) => G.armOf(u) === 'sword');
+  const bladesman = { ...swordsman, arm: 'blade' };
+  check('破刀式 answers one who fights with a blade: +0.30', !!swordsman && Math.abs(factor('youthBreakBlade', bladesman).factor - (TECHNIQUES.youthBreakBlade.factor + 0.3)) < 1e-9, G.enemies(t).map((u) => u.id + ':' + G.armOf(u)).join());
+  check('and no one else', factor('youthBreakBlade', swordsman).factor === TECHNIQUES.youthBreakBlade.factor);
+  check('each of the five weapon forms answers its own kind only', ['Blade:blade', 'Pole:pole', 'Soft:soft', 'Mace:mace', 'Hand:hand'].every((pair) => {
+    const [name, arm] = pair.split(':');
+    return Object.keys(G.ARM_NAMES).every((kind) => G.answers(t, TECHNIQUES['youthBreak' + name].answer, { ...swordsman, arm: kind }) === (kind === arm));
+  }));
+  check('every enemy that is no archer has a kind of weapon, bar 完顏洪烈, 東方不敗 (needles, answered by reach) and 求敗', Object.entries(G.DETAILS).filter(([key, d]) => !G.ROSTER.includes(key) && !d.object && !d.arm).every(([key, d]) => d.row === 'bow' || /bow/i.test(key) || ['wanYan', 'dongFang', 'qiubai'].includes(key)));
+  check('the enemy page names the weapon once 無名 is on the board', G.enemyTraitLines(t, swordsman).includes('【兵刃】劍。') && !G.enemyTraitLines(board(), unit(board(), 'chief')).some((l) => l.startsWith('【兵刃】')));
+  // One art, one effect and one tier, whoever learns it: the four forms 令狐冲 has too.
+  const sameArt = (mine, his) => ['name', 'tier', 'points', 'mp', 'range', 'factor', 'pierce', 'safe', 'splash', 'debuff', 'answer', 'desc', 'forms'].every((k) => same(TECHNIQUES[mine][k], TECHNIQUES[his][k]));
+  check('破劍式, 破箭式 and 破氣式 are the arts 令狐冲 learns, field for field', sameArt('youthBreakSword', 'breakSword') && sameArt('youthBreakArrow', 'breakArrow') && sameArt('youthBreakQi', 'breakQi'));
+  const start = G.artFor(G.startingHero('youth'), 'signature'),
+    formula = TECHNIQUES.ninefoldFormula;
+  check('and his starting 總訣式 is 令狐冲’s 總訣式', start.name === formula.name && start.factor === formula.factor && start.range === formula.range && start.mp === formula.mp && start.desc === formula.desc && same(start.forms, formula.forms));
+  check('令狐冲’s forms answer as they always did', G.answers(t, 'close', { ...swordsman, range: 1 }) && G.answers(t, 'master', swordsman) && !G.answers(t, 'master', q));
+
+  // His 變招, and those who walk on
+  const h = last();
+  const hq = unit(h, 'qiubai'),
+    atk = hq.atk;
+  hq.hp = Math.floor(hq.maxHp / 2);
+  G.check(h);
+  check('求敗 at half: his 變招, and what he says', hq.phased && hq.atk === atk + 4 && logged(h, MAZE_TALE.finale.half, '求敗'));
+  // 護駕: those who come to his side as his 氣血 falls, who guards him, and where he falls back to
+  const w = last();
+  const wq = unit(w, 'qiubai'),
+    later = G.boardOf(w).waves.map((wave) => wave.pieces.map((p) => p.id)),
+    beside = (state, ids, m) => ids.every((id) => unit(state, id) && G.distance(unit(state, id), m) <= 2);
+  check('no round brings the rest: nothing is announced, nothing scheduled', !Object.keys(w.arrivals || {}).length && !G.announcedWaves(w).length && !logged(w, MAZE_TALE.clack));
+  check('above half no master takes a blow for him', !G.coverer(w, wq));
+  wq.hp = Math.floor(wq.maxHp / 2) + 1;
+  G.check(w);
+  check('above half no one comes', later.flat().every((id) => !unit(w, id)));
+  wq.hp = Math.floor(wq.maxHp / 2);
+  G.check(w);
+  check('at half two masters step to his side at once, unacted, and say their own board’s line', later[0].every((id) => unit(w, id) && !unit(w, id).acted && unit(w, id).hp === unit(w, id).maxHp && logged(w, G.guestLine(id), G.DETAILS[id].name)) && beside(w, later[0], wq) && later[1].every((id) => !unit(w, id)) && logged(w, MAZE_TALE.finale.rally), later[0].join());
+  check('from half on a master beside him takes the heroes’ blows for him', !!G.coverer(w, wq)?.guest && G.distance(G.coverer(w, wq), wq) === 1);
+  G.check(w);
+  check('they come once', G.enemies(w).filter((u) => later[0].includes(u.id)).length === 2 && G.enemies(w).length === 8);
+  wq.woke = true; // he has been struck: his post at 天元 no longer holds him
+  check('he does not fall back yet', G.standCells(w, wq).length > 1);
+  wq.hp = Math.floor(wq.maxHp / 4);
+  G.check(w);
+  check('at a quarter the last three come: all ten masters are on the board', later[1].every((id) => unit(w, id) && logged(w, G.guestLine(id), G.DETAILS[id].name)) && beside(w, later[1], wq) && G.enemies(w).filter((u) => u.guest).length === 10);
+  {
+    // 退守: his one tile is the reachable one farthest from the heroes with most of his own beside it.
+    const cells = G.standCells(w, wq),
+      heroes = G.party(w).filter(G.living),
+      own = G.enemies(w).filter((u) => u !== wq && G.living(u)),
+      worth = (c) => Math.min(4, ...heroes.map((h) => G.distance(c, h))) + 2 * Math.min(2, own.filter((v) => G.distance(c, v) === 1).length);
+    check('at a quarter he falls back: one tile, none better within his walk', cells.length === 1 && G.walkCells(w, wq).every((c) => worth(c) <= worth(cells[0])));
+    w.phase = 'enemy';
+    G.enemyAct(w, wq);
+    check('and the page says so, once', logged(w, MAZE_TALE.finale.withdraw) && wq.withdrew && wq.x === cells[0].x && wq.y === cells[0].y);
+  }
+  {
+    // A blow from above half to his last point ends the board: no one comes.
+    const e = last(),
+      eq = unit(e, 'qiubai');
+    eq.hp = 1;
+    G.check(e);
+    check('brought straight to 1 氣血, the board is over and no one comes', e.result === 'win' && G.enemies(e).length === 6);
+    // Both shares crossed by one blow: all five come together.
+    const b = last(),
+      bq = unit(b, 'qiubai');
+    bq.hp = Math.floor(bq.maxHp / 5);
+    G.check(b);
+    check('both shares crossed at once: all five come together', G.enemies(b).filter((u) => u.guest).length === 10);
+    check('a save made with them on the board loads', !!R.restoreRun(copy(b)));
+  }
+  {
+    // 無名 on the last board is stronger than the same piece at the same level.
+    const plain = G.startingHero('youth');
+    G.raiseLevel(plain, youth.level - plain.level);
+    const B = R.LAST_BOON;
+    check('無名 steps onto the last board stronger: 氣血, 內力, 攻擊, 防禦 and a step more', youth.boon && youth.maxHp === plain.maxHp + B.hp && youth.maxMp === plain.maxMp + B.mp && youth.atk === plain.atk + B.atk && youth.def === plain.def + B.def && youth.step === plain.step + B.step && B.hp > 0 && B.atk > 0, [youth.maxHp, plain.maxHp, youth.atk, plain.atk].join());
+    check('and the briefing says by how much', R.briefing(s).battle.includes('氣血 ＋' + B.hp) && R.briefing(s).battle.includes('攻擊 ＋' + B.atk));
+  }
+
+  // From the tenth board to the last, and the end of the run
+  const run = R.devTestRun({ map: 9, realm: 5, heroes: HEROES, seed: 5 }, R.LEGACY);
+  R.devFinish(run, true);
+  R.settle(run);
+  check('ten boards won in 無劍境界 do not end the run: the last board follows', !run.run.last.terminal && run.run.last.finale === true && run.run.chronicle.wins === 1 && same(run.run.chronicle.cleared, [5]) && run.run.chronicle.finale === 1 && run.run.chronicle.returns === 1);
+  check('…and bring no hero, and send no one home', !run.run.last.recruit && !R.dialogue(run).some((b) => b.text === MAZE_TALE.release.text));
+  const other9 = R.devTestRun({ map: 9, realm: 4, heroes: HEROES, seed: 5 }, R.LEGACY);
+  R.devFinish(other9, true);
+  R.settle(other9);
+  check('in any other 境界 the tenth board ends the run', other9.run.last.terminal && !other9.run.last.finale);
+  while (R.turnPage(run)) {}
+  // In the shop before it, 整理隊伍 already shows the line that will take the field.
+  check('in the shop before the last board 無名 has joined and heads the line, and is held there', run.run.scene === 'shop' && run.run.next[0] === 'youth' && run.run.next.length === 5 && R.fixedLead(run, 'youth') && !R.toggleSeat(run, 'youth') && !R.appointLeader(run, run.run.next[1]));
+  const swapped = [run.run.next[0], run.run.next[2], run.run.next[1], ...run.run.next.slice(3)];
+  check('a line arranged there is the line that takes the field', R.placeHero(run, run.run.next[1], 2) && same(seatsFor(run.run), swapped) && !!R.restoreRun(copy(run)));
+  const top = Math.max(...G.company(run).map((u) => u.level));
+  check('to the last board', R.advance(run) && run.run.stage === 10 && run.mapIndex === G.LAST_MAP && run.run.scene === 'before');
+  const joined = G.company(run).find((u) => u.id === 'youth');
+  check('…with the seats as arranged in the shop', same(seatsFor(run.run), swapped) && unit(run, 'youth').x === 6 && unit(run, 'youth').y === 11);
+  check('無名 joins as its 眼, at the company’s highest level, rested', !!joined && run.leader === 'youth' && run.run.next[0] === 'youth' && joined.level === top && G.company(run).every((u) => u.hp === u.maxHp && u.mp === u.maxMp));
+  check('every stone remembers its whole tree, gates waived', G.company(run).every((u) => TREE(u.id).every((id) => u.learned.includes(id))));
+  R.turnPage(run, true);
+  R.turnPage(run, true);
+  // His seat is not given to one from the bench either.
+  const benched = run.run.bench[0].id,
+    hisSeat = seatsFor(run.run).indexOf('youth');
+  check('nor is his seat given to a benched hero', !R.canPlaceHero(run, benched, hisSeat) && !R.placeHero(run, benched, hisSeat) && run.run.next[0] === 'youth' && R.canPlaceHero(run, benched, seatsFor(run.run).indexOf(run.run.next[1])));
+  check('in 整備 he is not benched and no one else leads, though the others may change', run.run.scene === 'prep' && !R.toggleSeat(run, 'youth') && !R.appointLeader(run, run.run.next[1]) && R.toggleSeat(run, run.run.next[4]) && run.run.next.length === 4 && run.run.next[0] === 'youth');
+  check('a save made there loads', !!R.restoreRun(copy(run)));
+  R.devFinish(run, true);
+  check('速勝 on 問劍 leaves 求敗 at 1', unit(run, 'qiubai').hp === 1);
+  R.settle(run);
+  check('the last board pays no silver and has no secondary to pay', run.run.last.reward === 0 && !run.run.last.optional && !run.run.last.side && BATTLES[G.LAST_MAP].sides.length === 0);
+  check('the last board won: the ending, counted once, the run over', run.run.last.terminal && run.run.last.ended && run.run.last.lastBoard && run.run.chronicle.ended === 1 && run.run.chronicle.returns === 1 && run.run.chronicle.best === 11);
+  while (R.turnPage(run)) {}
+  check('…with no shop after it', run.run.status === 'ended' && run.run.scene === 'ended' && !!R.restoreRun(copy(run)));
+  const again = R.devTestRun({ map: G.LAST_MAP, realm: 5, heroes: HEROES, seed: 6 }, R.LEGACY);
+  R.devFinish(again, false);
+  R.settle(again);
+  check('the last board lost: the run over, no ending, counted as missed, 請回吧', again.run.last.terminal && !again.run.last.ended && again.run.chronicle.ended === 0 && again.run.chronicle.missed === 1 && R.dialogue(again).some((b) => b.speaker === '求敗' && b.text.includes('請回吧')));
+  while (R.turnPage(again)) {}
+  check('…and the shop still stands, to leave things with 韋小寶', again.run.scene === 'shop' && R.advance(again) && again.run.status === 'ended');
+
+  // New game plus
+  const plus = R.startRun(R.drawLots(9), { ...R.LEGACY, ended: 1, realms: 5, cleared: [1, 2, 3, 4, 5] });
+  const py = unit(plus, 'youth');
+  check('after the ending 無名 is a fourth piece from the first board', plus.run.plus === true && G.party(plus).length === 4 && same(plus.run.next.slice(3), ['youth']) && plus.leader !== 'youth');
+  check('…from the root: 總訣式 only, and points to spend like anyone', py.learned.length === 0 && same(py.slots, ['signature', null, null]) && py.sp >= 2 && G.artFor(py).name === '總訣式');
+  check('…an ordinary piece: he may be benched, or lead', R.turnPage(plus, true) && R.turnPage(plus, true) && R.toggleSeat(plus, 'youth') && R.toggleSeat(plus, 'youth') && R.appointLeader(plus, 'youth'));
+  check('before the ending he is not', G.party(R.startRun(R.drawLots(9), R.LEGACY)).length === 3);
+  const test3 = R.devTestRun({ map: 3, realm: 2, heroes: ['hero', 'guo'] }, { ...R.LEGACY, ended: 1 }),
+    test3full = R.devTestRun({ map: 3, realm: 2, heroes: HEROES }, { ...R.LEGACY, ended: 1 });
+  check('a test battle after the ending has him too: on the board if a seat is free, else on the bench', same(test3.run.next, ['hero', 'guo', 'youth']) && !!unit(test3, 'youth') && test3full.run.next.length === 5 && test3full.run.bench.some((u) => u.id === 'youth') && !!R.restoreRun(copy(test3)) && !!R.restoreRun(copy(test3full)));
+  // The last board seen ahead from the shop names the masters this run will bring, in its order.
+  const ahead = R.boardBrief(G.LAST_MAP, 10, [0, 2, 1, 4, 3, 6, 5, 7, 8, 9]).foes.map((f) => f.key);
+  check('the last board ahead is read for the run’s own route', same(ahead.slice(1, 5), ['chief', 'reed', 'courier', 'qin']) && !same(ahead, R.boardBrief(G.LAST_MAP, 10).foes.map((f) => f.key)));
+  // 求敗 has brought the youth this far before only if the last board was fought and lost.
+  const closeOf = (profile) => {
+    const t9 = R.devTestRun({ map: 9, realm: 5, heroes: HEROES, seed: 12 }, profile);
+    R.devFinish(t9, true);
+    R.settle(t9);
+    return R.dialogue(t9).map((b) => b.text);
+  };
+  check('the short close before the last board: only after a lost one', closeOf({ ...R.LEGACY, finale: 1, missed: 1 }).includes(MAZE_TALE.finale.again[0].text) && !closeOf({ ...R.LEGACY, finale: 3 }).includes(MAZE_TALE.finale.again[0].text) && !closeOf({ ...R.LEGACY, finale: 2, missed: 1, ended: 1 }).includes(MAZE_TALE.finale.again[0].text));
+  check('his tree can be learned in order: 破刀式, then 破槍式', !!R.studyState(plus, py, 'youthBreakBlade')?.canLearn && !R.studyState(plus, py, 'youthBreakPole')?.canLearn && R.learn(plus, py, 'youthBreakBlade') && !!R.studyState(plus, py, 'youthBreakPole')?.canLearn);
+
+  // After the ending the one at the table is 求敗's shadow.
+  const shadowLines = R.dialogue(plus, 'before').filter((b) => b.portrait === 'npc-qiubai.webp');
+  check('after the ending it is 求敗’s shadow who speaks, and the narration says so', shadowLines.length > 0 && shadowLines.every((b) => b.speaker === '求敗的影子' && !b.note.includes('求敗')) && R.dialogue(R.startRun(R.drawLots(9), R.LEGACY), 'before').every((b) => b.speaker !== '求敗的影子'));
+  // Saves and profiles from before
+  const old = { ...R.LEGACY, wins: 5, returns: 6, realms: 5, cleared: [1, 2, 3, 4, 5], finale: 2 };
+  delete old.ended;
+  const fresh = R.startRun(R.drawLots(3), old);
+  check('a profile from before the ending existed has seen none: the placeholder does not count', fresh.run.chronicle.ended === 0 && !fresh.run.plus && !!R.restoreRun(copy(fresh)));
+  // A run that ended at the tenth board of 無劍境界 when a placeholder stood for the last board.
+  const ended = R.devTestRun({ map: 9, realm: 5, heroes: HEROES, seed: 8 }, R.LEGACY);
+  R.devFinish(ended, true);
+  R.settle(ended);
+  while (R.turnPage(ended)) {}
+  Object.assign(ended.run, { status: 'ended', scene: 'ended' });
+  ended.run.last.terminal = true;
+  const reloaded = R.restoreRun(copy(ended));
+  check('…and a run that ended there then goes on to the last board', !!reloaded && R.enterLast(reloaded) && reloaded.run.stage === 10 && reloaded.leader === 'youth' && !R.enterLast(reloaded));
+}
+
+// ── The later ten's leader boons: each on and off ───────────────────────────────
+// Each is tried on a hero within two tiles of the leader, on one beyond, and with the leader
+// fallen. Where a boon changes a blow, the forecast says so and the strike does what it said.
+section('leader boons of the later ten');
+{
+  const MF = await load('rules/move-facts.js');
+  const LATER = ['qiaoFeng', 'xuZhu', 'hongQi', 'yaoShi', 'sanFeng', 'zhaoMin', 'lingSu', 'diYun', 'chengZhi', 'aQing'];
+  const stats = G.PARTY.filter((id) => id !== 'youth').map((id) => BM.COMMANDS[id].stat);
+  check('every hero leads with a boon of his own kind', new Set(stats).size === stats.length && LATER.every((id) => stats.includes(BM.COMMANDS[id].stat)), stats);
+  // A board led by `id` from (4,7), 令狐冲 beside him at (5,7) with the lieutenant past him at
+  // (6,7); 藍鳳凰 eight tiles off at (8,3), the archer beside her at (7,3).
+  const led = (id) => {
+    const s = board([id, 'hero', 'medic']);
+    return { s, lead: put(s, id, 4, 7), near: put(s, 'hero', 5, 7), far: put(s, 'medic', 8, 3), foe: put(s, 'blade', 6, 7), other: put(s, 'bow', 7, 3) };
+  };
+  const pin = (s, v, kind = 'pin') => BM.applyCondition(s, v, { kind, power: 2, turns: 2 }, unit(s, s.leader));
+
+  // 蕭峰 聚賢豪氣: 攻擊 ＋3 for each foe beside, up to two.
+  {
+    const per = BM.COMMANDS.qiaoFeng.power;
+    const s = board(['qiaoFeng', 'hero', 'medic']);
+    const lead = put(s, 'qiaoFeng', 4, 7),
+      mate = put(s, 'medic', 6, 7),
+      hero = put(s, 'hero', 7, 3);
+    const [own, mates, far] = [G.stat(lead, 'atk', s), G.stat(mate, 'atk', s), G.stat(hero, 'atk', s)];
+    const blade = put(s, 'blade', 5, 7);
+    put(s, 'bow', 8, 3);
+    const one = G.forecast(lead, blade, false, s).amount;
+    check('聚賢豪氣: a foe beside the leader adds 3 攻擊', per === 3 && G.stat(lead, 'atk', s) === own + per);
+    check('…and so beside a hero two tiles off', G.stat(mate, 'atk', s) === mates + per);
+    check('…but not beside one eight tiles off', G.stat(hero, 'atk', s) === far);
+    put(s, 'scout', 3, 7);
+    check('two foes beside: ＋6, and the forecast deals the 3 more', G.stat(lead, 'atk', s) === own + 2 * per && G.forecast(lead, blade, false, s).amount === one + per);
+    put(s, 'chief', 4, 6);
+    check('a third adds nothing more', G.stat(lead, 'atk', s) === own + 2 * per);
+    lead.hp = 0;
+    check('with the leader fallen, nothing', G.stat(mate, 'atk', s) === mates);
+  }
+  // 虛竹 北冥真氣: a blow that lands gives back 3 內力.
+  {
+    const { s, lead, near, far, foe, other } = led('xuZhu');
+    near.mp = 0;
+    const f = G.forecast(near, foe, false, s);
+    check('北冥真氣: the forecast gives back 3 內力', f.absorb === 3 && f.notes.includes('北冥真氣 · 內力 ＋3'), f.notes);
+    check('…and the move’s page says so', MF.moveFacts(s, near, 'basic').effectLines.includes('北冥真氣 · 出手擊中敵人時，回復 3 點內力'));
+    G.resolve(s, near, foe, false);
+    check('…and the strike gives it', near.mp === 3, near.mp);
+    check('not eight tiles off', !G.forecast(far, other, false, s).absorb);
+    BM.applyCondition(s, foe, { kind: 'evade', power: 1, turns: 1 }, foe);
+    check('not for a blow 閃身 makes miss', !G.forecast(lead, foe, false, s).absorb);
+    lead.hp = 0;
+    delete foe.conditions.evade;
+    check('not with the leader fallen', !G.forecast(near, foe, false, s).absorb);
+  }
+  // 洪七公 打狗陣法: ＋8 on a held foe.
+  {
+    const { s, lead, near, far, foe, other } = led('hongQi');
+    const free = G.forecast(near, foe, false, s).amount,
+      distant = G.forecast(far, other, false, s).amount;
+    pin(s, foe);
+    const f = G.forecast(near, foe, false, s);
+    check('打狗陣法: ＋8 on a foe under 絆足, and the forecast says so', f.amount === free + 8 && f.notes.includes('打狗陣法 · 傷害 ＋8'), [free, f.amount]);
+    delete foe.conditions.pin;
+    pin(s, foe, 'seal');
+    check('…and under 封穴', G.forecast(near, foe, false, s).amount === free + 8);
+    pin(s, other);
+    check('not eight tiles off', G.forecast(far, other, false, s).amount === distant);
+    lead.hp = 0;
+    check('not with the leader fallen', G.forecast(near, foe, false, s).amount === free);
+  }
+  // 黃藥師 桃花迷陣: the conditions a blow puts on a foe stay two rounds longer.
+  {
+    const { s, lead, near, far, foe, other } = led('yaoShi');
+    const art = defineArt({ debuff: { stat: 'atk', power: 3, turns: 2 }, safe: true, mp: 2 });
+    teach(near, art);
+    teach(far, art);
+    const f = G.forecast(near, foe, true, s);
+    check('桃花迷陣: 攻勢受挫 for 4 rounds, and the forecast says so', f.effects.find((e) => e.kind === 'weak')?.turns === 4 && f.notes.includes('桃花迷陣 · 攻勢受挫多留 2 回合'), f.notes);
+    G.resolve(s, near, foe, true);
+    check('…and the strike puts it on for 4', foe.conditions.weak?.through === s.round + 3, foe.conditions.weak?.through);
+    check('not eight tiles off', G.forecast(far, other, true, s).effects.find((e) => e.kind === 'weak')?.turns === 2);
+    lead.hp = 0;
+    check('not with the leader fallen', G.forecast(near, other, true, s).effects.find((e) => e.kind === 'weak')?.turns === 2);
+  }
+  // 張三丰 太極圓轉: counters two tenths fuller, up to a full one.
+  {
+    const { s, lead, near, far, foe } = led('sanFeng');
+    check('太極圓轉: counters at 0.75 in range', G.counterRatio(s, near) === 0.75 && G.counterRatio(s, lead) === 0.75);
+    check('…0.55 eight tiles off', G.counterRatio(s, far) === 0.55);
+    BM.applyCondition(s, near, { kind: 'stance', power: 30, turns: 1 }, near);
+    check('…and a full counter stays full', G.counterRatio(s, near) === 1);
+    delete near.conditions.stance;
+    loose(() => {
+      Object.assign(foe, { step: 0, range: 1 });
+      const want = Math.max(2, Math.round(G.damage(near, foe, false, 0, s) * 0.75)),
+        hp = foe.hp;
+      G.startEnemy(s);
+      G.enemyAct(s, foe);
+      check('…and the enemy phase’s counter is that share', hp - foe.hp === want, [hp - foe.hp, want]);
+    });
+    lead.hp = 0;
+    check('with the leader fallen, 0.55', G.counterRatio(s, near) === 0.55);
+  }
+  // 趙敏 軟筋餘香: foes within two tiles of her strike 3 lighter.
+  {
+    const { s, lead, near, foe, other } = led('zhaoMin');
+    check('軟筋餘香 names the foes', BM.commandDescription('zhaoMin') === '距離領隊兩格內的敵人攻擊減少 3。');
+    const weak = [G.stat(foe, 'atk', s), G.damage(foe, near, false, 0, s), G.forecast(near, foe, false, s)],
+      farAtk = G.stat(other, 'atk', s);
+    put(s, 'zhaoMin', 3, 3);
+    const full = [G.stat(foe, 'atk', s), G.damage(foe, near, false, 0, s), G.forecast(near, foe, false, s)];
+    check('軟筋餘香: 攻擊 −3 on a foe two tiles off, none once she is five off', weak[0] === full[0] - 3, [weak[0], full[0]]);
+    check('…so its blow lands 3 lighter', weak[1] === full[1] - 3, [weak[1], full[1]]);
+    check('…and the forecast’s counter is lighter and says why', weak[2].counterRaw < full[2].counterRaw && weak[2].notes.includes('軟筋餘香 · 還擊攻擊 −3'), weak[2].notes);
+    check('the archer eight tiles off keeps his', farAtk === G.stat(other, 'atk', s));
+    check('a hero takes nothing from it', BM.commandBonus(s, near, 'sap') === 0);
+    put(s, 'zhaoMin', 4, 7);
+    lead.hp = 0;
+    check('with her fallen, nothing', G.stat(foe, 'atk', s) === full[0]);
+    // 整備: centred on her seat's post.
+    lead.hp = lead.maxHp;
+    s.run.scene = 'prep';
+    const post = BM.prepPost(s, 'zhaoMin');
+    Object.assign(foe, { x: post.x + 1, y: post.y });
+    const prepAtk = G.stat(foe, 'atk', s);
+    Object.assign(foe, { x: post.x + 3, y: post.y });
+    check('in 整備 it reads her seat’s post', prepAtk === G.stat(foe, 'atk', s) - 3);
+    s.run.scene = 'fight';
+  }
+  // 程靈素 碧蠶毒蠱: a blow that lands poisons, 4 for two rounds.
+  {
+    const { s, lead, near, far, foe, other } = led('lingSu');
+    const f = G.forecast(near, foe, false, s);
+    check('碧蠶毒蠱: the forecast poisons 4 for 2 rounds', same(f.effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: 4, turns: 2 }]) && f.notes.includes('碧蠶毒蠱 · 中毒 4，2 回合'), JSON.stringify(f.effects));
+    G.resolve(s, near, foe, false);
+    check('…and the strike does', foe.conditions.poison?.power === 4 && foe.conditions.poison.through === s.round + 1);
+    teach(lead, defineArt({ poison: { power: 6, turns: 1 }, safe: true, mp: 2 }));
+    const scout = put(s, 'scout', 3, 7);
+    check('an art’s own poison and the boon’s are one: the stronger, the longer', same(G.forecast(lead, scout, true, s).effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: 6, turns: 2 }]));
+    check('not eight tiles off', !G.forecast(far, other, false, s).effects.some((e) => e.kind === 'poison'));
+    BM.applyCondition(s, scout, { kind: 'evade', power: 1, turns: 1 }, scout);
+    check('not on a blow 閃身 makes miss, nor its line', !G.forecast(lead, scout, false, s).effects.length && !G.forecast(lead, scout, false, s).notes.some((n) => n.startsWith('碧蠶毒蠱')));
+    lead.hp = 0;
+    check('not with the leader fallen', !G.forecast(near, foe, false, s).effects.some((e) => e.kind === 'poison'));
+  }
+  // 狄雲 雪谷回生: the first hero in range who would fall this board is left at 1 氣血.
+  {
+    const { s, near, far, foe } = led('diYun');
+    near.hp = 5;
+    G.wound(s, near, 50, foe);
+    check('雪谷回生: a felling blow leaves him at 1', near.hp === 1 && s.tally.spared === 'hero' && s.logs.some((l) => l.text === '雪谷回生：留住一口氣，氣血剩 1。'));
+    G.wound(s, near, 50, foe);
+    check('…once a board', near.hp === 0);
+    const t = led('diYun');
+    t.far.hp = 5;
+    G.wound(t.s, t.far, 50, t.other);
+    check('not eight tiles off', t.far.hp === 0 && !t.s.tally.spared);
+    t.lead.hp = 3;
+    G.wound(t.s, t.lead, 50, t.foe);
+    check('the leader himself', t.lead.hp === 1);
+    const u = led('diYun');
+    u.near.hp = 2;
+    const f = G.forecast(u.near, u.foe, false, u.s);
+    check('the forecast shows the counter leaving him at 1, and says so', f.counter === 1 && f.counterRaw >= 2 && f.notes.includes('雪谷回生 · 留住 1 點氣血（每局一次）'), [f.counter, f.counterRaw]);
+    G.resolve(u.s, u.near, u.foe, false);
+    check('…and so it does', u.near.hp === 1 && u.s.tally.spared === 'hero');
+    const v = led('diYun');
+    v.lead.hp = 0;
+    v.near.hp = 5;
+    G.wound(v.s, v.near, 50, v.foe);
+    check('not with the leader fallen', v.near.hp === 0);
+    check('a new board’s facts have it again', !G.blankTally().spared);
+  }
+  // 袁承志 金蛇轉鋒: blows pass the ground's defence and every 代受.
+  {
+    const s = board(['chengZhi', 'hero', 'medic']);
+    const lead = put(s, 'chengZhi', 3, 3),
+      chief = put(s, 'chief', 2, 3); // 疏竹林: 防禦 ＋5
+    const bent = G.damage(lead, chief, false, 0, s);
+    check('金蛇轉鋒: the forecast says the ground does not count', G.forecast(lead, chief, false, s).notes.includes('金蛇轉鋒 · 無視地形防禦'));
+    lead.hp = 0;
+    check('…and with the leader fallen it counts again', G.damage(lead, chief, false, 0, s) < bent, [G.damage(lead, chief, false, 0, s), bent]);
+    withTraits('scout-0', { cover: 'master' }, () => {
+      Object.assign(G.DETAILS['scout-0'], { ...G.DETAILS.scout, name: '星宿弟子', traits: { cover: 'master' } });
+      const t = board(['chengZhi', 'hero', 'medic']);
+      const cz = put(t, 'chengZhi', 4, 7),
+        boss = put(t, 'chief', 5, 7);
+      put(t, 'scout', 6, 7);
+      const f = G.forecast(cz, boss, false, t),
+        life = boss.hp;
+      check('no disciple takes the blow for his master', !f.coveredBy);
+      G.resolve(t, cz, boss, false);
+      check('…and it lands on the master', boss.hp === life - f.amount && f.amount > 0);
+      put(t, 'chengZhi', 8, 3);
+      put(t, 'hero', 4, 7);
+      check('a hero beyond two tiles of the leader is met by the disciple', G.forecast(unit(t, 'hero'), boss, false, t).coveredBy === 'scout');
+    });
+  }
+  // 阿青 越女試劍: the first blow each round that would draw a counter draws none.
+  {
+    const { s, lead, near, far, foe, other } = led('aQing');
+    const f = G.forecast(near, foe, false, s),
+      hp = near.hp;
+    check('越女試劍: the forecast draws no counter, and says so', f.opening && f.counter === 0 && f.notes.includes('越女試劍 · 本回合頭一次，敵人不能還擊'), f.notes);
+    G.resolve(s, near, foe, false);
+    check('…the strike draws none, and spends it for the round', near.hp === hp && s.tally.opened === s.round);
+    const scout = put(s, 'scout', 3, 7);
+    const second = G.forecast(lead, scout, false, s);
+    check('the next blow that round is countered', !second.opening && second.counter > 0);
+    quietTurn(s);
+    check('a new round, a new first blow', G.forecast(lead, scout, false, s).opening === true);
+    const t = led('aQing');
+    teach(t.near, defineArt({ safe: true, mp: 2 }));
+    G.resolve(t.s, t.near, t.foe, true);
+    check('a blow that draws no counter anyway does not spend it', !t.s.tally.opened && G.forecast(t.lead, put(t.s, 'scout', 3, 7), false, t.s).opening === true);
+    check('not eight tiles off', !G.forecast(t.far, t.other, false, t.s).opening);
+    t.lead.hp = 0;
+    check('not with the leader fallen', !G.forecast(t.near, t.foe, false, t.s).opening);
+  }
+}
+
+// ── Growth paces (GROWTH_PACES, GROWTH_PROFILES; the producer's request of 2026-11-22) ──
+section('growth paces');
+{
+  const stats = (u) => [u.atk, u.def, u.maxHp, u.maxMp];
+  const add = (a, b) => a.map((n, i) => n + b[i]);
+  const raised = (id, level) => {
+    const u = G.startingHero(id);
+    G.raiseLevel(u, level - 1);
+    return u;
+  };
+  const { novice, veteran } = G.LEVEL_GAINS;
+  const COMMON = add(add(novice, novice), veteran.map((n) => 9 * n));
+  check('the common growth adds 24 攻擊, 13 防禦, 96 氣血 and 66 內力 from level 1 to 12', same(COMMON, [24, 13, 96, 66]), COMMON);
+  for (const [key, pace] of Object.entries(G.GROWTH_PACES)) {
+    const total = pace.levels.reduce(add, pace.start);
+    check(key + ' (' + pace.name + '): eleven rows, and with its start it adds up to the common growth', pace.levels.length === 11 && same(total, COMMON), total);
+    check('…no level takes anything away', pace.levels.every((row) => row.every((n) => n >= 0)));
+  }
+  check('the five heroes the producer named, each on a pace that exists', same(Object.keys(G.GROWTH_PROFILES).sort(), ['chengZhi', 'duan', 'guo', 'hu', 'xuZhu']) && Object.values(G.GROWTH_PROFILES).every((p) => G.GROWTH_PACES[p.pace] && p.why));
+  // A profiled hero, level by level: his starting numbers, plus `start`, plus each row reached.
+  for (const id of Object.keys(G.GROWTH_PROFILES)) {
+    const pace = G.growthOf(id),
+      bare = add(stats(G.startingHero(id)), pace.start.map((n) => -n));
+    let want = add(bare, pace.start),
+      ok = same(stats(raised(id, 1)), want);
+    for (let level = 2; level <= 12; level++) {
+      want = add(want, pace.levels[level - 2]);
+      ok = ok && same(stats(raised(id, level)), want);
+    }
+    check(id + ': at every level from 1 to 12 his numbers follow his pace', ok);
+    check('…at level 12 they are what the common growth gives him', same(stats(raised(id, 12)), add(bare, COMMON)), stats(raised(id, 12)));
+    check('…past level 12 he grows by the common veteran row', same(stats(raised(id, 13)), add(add(bare, COMMON), veteran)));
+  }
+  const hu1 = raised('hu', 1),
+    hu4 = raised('hu', 4),
+    duan6 = raised('duan', 6),
+    duan7 = raised('duan', 7),
+    xz5 = raised('xuZhu', 5),
+    xz6 = raised('xuZhu', 6);
+  check('胡斐 (早成) starts at 攻擊 27, 氣血 144 and stands at 攻擊 39 by level 4', hu1.atk === 27 && hu1.maxHp === 144 && hu4.atk === 39 && hu4.maxHp === 192, stats(hu1) + ' / ' + stats(hu4));
+  check('段譽 (晚成) climbs from 攻擊 11 at level 1 to 23 on level 6 and 28 on level 7', G.startingHero('duan').atk === 11 && duan6.atk === 23 && duan7.atk === 28, G.startingHero('duan').atk + ' / ' + duan6.atk + ' / ' + duan7.atk);
+  check('虛竹 (驟進) gains 攻擊 15, 防禦 10, 氣血 60 and 內力 40 on reaching level 6', same(add(stats(xz6), stats(xz5).map((n) => -n)), [15, 10, 60, 40]));
+  // An unprofiled hero grows exactly as before.
+  const hero1 = G.startingHero('hero'),
+    hero2 = raised('hero', 2),
+    hero4 = raised('hero', 4),
+    hero12 = raised('hero', 12);
+  check('令狐冲 (no pace) starts at his HERO_STATS', same(stats(hero1), [25, 11, 148, 74]), stats(hero1));
+  check('…gains 3, 2, 12 and 6 on level 2, and 2, 1, 8 and 6 on level 4', same(add(stats(hero2), stats(hero1).map((n) => -n)), [3, 2, 12, 6]) && same(add(stats(hero4), stats(raised('hero', 3)).map((n) => -n)), [2, 1, 8, 6]));
+  check('…and stands at 攻擊 49, 防禦 24, 氣血 244 and 內力 140 at level 12', same(stats(hero12), [49, 24, 244, 140]), stats(hero12));
+  // Several levels at once are the same as one at a time, from any level.
+  let even = true;
+  for (const id of [...Object.keys(G.GROWTH_PROFILES), 'hero', 'yang', G.YOUTH_ID])
+    for (const [from, to] of [[1, 12], [1, 6], [3, 9], [5, 7], [6, 14]]) {
+      const once = raised(id, from),
+        step = raised(id, from);
+      G.raiseLevel(once, to - from);
+      for (let n = from; n < to; n++) G.raiseLevel(step, 1);
+      even = even && same([...stats(once), once.hp, once.mp, once.level], [...stats(step), step.hp, step.mp, step.level]);
+    }
+  check('raising several levels at once gives the numbers of raising them one by one', even);
+  // 氣血 and 內力 rise with the maximum, and a fallen hero is not raised from the floor.
+  const hurt = raised('xuZhu', 5);
+  hurt.hp = 10;
+  hurt.mp = 3;
+  G.raiseLevel(hurt, 1);
+  check('a hurt hero reaching a level gains that level’s 氣血 and 內力', hurt.hp === 70 && hurt.mp === 43, hurt.hp + ' / ' + hurt.mp);
+  const fallen = raised('duan', 3);
+  fallen.hp = 0;
+  G.raiseLevel(fallen, 4);
+  check('…a fallen one stays at 0 氣血', fallen.hp === 0);
+  check('raising no levels changes nothing', same(stats(G.startingHero('hu')), stats(raised('hu', 1))));
+  // A hero saved mid-run keeps the numbers he has; only later levels follow his pace.
+  const s = board(['hu', 'duan', 'xuZhu']);
+  const hu = unit(s, 'hu');
+  Object.assign(hu, { level: 5, atk: 27, def: 16, maxHp: 144, hp: 144, maxMp: 60, mp: 60 }); // as the common growth left him
+  const back = R.restoreRun(R.migrateSave(copy(s)));
+  const again = unit(back, 'hu');
+  check('a save made before the paces keeps its hero’s numbers on loading', !!again && same([...stats(again), again.level], [27, 16, 144, 60, 5]), again && stats(again));
+  G.raiseLevel(again, 1);
+  check('…and his next level adds what his pace gives at level 6', same(stats(again), add([27, 16, 144, 60], G.growthOf('hu').levels[4])), stats(again));
+  // A hero drawn into a run later is built at his pace (recruit and 試局 raise him from level 1).
+  const late = G.startingHero('guo');
+  G.raiseLevel(late, 4);
+  check('a hero lent at level 5 has his pace’s numbers', same(stats(late), stats(raised('guo', 5))));
+}
+
+section('the draw: five drawn, three kept');
+{
+  const seed = 2026,
+    draw = R.drawLots(seed),
+    ids = draw.ids;
+  check('five distinct heroes are drawn, none of them 無名', ids.length === R.DRAWN && new Set(ids).size === 5 && ids.every((id) => G.PARTY.includes(id)), ids);
+  check('the same seed draws the same five', same(R.drawLots(seed).ids, ids));
+  check('with no pick the first three drawn are kept', same(R.keptLots(draw), ids.slice(0, 3)));
+  const picks = [ids[4], ids[1], ids[3]];
+  check('a pick of three of the five is kept, in the order drawn', same(R.keptLots({ seed, picks }), [ids[1], ids[3], ids[4]]));
+  for (const [why, bad] of [
+    ['two', [ids[0], ids[1]]],
+    ['four', ids.slice(0, 4)],
+    ['a repeat', [ids[0], ids[0], ids[1]]],
+    ['one not drawn', [ids[0], ids[1], G.PARTY.find((id) => !ids.includes(id))]]
+  ])
+    check('a pick of ' + why + ' falls back to the first three', same(R.keptLots({ seed, picks: bad }), ids.slice(0, 3)));
+  const s = R.startRun({ seed, picks, leaderId: ids[3] }, R.LEGACY);
+  const team = G.party(s).map((u) => u.id);
+  check('the run starts with the three kept, the chosen leader first', same(team, [ids[3], ids[1], ids[4]]) && s.leader === ids[3], team);
+  check('the two put back go into the box: they may be lent later', [ids[0], ids[2]].every((id) => s.run.pool.includes(id)) && !s.run.pool.some((id) => team.includes(id)));
+  const odd = R.startRun({ seed, picks, leaderId: ids[0] }, R.LEGACY);
+  check('a leader who was put back is not the leader: the first kept leads', odd.leader === ids[1] && !G.party(odd).some((u) => u.id === ids[0]), odd.leader);
+}
+
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
