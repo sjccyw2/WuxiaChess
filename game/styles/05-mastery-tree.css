@@ -505,6 +505,12 @@
   .run-lot-skill {
     font-size: 11px;
   }
+  .run-lot-name .lot-lead {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    margin: 0;
+  }
   .run-draw-ledger {
     padding: 12px 0 7px;
   }

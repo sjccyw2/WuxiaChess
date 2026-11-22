@@ -75,7 +75,7 @@ let deployPick = null,
 // reads the next board.
 let briefFrom = null;
 let studyUI = { tab: 'school', node: null, slot: 0 };
-let teamUI = { tab: 'line', slot: 0 };
+let teamUI = { tab: 'line', slot: 0, skill: 'school', node: null };
 let heroParent = null,
   archiveScene = 'before',
   archiveReturn = null;
@@ -720,9 +720,10 @@ function pageHtml() {
     case 'formation':
       return rollView(
         draft.ids,
-        { ...state.run.chronicle, parcelCount: R.parcelCount(state.run.chronicle), realm: prologue.realm },
+        { ...state.run.chronicle, parcelCount: R.parcelCount(state.run.chronicle), realm: prologue.realm, settled: draft.settled },
         hasSave,
-        draft.leaderId
+        draft.leaderId,
+        draft.picks
       );
     case 'encounter':
       return encounterPage(state, state.run.scene, state.run.beat);
@@ -849,7 +850,8 @@ function openPage(name, heroId) {
   }
   if (name === 'team' && dialogState !== 'team' && !personalPages.includes(dialogState)) {
     viewId = state.selected;
-    teamUI = { tab: 'line', slot: 0 };
+    // (A folded 作戰目標 stays folded the next time the page opens.)
+    teamUI = { tab: 'line', slot: 0, skill: 'school', node: null, missionShut: teamUI.missionShut };
   }
   if (personalPages.includes(name)) {
     if (dialogState === 'team') heroParent = 'team';
@@ -1264,15 +1266,22 @@ function openFormation() {
     const seed =
       pending?.source === source && Number.isInteger(pending.seed) ? pending.seed : R.newSeed();
     draft = { ...R.drawLots(seed), source };
-    draft.leaderId =
-      pending?.source === source && pending.seed === seed && draft.ids.includes(pending.leaderId)
-        ? pending.leaderId
-        : draft.ids[0];
-    try {
-      localStorage.setItem(drawKey, JSON.stringify({ source, seed, leaderId: draft.leaderId }));
-    } catch {}
+    const same = pending?.source === source && pending.seed === seed;
+    // Five drawn, three kept: a pick remembered for this draw if it still fits, else the first three.
+    draft.picks = R.keptLots({ seed, picks: same ? pending.picks : null });
+    draft.leaderId = same && draft.picks.includes(pending.leaderId) ? pending.leaderId : draft.picks[0];
+    rememberDraw();
   }
   openPage('formation');
+}
+// The draw being set up survives a reload: its seed, the three kept and the leader.
+function rememberDraw() {
+  try {
+    localStorage.setItem(
+      drawKey,
+      JSON.stringify({ source: draft.source, seed: draft.seed, leaderId: draft.leaderId, picks: draft.picks })
+    );
+  } catch {}
 }
 // A new run starts with the youth opening his eyes, then the draw. A first visit opens with the
 // film (a 9:16 or 16:9 cut, by the screen's shape), and the pages pick up where it ends.
@@ -1702,20 +1711,32 @@ function command(action, id, data = {}, keyboard = false) {
       board.rotate(1);
       break;
     case 'lead-lot':
-      if (dialogState === 'formation' && draft?.ids.includes(id)) {
+      if (dialogState === 'formation' && draft?.picks.includes(id)) {
         draft.leaderId = id;
-        try {
-          localStorage.setItem(
-            drawKey,
-            JSON.stringify({ source: draft.source, seed: draft.seed, leaderId: id })
-          );
-        } catch {}
+        draft.settled = true; // the cards have been dealt: no second deal on redrawing
+        rememberDraw();
+        drawModal(true);
+        audio('select');
+      }
+      break;
+    // Keep a drawn stone or put it back: three are kept. The leader is one of the three.
+    case 'keep-lot':
+      if (dialogState === 'formation' && draft?.ids.includes(id)) {
+        if (draft.picks.includes(id)) draft.picks = draft.picks.filter((p) => p !== id);
+        else if (draft.picks.length < R.KEPT) draft.picks = draft.ids.filter((p) => p === id || draft.picks.includes(p));
+        else {
+          notice('已留下三枚：先放回一枚。');
+          break;
+        }
+        if (!draft.picks.includes(draft.leaderId)) draft.leaderId = draft.picks[0] ?? null;
+        draft.settled = true;
+        rememberDraw();
         drawModal(true);
         audio('select');
       }
       break;
     case 'deploy':
-      if (dialogState !== 'formation' || !draft) break;
+      if (dialogState !== 'formation' || !draft || draft.picks.length !== R.KEPT) break;
       ++aiRun;
       state = R.startRun({ ...draft, realm: prologue.realm }, state.run.chronicle);
       prologue = { step: 0, film: false, realm: 1 };
@@ -1734,8 +1755,23 @@ function command(action, id, data = {}, keyboard = false) {
     case 'team-guides':
       if (personalPages.includes(dialogState)) {
         openPage('team', viewId);
-        teamUI.tab = 'arts';
+        Object.assign(teamUI, { tab: 'arts', skill: 'guides', node: null });
         drawModal();
+      }
+      break;
+    // 習武 in the 陣容 pane: the 武學 tab, on the tree, for that hero.
+    case 'hero-train':
+      if (dialogState === 'team' && G.company(state).some((v) => v.id === id)) {
+        viewId = id;
+        Object.assign(teamUI, { tab: 'arts', skill: 'school', node: null, slot: 0, pickedHero: null });
+        drawModal();
+        audio('tap');
+      }
+      break;
+    case 'mission-fold':
+      if (dialogState === 'team') {
+        teamUI.missionShut = !teamUI.missionShut;
+        drawModal(true);
       }
       break;
     case 'team-tab':
@@ -1901,7 +1937,7 @@ function command(action, id, data = {}, keyboard = false) {
             ? '已寄在通吃坊，下一輪取用。'
             : G.ITEMS[id]
               ? '已收入隊伍行囊。'
-              : '抄本已入公庫，可在「隊伍・武譜招式」授予俠客。'
+              : '抄本已入公庫，可在「隊伍・武學」授予俠客。'
         );
       }
       break;
@@ -1919,11 +1955,22 @@ function command(action, id, data = {}, keyboard = false) {
         studyUI.tab = id;
         studyUI.node = null;
         drawModal();
+      } else if (
+        dialogState === 'team' &&
+        teamUI.tab === 'arts' &&
+        ['school', 'guides', 'loadout'].includes(id)
+      ) {
+        teamUI.skill = id;
+        teamUI.node = null;
+        drawModal();
       }
       break;
     case 'skill-node':
       if (dialogState === 'skills') {
         studyUI.node = id;
+        drawModal(true);
+      } else if (dialogState === 'team' && teamUI.tab === 'arts') {
+        teamUI.node = id;
         drawModal(true);
       }
       break;
@@ -1932,6 +1979,7 @@ function command(action, id, data = {}, keyboard = false) {
       if (['skills', 'team'].includes(dialogState) && R.learn(state, u, id)) {
         const chooseSlot = u.unplacedArts?.includes(id);
         if (chooseSlot && dialogState === 'skills') studyUI.tab = 'loadout';
+        if (chooseSlot && dialogState === 'team') teamUI.skill = 'loadout';
         update();
         drawModal(!chooseSlot);
         audio('grow');
@@ -1984,7 +2032,7 @@ function command(action, id, data = {}, keyboard = false) {
       if (!G.company(state).some((u) => u.id === id)) break;
       viewId = id;
       Object.assign(armState(), { item: null, owner: null, pickedHero: null });
-      studyUI.node = null;
+      studyUI.node = teamUI.node = null;
       studyUI.slot = teamUI.slot = 0;
       drawModal(false);
       audio('tap');

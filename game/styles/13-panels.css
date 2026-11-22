@@ -605,6 +605,9 @@ html.polish-ui-chrome #modal .run-lot.lead-lot {
 html.polish-ui-chrome #modal .run-lot:not(.lead-lot) .run-lot-image img {
   filter: saturate(0.72) brightness(0.8);
 }
+html.polish-ui-chrome #modal .run-lot.back-lot .run-lot-image img {
+  filter: grayscale(0.85) brightness(0.55);
+}
 html.polish-ui-chrome #modal :is(.fo-seat.inspected, .fo-seat.picked, .fo-item.picked, .lk-lot.won) {
   box-shadow:
     0 0 0 2px #a75c45,

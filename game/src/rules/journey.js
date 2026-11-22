@@ -100,8 +100,19 @@ function newSeed() {
     return globalThis.crypto.getRandomValues(new Uint32Array(1))[0];
   return Math.floor(Math.random() * 4294967296);
 }
+// 抓子: a handful of five white stones comes up; three are kept (the player's pick) and the other
+// two go back into the box, so 求敗 may still lend them later (they join the run's pool).
+const DRAWN = 5,
+  KEPT = 3;
 function drawLots(seed = newSeed()) {
-  return { seed, ids: shuffled(G.PARTY, random(seed)).slice(0, 3) };
+  return { seed, ids: shuffled(G.PARTY, random(seed)).slice(0, DRAWN) };
+}
+// The three kept, in the order drawn: the pick when it is three of the five, else the first three.
+function keptLots(draw) {
+  const ids = drawLots(draw.seed).ids,
+    picks = Array.isArray(draw.picks) ? draw.picks : [];
+  const valid = picks.length === KEPT && new Set(picks).size === KEPT && picks.every((id) => ids.includes(id));
+  return valid ? ids.filter((id) => picks.includes(id)) : ids.slice(0, KEPT);
 }
 // The ten boards of a run, in order. A run always opens on 青竹渡 and ends on 無刻漏臺; between
 // them the boards stand in tiers of like strength. Since edition 2 each tier also holds a board
@@ -190,7 +201,7 @@ function prepareHero(u) {
   return u;
 }
 function startRun(draw = drawLots(), legacy = LEGACY) {
-  const lots = drawLots(draw.seed).ids;
+  const lots = keptLots(draw);
   const ids = lots.includes(draw.leaderId)
     ? [draw.leaderId, ...lots.filter((id) => id !== draw.leaderId)]
     : lots;
@@ -2096,4 +2107,4 @@ function campModel(s) {
 }
 
 export { LAST_BOON, devPress, stagesOf, nextMap, TENTH, LAST_STAGE, endsWithLast, finalStage, mapAt, plusRun, enterLast, fixedLead, stageTitle, KIND_NAMES };
-export { routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { DRAWN, KEPT, keptLots, routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

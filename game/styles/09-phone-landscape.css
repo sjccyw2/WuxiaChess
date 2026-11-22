@@ -825,18 +825,25 @@
   border-color: #d7b675;
   box-shadow: 0 0 0 1px #d7b675;
 }
+/* The card is one button: the face (picture, seal, name) and under it the numbers and arts. */
 .fo-portrait {
   display: block;
   width: 100%;
   min-width: 0;
   position: relative;
-  background: #384439;
-  isolation: isolate;
   padding: 0;
-  aspect-ratio: 1/1.16;
   text-align: left;
 }
-.fo-portrait::after {
+.fo-face {
+  display: block;
+  width: 100%;
+  position: relative;
+  background: #384439;
+  isolation: isolate;
+  overflow: hidden;
+  aspect-ratio: 1/1.16;
+}
+.fo-face::after {
   content: '';
   position: absolute;
   inset: 30% 0 0;
@@ -844,11 +851,11 @@
   z-index: -1;
   pointer-events: none;
 }
-.fo-portrait img,
-.fo-portrait > span {
+.fo-face img,
+.fo-face > .fo-name {
   position: absolute;
 }
-.fo-portrait img {
+.fo-face img {
   width: 100%;
   height: 100%;
   inset: 0;
@@ -856,7 +863,7 @@
   object-position: 50% 29%;
   z-index: -2;
 }
-.fo-portrait > span {
+.fo-face > .fo-name {
   inset: auto 6px 5px;
   color: #fff1d2;
   line-height: 1.2;
@@ -1390,7 +1397,7 @@
   .fo-portrait small {
     font-size: 9px;
   }
-  .fo-portrait > span {
+  .fo-face > .fo-name {
     left: 3px;
     bottom: 2px;
   }
@@ -1436,7 +1443,7 @@
   .fo-slot-use {
     right: 2%;
   }
-  .fo-portrait {
+  .fo-face {
     max-height: 110px;
     aspect-ratio: 1.16;
   }

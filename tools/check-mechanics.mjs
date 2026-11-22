@@ -5979,5 +5979,30 @@ section('growth paces');
   check('a hero lent at level 5 has his pace’s numbers', same(stats(late), stats(raised('guo', 5))));
 }
 
+section('the draw: five drawn, three kept');
+{
+  const seed = 2026,
+    draw = R.drawLots(seed),
+    ids = draw.ids;
+  check('five distinct heroes are drawn, none of them 無名', ids.length === R.DRAWN && new Set(ids).size === 5 && ids.every((id) => G.PARTY.includes(id)), ids);
+  check('the same seed draws the same five', same(R.drawLots(seed).ids, ids));
+  check('with no pick the first three drawn are kept', same(R.keptLots(draw), ids.slice(0, 3)));
+  const picks = [ids[4], ids[1], ids[3]];
+  check('a pick of three of the five is kept, in the order drawn', same(R.keptLots({ seed, picks }), [ids[1], ids[3], ids[4]]));
+  for (const [why, bad] of [
+    ['two', [ids[0], ids[1]]],
+    ['four', ids.slice(0, 4)],
+    ['a repeat', [ids[0], ids[0], ids[1]]],
+    ['one not drawn', [ids[0], ids[1], G.PARTY.find((id) => !ids.includes(id))]]
+  ])
+    check('a pick of ' + why + ' falls back to the first three', same(R.keptLots({ seed, picks: bad }), ids.slice(0, 3)));
+  const s = R.startRun({ seed, picks, leaderId: ids[3] }, R.LEGACY);
+  const team = G.party(s).map((u) => u.id);
+  check('the run starts with the three kept, the chosen leader first', same(team, [ids[3], ids[1], ids[4]]) && s.leader === ids[3], team);
+  check('the two put back go into the box: they may be lent later', [ids[0], ids[2]].every((id) => s.run.pool.includes(id)) && !s.run.pool.some((id) => team.includes(id)));
+  const odd = R.startRun({ seed, picks, leaderId: ids[0] }, R.LEGACY);
+  check('a leader who was put back is not the leader: the first kept leads', odd.leader === ids[1] && !G.party(odd).some((u) => u.id === ids[0]), odd.leader);
+}
+
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
