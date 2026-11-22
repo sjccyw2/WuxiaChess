@@ -214,7 +214,7 @@ The wiki holds no copy of the game's data. When the page opens it imports the ga
 | Wiki section | Built by | Read from the game |
 | --- | --- | --- |
 | 群俠列傳 | `catalog/heroes.js` | hero details, starting stats, leader commands, art trees: the ten heroes and 無名 |
-| 俠客對照 | `catalog/compare.js`, `view/compare.js` | up to five heroes side by side (`#compare?h=guo,huang`): seven aspects scored with the game's own `forecast` and `damage` at level 12, a growth curve by level, every art at level 12. Its weights are named at the top of `catalog/compare.js` |
+| 俠客對照 | `catalog/compare.js`, `view/compare.js` | up to five heroes side by side (`#compare?h=guo,huang`): seven aspects scored with the game's own `forecast` and `damage` at level 12, a growth curve by level, every art at level 12, and a ranking of every hero (`&s=<aspect>` to sort). 群俠列傳 shows each hero's 綜合 from the same module. Its weights are named at the top of `catalog/compare.js` |
 | 武學總譜 | `catalog/skills.js` | every technique; numbers come from the game's own `moveFacts()` |
 | 百物譜 | `catalog/items.js` | items, shop prices, manuals |
 | 群敵錄 | `catalog/foes.js` | each board's master and lieutenant, the villains who join them, 求敗 on the last board, and troop types |

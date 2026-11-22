@@ -2,7 +2,7 @@
 // numbers, how one measure grows from level 1 to 12, and every art each has at the last level.
 //
 // The choice lives in the address: #compare?h=guo,huang,xiao (&m=<measure> for the growth
-// chart). Each place in that list is a colour slot, so a hero keeps its colour when another is
+// chart, &s=<measure> for the order of the ranking of every hero). Each place in that list is a colour slot, so a hero keeps its colour when another is
 // removed: removing leaves an empty place (guo,,xiao) that the next hero added fills.
 import { esc, href, anchor, image, crumb } from './html.js';
 import { compareData } from '../catalog/compare.js';
@@ -55,14 +55,15 @@ export function readSlots(p) {
   while (slots.length && slots[slots.length - 1] == null) slots.pop();
   return slots;
 }
-const measureOf = (p, axes) => (axes.some((a) => a.key === p.get('m')) ? p.get('m') : 'composite');
-function addressOf(slots, measure) {
+const measureOf = (p, axes, k = 'm') => (axes.some((a) => a.key === p.get(k)) ? p.get(k) : 'composite');
+function addressOf(slots, measure, sort) {
   const list = [...slots];
   while (list.length && list[list.length - 1] == null) list.pop();
   return (
     '#compare?h=' +
     list.map((id) => (id ? encodeURIComponent(id) : '')).join(',') +
-    (measure && measure !== 'composite' ? '&m=' + encodeURIComponent(measure) : '')
+    (measure && measure !== 'composite' ? '&m=' + encodeURIComponent(measure) : '') +
+    (sort && sort !== 'composite' ? '&s=' + encodeURIComponent(sort) : '')
   );
 }
 const withHero = (slots, id) => {
@@ -530,7 +531,7 @@ function artsGrid(list) {
 }
 
 // ── the page ────────────────────────────────────────────────────────────────
-function picker(data, slots, list, measure) {
+function picker(data, slots, list, measure, sort) {
   const full = list.length >= MAX,
     picked = new Set(list.map(({ hero }) => hero.id));
   const chips = list
@@ -550,7 +551,7 @@ function picker(data, slots, list, measure) {
         '</span></button><a class="cmp-x" data-cmp-key="h-' +
         esc(hero.id) +
         '" href="' +
-        esc(addressOf(withoutHero(slots, hero.id), measure)) +
+        esc(addressOf(withoutHero(slots, hero.id), measure, sort)) +
         '" aria-label="' +
         esc('移除' + hero.name) +
         '">×</a></li>'
@@ -564,7 +565,7 @@ function picker(data, slots, list, measure) {
         : '<li><a class="cmp-pick" data-cmp-key="h-' +
           esc(h.id) +
           '" href="' +
-          esc(addressOf(withHero(slots, h.id), measure)) +
+          esc(addressOf(withHero(slots, h.id), measure, sort)) +
           '" aria-label="' +
           esc('加入' + h.name) +
           '">' +
@@ -590,7 +591,8 @@ export function comparePage(p) {
   const data = lookup(),
     slots = readSlots(p),
     list = chosen(slots),
-    measure = measureOf(p, data.axes);
+    measure = measureOf(p, data.axes),
+    sort = measureOf(p, data.axes, 's');
   const intro =
     '<p class="cmp-intro">並列最多五位俠客：七項評分、從第一級到第十二級的成長，與滿級時手上的每一式武學。</p>';
   const head =
@@ -601,8 +603,9 @@ export function comparePage(p) {
     MAX +
     ' 人</span></div>' +
     intro +
-    picker(data, slots, list, measure);
-  if (!list.length) return '<div class="compare" data-compare>' + head + notesBox(data) + '</div>';
+    picker(data, slots, list, measure, sort);
+  const ranks = rankingTable(data, slots, list, measure, sort);
+  if (!list.length) return '<div class="compare" data-compare>' + head + ranks + notesBox(data) + '</div>';
   return (
     '<div class="compare" data-compare>' +
     head +
@@ -617,6 +620,7 @@ export function comparePage(p) {
     '<div class="cmp-side"><h3 class="cmp-sub">對照表 <small>0–100，各項最高者標底色</small></h3>' +
     scoreTable(list, data.axes) +
     '</div></div></section>' +
+    ranks +
     '<section class="cmp-block" aria-labelledby="cmp-growth-h"><div class="cmp-block-head"><h2 id="cmp-growth-h">成長曲線</h2>' +
     '<label class="cmp-measure"><span>比較項目</span><select data-cmp-measure>' +
     [['composite', '綜合'], ...data.axes.map((a) => [a.key, a.name])]
@@ -637,6 +641,97 @@ export function comparePage(p) {
     '</section>' +
     notesBox(data) +
     '</div>'
+  );
+}
+// 全員排名: every hero in one table, ranked by 綜合 or by one measure (a column heading re-sorts),
+// so the whole roster can be read at once and any hero added to the comparison from its row.
+function rankingTable(data, slots, list, measure, sort) {
+  const value = (h, k) => (k === 'composite' ? h.composite : h.scores[k]),
+    slotOf = new Map(list.map(({ hero, slot }) => [hero.id, slot])),
+    full = list.length >= MAX,
+    order = data.heroes
+      .map((h, i) => ({ h, i }))
+      .sort((a, b) => value(b.h, sort) - value(a.h, sort) || b.h.composite - a.h.composite || a.i - b.i)
+      .map(({ h }) => h),
+    cols = [['composite', '綜合'], ...data.axes.map((a) => [a.key, a.name])],
+    sortName = cols.find(([k]) => k === sort)[1];
+  const head = cols
+    .map(
+      ([k, name]) =>
+        '<th scope="col"' +
+        (k === sort ? ' aria-sort="descending" class="is-sorted"' : '') +
+        '><a href="' +
+        esc(addressOf(slots, measure, k)) +
+        '" data-cmp-key="s-' +
+        esc(k) +
+        '" title="' +
+        esc('依' + name + '排序') +
+        '">' +
+        esc(name) +
+        (k === sort ? ' ▾' : '') +
+        '</a></th>'
+    )
+    .join('');
+  let rank = 0,
+    last = null;
+  const rows = order
+    .map((h, i) => {
+      const v = value(h, sort);
+      if (v !== last) (rank = i + 1), (last = v);
+      const slot = slotOf.get(h.id);
+      const action =
+        slot != null
+          ? '<span class="cmp-rank-in">' + key(slot) + '已選</span>'
+          : full
+            ? ''
+            : '<a class="cmp-rank-add" data-cmp-key="h-' +
+              esc(h.id) +
+              '" href="' +
+              esc(addressOf(withHero(slots, h.id), measure, sort)) +
+              '" aria-label="' +
+              esc('加入' + h.name) +
+              '">＋對照</a>';
+      return (
+        '<tr' +
+        (slot != null ? ' class="is-chosen" style="--slot:' + SERIES[slot] + '"' : '') +
+        '><td class="cmp-rank-no">' +
+        rank +
+        '</td><th scope="row"><span class="cmp-rank-hero">' +
+        image(h.portrait) +
+        anchor(href('heroes', h.id), esc(h.name)) +
+        '</span>' +
+        action +
+        '</th>' +
+        cols
+          .map(([k]) => {
+            const n = value(h, k);
+            return k === 'composite'
+              ? '<td class="cmp-rank-total' +
+                  (k === sort ? ' is-sorted' : '') +
+                  '"><span class="cmp-bar" style="--v:' +
+                  n +
+                  '"></span><b>' +
+                  n +
+                  '</b></td>'
+              : '<td' + (k === sort ? ' class="is-sorted"' : '') + '>' + n + '</td>';
+          })
+          .join('') +
+        '</tr>'
+      );
+    })
+    .join('');
+  return (
+    '<section class="cmp-block" aria-labelledby="cmp-rank-h"><div class="cmp-block-head"><h2 id="cmp-rank-h">全員排名</h2>' +
+    '<p class="cmp-hint">依' +
+    esc(sortName) +
+    '排序；點欄名改排序，點「＋對照」加入上方比較。</p></div>' +
+    '<div class="cmp-table-wrap"><table class="cmp-table cmp-rank"><caption class="sr">' +
+    esc('全部 ' + order.length + ' 位俠客的綜合與七項評分，依' + sortName + '由高到低') +
+    '</caption><thead><tr><th scope="col">名次</th><th scope="col">俠客</th>' +
+    head +
+    '</tr></thead><tbody>' +
+    rows +
+    '</tbody></table></div></section>'
   );
 }
 function notesBox(data) {
@@ -775,11 +870,11 @@ export function mountCompare(root) {
     growthBox.dataset.measure = measure;
     drawGrowth();
     const q = new URLSearchParams(location.hash.split(/\?(.*)/s)[1] || '');
-    history.replaceState(null, '', addressOf(readSlots(q), measure));
-    // The add and remove links carry the measure too.
-    page.querySelectorAll('a.cmp-pick, a.cmp-x').forEach((a) => {
+    history.replaceState(null, '', addressOf(readSlots(q), measure, measureOf(q, data.axes, 's')));
+    // The add, remove and sort links carry the measure too.
+    page.querySelectorAll('a[href^="#compare?"]').forEach((a) => {
       const u = new URLSearchParams(a.getAttribute('href').split('?')[1]);
-      a.setAttribute('href', addressOf(readSlots(u), measure));
+      a.setAttribute('href', addressOf(readSlots(u), measure, measureOf(u, data.axes, 's')));
     });
   });
   // Redraw at the width the page gives, so the labels keep their size on a phone.
