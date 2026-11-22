@@ -25,7 +25,7 @@ function dangerTiles(s) {
           u.y,
           G.ally(u) ? 0 : G.strikeReach(s, u),
           G.ally(u) ? 0 : G.stat(u, 'step', s),
-          u.conditions?.daze ? 1 : 0,
+          G.holdsFire(u) ? 1 : 0,
           // 坐鎮 and a charged hold clip where it can stand; waking or the charge changes that.
           G.ally(u) ? '' : JSON.stringify(G.holdOf(s, u)),
           u.phased ? 1 : 0,
@@ -39,8 +39,8 @@ function dangerTiles(s) {
   if (mark === memo.mark) return memo.tiles;
   const tiles = new Set();
   for (const u of alive) {
-    // A dazed enemy will not act this turn, so it threatens nothing.
-    if (G.ally(u) || u.conditions?.daze) continue;
+    // A dazed, frozen, muted or charmed enemy strikes no hero this turn, so it threatens nothing.
+    if (G.ally(u) || G.holdsFire(u)) continue;
     // Only where it will actually end its action: a posted piece within its tether, a charged
     // 蓄勢反擊 on its own tile, a fleeing master where its flight takes it.
     const stands = G.standCells(s, u).map((c) => [c.x, c.y]);

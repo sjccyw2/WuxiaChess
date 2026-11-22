@@ -13,7 +13,7 @@ const NEW_HEROES = {
     skillIcon: 'target',
     skillRange: 1,
     cost: 9,
-    skillDesc: '拂中相鄰敵人要穴，此擊免受還擊，對方本回合也發不出絕技。',
+    skillDesc: '拂中相鄰敵人要穴，此擊免受還擊；對方下一回合不能出手或還擊，仍可移動。局主受過後下一回合可抵抗。',
     voice: '那塊石頭不會走路。換了位置的，是我們腳下這一片地。'
   },
   yang: {

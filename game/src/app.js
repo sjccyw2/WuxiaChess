@@ -1108,12 +1108,13 @@ async function runEnemy() {
       }
       return;
     }
-    const dazed = !!e.conditions?.daze; // 失神: the piece loses its action, and says so
+    // 失神 and 定身: the piece loses its action, and says so.
+    const dazed = e.conditions?.daze ? '失神' : e.conditions?.freeze ? '定身' : '';
     const effects = G.enemyAct(state, e);
     audio(effects.length && !dazed ? 'ready' : 'move'); // footfalls and blows follow as board cues
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
-    if (dazed) mapTip(uName(e) + ' 失神，錯過了這一手');
+    if (dazed) mapTip(uName(e) + ' ' + dazed + '，錯過了這一手');
     // 續命: a mend is no blow, so the board says what it did.
     else if (effects[0]?.[1].startsWith('+'))
       mapTip(

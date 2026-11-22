@@ -116,6 +116,7 @@ const RECIPES = {
 
   'signature:zhaoMin': ['萬安寺劍招','steel','thrust','swordBind','snap','一招偷學來的殺著一線穿出，劍鋒從護手旁掠過。'],
   zmPowder: ['十香軟筋散','peach','wave','cottonPalm','glide','藥粉散作層疊的雲絮，綿綿外散。'],
+  zmSalve: ['黑玉斷續膏','obsidian','pulse','valleyPulse','pulse','雙葉之間的一段脈線由紊亂轉為平緩。'],
   zmJade: ['玉碎崑岡','pearl','thrust','swordBind','snap','劍鋒相交，一線從對方的護手旁穿出。'],
   zmYitian: ['倚天劍','frost','draw','snowSaber','snap','倚天劍橫過，留下一道冰白劍痕。'],
   zmGhost: ['人鬼同途','cinnabar','thrust','gateSpike','heavy','赤色劍鋒從傾倒的關柵間直出。'],

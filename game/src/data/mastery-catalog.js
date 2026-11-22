@@ -240,7 +240,7 @@ const HERO_PATHS = {
       '入境之時，趙敏手上只剩在萬安寺中向各派高手偷學來的零碎劍招。靈蛇島上那三招與敵偕亡的劍法，要一招一招想起；天地同壽，須到最後。',
     layout: [
       ['zmSwift', null, 'zmPowder'],
-      ['zmJade', 'zmYitian', null],
+      ['zmJade', 'zmYitian', 'zmSalve'],
       ['zmGhost', null, null],
       [null, 'zmHeaven', null]
     ]
@@ -385,14 +385,15 @@ const MASTERY_ARTS = {
     tier: 2,
     needs: ['ninefoldFormula'],
     points: 2,
-    mp: 3,
+    mp: 5,
     range: 1,
     icon: 'drop',
     visual: 'hero',
     target: 'enemy',
     factor: 1.25,
+    drain: { share: 0.5, cap: 30 },
     backlash: true,
-    desc: '貼身吸取敵人內力，命中回復 8 點內力，並使其絕技延後一回合。每次施展積一層亂氣，滿三層時反噬自身。',
+    desc: '貼身吸取敵人真元，依其此擊所失氣血回復自身一半，至多 30 點。每次施展積一層亂氣，滿三層時反噬自身。',
     source: '令狐冲在梅莊湖底鐵板上習得吸星大法，異種真氣幾乎要了他的命。'
   },
   breakQi: {
@@ -573,8 +574,10 @@ const MASTERY_ARTS = {
     visual: 'guard',
     target: 'self',
     taunt: 2,
-    shield: { power: 12, turns: 1 },
-    desc: '抖響鐵索挑釁四周，自身得 12 點護盾。至下回合，兩格內能攻到他的敵人只能攻擊他。',
+    shield: { power: 10, turns: 1 },
+    fortify: { power: 4, turns: 2 },
+    aura: 1,
+    desc: '抖響鐵索挑釁四周，自身與相鄰同伴各得 10 點護盾，防禦增加 4 點，持續兩回合。至下回合，兩格內能攻到他的敵人只能攻擊他。',
     source: '依向問天與令狐冲在涼亭並肩、獨引群敵的情節另擬。'
   },
   sweepingWhip: {
@@ -766,9 +769,10 @@ const MASTERY_ARTS = {
     icon: 'people',
     visual: 'guo',
     target: 'ally',
-    rally: { power: 6, turns: 2 },
+    rally: { power: 5, turns: 2 },
+    fortify: { power: 4, turns: 2 },
     aura: 1,
-    desc: '調整友軍陣勢，目標及相鄰友軍的攻擊增加 6 點，持續兩回合，同伴各回復 6 點內力。此招不算出手。',
+    desc: '調整友軍陣勢，目標及相鄰友軍的攻擊增加 5 點、防禦增加 4 點，持續兩回合，同伴各回復 6 點內力。此招不算出手。',
     source: '郭靖在鐵掌峰得武穆遺書，後以之守襄陽。合陣為本作所擬的號令。'
   },
   dragonReserve: {
@@ -786,10 +790,11 @@ const MASTERY_ARTS = {
     target: 'enemy',
     factor: 2.25,
     push: true,
-    splash: 0.45,
+    splash: 0.4,
+    radius: 2,
     poised: true,
     gate: { metric: 'side', map: 6, atLeast: 1, or: { metric: 'protects', atLeast: 4 } },
-    desc: '十八掌合而為一，擊退相鄰主敵並以四成半餘勁震傷四鄰，退路受阻時再加力。上一回合曾普攻或攻擊敵人時不能施展。',
+    desc: '十八掌合而為一，擊退相鄰主敵，掌風以四成餘勁震傷主敵兩格之內的其他敵人，退路受阻時再加力。上一回合曾普攻或攻擊敵人時不能施展。',
     source: '郭靖以九陰真經內力貫通降龍十八掌，為《神鵰俠侶》中天下少有敵手的掌法。'
   },
   jadeThread: {
@@ -839,9 +844,9 @@ const MASTERY_ARTS = {
     visual: 'xiao',
     target: 'enemy',
     factor: 1.05,
-    debuff: { stat: 'atk', power: 5, turns: 2 },
-    desc: '以鈴索捲住三格內敵人的腕臂，將其牽近一格，攻擊降低 5 點，持續兩回合；去路受阻時威力再增。',
-    source: '小龍女以白綢金鈴索為兵器。牽制手腕是本局演繹。'
+    mute: { turns: 1 },
+    desc: '以鈴索點中三格內敵人的穴道，將其牽近一格；對方下一回合不能出手或還擊，仍可移動，局主受過後下一回合可抵抗。去路受阻時威力再增。',
+    source: '小龍女以白綢金鈴索為兵器，索端金鈴專打敵人穴道。'
   },
   jadeHeart: {
     name: '玉女心經',
@@ -1231,9 +1236,10 @@ const MASTERY_ARTS = {
     target: 'enemy',
     hpCost: 10,
     factor: 1.6,
-    splash: 0.45,
+    splash: 0.35,
+    radius: 2,
     lone: 0.2,
-    desc: '自耗 10 點氣血強擊相鄰主敵，以四成半餘勁波及四鄰；四鄰沒有同伴時威力更強。出掌後須留至少 1 點氣血。',
+    desc: '自耗 10 點氣血強擊相鄰主敵，以三成半餘勁波及主敵兩格之內的其他敵人；四鄰沒有同伴時威力更強。出掌後須留至少 1 點氣血。',
     source: '杞人憂天是黯然銷魂掌中的招式。本作由此式進入黯然銷魂掌。'
   },
   solitaryPalm: {
@@ -1623,10 +1629,11 @@ const MASTERY_ARTS = {
     target: 'enemy',
     hpCost: 14,
     factor: 2.1,
-    splash: 0.5,
+    splash: 0.4,
+    radius: 2,
     avenge: 0.3,
     gate: { metric: 'kills', atLeast: 5 },
-    desc: '自耗 14 點氣血，廿八掌一氣打出，重擊相鄰主敵並以五成餘勁震傷其四鄰；上一敵方回合曾受傷時威力更強。出掌後須留至少 1 點氣血。',
+    desc: '自耗 14 點氣血，廿八掌一氣打出，重擊相鄰主敵，掌風以四成餘勁震傷主敵兩格之內的其他敵人；上一敵方回合曾受傷時威力更強。出掌後須留至少 1 點氣血。',
     source: '新修版《天龍八部》中，蕭峰得自汪劍通的是降龍廿八掌，日後才與虛竹刪繁就簡，成為十八掌。聚賢莊一戰，掌下盡是舊日相識；自耗氣血為本作演繹。'
   },
   xzArhat: {
@@ -1729,13 +1736,13 @@ const MASTERY_ARTS = {
     icon: 'spark',
     visual: 'xiao',
     target: 'enemy',
-    factor: 1.6,
-    daze: true,
+    factor: 1.4,
+    charm: { turns: 2 },
     wound: { power: 6, turns: 2 },
     cooldown: 2,
     gate: { metric: 'heals', atLeast: 60 },
-    desc: '掌心凝酒成冰，打入三格內敵人體內，使其失去下一次行動，並受內傷兩回合：療傷減半，每次出手後自損 6 點氣血。局主受過後下一回合可抵抗。施展後須調息兩回合。',
-    source: '生死符是天山童姥控制群豪的暗器，中者求生不得，求死不能。虛竹以此制住丁春秋。調息是本作所定的代價。'
+    desc: '掌心凝酒成冰，打入三格內敵人體內。尋常敵人受制倒戈兩回合，轉而攻擊同夥；局主與副手不受制，改為失去下一次行動。中者另受內傷兩回合：療傷減半，每次出手後自損 6 點氣血。施展後須調息兩回合。',
+    source: '生死符是天山童姥控制群豪的暗器，中者求生不得，求死不能，只得俯首聽命。調息是本作所定的代價。'
   },
   hqTap: {
     name: '竹棒點打・引字訣',
@@ -1804,8 +1811,9 @@ const MASTERY_ARTS = {
     visual: 'guo',
     target: 'enemy',
     factor: 1.6,
-    splash: 0.5,
-    desc: '雙掌齊出擊中相鄰主敵，以五成餘勁震傷其四鄰。',
+    splash: 0.4,
+    radius: 2,
+    desc: '雙掌齊出擊中相鄰主敵，掌風以四成餘勁震傷主敵兩格之內的其他敵人。',
     source: '震驚百里是降龍十八掌的招名，見《射鵰英雄傳》。'
   },
   hqTurn: {
@@ -1970,11 +1978,12 @@ const MASTERY_ARTS = {
     visual: 'medic',
     target: 'enemy',
     factor: 1.75,
-    splash: 0.7,
+    splash: 0.5,
+    radius: 3,
     debuff: { stat: 'atk', power: 6, turns: 2 },
     cooldown: 2,
     gate: { metric: 'casts', atLeast: 10 },
-    desc: '簫聲如潮，襲向三格內主敵，其四鄰敵人承受七成餘勁；主敵攻擊降低 6 點，持續兩回合。一曲吹罷須調息兩回合。',
+    desc: '簫聲如潮，襲向三格內主敵，主敵三格之內的其他敵人都承受五成餘勁；主敵攻擊降低 6 點，持續兩回合。一曲吹罷須調息兩回合。',
     source: '碧海潮生曲以簫聲傷人，內力稍弱者聞之心神大亂。桃花島上黃藥師曾以此曲與歐陽鋒、洪七公相鬥。'
   },
   sfSoft: {
@@ -2043,9 +2052,10 @@ const MASTERY_ARTS = {
     visual: 'medic',
     target: 'ally',
     rally: { power: 4, turns: 2 },
-    shield: { power: 16, turns: 2 },
+    fortify: { power: 5, turns: 2 },
+    shield: { power: 8, turns: 2 },
     aura: 1,
-    desc: '指點陣勢，兩格內一人及其相鄰友軍攻擊增加 4 點，並各得 16 點護盾，俱持續兩回合。',
+    desc: '指點陣勢，兩格內一人及其相鄰友軍攻擊增加 4 點、防禦增加 5 點，並各得 8 點護盾，俱持續兩回合。',
     source: '真武七截陣是張三丰觀龜蛇二山所創，七人合使，威力倍增。'
   },
   sfCloud: {
@@ -2083,11 +2093,12 @@ const MASTERY_ARTS = {
     target: 'enemy',
     factor: 1.8,
     safe: true,
-    stance: 40,
+    immune: { turns: 1 },
     cover: true,
     rooted: true,
+    cooldown: 2,
     gate: { metric: 'protects', atLeast: 5 },
-    desc: '以靜制動，重擊相鄰一敵，敵人無從還擊。至下回合：自身受擊減四成，還擊全力，敵人對相鄰同伴的直接攻擊改由自己承受。下一回合不能移動。',
+    desc: '以靜制動，重擊相鄰一敵，敵人無從還擊。至下回合：敵人的直接攻擊傷不了自己，對相鄰同伴的直接攻擊也改由自己承受。下一回合不能移動，施展後須調息兩回合。',
     source: '張三丰閉關創出太極拳，強敵上山之日當眾演示：以靜制動，後發制人。'
   },
   zmSwift: {
@@ -2117,10 +2128,28 @@ const MASTERY_ARTS = {
     icon: 'drop',
     visual: 'xiao',
     target: 'enemy',
-    factor: 0.9,
-    debuff: { stat: 'atk', power: 6, turns: 2 },
-    desc: '向四格內敵人撒出藥粉，使其筋骨酸軟，攻擊降低 6 點，並絆足兩回合。',
+    factor: 0.7,
+    mute: { turns: 2 },
+    cooldown: 2,
+    desc: '向四格內敵人撒出藥粉，使其筋骨酸軟：兩回合不能出手或還擊，仍可移動，並絆足兩回合；局主只受一回合，下一回合可抵抗。施展後須調息兩回合。',
     source: '趙敏以十香軟筋散擒住六大派高手，囚於萬安寺。'
+  },
+  zmSalve: {
+    name: '黑玉斷續膏',
+    owner: 'zhaoMin',
+    root: 'breath',
+    kind: 'active',
+    tier: 2,
+    needs: ['zmPowder'],
+    points: 2,
+    mp: 12,
+    range: 1,
+    icon: 'leaf',
+    visual: 'medic',
+    target: 'ally',
+    heal: 42,
+    desc: '取出黑玉斷續膏替相鄰一人敷治，基礎回復 42 點氣血並解除不良狀態。可對自己施術。',
+    source: '黑玉斷續膏是西域金剛門的療傷聖藥。趙敏以此相贈，治好了俞岱巖與殷梨亭多年的殘廢。'
   },
   zmJade: {
     name: '玉碎崑岡',
@@ -2285,10 +2314,10 @@ const MASTERY_ARTS = {
     icon: 'spark',
     visual: 'xiao',
     target: 'enemy',
-    factor: 1.2,
-    daze: true,
+    factor: 1,
+    freeze: { turns: 2 },
     cooldown: 2,
-    desc: '點起一縷醍醐香，三格內一敵如飲烈酒，失去下一次行動；局主受過後下一回合可抵抗。施展後須調息兩回合。',
+    desc: '點起一縷醍醐香，三格內一敵如飲烈酒醉倒，定身兩回合，不能移動、出手或還擊；局主只受一回合，下一回合可抵抗。施展後須調息兩回合。',
     source: '醍醐香花香如酒，聞者醉倒，程靈素曾以它制住同門師兄師姊。'
   },
   lsSeven: {
@@ -2305,12 +2334,13 @@ const MASTERY_ARTS = {
     visual: 'xiao',
     target: 'enemy',
     factor: 1.45,
-    splash: 0.8,
+    splash: 0.6,
+    radius: 2,
     poison: { power: 12, turns: 3 },
     wound: { power: 5, turns: 3 },
     once: true,
     gate: { metric: 'heals', atLeast: 60 },
-    desc: '點燃摻了七心海棠的蠟燭，毒及三格內主敵，其四鄰敵人承受八成餘勁。主敵往後三個敵方回合結束時各扣 12 點氣血，並受內傷三回合：療傷減半，每次出手後自損 5 點氣血。每局只能施展一次。',
+    desc: '點燃摻了七心海棠的蠟燭，毒及三格內主敵，主敵兩格之內的其他敵人承受六成餘勁。主敵往後三個敵方回合結束時各扣 12 點氣血，並受內傷三回合：療傷減半，每次出手後自損 5 點氣血。每局只能施展一次。',
     source: '七心海棠是萬毒之王，無色無臭，程靈素花了七年才種活。破廟中她以一枝蠟燭了結師門恩怨。'
   },
   dyShoulder: {
@@ -2361,7 +2391,8 @@ const MASTERY_ARTS = {
     visual: 'hu',
     target: 'enemy',
     factor: 1.55,
-    desc: '刀鋒從意想不到之處削向相鄰敵人，並依實際傷害回復少許氣血。',
+    drain: { share: 0.4, cap: 20 },
+    desc: '刀鋒從意想不到之處削向相鄰敵人，依其此擊所失氣血回復自身四成，至多 20 點。',
     source: '批紙削腐是血刀門練刀的入門功夫。狄雲在雪谷中依血刀經自行練成。'
   },
   dyDisarm: {
@@ -2729,7 +2760,7 @@ const TRADE_MANUALS = {
     tier: 2,
     needs: ['force'],
     points: 2,
-    price: 36,
+    price: 40,
     stock: 1,
     manual: true,
     mp: 11,
@@ -2737,10 +2768,12 @@ const TRADE_MANUALS = {
     icon: 'feather',
     visual: 'xiao',
     target: 'enemy',
-    factor: 1.2,
-    poison: { power: 9, turns: 2 },
-    desc: '三格內發出毒針，往後兩個敵方回合結束時，各扣 9 點氣血。',
-    source: '冰魄銀針為《神鵰俠侶》中李莫愁的暗器。'
+    factor: 1,
+    poison: { power: 5, turns: 2 },
+    freeze: { turns: 2 },
+    cooldown: 2,
+    desc: '三格內發出寒毒銀針，敵人定身兩回合，不能移動、出手或還擊；局主只受一回合，下一回合可抵抗。往後兩個敵方回合結束時，毒傷各扣 5 點氣血。施展後須調息兩回合。',
+    source: '冰魄銀針為《神鵰俠侶》中李莫愁的暗器，針上劇毒，中者僵立。定身之效為本作演繹。'
   },
   diamondWard: {
     name: '金剛護體圖',
@@ -2752,14 +2785,15 @@ const TRADE_MANUALS = {
     price: 35,
     stock: 1,
     manual: true,
-    mp: 11,
+    mp: 12,
     range: 0,
     icon: 'shield',
     visual: 'guo',
     target: 'self',
-    shield: { power: 40, turns: 3 },
+    immune: { turns: 1 },
+    cooldown: 2,
     rooted: true,
-    desc: '運氣自護，護盾合計可抵銷 40 點傷害，最多保留三回合。下一回合不能移動。',
+    desc: '運氣自護，至下回合敵人的直接攻擊傷不了自己，也附不上任何狀態。下一回合不能移動，施展後須調息兩回合。',
     source: '據《倚天屠龍記》空見神僧受謝遜十三拳不還手的金剛不壞體神功另繪護體圖。'
   },
   sevenInjuries: {
