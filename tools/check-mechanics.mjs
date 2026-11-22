@@ -4483,16 +4483,22 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
     q = unit(t, 'qiubai');
   const factor = (art, target) => G.strikeFactor(t, y, TECHNIQUES[art], target);
   check('無招: 破氣式 answers masters, but not 求敗', !factor('youthBreakQi', q).notes.some((n) => n.startsWith('破招')) && factor('youthBreakQi', q).notes.includes('無招 · 破招不成'));
-  const swordsman = G.enemies(t).find((u) => G.armOf(u) === 'sword'),
-    other = G.enemies(t).find((u) => u.guest && G.armOf(u) && G.armOf(u) !== 'sword');
-  check('破劍式 answers one who fights with a sword: +0.30', !!swordsman && Math.abs(factor('youthBreakSword', swordsman).factor - (TECHNIQUES.youthBreakSword.factor + 0.3)) < 1e-9, G.enemies(t).map((u) => u.id + ':' + G.armOf(u)).join());
-  check('and no one else', !!other && factor('youthBreakSword', other).factor === TECHNIQUES.youthBreakSword.factor);
-  check('each of the six weapon forms answers its own kind only', ['Sword:sword', 'Blade:blade', 'Pole:pole', 'Soft:soft', 'Mace:mace', 'Hand:hand'].every((pair) => {
+  const swordsman = G.enemies(t).find((u) => G.armOf(u) === 'sword');
+  const bladesman = { ...swordsman, arm: 'blade' };
+  check('破刀式 answers one who fights with a blade: +0.30', !!swordsman && Math.abs(factor('youthBreakBlade', bladesman).factor - (TECHNIQUES.youthBreakBlade.factor + 0.3)) < 1e-9, G.enemies(t).map((u) => u.id + ':' + G.armOf(u)).join());
+  check('and no one else', factor('youthBreakBlade', swordsman).factor === TECHNIQUES.youthBreakBlade.factor);
+  check('each of the five weapon forms answers its own kind only', ['Blade:blade', 'Pole:pole', 'Soft:soft', 'Mace:mace', 'Hand:hand'].every((pair) => {
     const [name, arm] = pair.split(':');
     return Object.keys(G.ARM_NAMES).every((kind) => G.answers(t, TECHNIQUES['youthBreak' + name].answer, { ...swordsman, arm: kind }) === (kind === arm));
   }));
   check('every enemy that is no archer has a kind of weapon, bar 完顏洪烈 and 求敗', Object.entries(G.DETAILS).filter(([key, d]) => !G.ROSTER.includes(key) && !d.object && !d.arm).every(([key, d]) => d.row === 'bow' || /bow/i.test(key) || ['wanYan', 'qiubai'].includes(key)));
   check('the enemy page names the weapon once 無名 is on the board', G.enemyTraitLines(t, swordsman).includes('【兵刃】劍。') && !G.enemyTraitLines(board(), unit(board(), 'chief')).some((l) => l.startsWith('【兵刃】')));
+  // One art, one effect and one tier, whoever learns it: the four forms 令狐冲 has too.
+  const sameArt = (mine, his) => ['name', 'tier', 'points', 'mp', 'range', 'factor', 'pierce', 'safe', 'splash', 'debuff', 'answer', 'desc', 'forms'].every((k) => same(TECHNIQUES[mine][k], TECHNIQUES[his][k]));
+  check('破劍式, 破箭式 and 破氣式 are the arts 令狐冲 learns, field for field', sameArt('youthBreakSword', 'breakSword') && sameArt('youthBreakArrow', 'breakArrow') && sameArt('youthBreakQi', 'breakQi'));
+  const start = G.artFor(G.startingHero('youth'), 'signature'),
+    formula = TECHNIQUES.ninefoldFormula;
+  check('and his starting 總訣式 is 令狐冲’s 總訣式', start.name === formula.name && start.factor === formula.factor && start.range === formula.range && start.mp === formula.mp && start.desc === formula.desc && same(start.forms, formula.forms));
   check('令狐冲’s forms answer as they always did', G.answers(t, 'close', { ...swordsman, range: 1 }) && G.answers(t, 'master', swordsman) && !G.answers(t, 'master', q));
 
   // His 變招, and those who walk on
@@ -4549,7 +4555,7 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   check('…from the root: 總訣式 only, and points to spend like anyone', py.learned.length === 0 && same(py.slots, ['signature', null, null]) && py.sp >= 2 && G.artFor(py).name === '總訣式');
   check('…an ordinary piece: he may be benched, or lead', R.turnPage(plus, true) && R.turnPage(plus, true) && R.toggleSeat(plus, 'youth') && R.toggleSeat(plus, 'youth') && R.appointLeader(plus, 'youth'));
   check('before the ending he is not', G.party(R.startRun(R.drawLots(9), R.LEGACY)).length === 3);
-  check('his tree can be learned in order, 破劍式 first', !!R.studyState(plus, py, 'youthBreakSword')?.canLearn && !R.studyState(plus, py, 'youthBreakPole')?.canLearn && R.learn(plus, py, 'youthBreakSword') && !!R.studyState(plus, py, 'youthBreakPole')?.canLearn);
+  check('his tree can be learned in order: 破刀式, then 破槍式', !!R.studyState(plus, py, 'youthBreakBlade')?.canLearn && !R.studyState(plus, py, 'youthBreakPole')?.canLearn && R.learn(plus, py, 'youthBreakBlade') && !!R.studyState(plus, py, 'youthBreakPole')?.canLearn);
 
   // Saves and profiles from before
   const old = { ...R.LEGACY, wins: 5, returns: 6, realms: 5, cleared: [1, 2, 3, 4, 5], finale: 2 };

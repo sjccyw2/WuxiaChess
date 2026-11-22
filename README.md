@@ -122,8 +122,9 @@ marked `last` in `game/src/data/battles.js`).
 - **How it is won (問劍, kind `yield`).** 求敗 is 不敗 and never falls: bring him to 1 氣血. No 破招
   answers him (無招). If 無名 falls or the twelve rounds run out the board is lost, and the ten
   boards of 無劍境界 must be won again to reach it.
-- **無名's arts.** Nine forms (`HERO_PATHS.youth`), each answering one kind of weapon; every enemy
-  has a kind (`ARM_OF` in `game/src/data/encounters.js`).
+- **無名's arts.** Nine forms (`HERO_PATHS.youth`). The four 令狐冲 learns too (總訣式, 破劍式, 破箭式,
+  破氣式) are the same arts in both trees (`SHARED_FORMS`); the other five each answer one kind of
+  weapon, and every enemy has a kind (`ARM_OF` in `game/src/data/encounters.js`).
 - **The ending.** Winning it plays a 59-second film (`game/assets/finale-film*.mp4`, made in
   `asset-gen/finale-video/`), then the run's last page, which carries the film's words as text
   (`MAZE_TALE.finale.ending`). There is no shop after it.

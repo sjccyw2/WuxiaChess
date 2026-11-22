@@ -63,10 +63,12 @@ const EXTRA = {
     ]),
   loss: () => rows('限時', [['回合上限', '第' + G.NUMERALS[G.LIMIT - 1] + '回合']]),
   // 守 and 破: each board's objects and, on 守, how long they must stand.
-  // 破招: what each kind of weapon is, and who fights with it (無名's forms answer by weapon).
+  // 破招: what each kind of weapon is, and who fights with it. Five of 無名's forms answer by
+  // weapon; 破劍式, which is 令狐冲's art too, answers whoever fights at reach 1, so 劍 is listed
+  // here for the enemy page only.
   answer: () =>
     rows(
-      '兵刃六類',
+      '兵刃各類',
       Object.entries(G.ARM_NAMES).map(([arm, name]) => [
         name,
         [...new Set(Object.values(G.DETAILS).filter((d) => d.arm === arm).map((d) => d.name))].join('、')

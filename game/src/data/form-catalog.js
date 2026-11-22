@@ -1,8 +1,8 @@
 // Keys match the combat and mastery catalogues. A weapon's offensive forms belong
 // to deliberate normal attacks. Its support forms belong to support skills.
 const ART_FORMS = {
-  // 無名
-  'signature:youth': ['mark'],
+  // 無名. 總訣式, 破劍式, 破箭式 and 破氣式 are 令狐冲's arts too and carry the same forms.
+  'signature:youth': ['exploit'],
   youthKeenEdge: [],
   youthBreakSword: [],
   youthBreakBlade: [],
@@ -131,7 +131,7 @@ const WEAPON_FORMS = {
   foxSaber: ['flank'],
   frost: ['distill'],
   blueEdge: ['exploit'],
-  keenSword: ['exploit'],
+  keenSword: ['mark'],
   ironFan: ['mark', 'overflow'],
   silkWhip: ['pull', 'pin'],
   travelBlade: ['arc'],

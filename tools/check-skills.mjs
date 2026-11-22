@@ -50,7 +50,7 @@ const T = {
   NODE_BAND: [6, 7],
   // 無名's tree is the nine forms of 獨孤九劍 (the producer's ruling of 2026-11-22): the starting
   // form, eight more and the basic upgrade, so it is held to bands of its own.
-  OWN_BANDS: { youth: { points: [16, 16], nodes: [9, 9] } },
+  OWN_BANDS: { youth: { points: [17, 17], nodes: [9, 9] } },
   // The summit must cost at least as much as any other node (true: a tie is enough).
   SUMMIT_TIE_OK: true,
   // R9: plain-strike-equivalent bands per tier ('start' is the starting art), from FRAMEWORK.md.

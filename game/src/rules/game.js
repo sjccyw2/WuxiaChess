@@ -359,11 +359,12 @@ const DETAILS = {
     book: '一念江湖',
     bio: '在自家床上睡著了，一睜眼便到了谷底棋臺邊的少年。他記不起自己的名字，自稱無名，身上半點功夫也無，卻在盤外瞧了千百局。千年的招數在他眼裡過了一遍；入得盤來，手上使出的沒有一招是學來的，只是瞧著對手的兵刃，劍便自己尋到了空處。',
     basic: '直刺',
-    skill: '總訣式',
+    // 總訣式 is the art 令狐冲 learns as a node: one art, one effect, whoever has it.
+    skill: TECHNIQUES.ninefoldFormula.name,
     skillIcon: 'sword',
-    skillDesc: '瞧準對手出招的來路搶先一劍，可攻擊兩格內的一名敵人，並在其身上留下破綻。',
-    skillRange: 2,
-    cost: 8
+    skillDesc: TECHNIQUES.ninefoldFormula.desc,
+    skillRange: TECHNIQUES.ninefoldFormula.range,
+    cost: TECHNIQUES.ninefoldFormula.mp
   },
   chief: {
     name: '余滄海',
@@ -515,8 +516,8 @@ function stageRows(map, depth, realm = 1) {
 // The last board's two rows: 求敗 himself ('master'), and each of the run's ten masters as he
 // stands there ('guest'): no 戰意 on him and no men of his own, a good deal less than on his own
 // board. A guest's own `mods` still apply. Measured with `node tools/sim-battles.mjs --last`: with
-// these the simulated player, who is far weaker than a person, wins about two boards in three in
-// some eight rounds at hero level 11, and loses nearly always by 無名 falling.
+// these the simulated player, who is far weaker than a person, wins about three boards in five in
+// some eight rounds at hero level 11, and loses mostly by 無名 falling.
 const LAST_ROWS = {
   master: [1900, 56, 28, 3, 2],
   guest: [350, 46, 20, 3, 1]
@@ -1514,7 +1515,7 @@ const SIGNATURE_RULES_BY_HERO = {
   yang: { factor: 1.32, visual: 'guo' },
   zhang: { visual: 'medic', heal: 30, target: 'ally' },
   hu: { factor: 1.3, visual: 'xiao' },
-  youth: { factor: 1.3, visual: 'hero' }
+  youth: { factor: TECHNIQUES.ninefoldFormula.factor, visual: 'hero' }
 };
 function artFor(u, key = u.activeArt || 'signature') {
   if (u.learned?.includes(key) && TECHNIQUES[key]) return TECHNIQUES[key];
