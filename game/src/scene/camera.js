@@ -83,7 +83,8 @@ class FerryCamera {
         }
     }
     // `push` is the brief lean-in on a high-tier technique; it is 1 at every other moment.
-    const d = (this.title ? (narrow ? 17.4 : 16.2) : fit / this.push) / this.zoom;
+    // On a narrow screen the title camera stands far enough back to show the whole pavilion.
+    const d = (this.title ? (narrow ? 25.5 : 16.2) : fit / this.push) / this.zoom;
     this.distance = d;
     c.position.set(
       focus.x + d * Math.cos(this.pitch) * Math.sin(this.yaw),
@@ -93,9 +94,9 @@ class FerryCamera {
     c.lookAt(focus);
     c.updateProjectionMatrix();
     if (this.title) {
-      // Wide: the scene moves right, clear of the title on the left. Narrow: it moves a little
-      // left, so the three fighters on the east bank (actors.js) stay in the frame.
-      c.projectionMatrix.elements[8] -= narrow ? -0.36 : 0.32;
+      // Wide: the scene moves right, clear of the title on the left. Narrow: a touch left, to
+      // centre the pavilion.
+      c.projectionMatrix.elements[8] -= narrow ? -0.08 : 0.32;
       c.projectionMatrix.elements[9] -= narrow ? 0.25 : 0.01;
     } else {
       // Frame the playable tiles clear of the controls. Both renderers and the
