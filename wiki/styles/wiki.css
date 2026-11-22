@@ -1662,3 +1662,153 @@ a.cmp-pick:hover {
     font-size: 13px;
   }
 }
+/* 全員排名: every hero, ranked; the chosen rows carry their colour at the left edge. */
+.cmp-rank thead th a {
+  display: block;
+  color: inherit;
+}
+.cmp-rank thead th a:hover,
+.cmp-rank thead th a:focus-visible {
+  color: var(--red);
+}
+.cmp-rank thead th.is-sorted {
+  color: var(--red);
+}
+.cmp-rank td.is-sorted {
+  font-weight: 800;
+}
+.cmp-rank .cmp-rank-no {
+  color: var(--faint);
+  width: 2.5em;
+}
+.cmp-rank tbody th {
+  color: var(--ink);
+  min-width: 9.5em;
+}
+.cmp-rank tr.is-chosen {
+  background: #f1ede1;
+  box-shadow: inset 4px 0 0 var(--slot);
+}
+.cmp-rank-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  vertical-align: middle;
+  font: 700 15px var(--serif);
+}
+.cmp-rank-hero img {
+  width: 28px;
+  height: 30px;
+  object-fit: cover;
+  object-position: center 30%;
+  border-radius: 2px;
+}
+.cmp-rank-hero a:hover {
+  color: var(--red);
+}
+.cmp-rank-add,
+.cmp-rank-in {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+  font-size: 12px;
+  vertical-align: middle;
+}
+.cmp-rank-add {
+  color: var(--jade);
+  border: 1px solid var(--stroke);
+  border-radius: 3px;
+  padding: 0 5px;
+}
+.cmp-rank-add:hover,
+.cmp-rank-add:focus-visible {
+  border-color: var(--jade);
+  background: #e2ead8;
+}
+.cmp-rank-in {
+  color: var(--faint);
+}
+.cmp-rank-in .cmp-key {
+  width: 22px;
+}
+.cmp-rank .cmp-rank-total {
+  position: relative;
+  min-width: 6.5em;
+  text-align: left;
+  padding-left: 13px;
+}
+.cmp-rank thead th:first-child {
+  white-space: nowrap;
+}
+.cmp-rank-total b {
+  position: relative;
+}
+.cmp-bar {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  height: 14px;
+  margin-top: -7px;
+  width: calc((100% - 16px) * var(--v) / 100);
+  background: #d9e2d1;
+  border-radius: 2px;
+}
+/* On a narrow screen the names stay put while the scores scroll beneath the table's own bar. */
+@media (max-width: 640px) {
+  .cmp-rank tbody th,
+  .cmp-rank thead th:nth-child(2) {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--sheet);
+    min-width: 0;
+    box-shadow: 1px 0 0 #e9e4d6;
+  }
+  .cmp-rank thead th:nth-child(2) {
+    background: #edeadd;
+  }
+  .cmp-rank tr.is-chosen th {
+    background: #f1ede1;
+    box-shadow: inset 4px 0 0 var(--slot), 1px 0 0 #e9e4d6;
+  }
+  .cmp-rank tr.is-chosen {
+    box-shadow: none;
+  }
+  .cmp-rank .cmp-rank-no {
+    display: none;
+  }
+  .cmp-rank thead th:first-child {
+    display: none;
+  }
+  .cmp-rank-hero img {
+    display: none;
+  }
+  .cmp-rank-add,
+  .cmp-rank-in {
+    display: flex;
+    margin: 2px 0 0;
+    width: max-content;
+  }
+}
+/* 群俠列傳: each hero card shows its 綜合 score. */
+.card-score {
+  margin-left: auto;
+  align-self: center;
+  text-align: center;
+  font: 700 20px/1 var(--serif);
+  color: var(--jade);
+  font-style: normal;
+  flex: none;
+}
+.card-score small {
+  display: block;
+  margin-bottom: 3px;
+  font: 400 11px var(--sans);
+  color: var(--faint);
+}
+.list-note {
+  margin: -4px 0 14px;
+  font-size: 13px;
+  color: var(--soft);
+}
