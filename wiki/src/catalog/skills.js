@@ -94,12 +94,14 @@ function learned([id, art]) {
   return {
     id,
     name: art.name,
-    tag: manual ? '授譜武學' : art.kind === 'basic' ? '普攻進階' : '門派武學',
+    // The game's kinds: 普攻精進 upgrades the basic attack; 新招 and 成名絕技 are arts of their own.
+    tag: manual ? '授譜武學' : art.kind === 'basic' ? '普攻精進' : art.kind === 'refinement' ? '成名絕技' : '新招',
     summary: art.desc,
     image: manual ? gameArt('guide-cover.webp') : heroPortrait(owner),
     sections: [
       figures(f, art),
       rows('參悟條件', [
+        art.family && ['所屬', art.family],
         ['層級', art.tier + ' 階'],
         ['武學點', art.points],
         ['來源', manual ? NOTES.manualSource : G.DETAILS[owner].name + '專屬'],

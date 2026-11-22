@@ -16,7 +16,7 @@ export { TECHNIQUES, HERO_PATHS, MASTERY_ARTS, TRADE_MANUALS };
 // ── Field families ────────────────────────────────────────────────────────
 // Pure bookkeeping: never a mechanic. Add a field here only if it says nothing about play.
 export const BOOKKEEPING = new Set([
-  'name', 'owner', 'tier', 'needs', 'points', 'icon', 'visual', 'desc', 'source', 'root', 'kind',
+  'name', 'family', 'owner', 'tier', 'needs', 'points', 'icon', 'visual', 'desc', 'source', 'root', 'kind',
   'mp', 'range', 'target', 'gate', 'price', 'stock', 'manual', 'requires', 'forms', 'lane'
 ]);
 // Mechanics whose whole worth already shows in the measured numbers (damage, healing, people

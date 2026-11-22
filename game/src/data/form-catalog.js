@@ -33,7 +33,7 @@ const ART_FORMS = {
   'signature:guo': [],
   southernStance: ['still'],
   kanglongRegret: ['collision'],
-  guoPairedHands: [],
+  guoPairedHands: ['distill'],
   fieldDragonWard: [],
   flyingDragon: [],
   armyBookRally: ['channel'],
@@ -161,7 +161,7 @@ const COMBINATIONS = [
     name: '踏浪回陣',
     skills: ['waterSkim', 'armyBookRally'],
     weapons: ['wraps'],
-    text: '讓同伴施水上漂，落在郭靖旁的空格，兩人各得 8 點護盾。郭靖戴布纏護手，接武穆遺書・合陣。同伴受令後攻擊上升，並回 6 點內力。下一次受敵人直接攻擊而損血時，可按損血數返勁，最多 9 點。'
+    text: '讓同伴施水上漂，落在郭靖旁的空格，兩人各得 8 點護盾。郭靖戴布纏護手，接合陣。同伴受令後攻擊上升，並回 6 點內力。下一次受敵人直接攻擊而損血時，可按損血數返勁，最多 9 點。'
   }
 ];
 
