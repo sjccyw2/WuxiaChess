@@ -104,7 +104,8 @@ function learned([id, art]) {
         art.family && ['所屬', art.family],
         ['層級', art.tier + ' 階'],
         ['武學點', art.points],
-        ['來源', manual ? NOTES.manualSource : G.DETAILS[owner].name + '專屬'],
+        // A form 無名 and 令狐冲 both learn is one art: this page is 無名's copy of it.
+        ['來源', manual ? NOTES.manualSource : G.SHARED_FORMS[id] ? G.DETAILS[owner].name + '所學；與' + G.DETAILS[G.TECHNIQUES[G.SHARED_FORMS[id][0]].owner].name + '的' + art.name + '是同一招，效果與階位相同' : G.DETAILS[owner].name + '專屬'],
         trial && ['歷練門檻', trial],
         ['攜帶', art.kind === 'basic' ? SLOT.basic : SLOT.art]
       ]),

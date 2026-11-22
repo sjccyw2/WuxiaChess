@@ -385,7 +385,7 @@ for (const [index, [boss, second]] of ENCOUNTERS.entries()) {
   DETAILS[id] = {
     ...DETAILS[id],
     ...boss,
-    role: index === 9 ? '最後一局・局主' : '局主',
+    role: '局主',
     portraitFile: 'captain-' + index + '.webp',
     rank: 'boss'
   };
@@ -516,11 +516,12 @@ function stageRows(map, depth, realm = 1) {
 // The last board's two rows: 求敗 himself ('master'), and each of the run's ten masters as he
 // stands there ('guest'): no 戰意 on him and no men of his own, a good deal less than on his own
 // board. A guest's own `mods` still apply. Measured with `node tools/sim-battles.mjs --last`: with
-// these the simulated player, who is far weaker than a person, wins about three boards in five in
-// some eight rounds at hero level 11, and loses mostly by 無名 falling.
+// these the simulated player, who is far weaker than a person, wins about two boards in three in
+// some eight rounds at hero level 11 (46%, 66% and 74% at levels 10, 11 and 12), and loses mostly
+// by 無名 falling.
 const LAST_ROWS = {
-  master: [1900, 56, 28, 3, 2],
-  guest: [350, 46, 20, 3, 1]
+  master: [2000, 56, 28, 3, 2],
+  guest: [365, 46, 20, 3, 1]
 };
 function stageBase(map, depth) {
   if (map === 0 && depth === 0)
@@ -593,13 +594,22 @@ for (const id of ['blade', 'bow', 'scout']) DETAILS[id].portraitFile = 'npc-' + 
 function unitDetails(u) {
   return DETAILS[u?.encounterId] || DETAILS[u?.id];
 }
+// The stage a piece's traits scale by: the run's, or for a guest on the last board the stage at
+// which this run met his own board, so each master's signature, banner and drain are as strong
+// there as they were when the youth first faced him.
+function traitStage(s, u) {
+  const stage = s?.run?.stage || 0;
+  if (!u?.guest || !Array.isArray(s?.run?.route)) return stage;
+  const home = s.run.route.indexOf(CAPTAINS.findIndex(([captain]) => captain === u.id));
+  return home >= 0 ? home : stage;
+}
 // A villain whose traits are written uses the stage-scaled status strengths; one without plays
 // with the flat numbers of stage 0, as every villain did before the redesign.
 function enemyTechnique(u, s) {
   const info = unitDetails(u);
   if (!info?.rank) return null;
   const sig = traitsOf(u).sig || {},
-    stage = Object.keys(info.traits || {}).length ? s?.run?.stage || 0 : 0;
+    stage = Object.keys(info.traits || {}).length ? traitStage(s, u) : 0;
   const status = {
     power: sig.power ?? STATUS_POWER[info.style]?.(stage),
     turns: sig.turns ?? 2,
@@ -802,8 +812,11 @@ function turnBack(s, striker, bearer, blow, effects) {
 // and hold replace those it began the board with.
 function traitsOf(u) {
   let t = unitDetails(u)?.traits || {};
-  // A guest on the last board stands where he likes: the post he keeps on his own board is not his here.
-  if (u?.guest && t.post) t = { ...t, post: null };
+  // A guest on the last board is his own man: no 戰意 holds him to the post he keeps on his own
+  // board, to the spot where he charges, or half-asleep until his 變招 (半醒), so none of the
+  // three is his here.
+  if (u?.guest && (t.post || t.phase || t.stance?.holds))
+    t = { ...t, post: null, phase: null, stance: t.stance?.holds ? { ...t.stance, holds: false } : t.stance };
   const p = u?.phased ? t.phase : null;
   if (!p) return t;
   return {
@@ -868,7 +881,7 @@ function homeward(s, u, all, hold) {
 // 坐鎮 ends for good as its trait says: `wake: true` once a hero strikes the piece or it strikes
 // a hero; 'struck' only once a hero strikes it; false never.
 function wakePost(s, u, struck) {
-  const post = unitDetails(u)?.traits?.post;
+  const post = traitsOf(u).post;
   if (!post || u.woke || !living(u) || !(post.wake === true || (post.wake === 'struck' && struck)))
     return;
   u.woke = true;
@@ -938,7 +951,7 @@ function strikeReachWhenDue(s, u) {
 function enemyTraitLines(s, u) {
   const info = unitDetails(u),
     t = traitsOf(u),
-    stage = s.run?.stage || 0,
+    stage = traitStage(s, u),
     lines = [];
   const say = (label, text) => lines.push('【' + label + '】' + text);
   const master = unitDetails(find(s, commanderId(s)))?.name;
@@ -1028,7 +1041,7 @@ function enemyTraitLines(s, u) {
   if (t.execute) say('斬殘', '對氣血不過半的俠客出手或還擊時，攻擊 ＋' + executeBonus(s, t) + '。');
   if (t.cover === 'kin') say('刀陣', '相鄰的另一名' + info.name + '氣血較多時，替他承受俠客的直接攻擊。');
   if (t.prefers) say('偏好', PREFERS[t.prefers] + '。');
-  const phase = info.traits?.phase;
+  const phase = u.guest ? null : info.traits?.phase;
   if (phase)
     say(
       (u.phased ? '已變招' : '半血變招') + (phase.name ? ' · ' + phase.name : ''),
@@ -1471,7 +1484,7 @@ function bannerBonus(s, u) {
   let bonus = 0;
   for (const v of s.units) {
     const banner = v !== u && living(v) && !ally(v) && unitDetails(v)?.traits?.banner;
-    if (banner) bonus = Math.max(bonus, banner.atk + (s.run?.stage || 0));
+    if (banner) bonus = Math.max(bonus, banner.atk + traitStage(s, v));
   }
   return bonus;
 }
@@ -2086,6 +2099,9 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.amount = result.hits.reduce((sum, n) => sum + n, 0);
     result.notes.push('不敗 · 氣血不低於 1');
   }
+  // 問劍: the blow that leaves the board's master at his last point ends the board.
+  if (s?.run && boardKind(s) === 'yield' && masterIds(s).includes(t.id) && t.hp - result.amount <= 1)
+    result.notes.push('問劍 · 此擊之後，這一局便完了');
   result.push = t.hp > result.amount ? step : null;
   // 閃身, 挪移: what the receiver's guard did to the blow as a whole.
   if (blow.ward || blow.void) answerBlow(s, u, t, blow, result);
@@ -2111,6 +2127,8 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     !plan.safe &&
     !blow.silent &&
     t.hp > result.amount &&
+    // 不敗: the blow that brings him to 1 氣血 ends it, as a felling blow would: he does not answer it.
+    !(traitsOf(t).unfelled && t.hp - result.amount <= 1) &&
     distance(u, result.push || t) <= reach(s, t)
   ) {
     const reply =
@@ -2214,7 +2232,7 @@ function contactLoss(s, u, t, result) {
   const c = traitsOf(t).contact;
   if (!c || !ally(u) || distance(u, t) !== 1 || t.conditions?.seal) return 0;
   if (result.effects.some((e) => e.kind === 'seal')) return 0;
-  return Math.min(c.mp + (s?.run?.stage || 0), Math.max(0, u.mp - result.mpCost));
+  return Math.min(c.mp + traitStage(s, t), Math.max(0, u.mp - result.mpCost));
 }
 // The preview of a blow the receiver's guard answers: one that does not land carries none of its
 // effects or push; what a 挪移 turns back is shown on the striker, never below 1 氣血.
@@ -2830,7 +2848,8 @@ function markHalved(s) {
     if (!m || m.halved || m.hp > m.maxHp / 2) continue;
     m.halved = true;
     if (id === commanderId(s)) s.foreshadow = true;
-    if (living(m)) shiftPhase(s, m);
+    // 問劍: a master brought from above half straight to his last point does not change; it is over.
+    if (living(m) && !(boardKind(s) === 'yield' && spent(s, id))) shiftPhase(s, m);
     fireHalved(s, id);
   }
 }
@@ -3543,5 +3562,5 @@ function nextRound(s) {
   return true;
 }
 
-export { YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
+export { traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
 export { isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor };

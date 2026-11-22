@@ -361,11 +361,13 @@ const BATTLES = [
         ]
       }
     ],
+    // Each pays a manual, kept at 通吃坊 for the next run: silver would be lost, for a won last
+    // board ends on the ending and has no shop after it.
     sides: [
       { kind: 'intact', reward: 'manual' },
-      { kind: 'swift', by: 9, reward: 'coins' },
-      { kind: 'noMedicine', reward: 'coins' },
-      { kind: 'double', reward: 'coins' }
+      { kind: 'swift', by: 9, reward: 'manual' },
+      { kind: 'noMedicine', reward: 'manual' },
+      { kind: 'double', reward: 'manual' }
     ]
   }
 ];

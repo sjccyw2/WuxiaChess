@@ -173,7 +173,7 @@ const HERO_PATHS = {
     recall:
       '無名不是拓來的一念，身上本來半點功夫也無。他在盤外瞧過的招數，要到了盤上，一式一式使將出來，手上才算是有了。',
     origin:
-      '入盤之時，無名手上甚麼也沒有，只有在棋臺邊瞧了千百局的一雙眼。千年的招數在他眼裡過了一遍；他瞧著對手的兵刃，劍便自己尋到了空處。這九式還沒有名字，要在局中一式一式使將出來。',
+      '入盤之時，無名手上甚麼也沒有，只有在棋臺邊瞧了千百局的一雙眼。千年的招數在他眼裡過了一遍；他瞧著對手的兵刃，劍便自己尋到了空處。這九式沒有誰教過他，要在局中一式一式使將出來。',
     layout: [
       ['youthKeenEdge', 'youthBreakBlade', null],
       ['youthBreakPole', 'youthBreakSword', 'youthBreakArrow'],
@@ -219,7 +219,7 @@ const MASTERY_ARTS = {
     factor: 1.4,
     answer: 'blade',
     desc: '以輕御重，以快制慢，搶在刀勢使老之前一劍刺中相鄰敵人。對使刀之敵威力更強。',
-    source: '獨孤九劍第三式，破解單刀、雙刀、柳葉刀、鬼頭刀、大砍刀、斬馬刀種種刀法。見《笑傲江湖》。'
+    source: '《笑傲江湖》中風清揚所傳劍法的第三式，破解單刀、雙刀、柳葉刀、鬼頭刀、大砍刀、斬馬刀種種刀法。'
   },
   youthBreakPole: {
     name: '破槍式',
@@ -239,7 +239,7 @@ const MASTERY_ARTS = {
     push: true,
     answer: 'pole',
     desc: '欺入長兵圈內，一劍將相鄰敵人震退一格。對使長兵之敵威力更強。',
-    source: '獨孤九劍第四式，破解長槍、大戟、蛇矛、齊眉棍、狼牙棒、白蠟桿、禪杖、方便鏟種種長兵刃。見《笑傲江湖》。'
+    source: '《笑傲江湖》中風清揚所傳劍法的第四式，破解長槍、大戟、蛇矛、齊眉棍、狼牙棒、白蠟桿、禪杖、方便鏟種種長兵刃。'
   },
   youthBreakSoft: {
     name: '破索式',
@@ -259,7 +259,7 @@ const MASTERY_ARTS = {
     disarm: { power: 5, turns: 2 },
     answer: 'soft',
     desc: '劍尖搭上軟兵一絞，可攻擊兩格內的一名敵人。敵人攻擊降低 5 點，且只能攻擊相鄰一格，持續兩回合。對使軟兵之敵威力更強。',
-    source: '獨孤九劍第六式，破解長索、軟鞭、三節棍、鍊子槍、鐵鍊、漁網、飛鎚流星種種軟兵刃。見《笑傲江湖》。'
+    source: '《笑傲江湖》中風清揚所傳劍法的第六式，破解長索、軟鞭、三節棍、鍊子槍、鐵鍊、漁網、飛鎚流星種種軟兵刃。'
   },
   youthBreakMace: {
     name: '破鞭式',
@@ -279,7 +279,7 @@ const MASTERY_ARTS = {
     pierce: 0.5,
     answer: 'mace',
     desc: '短兵勢沉，劍從它的縫隙中遞將進去，重擊相鄰敵人並穿透一半防禦。對使短兵之敵威力更強。',
-    source: '獨孤九劍第五式，破解鋼鞭、鐵鐧、點穴橛、拐子、蛾眉刺、匕首、板斧、鐵牌、八角鎚、鐵椎種種短兵刃。見《笑傲江湖》。'
+    source: '《笑傲江湖》中風清揚所傳劍法的第五式，破解鋼鞭、鐵鐧、點穴橛、拐子、蛾眉刺、匕首、板斧、鐵牌、八角鎚、鐵椎種種短兵刃。'
   },
   youthBreakHand: {
     name: '破掌式',
@@ -301,7 +301,7 @@ const MASTERY_ARTS = {
     answer: 'hand',
     gate: { metric: 'casts', atLeast: 10 },
     desc: '對手敢以空手來鬥利劍，武功上必有極高造詣；劍便專削他出招的手腳，重擊相鄰敵人，敵人無從還擊。對拳掌之敵威力更強。出劍後露空：至下回合防禦降低 6 點。',
-    source: '獨孤九劍第七式，破解拳腳指掌上的功夫：長拳短打、擒拿點穴、鷹爪虎爪、鐵沙神掌。風清揚說，對方既敢以空手來鬥利劍，武功上自有極高造詣。見《笑傲江湖》。'
+    source: '《笑傲江湖》中風清揚所傳劍法的第七式，破解拳腳指掌上的功夫：長拳短打、擒拿點穴、鷹爪虎爪、鐵沙神掌。風清揚說，對方既敢以空手來鬥利劍，武功上自有極高造詣。'
   },
   mountainOpening: {
     name: '華山劍法・白虹貫日',
@@ -1501,14 +1501,15 @@ const MASTERY_ARTS = {
 };
 // The forms 無名 and 令狐冲 both learn are one art each: the same effect, tier and cost, whoever
 // learns it (the producer's rule, 2026-11-22). 無名's are copies of 令狐冲's, with what they hang
-// from in his own tree. In the dream the forms have no name yet, so his are filed under his tree's.
+// from in his own tree and a note of their own: 令狐冲's tell how he came by each, and name the art
+// the nine will one day be called, which 無名's tree does not say before the ending.
 const SHARED_FORMS = {
-  youthBreakSword: ['breakSword', ['signature']],
-  youthBreakArrow: ['breakArrow', ['signature']],
-  youthBreakQi: ['breakQi', ['youthBreakSword']]
+  youthBreakSword: ['breakSword', ['signature'], '《笑傲江湖》中風清揚所傳劍法的第二式，破解普天下各門各派的劍法。以射程分辨對手是本作的讀法。'],
+  youthBreakArrow: ['breakArrow', ['signature'], '《笑傲江湖》中風清揚所傳劍法的第八式，破解諸般暗器；練這一式，須得先學聽風辨器之術。波及四鄰是本作的演繹。'],
+  youthBreakQi: ['breakQi', ['youthBreakSword'], '《笑傲江湖》中風清揚所傳劍法的第九式，為對付身具上乘內功的敵人而用，神而明之，存乎一心。']
 };
-for (const [mine, [his, needs]] of Object.entries(SHARED_FORMS))
-  MASTERY_ARTS[mine] = { ...MASTERY_ARTS[his], family: '盤上九式', owner: 'youth', needs };
+for (const [mine, [his, needs, source]] of Object.entries(SHARED_FORMS))
+  MASTERY_ARTS[mine] = { ...MASTERY_ARTS[his], family: '盤上九式', owner: 'youth', needs, source };
 
 // A purchased copy belongs to the hero who studies it. The SP price is paid by that reader.
 const TRADE_MANUALS = {

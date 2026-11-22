@@ -72,12 +72,14 @@ function endingPage(s) {
   return (
     titleHead('scroll', '放下') +
     '<div class="result-banner ending-banner"><div class="result-seal">終</div><h3>撒手而去</h3><p>' +
-    fill(tale.epilogue) +
+    fill(tale.closed) +
     '</p></div>' +
     '<section class="wake-choice ending-words"><h3>終局</h3>' +
     words +
     '<p class="ending-name">' +
     esc(tale.name) +
+    '</p><p class="ending-after">' +
+    fill(tale.epilogue) +
     '</p></section>' +
     '<section class="wake-choice wake-closing ending-plus"><h3>' +
     icon('spark', 15) +
@@ -109,16 +111,16 @@ function journeyEnding(s) {
     carved = won || missed;
   if (r.last?.ended) return endingPage(s);
   return (
-    titleHead(won ? 'flag' : 'scroll', won ? '好棋' : '眼破') +
+    titleHead(won ? 'flag' : 'scroll', won ? '好棋' : missed ? '終局未成' : '眼破') +
     '<div class="result-banner"><div class="result-seal">' +
-    (won ? '勝' : '破') +
+    (won ? '勝' : missed ? '缺' : '破') +
     '</div><h3>' +
     (won ? '請回吧' : missed ? '還差著一點' : '白子俱暗') +
     '</h3><p>' +
     esc(won ? MAZE_TALE.win : missed ? MAZE_TALE.finale.missed : MAZE_TALE.loss) +
     '</p></div>' +
     // After a lost run the white stones have gone dark and go back into the box.
-    (won
+    (won || missed
       ? ''
       : '<figure class="ending-figure ending-scene"><img class="tale-scene" src="' +
         esc(art(TALE_ART.loss)) +

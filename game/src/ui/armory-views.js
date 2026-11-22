@@ -25,7 +25,7 @@ function planningMap(s) {
 // enemy pieces, the reinforcements' entry tiles and the secondary's lamp or line drawn with it.
 function planDiagram(s, seats, chief) {
   const map = planningMap(s),
-    plan = boardPlan(map, map === s.mapIndex ? s : null);
+    plan = boardPlan(map, map === s.mapIndex ? s : null, s.run.route);
   const post = (i, x, y, at) =>
     btn(
       'place-post',

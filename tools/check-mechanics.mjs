@@ -16,7 +16,7 @@ const FR = await load('rules/form-rules.js');
 const FM = await load('rules/ferry-market.js');
 const { TECHNIQUES, MANUAL_PRICES } = await load('data/martial-arts.js');
 const { HERO_PATHS } = await load('data/mastery-catalog.js');
-const { ENCOUNTERS, RANKS, STATUS_POWER } = await load('data/encounters.js');
+const { ENCOUNTERS, RANKS, STATUS_POWER, GUEST_GISTS } = await load('data/encounters.js');
 const { mapLayout } = await load('data/terrain.js');
 const { MAZE_TALE } = await load('data/maze-tale.js');
 const { dangerTiles } = await load('actors/danger.js');
@@ -4440,12 +4440,20 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   const s = last();
   const qiu = unit(s, 'qiubai'),
     youth = unit(s, 'youth');
+  check('a test of it has the heroes at the level a run brings them to it', G.party(s).every((u) => u.level === R.DEV_TEST.lastLevel));
   check('it is played in 無劍境界 as the eleventh board, 無名 leading from the middle tile', s.run.realm === 5 && s.run.stage === R.LAST_STAGE && s.mapIndex === G.LAST_MAP && s.leader === 'youth' && youth.x === 6 && youth.y === 11);
   check('求敗 at 天元 and the first four masters of the run, on the guest row', qiu.x === 6 && qiu.y === 6 && same(G.enemies(s).map((u) => u.id), ['qiubai', ...s.run.route.slice(0, 4).map((m) => G.refId(m, 'master'))]) && G.enemies(s).slice(1).every((u) => u.guest));
   check('the other six walk on two by two, in the order the run met them', same(G.boardOf(s).waves.flatMap((w) => w.pieces.map((p) => p.id)), s.run.route.slice(4).map((m) => G.refId(m, 'master'))) && same(G.boardOf(s).waves.map((w) => w.when.round), [3, 5, 7]));
   check('a different run casts different guests', !same(G.castBoard(10, [0, 2, 1, 4, 3, 6, 5, 7, 8, 9]).pieces.map((p) => p.id), G.castBoard(10).pieces.map((p) => p.id)));
   check('its numbers are its own, whatever the 境界', same(G.stageRows(10, 10, 1), G.stageRows(10, 10, 5)) && qiu.maxHp === G.stageRows(10, 10).master[0]);
   const chief = unit(s, 'chief') || G.enemies(s)[1];
+  // A guest is his own man there: no post, no 變招 at half, no standing still while he charges, and
+  // his traits as strong as when this run met his board.
+  const guestsOf = (state) => G.enemies(state).filter((u) => u.guest);
+  check('a guest has no post, no phase and no hold', guestsOf(s).every((u) => !G.traitsOf(u).post && !G.traitsOf(u).phase && !G.traitsOf(u).stance?.holds));
+  check('…and his page promises no 變招', guestsOf(s).every((u) => !G.enemyTraitLines(s, u).some((l) => l.includes('變招'))));
+  check('a guest’s traits scale by the stage this run met his board at, not by the last board’s', guestsOf(s).every((u) => G.traitStage(s, u) === s.run.route.indexOf(s.run.route.find((m) => G.refId(m, 'master') === u.id))) && G.traitStage(s, qiu) === 10);
+  check('each of the ten masters has a line for the briefing as a guest', s.run.route.every((m) => !!GUEST_GISTS[G.refId(m, 'master')]) && R.briefing(s).foes.slice(1).every((f) => f.gist === GUEST_GISTS[f.key] && !/橋|琴臺|弟子|索樁|半血/.test(f.gist)));
   check('a guest keeps his mods and loses his post', !G.traitsOf(chief).post && !!G.unitDetails(chief).traits.post === !!G.DETAILS[chief.id].traits.post && chief.maxHp === Math.round(G.stageRows(10, 10).guest[0] * (G.DETAILS[chief.id].traits.mods?.hp ?? 1)));
   check('the briefing: 問劍, its win and its loss', R.briefing(s).kindName === '問劍' && R.briefing(s).win.includes('削至 1 點') && R.briefing(s).loss.startsWith('無名倒下') && R.briefing(s).heading.startsWith('終局'));
   check('ten masters and 求敗 in the briefing, the later six with their rounds', R.briefing(s).foes.length === 11 && R.briefing(s).foes[0].rank === '對弈' && R.briefing(s).foes.filter((f) => f.note).length === 6);
@@ -4468,6 +4476,28 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   qiu.hp = 1;
   G.check(s);
   check('問劍: won at 1, though every guest stands', s.result === 'win' && G.enemies(s).slice(1).every(G.living));
+  // The blow that brings him to his last point is the last blow: he does not answer it, so it
+  // cannot fell the one who lands it.
+  const y5 = last();
+  const q5 = unit(y5, 'qiubai'),
+    frail = put(y5, 'youth', 6, 7);
+  q5.woke = true;
+  frail.hp = 3;
+  q5.hp = 400;
+  check('問劍: an ordinary blow at 求敗 draws his counter', G.forecast(frail, q5, false, y5).counter > 0);
+  q5.hp = 5;
+  const yielding = G.forecast(frail, q5, false, y5);
+  check('問劍: the forecast says this blow ends the board', yielding.notes.includes('問劍 · 此擊之後，這一局便完了') && !G.forecast(frail, { ...q5, hp: 400 }, false, y5).notes.some((n) => n.startsWith('問劍')));
+  check('問劍: the yielding blow draws none', yielding.amount === 4 && !yielding.counter, JSON.stringify([yielding.amount, yielding.counter]));
+  y5.selected = 'youth';
+  G.resolve(y5, frail, q5, false);
+  G.check(y5);
+  check('問劍: so a youth at his last breath can win it', q5.hp === 1 && G.living(frail) && y5.result === 'win', [q5.hp, frail.hp, y5.result].join());
+  // From above half straight to his last point: no 變招, no 「再來」; it is over.
+  const once = last();
+  unit(once, 'qiubai').hp = 1;
+  G.check(once);
+  check('問劍: brought from above half to 1 at a stroke, he does not change', once.result === 'win' && !unit(once, 'qiubai').phased && !logged(once, MAZE_TALE.finale.half));
   const lost = last();
   unit(lost, 'youth').hp = 0;
   G.check(lost);
@@ -4526,25 +4556,35 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   R.settle(other9);
   check('in any other 境界 the tenth board ends the run', other9.run.last.terminal && !other9.run.last.finale);
   while (R.turnPage(run)) {}
+  // In the shop before it, 整理隊伍 already shows the line that will take the field.
+  check('in the shop before the last board 無名 has joined and heads the line, and is held there', run.run.scene === 'shop' && run.run.next[0] === 'youth' && run.run.next.length === 5 && R.fixedLead(run, 'youth') && !R.toggleSeat(run, 'youth') && !R.appointLeader(run, run.run.next[1]));
+  const swapped = [run.run.next[0], run.run.next[2], run.run.next[1], ...run.run.next.slice(3)];
+  check('a line arranged there is the line that takes the field', R.placeHero(run, run.run.next[1], 2) && same(seatsFor(run.run), swapped) && !!R.restoreRun(copy(run)));
   const top = Math.max(...G.company(run).map((u) => u.level));
   check('to the last board', R.advance(run) && run.run.stage === 10 && run.mapIndex === 10 && run.run.scene === 'before');
   const joined = G.company(run).find((u) => u.id === 'youth');
+  check('…with the seats as arranged in the shop', same(seatsFor(run.run), swapped) && unit(run, 'youth').x === 6 && unit(run, 'youth').y === 11);
   check('無名 joins as its 眼, at the company’s highest level, rested', !!joined && run.leader === 'youth' && run.run.next[0] === 'youth' && joined.level === top && G.company(run).every((u) => u.hp === u.maxHp && u.mp === u.maxMp));
   check('every stone remembers its whole tree, gates waived', G.company(run).every((u) => TREE(u.id).every((id) => u.learned.includes(id))));
   R.turnPage(run, true);
   R.turnPage(run, true);
+  // His seat is not given to one from the bench either.
+  const benched = run.run.bench[0].id,
+    hisSeat = seatsFor(run.run).indexOf('youth');
+  check('nor is his seat given to a benched hero', !R.canPlaceHero(run, benched, hisSeat) && !R.placeHero(run, benched, hisSeat) && run.run.next[0] === 'youth' && R.canPlaceHero(run, benched, seatsFor(run.run).indexOf(run.run.next[1])));
   check('in 整備 he is not benched and no one else leads, though the others may change', run.run.scene === 'prep' && !R.toggleSeat(run, 'youth') && !R.appointLeader(run, run.run.next[1]) && R.toggleSeat(run, run.run.next[4]) && run.run.next.length === 4 && run.run.next[0] === 'youth');
   check('a save made there loads', !!R.restoreRun(copy(run)));
   R.devFinish(run, true);
   check('速勝 on 問劍 leaves 求敗 at 1', unit(run, 'qiubai').hp === 1);
   R.settle(run);
+  check('the last board pays no silver, and its secondaries pay manuals, kept for the next run', run.run.last.reward === 0 && BATTLES[10].sides.every((e) => e.reward === 'manual'));
   check('the last board won: the ending, counted once, the run over', run.run.last.terminal && run.run.last.ended && run.run.last.lastBoard && run.run.chronicle.ended === 1 && run.run.chronicle.returns === 1 && run.run.chronicle.best === 11);
   while (R.turnPage(run)) {}
   check('…with no shop after it', run.run.status === 'ended' && run.run.scene === 'ended' && !!R.restoreRun(copy(run)));
   const again = R.devTestRun({ map: G.LAST_MAP, realm: 5, heroes: HEROES, seed: 6 }, R.LEGACY);
   R.devFinish(again, false);
   R.settle(again);
-  check('the last board lost: the run over, no ending, 請回吧', again.run.last.terminal && !again.run.last.ended && again.run.chronicle.ended === 0 && R.dialogue(again).some((b) => b.speaker === '求敗' && b.text.includes('請回吧')));
+  check('the last board lost: the run over, no ending, counted as missed, 請回吧', again.run.last.terminal && !again.run.last.ended && again.run.chronicle.ended === 0 && again.run.chronicle.missed === 1 && R.dialogue(again).some((b) => b.speaker === '求敗' && b.text.includes('請回吧')));
   while (R.turnPage(again)) {}
   check('…and the shop still stands, to leave things with 韋小寶', again.run.scene === 'shop' && R.advance(again) && again.run.status === 'ended');
 
@@ -4555,6 +4595,20 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   check('…from the root: 總訣式 only, and points to spend like anyone', py.learned.length === 0 && same(py.slots, ['signature', null, null]) && py.sp >= 2 && G.artFor(py).name === '總訣式');
   check('…an ordinary piece: he may be benched, or lead', R.turnPage(plus, true) && R.turnPage(plus, true) && R.toggleSeat(plus, 'youth') && R.toggleSeat(plus, 'youth') && R.appointLeader(plus, 'youth'));
   check('before the ending he is not', G.party(R.startRun(R.drawLots(9), R.LEGACY)).length === 3);
+  const test3 = R.devTestRun({ map: 3, realm: 2, heroes: ['hero', 'guo'] }, { ...R.LEGACY, ended: 1 }),
+    test3full = R.devTestRun({ map: 3, realm: 2, heroes: HEROES }, { ...R.LEGACY, ended: 1 });
+  check('a test battle after the ending has him too: on the board if a seat is free, else on the bench', same(test3.run.next, ['hero', 'guo', 'youth']) && !!unit(test3, 'youth') && test3full.run.next.length === 5 && test3full.run.bench.some((u) => u.id === 'youth') && !!R.restoreRun(copy(test3)) && !!R.restoreRun(copy(test3full)));
+  // The last board seen ahead from the shop names the masters this run will bring, in its order.
+  const ahead = R.boardBrief(10, 10, [0, 2, 1, 4, 3, 6, 5, 7, 8, 9]).foes.map((f) => f.key);
+  check('the last board ahead is read for the run’s own route', same(ahead.slice(1, 5), ['chief', 'reed', 'courier', 'qin']) && !same(ahead, R.boardBrief(10, 10).foes.map((f) => f.key)));
+  // 求敗 has brought the youth this far before only if the last board was fought and lost.
+  const closeOf = (profile) => {
+    const t9 = R.devTestRun({ map: 9, realm: 5, heroes: HEROES, seed: 12 }, profile);
+    R.devFinish(t9, true);
+    R.settle(t9);
+    return R.dialogue(t9).map((b) => b.text);
+  };
+  check('the short close before the last board: only after a lost one', closeOf({ ...R.LEGACY, finale: 1, missed: 1 }).includes(MAZE_TALE.finale.again[0].text) && !closeOf({ ...R.LEGACY, finale: 3 }).includes(MAZE_TALE.finale.again[0].text) && !closeOf({ ...R.LEGACY, finale: 2, missed: 1, ended: 1 }).includes(MAZE_TALE.finale.again[0].text));
   check('his tree can be learned in order: 破刀式, then 破槍式', !!R.studyState(plus, py, 'youthBreakBlade')?.canLearn && !R.studyState(plus, py, 'youthBreakPole')?.canLearn && R.learn(plus, py, 'youthBreakBlade') && !!R.studyState(plus, py, 'youthBreakPole')?.canLearn);
 
   // Saves and profiles from before

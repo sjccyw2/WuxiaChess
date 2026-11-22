@@ -740,7 +740,7 @@ const VILLAINS = {
     rank: 'boss',
     row: 'master',
     role: '對面的人',
-    ...adversary('求敗', '劍塚', '神鵰俠侶、笑傲江湖', '折枝為劍', '無劍勝有劍', 'sweep', 'hero',
+    ...adversary('求敗', '無門無派', '神鵰俠侶、笑傲江湖', '折枝為劍', '無劍勝有劍', 'sweep', 'hero',
       '世人叫他求敗，本名早已忘了。利劍、軟劍、重劍、木劍，一柄一柄放下；四十歲後不滯於物，草木竹石均可為劍。幾百年來他只在盤外瞧，這一局放下了棋子，手持一根枯枝，親自立在天元。', 'qiubai', '', {
         sig: { reach: 2, sweep: 0.5, cadence: 3 },
         unfelled: true,
@@ -750,7 +750,7 @@ const VILLAINS = {
         phase: {
           atk: 4,
           step: 1,
-          log: '求敗枯枝一振，劍意陡盛：攻擊增加 4，移動增加 1。',
+          log: '求敗枯枝一振，劍勢陡盛：攻擊增加 4，移動增加 1。',
           say: MAZE_TALE.finale.half,
           note: '攻擊 ＋4、移動 ＋1。'
         }
@@ -858,7 +858,22 @@ const GISTS = {
   jinBow: '射程四格；兩格以內的目標打得較輕。',
   huaBlade: '相鄰的同門中，氣血較多者替對方受招。',
   wanDisciple: '對氣血不過半者出手更重；專挑傷重者。',
-  qiubai: '立在天元，有人近身或打他才離位；專挑領隊；氣血不會低於 1，九劍諸式破不了他的招。'
+  qiubai: '立在天元，有人近身或打他才離位；專挑領隊；氣血不會低於 1，任何破招對他都不成。'
+};
+// The same for a board's master as a guest on the last board, where he keeps no post, has no men
+// of his own and does not change at half: only what he still does there. A master with no entry
+// here is briefed by his own board's line.
+const GUEST_GISTS = {
+  chief: '摧心掌令目標攻擊降低。',
+  courier: '快劍令目標防禦降低。',
+  reed: '貼身打中他會被化去內力。',
+  snow: '一刀掃及兩旁。',
+  qin: '存活時其餘敵人攻擊提升。',
+  peach: '蓄勢時在他攻擊範圍內打他，必遭全力還擊。',
+  wall: '五輪穿過目標，再傷其後一人。',
+  jadeHall: '冰魄銀針令目標中毒並受內傷；專挑療傷者。',
+  mirror: '出手後退開。',
+  murong: '蓄勢時第一下直接攻擊被反震。'
 };
 // What each enemy fights with, by DETAILS key: the kind of weapon one of 無名's nine forms answers
 // (破招, game.js strikeFactor). Archers and dart-throwers are answered by reach, not by this, so
@@ -879,4 +894,4 @@ const ARMS = {
 const ARM_OF = Object.fromEntries(Object.entries(ARMS).flatMap(([arm, keys]) => keys.map((key) => [key, arm])));
 
 
-export { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS, VILLAINS, TROOPS, GISTS, ARM_NAMES, ARM_OF };
+export { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS, VILLAINS, TROOPS, GISTS, GUEST_GISTS, ARM_NAMES, ARM_OF };

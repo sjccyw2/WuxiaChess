@@ -54,9 +54,9 @@ without any emphasis at all. A picture stays on screen until the next panel has 
   same four characters beside the old man (the same size, place and calm: no flash, no shake), so
   that the player sees the boy was the young 求敗 all along. There is no title card.
 - **What is never shown.** 求敗 is not defeated, hurt or kneeling: he lets go of his own accord.
-  He holds a twig, never a sword. The eagle makes no sound but its wings. The three phrases the
-  story does not use for his leaving (the ones `tools/check-story.mjs` refuses in game text) appear
-  nowhere: he 撒手而去，不知所終.
+  He holds a twig, never a sword. The eagle makes no sound but its wings. The phrase the story
+  does not use for his leaving (破碎虛空, which `tools/check-story.mjs` refuses in the spine)
+  appears nowhere: he 撒手而去，不知所終.
 - **Lettering, 港漫 fashion**, as in the prologue: narration in rectangular boxes with a double
   rule, set flush to the panel's corners and stacked; 求敗's speech in ovals, vertical, right to
   left. On 「夠了。」 he is above the frame, so the balloon's tail points up off the panel. This film
@@ -71,9 +71,9 @@ without any emphasis at all. A picture stays on screen until the next panel has 
   The stones lighting is one panel shown twice: darkened and drained of colour, then as painted.
   The drifting lights are drawn by the compositor.
 - **Type**: the game's serif (`river-serif` with the `extra-serif` supplement), set vertically when
-  the frames are rendered. One character, 枯, is not yet in either file; it is set from the font
-  they were both cut from (Noto Serif CJK TC Bold), so it matches. If the game ever shows 枯枝
-  itself, `tools/extra-fonts.py` will add it to the supplement.
+  the frames are rendered. One character, 枯, was in neither file when the film was rendered, so
+  the film sets it from the font they were both cut from (Noto Serif CJK TC Bold), and it matches.
+  The game's text now shows 枯枝 too, and `tools/extra-fonts.py` has since added 枯 to the supplement.
 - **Sound**: synthesised in `make/sound59.py` with the prologue's instruments (a plucked string in
   the spirit of a guzheng, a soft hand drum, a low drone; A 羽 pentatonic) and no samples or
   voices. Unlike the prologue's one steady piece it follows the story: the prologue's tune at a

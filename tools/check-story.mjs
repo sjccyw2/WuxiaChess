@@ -244,7 +244,8 @@ for (let player = 0; player < 60; player++) {
     const wanted = draw.realm <= open ? draw.realm : open,
       clearedBefore = [...(legacy.cleared || [])],
       finaleBefore = legacy.finale || 0,
-      endedBefore = legacy.ended || 0;
+      endedBefore = legacy.ended || 0,
+      missedBefore = legacy.missed || 0;
     const s = R.startRun(draw, legacy),
       r = s.run,
       label = 'seed ' + draw.seed + ' run ' + run;
@@ -305,9 +306,10 @@ for (let player = 0; player < 60; player++) {
             fail(at + ': ' + G.DETAILS[u.id].name + ' does not remember every art');
         for (const beat of MAZE_TALE.finale.before)
           if (!before.some((line) => line.text === beat.text)) fail(at + ': a line before the last board is missing');
-        const masters = r.route.map((m) => G.castBoard(m).masters).length;
         const guests = G.enemies(s).filter((u) => u.guest);
-        if (guests.length !== 4 || G.boardOf(s).waves.flatMap((w) => w.pieces).length !== 6 || masters !== 10) fail(at + ': the ten masters of the run are not all on the last board');
+        if (guests.length !== 4 || G.boardOf(s).waves.flatMap((w) => w.pieces).length !== 6) fail(at + ': the ten masters of the run are not all on the last board');
+        // 無名 is on the board and has drawn the sword before he looks about him.
+        if (before[0]?.text !== MAZE_TALE.finale.before[0].text) fail(at + ': the last board does not open with 無名 stepping onto it');
         const cast = [...G.boardOf(s).pieces, ...G.boardOf(s).waves.flatMap((w) => w.pieces)].slice(1).map((p) => p.id);
         if (cast.join() !== r.route.map((m) => G.castBoard(m).commander || G.refId(m, 'master')).join()) fail(at + ': the last board is not cast from the run\u2019s ten boards in the order met');
         for (const u of guests) if (!before.some((line) => line.person?.id === u.id)) fail(at + ': ' + G.unitDetails(u).name + ' stands there and says nothing');
@@ -367,8 +369,12 @@ for (let player = 0; player < 60; player++) {
         opened = r.last.opened || 0;
         if (r.last.terminal !== (realm < WAKES.length)) fail(at + ': the tenth board ' + (r.last.terminal ? 'ended' : 'did not end') + ' a run in 境界 ' + realm);
         if (!r.last.terminal) {
-          for (const beat of [...(finaleBefore > 0 ? MAZE_TALE.finale.again : MAZE_TALE.close[realm - 1]), ...MAZE_TALE.finale.invite])
+          // (In short only when the last board has been fought and lost and not yet won: after the
+          // ending the old dream is dreamt again, and he says it all as he did the first time.)
+          const short = !plus && missedBefore > 0;
+          for (const beat of [...(short ? MAZE_TALE.finale.again : MAZE_TALE.close[realm - 1]), ...MAZE_TALE.finale.invite])
             if (!said(beat)) fail(at + ': 求敗\u2019s lines before the last board are incomplete');
+          if (short === after.some((line) => line.text === '走進來的啊。你又沒關門。')) fail(at + ': 求敗 ' + (short ? 'sees 韋小寶 for the first time twice' : 'does not see 韋小寶'));
           if (after.some((line) => line.text === MAZE_TALE.release.text || line.text.includes('請回吧'))) fail(at + ': the stones are sent home before the last board');
         }
       }
@@ -409,6 +415,7 @@ for (let player = 0; player < 60; player++) {
     if (finale) finales++;
     // The ending is counted when the last board is won, and only then.
     if (legacy.ended !== endedBefore + (finale && lastWins ? 1 : 0)) fail(label + ': the ending was counted ' + (legacy.ended - endedBefore) + ' times');
+    if (legacy.missed !== missedBefore + (finale && !lastWins ? 1 : 0)) fail(label + ': a lost last board was counted ' + (legacy.missed - missedBefore) + ' times');
     for (const u of G.company(s)) if (!legacy.walked[u.id]) fail(label + ': ' + names([u.id]) + ' not recorded as having walked');
     if (!R.restoreRun(JSON.parse(JSON.stringify(s)))) fail(label + ': the finished run does not load');
   }

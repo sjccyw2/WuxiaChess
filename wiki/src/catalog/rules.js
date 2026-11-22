@@ -69,10 +69,13 @@ const EXTRA = {
   answer: () =>
     rows(
       '兵刃各類',
-      Object.entries(G.ARM_NAMES).map(([arm, name]) => [
-        name,
-        [...new Set(Object.values(G.DETAILS).filter((d) => d.arm === arm).map((d) => d.name))].join('、')
-      ])
+      [
+        ...Object.entries(G.ARM_NAMES).map(([arm, name]) => [
+          name,
+          [...new Set(Object.values(G.DETAILS).filter((d) => d.arm === arm).map((d) => d.name))].join('、')
+        ]),
+        ['說明', '弓手與發暗器的，由破箭式按射程來破，不列兵刃；完顏洪烈與求敗也不列。使劍的記在這裡，眼下卻沒有哪一式按「劍」來破：破劍式破的是只能攻擊相鄰的對手。']
+      ]
     ),
   keep: () => rows('各局守物', objectRows('keep')),
   break: () => rows('各局破物', objectRows('break')),

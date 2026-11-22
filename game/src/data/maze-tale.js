@@ -160,7 +160,7 @@ const MAZE_TALE = {
     keep: '這一局的戰意不壓在人身上，對著的是我們這邊的一件東西。守住它，撐到那一念自己散了；打醒了局主，也是一樣。',
     break: '這一局的戰意不壓在人身上，釘在東西上。毀了它，人人都醒。',
     // The last board: no 戰意 anywhere, and 求敗 himself across it.
-    yield: '這一局沒有戰意。對面站著的是求敗自己：他不會倒下，逼到他只賸最後一口氣，這一局便完了。',
+    yield: '這一局沒有戰意。對面站著的是求敗自己：他不會倒下；逼得他垂下枯枝，這一局便完了。',
     side: '韋小寶另開盤口',
     // The white stone 求敗 has set by the board: who comes if this board is won.
     next: '盤邊擱著一枚白子：這一局勝了，求敗便借出{hero}。'
@@ -301,7 +301,7 @@ const MAZE_TALE = {
         note: '求敗怔了半晌，突然間哈哈大笑，笑聲震得谷中落葉紛飛。那頭大鵰跟了他幾百年，從沒聽他這般笑過，不由得側過頭來。',
         text: '原來如此，原來如此！老夫求了幾百年的東西，便在臺邊嗑瓜子。'
       },
-      { text: '小兄弟，多謝你。……還有一局。這一局，老夫不在盤外下了。' }
+      { text: '……還有一局。這一局，老夫不在盤外下了。' }
     ]
   ],
   // The last board (world view §8.4), which follows the tenth board of 無劍境界 in the same run, and
@@ -322,27 +322,28 @@ const MAZE_TALE = {
   //   epilogue the page after the film; `plus` is what the ending opens
   finale: {
     again: [
-      { text: '又到了這一步。利劍、軟劍、重劍、木劍，老夫再放一遍，手裡賸下的，仍是這盤棋。' },
-      { text: '上一回你我到得盤上，還差著一點。小兄弟，再來。這一局，老夫仍不在盤外下。' }
+      { text: '又到了這一步。利劍、軟劍、重劍、木劍，老夫再放一遍，手裡剩下的，仍是這盤棋。' },
+      { text: '上一回你我到得盤上，還差著一點。小兄弟，再來。' }
     ],
     invite: [
       {
         note: '求敗依著局規，伸手要將盤上的白子一枚一枚翻轉，手到半途，卻停住了。',
-        text: '十局皆勝，各位原該放還本尊。老夫卻有一事相求：再留一局。這一局沒有戰意，也沒有局規，願留的便留。'
+        text: '十局皆勝，各位原該放還本尊。老夫卻有一事相求：再留一局，願留的便留。'
       },
       { who: 'youth', note: '盤邊眾人你瞧我，我瞧你，竟沒有一個肯走。', text: '老伯，他們都不走。' },
       {
-        note: '求敗打開棋盒，將這一輪十位局主的黑子一一取出，放在盤上，手指卻不在子上按那一按。黑子上人影立起，個個神智清明，竟也無一人離去。',
+        note: '求敗打開棋盒，將這一輪十位局主的黑子一一取出，擱在盤邊，手指卻不在子上按那一按。黑子上人影立起，個個神智清明，竟也無一人離去。',
         text: '老夫不按了。各位愛打便打，不愛打的，自管請便。'
       },
-      { who: 'youth', text: '老伯，你也下去？你不是說，你只能在盤外瞧麼？' },
+      { who: 'youth', text: '老伯，你也下去？你不是一向只在盤外瞧麼？' },
       { text: '那是手裡握著子的時候。' },
       { who: 'youth', text: '可是我不會武功。' },
+      { text: '千年的武功，你在臺邊都瞧過了。手會記得。' },
       {
         note: '求敗向盤上一指。四角星位各有一塊大石，石上各插一劍。',
-        text: '千年的武功，都在你眼裡過了一遍。手會記得。石上那柄利劍，是老夫弱冠之前所用，你拿去使。'
+        text: '石上那柄利劍，是老夫弱冠之前所用。你拿去使。'
       },
-      { who: 'wei', text: '這多出來的一局，我照樣開盤口。老爺子，這一回你瞧得見我啦，要不要也押一注？' },
+      { who: 'wei', text: '多出來的這一局，我照樣開盤口。老爺子，你既瞧得見我，也押一注？' },
       { text: '……老夫押這孩子。' }
     ],
     before: [
@@ -355,23 +356,24 @@ const MAZE_TALE = {
         note: '求敗隨手折了一根枯枝，緩步走到天元，站定了。',
         text: '老夫四十歲後，不滯於物，草木竹石均可為劍。幾百年不曾同人動手，這一局，老夫不讓。'
       },
-      { who: 'youth', text: '各位，我這一回同你們站在一起。我若倒了，這一局便輸了。……老伯，得罪！' },
+      { who: 'youth', text: '各位，這一回我也在盤上。我若倒了，這一局便輸了。……老伯，小心了！' },
       { text: '老夫求了一世的敗。今日瞧瞧，你給不給得起。' }
     ],
     // Later black stones walk on by themselves: no stone is set down, so there is no 「嗒」.
     walkOn: '盤邊有人自行邁步上枰。下一合，人便到。',
     half: '好。這一劍，老夫幾百年來不曾見過。……再來！',
     after: [
-      { note: '求敗低頭瞧著手中的枯枝，瞧了很久。盤上的人影一齊停了手。', text: '……夠了。' },
+      { note: '求敗低頭瞧著手中的枯枝，瞧了很久。', text: '……好。' },
       { who: 'youth', text: '老伯，你還站著。我沒有贏。' },
       { text: '老夫求了一世的敗，原來不是要誰將老夫打倒。' }
     ],
     lost: [
+      { note: '求敗瞧著自己手中的枯枝，半晌不語。', text: '還差著一點。……差的是甚麼，老夫也說不上來。' },
+      // The ten boards were won, so the white stones go home as the rule says, lost board or not.
       {
-        note: '少年手中的劍脫手飛出，釘在石上。盤上的人影一齊停了手。求敗瞧著自己手中的枯枝，半晌不語。',
-        text: '還差著一點。……差的是甚麼，老夫也說不上來。武學的盡頭，想必還在前面。'
+        note: '白子上的人影一個一個淡了，各回本尊。',
+        text: '那十局你再下一遍。下完了，老夫仍到這盤上來等你。請回吧。'
       },
-      { text: '那十局你再下一遍。下完了，老夫仍到這盤上來等你。請回吧。' },
       { who: 'wei', text: '不打緊，不打緊。差一點便是差一點，下回補上就是。東西照舊放我這兒。' }
     ],
     film: {
@@ -394,17 +396,19 @@ const MAZE_TALE = {
     ],
     name: '獨孤求敗',
     // A lost last board, on the run's last page.
-    missed: '終局未成。少年的劍脫了手，求敗說還差著一點。那十局須得再下一遍，方能再到這盤上來。',
-    epilogue: '這盤棋下完了。對面那個人撒手而去，再沒有回來。少年後來的事，江湖上人人知道；只有這一場夢，他自己也記不清了。',
+    missed: '終局未成。求敗說還差著一點。同行的人各歸本尊；那十局須得再下一遍，方能再到這盤上來。',
+    // The run's last page: `closed` under its heading, `epilogue` after the film's words.
+    closed: '這盤棋下完了。',
+    epilogue: '對面那個人撒手而去，再沒有回來。少年後來的事，都刻在劍塚的石上；只有這一場夢，他自己也記不清了。',
     // As the company goes onto the last board (the log).
-    muster: '{name}提了利劍，頭一個踏上棋枰。這一局他是眼。同行的人到了這裡，平生所學一招不缺，全都想了起來。',
+    muster: '這一局{name}是眼。同行的人到了這裡，平生所學一招不缺，全都想了起來。',
     plus: {
       // The first board of a run after the ending (the log).
       joins: '這一回，{name}自己也在盤上。',
       // The draw page (抓子), under the three drawn.
       draw: '{name}自己也在盤上：連這三位，開局共是四人。',
       title: '無名入盤',
-      text: '此後再入夢，便是將這場舊夢從頭再做一遍。這一回，{name}自己也是盤上一子：開局抓三枚，連他共是四人。他同旁人一樣從根長起，九劍要一式一式想起來。'
+      text: '此後再入夢，便是將這場舊夢從頭再做一遍。這一回，{name}自己也是盤上一子：開局抓三枚，連他共是四人。他同旁人一樣從根長起，九式要一式一式使將出來。'
     }
   },
   // The run's last page.
@@ -465,10 +469,10 @@ const CHAMBER_TALES = [
     arrival: '銅漏的最後一滴水懸在半空。兩股星索從盤外垂將下來，繫在臺心一位老者身上。',
     victory: '兩股星索斷了，縮回盤外。懸了許久的那滴水終於落下，銅漏響了一聲。'
   },
-  // The last board. Its victory is 求敗 lowering the twig (finale.yields): he does not fall.
+  // The last board. Its victory is 求敗 lowering the twig: he does not fall.
   {
     name: '谷底棋臺',
-    arrival: '青石棋枰縱橫十三路，四角星位各插一劍。枰上沒有一道戰意。求敗手持一根枯枝，立在天元。',
+    arrival: '青石棋枰縱橫十三路，四角星位各插一劍。枰上沒有一道戰意，天元空著。',
     victory: '求敗手中的枯枝垂了下來。他沒有倒下，也沒有再舉起那根枯枝。'
   }
 ];

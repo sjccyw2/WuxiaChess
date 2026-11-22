@@ -16,7 +16,7 @@ import { NUMERALS } from './game.js';
 import { mapLayout } from '../data/terrain.js';
 import { TECHNIQUES, MANUAL_PRICES, CAPTAINS } from '../data/martial-arts.js';
 import { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, YOUTH, WEI, QIUBAI } from '../data/maze-tale.js';
-import { GISTS } from '../data/encounters.js';
+import { GISTS, GUEST_GISTS } from '../data/encounters.js';
 import { BATTLES, SIDE_REWARDS, LAST_MAP } from '../data/battles.js';
 import { WEAPON_FORMS } from '../data/form-catalog.js';
 import { HERO_VOICES } from '../data/hero-voices.js';
@@ -41,8 +41,9 @@ const LEGACY = {
   cleared: [],
   finale: 0,
   // How many times the last board has been won, which is the ending seen. Once it is, 無名 is a
-  // piece from the first board of every run (new game plus).
-  ended: 0
+  // piece from the first board of every run (new game plus). `missed` counts the times it was lost.
+  ended: 0,
+  missed: 0
 };
 const MAPS = BATTLES.map((_, map) => map);
 // The last board is the eleventh of a run in 無劍境界 (world view §8.4): the tenth won there does
@@ -89,6 +90,7 @@ function fillProfile(chronicle) {
   chronicle.cleared ??= REALM_NUMBERS.slice(0, won);
   chronicle.finale ??= 0;
   chronicle.ended ??= 0;
+  chronicle.missed ??= 0;
   return chronicle;
 }
 const copy = (value) => JSON.parse(JSON.stringify(value));
@@ -225,6 +227,7 @@ function validProfile(p) {
     (p.cleared == null || uniqueMembers(p.cleared, REALM_NUMBERS)) &&
     (p.finale == null || (Number.isSafeInteger(p.finale) && p.finale >= 0)) &&
     (p.ended == null || (Number.isSafeInteger(p.ended) && p.ended >= 0)) &&
+    (p.missed == null || (Number.isSafeInteger(p.missed) && p.missed >= 0)) &&
     p.parcel?.stock &&
     Object.entries(p.parcel.stock).every(
       ([id, n]) => Object.hasOwn(G.ITEMS, id) && Number.isInteger(n) && n >= 0
@@ -709,8 +712,10 @@ function dialogue(s, scene = s.run.scene) {
   // The heroes who speak: 無名 as a piece says nothing here, his lines being the spine's.
   const heroes = G.party(s).filter(voiced);
   if (before && lastBoard) {
-    beats.push(...script.before);
-    for (const beat of tale.before) beats.push({ who: 'qiu', ...beat });
+    // He steps on and draws the sword (the spine's first beat) before he looks about him.
+    const [stepsOn, ...rest] = tale.before;
+    beats.push({ who: 'qiu', ...stepsOn }, ...script.before);
+    for (const beat of rest) beats.push({ who: 'qiu', ...beat });
     // The masters who stand there from the start; the rest speak as they step on (game.js arrive).
     for (const u of G.enemies(s)) if (u.guest && G.guestLine(u.id)) beats.push({ who: u.id, text: G.guestLine(u.id) });
   } else if (before) {
@@ -762,9 +767,10 @@ function dialogue(s, scene = s.run.scene) {
       } else beats.push({ who: 'wei', text: SIDE_MISS });
     }
     if (r.stage === TENTH && !r.last?.terminal) {
-      // Ten boards won in 無劍境界: no one is sent home yet. 求敗 says what he saw (briefly, if
-      // he has brought the youth this far before) and asks every stone to stay one board more.
-      const seen = r.chronicle.finale > 1;
+      // Ten boards won in 無劍境界: no one is sent home yet. 求敗 says what he saw (briefly, if the
+      // last board has been fought and lost before; in full in the runs after the ending, which
+      // are the old dream dreamt again) and asks every stone to stay one board more.
+      const seen = !r.plus && r.chronicle.missed > 0;
       for (const beat of seen ? tale.again : MAZE_TALE.close[realm - 1]) beats.push({ who: 'qiu', ...beat });
       for (const beat of tale.invite) beats.push({ who: 'qiu', ...beat });
     } else if (!r.last?.terminal) {
@@ -832,6 +838,9 @@ function turnPage(s, skip = false) {
   }
   r.scene = NEXT_SCENE[r.scene];
   r.beat = 0;
+  // Into the shop before the last board: 無名 joins the company now, so that 整理隊伍 shows the line
+  // that will take the field, with him at its head and every art in hand.
+  if (r.scene === 'shop' && lastAhead(r)) musterLast(s);
   return true;
 }
 // The boards of a run in the order met, the last board after them where the run ends with it.
@@ -918,7 +927,9 @@ function devFinish(s, won, side = false) {
 // is met at its own stage (the earliest the shuffle can bring it), so its enemies are as strong
 // as in play, and the heroes are raised as a recruit at that stage would be. After the board the
 // run goes on as usual. `legacy` is the profile, which the run carries as any other.
-const DEV_TEST = { points: 20, coins: 1000 };
+// On the last board the heroes are at `lastLevel`, about what a run in 無劍境界 brings to it (the
+// simulated runs that get there have them at 11 to 13): the board is measured against that.
+const DEV_TEST = { points: 20, coins: 1000, lastLevel: 11 };
 function devTestRun({ map = 0, realm = 1, heroes = [], seed = newSeed() } = {}, legacy = LEGACY) {
   const ids = [...new Set(heroes)].filter((id) => G.PARTY.includes(id));
   if (!ids.length || !Number.isInteger(map) || !BATTLES[map]) return null;
@@ -927,7 +938,7 @@ function devTestRun({ map = 0, realm = 1, heroes = [], seed = newSeed() } = {}, 
   const stage = mapStages(map)[0] ?? 0;
   while (!lastBoard && routeFor(seed)[stage] !== map) seed = (seed + 1) >>> 0;
   // The last board is tested apart from new game plus: 無名 joins it as he does the first time.
-  const s = startRun({ seed, realm }, { ...legacy, ended: 0 }),
+  const s = startRun({ seed, realm }, lastBoard ? { ...legacy, ended: 0 } : legacy),
     r = s.run;
   r.chronicle.ended = legacy.ended || 0;
   // Any 境界, open or not: this is for testing. The last board is met in 無劍境界 only.
@@ -944,13 +955,21 @@ function devTestRun({ map = 0, realm = 1, heroes = [], seed = newSeed() } = {}, 
   r.coins = DEV_TEST.coins;
   r.devTest = true;
   const layout = mapLayout(map),
-    tier = Math.floor(stage / 2);
+    tier = lastBoard ? DEV_TEST.lastLevel - 1 : Math.floor(stage / 2);
   const all = ids.map((id) => {
     const u = prepareHero(G.startingHero(id));
     G.raiseLevel(u, tier);
     u.sp = DEV_TEST.points;
     return u;
   });
+  // After the ending 無名 is a piece on every board: he takes a seat if one is free, the bench if not.
+  if (r.plus) {
+    const youth = prepareHero(G.startingHero(G.YOUTH_ID));
+    G.raiseLevel(youth, tier);
+    youth.sp = DEV_TEST.points;
+    all.push(youth);
+    if (r.next.length < 5) r.next.push(G.YOUTH_ID);
+  }
   // The last board: 無名 joins and leads, and every stone remembers every art (musterLast).
   if (lastBoard) {
     r.bench = all;
@@ -1252,8 +1271,8 @@ const COUNT_WORDS = ['', '一', '兩', '三', '四'];
 // Everything the briefing page shows, for a board at a stage. `s` is the run on this board
 // (with its drawn secondary), or null for a look at a board without one (the wiki, the shop's
 // look at the next board), which lists the pool instead. `live` adds the state of the fight.
-function boardModel(map, stage, s = null, live = false) {
-  const board = s ? G.boardOf(s) : G.castBoard(map),
+function boardModel(map, stage, s = null, live = false, route = null) {
+  const board = s ? G.boardOf(s) : G.castBoard(map, route || undefined),
     layout = mapLayout(map),
     r = s?.run;
   const masters = board.masters.map((ref) => pieceName(map, ref));
@@ -1295,7 +1314,8 @@ function boardModel(map, stage, s = null, live = false) {
     // On the last board 求敗 is the one across it, and the masters are who they were on their own boards.
     rank: board.last && key === board.commander ? '對弈' : villain(key) === 'boss' ? '局主' : '副手',
     name: G.DETAILS[key].name,
-    gist: GISTS[key] || '',
+    // A guest on the last board is briefed by what he does there, not by his own board's habits.
+    gist: (board.last && key !== board.commander && GUEST_GISTS[key]) || GISTS[key] || '',
     note
   });
   const starts = [
@@ -1418,8 +1438,9 @@ function briefing(s, { live = false } = {}) {
   return boardModel(s.mapIndex, s.run.stage, s, live);
 }
 // The same for a board at a stage with no run: the secondary pool instead of a drawn one.
-function boardBrief(map, stage) {
-  return boardModel(map, stage);
+// `route`: the run it is read for, so the last board ahead names the masters that run will bring.
+function boardBrief(map, stage, route = null) {
+  return boardModel(map, stage, null, false, route);
 }
 function recruit(s) {
   const r = s.run,
@@ -1449,7 +1470,8 @@ function settle(s) {
     tenth = r.stage === TENTH,
     last = r.stage === LAST_STAGE,
     terminal = !won || r.stage === finalStage(r);
-  let reward = won ? REWARDS.clear + REWARDS.perStage * r.stage : 0;
+  // (The last board pays no silver: the run ends on the ending, with no shop to spend it in.)
+  let reward = won && !last ? REWARDS.clear + REWARDS.perStage * r.stage : 0;
   r.next = G.party(s).map((u) => u.id);
   r.coins += reward;
   // Credits, stock, recruits and the receipt persist in the same saved transaction.
@@ -1465,6 +1487,9 @@ function settle(s) {
     if (optional)
       for (const u of G.party(s).filter(G.living))
         if (!u.mastery.sides.includes(s.mapIndex)) u.mastery.sides.push(s.mapIndex);
+  } else if (last) {
+    // The last board lost: counted, so the next time 求敗 says he has been here before.
+    r.chronicle.missed = (r.chronicle.missed || 0) + 1;
   }
   if (last) {
     // The run was counted when its tenth board was won; the last board is only noted as reached.
@@ -1509,8 +1534,10 @@ function settle(s) {
     // On a 斬將 board the rank and file were only in the master's thought.
     if (G.boardKind(s) === 'slay' && G.enemies(s).some((v) => G.living(v) && !G.unitDetails(v).rank))
       G.log(s, 'story', MAZE_TALE.fade, '戰意');
-    G.log(s, 'grow', '分得彩頭 ' + (reward - (bonus?.reward === 'coins' ? bonus.amount : 0)) + ' 兩，同行俠客各得 1 武學點。', '通吃坊');
-    G.log(s, 'story', MAZE_TALE.step, YOUTH.role);
+    if (!last) {
+      G.log(s, 'grow', '分得彩頭 ' + (reward - (bonus?.reward === 'coins' ? bonus.amount : 0)) + ' 兩，同行俠客各得 1 武學點。', '通吃坊');
+      G.log(s, 'story', MAZE_TALE.step, YOUTH.role);
+    }
   }
   if (bonus) G.log(s, 'grow', '支線達成，' + rewardText(r.side, r.stage, bonus.manual, r) + '。', '支線');
   return true;
@@ -1593,8 +1620,10 @@ function canPlaceHero(s, id, destination) {
     destination >= 5
   )
     return false;
-  // 無名 is the last board's 眼: he is not taken off it.
+  // 無名 is the last board's 眼: he is not taken off it, nor is his seat given to one from the bench.
   if (destination === -1 && fixedLead(s, id)) return false;
+  const seats = seatsFor(s.run);
+  if (destination >= 0 && fixedLead(s, seats[destination]) && !seats.includes(id)) return false;
   return (
     seatsFor(s.run).indexOf(id) !== destination && !(destination === -1 && s.run.next.length === 1)
   );
@@ -1662,14 +1691,20 @@ function musterLast(s) {
       if (u.slots.includes(null) && TECHNIQUES[id].kind !== 'basic' && !u.slots.includes(id)) u.slots[u.slots.indexOf(null)] = id;
     u.activeArt ||= u.slots.find(Boolean) || null;
   }
-  // He is the 眼: first in the line, on the middle starting tile, and not to be benched.
-  const others = r.next.filter((id) => id !== G.YOUTH_ID).slice(0, 4);
-  r.next = [G.YOUTH_ID, ...others];
-  r.posts = [G.YOUTH_ID, ...others];
-  G.log(s, 'story', fill(MAZE_TALE.finale.muster, s), YOUTH.role);
+  // He is the 眼: first in the line, on the middle starting tile, and not to be benched. Done once:
+  // a line the player has arranged since (in the shop before the board) is left as it is.
+  if (r.next[0] !== G.YOUTH_ID) {
+    const others = r.next.filter((id) => id !== G.YOUTH_ID).slice(0, 4);
+    r.next = [G.YOUTH_ID, ...others];
+    r.posts = [G.YOUTH_ID, ...others];
+    G.log(s, 'story', fill(MAZE_TALE.finale.muster, s), YOUTH.role);
+  }
 }
+// Whether the last board is the next one: ten boards won in 無劍境界, the run still on.
+const lastAhead = (r) => r.stage === TENTH && r.status === 'camp' && !!r.last?.won && !r.last.terminal && endsWithLast(r);
 // Whether this hero is held to the field and to the lead: 無名 on the last board.
-const fixedLead = (s, id) => id === G.YOUTH_ID && s.run.stage === LAST_STAGE && s.run.status === 'battle';
+// (From the shop before it too, where the line for it is arranged.)
+const fixedLead = (s, id) => id === G.YOUTH_ID && ((s.run.stage === LAST_STAGE && s.run.status === 'battle') || lastAhead(s.run));
 // A save that ended at the tenth board of 無劍境界 before the last board was built (when a
 // placeholder stood for it): the run is taken up again and goes on to the last board.
 function enterLast(s) {

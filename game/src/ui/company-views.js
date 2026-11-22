@@ -148,7 +148,7 @@ function memberLine(s, u, ui) {
   const board = mapLayout(map);
   // The briefing in short: this board's (or, from the shop, the next board's, whose secondary
   // is not drawn yet). 軍情 opens the whole briefing.
-  const model = upcoming ? R.boardBrief(map, s.run.stage + 1) : R.briefing(s);
+  const model = upcoming ? R.boardBrief(map, s.run.stage + 1, s.run.route) : R.briefing(s);
   const side = model.side;
   const row = (term, body) => '<div><dt>' + term + '</dt><dd>' + body + '</dd></div>';
   const brief =
@@ -386,7 +386,8 @@ function encounterPage(s, scene, beat, archive = false) {
   const opening = scene === 'before',
     last = current === lines.length - 1;
   const label = opening ? '臨陣' : s.result === 'win' ? '戰後 · 勝' : '戰後 · 敗';
-  const dest = opening ? '進入整備' : '前往通吃坊';
+  // (After the last board is won there is no shop: the ending follows.)
+  const dest = opening ? '進入整備' : s.run.last?.ended ? '放下' : '前往通吃坊';
   const next = archive ? (last ? '返回' : '下一句') : last ? dest : '下一句';
   const head =
     '<header class="modal-head"><div class="modal-title">' +

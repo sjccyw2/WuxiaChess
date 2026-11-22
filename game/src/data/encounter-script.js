@@ -32,7 +32,7 @@
 // there is the spine's (maze-tale.js `finale`), so its own lines are only how the board looks.
 const ENCOUNTER_SCRIPT = [
   {
-    guest: '余某給人按著頭打了這許多場，今日頭一回是自己要打。痛快！',
+    guest: '沒人按著余某，余某照樣要打。青城派的劍，向來不必旁人使喚。',
     before: [
       {
         who: 'boss',
@@ -81,7 +81,7 @@ const ENCOUNTER_SCRIPT = [
     }
   },
   {
-    guest: '沒有人逼，田某原該一走了之。只是這般的對手，一世也未必再遇得上。',
+    guest: '沒有人逼，田某原該一走了之。只是站在這位老前輩身邊，這一仗總算有了七分把握。',
     before: [
       {
         who: 'mini',
@@ -202,7 +202,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
-    guest: '左某平生不做無益之事。同這位老先生並肩過得一招，勝讀十年劍譜。',
+    guest: '左某平生不做無益之事。同這位前輩並肩過得一招，勝讀十年劍譜。',
     before: [
       {
         who: 'boss',
@@ -296,7 +296,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
-    guest: '老衲十層龍象般若功，向來只恨沒有對手。今日這一陣，不必誰來相強。',
+    guest: '老衲十層龍象般若功，正要尋個配得上的對手。今日這一陣，不必誰來相強。',
     before: [
       {
         who: 'boss',
@@ -522,12 +522,13 @@ const ENCOUNTER_SCRIPT = [
     before: [
       {
         who: 'youth',
-        note: '谷底棋臺。那方青石棋枰到了腳下，竟有一座校場大小，縱橫十三路，一路便是一步。四角星位各有一塊大石，石上各插一劍；東邊一道瀑布，落作淺潭。',
+        note: '谷底棋臺。那方青石棋枰到了腳下，竟有一座校場大小，縱橫十三路，一路便是一步；東邊一道瀑布，落作淺潭。',
         text: '原來盤上是這般光景。站在這裡，果然只瞧得見身邊幾步。'
       }
     ],
     win: [{ who: 'youth', note: '瀑布之聲忽然清楚起來。盤上再沒有人動手。', text: '……停了。大家都停了。' }],
-    loss: [{ who: 'youth', note: '利劍釘在石上，劍身猶自顫動。', text: '我……我接不住。' }]
+    // (Lost by 無名 falling or by the twelve rounds running out: the line must fit both.)
+    loss: [{ who: 'youth', note: '瀑布聲中，盤上的人影一齊停了手。', text: '……我沒有撐住。' }]
   }
 ];
 

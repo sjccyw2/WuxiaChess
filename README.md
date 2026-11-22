@@ -120,14 +120,18 @@ marked `last` in `game/src/data/battles.js`).
   (`guest` pieces: the first four from the start, the rest walking on two by two in rounds 3, 5
   and 7).
 - **How it is won (問劍, kind `yield`).** 求敗 is 不敗 and never falls: bring him to 1 氣血. No 破招
-  answers him (無招). If 無名 falls or the twelve rounds run out the board is lost, and the ten
-  boards of 無劍境界 must be won again to reach it.
-- **無名's arts.** Nine forms (`HERO_PATHS.youth`). The four 令狐冲 learns too (總訣式, 破劍式, 破箭式,
-  破氣式) are the same arts in both trees (`SHARED_FORMS`); the other five each answer one kind of
-  weapon, and every enemy has a kind (`ARM_OF` in `game/src/data/encounters.js`).
+  answers him (無招), and he does not counter the blow that ends it. If 無名 falls or the twelve
+  rounds run out the board is lost, and the ten boards of 無劍境界 must be won again to reach it.
+  The masters there are their own men: no post, no change at half, and their traits as strong as
+  when the run met their boards.
+- **無名's arts.** Nine forms (`HERO_PATHS.youth`). The four 令狐冲 learns too are the same arts for both: 破劍式,
+  破箭式 and 破氣式 are copied from his (`SHARED_FORMS`), and 無名's starting 總訣式 reads his; the other five each answer one kind of
+  weapon (`ARM_OF` in `game/src/data/encounters.js` gives each enemy its kind; archers, 完顏洪烈 and
+  求敗 have none).
 - **The ending.** Winning it plays a 59-second film (`game/assets/finale-film*.mp4`, made in
   `asset-gen/finale-video/`), then the run's last page, which carries the film's words as text
-  (`MAZE_TALE.finale.ending`). There is no shop after it.
+  (`MAZE_TALE.finale.ending`). There is no shop after it, so the board pays no silver and each of
+  its secondaries pays a manual, kept for the next run.
 - **Afterwards (無名入盤).** Once it has been won, every run starts with four pieces: the three
   drawn and 無名, an ordinary piece who grows his nine forms from the first like anyone. The last
   board is earned again each time, and 重看終局 on the 選境界 page replays the film.

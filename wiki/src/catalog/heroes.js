@@ -23,7 +23,7 @@ export function heroes() {
       sections: [
         rows('人物誌', [
           ['稱號', d.epithet],
-          ['原著', G.BOOKS[id]],
+          id === G.YOUTH_ID ? ['出處', '本作《' + G.BOOKS[id] + '》（暫名）；金庸原著沒有交代他的少年時代'] : ['原著', G.BOOKS[id]],
           ['門派', d.school],
           partner && ['合璧之人', G.DETAILS[partner].name + '：相鄰時，合璧之招倍率更高'],
           // 無名 is in no box: when he is a piece at all.

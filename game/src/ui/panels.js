@@ -688,8 +688,8 @@ function logPage(s, filter) {
 // board from the shop, with no secondary drawn yet. `back` names the page the footer returns to.
 function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {}) {
   const r = s.run,
-    model = ahead ? boardBrief(mapAt(r, r.stage + 1), r.stage + 1) : briefing(s, { live });
-  const plan = boardPlan(model.map, ahead ? null : s);
+    model = ahead ? boardBrief(mapAt(r, r.stage + 1), r.stage + 1, r.route) : briefing(s, { live });
+  const plan = boardPlan(model.map, ahead ? null : s, r.route);
   const seats = ahead ? [] : seatsFor(r);
   const post = (i, x, y, at) =>
     '<b class="plan-post' +
@@ -1295,7 +1295,7 @@ function attackPage(s, source, target, skill) {
   // 代受 and 號令 change who the action is for: each gets its own row.
   for (const note of f.notes)
     lines.push(
-      /^(代受|號令|化功) · /.test(note)
+      /^(代受|號令|化功|不敗|無招|問劍) · /.test(note)
         ? line(note.slice(0, 2), esc(note.slice(5)))
         : line('招式連攜', esc(note))
     );

@@ -50,9 +50,10 @@ function qiubai() {
         ['所求', '武學的最終奧義。這盤棋他左手同右手下了幾百年。'],
         ['黑子', '他落子之時，將一道戰意按在黑子眉心，叫他們見人便打。']
       ]),
-      speech('自稱', said(q.name, t.prologue.first[6].text), said(q.name, t.prologue.first[8].text)),
+      // His own account of himself: the two lines of the first prologue in which he says 求敗.
+      speech('自稱', t.prologue.first.filter((b) => b.who === 'qiu' && b.text.includes('求')).map((b) => said(q.name, b.text))),
       speech('每一輪的最後', t.close[0].map((b) => said(q.name, b.text))),
-      links('全部對白', [link('story', 'qiu', TITLES.qiu), link('story', 'opening', TITLES.opening), link('story', 'return', TITLES.return)])
+      links('全部對白', [link('story', 'qiu', TITLES.qiu), link('story', 'opening', TITLES.opening), link('story', 'return', TITLES.return), link('story', 'finale', TITLES.finale), link('foes', 'enc-qiubai', q.name + '（入盤之後）')])
     ],
     sources: cites(cite(q.name, 'src/data/maze-tale.js'))
   };
