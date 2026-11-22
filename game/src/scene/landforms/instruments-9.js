@@ -169,6 +169,32 @@ function disc(m, x, y, z, r, col, n = 18) {
   m.face(ring, col);
 }
 
+// A dragon coiled round a vertical post at (x, z): a scaled body winding up in
+// `turns` turns from y0 to y1, its head thrust out at the top. Raised scales
+// are worn bright, the hollows between the coils hold verdigris.
+function coil(m, x, z, y0, y1, rad, turns, phase = 0, head = 0) {
+  const steps = Math.round(turns * 12),
+    pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps,
+      a = phase + t * turns * circle;
+    pts.push([x + Math.cos(a) * rad, y0 + (y1 - y0) * t, z + Math.sin(a) * rad]);
+  }
+  for (let i = 1; i < pts.length; i++) {
+    const thick = 0.026 + 0.012 * Math.sin((i / pts.length) * Math.PI);
+    m.tube(pts[i - 1], pts[i], thick, thick, i % 3 ? body : verdigris, 5);
+    if (i % 2 === 0) m.box(...pts[i], 0.02, 0.02, 0.02, worn);
+  }
+  // The head: snout, horns and beard, looking out along `head`.
+  const top = pts.at(-1),
+    dx = Math.cos(head),
+    dz = Math.sin(head);
+  const snout = [top[0] + dx * 0.11, top[1] + 0.03, top[2] + dz * 0.11];
+  m.tube(top, snout, 0.04, 0.022, bronze, 6);
+  m.tube([top[0], top[1] + 0.03, top[2]], [top[0] - dx * 0.06, top[1] + 0.1, top[2] - dz * 0.06], 0.012, 0.005, worn, 4);
+  m.tube(snout, [snout[0] + dx * 0.02, snout[1] - 0.06, snout[2] + dz * 0.02], 0.01, 0.004, verdigris, 4);
+}
+
 // 渾儀: a cross base with four pillars, the fixed horizon and meridian rings,
 // the equatorial ring, the ecliptic, and the turning declination ring with
 // its sighting tube about the polar axis.
@@ -200,7 +226,17 @@ function armillary(m) {
       6
     );
     m.box(x * k, 1.0, z * k, 0.1, 0.06, 0.1, worn);
+    // A dragon climbs each pillar and holds up the horizon ring in its jaws.
+    coil(m, x * 0.98, z * 0.98, 0.24, 0.92, 0.07, 2.2, Math.atan2(z, x), Math.atan2(-z, -x));
   }
+  // Rivet bosses where the horizon ring's segments were cast together.
+  for (let j = 0; j < 16; j++) {
+    const a = (j * circle) / 16 + 0.1;
+    m.box(Math.cos(a) * 0.8, 1.042, Math.sin(a) * 0.8, 0.035, 0.012, 0.035, worn);
+  }
+  // Cloud scrolls on the arms of the cross base.
+  for (const [x, z] of [[0.45, 0], [-0.45, 0], [0, 0.45], [0, -0.45]])
+    m.hoop(x, 0.155, z, 0.06, 0.012, worn, 10, 'xz', 0);
   // A short cloud-shaped post carries the foot of the meridian ring.
   m.tube([0, 0.15, 0], [0, 0.28, 0], 0.07, 0.05, body, 6);
   band(m, c, [1, 0, 0], [0, 0, 1], 0.8, 0.13, 0.04, 44); // horizon
@@ -233,6 +269,16 @@ function gnomon(m) {
   for (const s of [-1, 1]) m.box(s * 0.078, 1.47, 1.05, 0.012, 1.94, 0.16, worn);
   m.box(0, 2.47, 1.05, 0.7, 0.07, 0.1, worn);
   for (const s of [-0.3, 0.3]) m.tube([s, 2.5, 1.05], [s, 2.62, 1.05], 0.03, 0.018, bronze, 6);
+  // Two dragons twine up the column, their heads under the crossbar.
+  coil(m, 0, 1.05, 0.55, 2.3, 0.1, 3, 0, Math.PI / 2);
+  coil(m, 0, 1.05, 0.6, 2.32, 0.1, 3, Math.PI, -Math.PI / 2);
+  // The shadow-sharpener: a pierced bronze leaf on a frame that slides on the scale.
+  m.box(0, 0.16, -0.95, 0.5, 0.05, 0.12, body);
+  for (const s of [-1, 1]) m.box(s * 0.22, 0.32, -0.95, 0.04, 0.3, 0.04, bronze);
+  m.frame(0, 0.42, -0.95, 0, 1, () => {
+    m.box(0, 0, 0, 0.3, 0.2, 0.012, m.mix(bronze, worn, 0.4));
+    m.hoop(0, 0, 0.008, 0.03, 0.006, body, 10, 'xy', 0);
+  }, -0.5);
   // Two stays brace the column from the plinth.
   for (const s of [-1, 1])
     m.tube([s * 0.24, 0.42, 1.05], [s * 0.05, 1.3, 1.05], 0.025, 0.02, verdigris, 5);
@@ -420,6 +466,22 @@ function clock(m) {
       [h - 0.06, r * 0.94, verdigris]
     ]);
     disc(m, x, y + h - 0.07, z, r * 0.94, water);
+    // Cast relief: a band of thunder pattern under the lip and one at the
+    // waist, and a beast mask on the front between them.
+    m.hoop(x, y + h - 0.13, z, r * 1.015, 0.014, worn, 18);
+    m.hoop(x, y + h * 0.3, z, r * 1.025, 0.016, verdigris, 18);
+    for (let k = 0; k < 12; k++) {
+      const a = (k * circle) / 12;
+      m.box(x + Math.cos(a) * r * 1.02, y + h * 0.5, z + Math.sin(a) * r * 1.02, 0.03, 0.03, 0.03, k % 2 ? worn : bronze);
+    }
+    m.frame(x, y + h * 0.48, z + r * 1.0, 0, 1, () => {
+      m.box(0, 0, 0, 0.16, 0.11, 0.03, bronze);
+      for (const s of [-1, 1]) {
+        m.box(s * 0.045, 0.02, 0.02, 0.035, 0.03, 0.02, worn);
+        m.tube([s * 0.06, 0.05, 0], [s * 0.11, 0.1, 0], 0.016, 0.006, body, 4);
+      }
+      m.box(0, -0.035, 0.018, 0.08, 0.02, 0.015, verdigris);
+    });
     // Raised bands hold the handles.
     for (const s of [-1, 1]) m.tube([x + s * r, y + h * 0.62, z], [x + s * (r + 0.07), y + h * 0.62, z], 0.035, 0.035, worn, 5);
     if (i < 3) {
@@ -441,6 +503,25 @@ function clock(m) {
       );
     }
   });
+  // The receiving vessel stands on the shell of a bronze tortoise.
+  {
+    const [ty, tz, tr] = vessels[3];
+    turned(m, x, ty - 0.02, tz, [
+      [0, tr * 1.5, body],
+      [0.05, tr * 1.62, verdigris],
+      [0.1, tr * 1.5, bronze],
+      [0.16, tr * 1.2, worn],
+      [0.2, tr * 0.86, bronze]
+    ], 14);
+    for (let k = 0; k < 7; k++) {
+      const a = (k * circle) / 7;
+      m.box(x + Math.cos(a) * tr * 1.32, ty + 0.11, tz + Math.sin(a) * tr * 1.32, 0.09, 0.03, 0.09, worn);
+    }
+    for (const a of [0.8, 2.35, 3.95, 5.5])
+      m.tube([x + Math.cos(a) * tr * 1.3, ty + 0.03, tz + Math.sin(a) * tr * 1.3], [x + Math.cos(a) * tr * 1.75, ty - 0.01, tz + Math.sin(a) * tr * 1.75], 0.05, 0.04, body, 6);
+    m.tube([x, ty + 0.06, tz + tr * 1.45], [x, ty + 0.12, tz + tr * 1.95], 0.07, 0.05, bronze, 7);
+    for (const s of [-1, 1]) m.box(x + s * 0.035, ty + 0.15, tz + tr * 1.88, 0.02, 0.02, 0.02, worn);
+  }
   // Receiving vessel: lid, float rod, and the blank scale in its frame.
   const [ry, rz, rr, rh] = vessels[3];
   disc(m, x, ry + rh + 0.005, rz, rr * 1.08, bronze);

@@ -2,6 +2,9 @@
 // 堂前五色龍旗，西、北兩面毛竹成林。棋盤以外的一切，和這張圖自己的幾種地塊，都在這裡。
 import { Model, circle, midway } from '../scenery-kit.js';
 import { lantern, reeds } from '../maze-models.js';
+import { hallDetail, fringe, courses } from './hall-10.js';
+import { shoreTrees, undergrowth } from './flora-10.js';
+import { beachcombing } from './shore-10.js';
 
 const sea = -0.62;
 const clamp = (n) => Math.max(0, Math.min(1, n));
@@ -67,6 +70,14 @@ function trail(x, z) {
   if (x > -5.7) return 0;
   const line = 0.8 + 0.5 * Math.sin(x * 0.7 + 0.5);
   return (1 - smooth((Math.abs(z - line) - 0.3) / 0.45)) * smooth((-5.7 - x) / 0.4);
+}
+
+// Sand packed by feet: up from the south landing to the board, and from the landing stage on
+// the east beach.
+function trodden(x, z) {
+  const south = z > 5.8 ? (1 - smooth((Math.abs(x - 0.3 - 0.35 * Math.sin(z * 1.3)) - 0.35) / 0.5)) * (1 - smooth((z - 8.4) / 0.6)) : 0,
+    east = x > 5.8 ? (1 - smooth((Math.abs(z - 2.6 - 0.2 * Math.sin(x * 1.7)) - 0.25) / 0.45)) * (1 - smooth((x - 7.2) / 0.5)) : 0;
+  return Math.max(south, east);
 }
 
 // The island as a field: where the board is, how far a point lies inside the waterline, how
@@ -187,6 +198,7 @@ function paint(m, isle, x, z, y) {
   c = m.mix(c, turf, 0.92 * smooth((s - 2.0) / 1.1) * (1 - 0.8 * bare));
   c = m.mix(c, 0x55703f, 0.55 * thicket(isle, x, z) + 0.3 * smooth((y - 0.2) / 1.2));
   c = m.mix(c, 0xbfae84, 0.5 * bare * smooth((s - 2.0) / 1.1));
+  c = m.mix(c, 0xa89a72, 0.5 * trodden(x, z) * smooth((s - 0.4) / 0.4));
   const grain = 0.94 + 0.12 * n2;
   return c.map((v) => v * grain);
 }
@@ -875,6 +887,7 @@ function strand(m, isle) {
     snake(m, x, isle.surface(x, z) + 0.004, z, yaw, l, SCALE[tone]);
   coil(m, 7.35, isle.surface(7.35, 3.6), 3.6, 0.1, SCALE[0]);
   coil(m, -6.75, isle.surface(-6.75, -2.2), -2.2, 0.1, SCALE[3]);
+  beachcombing(m, isle, reef);
 }
 
 // A stretch of woven matting between two posts: strips of two straws, with cane rails.
@@ -956,6 +969,9 @@ function thatchRoof(m, zc, hx0, hz0, eave, rise) {
           0x7b6943,
           shade * (0.9 + 0.08 * (q % 2))
         );
+      // Bundles laid in courses across the face, and loose straw hanging from the cut edge.
+      courses(m, low[e], low[f], crest[1], crest[0], long ? 3 - (k >> 1) : 2, 0.24, shade);
+      fringe(m, butt[e], butt[f], [[0, 1], [1, 0], [0, -1], [-1, 0]][e], 0.075, straw);
     }
     // A cane batten round each tier, pegged through the straw.
     const t = tiers[k] + (hipped ? 0.4 * (tiers[k + 1] - tiers[k]) : 0.1),
@@ -1001,7 +1017,7 @@ function thatchRoof(m, zc, hx0, hz0, eave, rise) {
         4
       );
   }
-  return { top, gable };
+  return { top, gable, under };
 }
 // 大竹堂: the great hall of the 神龍教, built wholly of bamboo. A terrace faced with cane
 // courses, a wide stair either side of a carved serpent ramp, posts of three culms lashed
@@ -1011,18 +1027,6 @@ function bambooHall(m) {
   // The terrace: rammed earth behind stacked canes held by stakes, decked with split bamboo.
   m.box(0, 0.16, -4.15, 10.7, 0.62, 5.5, 0x9d8d68);
   m.box(0, floor - 0.015, -4.15, 10.84, 0.03, 5.62, 0xc0aa72);
-  for (let k = 0; k < 21; k++) {
-    const x = -5.2 + k * 0.52;
-    m.face(
-      [
-        [x - 0.012, floor + 0.003, -1.36],
-        [x + 0.012, floor + 0.003, -1.36],
-        [x + 0.012, floor + 0.003, porch - 0.2],
-        [x - 0.012, floor + 0.003, porch - 0.2]
-      ],
-      0x8f7b4e
-    );
-  }
   for (let k = 0; k < 4; k++) {
     const y = -0.03 + k * 0.145,
       tone = AGED[(k + 1) % 4];
@@ -1163,7 +1167,7 @@ function bambooHall(m) {
     over = 0.7,
     eave = plate + 0.3 - over * 0.9,
     rise = ((back - porch) / -2 + over) * 0.9;
-  const { top, gable } = thatchRoof(m, zc, half + 0.75, (porch - back) / 2 + over, eave, rise);
+  const { top, gable, under } = thatchRoof(m, zc, half + 0.75, (porch - back) / 2 + over, eave, rise);
   // Crossed canes ride the ridge and cradle the divine dragon that lies along it, tail to the
   // west, head reared over the eastern gable.
   for (const x of [-gable - 0.1, -2.2, -1.1, 0, 1.1, 2.2, gable + 0.1])
@@ -1219,6 +1223,7 @@ function bambooHall(m) {
   );
   // Paper lanterns under the front eave, either side of the stair.
   for (const side of [-1, 1]) lantern(m, side * 2.75, eave - 0.5, porch + over - 0.1, 0.8);
+  hallDetail(m, eave, under);
 }
 
 // A dragon banner: a cane staff with a spearhead, a yard, and a long cloth with a toothed foot,
@@ -1414,13 +1419,116 @@ function farIslets(m) {
       }
       const peak = [cx + lean, sea + ch, cz];
       for (let i = 0; i < n; i++) m.face([peak, last.ring[(i + 1) % n], last.ring[i]], green);
+      // Woods on the shoulders: crowns of trees blurred by the haze.
+      const wood = m.mix(0x4f7448, haze, far * 0.8);
+      for (let i = 0; i < n; i++) {
+        if (hash(k * 5 + c, i * 3) < 0.3) continue;
+        const a = ((i + 0.5) * circle) / n + turn,
+          e = (edge[i] + edge[(i + 1) % n]) / 2,
+          t = 0.62 + 0.15 * hash(i, k),
+          scale = 1 - (t - 0.42) * 0.86;
+        m.crystal(
+          cx + Math.cos(a) * cr * e * scale + lean * t,
+          sea + t * ch - 0.1,
+          cz + Math.sin(a) * cr * e * scale,
+          cr * 0.17,
+          ch * 0.28,
+          wood,
+          m.mix(green, 0xc0d4b8, 0.2),
+          5
+        );
+      }
     }
   }
 }
 
 // The tiles that are this island's own, each drawn in its tile's frame. Pieces stand at the
 // middle, so what grows on a walkable tile keeps to the back and the edges.
+// Sand on the board, in the board's own grid units so that neighbouring tiles meet: packed
+// and greyer down the line feet take from the landing to the hall stair, paler and looser
+// either side, a slight roll to it.
+const tread = (gx, gy) => 1 - smooth((Math.abs(gx - 6 - 0.45 * Math.sin(gy * 0.6)) - 0.3) / 0.6);
+function sandTone(m, p, gx, gy) {
+  const n1 = fbm(gx * 0.7 + 13, gy * 0.7 - 5),
+    n2 = noise(gx * 3.1 + 2, gy * 3.1 + 9);
+  let c = m.mix(0xb8ab80, 0xdcd0a8, smooth((n1 - 0.3) / 0.4));
+  c = m.mix(c, p[0], 0.55 * smooth((n2 - 0.45) / 0.35));
+  c = m.mix(c, 0x968a66, 0.6 * tread(gx, gy));
+  return c.map((v) => v * (0.9 + 0.16 * n2));
+}
 const tiles10 = {
+  // The board's ground: a little sheet of sand, its corners shared with the tiles beside it,
+  // a few flat pebbles and a shell toward the edges.
+  ground(m, p, cell) {
+    const r = m.rng,
+      n = 3,
+      at = (i, j) => {
+        const u = i / n - 0.5,
+          v = j / n - 0.5,
+          gx = cell.x + u,
+          gy = cell.y + v;
+        return { pos: [u * 1.002, 0.011 + 0.007 * hash(gx * 3.7, gy * 5.3), v * 1.002], col: sandTone(m, p, gx, gy) };
+      };
+    for (let j = 0; j < n; j++)
+      for (let i = 0; i < n; i++) {
+        const ring = [at(i, j), at(i, j + 1), at(i + 1, j + 1), at(i + 1, j)];
+        m.face(
+          ring.map((c) => c.pos),
+          ring.map((c) => c.col)
+        );
+      }
+    for (let k = 0; k < 5; k++) {
+      const a = r.range(0, circle),
+        d = r.range(0.28, 0.47),
+        x = Math.cos(a) * d,
+        z = Math.sin(a) * d,
+        size = r.range(0.025, 0.06),
+        turn = r.range(0, circle);
+      m.face(
+        Array.from({ length: 6 }, (_, j) => {
+          const b = turn - (j * circle) / 6;
+          return [x + Math.cos(b) * size, 0.022, z + Math.sin(b) * size * 0.7];
+        }),
+        r.pick([0x9a968a, 0xb3ad9c, 0x7f7d74, 0xc2b9a2]),
+        r.range(0.9, 1.05)
+      );
+    }
+    return true;
+  },
+  // Open sand: now and then a tuft at a corner, a shell, or the wavering track a snake left.
+  plain(m, p, cell) {
+    const r = m.rng,
+      salt = (cell.x * 7 + cell.y * 13) % 5;
+    if (salt === 0 || salt === 3) {
+      const cx = r.pick([-0.38, 0.38]),
+        cz = r.pick([-0.38, 0.38]);
+      reeds(m, cx, cz, r.range(0.12, 0.2), 4, false, 0.015);
+    }
+    if (salt === 1) {
+      const a = r.range(0, circle),
+        dir = [Math.cos(a), Math.sin(a)];
+      for (let k = 0; k < 9; k++) {
+        const t = k / 9 - 0.5,
+          w = 0.06 * Math.sin(k * 1.4),
+          x = dir[0] * t * 0.85 - dir[1] * w,
+          z = dir[1] * t * 0.85 + dir[0] * w;
+        m.face(
+          [
+            [x - dir[1] * 0.012, 0.0215, z + dir[0] * 0.012],
+            [x + dir[0] * 0.1 - dir[1] * 0.012, 0.0215, z + dir[1] * 0.1 + dir[0] * 0.012],
+            [x + dir[0] * 0.1 + dir[1] * 0.012, 0.0215, z + dir[1] * 0.1 - dir[0] * 0.012],
+            [x + dir[1] * 0.012, 0.0215, z - dir[0] * 0.012]
+          ],
+          0x9c9070
+        );
+      }
+    }
+    if (salt === 2 || salt === 4) {
+      const x = r.range(-0.4, 0.4),
+        z = r.pick([-0.42, 0.42]);
+      m.crystal(x, 0.015, z, 0.022, 0.035, 0xe8d8c0, 0xf8f0e4, 5, 0.01);
+    }
+  },
   // 毛竹林: tall culms along the back of the tile, a new shoot, last year's leaves.
   bamboo(m, p, cell) {
     const r = m.rng,
@@ -1623,6 +1731,10 @@ function landform10(T, layout) {
   grove(west, isle, (x, z) => z >= -5.6, 85, 10);
   const far = new Model(T, 100107);
   farIslets(far);
+  const palms = new Model(T, 100108);
+  shoreTrees(palms, isle);
+  const floor = new Model(T, 100109);
+  undergrowth(floor, isle);
   group.add(
     shore,
     beach.finish('礁石浮木與舢舨'),
@@ -1630,9 +1742,11 @@ function landform10(T, layout) {
     flags.finish('五色龍旗與蛇柱', { occluder: true }),
     north.finish('島北竹林', { occluder: true }),
     west.finish('島西竹林', { occluder: true }),
+    palms.finish('海岸高樹與林投', { occluder: true }),
+    floor.finish('林下草叢與落葉', { occluder: true }),
     far.finish('遠海霧島', { distant: true, cast: false })
   );
   return group;
 }
 
-export { landform10, tiles10 };
+export { landform10, tiles10, AGED, CANE, LEAF, BROAD, HALL, SCALE, smooth, hash, fbm, noise, court, trail, thicket, sea };

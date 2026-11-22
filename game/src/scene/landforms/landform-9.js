@@ -5,6 +5,9 @@
 import { Model, circle } from '../scenery-kit.js';
 import { BED, FOOT, edgeRadius, gateLamps, painter, paving, drum, parapet, footing, spillAngle } from './terrace-9.js';
 import { instruments9, clockLamps } from './instruments-9.js';
+import { gateways, galleries, galleryLamps } from './gates-9.js';
+import { relics9, propLamps } from './props-9.js';
+import { gulf, mountainside, farPeaks } from './gulf-9.js';
 
 const stone = 0x54636a;
 const coping = 0x87928a;
@@ -579,18 +582,35 @@ function landform9(T, layout) {
   site.add(structure.finish('分瓣石盤與四門泄洪嘴'));
   // The terrace, its drum and balustrade, painted with the light of its lamps.
   const terrace = new Model(T, 52361);
-  const light = painter(terrace, [...gateLamps(), ...clockLamps()]);
+  const lamps = [...gateLamps(), ...clockLamps(), ...galleryLamps(), ...propLamps()];
+  const light = painter(terrace, lamps);
   paving(terrace, layout, light);
   drum(terrace, light);
   parapet(terrace, light);
   footing(terrace, light);
   site.add(terrace.finish('環臺石鋪與欄杆'));
+  // Gateways and galleries: tall, so the cutaway may fade them from any side.
+  const timber = new Model(T, 92011);
+  const lit = painter(timber, lamps);
+  gateways(timber, lit);
+  galleries(timber, lit);
+  site.add(timber.finish('四門牌樓與迴廊', { occluder: true }));
+  // The observatory's furniture, left as its keepers left it.
+  const relics = new Model(T, 93029);
+  relics9(relics, painter(relics, lamps));
+  site.add(relics.finish('觀星臺遺物', { occluder: true }));
   const hydraulics = new Model(T, 74347);
   waterWorks(hydraulics);
   site.add(hydraulics.finish('漏刻引渠與兩級沉澱池'));
   site.add(...instruments9(T));
+  // The fallen centre and the mountain's flanks.
+  const fall = new Model(T, 94057);
+  gulf(fall, layout);
+  mountainside(fall);
+  site.add(fall.finish('墜心亂石與山松'));
   const sky = new Model(T, 61813);
   cloudSea(sky);
+  farPeaks(sky);
   site.add(sky.finish('臺下雲海', { distant: true, cast: false }));
   site.updateMatrixWorld(true);
   return site;

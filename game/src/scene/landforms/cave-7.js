@@ -1,4 +1,5 @@
 import { Model, circle } from '../scenery-kit.js';
+import { wallRadius, extraLights } from './kit-7.js';
 
 // The cavern around 寒玉石室: hewn jade paving on the walkway, the cave wall
 // that closes the two grottoes in, rock spurs, columns and dripstone, the
@@ -33,6 +34,9 @@ function lightField(layout) {
   sources.push({ x: -0.25, y: 0.8, z: 6.9, r: 1.6, k: 0.3, col: jade });
   sources.push({ x: 3.98, y: 0.3, z: 6.73, r: 1.15, k: 0.26, col: warm });
   for (const [x, z] of tombLamps) sources.push({ x, y: 1.0, z, r: 1.5, k: 0.3, col: warm });
+  // The altar candles, the jade bed and the lamps of the side passages.
+  for (const [x, y, z, r, k, col] of extraLights)
+    sources.push({ x, y, z, r, k, col: col === 'warm' ? warm : jade });
   return (x, y, z, base) => {
     const out = base.slice();
     for (const s of sources) {
@@ -445,17 +449,7 @@ function decorate(m, s, x0, z0, x1, z1, tint, near, spring, lit, r) {
 // The cave wall: one ring around both grottoes. It rises from a talus under
 // the black water, carries bedding ledges and flowstone drapes, leans in
 // toward a vault on the far side and stays low toward the viewer.
-function wallRadius(a) {
-  const c = Math.cos(a),
-    s = Math.sin(a);
-  const k = 1 / (Math.abs(c) ** 3 + Math.abs(s) ** 3) ** (1 / 3);
-  return (
-    12.5 * k +
-    0.9 * Math.sin(3 * a + 1.1) +
-    0.55 * Math.sin(7 * a + 0.3) +
-    0.3 * Math.sin(13 * a + 2.2)
-  );
-}
+// wallRadius, the plan of the wall's foot, is shared from kit-7.js.
 const drapes = [0.35, 1.05, 1.7, 2.2, 2.75, 3.3, 3.9, 4.4, 5.0, 5.6, 6.0];
 // Faces of the wall are wound to face the middle of the cave, so that with
 // front faces only the near wall disappears whenever the camera is behind it.
