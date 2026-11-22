@@ -24,8 +24,9 @@ the upright cut (`game/assets/finale-film.mp4`, 720 × 1280, 15.1 MB) on a scree
 the wide cut (`game/assets/finale-film-wide.mp4`, 1600 × 900, 22.2 MB) otherwise. Both are
 re-encoded for streaming from the full-size renders:
 `ffmpeg -i <cut> -vf scale=<size> -c:v libx264 -profile:v high -level 4.0 -crf 28 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 128k <file>`.
-Their posters, `finale-film.webp` and `finale-film-wide.webp`, are the frame at 1.2 s (WebP,
-quality 75). Replace all four when a cut changes.
+Their posters, `finale-film.webp` and `finale-film-wide.webp`, are each film's first frame (WebP,
+quality 70), so playback starts exactly where the poster leaves off; a later frame showed the first
+caption, which then appeared a second time. Replace all four when a cut changes.
 
 **Pacing.** Calmer than the prologue and about five seconds a panel: an ending, not an opening.
 Only three moments hit: 求敗's start of recognition, the boy's eyes opening, and the eagle on the
