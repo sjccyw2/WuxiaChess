@@ -1,4 +1,4 @@
-// 俠客對照: up to five heroes side by side. A radar of the seven measures, a table of the same
+// 俠客對照: up to five heroes side by side. A radar of the six measures, a table of the same
 // numbers, how one measure grows from level 1 to 12, and every art each has at the last level.
 //
 // The choice lives in the address: #compare?h=guo,huang,xiao (&m=<measure> for the growth
@@ -240,7 +240,7 @@ function radarSvg(list, axes, width = 420) {
     w +
     '" height="' +
     h.toFixed(0) +
-    '" role="group" aria-label="七項評分雷達圖，數值另見右方對照表">' +
+    '" role="group" aria-label="六項評分雷達圖，數值另見右方對照表">' +
     rings +
     spokes +
     ringText +
@@ -383,7 +383,7 @@ function growthSvg(list, data, measure, width = 640) {
 function scoreTable(list, axes) {
   const rows = [...axes.map((a) => [a.name, (h) => h.scores[a.key]]), ['綜合', (h) => h.composite]];
   return (
-    '<div class="cmp-table-wrap"><table class="cmp-table"><caption class="sr">各俠客七項評分與綜合分數（0 至 100）</caption><thead><tr><th scope="col">項目</th>' +
+    '<div class="cmp-table-wrap"><table class="cmp-table"><caption class="sr">各俠客六項評分與綜合分數（0 至 100）</caption><thead><tr><th scope="col">項目</th>' +
     list.map(({ hero, slot }) => '<th scope="col">' + key(slot) + '<span>' + esc(hero.name) + '</span></th>').join('') +
     '</tr></thead><tbody>' +
     rows
@@ -594,7 +594,7 @@ export function comparePage(p) {
     measure = measureOf(p, data.axes),
     sort = measureOf(p, data.axes, 's');
   const intro =
-    '<p class="cmp-intro">並列最多五位俠客：七項評分、從第一級到第十二級的成長，與滿級時手上的每一式武學。</p>';
+    '<p class="cmp-intro">並列最多五位俠客：六項評分、從第一級到第十二級的成長，與滿級時手上的每一式武學。</p>';
   const head =
     crumb('俠客對照') +
     '<div class="index-head"><h1>俠客對照</h1><span class="count">已選 ' +
@@ -609,7 +609,7 @@ export function comparePage(p) {
   return (
     '<div class="compare" data-compare>' +
     head +
-    '<section class="cmp-block" aria-labelledby="cmp-radar-h"><h2 id="cmp-radar-h">七項評分</h2>' +
+    '<section class="cmp-block" aria-labelledby="cmp-radar-h"><h2 id="cmp-radar-h">六項評分</h2>' +
     '<div class="cmp-radar-row"><figure class="cmp-figure">' +
     legend(list) +
     '<div class="cmp-chart" data-cmp-chart="radar">' +
@@ -726,7 +726,7 @@ function rankingTable(data, slots, list, measure, sort) {
     esc(sortName) +
     '排序；點欄名改排序，點「＋對照」加入上方比較。</p></div>' +
     '<div class="cmp-table-wrap"><table class="cmp-table cmp-rank"><caption class="sr">' +
-    esc('全部 ' + order.length + ' 位俠客的綜合與七項評分，依' + sortName + '由高到低') +
+    esc('全部 ' + order.length + ' 位俠客的綜合與六項評分，依' + sortName + '由高到低') +
     '</caption><thead><tr><th scope="col">名次</th><th scope="col">俠客</th>' +
     head +
     '</tr></thead><tbody>' +

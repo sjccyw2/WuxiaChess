@@ -211,8 +211,8 @@ export function listPage(g, p) {
     '</span></div>' +
     filters(g, p, values, textGroup) +
     (scores
-      ? '<p class="list-note">右側數字為綜合評分（第十二級、武學全數習得，最高者 100 為準的七項平均）。' +
-        anchor('#compare', '到俠客對照看七項評分與全員排名 →', 'more') +
+      ? '<p class="list-note">右側數字為綜合評分（第十二級、武學全數習得，最高者 100 為準的六項平均）。' +
+        anchor('#compare', '到俠客對照看六項評分與全員排名 →', 'more') +
         '</p>'
       : '') +
     (textGroup ? '<p class="revision">〔　〕標示遊戲執行時代入的姓名、數值或選項。</p>' : '') +

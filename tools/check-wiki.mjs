@@ -108,7 +108,7 @@ const comparison = compareData();
 {
   const keys = comparison.axes.map((a) => a.key),
     score = (n) => Number.isInteger(n) && n >= 0 && n <= 100;
-  if (keys.join() !== 'melee,ranged,vitality,inner,speed,support,burst') problems.push('compare: the axes are ' + keys.join());
+  if (keys.join() !== 'melee,ranged,vitality,inner,speed,support') problems.push('compare: the axes are ' + keys.join());
   if (comparison.heroes.map((h) => h.id).join() !== G.ROSTER.join()) problems.push('compare: the heroes are not the roster, in its order');
   for (const h of comparison.heroes) {
     const at = 'compare/' + h.id;

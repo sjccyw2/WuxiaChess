@@ -1,10 +1,11 @@
-// 群俠比較: every hero scored on seven aspects, at level 12 with the whole tree learned (the
+// 群俠比較: every hero scored on six aspects, at level 12 with the whole tree learned (the
 // radar) and level by level as a run buys it (the growth curve).
 //
 // No value is typed in here. Each hero is built as the game builds him (startingHero,
 // raiseLevel), learns his arts in the order tools/sim-battles.mjs buys them, and is measured
 // with the rules' own forecast, damage, stat, artCost and healingPower against a foe made from
-// the tenth board's numbers, so a rebalance in game/src/ moves every score. What is this page's
+// the tenth board's numbers, so a rebalance in game/src/ moves every score. Bare-handed: no
+// weapon or gear counts (the producer's rule), only the hero, his level and his arts. What is this page's
 // own is the weighing: how much a shield is worth beside a blow, which constants are named below.
 import * as G from '../game-data.js';
 import { heroPortrait } from './heroes.js';
@@ -13,13 +14,12 @@ export const LEVELS = Array.from({ length: 12 }, (_, i) => i + 1);
 const TOP = LEVELS.at(-1);
 
 const AXES = [
-  { key: 'melee', name: '近身攻擊', hint: '貼身出手的傷害：最強兩招（普攻也算）加還擊；射程兩格以上的招式貼身使用只算一半。' },
-  { key: 'ranged', name: '遠程攻擊', hint: '兩格以外出手的傷害，射程越遠越高；濺射波及兩格以外的餘勁也算。' },
-  { key: 'vitality', name: '氣血防禦', hint: '倒下前挨得住幾擊，再加護盾、固守、卸勁、金剛、自療、吸血與代受。' },
+  { key: 'melee', name: '近身攻擊', hint: '貼身出手的傷害：最強兩招（普攻也算）加還擊；破招、斬殘等條件加成與連環也算；射程兩格以上的招式貼身使用只算一半。' },
+  { key: 'ranged', name: '遠程攻擊', hint: '兩格以外出手的傷害，射程越遠越高；條件加成、連環與濺射波及兩格以外的餘勁也算。' },
+  { key: 'vitality', name: '氣血防禦', hint: '倒下前挨得住幾擊，再加護盾、固守、卸勁、金剛、閃身、免受還擊、自療、吸血與代受。' },
   { key: 'inner', name: '內力回氣', hint: '八回合內，內力上限加每回合回氣，夠施展幾次本門最耗內力的三招（以學全後為準）；凝氣、回氣與領隊減耗都算。' },
   { key: 'speed', name: '身法速度', hint: '移動步數，加輕身、越障身法與出招後回身。' },
-  { key: 'support', name: '輔助同伴', hint: '替同伴療傷、護盾、振奮、輕身、固守、代受、號令，與壓制敵人；領隊陣法按三分之一計。' },
-  { key: 'burst', name: '爆發閃避', hint: '暫代暴擊與閃避：條件全成立時的最高一擊，與閃身、金剛、免受還擊等避招之效，各佔一半。' }
+  { key: 'support', name: '輔助同伴', hint: '替同伴療傷、護盾、振奮、輕身、固守、代受、號令，與壓制敵人；領隊陣法按三分之一計。' }
 ];
 const KEYS = AXES.map((a) => a.key);
 
@@ -37,10 +37,11 @@ const CONTROL = 0.8; // holding a foe helps companions less surely than mending 
 const AURA = 0.75; // companions an aura finds, per tile of it
 const STEP_WORTH = 0.15; // one step for one companion, in blows
 const AGAIN = 0.3; // 連環: the kill that buys another action
+const UPSIDE = 0.5; // a conditional art's room above its expected blow, counted at half
 const TWO = [0.65, 0.35],
   THREE = [1, 0.7, 0.5];
 // Axes made of two halves, each scaled to its own best before they are added.
-const HALVES = { ranged: ['damage', 'reach'], burst: ['spike', 'evasion'] };
+const HALVES = { ranged: ['damage', 'reach'] };
 
 // Availability: how much of the time an art can be the one used.
 function uptime(art) {
@@ -74,7 +75,7 @@ const FOE = (() => {
 })();
 // A board master, for 破招 aimed at 局主.
 const MASTER = Object.keys(G.DETAILS).find((k) => G.DETAILS[k].rank === 'boss' && !G.DETAILS[k].traits?.formless && !G.DETAILS[k].traits?.twin);
-const companion = (id, partner) => ({ ...G.startingHero(partner ? G.PARTNERS[id] || G.ROSTER.find((v) => v !== id) : G.ROSTER.find((v) => v !== id)), x: C.x, y: C.y });
+const companion = (id, partner) => ({ ...bareHero(partner ? G.PARTNERS[id] || G.ROSTER.find((v) => v !== id) : G.ROSTER.find((v) => v !== id)), x: C.x, y: C.y });
 
 function scene(u, foe, lead, friend = null) {
   const s = { units: [u, foe], mapIndex: 0, round: 3, logs: [] };
@@ -90,8 +91,10 @@ const REGEN = (() => {
   return u.mp;
 })();
 
+// Bare-handed: the weapon HERO_STATS gives and the gear STARTING_GEAR gives are taken off.
+const bareHero = (id) => ({ ...G.startingHero(id), weapon: null, gear: null });
 function build(id, level, learned, talents) {
-  const u = G.startingHero(id);
+  const u = bareHero(id);
   G.raiseLevel(u, level - 1);
   return { ...u, learned: [...learned], talents: { ...talents }, x: A.x, y: A.y };
 }
@@ -172,14 +175,18 @@ function measure(id, level, learned, talents, lead, unit, kit = learned) {
       radius = G.splashRadius(a.art),
       forms = G.formsFor(u, a.art, basic),
       area = (a.art?.splash ? hit.E * a.art.splash * CROWD(radius) : 0) + (forms.some((f) => f === 'line' || f === 'arc') ? hit.E * RIDER : 0),
-      up = uptime(a.art);
+      up = uptime(a.art),
+      // What used to be 爆發: half the room a conditional art has above its expected blow, and
+      // 連環's extra action, now part of the attack at the range it is made from.
+      blow = (hit.E + UPSIDE * Math.max(0, hit.peak - hit.E)) * (forms.includes('again') ? 1 + AGAIN : 1);
     return {
       ...a,
       ...hit,
+      blow,
       forms,
-      melee: (a.range <= 1 ? hit.E + (radius <= 1 ? area : 0) : hit.E * FAR_UP_CLOSE) * up,
+      melee: (a.range <= 1 ? blow + (radius <= 1 ? area : 0) : blow * FAR_UP_CLOSE) * up,
       // Each tile of reach beyond one is worth less than the one before (2 → ×1, 3 → ×1.41, 5 → ×2).
-      ranged: (a.range >= 2 ? hit.E * Math.sqrt(a.range - 1) + area : radius >= 2 ? area : 0) * up
+      ranged: (a.range >= 2 ? blow * Math.sqrt(a.range - 1) + area : radius >= 2 ? area : 0) * up
     };
   });
   const plainBasic = attacks[0];
@@ -204,11 +211,14 @@ function measure(id, level, learned, talents, lead, unit, kit = learned) {
     if (selfward(art) && art.heal) n += ((type(art) === 'self' ? 0.8 : 0.4) * G.healingPower(u, s, art)) / I;
     if (mine && art.fortify) n += (guarded({ fortify: { power: art.fortify.power } }) * TAKEN * (art.fortify.turns || 1)) / I;
     if (mine && art.immune) n += TAKEN * (art.immune.turns || 1);
+    if (mine && art.evade) n += 1; // 閃身: the next direct blow misses
     if (art.stance) n += (TAKEN * art.stance) / 100;
     if (type(art) === 'ally' && art.redirect) n += 0.5;
     if (art.cover) n += 0.3;
     const a = attacks.find((x) => x.art === art);
     if (a?.selfHeal) n += a.selfHeal / I;
+    // A strike that draws less of a counter than the plain basic attack (免受還擊, 定身 …).
+    if (a) n += Math.max(0, plainBasic.counter - a.counter) / I;
     return n * uptime(art);
   };
   const renew = (G.commandBonus(s, u, 'renew') * ROUNDS) / 2 / I;
@@ -282,22 +292,6 @@ function measure(id, level, learned, talents, lead, unit, kit = learned) {
   };
   const support = blend(known.map(help), THREE);
 
-  // 爆發閃避: the highest blow, and blows made to miss.
-  const top = best(attacks, (a) => a.peak * (a.forms.includes('again') ? 1 + AGAIN : 1));
-  const spike = top.peak * (top.forms.includes('again') ? 1 + AGAIN : 1) + 0.5 * Math.max(0, ...attacks.map((a) => a.peak - a.E));
-  const dodge = (k) => {
-    const art = k.art;
-    let n = 0;
-    if (art.evade) n += 1;
-    if ((selfward(art) || !G.isSupport(art)) && art.immune) n += TAKEN * (art.immune.turns || 1);
-    if (type(art) === 'ally' && art.redirect) n += 0.5;
-    if (art.blink) n += 0.3;
-    const a = attacks.find((x) => x.art === art);
-    if (a) n += Math.max(0, plainBasic.counter - a.counter) / I;
-    return n * uptime(art);
-  };
-  const evasion = blend(known.map(dodge), THREE);
-
   const bestAttack = best(attacks, (a) => a.E);
   const healer = best(known.filter((k) => selfward(k.art) && k.art.heal), (k) => G.healingPower(u, s, k.art));
   return {
@@ -312,8 +306,8 @@ function measure(id, level, learned, talents, lead, unit, kit = learned) {
     bestE: bestAttack.E,
     basicE: plainBasic.E,
     heal: healer ? G.healingPower(u, s, healer.art) : 0,
-    axes: { melee, ranged, vitality, inner, speed, support, burst: { spike, evasion } },
-    parts: { known, attacks, guard, help, dodge, mobility, top, spike, evasion, renew }
+    axes: { melee, ranged, vitality, inner, speed, support },
+    parts: { known, attacks, guard, help, mobility, renew }
   };
 }
 
@@ -410,7 +404,7 @@ function reasons(p, axes, boon) {
   const { u, parts, I } = p;
   const name = (k) => k.art.name;
   const topBy = (list, f) => [...list].filter((x) => f(x) > 0).sort((a, b) => f(b) - f(a));
-  const atk = (key) => topBy(parts.attacks, (a) => a[key]).slice(0, 2).map((a) => a.name + (key === 'ranged' ? ' ' + a.range + ' 格' : '') + ' 約 ' + n0(a.E));
+  const atk = (key) => topBy(parts.attacks, (a) => a[key]).slice(0, 2).map((a) => a.name + (key === 'ranged' ? ' ' + a.range + ' 格' : '') + ' 約 ' + n0(a.E) + (a.peak > a.E + 0.5 ? '，最高 ' + n0(a.peak) : ''));
   const by = (f) => topBy(parts.known, f).slice(0, 2).map(name);
   return {
     melee: [...atk('melee'), '還擊 約 ' + n0(p.counter)].slice(0, 3),
@@ -418,8 +412,7 @@ function reasons(p, axes, boon) {
     vitality: ['氣血 ' + u.maxHp + '、防禦 ' + G.stat(u, 'def', p.s), '約挨得住 ' + r1(u.maxHp / I) + ' 擊', ...by(parts.guard).map((n) => n + '護身')].slice(0, 3),
     inner: ['內力 ' + u.maxMp + '，每回合回 ' + p.regen, '三招平均耗 ' + r1(p.cost), '八回合約施展 ' + r1(axes.inner) + ' 次'],
     speed: ['移動 ' + p.step + ' 步', ...by((k) => (k.art.haste && ['self', 'ally'].includes(G.targetType(k.art))) || k.art.blink ? 1 : 0), ...(parts.attacks.some((a) => a.forms.includes('glide')) ? ['出招後可回身'] : [])].slice(0, 3),
-    support: [...(by(parts.help).length ? by(parts.help) : ['沒有助人的招式']), ...(boon > 0 ? ['領隊：' + G.COMMANDS[u.id].name] : [])],
-    burst: [parts.top.name + ' 最高 ' + n0(parts.top.peak), ...by(parts.dodge).map((n) => n + '可避招')].slice(0, 3)
+    support: [...(by(parts.help).length ? by(parts.help) : ['沒有助人的招式']), ...(boon > 0 ? ['領隊：' + G.COMMANDS[u.id].name] : [])]
   };
 }
 
@@ -463,12 +456,12 @@ function artList(id, unit, at) {
 const NOTES = [
   '雷達圖：等級 12，本門武學樹全數學成，餘下的武學點照模擬的買法修習根基。',
   '成長曲線：每升一級多一點武學點，照模擬的買法（先買通往成名絕技最便宜的一招，買不到時修習根基）逐級學起，歷練門檻當作已過。',
-  '每一項以等級 12 時全體俠客中最高者為 100；成長曲線用同一把尺，所以前期分數較低。綜合分是七項的平均。',
+  '每一項以等級 12 時全體俠客中最高者為 100；成長曲線用同一把尺，所以前期分數較低。綜合分是六項的平均。',
   '傷害、承傷、療傷與內力消耗都照遊戲本身的算式，對手取第十局四名守將的平均（氣血 ' + FOE.maxHp + '、攻擊 ' + FOE.atk + '、防禦 ' + FOE.def + '），站在無地形加成的平地上。',
-  '破招、孤行、合璧、黯然、還報、斬殘這些條件加成，在近身與遠程兩項按成立的機會折算，在爆發一項按全部成立計。',
-  '遊戲目前沒有暴擊與閃避的擲骰，一招打多少是定數；「爆發閃避」暫以最高一擊與閃身、金剛、免受還擊等避招之效代算，日後加入暴擊與閃避再改。',
+  '破招、孤行、合璧、黯然、還報、斬殘這些條件加成，按成立的機會折算，再加上全部成立時多出部分的一半，連環另加三成；依招式射程計入近身或遠程。',
+  '遊戲目前沒有暴擊與閃避，一招打多少是定數，故不列此項；閃身、金剛與免受還擊之效計入「氣血防禦」，越障身法計入「身法速度」。',
   '領隊陣法只有一人能用，按三分之一計入本人各項，並計入「輔助同伴」。',
-  '不計購得的裝備與丹藥，只有入局時手上的兵器；後來加入的十位俠客入局時尚無兵器（仍待定奪），攻擊一項因此略低。'
+  '不計兵器、裝備與丹藥：每位俠客空手入局，只看等級、根基與武學。'
 ];
 
 function compute() {
