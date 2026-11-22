@@ -34,7 +34,7 @@ import {
 } from './battle-mastery.js';
 import { FIELD_SIZE, fieldCells, mapLayout, validTile, tileInfo } from '../data/terrain.js';
 import { TECHNIQUES, WARES, CAPTAINS } from '../data/martial-arts.js';
-import { CHAMBER_TALES, MAZE_TALE, QIUBAI, YOUTH } from '../data/maze-tale.js';
+import { CHAMBER_TALES, MAZE_TALE, QIUBAI, YOUTH, acrossTable, shade } from '../data/maze-tale.js';
 import { ENCOUNTER_SCRIPT } from '../data/encounter-script.js';
 const SIZE = FIELD_SIZE;
 const FIELD_EDITION = 1;
@@ -3072,7 +3072,7 @@ function announce(s) {
       // 求敗 sets a stone down: the sound comes a round before the person. On the last board he
       // is on it himself, and those who come walk on of their own accord.
       if (s.run && boardOf(s).last) log(s, 'story', MAZE_TALE.finale.walkOn, YOUTH.role);
-      else if (s.run) log(s, 'story', MAZE_TALE.clack, QIUBAI.name);
+      else if (s.run) log(s, 'story', shade(MAZE_TALE.clack, s.run.plus), acrossTable(s.run.plus).name);
       log(s, 'system', '下一回合，' + waveList(defs) + '自' + w.place + '入場。', '敵援');
     }
   }
@@ -3090,7 +3090,7 @@ function fireHalved(s, id) {
     s.arrivals[w.id] = s.round + 2;
     const name = unitDetails(find(s, id)).name;
     // 求敗 answers a stone in danger.
-    if (s.run) log(s, 'story', MAZE_TALE.clackSave, QIUBAI.name);
+    if (s.run) log(s, 'story', shade(MAZE_TALE.clackSave, s.run.plus), acrossTable(s.run.plus).name);
     log(s, 'system', name + '氣血過半。' + fireLine(s, w), '敵援');
   }
 }

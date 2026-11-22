@@ -20,6 +20,14 @@ const WEI = { name: '韋小寶', role: '通吃坊掌櫃', portrait: 'npc-wei.web
 const EAGLE = { name: '大鵰', role: '谷中的鵰', portrait: 'npc-eagle.webp' };
 // The one who set the boards. He sits across the table from the first scene and plays black.
 const QIUBAI = { name: '求敗', role: '對面的人', portrait: 'npc-qiubai.webp' };
+// After the ending 求敗 has let go and left the world; he does not come back. In the runs that
+// follow (無名入盤) the one at the table is what the board keeps of him: a shadow that plays the old
+// games over, saying what he said. So it sees 韋小寶 only where he did, and forgets him as he did.
+const QIUBAI_SHADOW = { name: '求敗的影子', role: '棋盤記得的人', portrait: 'npc-qiubai.webp' };
+// Who sits across the table in a run: 求敗, or after the ending his shadow.
+const acrossTable = (plus) => (plus ? QIUBAI_SHADOW : QIUBAI);
+// Narration in a run after the ending: where it names 求敗, it is the shadow that moves.
+const shade = (text, plus) => (plus ? String(text ?? '').replaceAll('求敗', '那道影子') : text);
 // The spine's wide pictures (asset-gen/prompts.md, group B), kept apart from the text.
 const TALE_ART = {
   wake: 'scene-open-eyes.webp', // above the prologue's first page, every run
@@ -106,6 +114,13 @@ const MAZE_TALE = {
       ],
       youth: '老伯，我好像來過這裡。同你下過棋，是不是？',
       reply: '下過。你醒了便忘，老夫卻一手也沒有忘。抓三枚。'
+    },
+    // Every run after the ending: 求敗 is gone, and what greets the youth is his shadow. The
+    // greeting is still the one for the 境界 picked.
+    shadow: {
+      note: '少年又睡著了。再睜開眼來，仍是那座山谷，那方青石棋臺。臺邊坐著的仍是那個老者，身形卻淡了，谷風吹過，他的衣袖竟不飄動。那頭大鵰瞧瞧他，又瞧瞧少年，沒有點頭。',
+      youth: '老伯，你……你怎地淡了？你不是走了麼？',
+      reply: '走了的是老夫。留在這裡的，是這盤棋記得的一道影子。坐，舊棋再下一遍。抓三枚。'
     }
   },
   // The rule cut into the edge of the table. Every stone that wins ten boards goes home.
@@ -194,6 +209,9 @@ const MAZE_TALE = {
     { note: '求敗向那塊空地多瞧了一眼。', text: '那裡當真有人？……罷了。落子。' },
     { note: '求敗向那塊空地瞧了許久。', text: '老夫瞧不見，未必便是沒有。……落子。' }
   ],
+  // The same, once 求敗 has seen 韋小寶 (at the close of 無劍境界) and the last board is still to
+  // be won: he holds stones again, and cannot see him again.
+  unseenAgain: { note: '求敗向那塊空地瞧了許久。', text: '上一回分明瞧見了，今日又瞧不見了。……落子。' },
   // Before the fifth board 求敗 thinks long, and the company sits down by the shop's lamp.
   night: '求敗拈著一枚黑子，久久不落，竟自閉上了眼。韋小寶道：「老兒要想上半天。來來來，都過來坐。」',
   // What 求敗 says after a board is won, by 境界 and by how many boards have been won this run
@@ -408,7 +426,7 @@ const MAZE_TALE = {
       // The draw page (抓子), under the three drawn.
       draw: '{name}自己也在盤上：連這三位，開局共是四人。',
       title: '無名入盤',
-      text: '此後再入夢，便是將這場舊夢從頭再做一遍。這一回，{name}自己也是盤上一子：開局抓三枚，連他共是四人。他同旁人一樣從根長起，九式要一式一式使將出來。'
+      text: '求敗撒手而去，再不回來。此後再入夢，棋臺邊坐著的只是這盤棋記得的一道影子，陪{name}將舊夢從頭再做一遍。這一回，{name}自己也是盤上一子：開局抓三枚，連他共是四人。他同旁人一樣從根長起，九式要一式一式使將出來。'
     }
   },
   // The run's last page.
@@ -504,4 +522,4 @@ const SIDE_PAY = {
 // The board was won and the bet was not.
 const SIDE_MISS = '這一口你沒押中。不打緊，局是贏了的。';
 
-export { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, YOUTH, WEI, EAGLE, QIUBAI, TALE_ART };
+export { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, YOUTH, WEI, EAGLE, QIUBAI, QIUBAI_SHADOW, acrossTable, shade, TALE_ART };

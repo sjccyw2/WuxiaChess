@@ -16,7 +16,7 @@ const R = await load('rules/journey.js');
 const G = await load('rules/game.js');
 const { ENCOUNTER_SCRIPT } = await load('data/encounter-script.js');
 const { ENCOUNTERS, VILLAINS } = await load('data/encounters.js');
-const { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, QIUBAI, WEI } = await load('data/maze-tale.js');
+const { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, QIUBAI, QIUBAI_SHADOW, WEI } = await load('data/maze-tale.js');
 const { WORLD, WAKES, FRAGMENTS, NO_MARK } = await load('data/wake-tale.js');
 const { HERO_VOICES, sameSeries } = await load('data/hero-voices.js');
 const { VISITOR } = await load('rules/ferry-market.js');
@@ -95,6 +95,10 @@ for (const word of ['破碎虛空'])
 }
 
 if (MAZE_TALE.unseen.length !== WAKES.length) fail('求敗 needs a line about the empty spot for each 境界');
+if (!MAZE_TALE.unseenAgain?.text) fail('求敗 has no line about the empty spot once he has seen 韋小寶');
+// After the ending the one at the table is 求敗's shadow: it has its own name and its own greeting.
+for (const key of ['note', 'youth', 'reply']) if (!MAZE_TALE.prologue.shadow?.[key]) fail('the shadow of 求敗 has no ' + key + ' for the prologue');
+if (!QIUBAI_SHADOW?.name || QIUBAI_SHADOW.name === QIUBAI.name || !QIUBAI_SHADOW.portrait) fail('the shadow of 求敗 has no name or picture of its own');
 for (const reward of SIDE_REWARDS) if (!SIDE_PAY[reward]) fail('韋小寶 has no line for a bet paid in ' + reward);
 if (!SIDE_MISS) fail('韋小寶 has no line for a bet missed');
 if (ENCOUNTER_SCRIPT.length !== BATTLES.length || CHAMBER_TALES.length !== BATTLES.length) fail('a board has no script or no tale');
@@ -186,6 +190,12 @@ function checkScene(s, scene, label) {
   } catch (e) {
     fail(label + ': ' + e.message);
     return [];
+  }
+  // Before the ending it is 求敗 across the table; after it, his shadow, in name and in narration.
+  const plus = !!s.run.plus;
+  for (const line of lines) {
+    if (line.speaker === (plus ? QIUBAI.name : QIUBAI_SHADOW.name)) fail(label + ': ' + line.speaker + ' speaks in a run ' + (plus ? 'after' : 'before') + ' the ending');
+    if (plus && line.note.includes(QIUBAI.name)) fail(label + ': the narration names 求敗 in a run after the ending');
   }
   lines.forEach((line, i) => {
     if (!line.speaker || !line.text) fail(label + ' line ' + (i + 1) + ': no speaker or no text');
@@ -338,6 +348,12 @@ for (let player = 0; player < 60; player++) {
       if (forced && !r.last.optional) fail(at + ': the secondary ' + r.side.kind + ' was not done');
       const after = checkScene(s, 'after', at + ' after');
       scenes++;
+      // After the first board he cannot see 韋小寶's stall: in his usual words, or, once he has seen
+      // 韋小寶 and the last board is still to be won, in the words for that.
+      if (won && r.stage === 0) {
+        const again = !r.plus && finaleBefore > 0;
+        if (!after.some((line) => line.text === (again ? MAZE_TALE.unseenAgain : MAZE_TALE.unseen[realm - 1]).text)) fail(at + ': 求敗 says the wrong thing about the empty spot');
+      }
       if (r.last.recruit && !after.some((line) => line.person?.id === r.last.recruit))
         fail(at + ': ' + G.DETAILS[r.last.recruit].name + ' joined without a word');
       // 韋小寶 settles his side bet: met, by its kind and its pay; missed, one short line.
@@ -347,7 +363,7 @@ for (let player = 0; player < 60; player++) {
         fail(at + ': 韋小寶 did not settle the bet ' + r.side.kind);
       if (won && !r.last.optional && !weiSays(SIDE_MISS)) fail(at + ': nothing said about the bet missed');
       // 求敗 speaks after every board: what he makes of a win, 請回吧 at the end of the run.
-      const qiu = after.filter((line) => line.speaker === QIUBAI.name);
+      const qiu = after.filter((line) => [QIUBAI.name, QIUBAI_SHADOW.name].includes(line.speaker));
       if (!qiu.length) fail(at + ': 求敗 says nothing');
       // (The last board won ends on the ending film instead: he is gone, and sends no one home.)
       const ending = onLast && won,

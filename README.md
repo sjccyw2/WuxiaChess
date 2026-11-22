@@ -133,8 +133,11 @@ marked `last` in `game/src/data/battles.js`).
   (`MAZE_TALE.finale.ending`). There is no shop after it, so the board pays no silver and each of
   its secondaries pays a manual, kept for the next run.
 - **Afterwards (無名入盤).** Once it has been won, every run starts with four pieces: the three
-  drawn and 無名, an ordinary piece who grows his nine forms from the first like anyone. The last
-  board is earned again each time, and 重看終局 on the 選境界 page replays the film.
+  drawn and 無名, an ordinary piece who grows his nine forms from the first like anyone. 求敗 has
+  left the world and does not return: the one across the table in these runs is his shadow
+  (`QIUBAI_SHADOW` in `maze-tale.js`), which says what he said; the speaker's name and the
+  narration change with `run.plus`, the lines do not. The last board is earned again each time,
+  and 重看終局 on the 選境界 page replays the film.
 
 Its numbers are its own (`LAST_ROWS` in `game/src/rules/game.js`), measured with
 `node tools/sim-battles.mjs --last`. The design is in `wiki/content/世界觀設定.md` §8.4 and

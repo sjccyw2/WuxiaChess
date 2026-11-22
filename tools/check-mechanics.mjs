@@ -4493,6 +4493,15 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   G.resolve(y5, frail, q5, false);
   G.check(y5);
   check('問劍: so a youth at his last breath can win it', q5.hp === 1 && G.living(frail) && y5.result === 'win', [q5.hp, frail.hp, y5.result].join());
+  // A hard stop: the board is over with that blow, and no black stone acts after it.
+  const stopped = last();
+  const sq = unit(stopped, 'qiubai'),
+    guest = G.enemies(stopped)[1],
+    was = [guest.x, guest.y];
+  G.startEnemy(stopped);
+  sq.hp = 1; // as a hero's counter leaves him, in the black stones' own turn
+  G.check(stopped);
+  check('問劍: a hard stop, in the enemy phase too: no one acts once he is at 1', stopped.result === 'win' && stopped.phase === 'done' && G.enemyAct(stopped, guest).length === 0 && same([guest.x, guest.y], was) && G.enemyAct(stopped, sq).length === 0);
   // From above half straight to his last point: no 變招, no 「再來」; it is over.
   const once = last();
   unit(once, 'qiubai').hp = 1;
@@ -4611,6 +4620,9 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   check('the short close before the last board: only after a lost one', closeOf({ ...R.LEGACY, finale: 1, missed: 1 }).includes(MAZE_TALE.finale.again[0].text) && !closeOf({ ...R.LEGACY, finale: 3 }).includes(MAZE_TALE.finale.again[0].text) && !closeOf({ ...R.LEGACY, finale: 2, missed: 1, ended: 1 }).includes(MAZE_TALE.finale.again[0].text));
   check('his tree can be learned in order: 破刀式, then 破槍式', !!R.studyState(plus, py, 'youthBreakBlade')?.canLearn && !R.studyState(plus, py, 'youthBreakPole')?.canLearn && R.learn(plus, py, 'youthBreakBlade') && !!R.studyState(plus, py, 'youthBreakPole')?.canLearn);
 
+  // After the ending the one at the table is 求敗's shadow.
+  const shadowLines = R.dialogue(plus, 'before').filter((b) => b.portrait === 'npc-qiubai.webp');
+  check('after the ending it is 求敗’s shadow who speaks, and the narration says so', shadowLines.length > 0 && shadowLines.every((b) => b.speaker === '求敗的影子' && !b.note.includes('求敗')) && R.dialogue(R.startRun(R.drawLots(9), R.LEGACY), 'before').every((b) => b.speaker !== '求敗的影子'));
   // Saves and profiles from before
   const old = { ...R.LEGACY, wins: 5, returns: 6, realms: 5, cleared: [1, 2, 3, 4, 5], finale: 2 };
   delete old.ended;

@@ -15,7 +15,7 @@ import * as G from './game.js';
 import { NUMERALS } from './game.js';
 import { mapLayout } from '../data/terrain.js';
 import { TECHNIQUES, MANUAL_PRICES, CAPTAINS } from '../data/martial-arts.js';
-import { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, YOUTH, WEI, QIUBAI } from '../data/maze-tale.js';
+import { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, YOUTH, WEI, acrossTable, shade } from '../data/maze-tale.js';
 import { GISTS, GUEST_GISTS } from '../data/encounters.js';
 import { BATTLES, SIDE_REWARDS, LAST_MAP } from '../data/battles.js';
 import { WEAPON_FORMS } from '../data/form-catalog.js';
@@ -789,7 +789,9 @@ function dialogue(s, scene = s.run.scene) {
         const tales = MAZE_TALE.origins.tales;
         beats.push({ who: 'wei', ...MAZE_TALE.opened });
         beats.push({ who: 'wei', note: MAZE_TALE.origins.note, text: tales[(r.voyage - 1) % tales.length] });
-        beats.push({ who: 'qiu', ...MAZE_TALE.unseen[realm - 1] });
+        // (He saw 韋小寶 once he put the stones down; with stones in hand again he cannot. The
+        // shadow of the runs after the ending says what 求敗 said the first time.)
+        beats.push({ who: 'qiu', ...(!r.plus && r.chronicle.finale > 0 ? MAZE_TALE.unseenAgain : MAZE_TALE.unseen[realm - 1]) });
       }
     } else {
       // Ten boards won: the white stones go home, and 求敗 says what he saw.
@@ -803,7 +805,8 @@ function dialogue(s, scene = s.run.scene) {
     beats.push({ who: 'qiu', note: sent.note, text: sent.text[realm >= 3 ? 1 : 0] });
     beats.push({ who: 'wei', ...MAZE_TALE.packUp });
   }
-  const offBoard = { youth: { ...YOUTH, name: youthName(s) }, wei: WEI, qiu: QIUBAI };
+  // After the ending the one across the table is 求敗's shadow, and the narration says so.
+  const offBoard = { youth: { ...YOUTH, name: youthName(s) }, wei: WEI, qiu: acrossTable(r.plus) };
   // A named black stone speaks only if he is on the board: one who never arrived says nothing.
   const speakerOf = (who) => cast[who] || G.company(s).find((u) => u.id === who) || G.find(s, who);
   return beats.filter((beat) => offBoard[beat.who] || speakerOf(beat.who)).map((beat) => {
@@ -816,7 +819,7 @@ function dialogue(s, scene = s.run.scene) {
       role: off?.role || (person && G.ally(person) ? '' : info?.role) || '',
       person,
       portrait: off?.portrait || '',
-      note: fill(beat.note || '', s),
+      note: shade(fill(beat.note || '', s), r.plus),
       text: fill(beat.text, s)
     };
   });
@@ -1452,7 +1455,7 @@ function recruit(s) {
   u.sp += 1 + r.stage;
   r.bench.push(u);
   if (r.next.length < 5) r.next.push(id);
-  G.log(s, 'story', fill(MAZE_TALE.lend[r.stage % MAZE_TALE.lend.length], s, { hero: G.DETAILS[id].name }), QIUBAI.name);
+  G.log(s, 'story', shade(fill(MAZE_TALE.lend[r.stage % MAZE_TALE.lend.length], s, { hero: G.DETAILS[id].name }), r.plus), acrossTable(r.plus).name);
   return id;
 }
 // Silver paid after a won battle, and for a met secondary. The wiki's mission pages read these.

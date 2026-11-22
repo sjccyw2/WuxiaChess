@@ -4,7 +4,7 @@ import { rollLeaderInfo } from './mastery-views.js';
 import { btn, titleHead, face, esc, bookCitation } from './panels.js';
 import { icon } from './icons.js';
 import { BOOKS, DETAILS } from '../rules/game.js';
-import { MAZE_TALE, YOUTH, WEI, QIUBAI, TALE_ART } from '../data/maze-tale.js';
+import { MAZE_TALE, YOUTH, WEI, acrossTable, TALE_ART } from '../data/maze-tale.js';
 import { art } from './artwork.js';
 import { REALMS } from '../data/realms.js';
 
@@ -79,7 +79,10 @@ function prologueSteps(profile, film = false, realm = 1) {
   const tale = MAZE_TALE.prologue,
     called = YOUTH.name,
     greetings = tale.again.greeting;
-  const people = { youth: YOUTH, qiu: QIUBAI, wei: WEI };
+  // After the ending the one at the table is 求敗's shadow (maze-tale.js QIUBAI_SHADOW).
+  const plus = (profile.ended ?? 0) > 0,
+    people = { youth: YOUTH, qiu: acrossTable(plus), wei: WEI },
+    back = plus ? tale.shadow : tale.again;
   const named = (line) => String(line).replaceAll('{name}', called);
   const page = (step) => ({
     ...step,
@@ -91,10 +94,10 @@ function prologueSteps(profile, film = false, realm = 1) {
   const again = (profile.returns ?? 0) > 0;
   const steps = again
     ? [
-        { note: tale.again.note, picture: EAGLE_PICTURE },
+        { note: back.note, picture: EAGLE_PICTURE },
         { who: 'qiu', text: greetings[Math.min(greetings.length, Math.max(1, realm)) - 1] },
-        { who: 'youth', text: tale.again.youth },
-        { who: 'qiu', text: tale.again.reply }
+        { who: 'youth', text: back.youth },
+        { who: 'qiu', text: back.reply }
       ]
     : film
       ? [tale.film.name, tale.film.named, ...tale.first.slice(tale.first.findIndex((step) => step.afterFilm))]

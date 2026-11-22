@@ -60,6 +60,14 @@ function opening() {
         said(YOUTH_NAME, p.again.youth),
         said(G.QIUBAI.name, p.again.reply)
       ),
+      // After the ending 求敗 is gone: what greets the youth is his shadow.
+      speech(
+        '勝過終局之後：' + G.QIUBAI_SHADOW.name,
+        p.shadow.note,
+        said(G.QIUBAI_SHADOW.name, '（仍是所選境界的那一句招呼）'),
+        said(YOUTH_NAME, p.shadow.youth),
+        said(G.QIUBAI_SHADOW.name, p.shadow.reply)
+      ),
       speech('抓子與局規', t.draw, '棋臺沿上刻著：「' + t.rule + '」'),
       speech(
         '第一局之前',
@@ -100,7 +108,7 @@ function qiubai() {
       ),
       speech('添子', t.lend),
       speech('局中落子', t.clack, t.clackSave),
-      speech('少年同韋小寶說話時', t.unseen.map((b, i) => said(G.QIUBAI.name, b.text, realmName(i) + '。' + b.note))),
+      speech('少年同韋小寶說話時', t.unseen.map((b, i) => said(G.QIUBAI.name, b.text, realmName(i) + '。' + b.note)), said(G.QIUBAI.name, t.unseenAgain.text, '他在無劍境界收局見過韋小寶之後、終局未勝之前。' + t.unseenAgain.note)),
       links('相關', [link('story', 'opening', TITLES.opening), link('story', 'return', TITLES.return), link('folk', 'qiu', G.QIUBAI.name)])
     ],
     sources: cites(cite(t.after[0][0].text, 'src/data/maze-tale.js'))
@@ -435,7 +443,15 @@ function finale() {
       speech('入盤', said('', fill(f.muster)), f.before.map((b) => spine(b))),
       speech('終局影片的文字', '勝了終局，先播一段影片，直幅橫幅各一。影片不能播放時，結局頁上照樣讀得到這些字。', f.ending.flatMap((line) => [line.note, line.text && said(G.QIUBAI.name, line.text)]), said('', f.name, '最後一格，這四個字落在少年身旁。')),
       speech('結局頁', f.epilogue),
-      speech(f.plus.title, fill(f.plus.text), fill(f.plus.draw), fill(f.plus.joins)),
+      speech(
+        f.plus.title,
+        fill(f.plus.text),
+        fill(f.plus.draw),
+        fill(f.plus.joins),
+        '此後棋臺對面說話的是「' + G.QIUBAI_SHADOW.name + '」（' + G.QIUBAI_SHADOW.role + '）：話仍是求敗從前說過的話，旁白裡的「求敗」都作「那道影子」。所以它在無劍境界收局照舊「頭一回」看見韋小寶，下一輪又照舊看不見。',
+        said(YOUTH_NAME, G.MAZE_TALE.prologue.shadow.youth, G.MAZE_TALE.prologue.shadow.note),
+        said(G.QIUBAI_SHADOW.name, G.MAZE_TALE.prologue.shadow.reply)
+      ),
       links('相關', [
         ...stageLinks(FINAL),
         link('missions', 'map-' + FINAL, missionLabel(FINAL)),
