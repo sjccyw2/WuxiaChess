@@ -1,9 +1,9 @@
 // 谷底棋臺 only: the stone table itself. One slab of pale grey-green stone
 // with a go board of thirteen lines cut into it, a line through the middle of
 // every tile so that whoever stands on a tile stands on a point of the board.
-// Its east edge is worn away into the pond, and on it lie the great go stones,
-// the four sword stones, the pines and orchids rooted in its cracks, and
-// 韋小寶's stall on the south-east corner.
+// It is a plain square with nothing on it but what blocks the way: the four
+// sword stones at its star points, seven great go stones, and 韋小寶's stall
+// on the south-east corner. The pond lies beside it, off the board.
 import { circle } from '../scenery-kit.js';
 import { oldPine } from './peaks-4.js';
 import { FLOOR, fbm, hash, mix, noise, smooth, leafLitter, faceUp, faceOut } from './valley-15.js';
@@ -294,6 +294,9 @@ const lens = [
 ];
 const slate = [0x17191c, 0x282b2f, 0x343940, 0x474d55],
   shell = [0xa39f8f, 0xcbc6b7, 0xe0ddd0, 0xf0eee5];
+// A great go stone, big enough to block its tile: a tile wide and knee-high to a piece.
+const WIDE = 1.12,
+  HIGH = 1.9;
 function goStone(m, black) {
   const r = m.rng,
     tones = black ? slate : shell,
@@ -308,9 +311,9 @@ function goStone(m, black) {
       let last = null;
       for (const [rad, y, tone] of lens) {
         const ring = Array.from({ length: n }, (_, i) => [
-          Math.cos((i * circle) / n) * rad,
-          y,
-          Math.sin((i * circle) / n) * rad
+          Math.cos((i * circle) / n) * rad * WIDE,
+          y * HIGH,
+          Math.sin((i * circle) / n) * rad * WIDE
         ]);
         if (last)
           for (let i = 0; i < n; i++) {
@@ -321,7 +324,7 @@ function goStone(m, black) {
           }
         last = { ring, tone };
       }
-      const crown = [0, 0.201, 0];
+      const crown = [0, 0.201 * HIGH, 0];
       for (let i = 0; i < n; i++)
         faceUp(m, [crown, last.ring[(i + 1) % n], last.ring[i]], tones[3]);
     },
@@ -650,7 +653,9 @@ function tileDressing(m, layout) {
     const x = cell.x - b.cx,
       z = cell.y - b.cz;
     const place = (yaw, draw) => m.frame(x, 0, z, yaw, 1, draw);
-    if (cell.kind === 'cover') place(0, () => goStone(m, stones++ % 2 === 0));
+    // A blocked tile is a sword stone at one of the four star points, a great go stone elsewhere.
+    const star = Math.abs(x) === 3 && Math.abs(z) === 3;
+    if (cell.kind === 'cover' || (cell.kind === 'rock' && !star)) place(0, () => goStone(m, stones++ % 2 === 0));
     else if (cell.kind === 'rock')
       // The four swords of the tomb: 利劍 south-west, 軟劍 south-east, 重劍 north-east, 木劍 north-west.
       place(0, () =>
