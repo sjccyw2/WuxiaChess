@@ -24,8 +24,11 @@ export function nav(g) {
     entry('home', '圖鑑總覽', '冊') +
     Object.entries(categories)
       .filter(([k]) => k === 'text' || store.entries[k])
-      .map(([k, v]) =>
-        entry(k, v[0], v[1], k === 'text' ? store.corpus.entries.length : store.entries[k].length)
+      .map(
+        ([k, v]) =>
+          entry(k, v[0], v[1], k === 'text' ? store.corpus.entries.length : store.entries[k].length) +
+          // 俠客對照 is a tool over 群俠列傳, not a catalog group of its own.
+          (k === 'heroes' ? entry('compare', '俠客對照', '較') : '')
       )
       .join('');
 }

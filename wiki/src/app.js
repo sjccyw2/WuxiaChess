@@ -4,10 +4,15 @@ import { categories, $, content, href, route } from './view/html.js';
 import { menu, nav } from './view/chrome.js';
 import { home, listPage, entry, textEntry, searchPage, lost } from './view/pages.js';
 import { loreIndex, loreEntry } from './view/lore.js';
+import { comparePage, mountCompare } from './view/compare.js';
 
+let shown = '';
 function render() {
   if (!store.entries) return;
   const { group: g, id, p } = route();
+  // 俠客對照 re-renders on every pick: keep the reader where they were, and on the same hero.
+  const stay = g === 'compare' && shown === 'compare',
+    focusKey = stay ? document.activeElement?.dataset?.cmpKey : '';
   menu(false);
   nav(g);
   $('query').value = g === 'search' ? p.get('q') || '' : '';
@@ -16,7 +21,9 @@ function render() {
       ? home()
       : g === 'search'
         ? searchPage(p)
-        : g === 'text' && id
+        : g === 'compare'
+          ? comparePage(p)
+          : g === 'text' && id
           ? textEntry(id)
           : store.docs[g]
             ? id
@@ -28,7 +35,10 @@ function render() {
               : listPage(g, p)
             : lost();
   document.title = (content.querySelector('h1')?.textContent || '江湖志') + ' · 劍影江湖';
-  if (window.scrollTo) window.scrollTo(0, 0);
+  mountCompare(content);
+  if (focusKey) content.querySelector('[data-cmp-key="' + CSS.escape(focusKey) + '"]')?.focus({ preventScroll: true });
+  if (window.scrollTo && !stay) window.scrollTo(0, 0);
+  shown = g;
 }
 function queryForm(form) {
   const obj = {};
@@ -78,7 +88,8 @@ content.addEventListener('submit', (e) => {
   }
 });
 content.addEventListener('change', (e) => {
-  if (e.target.matches('select')) queryForm(e.target.closest('form'));
+  const form = e.target.closest('form[data-filter]');
+  if (form && e.target.matches('select')) queryForm(form);
 });
 content.addEventListener('click', (e) => {
   const el = e.target.closest('[data-copy], [data-cell]');

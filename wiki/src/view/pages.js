@@ -37,6 +37,16 @@ function card(g, r) {
     'card'
   );
 }
+// 俠客對照 sits beside 群俠列傳 on the home page: it is a tool over the heroes, not a group.
+const compareShelf = () =>
+  anchor(
+    '#compare',
+    image(gameArt('portraits-guo.webp')) +
+      '<span><strong>俠客對照</strong><small>' +
+      store.entries.heroes.length +
+      ' 人並列 · 評分與成長</small></span><i aria-hidden="true">›</i>',
+    'shelf'
+  );
 export function home() {
   const shelf = (g, file) => {
     const c = categories[g];
@@ -103,7 +113,7 @@ export function home() {
       ['missions', 'run-meridians.webp'],
       ['rules', 'wake-gauge.webp']
     ]
-      .map(([g, f]) => shelf(g, f))
+      .map(([g, f]) => shelf(g, f) + (g === 'heroes' ? compareShelf() : ''))
       .join('') +
     '</div>' +
     '<div class="home-title"><h2>棋局輿圖</h2>' +
@@ -191,6 +201,9 @@ export function entry(g, id) {
     '<article class="entry">' +
     crumb(g, r.name) +
     detailHead(r, g) +
+    (g === 'heroes'
+      ? '<p class="entry-tools">' + anchor('#compare?h=' + encodeURIComponent(r.id), '與他人對照 →', 'more') + '</p>'
+      : '') +
     (g === 'skills' && r.sections[0]?.title === '招式數值'
       ? '<p class="revision">比較基準採攻擊 ' +
         BASELINE_ATTACK +
