@@ -4,7 +4,7 @@ import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, gameArt, wikiArt } from './parts.js';
 import { heroPortrait } from './heroes.js';
-import { stageName, stageLinks } from './foes.js';
+import { stageName, stageLinks, TEN, FINAL, foeLink } from './foes.js';
 import { missionLabel } from './missions.js';
 
 export const YOUTH_NAME = '少年';
@@ -17,19 +17,20 @@ export const TITLES = {
   archive: '霧鎖青竹渡',
   world: '少年在棋臺邊瞧明白的事',
   realms: '五重境界：選境界與開境界',
-  finale: '最後一局與放下（暫代）'
+  finale: '終局與放下'
 };
 const REALMS = '一二三四五';
 // A 境界 is named for its sword: 利劍境界, 軟劍境界, ….
 const realmName = (i) => G.WAKES[i].sword + '境界';
+// The tenth board: the last of the ten a run draws. The last board (終局) follows it in 無劍境界.
 const LAST = G.FINAL_MAP;
 const said = (speaker, text, note) => ({ ...(note ? { note } : {}), ...(speaker ? { speaker } : {}), text });
 
 // Who a line of a board's script belongs to.
 function speakerOf(who, stage) {
-  const [boss, second] = G.ENCOUNTERS[stage];
+  const [boss, second] = G.ENCOUNTERS[stage] || [];
   return (
-    { youth: YOUTH_NAME, boss: boss.name, mini: second?.name, leader: '當局領隊', ally: '當局同行俠客', qiu: G.QIUBAI.name, wei: G.WEI.name }[who] ||
+    { youth: YOUTH_NAME, boss: boss?.name, mini: second?.name, leader: '當局領隊', ally: '當局同行俠客', qiu: G.QIUBAI.name, wei: G.WEI.name }[who] ||
     G.VILLAINS[who]?.name
   );
 }
@@ -58,6 +59,14 @@ function opening() {
         p.again.greeting.map((line, i) => said(G.QIUBAI.name, line, '選了' + realmName(i))),
         said(YOUTH_NAME, p.again.youth),
         said(G.QIUBAI.name, p.again.reply)
+      ),
+      // After the ending 求敗 is gone: what greets the youth is his shadow.
+      speech(
+        '勝過終局之後：' + G.QIUBAI_SHADOW.name,
+        p.shadow.note,
+        said(G.QIUBAI_SHADOW.name, '（仍是所選境界的那一句招呼）'),
+        said(YOUTH_NAME, p.shadow.youth),
+        said(G.QIUBAI_SHADOW.name, p.shadow.reply)
       ),
       speech('抓子與局規', t.draw, '棋臺沿上刻著：「' + t.rule + '」'),
       speech(
@@ -99,7 +108,7 @@ function qiubai() {
       ),
       speech('添子', t.lend),
       speech('局中落子', t.clack, t.clackSave),
-      speech('少年同韋小寶說話時', t.unseen.map((b, i) => said(G.QIUBAI.name, b.text, realmName(i) + '。' + b.note))),
+      speech('少年同韋小寶說話時', t.unseen.map((b, i) => said(G.QIUBAI.name, b.text, realmName(i) + '。' + b.note)), said(G.QIUBAI.name, t.unseenAgain.text, '他在無劍境界收局見過韋小寶之後、終局未勝之前。' + t.unseenAgain.note)),
       links('相關', [link('story', 'opening', TITLES.opening), link('story', 'return', TITLES.return), link('folk', 'qiu', G.QIUBAI.name)])
     ],
     sources: cites(cite(t.after[0][0].text, 'src/data/maze-tale.js'))
@@ -197,7 +206,7 @@ function homecoming() {
         G.NO_MARK
       ),
       speech('夢醒：五重境界各一段', G.FRAGMENTS),
-      links('最後一局', [stageLinks(LAST)[1], stageLinks(LAST)[0], link('story', 'finale', TITLES.finale)])
+      links('第十局與終局', [stageLinks(LAST)[1], stageLinks(LAST)[0], link('story', 'finale', TITLES.finale), ...stageLinks(FINAL)])
     ],
     sources: cites(cite(t.win, 'src/data/maze-tale.js'))
   };
@@ -246,7 +255,7 @@ function stage(i) {
   return {
     id: 'map-' + i,
     name: stageName(i) + ' · 局中對白',
-    tag: i === LAST ? '最後一局' : '可抽換的局',
+    tag: i === LAST ? '第十局' : '可抽換的局',
     summary: tale.arrival,
     image: wikiArt('map-' + i + '.webp'),
     sections: [
@@ -324,7 +333,7 @@ function wake(w, i) {
       rows('難度', [
         ['黑子', G.REALMS[i].note],
         ['何時開', i ? '勝了' + realmName(i - 1) + '（其時已開的最高一重境界）之後。' : '一開始便開。'],
-        ['勝了之後', next ? '若此重境界是已開的最高一重境界，' + realmName(i + 1) + '便開。' : '五重境界皆勝，便有最後一局。']
+        ['勝了之後', next ? '若此重境界是已開的最高一重境界，' + realmName(i + 1) + '便開。' : '十局皆勝，這一輪並不結束：接著便是終局，' + stageName(FINAL) + '。']
       ]),
       speech('入夢時', said(G.QIUBAI.name, t.prologue.again.greeting[i], i ? '' : '第一輪另有開場；這一句是敗了再來時說的。')),
       speech('夜話（第五局前）', said(YOUTH_NAME, w.echo.text, t.night + w.echo.note)),
@@ -332,7 +341,7 @@ function wake(w, i) {
       speech('石上多一行', w.carve),
       speech('夢醒 · 勝', w.afterWin),
       speech('夢醒 · 敗', w.afterLoss),
-      links('相關', [worldLink(), link('story', 'qiu', TITLES.qiu), ...(next ? [link('story', wakeId(i + 1), next.name)] : [])])
+      links('相關', [worldLink(), link('story', 'qiu', TITLES.qiu), ...(next ? [link('story', wakeId(i + 1), next.name)] : [link('story', 'finale', TITLES.finale)])])
     ],
     sources: cites(cite(w.name, 'src/data/wake-tale.js'))
   };
@@ -361,22 +370,99 @@ function realms() {
   };
 }
 
-// The last battle and 求敗 letting go: placeholders until the producer designs them.
+// The last board's own page: how it looks, who says what on it, and where the rest is told.
+function lastStage() {
+  const i = FINAL,
+    script = G.ENCOUNTER_SCRIPT[i],
+    tale = G.CHAMBER_TALES[i],
+    f = G.MAZE_TALE.finale,
+    board = G.castBoard(i);
+  const guests = [...board.pieces, ...board.waves.flatMap((w) => w.pieces)].map((p) => p.id).filter((id) => id !== board.commander);
+  return {
+    id: 'map-' + i,
+    name: stageName(i) + ' · 局中對白',
+    tag: '終局',
+    summary: tale.arrival,
+    image: wikiArt('map-' + i + '.webp'),
+    sections: [
+      rows('這一局', [
+        ['對弈', G.QIUBAI.name + '：他不敗，不會倒下'],
+        ['眼', G.DETAILS[G.YOUTH_ID].name + '親自入盤，是這一局的領隊'],
+        ['黑子', '這一輪十局的十位局主，不受戰意所迫，自願留下'],
+        ['支線', missionLabel(i)]
+      ]),
+      speech('戰前', beats(script.before, i), f.before.map((b) => spine(b))),
+      speech(
+        '十位局主各自的話',
+        '開局便在盤上的四位在戰前說；其餘六位後來自行邁步上枰，踏上棋枰時說。每一句都寫在那位局主自己的局裡。',
+        guests.map((id) => said(G.DETAILS[id].name, G.guestLine(id)))
+      ),
+      speech('局中', said('', f.walkOn, '後來的人入場前一回合。這一局求敗自己在盤上，沒有「嗒」的一聲。'), said(G.QIUBAI.name, f.half, '求敗氣血過半。')),
+      speech('戰後 · 勝', beats(script.win, i), f.after.map((b) => spine(b))),
+      speech('戰後 · 敗', beats(script.loss, i), f.lost.map((b) => spine(b)), f.missed),
+      speech('局的紀事', tale.arrival, tale.victory),
+      links('同局條目', [
+        link('maps', i, stageName(i)),
+        foeLink(board.commander),
+        link('heroes', G.YOUTH_ID, G.DETAILS[G.YOUTH_ID].name),
+        link('missions', 'map-' + i, missionLabel(i)),
+        link('story', 'finale', TITLES.finale)
+      ])
+    ],
+    sources: cites(cite(script.before[0].text, 'src/data/encounter-script.js'), cite(tale.arrival, 'src/data/maze-tale.js'), cite(f.half, 'src/data/maze-tale.js'))
+  };
+}
+
+// The last board and the ending: how a run in 無劍境界 goes on past its tenth board, what 求敗 says
+// on the way, the ending film's words, and what the ending opens.
 function finale() {
-  const f = G.MAZE_TALE.finale;
+  const f = G.MAZE_TALE.finale,
+    name = G.YOUTH.name;
+  const fill = (text) => String(text).replaceAll('{name}', name);
   return {
     id: 'finale',
     name: TITLES.finale,
-    tag: '五重境界皆勝之後',
-    summary: '五重境界皆勝，無劍境界收局之後便是最後一局：一張新的棋盤，少年與求敗都親自上盤。這一局與求敗放下的終局動畫都尚未製成，遊戲裡暫以文字與簡單的動畫代之。',
-    image: gameArt(G.QIUBAI.portrait),
+    tag: '無劍境界十局皆勝之後',
+    summary:
+      '無劍境界十局皆勝，這一輪並不結束。求敗放下棋子，請所有的子再留一局；這一輪的十位局主不受戰意所迫，自願留下。求敗與' +
+      name +
+      '親自入盤，在' +
+      stageName(FINAL) +
+      '下終局。勝了，求敗放下，撒手而去；敗了，那十局須再下一遍。',
+    image: gameArt(f.film.wide.poster),
     sections: [
-      speech('第十一局（暫代）', f.board.map((b) => (b.who ? spine(b) : b.note))),
-      speech('放下（暫代）', f.letGo.map((b) => (b.who ? spine(b) : b.note))),
-      speech('夢醒', f.wake),
-      links('相關', [link('story', 'realms', TITLES.realms), link('story', wakeId(G.WAKES.length - 1), G.WAKES.at(-1).name)])
+      rows('終局的規矩', [
+        ['何時', '在無劍境界勝了第十局之後，同一輪接著下，是這一輪的第十一局。'],
+        ['白子', name + '與四位俠客。' + name + '是眼，不能換下，也不能改任領隊；同行俠客到了這裡，各自的武學全都想起，不論歷練。'],
+        ['黑子', G.QIUBAI.name + '立在天元，與這一輪十局的十位局主：先遇上的四位開局便在，其餘六位分三批自行上枰。'],
+        ['勝', '把' + G.QIUBAI.name + '的氣血削至 1 點。他不敗，不會倒下。'],
+        ['敗', name + '倒下，或十二回合已過。' + f.missed],
+        ['之後', '終局可以再下：在無劍境界再勝十局便是。勝過終局之後，' + f.plus.title + '。']
+      ]),
+      speech(realmName(G.WAKES.length - 1) + '收局之後：再留一局', f.invite.map((b) => spine(b))),
+      speech('再到這一步', '曾經到過終局而未勝，再勝無劍境界十局時，求敗不重說看見韋小寶的那一段，只說：', f.again.map((b) => spine(b))),
+      speech('入盤', said('', fill(f.muster)), f.before.map((b) => spine(b))),
+      speech('終局影片的文字', '勝了終局，先播一段影片，直幅橫幅各一。影片不能播放時，結局頁上照樣讀得到這些字。', f.ending.flatMap((line) => [line.note, line.text && said(G.QIUBAI.name, line.text)]), said('', f.name, '最後一格，這四個字落在少年身旁。')),
+      speech('結局頁', f.epilogue),
+      speech(
+        f.plus.title,
+        fill(f.plus.text),
+        fill(f.plus.draw),
+        fill(f.plus.joins),
+        '此後棋臺對面說話的是「' + G.QIUBAI_SHADOW.name + '」（' + G.QIUBAI_SHADOW.role + '）：話仍是求敗從前說過的話，旁白裡的「求敗」都作「那道影子」。所以它在無劍境界收局照舊「頭一回」看見韋小寶，下一輪又照舊看不見。',
+        said(YOUTH_NAME, G.MAZE_TALE.prologue.shadow.youth, G.MAZE_TALE.prologue.shadow.note),
+        said(G.QIUBAI_SHADOW.name, G.MAZE_TALE.prologue.shadow.reply)
+      ),
+      links('相關', [
+        ...stageLinks(FINAL),
+        link('missions', 'map-' + FINAL, missionLabel(FINAL)),
+        link('rules', 'yield', '問劍'),
+        link('heroes', G.YOUTH_ID, G.DETAILS[G.YOUTH_ID].name),
+        link('story', 'realms', TITLES.realms),
+        link('story', wakeId(G.WAKES.length - 1), G.WAKES.at(-1).name)
+      ])
     ],
-    sources: cites(cite(f.wake, 'src/data/maze-tale.js'))
+    sources: cites(cite(f.epilogue, 'src/data/maze-tale.js'), cite(f.ending[0].note, 'src/data/maze-tale.js'))
   };
 }
 
@@ -390,7 +476,8 @@ export function story() {
     shop(),
     homecoming(),
     archive(),
-    ...G.MAP_LAYOUTS.map((_, i) => stage(i)),
+    ...TEN.map((i) => stage(i)),
+    lastStage(),
     world(),
     ...G.WAKES.map(wake)
   ];

@@ -48,6 +48,9 @@ const T = {
   // R8: total points in a tree, and nodes in it (the basic upgrade included).
   POINTS_BAND: [11, 15],
   NODE_BAND: [6, 7],
+  // 無名's tree is the nine forms of 獨孤九劍 (the producer's ruling of 2026-11-22): the starting
+  // form, eight more and the basic upgrade, so it is held to bands of its own.
+  OWN_BANDS: { youth: { points: [17, 17], nodes: [9, 9] } },
   // The summit must cost at least as much as any other node (true: a tie is enough).
   SUMMIT_TIE_OK: true,
   // R9: plain-strike-equivalent bands per tier ('start' is the starting art), from FRAMEWORK.md.
@@ -232,10 +235,12 @@ function checkHero(heroId) {
     if (a && dearer.length) fail('structure', 'the summit costs ' + a.points + ' but ' + dearer.join(', ') + ' cost as much or more');
   }
   const total = present.reduce((n, id) => n + (MASTERY_ARTS[id].points || 0), 0);
-  if (total < T.POINTS_BAND[0] || total > T.POINTS_BAND[1])
-    fail('structure', 'total ' + total + ' points, outside ' + T.POINTS_BAND.join('-'));
-  if (present.length < T.NODE_BAND[0] || present.length > T.NODE_BAND[1])
-    warn('structure', present.length + ' nodes; the framework asks for ' + T.NODE_BAND.join(' or ') + ' (basic upgrade included)');
+  const pointsBand = T.OWN_BANDS[heroId]?.points || T.POINTS_BAND,
+    nodeBand = T.OWN_BANDS[heroId]?.nodes || T.NODE_BAND;
+  if (total < pointsBand[0] || total > pointsBand[1])
+    fail('structure', 'total ' + total + ' points, outside ' + pointsBand.join('-'));
+  if (present.length < nodeBand[0] || present.length > nodeBand[1])
+    warn('structure', present.length + ' nodes; the framework asks for ' + nodeBand.join(' or ') + ' (basic upgrade included)');
 
   // ── Measures ──
   const arts = ['signature', ...present];
@@ -359,7 +364,7 @@ function checkHero(heroId) {
   }
 
   // ── Print ──
-  const hdr = G.DETAILS[heroId].name + ' ' + heroId + ' · ' + path.title + ' · ' + total + ' points (band ' + T.POINTS_BAND.join('-') + ') · summit ' + (summit || '?');
+  const hdr = G.DETAILS[heroId].name + ' ' + heroId + ' · ' + path.title + ' · ' + total + ' points (band ' + pointsBand.join('-') + ') · summit ' + (summit || '?');
   console.log('\n' + hdr);
   console.log(
     '  ' + pad('id', 18) + pad('T', 3) + lpad('pts', 3) + lpad('mp', 4) + lpad('rng', 4) + '  ' + pad('job', 9) +

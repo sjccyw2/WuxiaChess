@@ -25,8 +25,13 @@
 //   stepPoison { power, turns }: 步裡藏毒, a blow struck after walking poisons
 //   lastStand  { below, cut }: 沉樁, at or below that share of its 氣血 it takes less from blows
 //   snare    { power, turns }: 墜網, its plain blow leaves the hero 絆足
+//   unfelled 不敗: no blow, counter or poison brings its 氣血 below 1 (求敗, on the last board)
+//   formless 無招: no 破招 answers it, whatever it holds
 // A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
-// without traits plays exactly as before the redesign.
+// without traits plays exactly as before the redesign. `phase.say` is a line the piece speaks as it
+// changes, logged after `phase.log`.
+import { MAZE_TALE } from './maze-tale.js';
+
 function adversary(name, school, book, basic, skill, style, visual, bio, mini, robe, traits = {}) {
   return { name, school, book, basic, skill, style, visual, bio, mini, robe, traits };
 }
@@ -804,7 +809,8 @@ const VILLAIN_FORMS = {
   陰陽倒亂刃法: [1.22, 'foxTwinChange'],
   鐵掌: [1.34, 'breakPalm'],
   白虹掌力: [1.24, 'vacantFist'],
-  葵花飛針: [1.28, 'iceSoulNeedle']
+  葵花飛針: [1.28, 'iceSoulNeedle'],
+  無劍勝有劍: [1.35, 'ninefoldIntent']
 };
 
 // The villains added to the existing boards (battles.js). `rank` 'boss' is a 局主, 'mini' a 副手;
@@ -852,6 +858,30 @@ const VILLAINS = {
     row: 'lieutenant',
     ...adversary('萬震山', '荊州萬門', '連城訣', '萬門劍式', '唐詩劍法', 'exposed', 'hero',
       '荊州萬門的師父。他夜夜夢遊，人睡著了，手自己起來砌牆；給戰意按著動手，於他並不希奇。劍招專向傷重之人招呼。', 'wanZhen', '', { mods: { def: 1 }, prefers: 'wounded' })
+  },
+  // 求敗 himself, on the last board only (battles.js, the entry marked `last`). He stands at 天元
+  // with a dry twig and is never felled: the board ends when he is brought to 1 氣血. What he
+  // says is the spine's (maze-tale.js).
+  qiubai: {
+    map: 15,
+    rank: 'boss',
+    row: 'master',
+    role: '對面的人',
+    ...adversary('求敗', '無門無派', '神鵰俠侶、笑傲江湖', '折枝為劍', '無劍勝有劍', 'sweep', 'hero',
+      '世人叫他求敗，本名早已忘了。利劍、軟劍、重劍、木劍，一柄一柄放下；四十歲後不滯於物，草木竹石均可為劍。幾百年來他只在盤外瞧，這一局放下了棋子，手持一根枯枝，親自立在天元。', 'qiubai', '', {
+        sig: { reach: 2, sweep: 0.5, cadence: 3 },
+        unfelled: true,
+        formless: true,
+        prefers: 'leader',
+        post: { tile: 'spawn', tether: 0, wake: true, note: '立在天元{tile}；有俠客踏入攻擊範圍或受到攻擊後，才離位。' },
+        phase: {
+          atk: 4,
+          step: 1,
+          log: '求敗枯枝一振，劍勢陡盛：攻擊增加 4，移動增加 1。',
+          say: MAZE_TALE.finale.half,
+          note: '攻擊 ＋4、移動 ＋1。'
+        }
+      })
   }
 };
 // Troop types that follow those villains. `row` as above; only the traits listed in the RANKS
@@ -1015,7 +1045,47 @@ const GISTS = {
   netHand: '隔兩格撒網，普攻令目標絆足。',
   ironPalm: '氣血不過半時，受到的傷害減半。',
   xiaGuard: '目標身旁另有黑子時，出手更重。',
-  heiMuGuard: '身旁沒有同夥時，出手更重。'
+  heiMuGuard: '身旁沒有同夥時，出手更重。',
+  qiubai: '立在天元，有人近身或打他才離位；專挑領隊；氣血不會低於 1，任何破招對他都不成。'
 };
+// The same for a board's master as a guest on the last board, where he keeps no post, has no men
+// of his own and does not change at half: only what he still does there. A master with no entry
+// here is briefed by his own board's line.
+const GUEST_GISTS = {
+  chief: '摧心掌令目標攻擊降低。',
+  courier: '快劍令目標防禦降低。',
+  reed: '貼身打中他會被化去內力。',
+  snow: '一刀掃及兩旁。',
+  qin: '存活時其餘敵人攻擊提升。',
+  peach: '蓄勢時在他攻擊範圍內打他，必遭全力還擊。',
+  wall: '五輪穿過目標，再傷其後一人。',
+  jadeHall: '冰魄銀針令目標中毒並受內傷；專挑療傷者。',
+  mirror: '出手後退開。',
+  murong: '蓄勢時第一下直接攻擊被反震。',
+  hongAn: '擒拿手隔三格將人扯到身前，並削去內力。',
+  gongSun: '單數回合使金刀，攻擊提高；雙數回合使黑劍，射程多一格；絕技令目標攻擊降低。',
+  qiuRen: '踏水如平地，移動不受地形拖累；鐵掌令目標防禦降低。',
+  liQiu: '掌力轉折，無視地形防禦，旁人代受不了；絕技波及身旁；專挑倚仗掩體或有人代受的人。',
+  dongFang: '每次出手之後，再刺射程內另一人；飛針隔三格令目標絆足。'
+};
+// What each enemy fights with, by DETAILS key: the kind of weapon one of 無名's nine forms answers
+// (破招, game.js strikeFactor). Archers and dart-throwers are answered by reach, not by this, so
+// they have none (東方不敗's needles among them); nor has 完顏洪烈, who points a banner, or 求敗,
+// whose twig no form answers. 公孫止 holds a sabre and a sword: he is listed by the sabre, and on
+// the rounds he fights with the sword it is the sword that is answered (game.js armOf).
+const ARM_NAMES = { sword: '劍', blade: '刀', pole: '長兵', mace: '短兵', soft: '軟兵', hand: '拳掌' };
+const ARMS = {
+  sword: ['chief', 'blade', 'lieutenant-0', 'courier', 'qin', 'mirror', 'lieutenant-8', 'scout-4', 'zhaoZhong', 'wanZhen', 'wanDisciple'],
+  blade: ['scout', 'scout-0', 'lieutenant-1', 'snow', 'lieutenant-3', 'echoBlade', 'echoScout', 'scout-3', 'scout-6', 'qingShield', 'huaBlade', 'gongSun', 'shenLong', 'heiMuGuard'],
+  // 長槍、大戟、棍、杖
+  pole: ['peach', 'scout-5', 'fengTiannan', 'fiveTiger'],
+  // 鋼鞭、鐵鐧、點穴橛、摺扇、短棍、匕首、短刺、輪
+  mace: ['wall', 'lieutenant-6', 'xianYu', 'scout-1', 'scout-8', 'xiaGuard'],
+  // 長索、軟鞭、拂塵、漁網
+  soft: ['jadeHall', 'lieutenant-7', 'scout-7', 'scout-9', 'netHand'],
+  // 拳、腳、指、掌
+  hand: ['reed', 'lieutenant-2', 'lieutenant-4', 'lieutenant-5', 'murong', 'lieutenant-9', 'scout-2', 'hongAn', 'qiuRen', 'liQiu', 'ironPalm']
+};
+const ARM_OF = Object.fromEntries(Object.entries(ARMS).flatMap(([arm, keys]) => keys.map((key) => [key, arm])));
 
-export { ENCOUNTERS, RANKS, GARRISONS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS, VILLAINS, TROOPS, GISTS };
+export { ENCOUNTERS, RANKS, GARRISONS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS, VILLAINS, TROOPS, GISTS, GUEST_GISTS, ARM_NAMES, ARM_OF };

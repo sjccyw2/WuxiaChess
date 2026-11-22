@@ -6,14 +6,17 @@
 // For each run it walks every scene (before and after each board, won or lost), and fails if
 // a line has no speaker or no text, if a hero is missing one of their own lines, if a board's
 // script leans on another board, if 求敗 or 韋小寶 misses a line the story promises (what he
-// says after a board, the side bet, 請回吧), or if a save made mid-run no longer loads.
+// says after a board, the side bet, 請回吧), or if a save made mid-run no longer loads. Runs in
+// 無劍境界 go on to the last board (終局), won and lost; after one is won the next runs are new game
+// plus, with 無名 a piece from the first board.
+import { existsSync } from 'node:fs';
 const root = new URL('../game/src/', import.meta.url);
 const load = (file) => import(new URL(file, root));
 const R = await load('rules/journey.js');
 const G = await load('rules/game.js');
 const { ENCOUNTER_SCRIPT } = await load('data/encounter-script.js');
 const { ENCOUNTERS, VILLAINS } = await load('data/encounters.js');
-const { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, QIUBAI, WEI } = await load('data/maze-tale.js');
+const { MAZE_TALE, CHAMBER_TALES, SIDE_TALES, SIDE_PAY, SIDE_MISS, QIUBAI, QIUBAI_SHADOW, WEI } = await load('data/maze-tale.js');
 const { WORLD, WAKES, FRAGMENTS, NO_MARK } = await load('data/wake-tale.js');
 const { HERO_VOICES, sameSeries } = await load('data/hero-voices.js');
 const { VISITOR } = await load('rules/ferry-market.js');
@@ -46,16 +49,36 @@ if (MAZE_TALE.after.length !== WAKES.length || MAZE_TALE.close.length !== WAKES.
 MAZE_TALE.after.forEach((lines, i) => {
   if (lines.length !== 9 || lines.some((line) => !line.text)) fail('境界 ' + (i + 1) + ': 求敗 needs a line after each of nine boards');
 });
+// Every close but the fifth sends the youth home; the fifth leads on to the last board.
 MAZE_TALE.close.forEach((lines, i) => {
-  if (!lines.at(-1).text.includes('請回吧')) fail('境界 ' + (i + 1) + ': the close does not end with 請回吧');
+  const last = i === WAKES.length - 1,
+    home = lines.at(-1).text.includes('請回吧');
+  if (!last && !home) fail('境界 ' + (i + 1) + ': the close does not end with 請回吧');
+  if (last && home) fail('境界 ' + (i + 1) + ': the close sends the youth home, but the last board follows it');
 });
 if (MAZE_TALE.prologue.again.greeting.length !== WAKES.length) fail('求敗 needs a greeting for each 境界');
-// The last battle and 求敗 letting go are placeholders, but their lines must be whole and
-// spoken by the two who are on the board.
+// The last board and the ending (MAZE_TALE.finale): every part is there, every spoken line has a
+// speaker the spine owns (求敗 where none is named, the youth, 韋小寶) and words, the loss sends
+// the youth home, and the ending's words are whole, with the film's files in the game.
 const finaleTale = MAZE_TALE.finale;
-if (!finaleTale?.board?.length || !finaleTale?.letGo?.length || !finaleTale?.wake) fail('the last battle has no lines');
-for (const line of [...(finaleTale?.board || []), ...(finaleTale?.letGo || [])])
-  if (!(line.note || (['qiu', 'youth'].includes(line.who) && line.text))) fail('a line of the last battle has no speaker or no text');
+for (const part of ['again', 'invite', 'before', 'after', 'lost']) {
+  if (!finaleTale?.[part]?.length) fail('the last board has no lines for ' + part);
+  for (const line of finaleTale?.[part] || [])
+    if (!line.text || ![undefined, 'qiu', 'youth', 'wei'].includes(line.who)) fail('the last board, ' + part + ': a line has no speaker or no text');
+}
+if (!finaleTale.lost.some((line) => !line.who && line.text.includes('請回吧'))) fail('a lost last board does not end with 請回吧');
+for (const key of ['walkOn', 'half', 'muster', 'missed', 'epilogue', 'name']) if (!finaleTale[key]) fail('the last board has no ' + key);
+for (const key of ['title', 'text', 'joins', 'draw']) if (!finaleTale.plus?.[key]) fail('new game plus has no ' + key);
+if (!finaleTale.ending?.length || finaleTale.ending.some((line) => !line.note && !line.text)) fail('the ending has a line with no words');
+// What the producer fixed for the ending: 求敗 thanks the youth, knows him in one line, and leaves.
+const endingWords = finaleTale.ending.map((line) => (line.note || '') + (line.text || '')).join('');
+for (const word of ['多謝', '原來是你', '撒手而去，不知所終', '鵰']) if (!endingWords.includes(word)) fail('the ending does not say ' + word);
+for (const cut of ['tall', 'wide'])
+  for (const key of ['file', 'poster'])
+    if (!finaleTale.film?.[cut]?.[key] || !existsSync(new URL('../assets/' + finaleTale.film[cut][key], root)))
+      fail('the ending film has no ' + cut + ' ' + key + ' in game/assets');
+// 韋小寶 tells one truth in the whole story, and it is at the close of the fifth 境界.
+if (!MAZE_TALE.close.at(-1).some((line) => line.who === 'wei' && line.text === '走進來的啊。你又沒關門。')) fail('韋小寶 does not say his one true line');
 // 破碎虛空 is 黃易's phrase and is not used (Q-N69); he 撒手而去. 仙 itself is the producer's own
 // addition to the world and is allowed (Q-N78).
 for (const word of ['破碎虛空'])
@@ -72,25 +95,40 @@ for (const word of ['破碎虛空'])
 }
 
 if (MAZE_TALE.unseen.length !== WAKES.length) fail('求敗 needs a line about the empty spot for each 境界');
+if (!MAZE_TALE.unseenAgain?.text) fail('求敗 has no line about the empty spot once he has seen 韋小寶');
+// After the ending the one at the table is 求敗's shadow: it has its own name and its own greeting.
+for (const key of ['note', 'youth', 'reply']) if (!MAZE_TALE.prologue.shadow?.[key]) fail('the shadow of 求敗 has no ' + key + ' for the prologue');
+if (!QIUBAI_SHADOW?.name || QIUBAI_SHADOW.name === QIUBAI.name || !QIUBAI_SHADOW.portrait) fail('the shadow of 求敗 has no name or picture of its own');
 for (const reward of SIDE_REWARDS) if (!SIDE_PAY[reward]) fail('韋小寶 has no line for a bet paid in ' + reward);
 if (!SIDE_MISS) fail('韋小寶 has no line for a bet missed');
+if (ENCOUNTER_SCRIPT.length !== BATTLES.length || CHAMBER_TALES.length !== BATTLES.length) fail('a board has no script or no tale');
 ENCOUNTER_SCRIPT.forEach((script, map) => {
   const here = CHAMBER_TALES[map].name,
-    master = ENCOUNTERS[map][0];
+    lastBoard = map === G.LAST_MAP,
+    master = ENCOUNTERS[map]?.[0];
   // A hero only has a line of their own on a board whose master is from their series.
   for (const id of Object.keys(script.heroLines || {}))
-    if (!sameSeries(G.BOOKS[id], master.book))
-      fail(here + ': ' + G.DETAILS[id].name + ' has a line but is not from ' + master.book);
+    if (!master || !sameSeries(G.BOOKS[id], master.book))
+      fail(here + ': ' + G.DETAILS[id].name + ' has a line but is not from ' + master?.book);
+  // Every board's master has a line for the last board, where he stands of his own accord; the
+  // last board itself has none, and only the youth speaks in its own script (the rest is the spine's).
+  if (!lastBoard && !script.guest) fail(here + ': its master has no line for the last board');
+  if (lastBoard && (script.guest || script.heroLines || script.extras)) fail(here + ': the last board has lines that belong to another layer');
   // A board is a closed scene: it must not name any other board.
   const text = JSON.stringify(script) + JSON.stringify(CHAMBER_TALES[map]);
   CHAMBER_TALES.forEach((other, j) => {
     if (j !== map && text.includes(other.name)) fail(here + ': mentions another board, ' + other.name);
   });
   // The named black stones 求敗 set down beside the master and his lieutenant.
-  const board = BATTLES[map],
+  // (On the last board every piece is a guest from another board or 求敗 himself, whose lines
+  // are the spine's: none is named in its own script.)
+  const board = G.castBoard(map),
     standing = board.pieces.map((p) => p.id),
     arriving = board.waves.flatMap((w) => w.pieces.map((p) => p.id)),
-    named = [...standing, ...arriving].filter((id) => VILLAINS[id]);
+    named = lastBoard ? [] : [...standing, ...arriving].filter((id) => VILLAINS[id]);
+  if (lastBoard)
+    for (const id of [...standing, ...arriving])
+      if (id !== board.commander && !G.guestLine(id)) fail(here + ': ' + G.DETAILS[id].name + ' has nothing to say there');
   for (const id of named) if (!script.extras?.[id]) fail(here + ': ' + VILLAINS[id].name + ' has no lines');
   for (const [id, extra] of Object.entries(script.extras || {})) {
     if (!named.includes(id)) {
@@ -128,7 +166,7 @@ ENCOUNTER_SCRIPT.forEach((script, map) => {
     if (!objectKeys.includes(key)) fail(here + ': lines for ' + key + ', which is not on this board');
   for (const part of ['before', 'win', 'loss'])
     for (const beat of script[part])
-      if (!(['boss', 'mini', 'youth', 'leader', 'ally'].includes(beat.who) || script.extras?.[beat.who]) || !beat.text)
+      if (!((lastBoard ? ['youth'] : ['boss', 'mini', 'youth', 'leader', 'ally']).includes(beat.who) || script.extras?.[beat.who]) || !beat.text)
         fail(here + ' ' + part + ': a line has no speaker or no text');
   if (!CHAMBER_TALES[map].arrival || !CHAMBER_TALES[map].victory) fail(here + ': missing arrival or victory');
   // Whatever secondary is drawn here, there is a line for having done it.
@@ -153,6 +191,12 @@ function checkScene(s, scene, label) {
     fail(label + ': ' + e.message);
     return [];
   }
+  // Before the ending it is 求敗 across the table; after it, his shadow, in name and in narration.
+  const plus = !!s.run.plus;
+  for (const line of lines) {
+    if (line.speaker === (plus ? QIUBAI.name : QIUBAI_SHADOW.name)) fail(label + ': ' + line.speaker + ' speaks in a run ' + (plus ? 'after' : 'before') + ' the ending');
+    if (plus && line.note.includes(QIUBAI.name)) fail(label + ': the narration names 求敗 in a run after the ending');
+  }
   lines.forEach((line, i) => {
     if (!line.speaker || !line.text) fail(label + ' line ' + (i + 1) + ': no speaker or no text');
     if ((line.text + line.note).includes('{')) fail(label + ' line ' + (i + 1) + ': a name was not filled in');
@@ -172,7 +216,10 @@ function forceSide(s) {
   if (side.kind === 'swift') s.round = side.by;
   if (side.kind === 'lastBlow') fall(side.target, { by: side.hero });
   if (side.kind === 'order') fall(side.first);
-  if (side.kind === 'double') fall('lieutenant'), fall('bow');
+  if (side.kind === 'double') {
+    const two = G.hasFour(map) ? ['lieutenant', 'bow'] : G.boardOf(s).pieces.slice(1, 3).map((p) => p.id);
+    for (const ref of two) fall(ref);
+  }
   if (side.kind === 'combo') fall('bow', { combo: true });
   if (side.kind === 'answer') fall('bow', { by: side.hero, answered: true });
 }
@@ -182,7 +229,10 @@ const dice = (seed) => () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>
 let runs = 0,
   scenes = 0,
   echoes = 0,
-  finales = 0;
+  finales = 0,
+  lastWon = 0,
+  lastLost = 0,
+  plusRuns = 0;
 const realms = new Set(),
   trios = new Set(),
   routes = new Set(),
@@ -190,11 +240,13 @@ const realms = new Set(),
 for (let player = 0; player < 60; player++) {
   const roll = dice(player * 7919 + 11);
   let legacy = R.LEGACY;
+  // Every sixth player plays on: twelve runs, so the last board is reached more than once.
+  const span = player % 6 === 0 ? 12 : 7;
   const been = new Set(); // the boards this player's runs have reached
   // Each player plays several runs in a row, so later runs can carry deja vu. Before each run the
   // player picks a 境界: some always the highest open, some any open one, some one not yet open
   // (which the run must refuse, starting in the highest open instead).
-  for (let run = 1; run <= 7; run++) {
+  for (let run = 1; run <= span; run++) {
     const draw = R.drawLots(Math.floor(roll() * 4294967296));
     draw.leaderId = draw.ids[Math.floor(roll() * 3)];
     const open = R.openRealms(legacy),
@@ -202,7 +254,9 @@ for (let player = 0; player < 60; player++) {
     draw.realm = habit === 0 ? open : habit === 1 ? 1 + Math.floor(roll() * open) : 1 + Math.floor(roll() * 5);
     const wanted = draw.realm <= open ? draw.realm : open,
       clearedBefore = [...(legacy.cleared || [])],
-      finaleBefore = legacy.finale || 0;
+      finaleBefore = legacy.finale || 0,
+      endedBefore = legacy.ended || 0,
+      missedBefore = legacy.missed || 0;
     const s = R.startRun(draw, legacy),
       r = s.run,
       label = 'seed ' + draw.seed + ' run ' + run,
@@ -213,6 +267,17 @@ for (let player = 0; player < 60; player++) {
     leaders.add(draw.leaderId);
     if (R.youthName(s) !== '無名') fail(label + ': the youth is not 無名');
     if (r.voyage !== run) fail(label + ': run counter is ' + r.voyage);
+    // New game plus: once the ending has been seen, 無名 is a fourth piece from the first board.
+    const plus = endedBefore > 0,
+      youthThere = G.party(s).some((u) => u.id === G.YOUTH_ID);
+    if (!!r.plus !== plus || youthThere !== plus || G.party(s).length !== (plus ? 4 : 3))
+      fail(label + ': ' + (plus ? 'new game plus without 無名 on the board' : '無名 on the board before the ending'));
+    if (plus) plusRuns++;
+    // The first time the last board is reached it is lost; the next time it is won.
+    const lastWins = finaleBefore > 0;
+    let tenWon = false,
+      sawFinale = false,
+      opened = 0;
     // The 境界 is the one picked, if it is open.
     if (r.realm !== wanted) fail(label + ': 境界 is ' + r.realm + ', picked ' + draw.realm + ' with ' + open + ' open');
     const realm = r.realm;
@@ -226,8 +291,9 @@ for (let player = 0; player < 60; player++) {
       const before = checkScene(s, 'before', at + ' before');
       scenes++;
       const company = G.company(s);
+      const onLast = r.stage === R.LAST_STAGE;
       if (r.stage === 0) {
-        for (const u of company)
+        for (const u of company.filter((v) => HERO_VOICES[v.id]))
           if (!before.some((line) => line.text === HERO_VOICES[u.id].arrival.text))
             fail(at + ': ' + G.DETAILS[u.id].name + ' did not arrive');
         if (!before.some((line) => line.text === HERO_VOICES[s.leader].obey)) fail(at + ': leader did not answer');
@@ -239,9 +305,27 @@ for (let player = 0; player < 60; player++) {
       if (r.stage === 4 && !before.some((line) => line.text === HERO_VOICES[line.person?.id]?.night[realm >= 2 ? 1 : 0]))
         fail(at + ': no night talk for 境界 ' + realm);
       // A named black stone who stands on the board from the start has his say before the battle.
-      for (const piece of BATTLES[s.mapIndex].pieces)
+      for (const piece of onLast ? [] : BATTLES[s.mapIndex].pieces)
         if (VILLAINS[piece.id] && !before.some((line) => line.person?.id === piece.id))
           fail(at + ': ' + VILLAINS[piece.id].name + ' stands there and says nothing');
+      // The last board: 無名 leads it and cannot be benched or replaced; every stone knows its whole
+      // tree; 求敗 and the youth speak, and so does each master who stands there from the start.
+      if (onLast) {
+        if (s.mapIndex !== G.LAST_MAP || s.leader !== G.YOUTH_ID || r.next[0] !== G.YOUTH_ID) fail(at + ': 無名 does not lead the last board');
+        if (R.toggleSeat(s, G.YOUTH_ID) || R.appointLeader(s, r.next[1])) fail(at + ': 無名 can be taken off the last board or out of its lead');
+        for (const u of company)
+          if (!HERO_PATHS[u.id].layout.flat().filter(Boolean).every((id) => u.learned.includes(id)))
+            fail(at + ': ' + G.DETAILS[u.id].name + ' does not remember every art');
+        for (const beat of MAZE_TALE.finale.before)
+          if (!before.some((line) => line.text === beat.text)) fail(at + ': a line before the last board is missing');
+        const guests = G.enemies(s).filter((u) => u.guest);
+        if (guests.length !== 4 || G.boardOf(s).waves.flatMap((w) => w.pieces).length !== 6) fail(at + ': the ten masters of the run are not all on the last board');
+        // 無名 is on the board and has drawn the sword before he looks about him.
+        if (before[0]?.text !== MAZE_TALE.finale.before[0].text) fail(at + ': the last board does not open with 無名 stepping onto it');
+        const cast = [...G.boardOf(s).pieces, ...G.boardOf(s).waves.flatMap((w) => w.pieces)].slice(1).map((p) => p.id);
+        if (cast.join() !== r.route.map((m) => G.castBoard(m).commander || G.refId(m, 'master')).join()) fail(at + ': the last board is not cast from the run\u2019s ten boards in the order met');
+        for (const u of guests) if (!before.some((line) => line.person?.id === u.id)) fail(at + ': ' + G.unitDetails(u).name + ' stands there and says nothing');
+      }
       const deja = before.filter((line) => HERO_VOICES[line.person?.id]?.echoes.includes(line.text));
       echoes += deja.length;
       if (deja.length > 1) fail(at + ': more than one deja vu line');
@@ -253,9 +337,10 @@ for (let player = 0; player < 60; player++) {
         fail(at + ': could not deploy');
         break;
       }
-      const won = r.stage + 1 <= reach;
+      const won = onLast ? lastWins : r.stage + 1 <= reach;
       s.result = won ? 'win' : 'loss';
       s.reason = won ? CHAMBER_TALES[s.mapIndex].victory : '';
+      if (won && onLast) G.find(s, G.commanderId(s)).hp = 1;
       // Sometimes the secondary is done, which pays a bonus; every win brings a hero.
       s.round = 9;
       const forced = won && roll() < 0.7;
@@ -267,31 +352,64 @@ for (let player = 0; player < 60; player++) {
       if (forced && !r.last.optional) fail(at + ': the secondary ' + r.side.kind + ' was not done');
       const after = checkScene(s, 'after', at + ' after');
       scenes++;
+      // After the first board he cannot see 韋小寶's stall: in his usual words, or, once he has seen
+      // 韋小寶 and the last board is still to be won, in the words for that.
+      if (won && r.stage === 0) {
+        const again = !r.plus && finaleBefore > 0;
+        if (!after.some((line) => line.text === (again ? MAZE_TALE.unseenAgain : MAZE_TALE.unseen[realm - 1]).text)) fail(at + ': 求敗 says the wrong thing about the empty spot');
+      }
       if (r.last.recruit && !after.some((line) => line.person?.id === r.last.recruit))
         fail(at + ': ' + G.DETAILS[r.last.recruit].name + ' joined without a word');
       // 韋小寶 settles his side bet: met, by its kind and its pay; missed, one short line.
       const weiSays = (text) => after.some((line) => line.speaker === WEI.name && line.text === text);
-      if (won && r.last.optional && !(weiSays(SIDE_TALES[r.side.kind] || SIDE_TALES.done) && weiSays(SIDE_PAY[r.last.side.reward])))
+      // (After the last board he says only which way the bet went: the ending is at hand.)
+      if (won && r.last.optional && !(weiSays(SIDE_TALES[r.side.kind] || SIDE_TALES.done) && (onLast || weiSays(SIDE_PAY[r.last.side.reward]))))
         fail(at + ': 韋小寶 did not settle the bet ' + r.side.kind);
       if (won && !r.last.optional && !weiSays(SIDE_MISS)) fail(at + ': nothing said about the bet missed');
       // 求敗 speaks after every board: what he makes of a win, 請回吧 at the end of the run.
-      const qiu = after.filter((line) => line.speaker === QIUBAI.name);
+      const qiu = after.filter((line) => [QIUBAI.name, QIUBAI_SHADOW.name].includes(line.speaker));
       if (!qiu.length) fail(at + ': 求敗 says nothing');
-      if (r.last.terminal && !qiu.at(-1).text.includes('請回吧')) fail(at + ': the run does not end with 請回吧');
+      // (The last board won ends on the ending film instead: he is gone, and sends no one home.)
+      const ending = onLast && won,
+        tenth = r.stage === R.TENTH;
+      if (r.last.terminal && !ending && !qiu.at(-1).text.includes('請回吧')) fail(at + ': the run does not end with 請回吧');
+      if (!!r.last.ended !== ending) fail(at + ': the ending ' + (ending ? 'did not follow' : 'followed') + ' the board');
+      const said = (beat) => after.some((line) => line.text === beat.text.replaceAll('{name}', R.youthName(s)));
+      // The last board: won, 求敗 lowers the twig; lost, something is still missing.
+      if (onLast) for (const beat of won ? MAZE_TALE.finale.after : MAZE_TALE.finale.lost) if (!said(beat)) fail(at + ': a line after the last board is missing');
       // A run won ends on what 求敗 saw in this 境界.
-      if (r.last.terminal && won)
+      if (r.last.terminal && won && !onLast)
         for (const beat of MAZE_TALE.close[realm - 1])
-          if (!after.some((line) => line.text === beat.text.replaceAll('{name}', R.youthName(s))))
-            fail(at + ': the close of 境界 ' + r.realm + ' is incomplete');
-      if (won && !r.last.terminal && !qiu.some((line) => line.text === MAZE_TALE.after[realm - 1][r.stage].text))
+          if (!said(beat)) fail(at + ': the close of 境界 ' + r.realm + ' is incomplete');
+      // Ten boards won in 無劍境界: the run goes on. He says what he saw (in short, if the youth has
+      // been brought this far before), sends no one home, and asks every stone to stay.
+      if (won && tenth) {
+        tenWon = true;
+        sawFinale = !!r.last.finale;
+        opened = r.last.opened || 0;
+        if (r.last.terminal !== (realm < WAKES.length)) fail(at + ': the tenth board ' + (r.last.terminal ? 'ended' : 'did not end') + ' a run in 境界 ' + realm);
+        if (!r.last.terminal) {
+          // (In short only when the last board has been fought and lost and not yet won: after the
+          // ending the old dream is dreamt again, and he says it all as he did the first time.)
+          const short = !plus && missedBefore > 0;
+          for (const beat of [...(short ? MAZE_TALE.finale.again : MAZE_TALE.close[realm - 1]), ...MAZE_TALE.finale.invite])
+            if (!said(beat)) fail(at + ': 求敗\u2019s lines before the last board are incomplete');
+          if (short === after.some((line) => line.text === '走進來的啊。你又沒關門。')) fail(at + ': 求敗 ' + (short ? 'sees 韋小寶 for the first time twice' : 'does not see 韋小寶'));
+          if (after.some((line) => line.text === MAZE_TALE.release.text || line.text.includes('請回吧'))) fail(at + ': the stones are sent home before the last board');
+        }
+      }
+      if (won && !r.last.terminal && !tenth && !qiu.some((line) => line.text === MAZE_TALE.after[realm - 1][r.stage].text))
         fail(at + ': 求敗 has the wrong line for 境界 ' + realm + ' board ' + (r.stage + 1));
-      if (won && !r.last.terminal && !r.last.recruit && r.pool.length > 0)
+      if (won && !r.last.terminal && !tenth && !r.last.recruit && r.pool.length > 0)
         fail(at + ': a win brought no hero');
-      if (r.last.terminal && won)
-        for (const u of G.party(s))
+      if (r.last.terminal && won && !onLast)
+        for (const u of G.party(s).filter((v) => HERO_VOICES[v.id]))
           if (!after.some((line) => line.text === HERO_VOICES[u.id].farewell))
             fail(at + ': ' + G.DETAILS[u.id].name + ' left without a farewell');
+      if (onLast) won ? lastWon++ : lastLost++;
       R.turnPage(s, true);
+      // The last board won has no shop after it: the run is over on the ending.
+      if (ending && r.status !== 'ended') fail(at + ': the run did not end on the ending');
       if (r.last.terminal) {
         if (!R.closingFor(realm, won)) fail(at + ': nothing to wake to');
         break;
@@ -310,15 +428,19 @@ for (let player = 0; player < 60; player++) {
     if (legacy.returns !== run) fail(label + ': the run was not counted');
     // A run won marks its 境界 won; won in the highest open 境界, it opens the next; won in the
     // fifth, the last battle follows. A run lost changes none of it.
-    const runWon = r.last.won && r.last.terminal;
+    // (A run is won when its ten boards are, whatever becomes of the last board after them.)
+    const runWon = tenWon;
     const opens = runWon && realm === open && open < WAKES.length ? open + 1 : 0;
     if (R.openRealms(legacy) !== (opens || open)) fail(label + ': ' + R.openRealms(legacy) + ' 境界 open after a run in 境界 ' + realm + ' with ' + open + ' open');
-    if ((r.last.opened || 0) !== opens) fail(label + ': the ending says 境界 ' + r.last.opened + ' opened, not ' + opens);
+    if (opened !== opens) fail(label + ': the ending says 境界 ' + opened + ' opened, not ' + opens);
     const clearedNow = runWon ? [...new Set([...clearedBefore, realm])].sort() : clearedBefore;
     if (legacy.cleared.join() !== clearedNow.join()) fail(label + ': 境界 won are ' + legacy.cleared + ', not ' + clearedNow);
     const finale = runWon && realm === WAKES.length;
-    if (!!r.last.finale !== finale || legacy.finale !== finaleBefore + (finale ? 1 : 0)) fail(label + ': the last battle ' + (finale ? 'did not follow' : 'followed') + ' a run in 境界 ' + realm);
+    if (sawFinale !== finale || !!r.last.lastBoard !== finale || legacy.finale !== finaleBefore + (finale ? 1 : 0)) fail(label + ': the last board ' + (finale ? 'did not follow' : 'followed') + ' a run in 境界 ' + realm);
     if (finale) finales++;
+    // The ending is counted when the last board is won, and only then.
+    if (legacy.ended !== endedBefore + (finale && lastWins ? 1 : 0)) fail(label + ': the ending was counted ' + (legacy.ended - endedBefore) + ' times');
+    if (legacy.missed !== missedBefore + (finale && !lastWins ? 1 : 0)) fail(label + ': a lost last board was counted ' + (legacy.missed - missedBefore) + ' times');
     for (const u of G.company(s)) if (!legacy.walked[u.id]) fail(label + ': ' + names([u.id]) + ' not recorded as having walked');
     if (!R.restoreRun(JSON.parse(JSON.stringify(s)))) fail(label + ': the finished run does not load');
   }
@@ -327,9 +449,11 @@ for (let player = 0; player < 60; player++) {
 console.log(
   runs + ' runs · ' + scenes + ' scenes · ' + trios.size + ' different trios · ' +
     routes.size + ' board orders · ' + leaders.size + ' leaders · ' + echoes + ' deja vu lines · 境界 ' + [...realms].sort((a, b) => a - b).join(' ') +
-    ' · ' + finales + ' last battles'
+    ' · ' + finales + ' last boards (' + lastWon + ' won, ' + lastLost + ' lost) · ' + plusRuns + ' runs with 無名 on the board'
 );
-if (!finales) fail('no run reached the last battle');
+if (!finales) fail('no run reached the last board');
+if (!lastWon || !lastLost) fail('the last board was not both won and lost');
+if (!plusRuns) fail('no run was played after the ending, with 無名 on the board');
 if (problems.size) {
   console.error('\n' + problems.size + ' problem(s):\n  ' + [...problems].slice(0, 40).join('\n  '));
   process.exit(1);

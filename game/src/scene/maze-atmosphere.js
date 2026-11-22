@@ -18,7 +18,9 @@ const styles = [
   ['絕情花徑', 0xd3c9c4, 0x93a7a6, 0xffd9b4, 0x74806a, 'earth', -0.82, 0.02],
   ['鐵掌溪灘', 0xbfc8c0, 0x7d98a6, 0xffe6c0, 0x4d7f86, 'water', -0.5, 0.02],
   ['西夏夜苑', 0x3d4a66, 0x151c33, 0xf0d2a0, 0x2d4a5c, 'water', -0.9, 0.018, 'night'],
-  ['黑木繡閣', 0xcfd3d6, 0x8097b0, 0xffe3c4, 0xa9b6bb, 'mist', -6.5, 0.02]
+  ['黑木繡閣', 0xcfd3d6, 0x8097b0, 0xffe3c4, 0xa9b6bb, 'mist', -6.5, 0.02],
+  // The water here is the pond under the fall; its level is WATER in landforms/valley-15.js.
+  ['谷底棋臺', 0xb0b5b6, 0x71839f, 0xffcd90, 0x4f867f, 'water', -0.13, 0.021]
 ];
 const atmospheres = styles.map(([name, horizon, zenith, sun, base, mode, level, fog, hour]) => ({
   name,

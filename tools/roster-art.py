@@ -12,6 +12,12 @@ and for a hero also:
                     the first idle frame enlarged, since the pack has no full-length painting
 Then name the id in game/src/data/roster-art.js. The pack's files are only read.
 
+    python3 tools/roster-art.py --story youth qiubai
+
+reads asset-gen/story-characters instead (the youth and 求敗, for the last board). It writes the
+three sheet files only: their portraits, npc-youth.webp and npc-qiubai.webp, are in the game
+already and are left as they are.
+
 A sheet's specks of alpha 1 to 3 are cleared; the half-size sheet is averaged with colour
 weighted by alpha, so no dark fringe bleeds in from the transparent pixels round a figure.
 The pack paints villains half-length and troops closer, so a villain's portrait is cut from a
@@ -29,6 +35,7 @@ from PIL import Image
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 PACK = os.path.join(ROOT, 'asset-gen', 'jianying-roster-art')
+STORY = os.path.join(ROOT, 'asset-gen', 'story-characters')
 OUT = os.path.join(ROOT, 'game', 'assets')
 CELL_W, CELL_H, FOOT_Y = 144, 176, 162
 # The horizontal centre of each face in the pack's portrait, as a share of its width.
@@ -86,11 +93,13 @@ def portrait(path, face_x, group):
     return face if side == 400 else face.resize((400, 400), Image.LANCZOS)
 
 
-def main(ids):
-    with open(os.path.join(PACK, 'manifest.json'), encoding='utf-8') as f:
-        group = {c['id']: c['group'] for c in json.load(f)['characters']}
+def main(ids, story=False):
+    group = {}
+    if not story:
+        with open(os.path.join(PACK, 'manifest.json'), encoding='utf-8') as f:
+            group = {c['id']: c['group'] for c in json.load(f)['characters']}
     for k in ids:
-        sheet = cleaned(os.path.join(PACK, 'sprites', k + '.png'))
+        sheet = cleaned(os.path.join(STORY if story else PACK, 'sprites', k + '.png'))
         assert sheet.size == (8 * CELL_W, 5 * CELL_H), (k, sheet.size)
         files = {
             'motion': ('motion-%s.webp' % k, lambda f: sheet.save(
@@ -99,11 +108,12 @@ def main(ids):
                 256, Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE).save(f, optimize=True)),
             'mini': ('mini-%s.webp' % k, lambda f: still(sheet).save(
                 f, 'WEBP', quality=88, method=6, alpha_quality=100)),
-            'npc': ('npc-%s.webp' % k, lambda f: portrait(
-                os.path.join(PACK, 'portraits', k + '.webp'), FACE_X.get(k, .5),
-                group[k]).save(f, 'WEBP', quality=82, method=6)),
         }
-        if group[k] == 'hero':
+        if not story:
+            files['npc'] = ('npc-%s.webp' % k, lambda f: portrait(
+                os.path.join(PACK, 'portraits', k + '.webp'), FACE_X.get(k, .5),
+                group[k]).save(f, 'WEBP', quality=82, method=6))
+        if group.get(k) == 'hero':
             files['figure'] = ('figure-%s.webp' % k, lambda f: figure(sheet).save(
                 f, 'WEBP', quality=88, method=6))
         for name, write in files.values():
@@ -113,6 +123,7 @@ def main(ids):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    args = [a for a in sys.argv[1:] if a != '--story']
+    if not args:
         sys.exit(__doc__)
-    main(sys.argv[1:])
+    main(args, story='--story' in sys.argv[1:])

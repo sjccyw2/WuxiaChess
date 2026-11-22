@@ -54,7 +54,8 @@ for (const [id, art] of Object.entries(G.TECHNIQUES)) {
   for (const key of Object.keys(art))
     if (!named(key, 'art')) problems.push('art ' + id + ' has the field "' + key + '", which no rule term or PLAIN_FIELDS.art entry accounts for (game/src/data/rule-terms.js)');
 }
-for (const hero of G.PARTY)
+// (G.ROSTER: the ten heroes of the box, and 無名, who is a piece on the last board and after it.)
+for (const hero of G.ROSTER)
   for (const page of ['basic-' + hero, 'signature-' + hero])
     if (!has('skills', page)) problems.push('no skills page ' + page);
 for (const [id, item] of Object.entries(G.ITEMS)) {
@@ -64,7 +65,7 @@ for (const [id, item] of Object.entries(G.ITEMS)) {
 }
 for (const id of Object.keys(G.TRADE_MANUALS)) if (!has('items', 'guide-' + id)) problems.push('no items page for the manual ' + id);
 for (const [key, details] of Object.entries(G.DETAILS)) {
-  if (G.PARTY.includes(key)) {
+  if (G.ROSTER.includes(key)) {
     if (!has('heroes', key)) problems.push('no heroes page for ' + key);
     continue;
   }
@@ -72,8 +73,10 @@ for (const [key, details] of Object.entries(G.DETAILS)) {
   for (const trait of Object.keys(details.traits || {}))
     if (!named(trait, 'trait')) problems.push('enemy ' + key + ' has the trait "' + trait + '", which no rule term or PLAIN_FIELDS.trait entry accounts for');
 }
-G.BATTLES.forEach((board, map) => {
-  if (!has('missions', 'map-' + map) || !has('maps', map)) problems.push('board ' + map + ' has no missions or maps page');
+// (The last board is read as the game casts it: its guests are the masters of the ten boards.)
+G.BATTLES.forEach((_, map) => {
+  const board = G.castBoard(map);
+  if (!has('missions', 'map-' + map) || !has('maps', map) || !has('story', 'map-' + map)) problems.push('board ' + map + ' has no missions, maps or story page');
   if (!has('rules', board.kind)) problems.push('board ' + map + ' is of kind "' + board.kind + '", which has no rules page');
   for (const piece of [...board.pieces, ...board.waves.flatMap((w) => w.pieces)])
     if (!has('foes', foePage(piece.id.split('#')[0]))) problems.push('board ' + map + ': no foes page for the piece ' + piece.id);

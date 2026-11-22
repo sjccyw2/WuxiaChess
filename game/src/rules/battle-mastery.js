@@ -93,7 +93,9 @@ const COMMANDS = {
     text: '擊中氣血不過半的敵人時，傷害增加 8。',
     icon: 'target'
   },
-  aQing: { name: '越女輕步', stat: 'step', power: 1, text: '移動力增加 1 步。', icon: 'feather' }
+  aQing: { name: '越女輕步', stat: 'step', power: 1, text: '移動力增加 1 步。', icon: 'feather' },
+  // 無名: he does not give up a stone.
+  youth: { name: '不棄一子', stat: 'def', power: 4, text: '防禦增加 4。', icon: 'shield' }
 };
 function commandDescription(id) {
   return '領隊與距離兩格內的友軍' + COMMANDS[id].text;

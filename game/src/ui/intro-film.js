@@ -1,6 +1,6 @@
-// The opening film: the first visit's prologue is told by a 45-second manga film
-// (asset-gen/prologue-video) instead of its first pages. It fills the screen above everything
-// else. There are two cuts on one timeline: 9:16 for a screen taller than wide, 16:9 otherwise; a
+// The game's two films: the opening one (the first visit's prologue, a 45-second manga film from
+// asset-gen/prologue-video, in place of its first pages) and the ending one (asset-gen/finale-video,
+// after the last board is won). A film fills the screen above everything else. There are two cuts on one timeline: 9:16 for a screen taller than wide, 16:9 otherwise; a
 // screen that turns mid-film switches cuts and keeps its place. 略過 leaves at any time; at the end
 // it offers 重看 and 繼續.
 import { art } from './artwork.js';
@@ -11,18 +11,19 @@ const TALL = '(orientation: portrait)';
 let layer = null,
   unturn = null;
 
-// tall, wide: { file, poster }, picture names in game/assets, for each cut; onDone(shown):
-// called once, with true when the player skips or continues and false when the file cannot play.
+// tall, wide: { file, poster }, picture names in game/assets, for each cut; label: what the film
+// is, for a screen reader; onDone(shown): called once, with true when the player skips or
+// continues and false when the file cannot play.
 // The film starts with its sound on even though the game's own sound starts off: the music is
 // half of it. A button in the corner mutes it.
-function playFilm({ tall, wide, onDone }) {
+function playFilm({ tall, wide, onDone, label = '序幕影片' }) {
   closeFilm();
   const doc = globalThis.document;
   layer = doc.createElement('div');
   layer.className = 'intro-film';
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
-  layer.setAttribute('aria-label', '序幕影片');
+  layer.setAttribute('aria-label', label);
   layer.innerHTML =
     '<video playsinline webkit-playsinline preload="auto"></video>' +
     '<button type="button" class="film-skip" data-film="skip">略過</button>' +

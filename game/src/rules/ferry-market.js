@@ -111,9 +111,10 @@ function makeOffers(s) {
 // ── The secondary's manual (journey.js settle) ───────────────────────────
 // A met secondary that pays a manual: one the shelf could carry after this board, preferring one
 // not already in the store and not held by every hero, drawn from the run and stage.
-function bonusManual(s) {
+// `ends`: the run ends with this board, so the manual goes to the parcel for the next run.
+function bonusManual(s, ends = s.run.stage === 9) {
   const r = s.run,
-    store = r.stage === 9 ? r.chronicle.parcel.manuals : r.manuals;
+    store = ends ? r.chronicle.parcel.manuals : r.manuals;
   const known = (id) => store.includes(id) || G.company(s).every((u) => u.guides.includes(id));
   const deck = shuffled(
     Object.keys(MANUAL_PRICES).filter((id) => manualStage(id) <= r.stage + 1),

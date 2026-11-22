@@ -122,32 +122,38 @@ function memberLine(s, u, ui) {
     chief = line[0] === u.id;
   const role = chief ? '領隊' : active ? '出陣' : '候補';
   const manage = G.managesCompany(s);
+  // On the last board the lead is 無名's: he is not benched, and no one else is appointed.
+  const held = R.fixedLead(s, line[0]);
   const edit = manage
     ? [
         action(
           'lineup',
           active ? '轉為候補' : '加入出陣',
           u.id,
-          active ? line.length > 1 : line.length < 5
+          active ? line.length > 1 && !(held && chief) : line.length < 5
         ),
-        action('appoint', chief ? '現任領隊' : '任為領隊', u.id, active && !chief)
+        action('appoint', chief ? '現任領隊' : '任為領隊', u.id, active && !chief && !held)
       ].join('')
     : active && G.living(u) && s.run.scene === 'fight'
       ? action('field-control', '操控此俠客', u.id)
       : '';
   const map = planningMap(s);
   const upcoming = map !== s.mapIndex;
+  // The next board's named stones: its master and lieutenant, or on the last board everyone it opens with.
   const foes = upcoming
-    ? // The next board's named opponents: its master, and its lieutenant if it has one.
-      G.encounterKeys(map)
-        .slice(0, 2)
-        .filter((key) => G.DETAILS[key]?.rank)
-        .map((id) => ({ id }))
+    ? G.hasFour(map)
+      ? // The next board's named opponents: its master, and its lieutenant if it has one.
+        G.encounterKeys(map)
+          .slice(0, 2)
+          .filter((key) => G.DETAILS[key]?.rank)
+          .map((id) => ({ id }))
+      : // The last board: 求敗 and the masters who stand with him from the start.
+        G.castBoard(map, s.run.route).pieces.map((p) => ({ id: p.id }))
     : G.enemies(s).filter((v) => G.unitDetails(v).rank);
   const board = mapLayout(map);
   // The briefing in short: this board's (or, from the shop, the next board's, whose secondary
   // is not drawn yet). 軍情 opens the whole briefing.
-  const model = upcoming ? R.boardBrief(map, s.run.stage + 1) : R.briefing(s);
+  const model = upcoming ? R.boardBrief(map, s.run.stage + 1, s.run.route) : R.briefing(s);
   const side = model.side;
   const row = (term, body) => '<div><dt>' + term + '</dt><dd>' + body + '</dd></div>';
   const brief =
@@ -385,14 +391,14 @@ function encounterPage(s, scene, beat, archive = false) {
   const opening = scene === 'before',
     last = current === lines.length - 1;
   const label = opening ? '臨陣' : s.result === 'win' ? '戰後 · 勝' : '戰後 · 敗';
-  const dest = opening ? '進入整備' : '前往通吃坊';
+  // (After the last board is won there is no shop: the ending follows.)
+  const dest = opening ? '進入整備' : s.run.last?.ended ? '放下' : '前往通吃坊';
   const next = archive ? (last ? '返回' : '下一句') : last ? dest : '下一句';
   const head =
     '<header class="modal-head"><div class="modal-title">' +
     icon('scroll', 20) +
-    '<h2>第' +
-    R.NUMERALS[s.run.stage] +
-    '局 · ' +
+    '<h2>' +
+    R.stageTitle(s.run.stage) +
     map.name +
     '</h2></div><small>' +
     label +

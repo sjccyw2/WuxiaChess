@@ -16,7 +16,7 @@ function youth() {
     image: gameArt(G.YOUTH.portrait),
     sections: [
       rows('人物誌', [
-        ['身分', '玩家所扮的角色。他是在睡夢裡闖進劍境的，不會武功。他不上盤，只落子。'],
+        ['身分', '玩家所扮的角色。他是在睡夢裡闖進劍境的，不會武功。十局之中他不上盤，只落子；到了終局，他親自入盤。'],
         ['名字', '「' + G.YOUTH.name + '」。他在夢裡記不起自己的名字，便這樣叫自己。求敗也早忘了自己的本名。']
       ]),
       speech('頭一句話', said(YOUTH_NAME, t.prologue.first[3].text)),
@@ -26,7 +26,9 @@ function youth() {
       links('相關', [
         link('story', 'opening', TITLES.opening),
         link('story', 'world', TITLES.world),
-        link('story', 'return', TITLES.return)
+        link('story', 'return', TITLES.return),
+        link('heroes', G.YOUTH_ID, G.YOUTH.name + '（入盤之後）'),
+        link('story', 'finale', TITLES.finale)
       ])
     ],
     sources: cites(cite(t.command.text, 'src/data/maze-tale.js'))
@@ -48,9 +50,10 @@ function qiubai() {
         ['所求', '武學的最終奧義。這盤棋他左手同右手下了幾百年。'],
         ['黑子', '他落子之時，將一道戰意按在黑子眉心，叫他們見人便打。']
       ]),
-      speech('自稱', said(q.name, t.prologue.first[6].text), said(q.name, t.prologue.first[8].text)),
+      // His own account of himself: the two lines of the first prologue in which he says 求敗.
+      speech('自稱', t.prologue.first.filter((b) => b.who === 'qiu' && b.text.includes('求')).map((b) => said(q.name, b.text))),
       speech('每一輪的最後', t.close[0].map((b) => said(q.name, b.text))),
-      links('全部對白', [link('story', 'qiu', TITLES.qiu), link('story', 'opening', TITLES.opening), link('story', 'return', TITLES.return)])
+      links('全部對白', [link('story', 'qiu', TITLES.qiu), link('story', 'opening', TITLES.opening), link('story', 'return', TITLES.return), link('story', 'finale', TITLES.finale), link('foes', 'enc-qiubai', q.name + '（入盤之後）')])
     ],
     sources: cites(cite(q.name, 'src/data/maze-tale.js'))
   };

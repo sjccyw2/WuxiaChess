@@ -16,9 +16,11 @@ import {
   SIGNATURE_RULES,
   VILLAIN_FORMS,
   VILLAINS,
-  TROOPS
+  TROOPS,
+  ARM_NAMES,
+  ARM_OF
 } from '../data/encounters.js';
-import { BATTLES, FINAL_MAP } from '../data/battles.js';
+import { BATTLES, FINAL_MAP, LAST_MAP } from '../data/battles.js';
 import { BOARD_OBJECTS } from '../data/board-objects.js';
 import { NEW_HEROES } from '../data/new-heroes.js';
 import { inRealm } from '../data/realms.js';
@@ -34,7 +36,7 @@ import {
 } from './battle-mastery.js';
 import { FIELD_SIZE, fieldCells, mapLayout, validTile, tileInfo } from '../data/terrain.js';
 import { TECHNIQUES, WARES, CAPTAINS } from '../data/martial-arts.js';
-import { CHAMBER_TALES, MAZE_TALE, QIUBAI, YOUTH } from '../data/maze-tale.js';
+import { CHAMBER_TALES, MAZE_TALE, QIUBAI, YOUTH, acrossTable, shade } from '../data/maze-tale.js';
 import { ENCOUNTER_SCRIPT } from '../data/encounter-script.js';
 const SIZE = FIELD_SIZE;
 const FIELD_EDITION = 1;
@@ -43,6 +45,11 @@ const LIMIT = 12;
 const NUMERALS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
 const ORIGINAL_PARTY = ['hero', 'medic', 'guard'];
 const PARTY = [...ORIGINAL_PARTY, 'guo', 'xiao', 'duan', ...Object.keys(NEW_HEROES)];
+// The youth as a piece: 無名 takes the field himself on the last board, and from the first board of
+// every run once the ending has been seen. He is never in the box the heroes are drawn from.
+const YOUTH_ID = 'youth';
+// Everyone who can be a white stone.
+const ROSTER = [...PARTY, YOUTH_ID];
 const BOOKS = {
   ...Object.fromEntries(Object.entries(NEW_HEROES).map(([id, h]) => [id, h.book])),
   hero: '笑傲江湖',
@@ -50,7 +57,9 @@ const BOOKS = {
   guard: '笑傲江湖',
   guo: '射鵰英雄傳、神鵰俠侶',
   xiao: '神鵰俠侶',
-  duan: '天龍八部'
+  duan: '天龍八部',
+  // He is from no book the heroes or the black stones know.
+  youth: '一念江湖'
 };
 const leader = (s) => s.leader || 'hero';
 const key = (x, y) => x + ',' + y;
@@ -66,7 +75,8 @@ const find = (s, id) =>
   s.units.find((u) => u.id === id) || s.run?.bench?.find((u) => u.id === id);
 const party = (s) => s.units.filter(ally);
 const company = (s) => [...party(s), ...(s.run?.bench || [])];
-const commanderId = (s) => (s.run ? CAPTAINS[s.mapIndex][0] : 'chief');
+// The piece a board's text names as its master: its own on the last board (battles.js).
+const commanderId = (s) => (s.run ? BATTLES[s.mapIndex]?.commander || CAPTAINS[s.mapIndex][0] : 'chief');
 const enemies = (s) => s.units.filter((u) => u.side === 'enemy');
 // Board objects (board-objects.js, battles.js `objects`) are units of side 'prop': on the board,
 // with 氣血, taking no turn, and neither the heroes' nor the black stones'.
@@ -172,6 +182,15 @@ const ITEMS = {
     def: 5,
     icon: 'shield',
     desc: '大雪山烏蠶絲所織的貼身軟甲，刀劍不入。防禦增加 5。'
+  },
+  // 利劍, the first sword of the tomb: 無名 draws it from its rock on the last board.
+  keenSword: {
+    name: '利劍',
+    kind: 'weapon',
+    owner: 'youth',
+    atk: 6,
+    icon: 'sword',
+    desc: '凌厲剛猛，無堅不摧。求敗弱冠之前所用，插在棋枰一角的石上。'
   },
   ...WARES,
   pine: {
@@ -360,6 +379,26 @@ const DETAILS = {
     skillRange: 1,
     cost: 6
   },
+  // 無名, the youth who holds the stones (maze-tale.js YOUTH), as a piece. His portrait is the one
+  // his lines have always worn.
+  youth: {
+    name: '無名',
+    role: '執子之人',
+    school: '無門無派',
+    mini: 'youth',
+    portrait: 'youth',
+    portraitFile: 'npc-youth.webp',
+    epithet: '入夢少年',
+    book: '一念江湖',
+    bio: '在自家床上睡著了，一睜眼便到了谷底棋臺邊的少年。他記不起自己的名字，自稱無名，身上半點功夫也無，卻在盤外瞧了千百局。千年的招數在他眼裡過了一遍；入得盤來，手上使出的沒有一招是學來的，只是瞧著對手的兵刃，劍便自己尋到了空處。',
+    basic: '直刺',
+    // 總訣式 is the art 令狐冲 learns as a node: one art, one effect, whoever has it.
+    skill: TECHNIQUES.ninefoldFormula.name,
+    skillIcon: 'sword',
+    skillDesc: TECHNIQUES.ninefoldFormula.desc,
+    skillRange: TECHNIQUES.ninefoldFormula.range,
+    cost: TECHNIQUES.ninefoldFormula.mp
+  },
   chief: {
     name: '余滄海',
     role: '掌門',
@@ -379,7 +418,7 @@ for (const [index, [boss, second]] of ENCOUNTERS.entries()) {
   DETAILS[id] = {
     ...DETAILS[id],
     ...boss,
-    role: index === FINAL_MAP ? '最後一局・局主' : '局主',
+    role: '局主',
     portraitFile: 'captain-' + index + '.webp',
     rank: 'boss'
   };
@@ -393,8 +432,11 @@ for (const [index, [boss, second]] of ENCOUNTERS.entries()) {
     };
 }
 // The DETAILS keys of a board's four enemies, in the order of its layout's spawn tiles.
+// The last board has no fixed four: every piece on it is named in battles.js.
+const hasFour = (map) => !BATTLES[map]?.last;
 // On a board built round one villain the other three are his troop type.
 function encounterKeys(map) {
+  if (!hasFour(map)) return [];
   const troop = GARRISONS[map];
   return troop
     ? [CAPTAINS[map][0], troop, troop, troop]
@@ -404,8 +446,10 @@ function encounterKeys(map) {
 const seatOf = (map, id) => SLOTS.findIndex((slot) => slotId(map, slot) === id);
 // The stage row a fixed seat's numbers come from: the seat's own, or its troop type's.
 const seatRow = (map, i) => DETAILS[encounterKeys(map)[i]]?.row || SLOTS[i];
-// The numbers of a board's fixed four at a stage and 境界, each with its type's mods.
+// The numbers of a board's fixed four at a stage and 境界, each with its type's mods. The last
+// board has no fixed four, so none.
 function seatNumbers(map, depth, realm = 1) {
+  if (!hasFour(map)) return [];
   const rows = stageRows(map, depth, realm),
     keys = encounterKeys(map);
   return SLOTS.map((_, i) => withMods(rows[seatRow(map, i)], DETAILS[keys[i]]?.traits?.mods));
@@ -426,9 +470,12 @@ function identifyEncounter(s) {
 // The fixed four of a board by slot, and the actor ids they have always had.
 const SLOTS = ['master', 'lieutenant', 'bow', 'scout'];
 function slotId(map, slot) {
+  if (!hasFour(map)) return null;
   const ids = map ? [CAPTAINS[map][0], 'echoBlade', 'echoBow', 'echoScout'] : FOES;
   return ids[SLOTS.indexOf(slot)];
 }
+// The fixed four a board has, as slots: none on the last board.
+const fixedSlots = (map) => (hasFour(map) ? SLOTS : []);
 // The DETAILS key of an actor id on this board, whether or not the piece is on it yet.
 const pieceKeyOf = (s, id) => {
   const u = s.units?.find((v) => v.id === id);
@@ -450,8 +497,29 @@ const LEGACY_BOARD = Object.freeze({
   waves: [],
   sides: []
 });
+// The last board's guests (battles.js `guest: n`): the master of the run's n-th board, on the
+// 'guest' row of the last board's numbers. `route` is the run's ten boards in the order met; with
+// none (the wiki, a briefing with no run) the boards in their own order stand in.
+const DEFAULT_ROUTE = CAPTAINS.map((_, map) => map);
+const castCache = new Map();
+function castBoard(map, route = DEFAULT_ROUTE) {
+  const board = BATTLES[map];
+  if (!board?.last) return board;
+  const key = map + ':' + route.join(',');
+  if (!castCache.has(key)) {
+    const cast = (piece) =>
+      piece.guest == null ? piece : { ...piece, id: CAPTAINS[route[piece.guest] ?? DEFAULT_ROUTE[piece.guest]][0], row: 'guest' };
+    castCache.set(key, {
+      ...board,
+      pieces: board.pieces.map(cast),
+      waves: board.waves.map((w) => ({ ...w, pieces: w.pieces.map(cast) }))
+    });
+  }
+  return castCache.get(key);
+}
 // The board being played. Every board rule reads the board through here.
-const boardOf = (s) => (!s.run || s.run.legacyBoard ? LEGACY_BOARD : BATTLES[s.mapIndex]);
+const boardOf = (s) =>
+  !s.run || s.run.legacyBoard ? LEGACY_BOARD : castBoard(s.mapIndex, Array.isArray(s.run.route) ? s.run.route : DEFAULT_ROUTE);
 // The kind the board is played as. A save from before its board had objects (none on the board)
 // finishes under the kind it began with.
 function boardKind(s) {
@@ -491,10 +559,23 @@ function homeTile(s, u) {
 // run's 境界 (data/realms.js; the first 境界 changes nothing). Board 0 met first has the numbers the
 // first board has always had.
 function stageRows(map, depth, realm = 1) {
+  // The last board is met in one 境界 and at one depth only, so its numbers are written as played.
+  if (!hasFour(map)) return { ...LAST_ROWS };
   const rows = stageBase(map, depth);
   for (const slot of Object.keys(rows)) rows[slot] = inRealm(rows[slot], realm);
   return rows;
 }
+// The last board's two rows: 求敗 himself ('master'), and each of the run's ten masters as he
+// stands there ('guest'): no 戰意 on him and no men of his own, a good deal less than on his own
+// board. A guest's own `mods` still apply. Measured with `node tools/sim-battles.mjs --last`: with
+// these the simulated player, who is far weaker than a person, wins about two boards in three in
+// some eight rounds at hero level 11 (50%, 68% and 76% at levels 10, 11 and 12, with a company of
+// twelve drawn from the twenty heroes), and loses mostly by 無名 falling. 求敗 had 2000 氣血 when
+// there were ten heroes; the ten added on 2026-11-22 made that seven to thirteen points easier.
+const LAST_ROWS = {
+  master: [2130, 56, 28, 3, 2],
+  guest: [365, 46, 20, 3, 1]
+};
 function stageBase(map, depth) {
   if (map === 0 && depth === 0)
     return {
@@ -542,11 +623,13 @@ function stageBase(map, depth) {
 function pieceUnit(s, piece, entered = null) {
   const key = piece.id.split('#')[0],
     info = DETAILS[key];
-  const row = stageRows(s.mapIndex, s.run?.stage || 0, s.run?.realm)[info.row];
+  const row = stageRows(s.mapIndex, s.run?.stage || 0, s.run?.realm)[piece.row || info.row];
   const [hp, atk, def, step, range] = withMods(withMods(row, info.traits?.mods), piece.mods);
   const u = makeUnit(piece.id, 'enemy', piece.at[0], piece.at[1], hp, 0, atk, def, step, range);
   if (piece.id.includes('#')) u.encounterId = key;
   if (entered != null) u.enteredRound = entered;
+  // A master away from his own board (the last board's guests) keeps no post there.
+  if (piece.row === 'guest') u.guest = true;
   return u;
 }
 // A villain's `mods` on the stage numbers: health scaled, attack and defence added, step and
@@ -564,13 +647,22 @@ for (const id of ['blade', 'bow', 'scout']) DETAILS[id].portraitFile = 'npc-' + 
 function unitDetails(u) {
   return DETAILS[u?.encounterId] || DETAILS[u?.id];
 }
+// The stage a piece's traits scale by: the run's, or for a guest on the last board the stage at
+// which this run met his own board, so each master's signature, banner and drain are as strong
+// there as they were when the youth first faced him.
+function traitStage(s, u) {
+  const stage = s?.run?.stage || 0;
+  if (!u?.guest || !Array.isArray(s?.run?.route)) return stage;
+  const home = s.run.route.indexOf(CAPTAINS.findIndex(([captain]) => captain === u.id));
+  return home >= 0 ? home : stage;
+}
 // A villain whose traits are written uses the stage-scaled status strengths; one without plays
 // with the flat numbers of stage 0, as every villain did before the redesign.
 function enemyTechnique(u, s) {
   const info = unitDetails(u);
   if (!info?.rank) return null;
   const sig = traitsOf(u).sig || {},
-    stage = Object.keys(info.traits || {}).length ? s?.run?.stage || 0 : 0;
+    stage = Object.keys(info.traits || {}).length ? traitStage(s, u) : 0;
   const status = {
     power: sig.power ?? STATUS_POWER[info.style]?.(stage),
     turns: sig.turns ?? 2,
@@ -790,8 +882,13 @@ function turnBack(s, striker, bearer, blow, effects) {
 // A villain's traits as they stand now: once its 變招 has fired, the phase's cadence, preference
 // and hold replace those it began the board with.
 function traitsOf(u) {
-  const t = unitDetails(u)?.traits || {},
-    p = u?.phased ? t.phase : null;
+  let t = unitDetails(u)?.traits || {};
+  // A guest on the last board is his own man: no 戰意 holds him to the post he keeps on his own
+  // board, to the spot where he charges, or half-asleep until his 變招 (半醒), so none of the
+  // three is his here.
+  if (u?.guest && (t.post || t.phase || t.stance?.holds))
+    t = { ...t, post: null, phase: null, stance: t.stance?.holds ? { ...t.stance, holds: false } : t.stance };
+  const p = u?.phased ? t.phase : null;
   if (!p) return t;
   return {
     ...t,
@@ -854,7 +951,7 @@ function homeward(s, u, all, hold) {
 // 坐鎮 ends for good as its trait says: `wake: true` once a hero strikes the piece or it strikes
 // a hero; 'struck' only once a hero strikes it; false never.
 function wakePost(s, u, struck) {
-  const post = unitDetails(u)?.traits?.post;
+  const post = traitsOf(u).post;
   if (!post || u.woke || !living(u) || !(post.wake === true || (post.wake === 'struck' && struck)))
     return;
   u.woke = true;
@@ -896,14 +993,14 @@ function pieceLines(map, ref, stage) {
   const keys = encounterKeys(map),
     layout = mapLayout(map),
     numbers = seatNumbers(map, stage);
-  SLOTS.forEach((slot, i) => {
+  fixedSlots(map).forEach((slot, i) => {
     const [hp, atk, def, step, range] = numbers[i];
     const p = layout.enemies[i];
     const u = makeUnit(slotId(map, slot), 'enemy', p.x, p.y, hp, 0, atk, def, step, range);
     if (i) u.encounterId = keys[i];
     s.units.push(u);
   });
-  const board = BATTLES[map];
+  const board = castBoard(map);
   s.units.push(...board.pieces.map((piece) => pieceUnit(s, piece)));
   const id = refId(map, ref);
   let u = s.units.find((v) => v.id === id);
@@ -925,7 +1022,7 @@ function strikeReachWhenDue(s, u) {
 function enemyTraitLines(s, u) {
   const info = unitDetails(u),
     t = traitsOf(u),
-    stage = s.run?.stage || 0,
+    stage = traitStage(s, u),
     lines = [];
   const say = (label, text) => lines.push('【' + label + '】' + text);
   const master = unitDetails(find(s, commanderId(s)))?.name;
@@ -962,6 +1059,10 @@ function enemyTraitLines(s, u) {
         WAKES[t.post.wake];
     say('坐鎮', words);
   }
+  if (t.unfelled) say('不敗', '氣血不會低於 1 點，他不會倒下；削至 1 點，這一局便完了。');
+  if (t.formless) say('無招', '手中只是一根枯枝，沒有招式可破：任何一式的破招對他都不成。');
+  // What he fights with, for the forms that answer a kind of weapon: said once 無名 is on the board.
+  if (armOf(u, s) && party(s).some((v) => v.id === YOUTH_ID)) say('兵刃', ARM_NAMES[armOf(u, s)] + '。');
   if (t.contact)
     say('化功', '貼身打中他的俠客損失 ' + (t.contact.mp + stage) + ' 點內力（封穴時無效）。');
   if (t.stance?.while === 'posted') {
@@ -1062,7 +1163,7 @@ function enemyTraitLines(s, u) {
   if (t.snare)
     say('墜網', '普攻令目標絆足，移動減 ' + t.snare.power + '，持續至下回合；還擊不帶網。');
   if (t.prefers) say('偏好', PREFERS[t.prefers] + '。');
-  const phase = info.traits?.phase;
+  const phase = u.guest ? null : info.traits?.phase;
   if (phase)
     say(
       (u.phased ? '已變招' : '半血變招') + (phase.name ? ' · ' + phase.name : ''),
@@ -1121,7 +1222,7 @@ for (const [map, ranks] of RANKS.entries())
 // The villains and troop types added to the boards (battles.js). Their portraits follow their
 // sprites, below.
 for (const [id, v] of Object.entries(VILLAINS))
-  DETAILS[id] = { ...v, role: v.rank === 'boss' ? '局主' : '副手' };
+  DETAILS[id] = { ...v, role: v.role || (v.rank === 'boss' ? '局主' : '副手') };
 for (const [id, t] of Object.entries(TROOPS)) DETAILS[id] = { ...t };
 // The board objects, with their pictures as their portraits.
 for (const [id, o] of Object.entries(BOARD_OBJECTS))
@@ -1141,6 +1242,10 @@ DETAILS.scout.row = 'scout';
 // whatever seat it fills: the face follows the sprite (data/roster-art.js).
 for (const d of Object.values(DETAILS))
   if (rosterPortrait(d.mini)) d.portraitFile = rosterPortrait(d.mini);
+// What each enemy fights with (encounters.js ARM_OF), for the forms that answer a kind of weapon.
+for (const [key, arm] of Object.entries(ARM_OF)) if (DETAILS[key]) DETAILS[key].arm = arm;
+// 求敗 wears the portrait his lines have always worn.
+DETAILS.qiubai.portraitFile = QIUBAI.portrait;
 const STORIES = [
   {
     place: '洛陽 · 綠竹巷',
@@ -1286,7 +1391,8 @@ const HERO_STATS = {
   lingSu: [90, 84, 19, 7, 4, 2],
   diYun: [136, 54, 28, 9, 4, 1],
   chengZhi: [112, 60, 23, 10, 5, 1],
-  aQing: [90, 58, 24, 6, 5, 1]
+  aQing: [90, 58, 24, 6, 5, 1],
+  youth: [108, 56, 25, 9, 4, 1, 'keenSword']
 };
 // What a hero arrives wearing, beside the weapon in HERO_STATS.
 const STARTING_GEAR = { diYun: 'silkwormCoat' };
@@ -1577,7 +1683,7 @@ function bannerBonus(s, u) {
   let bonus = 0;
   for (const v of s.units) {
     const banner = v !== u && living(v) && !ally(v) && !charmed(v) && unitDetails(v)?.traits?.banner;
-    if (banner) bonus = Math.max(bonus, banner.atk + (s.run?.stage || 0));
+    if (banner) bonus = Math.max(bonus, banner.atk + traitStage(s, v));
   }
   return bonus;
 }
@@ -1637,7 +1743,8 @@ const SIGNATURE_RULES_BY_HERO = {
   lingSu: { visual: 'medic', heal: 28, target: 'ally' },
   diYun: { factor: 1.3, visual: 'hero' },
   chengZhi: { factor: 1.25, visual: 'guo' },
-  aQing: { factor: 1.25, visual: 'xiao' }
+  aQing: { factor: 1.25, visual: 'xiao' },
+  youth: { factor: TECHNIQUES.ninefoldFormula.factor, visual: 'hero' }
 };
 function artFor(u, key = u.activeArt || 'signature') {
   if (u.learned?.includes(key) && TECHNIQUES[key]) return TECHNIQUES[key];
@@ -1912,7 +2019,25 @@ const PARTNERS = {
   lingSu: 'hu',
   xuZhu: 'qiaoFeng'
 };
-const ANSWERS = { close: '近身兵刃', ranged: '遠攻', master: '首領' };
+// What a 破招 form answers: a way of fighting (by reach or rank), or a kind of weapon (the enemy's
+// `arm`, encounters.js ARM_OF).
+const ANSWERS = {
+  close: '近身兵刃',
+  ranged: '遠攻',
+  master: '首領',
+  ...Object.fromEntries(Object.entries(ARM_NAMES).map(([arm, name]) => [arm, name]))
+};
+// The kind of weapon an enemy fights with, if any form answers it.
+// 公孫止 (陰陽倒亂) fights with the sword on even rounds, whatever he is listed by.
+const armOf = (u, s = null) => (twinForm(s, u) === 'sword' ? 'sword' : u?.arm || unitDetails(u)?.arm || null);
+// Whether a form that answers `kind` answers this target. 無招 is answered by nothing.
+function answers(s, kind, t) {
+  if (traitsOf(t).formless) return false;
+  if (ARM_NAMES[kind]) return armOf(t, s) === kind;
+  const rank = unitDetails(t)?.rank,
+    span = reach(s, t);
+  return { close: span === 1, ranged: span >= 2, master: rank === 'boss' || rank === 'mini' }[kind] || false;
+}
 const plus = (n) => '＋' + n.toFixed(2);
 // An art's factor for one strike: its own, with every conditional bonus that holds added (§4).
 // Read where the pieces stand as the blow lands, before its push or pull. The forecast, the strike
@@ -1930,10 +2055,8 @@ function strikeFactor(s, u, art, t = null) {
     notes.push('傾力 · 耗內力 ' + u.mp + '，倍率 ' + factor.toFixed(2));
   }
   if (art.answer && t) {
-    const rank = unitDetails(t)?.rank,
-      span = reach(s, t);
-    const hit = { close: span === 1, ranged: span >= 2, master: rank === 'boss' || rank === 'mini' };
-    if (hit[art.answer]) add(0.3, '破招 · ' + ANSWERS[art.answer] + ' ＋0.30');
+    if (answers(s, art.answer, t)) add(0.3, '破招 · ' + ANSWERS[art.answer] + ' ＋0.30');
+    else if (traitsOf(t).formless) notes.push('無招 · 破招不成');
   }
   const beside = (s?.units || []).filter(
     (v) => v !== u && living(v) && v.side === u.side && distance(v, u) === 1
@@ -2225,6 +2348,20 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     return hit - stopped;
   });
   result.amount = result.hits.reduce((sum, n) => sum + n, 0);
+  // 不敗: the blow takes him no lower than 1 氣血.
+  if (traitsOf(t).unfelled && result.amount >= t.hp) {
+    let room = Math.max(0, t.hp - 1);
+    result.hits = result.hits.map((hit) => {
+      const taken = Math.min(hit, room);
+      room -= taken;
+      return taken;
+    });
+    result.amount = result.hits.reduce((sum, n) => sum + n, 0);
+    result.notes.push('不敗 · 氣血不低於 1');
+  }
+  // 問劍: the blow that leaves the board's master at his last point ends the board.
+  if (s?.run && boardKind(s) === 'yield' && masterIds(s).includes(t.id) && t.hp - result.amount <= 1)
+    result.notes.push('問劍 · 此擊之後，這一局便完了');
   result.push = t.hp > result.amount ? step : null;
   // 閃身, 挪移: what the receiver's guard did to the blow as a whole.
   if (blow.ward || blow.void) answerBlow(s, u, t, blow, result);
@@ -2268,6 +2405,8 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     !plan.safe &&
     !blow.silent &&
     t.hp > result.amount &&
+    // 不敗: the blow that brings him to 1 氣血 ends it, as a felling blow would: he does not answer it.
+    !(traitsOf(t).unfelled && t.hp - result.amount <= 1) &&
     distance(u, result.push || t) <= reach(s, t)
   ) {
     const reply =
@@ -2386,7 +2525,7 @@ function contactLoss(s, u, t, result) {
   const c = traitsOf(t).contact;
   if (!c || !ally(u) || distance(u, t) !== 1 || t.conditions?.seal) return 0;
   if (result.effects.some((e) => e.kind === 'seal')) return 0;
-  return Math.min(c.mp + (s?.run?.stage || 0), Math.max(0, u.mp - result.mpCost));
+  return Math.min(c.mp + traitStage(s, t), Math.max(0, u.mp - result.mpCost));
 }
 // The preview of a blow the receiver's guard answers: one that does not land carries none of its
 // effects or push; what a 挪移 turns back is shown on the striker, never below 1 氣血.
@@ -2509,7 +2648,8 @@ function wound(s, u, n, source) {
     shield.power -= absorbed;
     if (!shield.power) delete u.conditions.shield;
   }
-  const d = Math.min(n, u.hp);
+  // 不敗: nothing takes him below 1 氣血.
+  const d = Math.min(n, traitsOf(u).unfelled ? Math.max(0, u.hp - 1) : u.hp);
   u.hp -= d;
   if (!living(u)) delete u.conditions;
   // 領隊無傷 counts what enemies take from the leader, through any blow, counter or poison.
@@ -2951,7 +3091,15 @@ const KIND_RULES = {
   // a master still to come has not fallen. An object broken loses it (check).
   keep: { won: (s) => masterIds(s).every((id) => fallen(s, id)) || heldOut(s) },
   // 破: every object is broken, whoever stands.
-  break: { won: (s) => props(s).length > 0 && !props(s).some(living) }
+  break: { won: (s) => props(s).length > 0 && !props(s).some(living) },
+  // 問劍: every master is at his last point of 氣血. He is 不敗 and does not fall; whoever else
+  // stands, the board is over.
+  yield: { won: (s) => masterIds(s).every((id) => spent(s, id)) }
+};
+// A master who can be brought no lower: on the board, at 1 氣血 or less.
+const spent = (s, id) => {
+  const u = s.units.find((v) => v.id === id);
+  return !!u && u.hp <= 1;
 };
 // 守: the enemy phase of the board's last round to hold is over, every enemy having acted or fallen.
 function heldOut(s) {
@@ -3011,7 +3159,8 @@ function markHalved(s) {
     if (!m || m.halved || m.hp > m.maxHp / 2) continue;
     m.halved = true;
     if (id === commanderId(s)) s.foreshadow = true;
-    if (living(m)) shiftPhase(s, m);
+    // 問劍: a master brought from above half straight to his last point does not change; it is over.
+    if (living(m) && !(boardKind(s) === 'yield' && spent(s, id))) shiftPhase(s, m);
     fireHalved(s, id);
   }
 }
@@ -3019,7 +3168,7 @@ function markHalved(s) {
 // the wave pieces still able to come. The interface and the simulator read progress here.
 function objectiveLeft(s) {
   return {
-    masters: masterIds(s).filter((id) => !fallen(s, id)),
+    masters: masterIds(s).filter((id) => !fallen(s, id) && !(boardKind(s) === 'yield' && spent(s, id))),
     foes: enemies(s).filter(living).length,
     waiting: wavesLeft(s),
     // The board's objects as they stand, and on a 'keep' board the rounds still to hold.
@@ -3033,6 +3182,8 @@ function winsIfFalls(s, ids) {
   const down = (id) => gone.has(id) || fallen(s, id);
   const kind = boardKind(s);
   if (kind === 'slay' || kind === 'keep') return masterIds(s).every(down);
+  // 問劍: no one falls; whether a blow ends it is asked of the 氣血 it would leave (winsIfLeft).
+  if (kind === 'yield') return masterIds(s).every((id) => spent(s, id));
   if (kind === 'break') return props(s).every((u) => down(u.id));
   if (enemies(s).some((u) => living(u) && !gone.has(u.id))) return false;
   // A master felled now marks his half and may call a wave.
@@ -3113,6 +3264,8 @@ function scheduleWaves(s) {
 // (鳳天南率五虎門棍徒兩名; 嵩山弟子兩名; types joined with 、).
 function waveList(defs) {
   const named = (def) => DETAILS[def.id.split('#')[0]];
+  // A wave of masters only (the last board's) is named man by man: 血刀老祖、歐陽鋒.
+  if (defs.length > 1 && defs.every((def) => named(def).rank === 'boss')) return defs.map((def) => named(def).name).join('、');
   const lead = defs[0] && named(defs[0]).rank ? named(defs[0]).name : '';
   const counts = new Map();
   for (const def of lead ? defs.slice(1) : defs) {
@@ -3199,6 +3352,11 @@ function arrive(s) {
 // A named black stone steps on during the battle: what he says, what a stone already there says
 // to that, and what a fielded hero from his series of books answers (encounter-script.js extras).
 function strangerSteps(s, id) {
+  if (s.run && boardOf(s).last) {
+    const line = guestLine(id);
+    if (line) log(s, 'story', line, DETAILS[id].name);
+    return;
+  }
   const lines = s.run && ENCOUNTER_SCRIPT[s.mapIndex]?.extras?.[id];
   if (!lines?.enter) return;
   log(s, 'story', lines.enter, DETAILS[id].name);
@@ -3206,6 +3364,12 @@ function strangerSteps(s, id) {
   if (other && living(other)) log(s, 'story', lines.reply.text, unitDetails(other).name);
   for (const u of party(s))
     if (living(u) && lines.heroes?.[u.id]) log(s, 'story', lines.heroes[u.id], DETAILS[u.id].name);
+}
+// What a board's master says on the last board, where he stands of his own accord: his own
+// board's line (encounter-script.js `guest`), so a new board brings its master's with it.
+function guestLine(id) {
+  const map = CAPTAINS.findIndex(([captain]) => captain === id);
+  return (map >= 0 && ENCOUNTER_SCRIPT[map]?.guest) || '';
 }
 // One round ahead of a wave: the log says who comes next round and from where.
 function announce(s) {
@@ -3216,8 +3380,10 @@ function announce(s) {
     if (w.when.halved && s.logs.some((l) => l.who === '敵援' && l.round === s.round - 1 && l.text.endsWith(fireLine(s, w))))
       continue;
     if (defs.length) {
-      // 求敗 sets a stone down: the sound comes a round before the person.
-      if (s.run) log(s, 'story', MAZE_TALE.clack, QIUBAI.name);
+      // 求敗 sets a stone down: the sound comes a round before the person. On the last board he
+      // is on it himself, and those who come walk on of their own accord.
+      if (s.run && boardOf(s).last) log(s, 'story', MAZE_TALE.finale.walkOn, YOUTH.role);
+      else if (s.run) log(s, 'story', shade(MAZE_TALE.clack, s.run.plus), acrossTable(s.run.plus).name);
       log(s, 'system', '下一回合，' + waveList(defs) + '自' + w.place + '入場。', '敵援');
     }
   }
@@ -3235,7 +3401,7 @@ function fireHalved(s, id) {
     s.arrivals[w.id] = s.round + 2;
     const name = unitDetails(find(s, id)).name;
     // 求敗 answers a stone in danger.
-    if (s.run) log(s, 'story', MAZE_TALE.clackSave, QIUBAI.name);
+    if (s.run) log(s, 'story', shade(MAZE_TALE.clackSave, s.run.plus), acrossTable(s.run.plus).name);
     log(s, 'system', name + '氣血過半。' + fireLine(s, w), '敵援');
   }
 }
@@ -3253,6 +3419,7 @@ function shiftPhase(s, u) {
   // 遁走: the flight covers its next `turns` actions, so from this round if it has yet to act.
   if (p.flee) u.fleeThrough = s.round + p.flee.turns - (s.phase === 'enemy' && u.acted ? 0 : 1);
   log(s, 'combat', p.log || '', unitDetails(u).name);
+  if (p.say) log(s, 'story', p.say, unitDetails(u).name);
 }
 function restOnHerbs(s, units) {
   for (const u of units.filter(living)) {
@@ -3855,4 +4022,5 @@ function nextRound(s) {
   return true;
 }
 
+export { traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
 export { charmed, sideOf, immuneTo, holdsFire, drainOf, controlPlan, isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor, seatOf, seatRow, seatNumbers, twinForm };

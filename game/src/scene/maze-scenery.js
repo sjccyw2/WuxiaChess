@@ -30,7 +30,8 @@ const stonework = [
   [0x8f8a76, 0xb3a98c, 0x69685a, 0x7d7c68, 0xb98f7a, 0x5a8a7c], // 絕情花徑: warm valley stone
   [0x8a8780, 0xaaa596, 0x5c5d58, 0x74746a, 0x9c917c, 0x4f8791], // 鐵掌溪灘: river rock
   [0x5d6b80, 0x8792a0, 0x3e4860, 0x4f5a70, 0xc9a560, 0x3f6f86], // 西夏夜苑: palace marble by lantern
-  [0x9b958c, 0xc2b8a6, 0x6e6b66, 0x868078, 0xb8947e, 0x6f9aa0] // 黑木繡閣: garden paths
+  [0x9b958c, 0xc2b8a6, 0x6e6b66, 0x868078, 0xb8947e, 0x6f9aa0], // 黑木繡閣: garden paths
+  [0x8a9a8e, 0xa9b5a3, 0x566159, 0x6f7d73, 0xb9b28b, 0x4f867f] // 谷底棋臺: valley stone and moss
 ];
 // The boards built round one villain (10 on) borrow the tile language of an earlier board (how
 // its ground, sides and rims are cut) and dress the tiles that are theirs alone through their own
@@ -47,7 +48,7 @@ const directions = [
   [0, 1],
   [-1, 0]
 ];
-const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32, 1.1, 1.3, 1.0, 1.6, 3.2];
+const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32, 1.1, 1.3, 1.0, 1.6, 3.2, 0.3];
 // Each side is measured in local coordinates. The first and last point of
 // every course meet the neighbouring side even along a re-entrant corner.
 function exposedSide(m, index, p, cell, salt, depth = landDepth[index]) {
@@ -208,6 +209,8 @@ function exposedSide(m, index, p, cell, salt, depth = landDepth[index]) {
 function shapedShelf(m, index, p, layout, depth = landDepth[index]) {
   // 桃花石陣 lays its own ground and well shaft in landforms/landform-5.js.
   if (index === 5) return;
+  // 谷底棋臺 is one slab of stone, cut and edged in landforms/table-15.js.
+  if (index === 15) return;
   const { width, height, cells, mask } = layout;
   const cx = (width - 1) / 2,
     cz = (height - 1) / 2;
@@ -668,6 +671,8 @@ function obstacle(m, index, p, crate) {
 function field(m, index, cells, p, size, own = null) {
   // 桃花石陣 dresses its tiles in landforms/formation-5.js.
   if (index === 5) return;
+  // 谷底棋臺 carves its go lines and sets its stones and swords in landforms/table-15.js.
+  if (index === 15) return;
   const centerX = (size.width - 1) / 2;
   const centerZ = (size.height - 1) / 2;
   for (const cell of cells) {
@@ -1051,6 +1056,8 @@ function ranges(m, index, p) {
   if (index === 6) return; // landform-6 draws its own horizon
   // 桃花石陣's distant islets are in landforms/island-5.js.
   if (index === 5) return;
+  // 谷底棋臺 is walled in by its own cliffs (landforms/valley-15.js).
+  if (index === 15) return;
   const r = m.rng,
     style = setting(index);
   if (index === 3) return peaks3(m, style);
@@ -1338,6 +1345,8 @@ function approachLandmark(index, size, add, p) {
       m.tube([0, 0.62, 0], [0, 1.49, 0], 0.034, 0.026, brass, 7);
       m.hoop(0, 1.39, 0, 0.18, 0.019, brass, 18, 'xy', 0.27);
     });
+  } else if (index === 15) {
+    // Nothing stands on the approaches: the valley floor is in landforms/valley-15.js.
   }
 }
 function mazeScenery(T, index, cells) {

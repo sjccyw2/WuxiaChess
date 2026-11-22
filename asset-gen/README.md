@@ -8,8 +8,9 @@ planned for each pack and which decisions are waiting on the producer.
 | Path | What it holds |
 | --- | --- |
 | `prompts.md` | Prompts for the story's pictures: file name, size, where it appears. |
-| `story-characters/` | The youth and 求敗 (`qiubai`): a character card (`cards/`, 1024 × 1024) and a sprite sheet (`sprites/`, the roster pack's 8 × 5 format) each. 求敗's card is also his portrait in the game (`npc-qiubai.webp`); the sheets are not in the game yet (roadmap 2.3). 求敗 holds a twig, not a sword. |
+| `story-characters/` | The youth and 求敗 (`qiubai`): a character card (`cards/`, 1024 × 1024) and a sprite sheet (`sprites/`, the roster pack's 8 × 5 format) each. 求敗's card is also his portrait in the game (`npc-qiubai.webp`). Both sheets are in the game since 2026-11-22, cut by `tools/roster-art.py --story youth qiubai`: the two stand on the last board, and the youth on every board after the ending. 求敗 holds a twig, not a sword. `make/` paints, and `full/` keeps, the two further pictures the youth needs as a piece: his full-length figure (`game/assets/figure-youth.webp`) and his sword, 利劍 (`game/assets/item-keenSword.webp`). |
 | `prologue-video/` | The 45-second manga-style prologue film lettered like a Hong Kong comic, in an upright (9:16) and a wide (16:9) cut, the painted panels of each, and the scripts that paint and cut them (`make/`). |
+| `finale-video/` | The 59-second manga-style ending film (放下, and the name the youth will take), made as the prologue film was and lettered like a Hong Kong comic, in an upright (9:16) and a wide (16:9) cut, the painted panels of each, and the scripts that paint and cut them (`make/`). |
 | `story-art/` | Story pictures painted for the old story that the v1.0 story has no place for (`prompts.md` B4, B7). |
 | `battle-objects/` | The board objects of the 守 and 破 boards: 七弦琴 (空山琴臺), 城頭戰鼓 (襄陽殘垣) and 星索樁 (無刻漏臺), each intact and broken, with the script that painted them and the one that cuts the game's files. All are in the game (`game/assets/object-*.webp`). |
 | `jianying-roster-art/` | Thirty characters: a portrait and a sprite sheet each. |

@@ -4,7 +4,6 @@
 // Reinforcements are not on it: they come as a surprise.
 // Read from the board's data, so it needs no fight: the shop's look at the next board uses it too.
 import * as G from '../rules/game.js';
-import { BATTLES } from '../data/battles.js';
 import { mapLayout } from '../data/terrain.js';
 import { art } from './artwork.js';
 
@@ -14,9 +13,10 @@ const place = (x, y) => 'grid-column:' + (x + 1) + ';grid-row:' + (y + 1);
 
 // What stands where before round one. `s` is a run on this board (its drawn secondary, a
 // legacy board's four), or null for a board seen ahead of time.
-function boardPlan(map, s = null) {
+// `route`: the run's boards, so the last board seen ahead names the masters that run will bring.
+function boardPlan(map, s = null, route = null) {
   const layout = mapLayout(map),
-    board = s ? G.boardOf(s) : BATTLES[map],
+    board = s ? G.boardOf(s) : G.castBoard(map, route || undefined),
     keys = G.encounterKeys(map);
   const piece = (key, x, y) => {
     const rank = G.DETAILS[key]?.rank;

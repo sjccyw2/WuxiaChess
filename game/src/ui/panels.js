@@ -7,7 +7,7 @@ import {
 } from '../rules/battle-mastery.js';
 import { art } from './artwork.js';
 import { fieldSize, fieldCells, terrainTypes, mapLayout, tileInfo } from '../data/terrain.js';
-import { NUMERALS, guideInventory, acceptsGuide, briefing, boardBrief, sideForecast } from '../rules/journey.js';
+import { NUMERALS, guideInventory, acceptsGuide, briefing, boardBrief, sideForecast, mapAt, stagesOf, stageTitle, TENTH } from '../rules/journey.js';
 import { seatsFor } from '../rules/formation.js';
 import { POSTS, boardPlan, planGrid, planKey } from './board-plan.js';
 import {
@@ -688,8 +688,8 @@ function logPage(s, filter) {
 // board from the shop, with no secondary drawn yet. `back` names the page the footer returns to.
 function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {}) {
   const r = s.run,
-    model = ahead ? boardBrief(r.route[r.stage + 1], r.stage + 1) : briefing(s, { live });
-  const plan = boardPlan(model.map, ahead ? null : s);
+    model = ahead ? boardBrief(mapAt(r, r.stage + 1), r.stage + 1, r.route) : briefing(s, { live });
+  const plan = boardPlan(model.map, ahead ? null : s, r.route);
   const seats = ahead ? [] : seatsFor(r);
   const post = (i, x, y, at) =>
     '<b class="plan-post' +
@@ -802,17 +802,19 @@ function goalsPage(s) {
     return briefPage(s, {
       live: true,
       extra:
-      '<details class="hud-disclosure brief-route"><summary>十局次序 · ' +
+      '<details class="hud-disclosure brief-route"><summary>棋局次序 · ' +
       (s.run.stage + 1) +
-      '／10</summary><ol class="journey-route">' +
-      s.run.route
+      '／' +
+      stagesOf(s.run).length +
+      '</summary><ol class="journey-route">' +
+      stagesOf(s.run)
         .map(
           (map, i) =>
             '<li class="' +
             (i === s.run.stage ? 'current' : i < s.run.stage ? 'cleared' : '') +
-            '"><small>第' +
-            NUMERALS[i] +
-            '局</small><strong>' +
+            '"><small>' +
+            stageTitle(i, '') +
+            '</small><strong>' +
             mapLayout(map).name +
             ' · ' +
             mapLayout(map).shapeName +
@@ -824,9 +826,11 @@ function goalsPage(s) {
               ? '目前所在'
               : i < s.run.stage
                 ? '已破局'
-                : i === 9
-                  ? '最後一局'
-                  : '未抵達') +
+                : i === TENTH
+                  ? '第十局，十局之末'
+                  : i > TENTH
+                    ? '十局皆勝之後'
+                    : '未抵達') +
             '</span></li>'
         )
         .join('') +
@@ -1301,7 +1305,7 @@ function attackPage(s, source, target, skill) {
   // 代受 and 號令 change who the action is for: each gets its own row.
   for (const note of f.notes)
     lines.push(
-      /^(代受|號令|化功) · /.test(note)
+      /^(代受|號令|化功|不敗|無招|問劍) · /.test(note)
         ? line(note.slice(0, 2), esc(note.slice(5)))
         : line('招式連攜', esc(note))
     );

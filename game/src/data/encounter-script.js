@@ -25,8 +25,15 @@
 //               broken  as it breaks
 //               lost    a 'keep' object: the board's reason for the loss its breaking is (text only)
 //               held    a 'keep' object: the last round to hold is over and it still stands
+//   guest     what the board's master says on the last board (battles.js `last`), where he stands
+//             with no 戰意 on him, of his own accord: as the board opens if he is there from the
+//             start, as he steps on if he comes later. It is about himself only.
+//
+// The last entry is the last board itself, 谷底棋臺. 求敗 and the youth are on it; what they say
+// there is the spine's (maze-tale.js `finale`), so its own lines are only how the board looks.
 const ENCOUNTER_SCRIPT = [
   {
+    guest: '沒人按著余某，余某照樣要打。青城派的劍，向來不必旁人使喚。',
     before: [
       {
         who: 'boss',
@@ -76,6 +83,7 @@ const ENCOUNTER_SCRIPT = [
     }
   },
   {
+    guest: '沒有人逼，田某原該一走了之。只是站在這位老前輩身邊，這一仗總算有了七分把握。',
     before: [
       {
         who: 'mini',
@@ -120,6 +128,7 @@ const ENCOUNTER_SCRIPT = [
     extras: { zhaoZhong: {} }
   },
   {
+    guest: '老仙法力無邊，從來用不著旁人來按。今日便教你們見識見識真本事！',
     before: [
       {
         who: 'mini',
@@ -160,6 +169,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '嘿嘿，沒人按著，老祖這口刀照樣要見血。砍人原是老祖自己的主意！',
     before: [
       {
         who: 'mini',
@@ -199,6 +209,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '左某平生不做無益之事。同這位前輩並肩過得一招，勝讀十年劍譜。',
     before: [
       {
         who: 'boss',
@@ -249,6 +260,7 @@ const ENCOUNTER_SCRIPT = [
     }
   },
   {
+    guest: '我是誰？……不管了。那邊有人要打架，我便同他打！',
     before: [
       {
         who: 'mini',
@@ -293,6 +305,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '老衲十層龍象般若功，正要尋個配得上的對手。今日這一陣，不必誰來相強。',
     before: [
       {
         who: 'boss',
@@ -364,6 +377,7 @@ const ENCOUNTER_SCRIPT = [
     }
   },
   {
+    guest: '沒有人逼我。我這一口怨氣，原是自己的。',
     before: [
       {
         who: 'mini',
@@ -405,6 +419,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '岳某向來以和為貴。只是老前輩有命，晚輩不敢不從，各位包涵。',
     before: [
       {
         who: 'mini',
@@ -463,6 +478,7 @@ const ENCOUNTER_SCRIPT = [
     }
   },
   {
+    guest: '老夫一生只為大燕，沒有一日是為自己打的。今日這一局，算是老夫自己的。',
     before: [
       {
         who: 'youth',
@@ -528,6 +544,7 @@ const ENCOUNTER_SCRIPT = [
   },
   // The boards built round one villain: no lieutenant, so no 'mini' line.
   {
+    guest: '今日心裡清清淨淨，一道號令也無。本座親自下場，這一回是本座自己的旨意。',
     before: [
       {
         who: 'boss',
@@ -560,6 +577,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '這一回無人替公孫某拿主意。一刀一劍，都是公孫某自己要使的，貴客休怪。',
     before: [
       {
         who: 'boss',
@@ -596,6 +614,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '今日沒有人替老夫點名。老夫一雙鐵掌，要打誰便打誰，這一掌是老夫自己要打的。',
     before: [
       {
         who: 'boss',
@@ -634,6 +653,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '沒有誰借我的手。我同人鬥了一世，再多鬥這一場，是我自己歡喜。',
     before: [
       {
         who: 'boss',
@@ -668,6 +688,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '這一回，針是我自己拈起來的。繡花繡得倦了，瞧瞧天下英雄，也是好的。',
     before: [
       {
         who: 'boss',
@@ -703,6 +724,19 @@ const ENCOUNTER_SCRIPT = [
       guard: '東方不敗，你奪了任教主的位子，老子同你有的是帳算。可你今日連教主也不想當，只想繡花，偏有人不許。嘿，這人比老子還不講理。'
     },
     extras: {}
+  },
+  // The last board (谷底棋臺): only 無名 speaks for the white side.
+  {
+    before: [
+      {
+        who: 'youth',
+        note: '谷底棋臺。那方青石棋枰到了腳下，竟有一座校場大小，縱橫十三路，一路便是一步；東邊一道瀑布，落作淺潭。',
+        text: '原來盤上是這般光景。站在這裡，果然只瞧得見身邊幾步。'
+      }
+    ],
+    win: [{ who: 'youth', note: '瀑布之聲忽然清楚起來。盤上再沒有人動手。', text: '……停了。大家都停了。' }],
+    // (Lost by 無名 falling or by the twelve rounds running out: the line must fit both.)
+    loss: [{ who: 'youth', note: '瀑布聲中，盤上的人影一齊停了手。', text: '……我沒有撐住。' }]
   }
 ];
 

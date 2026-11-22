@@ -105,7 +105,7 @@ const RULE_GROUPS = [
         id: 'answer',
         name: '破招',
         art: 'answer',
-        text: '每一式專破一路：近身、遠攻，或局主與副手。目標合於所破的一路時，倍率 ＋0.30'
+        text: '每一式專破一路：近身、遠攻、局主與副手，或一類兵刃（刀、長兵、短兵、軟兵、拳掌）。目標合於所破的一路時，倍率 ＋0.30'
       },
       { id: 'lone', name: '孤行', art: 'lone', text: '出手時四鄰沒有同伴，倍率提高' },
       {
@@ -324,7 +324,14 @@ const RULE_GROUPS = [
         text: '走動之後的普攻令目標中毒；原地出手與還擊不帶毒'
       },
       { id: 'lastStand', name: '沉樁', trait: 'lastStand', text: '氣血降到一定程度以下時，受到的傷害減少' },
-      { id: 'snare', name: '墜網', trait: 'snare', text: '普攻令目標絆足，移動減少；還擊不帶網' }
+      { id: 'snare', name: '墜網', trait: 'snare', text: '普攻令目標絆足，移動減少；還擊不帶網' },
+      {
+        id: 'unfelled',
+        name: '不敗',
+        trait: 'unfelled',
+        text: '無論攻擊、還擊或毒傷，氣血都不會低於 1 點；他不會倒下'
+      },
+      { id: 'formless', name: '無招', trait: 'formless', text: '沒有招式可破：任何一式的破招對他都不成' }
     ]
   },
   {
@@ -349,6 +356,12 @@ const RULE_GROUPS = [
         name: '破',
         kind: 'break',
         text: '戰意釘在盤上的東西（破物）上。把破物盡數擊毀便勝，局主倒不倒都一樣。破物不還擊、不閃避，招式的附帶之效與波及都不及其身'
+      },
+      {
+        id: 'yield',
+        name: '問劍',
+        kind: 'yield',
+        text: '終局的打法。對面的人不敗，不會倒下；把他的氣血削至 1 點便勝，其餘的人不必擊敗。無名是這一局的眼，他倒下便輸'
       },
       { id: 'loss', name: '敗退', text: '領隊倒下，或第十二回合結束仍未取勝，這一輪便結束' },
       {

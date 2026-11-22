@@ -38,6 +38,7 @@ function installGrade(T, renderer) {
 // key to fill, the fill temperature and the exposure are set here.
 //   key: sun colour pull toward warm, strength   fill: sky/ground strength
 //   rim: back light strength   exposure   mist: share of the map's fog kept when looking down
+//   ground: the colour light bounces up in, where the map's base colour is not its ground
 const base = { warm: 0.3, key: 3.0, fill: 1.08, cool: 0.5, rim: 0.75, exposure: 0.96, mist: 0.42 };
 const rigs = [
   { key: 3.0, fill: 1.05 }, // 青竹渡: morning sun through river mist
@@ -54,7 +55,9 @@ const rigs = [
   { warm: 0.36, key: 2.9, fill: 1.08, cool: 0.4, mist: 0.48 }, // 絕情花徑: soft light in a closed valley
   { warm: 0.3, key: 3.1, fill: 1.06, cool: 0.5 }, // 鐵掌溪灘: clear mountain light on water
   { warm: 0.16, key: 2.9, fill: 1.3, cool: 0.3, rim: 1.0, exposure: 0.86, mist: 0.5 }, // 西夏夜苑: lantern light
-  { warm: 0.3, key: 3.0, fill: 1.1, cool: 0.45, mist: 0.5 } // 黑木繡閣: bright air above the cloud
+  { warm: 0.3, key: 3.0, fill: 1.1, cool: 0.45, mist: 0.5 }, // 黑木繡閣: bright air above the cloud
+  // 谷底棋臺: late sun over the west cliff, cool shade. Its base colour is the pond's, so the bounce is given: earth.
+  { warm: 0.3, key: 2.4, fill: 1.08, cool: 0.7, rim: 0.7, exposure: 0.95, mist: 0.6, ground: 0x6f6a58 }
 ];
 function stageRig(index) {
   return { ...base, ...(rigs[index] || rigs[0]) };
@@ -66,7 +69,7 @@ function lightStage(T, scene, index, sun) {
     night = isNight(index);
   const horizon = new T.Color(index ? profile.horizon : 0xbcc7b9),
     zenith = new T.Color(index ? profile.zenith : 0x7fa7ae),
-    ground = new T.Color(index ? profile.base : 0x809a89);
+    ground = new T.Color(rig.ground ?? (index ? profile.base : 0x809a89));
   // Fill: the sky's own colour pushed cooler, over a dim warm bounce from the ground.
   const sky = horizon
     .clone()

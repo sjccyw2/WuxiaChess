@@ -132,7 +132,17 @@ const BEDS = [
       ['bird', 9],
       ['chime', 17]
     ]
-  } // 黑木繡閣
+  }, // 黑木繡閣
+  {
+    // Falling water, the air moving in a deep valley, now and then a bird.
+    wind: [450, 0.9, 0.35],
+    water: 0.65,
+    events: [
+      ['gust', 12],
+      ['bird', 17],
+      ['plip', 9]
+    ]
+  } // 谷底棋臺
 ];
 
 // The sparse sounds that punctuate a bed. Each is scheduled into the bed's own voice.

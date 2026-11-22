@@ -300,9 +300,149 @@ const HERO_PATHS = {
       ['aqChain', null, null],
       [null, 'aqYue', null]
     ]
+  },
+  // 無名, the youth, as a piece (the last board, and every run after the ending). His tree is
+  // nine forms, so it is two nodes and a few points larger than a hero's (tools/check-skills.mjs).
+  // Four of the nine are 令狐冲's too, and are the same arts in both trees (SHARED_FORMS).
+  youth: {
+    title: '盤上九式',
+    book: '一念江湖',
+    boon: '不棄一子',
+    signature: '總訣式',
+    // In place of RECALL_NOTE above his tree: he is no copy, and nothing is coming back to him.
+    recall:
+      '無名不是拓來的一念，身上本來半點功夫也無。他在盤外瞧過的招數，要到了盤上，一式一式使將出來，手上才算是有了。',
+    origin:
+      '入盤之時，無名手上甚麼也沒有，只有在棋臺邊瞧了千百局的一雙眼。千年的招數在他眼裡過了一遍；他瞧著對手的兵刃，劍便自己尋到了空處。這九式沒有誰教過他，要在局中一式一式使將出來。',
+    layout: [
+      ['youthKeenEdge', 'youthBreakBlade', null],
+      ['youthBreakPole', 'youthBreakSword', 'youthBreakArrow'],
+      ['youthBreakMace', 'youthBreakQi', 'youthBreakSoft'],
+      ['youthBreakHand', null, null]
+    ]
   }
 };
 const MASTERY_ARTS = {
+  // ── 無名 ── His nine forms. 總訣式 (his starting art), 破劍式, 破箭式 and 破氣式 are the arts 令狐冲
+  // learns, and by the producer's rule (2026-11-22) an art has one effect and one tier whoever
+  // learns it: those three are copied from 令狐冲's below (SHARED_FORMS), and 總訣式 from his in
+  // game.js. The other five are 無名's alone: each answers one kind of weapon (破招; the enemy's
+  // `arm`, encounters.js) and has an effect of its own, so no two do the same job.
+  youthKeenEdge: {
+    name: '利劍・凌厲剛猛',
+    owner: 'youth',
+    root: 'force',
+    kind: 'basic',
+    tier: 1,
+    needs: [],
+    points: 1,
+    icon: 'sword',
+    visual: 'hero',
+    basicBonus: 6,
+    desc: '普攻換用凌厲剛猛的一路直刺，命中時傷害增加 6 點。',
+    source: '劍塚石刻記第一柄劍：「凌厲剛猛，無堅不摧，弱冠前以之與河朔群雄爭鋒。」見《神鵰俠侶》。'
+  },
+  youthBreakBlade: {
+    name: '破刀式',
+    family: '盤上九式',
+    owner: 'youth',
+    root: 'guard',
+    kind: 'active',
+    tier: 1,
+    needs: ['signature'],
+    points: 1,
+    mp: 9,
+    range: 1,
+    icon: 'sword',
+    visual: 'hero',
+    target: 'enemy',
+    factor: 1.4,
+    answer: 'blade',
+    desc: '以輕御重，以快制慢，搶在刀勢使老之前一劍刺中相鄰敵人。對使刀之敵威力更強。',
+    source: '《笑傲江湖》中風清揚所傳劍法的第三式，破解單刀、雙刀、柳葉刀、鬼頭刀、大砍刀、斬馬刀種種刀法。'
+  },
+  youthBreakPole: {
+    name: '破槍式',
+    family: '盤上九式',
+    owner: 'youth',
+    root: 'force',
+    kind: 'active',
+    tier: 2,
+    needs: ['youthBreakBlade'],
+    points: 2,
+    mp: 11,
+    range: 1,
+    icon: 'sword',
+    visual: 'hero',
+    target: 'enemy',
+    factor: 1.5,
+    push: true,
+    answer: 'pole',
+    desc: '欺入長兵圈內，一劍將相鄰敵人震退一格。對使長兵之敵威力更強。',
+    source: '《笑傲江湖》中風清揚所傳劍法的第四式，破解長槍、大戟、蛇矛、齊眉棍、狼牙棒、白蠟桿、禪杖、方便鏟種種長兵刃。'
+  },
+  youthBreakSoft: {
+    name: '破索式',
+    family: '盤上九式',
+    owner: 'youth',
+    root: 'guard',
+    kind: 'active',
+    tier: 3,
+    needs: ['youthBreakArrow'],
+    points: 2,
+    mp: 13,
+    range: 2,
+    icon: 'sword',
+    visual: 'hero',
+    target: 'enemy',
+    factor: 1.5,
+    disarm: { power: 5, turns: 2 },
+    answer: 'soft',
+    desc: '劍尖搭上軟兵一絞，可攻擊兩格內的一名敵人。敵人攻擊降低 5 點，且只能攻擊相鄰一格，持續兩回合。對使軟兵之敵威力更強。',
+    source: '《笑傲江湖》中風清揚所傳劍法的第六式，破解長索、軟鞭、三節棍、鍊子槍、鐵鍊、漁網、飛鎚流星種種軟兵刃。'
+  },
+  youthBreakMace: {
+    name: '破鞭式',
+    family: '盤上九式',
+    owner: 'youth',
+    root: 'force',
+    kind: 'active',
+    tier: 3,
+    needs: ['youthBreakPole'],
+    points: 2,
+    mp: 13,
+    range: 1,
+    icon: 'sword',
+    visual: 'hero',
+    target: 'enemy',
+    factor: 1.65,
+    pierce: 0.5,
+    answer: 'mace',
+    desc: '短兵勢沉，劍從它的縫隙中遞將進去，重擊相鄰敵人並穿透一半防禦。對使短兵之敵威力更強。',
+    source: '《笑傲江湖》中風清揚所傳劍法的第五式，破解鋼鞭、鐵鐧、點穴橛、拐子、蛾眉刺、匕首、板斧、鐵牌、八角鎚、鐵椎種種短兵刃。'
+  },
+  youthBreakHand: {
+    name: '破掌式',
+    family: '盤上九式',
+    owner: 'youth',
+    root: 'force',
+    kind: 'refinement',
+    tier: 4,
+    needs: ['youthBreakQi', 'youthBreakMace'],
+    points: 3,
+    mp: 17,
+    range: 1,
+    icon: 'hand',
+    visual: 'hero',
+    target: 'enemy',
+    factor: 2.1,
+    safe: true,
+    recoil: 6,
+    answer: 'hand',
+    gate: { metric: 'casts', atLeast: 10 },
+    desc: '對手敢以空手來鬥利劍，武功上必有極高造詣；劍便專削他出招的手腳，重擊相鄰敵人，敵人無從還擊。對拳掌之敵威力更強。出劍後露空：至下回合防禦降低 6 點。',
+    source: '《笑傲江湖》中風清揚所傳劍法的第七式，破解拳腳指掌上的功夫：長拳短打、擒拿點穴、鷹爪虎爪、鐵沙神掌。風清揚說，對方既敢以空手來鬥利劍，武功上自有極高造詣。'
+  },
   mountainOpening: {
     name: '華山劍法・白虹貫日',
     owner: 'hero',
@@ -2669,6 +2809,18 @@ const MASTERY_ARTS = {
     source: '阿青的劍術得自白猿，並無招式之名，世稱越女劍。她孤身一人，三千越甲不可敵。'
   }
 };
+// The forms 無名 and 令狐冲 both learn are one art each: the same effect, tier and cost, whoever
+// learns it (the producer's rule, 2026-11-22). 無名's are copies of 令狐冲's, with what they hang
+// from in his own tree and a note of their own: 令狐冲's tell how he came by each, and name the art
+// the nine will one day be called, which 無名's tree does not say before the ending.
+const SHARED_FORMS = {
+  youthBreakSword: ['breakSword', ['signature'], '《笑傲江湖》中風清揚所傳劍法的第二式，破解普天下各門各派的劍法。以射程分辨對手是本作的讀法。'],
+  youthBreakArrow: ['breakArrow', ['signature'], '《笑傲江湖》中風清揚所傳劍法的第八式，破解諸般暗器；練這一式，須得先學聽風辨器之術。波及四鄰是本作的演繹。'],
+  youthBreakQi: ['breakQi', ['youthBreakSword'], '《笑傲江湖》中風清揚所傳劍法的第九式，為對付身具上乘內功的敵人而用，神而明之，存乎一心。']
+};
+for (const [mine, [his, needs, source]] of Object.entries(SHARED_FORMS))
+  MASTERY_ARTS[mine] = { ...MASTERY_ARTS[his], family: '盤上九式', owner: 'youth', needs, source };
+
 // A purchased copy belongs to the hero who studies it. The SP price is paid by that reader.
 const TRADE_MANUALS = {
   fingerFlick: {
@@ -2838,4 +2990,4 @@ const TRADE_MANUALS = {
   }
 };
 
-export { CATALOG_NOTE, RECALL_NOTE, GATE_LABELS, HERO_PATHS, MASTERY_ARTS, TRADE_MANUALS };
+export { CATALOG_NOTE, RECALL_NOTE, GATE_LABELS, HERO_PATHS, MASTERY_ARTS, TRADE_MANUALS, SHARED_FORMS };

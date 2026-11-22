@@ -6,17 +6,17 @@
 // In a battle (from its story, briefing or 整備 too) it can win the board now, win it with the
 // secondary met, or lose it; each goes through the game's own settling, so rewards, the next
 // hero, the story and the end of the run follow as in play (journey.js devFinish). Outside a
-// battle it can open all five 境界 and jump to the placeholder last battle. Always, 試局 opens a
-// page to start a test battle: any board, any 境界, the heroes picked (journey.js devTestRun).
+// battle it can open all five 境界, jump to the last board (終局) with the heroes last picked for a
+// test battle, play the ending film, and open what the ending opens (無名入盤). Always, 試局 opens
+// a page to start a test battle: any board, any 境界, the heroes picked (journey.js devTestRun).
 import { btn, titleHead, esc } from './panels.js';
 import { DETAILS, PARTY } from '../rules/game.js';
 import { mapLayout, MAP_LAYOUTS } from '../data/terrain.js';
 import { REALMS } from '../data/realms.js';
-import { DEV_TEST, mapStages } from '../rules/journey.js';
+import { DEV_TEST, mapStages, stageTitle } from '../rules/journey.js';
 
 const DEV_KEY = 'jianying.dev-mode.v1';
 const PICK_KEY = 'jianying.dev-test.v1';
-const NUMERAL = '一二三四五六七八九十';
 
 // Reads ?dev from the address and remembers it; every storage access may fail (private
 // windows, blocked storage), and then only the address counts.
@@ -42,7 +42,10 @@ function devPanel({ battle }) {
   return (
     (battle
       ? btn('dev-win', '速勝', 'dev-btn') + btn('dev-win-side', '速勝・支線', 'dev-btn') + btn('dev-lose', '速敗', 'dev-btn')
-      : btn('dev-unlock', '開五重境界', 'dev-btn') + btn('dev-finale', '跳至終局', 'dev-btn')) +
+      : btn('dev-unlock', '開五重境界', 'dev-btn') +
+        btn('dev-finale', '跳至終局', 'dev-btn') +
+        btn('dev-film', '看終局影片', 'dev-btn') +
+        btn('dev-plus', '開無名入盤', 'dev-btn')) +
     btn('dev-test', '試局', 'dev-btn')
   );
 }
@@ -81,11 +84,12 @@ function changePick(pick, what, id) {
 function devTestView(pick) {
   const chip = (action, id, label, on, extra = '') =>
     btn(action, label, 'dev-chip' + (on ? ' on' : ''), `data-id="${id}" aria-pressed="${on}" ${extra}`);
-  // Every board, in the order a run can meet them (the boards of a stage side by side).
+  // Every board, in the order a run can meet them (the boards of a stage side by side), the
+  // last board after them.
   const boards = MAP_LAYOUTS.map((_, i) => i)
     .sort((a, b) => (mapStages(a)[0] ?? 0) - (mapStages(b)[0] ?? 0) || a - b)
     .map((i) =>
-      chip('dev-test-map', i, `<small>第${NUMERAL[mapStages(i)[0] ?? 0]}局</small>${esc(mapLayout(i).name)}`, pick.map === i)
+      chip('dev-test-map', i, `<small>${stageTitle(mapStages(i)[0] ?? 0, '')}</small>${esc(mapLayout(i).name)}`, pick.map === i)
     )
     .join('');
   const realms = REALMS.map((r, i) => chip('dev-test-realm', i + 1, `${esc(r.sword)}境界`, pick.realm === i + 1)).join('');
@@ -96,7 +100,7 @@ function devTestView(pick) {
   }).join('');
   return `<section class="run-view dev-test">
     ${titleHead('scroll', '試局', '開發者模式')}
-    <p class="dev-test-lead">直接從一局的軍情開始，敵人照該局在一輪中的位置與所選境界。每位俠客 ${DEV_TEST.points} 武學點，行囊 ${DEV_TEST.coins} 兩。打完這一局，這一輪照常往下走。開局會取代目前的存檔。</p>
+    <p class="dev-test-lead">直接從一局的軍情開始，敵人照該局在一輪中的位置與所選境界。每位俠客 ${DEV_TEST.points} 武學點，行囊 ${DEV_TEST.coins} 兩。終局只在無劍境界，無名自會入盤領隊，眾人招式俱全。打完這一局，這一輪照常往下走。開局會取代目前的存檔。</p>
     <h3>棋局</h3><div class="dev-chips">${boards}</div>
     <h3>境界</h3><div class="dev-chips">${realms}</div>
     <h3>俠客 <small>按選的先後：第一位領隊，前五位上陣，其餘候補</small></h3><div class="dev-chips">${heroes}</div>

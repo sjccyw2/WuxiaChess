@@ -20,7 +20,7 @@ const groupPage = (group) => link('rules', 'group-' + group.id, group.title);
 
 // Every art a hero can use: each hero's starting art, then the trees and the manuals.
 const arts = () => [
-  ...G.PARTY.map((hero) => ({
+  ...G.ROSTER.map((hero) => ({
     to: artLink('signature', hero),
     art: G.artFor(G.startingHero(hero), 'signature'),
     forms: G.ART_FORMS['signature:' + hero] || []
@@ -31,7 +31,7 @@ const arts = () => [
 function enemies() {
   const pages = new Map();
   for (const key of Object.keys(G.DETAILS)) {
-    if (G.PARTY.includes(key)) continue;
+    if (G.ROSTER.includes(key)) continue;
     const id = foePage(key);
     if (!pages.has(id)) pages.set(id, { to: link('foes', id, G.DETAILS[key].name), details: G.DETAILS[key] });
   }
@@ -63,6 +63,20 @@ const EXTRA = {
     ]),
   loss: () => rows('限時', [['回合上限', '第' + G.NUMERALS[G.LIMIT - 1] + '回合']]),
   // 守 and 破: each board's objects and, on 守, how long they must stand.
+  // 破招: what each kind of weapon is, and who fights with it. Five of 無名's forms answer by
+  // weapon; 破劍式, which is 令狐冲's art too, answers whoever fights at reach 1, so 劍 is listed
+  // here for the enemy page only.
+  answer: () =>
+    rows(
+      '兵刃各類',
+      [
+        ...Object.entries(G.ARM_NAMES).map(([arm, name]) => [
+          name,
+          [...new Set(Object.values(G.DETAILS).filter((d) => d.arm === arm).map((d) => d.name))].join('、')
+        ]),
+        ['說明', '弓手與發暗器的，由破箭式按射程來破，不列兵刃；完顏洪烈與求敗也不列。使劍的記在這裡，眼下卻沒有哪一式按「劍」來破：破劍式破的是只能攻擊相鄰的對手。']
+      ]
+    ),
   keep: () => rows('各局守物', objectRows('keep')),
   break: () => rows('各局破物', objectRows('break')),
   counter: () => rows('例外', [['無守', sentence(G.RULE_TERMS.openGuard.text)], ['卸勁', sentence(G.RULE_TERMS.stance.text)], ['後發', sentence(G.RULE_TERMS.retort.text)]])
@@ -73,6 +87,7 @@ const BOARDS = {
   rout: () => STAGES.filter((map) => G.BATTLES[map].kind === 'rout'),
   keep: () => STAGES.filter((map) => G.BATTLES[map].kind === 'keep'),
   break: () => STAGES.filter((map) => G.BATTLES[map].kind === 'break'),
+  yield: () => STAGES.filter((map) => G.BATTLES[map].kind === 'yield'),
   waves: () => STAGES.filter((map) => G.BATTLES[map].waves.length)
 };
 
