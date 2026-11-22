@@ -196,7 +196,6 @@ for (let player = 0; player < 60; player++) {
   for (let run = 1; run <= 7; run++) {
     const draw = R.drawLots(Math.floor(roll() * 4294967296));
     draw.leaderId = draw.ids[Math.floor(roll() * 3)];
-    if (run === 1) draw.name = '阿' + player;
     const open = R.openRealms(legacy),
       habit = player % 3;
     draw.realm = habit === 0 ? open : habit === 1 ? 1 + Math.floor(roll() * open) : 1 + Math.floor(roll() * 5);
@@ -210,7 +209,7 @@ for (let player = 0; player < 60; player++) {
     trios.add([...draw.ids].sort().join());
     routes.add(r.route.join());
     leaders.add(draw.leaderId);
-    if (R.youthName(s) !== '阿' + player) fail(label + ': the name was not kept');
+    if (R.youthName(s) !== '無名') fail(label + ': the youth is not 無名');
     if (r.voyage !== run) fail(label + ': run counter is ' + r.voyage);
     // The 境界 is the one picked, if it is open.
     if (r.realm !== wanted) fail(label + ': 境界 is ' + r.realm + ', picked ' + draw.realm + ' with ' + open + ' open');

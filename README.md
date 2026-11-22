@@ -108,7 +108,7 @@ letting go and the youth waking. The profile keeps `realms` (highest open), `cle
 
 ## Developer mode
 
-`game/?dev` turns on a small panel (bottom left, folded under 開發); the browser remembers it,
+`game/?dev` turns on a small panel (at the left edge, folded under 開發); the browser remembers it,
 and `game/?dev=off` turns it off. In a battle, from its story, briefing or 整備 as well:
 
 - 速勝 wins the board now, its secondary missed;
@@ -118,6 +118,14 @@ and `game/?dev=off` turns it off. In a battle, from its story, briefing or 整�
 Each goes through the game's own settling (`devFinish` in `game/src/rules/journey.js`), so
 rewards, the next hero, the story and the end of the run follow as in play. Outside a battle,
 開五重境界 opens all five 境界 (the first four counted as won) and 跳至終局 shows the last battle.
+
+試局, always there, sets up a test battle: pick any of the ten boards, any 境界 (open or not) and
+any heroes, in order (the first leads, the first five fight, the rest wait on the bench). The run
+starts at that board's 軍情 page, its enemies as strong as at the board's usual place in a run and
+in the 境界 picked; every hero has 20 武學點 and the purse 1000 兩 (`DEV_TEST` and `devTestRun` in
+`game/src/rules/journey.js`). After the board the run goes on as usual. The last pick is
+remembered. Starting a test battle replaces the save, and its result counts in the profile like
+any run.
 
 ## How the story is put together
 

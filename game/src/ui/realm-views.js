@@ -24,7 +24,7 @@ function realmView(profile, picked) {
     return `<li class="realm-card${shut ? ' shut' : ''}${won ? ' won' : ''}${chosen ? ' chosen' : ''}">
       ${btn(
         'realm-pick',
-        `<span class="realm-seal">${NUMERAL[i]}</span><span class="realm-name"><strong>${esc(realm.sword)}境界</strong><small>${esc(WAKES[i].title)}</small></span><span class="realm-state">${state}</span><span class="realm-note">${esc(shut ? '先勝第' + NUMERAL[i - 1] + '境界，此重境界方開。' : realm.note)}</span>`,
+        `<span class="realm-seal">${NUMERAL[i]}</span><span class="realm-name"><strong>${esc(realm.sword)}境界</strong><small>${esc(WAKES[i].title)}</small></span><span class="realm-state">${state}</span><span class="realm-note">${esc(shut ? '先勝' + REALMS[i - 1].sword + '境界，此重境界方開。' : realm.note)}</span>`,
         'realm-choice',
         `data-id="${n}" aria-pressed="${chosen}" ${shut ? 'disabled' : ''}`
       )}

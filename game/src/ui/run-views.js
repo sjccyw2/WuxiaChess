@@ -67,20 +67,18 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
 }
 
 // The prologue: the youth falls asleep and finds himself beside the stone table, where an old
-// man is playing himself. The first time, 求敗 asks who he is and the player types the name. On
-// later runs 求敗 remembers him, and greets him by the 境界 he has reached.
-//   profile  the chronicle (name, returns, wins)
+// man is playing himself. The first time, 求敗 asks who he is: the youth cannot recall his name
+// in the dream and calls himself 無名. On later runs 求敗 greets him by the 境界 picked.
+//   profile  the chronicle (returns, wins)
 //   step     which page is showing
-//   name     the name as typed so far (first run only)
-//   film     the film has just told the first pages (first visit): start at
-//            the name, then resume where the film ends
+//   film     the film has just told the first pages (first visit): start where the youth
+//            cannot find his name, then resume where the film ends
 //   realm    the 境界 picked for this run: 求敗 greets him by it
-function prologueSteps(profile, name = '', film = false, realm = 1) {
+function prologueSteps(profile, film = false, realm = 1) {
   const tale = MAZE_TALE.prologue,
-    known = profile.name || '',
-    called = known || name || YOUTH.name,
+    called = YOUTH.name,
     greetings = tale.again.greeting;
-  const people = { youth: { ...YOUTH, name: called }, qiu: QIUBAI, wei: WEI };
+  const people = { youth: YOUTH, qiu: QIUBAI, wei: WEI };
   const named = (line) => String(line).replaceAll('{name}', called);
   const page = (step) => ({
     ...step,
@@ -88,8 +86,8 @@ function prologueSteps(profile, name = '', film = false, realm = 1) {
     text: step.text && named(step.text),
     speaker: people[step.who]
   });
-  // He has been here before only if a name was given: the first visit asks for it.
-  const again = known && (profile.returns ?? 0) > 0;
+  // He has been here before once a run has been played to its end.
+  const again = (profile.returns ?? 0) > 0;
   const steps = again
     ? [
         { note: tale.again.note, picture: EAGLE_PICTURE },
@@ -98,18 +96,18 @@ function prologueSteps(profile, name = '', film = false, realm = 1) {
         { who: 'qiu', text: tale.again.reply }
       ]
     : film
-      ? [...(known ? [] : [tale.film.name, tale.film.named]), ...tale.first.slice(tale.first.findIndex((step) => step.afterFilm))]
-      : tale.first.map((step) => (step.ask && known ? { ...step, ask: false } : step));
-  // Until he has said his name, the page calls him only 少年.
-  const asked = known ? -1 : steps.findIndex((step) => step.ask);
+      ? [tale.film.name, tale.film.named, ...tale.first.slice(tale.first.findIndex((step) => step.afterFilm))]
+      : tale.first;
+  // Until he calls himself 無名, the page calls him only 少年.
+  const namedAt = steps.findIndex((step) => step.names);
   return steps.map((step, i) => {
     const p = page(step);
-    if (i <= asked && step.who === 'youth') p.speaker = { ...p.speaker, name: '少年' };
+    if (i < namedAt && step.who === 'youth') p.speaker = { ...p.speaker, name: '少年' };
     return { ...p, view: i === 0 && !film ? TALE_ART.wake : '', last: i === steps.length - 1 };
   });
 }
-function prologuePage(profile, step = 0, name = '', film = false, realm = 1) {
-  const steps = prologueSteps(profile, name, film, realm),
+function prologuePage(profile, step = 0, film = false, realm = 1) {
+  const steps = prologueSteps(profile, film, realm),
     at = Math.max(0, Math.min(step, steps.length - 1)),
     p = steps[at];
   // A page has a picture when someone speaks, or when the narration comes with one.
@@ -117,22 +115,19 @@ function prologuePage(profile, step = 0, name = '', film = false, realm = 1) {
   const portrait = picture
     ? `<img class="fy-speaker-portrait" alt="" src="${text(art(picture))}">`
     : '';
-  const entry = p.ask
-    ? `<label class="youth-name"><span>起個名字</span><input id="youth-name" type="text" maxlength="8" autocomplete="off" spellcheck="false" enterkeyhint="done" value="${text(name)}" placeholder="${text(YOUTH.name)}"></label><p class="footnote">夢裡記不起自己的名字，便替他起一個。最多八個字。留空便叫「${text(YOUTH.name)}」。這個名字會一直跟著你。</p>`
-    : '';
   const said = p.speaker
     ? `<div class="fy-byline"><strong>${text(p.speaker.name)}</strong><small>${text(p.speaker.role)}</small></div><blockquote>${text(p.text)}</blockquote>`
     : '';
   return `<section class="mj-view fy-story fy-prologue">
     <header class="modal-head"><div class="modal-title">${icon('scroll', 20)}<h2>入夢</h2></div><small>序幕</small></header>
     ${p.view ? scene(p.view, 'fy-scene') : ''}<div class="fy-story-body${picture ? '' : ' fy-narration'}">${portrait}<div class="fy-dialogue">
-      ${p.note ? (p.picture ? `<blockquote>${text(p.note)}</blockquote>` : `<p class="fy-stage-note">${text(p.note)}</p>`) : ''}${said}${p.after ? `<p class="fy-stage-note">${text(p.after)}</p>` : ''}${entry}
+      ${p.note ? (p.picture ? `<blockquote>${text(p.note)}</blockquote>` : `<p class="fy-stage-note">${text(p.note)}</p>`) : ''}${said}${p.after ? `<p class="fy-stage-note">${text(p.after)}</p>` : ''}
     </div></div>
-    <footer class="mj-footer"><div class="fy-reading">${at ? btn('prologue-prev', '上一句', 'mj-action') : ''}<span>${at + 1}／${steps.length}</span></div><aside>${p.last || p.ask ? '' : btn('prologue-skip', '略過', 'mj-action')}${btn('prologue-next', p.last ? '看棋盤' : '下一句', 'gold-btn')}</aside></footer>
+    <footer class="mj-footer"><div class="fy-reading">${at ? btn('prologue-prev', '上一句', 'mj-action') : ''}<span>${at + 1}／${steps.length}</span></div><aside>${p.last ? '' : btn('prologue-skip', '略過', 'mj-action')}${btn('prologue-next', p.last ? '看棋盤' : '下一句', 'gold-btn')}</aside></footer>
   </section>`;
 }
 
 // Whether this run opens with the first visit's prologue, which the film tells.
-const firstVisit = (profile) => !(profile.name && (profile.returns ?? 0) > 0);
+const firstVisit = (profile) => !((profile.returns ?? 0) > 0);
 
 export { rollView, prologuePage, prologueSteps, firstVisit };

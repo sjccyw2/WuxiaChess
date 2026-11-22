@@ -579,40 +579,6 @@
   max-width: 32em;
   margin: 0 auto;
 }
-#modal .youth-name {
-  display: grid;
-  gap: 0.4rem;
-  justify-items: center;
-  margin: 0.4rem auto 0;
-}
-#modal .fy-story-body:not(.fy-narration) .youth-name {
-  justify-items: start;
-  margin: 0.2rem 0 0;
-  color: #6b4f24;
-  font-size: 0.9rem;
-}
-#modal .youth-name input {
-  width: min(100%, 15em);
-  padding: 0.5rem 0.8rem;
-  border: 1px solid #8b744c;
-  border-radius: 4px;
-  background: #14221f;
-  color: #f6e4bd;
-  font: 700 1.35rem/1.4 var(--serif, serif);
-  letter-spacing: 0.12em;
-  text-align: center;
-}
-#modal .youth-name input::placeholder {
-  color: #8f9a8c;
-}
-#modal .youth-name input:focus-visible {
-  outline: 2px solid #b0803a;
-  outline-offset: 2px;
-}
-#modal .fy-dialogue .youth-name + .footnote {
-  margin: 0;
-  color: #6b5a3a;
-}
 #modal .fy-narration .footnote {
   margin: 0.2rem auto 0;
   text-align: center;

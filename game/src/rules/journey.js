@@ -44,7 +44,9 @@ const LEGACY = {
 const MAPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 // A name typed by the player: no spaces or line breaks, at most eight characters.
 const cleanName = (value) => [...String(value ?? '').replace(/\s+/g, '')].slice(0, 8).join('');
-const youthName = (s) => s.run?.chronicle?.name || YOUTH.name;
+// The youth is 無名 (he cannot recall his own name in the dream). A name typed in an older save is
+// kept in the profile but no longer shown.
+const youthName = () => YOUTH.name;
 // The 境界 a run is played in: the one the player picked before it began, from those open.
 const realmOf = (r) => Math.min(WAKES.length, Math.max(1, r?.realm || 1));
 const REALM_NUMBERS = Array.from({ length: REALM_COUNT }, (_, i) => i + 1);
@@ -163,7 +165,6 @@ function startRun(draw = drawLots(), legacy = LEGACY) {
   s.version = 5;
   s.mapIndex = 0;
   s.run = initialRun(ids, draw.seed, legacy, draw.realm);
-  if (cleanName(draw.name)) s.run.chronicle.name = cleanName(draw.name);
   s.logs = [];
   s.stock = { remedy: 2 + (legacy.best >= 7 ? 1 : 0), elixir: 2, travelBlade: 1, bracer: 1 };
   s.run.manuals.push('softPalm');
@@ -849,6 +850,54 @@ function devFinish(s, won, side = false) {
   s.phase = 'done';
   G.log(s, 'story', s.reason, won ? '破關' : '敗退');
   return true;
+}
+// Developer mode: a test battle. Starts a run straight at one board (`map`, 0–9), in one 境界, with
+// the heroes picked (the first five take the seats, the rest wait on the bench), and opens on the
+// board's 軍情 page. Every hero gets DEV_TEST.points 武學點 and the run DEV_TEST.coins 兩. The board
+// is met at its own stage (the earliest the shuffle can bring it), so its enemies are as strong
+// as in play, and the heroes are raised as a recruit at that stage would be. After the board the
+// run goes on as usual. `legacy` is the profile, which the run carries as any other.
+const DEV_TEST = { points: 20, coins: 1000 };
+function devTestRun({ map = 0, realm = 1, heroes = [], seed = newSeed() } = {}, legacy = LEGACY) {
+  const ids = [...new Set(heroes)].filter((id) => G.PARTY.includes(id));
+  if (!ids.length || !Number.isInteger(map) || !BATTLES[map]) return null;
+  // A save holds the route its seed makes, so find a seed whose route meets the board at its stage.
+  const stage = mapStages(map)[0] ?? 0;
+  while (routeFor(seed)[stage] !== map) seed = (seed + 1) >>> 0;
+  const s = startRun({ seed, realm }, legacy),
+    r = s.run;
+  // Any 境界, open or not: this is for testing.
+  r.realm = realmIndex(realm);
+  r.stage = stage;
+  s.mapIndex = map;
+  r.next = ids.slice(0, 5);
+  delete r.posts;
+  r.openingCast = ids.slice(0, 2);
+  r.pool = shuffled(
+    G.PARTY.filter((id) => !ids.includes(id)),
+    random(seed ^ 0xb863c49)
+  );
+  r.coins = DEV_TEST.coins;
+  r.devTest = true;
+  const layout = mapLayout(map),
+    tier = Math.floor(stage / 2);
+  const all = ids.map((id) => {
+    const u = prepareHero(G.startingHero(id));
+    G.raiseLevel(u, tier);
+    u.sp = DEV_TEST.points;
+    return u;
+  });
+  const line = r.next.map((id) => Object.assign(all.find((u) => u.id === id), layout.allies[seatsFor(r).indexOf(id)]));
+  r.bench = all.filter((u) => !r.next.includes(u.id));
+  s.units = [...line, ...defenders(s)];
+  s.leader = s.selected = ids[0];
+  G.identifyEncounter(s);
+  setUpBoard(s);
+  r.scene = 'brief';
+  r.beat = 0;
+  s.logs = [];
+  G.log(s, 'story', '（開發者模式）試局：' + ids.map((id) => G.DETAILS[id].name).join('、') + '入局。', '試局');
+  return s;
 }
 // ── Secondary objectives ─────────────────────────────────────────────────
 // One is drawn per board per run from the board's pool (battles.js `sides`). Each kind reads the
@@ -1821,4 +1870,4 @@ function campModel(s) {
   };
 }
 
-export { devFinish, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

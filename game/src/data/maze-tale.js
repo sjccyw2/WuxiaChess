@@ -13,8 +13,8 @@
 // vernacular, forms of address that fit the speaker, no modern words.
 
 // The people who are always there but never on the board.
-// The youth's name is typed by the player; this one is used when nothing was typed.
-const YOUTH = { name: '阿石', role: '執子之人', portrait: 'npc-youth.webp' };
+// In the dream the youth cannot recall his name, so he calls himself 無名 (the prologue tells it).
+const YOUTH = { name: '無名', role: '執子之人', portrait: 'npc-youth.webp' };
 const WEI = { name: '韋小寶', role: '通吃坊掌櫃', portrait: 'npc-wei.webp' };
 // The great bird beside the table. It never speaks, and the game gives it no other name.
 const EAGLE = { name: '大鵰', role: '谷中的鵰', portrait: 'npc-eagle.webp' };
@@ -28,8 +28,9 @@ const TALE_ART = {
 };
 
 // {name} in a line is replaced by the youth's name.
-// The youth reaches for his name and cannot find it (in the dream he has forgotten it), then
-// makes one up. Shared by the pages and the page after the film.
+// The youth reaches for his name and cannot find it (in the dream he has forgotten it), and calls
+// himself 無名. Shared by the pages and the pages after the film. `names` marks the line from which
+// the pages call him 無名 rather than 少年.
 const YOUTH_FORGETS = {
   who: 'youth',
   note: '少年張口便要報上名字，那兩個字卻似到了嘴邊，又滑了回去。在這夢裡，他竟記不起自己叫甚麼。',
@@ -37,7 +38,8 @@ const YOUTH_FORGETS = {
 };
 const YOUTH_NAMES = {
   who: 'youth',
-  text: '怪了，自己的名字，怎地想不起來？……那便叫{name}罷。我在家裡睡覺，一睜眼便到了這裡。老伯，你又是誰？'
+  text: '怪了，自己的名字，怎地想不起來？……既然想不起，便叫「無名」罷。我在家裡睡覺，一睜眼便到了這裡。老伯，你又是誰？',
+  names: true
 };
 const MAZE_TALE = {
   title: '劍影江湖・一念江湖',
@@ -61,11 +63,11 @@ const MAZE_TALE = {
         text: '咦。老夫這劍境之中，幾百年來不曾有人闖得進來。……奇了。你身上半點功夫也無，老夫怎地瞧得見你？你是甚麼人？'
       },
       // In the dream he cannot recall his own name, so he makes one up: the name the player types.
-      { ...YOUTH_FORGETS, ask: true },
-      { ...YOUTH_NAMES },
+      YOUTH_FORGETS,
+      YOUTH_NAMES,
       {
         who: 'qiu',
-        text: '{name}？這名字倒有些耳熟。……想不起了。想不起自己的名字，也不打緊。老夫自己的姓名，也早已忘了。世人叫我「求敗」。'
+        text: '無名？……嘿，這名字倒有些耳熟。想不起自己的名字，也不打緊。老夫自己的姓名，也早已忘了。世人叫我「求敗」。'
       },
       { who: 'youth', text: '求敗？天下哪有人盼著打敗仗的？' },
       {
@@ -85,12 +87,12 @@ const MAZE_TALE = {
     // (index 0 is the first 境界, which may be picked again at any time).
     // The first visit opens with a film (asset-gen/prologue-video), in a 9:16 cut for screens taller
     // than wide and a 16:9 cut otherwise: it tells the pages above up to 「抓三枚」, and in it the
-    // youth is cut off before he can say his name. So after it he finds he cannot recall it and the
-    // player makes one up for him (`name`, `named`), and the pages resume at `afterFilm`.
+    // youth is cut off before he can say his name. So after it he finds he cannot recall it and calls
+    // himself 無名 (`name`, `named`), and the pages resume at `afterFilm`.
     film: {
       tall: { file: 'prologue-film.mp4', poster: 'prologue-film.webp' },
       wide: { file: 'prologue-film-wide.mp4', poster: 'prologue-film-wide.webp' },
-      name: { ...YOUTH_FORGETS, ask: true },
+      name: YOUTH_FORGETS,
       named: YOUTH_NAMES
     },
     again: {

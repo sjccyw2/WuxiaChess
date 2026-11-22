@@ -23,7 +23,7 @@ import * as R from './rules/journey.js';
 import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
 import { playFilm } from './ui/intro-film.js';
 import { realmView, finaleView } from './ui/realm-views.js';
-import { devMode, devPanel } from './ui/dev-mode.js';
+import { devMode, devPanel, devTestView, loadPick, changePick } from './ui/dev-mode.js';
 import { MAZE_TALE } from './data/maze-tale.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
@@ -48,9 +48,9 @@ let hasSave = !!saved,
 let state = saved || R.startRun(R.drawLots(0));
 let draft = null,
   codexId = 'hero';
-// The prologue shown before the draw: which page it is on, the name typed so far, whether the
+// The prologue shown before the draw: which page it is on, whether the
 // opening film told its first pages, and the 境界 picked for the run.
-let prologue = { step: 0, name: '', film: false, realm: 1 };
+let prologue = { step: 0, film: false, realm: 1 };
 // The 境界 picker's choice (選境界), and which part of the placeholder last battle is showing.
 let realmPick = 0,
   finalePhase = 'board';
@@ -696,11 +696,13 @@ function pageHtml() {
     case 'wake':
       return journalPage(state);
     case 'prologue':
-      return prologuePage(state.run.chronicle, prologue.step, prologue.name, prologue.film, prologue.realm);
+      return prologuePage(state.run.chronicle, prologue.step, prologue.film, prologue.realm);
     case 'realm':
       return realmView(state.run.chronicle, realmPick);
     case 'finale':
       return finaleView(R.youthName(state), finalePhase);
+    case 'devtest':
+      return devTestView(devPick);
     case 'formation':
       return rollView(
         draft.ids,
@@ -1216,6 +1218,8 @@ function openFinale(phase = 'board') {
 }
 // Developer mode (?dev): a small panel, kept inside the open dialog so it stays clickable.
 const dev = devMode() ? document.createElement('aside') : null;
+// The test battle being set up on the 試局 page (dev-mode.js).
+let devPick = dev ? loadPick() : null;
 if (dev) {
   dev.className = 'dev-panel';
   dev.setAttribute('aria-label', '開發者模式');
@@ -1238,11 +1242,6 @@ function devFinish(won, side = false) {
   mapTip(null);
   update();
   result();
-}
-// Keeps what was typed when the page is redrawn or left.
-function keepName() {
-  const field = $('youth-name');
-  if (field) prologue.name = R.cleanName(field.value);
 }
 function openTitle() {
   ++aiRun;
@@ -1511,22 +1510,46 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-finale':
       if (dev) openFinale('board');
       break;
+    case 'dev-test':
+      if (!dev) break;
+      devPick = loadPick();
+      dev.querySelector('details').open = false;
+      openPage('devtest');
+      audio('page');
+      break;
+    case 'dev-test-map':
+    case 'dev-test-realm':
+    case 'dev-test-hero':
+    case 'dev-test-all':
+      if (!dev || dialogState !== 'devtest') break;
+      devPick = changePick(devPick, action.slice(9), id);
+      drawModal(true);
+      audio('select');
+      break;
+    case 'dev-test-go': {
+      if (!dev || dialogState !== 'devtest' || !devPick.heroes.length) break;
+      const next = R.devTestRun(devPick, state.run.chronicle);
+      if (!next) break;
+      ++aiRun;
+      state = next;
+      save();
+      dev.querySelector('details').open = false;
+      strikeData = null;
+      logFilter = 'all';
+      enterBattle(true);
+      break;
+    }
     case 'prologue-prev':
     case 'prologue-next':
     case 'prologue-skip': {
       if (dialogState !== 'prologue') break;
-      keepName();
-      const steps = prologueSteps(state.run.chronicle, prologue.name, prologue.film, prologue.realm),
-        ask = steps.findIndex((step) => step.ask);
+      const steps = prologueSteps(state.run.chronicle, prologue.film, prologue.realm);
       if (action === 'prologue-prev') prologue.step = Math.max(0, prologue.step - 1);
-      // Skipping still stops at the name the first time, since it has to be given once.
-      else if (action === 'prologue-skip' && ask > prologue.step) prologue.step = ask;
       else if (action === 'prologue-skip' || prologue.step >= steps.length - 1) {
         openFormation();
         break;
       } else prologue.step++;
       drawModal();
-      $('youth-name')?.focus({ preventScroll: true });
       audio('page');
       break;
     }
@@ -1571,8 +1594,8 @@ function command(action, id, data = {}, keyboard = false) {
     case 'deploy':
       if (dialogState !== 'formation' || !draft) break;
       ++aiRun;
-      state = R.startRun({ ...draft, name: prologue.name, realm: prologue.realm }, state.run.chronicle);
-      prologue = { step: 0, name: '', film: false, realm: 1 };
+      state = R.startRun({ ...draft, realm: prologue.realm }, state.run.chronicle);
+      prologue = { step: 0, film: false, realm: 1 };
       draft = null;
       try {
         localStorage.removeItem(drawKey);
@@ -1924,13 +1947,6 @@ function command(action, id, data = {}, keyboard = false) {
       break;
   }
 }
-// Enter in the name field moves on, except while an input method is still composing.
-dialog.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.target.id === 'youth-name' && !e.isComposing) {
-    e.preventDefault();
-    command('prologue-next');
-  }
-});
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-do]');
   if (b && !b.disabled) command(b.dataset.do, b.dataset.id, b.dataset, e.detail === 0);
