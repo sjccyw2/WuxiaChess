@@ -2,8 +2,10 @@ import { FORM_RULES, splashRadius } from './form-rules.js';
 import { STROKE_NOTES } from '../fx/technique-strokes.js';
 import * as G from './game.js';
 import { TECHNIQUES } from '../data/martial-arts.js';
-import { commandBonus, effectsOf, effectDescription } from './battle-mastery.js';
+import { leaderBoon, commandBonus, effectsOf, effectDescription } from './battle-mastery.js';
 
+// The leader's boons (COMMANDS) that change what a hero's blow does, beyond its numbers.
+const STRIKE_BOONS = ['held', 'absorb', 'venom', 'linger', 'bend', 'opening'];
 const percent = (fraction) => Math.round(fraction * 100) + '%';
 const roots = { force: '攻擊 ＋3', guard: '防禦 ＋2', breath: '絕技威力 ＋5、內力消耗 −2' };
 
@@ -136,6 +138,9 @@ function moveFacts(s, u, id = 'basic', target = null) {
     if (art?.recover) lines.push('命中回復 ' + art.recover + ' 內力');
     const bonus = commandBonus(s, u, 'pursuit');
     if (bonus) lines.push('敵方半血以下威力 ＋' + bonus);
+    // The leader's boons that change a blow, in their own words.
+    for (const stat of STRIKE_BOONS)
+      if (commandBonus(s, u, stat)) lines.push(leaderBoon(s).name + ' · ' + leaderBoon(s).text.replace(/。$/, ''));
     if (basic && definition.basicBonus) lines.push('普攻威力 ＋' + definition.basicBonus);
     if (!lines.length && !effectsOf(art).length) lines.push('單體攻擊，射程內可受反擊');
   } else if (art.heal) {

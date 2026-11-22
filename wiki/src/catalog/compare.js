@@ -319,6 +319,9 @@ function measure(id, level, learned, talents, lead, unit, kit = learned) {
 
 // The leader boon, for a companion: what it adds to this hero's own numbers, as a proxy for
 // what it adds to each of the two others, in blows' worth.
+// 聚賢豪氣 (one foe beside him in the scene), 太極圓轉 (his counter) and 軟筋餘香 (the foe within two
+// tiles of him) show in his numbers as they are. The rest bear on a blow the scene does not
+// strike, so each is read off the rules on that blow, at how often it is met (BOON_SHARE).
 function boonWorth(plain, lead, unit) {
   const BLOW = unit.blow;
   return (
@@ -326,9 +329,74 @@ function boonWorth(plain, lead, unit) {
     ((plain.I - lead.I) * TAKEN) / BLOW +
     (lead.step - plain.step) * STEP_WORTH +
     ((lead.regen - plain.regen + 0.6 * (plain.cost - lead.cost)) * unit.mpWorth) / BLOW +
-    G.commandBonus(lead.s, lead.u, 'renew') / BLOW
+    G.commandBonus(lead.s, lead.u, 'renew') / BLOW +
+    boonBlows(plain, lead, unit)
   );
 }
+// How often a boon's moment comes, as a share of a round's blows (judgement, not game values).
+const BOON_SHARE = {
+  held: 0.3, // 打狗陣法: the foe struck is already held
+  venom: 0.5, // 碧蠶毒蠱: the foe struck is not yet poisoned, and lives to suffer it
+  linger: 0.5, // 桃花迷陣: a blow that leaves a condition, of those struck
+  ground: 0.25, // 金蛇轉鋒: the foe struck stands on ground that guards him
+  covered: 0.05, // ...or behind someone who would take the blow for him
+  opening: 0.3, // 越女試劍: once a round for the side; this companion's share of it
+  spare: 1 / ROUNDS // 雪谷回生: a fall turned aside once a board, about a blow a board
+};
+// 越女試劍 and 雪谷回生 keep count in a board's facts, which the scene has not: they are read off
+// the boon itself, on the counter his basic draws and the blow he takes.
+function boonBlows(plain, lead, unit) {
+  const BLOW = unit.blow,
+    { s, u } = lead,
+    foe = s.units.find((v) => v.side === 'enemy');
+  const has = (stat) => G.commandBonus(s, u, stat) > 0;
+  const blow = (v, t) => G.damage(v.u, t, false, 0, v.s);
+  const swing = 1.5; // the best blow and half a basic, as the scene weighs them above
+  const f = G.forecast(u, foe, false, s);
+  let n = 0;
+  // 北冥真氣: 內力 back for the round's blow.
+  n += ((f.absorb || 0) * unit.mpWorth) / BLOW;
+  // 打狗陣法: the same blow at a foe under 絆足.
+  if (has('held')) {
+    const held = { ...foe, conditions: { pin: { power: 2, through: s.round + 1 } } };
+    n += (BOON_SHARE.held * swing * (blow(lead, held) - blow(plain, foe))) / BLOW;
+  }
+  // 碧蠶毒蠱: the poison the forecast puts on him, over its rounds.
+  const poison = f.effects.find((e) => e.kind === 'poison');
+  if (has('venom') && poison) n += (BOON_SHARE.venom * poison.power * poison.turns) / BLOW;
+  // 桃花迷陣: a round more of the conditions his own arts leave, at what a round of each is worth
+  // in damage (攻勢受挫, 中毒, 內傷, 纏械 by their power; 破防 by the blows it opens; 絆足 and 破綻
+  // as the support axis weighs them).
+  if (has('linger')) {
+    const round = (art) => {
+      let v = 0;
+      for (const e of G.effectsOf(art))
+        if (['weak', 'poison', 'wound', 'disarm'].includes(e.kind)) v += e.power;
+        else if (e.kind === 'exposed') v += e.power * 0.65 * TAKEN;
+      const forms = G.formsFor(u, art, G.basicFor(u));
+      if (forms.includes('pin')) v += (0.15 / 2) * BLOW;
+      if (forms.includes('mark')) v += (0.1 / 2) * BLOW;
+      return v * uptime(art);
+    };
+    n += (BOON_SHARE.linger * Math.max(0, ...lead.parts.known.map((k) => round(k.art)))) / BLOW;
+  }
+  // 金蛇轉鋒: the blow at a foe on 苔石掩體 or 疏竹林, and one no disciple steps in front of.
+  if (has('bend')) {
+    const sheltered = { ...foe, ...SHELTER };
+    n += (BOON_SHARE.ground * swing * (blow(lead, sheltered) - blow(plain, sheltered))) / BLOW;
+    n += (BOON_SHARE.covered * lead.bestE) / BLOW;
+  }
+  // 越女試劍: the counter his basic draws, not drawn.
+  if (has('opening')) n += (BOON_SHARE.opening * plain.attacks[0].counter) / BLOW;
+  // 雪谷回生: a blow that would have felled him.
+  if (has('spare')) n += (BOON_SHARE.spare * plain.I) / BLOW;
+  return n;
+}
+// A tile of the first board whose ground guards whoever stands on it.
+const SHELTER = (() => {
+  for (let y = 0; y < 20; y++)
+    for (let x = 0; x < 20; x++) if (G.tileInfo(x, y, 0)?.defense > 0 && G.walkable(x, y, 0)) return { x, y };
+})();
 
 // Both ways of fighting, blended: led by someone else, and leading.
 function profile(id, level, learned, talents, unit, kit) {

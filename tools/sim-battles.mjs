@@ -428,7 +428,8 @@ function foeValue(s, t, ctx) {
 // What an option is worth, read entirely from the rules' forecast. A blow at a covered piece
 // lands on its coverer (forecast's coveredBy), so that is the piece it may fell.
 function strikeScore(s, u, t, f, ctx, mp, art = null) {
-  let score = -mp * W.mp - f.hpCost * W.hpCost;
+  // 北冥真氣 (a leader's boon) gives back 內力 for a blow that lands, as if it cost that much less.
+  let score = -(mp - (f.absorb || 0)) * W.mp - f.hpCost * W.hpCost;
   const gone = new Set();
   const leader = u.id === s.leader;
   const victim = (f.coveredBy && G.find(s, f.coveredBy)) || t;

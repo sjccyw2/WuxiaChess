@@ -27,7 +27,12 @@ import { inRealm } from '../data/realms.js';
 import { rosterPortrait } from '../data/roster-art.js';
 import {
   COMMANDS,
+  HELD_KINDS,
+  LINGER_KINDS,
   commandBonus,
+  commandAura,
+  leaderBoon,
+  prepPost,
   effectsOf,
   selfEffectsOf,
   applyCondition,
@@ -753,11 +758,14 @@ function strikeReach(s, u) {
 }
 // The share of a full basic strike a counter carries: none while 無守; full under 卸勁, or for a
 // villain whose 蓄勢反擊 is charged; a learned 後發 sets its own; otherwise 0.55.
+// 太極圓轉 (the leader's boon) adds its share, up to a full counter.
 function counterRatio(s, defender) {
   const c = defender.conditions || {};
   if (c.unguarded || c.freeze || c.mute) return 0; // 無守; 定身 and 閉穴 do not counter
   if (c.stance || (unitDetails(defender)?.traits?.stance && signatureDue(s, defender))) return 1;
-  return basicFor(defender).retort || 0.55;
+  const share = basicFor(defender).retort || 0.55,
+    more = commandBonus(s, defender, 'retort') / 100;
+  return more ? Math.min(1, Math.round((share + more) * 100) / 100) : share;
 }
 // 卸勁's cut, in percent, on the damage a unit takes from its foes' blows and counters: a hero's
 // stance condition; a villain's 蓄勢反擊 cuts by its own `cut` while charged.
@@ -1708,6 +1716,16 @@ function bannerBonus(s, u) {
   }
   return bonus;
 }
+// 聚賢豪氣: the leader's boon, for each foe beside the hero (in 整備, beside his seat's post).
+function throngBonus(s, u) {
+  const per = commandBonus(s, u, 'throng');
+  if (!per) return 0;
+  const at = s.run?.scene === 'prep' ? prepPost(s, u.id) : u;
+  const near = s.units.filter(
+    (v) => v.side === 'enemy' && living(v) && !charmed(v) && distance(v, at) === 1
+  ).length;
+  return per * Math.min(near, leaderBoon(s)?.most || 3);
+}
 function stat(u, k, s) {
   const items = [ITEMS[u.weapon], ITEMS[u.gear]].filter(Boolean);
   const talent =
@@ -1725,7 +1743,9 @@ function stat(u, k, s) {
         (c.weak?.power || 0) -
         (c.disarm?.power || 0) +
         bannerBonus(s, u) +
-        sabreBonus(s, u)
+        sabreBonus(s, u) +
+        throngBonus(s, u) -
+        commandAura(s, u, 'sap')
       : k === 'def'
         ? -(c.exposed?.power || 0) -
           (c.recoil?.power || 0) +
@@ -2112,9 +2132,13 @@ function attackPower(s, u, art, basic = basicFor(u), target = null, struckHp = t
     ? stat(u, 'power', s) + 4
     : (basic.basicBonus || 0) + commandBonus(s, u, 'basic');
   const pursuit = target && target.hp <= target.maxHp / 2 ? commandBonus(s, u, 'pursuit') : 0;
+  const held = heldBonus(s, u, target);
   const atk = stat(u, 'atk', s) - traitEdge(s, u, target, struckHp);
-  return atk * (art ? strikeFactor(s, u, art, target).factor : 1) + base + pursuit;
+  return atk * (art ? strikeFactor(s, u, art, target).factor : 1) + base + pursuit + held;
 }
+// 打狗陣法: the leader's boon on a foe already held (絆足, 封穴, 纏械, 失神, 定身, 閉穴).
+const heldBonus = (s, u, t) =>
+  t && HELD_KINDS.some((k) => t.conditions?.[k]) ? commandBonus(s, u, 'held') : 0;
 // What a villain's own traits take off (+) or add to (−) its attack against this hero, blows and
 // counters alike: 近身失準 (`crowded`) when the hero stands within its distance, 斬殘 (`execute`)
 // when the hero is at or below half.
@@ -2145,6 +2169,10 @@ const flanked = (s, u, target) =>
     (v) => v.id !== u.id && living(v) && v.side === 'enemy' && distance(v, target) === 1
   );
 const executeBonus = (s, t) => t.execute.atk + Math.floor((s?.run?.stage || 0) / 2);
+// 轉折: whether u's blows pass the ground's defence and every 代受 — a `bend` villain's, or a
+// hero's under the leader's 金蛇轉鋒.
+const bends = (s, u) =>
+  ally(u) ? !!commandBonus(s, u, 'bend') : !!unitDetails(u)?.traits?.bend;
 function damage(
   u,
   t,
@@ -2155,8 +2183,8 @@ function damage(
   basic = basicFor(u),
   struckHp = t.hp
 ) {
-  // 轉折: a `bend` villain's blows pass the defence the ground gives.
-  const ground = !ally(u) && unitDetails(u)?.traits?.bend ? 0 : tileInfo(t.x, t.y, map).defense;
+  // 轉折: a `bend` villain's blows pass the defence the ground gives; so do a hero's under 金蛇轉鋒.
+  const ground = bends(s, u) ? 0 : tileInfo(t.x, t.y, map).defense;
   const protection = stat(t, 'def', s) + ground + (t.brace ? 4 : 0);
   const pierce = art ? art.pierce || 0 : commandBonus(s, u, 'pierce') / 100;
   return Math.max(
@@ -2257,13 +2285,49 @@ function drainOf(art) {
 }
 const afterWard = (power, percent) =>
   percent ? Math.max(1, Math.round((power * (100 - percent)) / 100)) : power;
+// The leader's boon on a hero's blow at a foe, worked out for the forecast (so the strike does
+// the same): 碧蠶毒蠱's poison and 桃花迷陣's longer conditions on the foe, and the lines of
+// 打狗陣法 and 金蛇轉鋒 where they bear on this blow. A blow that does not land keeps none of it.
+function boonPlan(s, u, t, result) {
+  if (!ally(u) || !s?.run) return;
+  const name = leaderBoon(s)?.name,
+    rider = (note) => {
+      result.notes.push(note);
+      result.riders.push(note);
+    };
+  const venom = commandBonus(s, u, 'venom');
+  if (venom) {
+    // Two poisons are one: the stronger, for the longer (applyCondition).
+    const turns = leaderBoon(s).turns,
+      had = result.effects.find((e) => e.kind === 'poison');
+    if (had) Object.assign(had, { power: Math.max(had.power, venom), turns: Math.max(had.turns, turns) });
+    else result.effects.push({ kind: 'poison', power: venom, turns });
+    rider(name + ' · 中毒 ' + venom + '，' + turns + ' 回合');
+  }
+  const linger = commandBonus(s, u, 'linger'),
+    kept = result.effects.filter((e) => LINGER_KINDS.includes(e.kind));
+  if (linger && kept.length) {
+    result.effects = result.effects.map((e) => (kept.includes(e) ? { ...e, turns: e.turns + linger } : e));
+    rider(name + ' · ' + kept.map((e) => CONDITION_NAMES[e.kind]).join('、') + '多留 ' + linger + ' 回合');
+  }
+  const held = heldBonus(s, u, t);
+  if (held) result.notes.push(name + ' · 傷害 ＋' + held);
+  if (bends(s, u) && tileInfo(t.x, t.y, s.mapIndex)?.defense)
+    result.notes.push(name + ' · 無視地形防禦');
+}
+// 越女試劍: whether this hero's blow is the round's first under the boon that would draw a counter.
+const opens = (s, u) =>
+  ally(u) && !!s?.tally && s.tally.opened !== s.round && !!commandBonus(s, u, 'opening');
+// 雪谷回生: whether the boon would keep this hero standing now (once a board, for anyone it covers).
+const spares = (s, u) => ally(u) && !!s?.tally && !s.tally.spared && !!commandBonus(s, u, 'spare');
 function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicFor(u)) {
   const type = art ? targetType(art) : 'enemy';
   const support = type === 'self' || type === 'ally',
     heal = support && !!art.heal;
   // 代受: a blow at a covered piece is worked out on its coverer from here on (§6).
+  // 金蛇轉鋒: no one takes the blow for its target (a 轉折).
   const aimed = t,
-    guard = type === 'enemy' ? coverer(s, t) : null;
+    guard = type === 'enemy' && !bends(s, u) ? coverer(s, t) : null;
   if (guard) t = guard;
   const ward = t.id ? wardPercent(s, t) : 0;
   const result = {
@@ -2349,6 +2413,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   result.effects.push(...plan.effects);
   dazePlan(s, u, t, art, result); // 失神: a setup to meet, a master to resist
   controlPlan(s, u, t, art, result); // 定身, 閉穴, 受制
+  boonPlan(s, u, t, result); // the leader's boon on this blow
   const baseHits = (art?.hits || [1]).map(
     (part, i) => Math.round(single * part) + (i === 0 ? plan.extra : 0)
   );
@@ -2420,7 +2485,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   const held = result.effects.find((e) => ['freeze', 'mute', 'charm'].includes(e.kind));
   if (held && share && !plan.safe && !blow.silent && t.hp > result.amount)
     result.notes.push(CONDITION_NAMES[held.kind] + ' · 無從還擊');
-  if (
+  const answered =
     share &&
     !held &&
     !plan.safe &&
@@ -2428,8 +2493,12 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     t.hp > result.amount &&
     // 不敗: the blow that brings him to 1 氣血 ends it, as a felling blow would: he does not answer it.
     !(traitsOf(t).unfelled && t.hp - result.amount <= 1) &&
-    distance(u, result.push || t) <= reach(s, t)
-  ) {
+    distance(u, result.push || t) <= reach(s, t);
+  // 越女試劍: the first blow each round that would draw a counter draws none.
+  if (answered && opens(s, u)) {
+    result.opening = true;
+    result.notes.push(leaderBoon(s).name + ' · 本回合頭一次，敵人不能還擊');
+  } else if (answered) {
     const reply =
       art?.debuff?.stat === 'atk'
         ? {
@@ -2461,10 +2530,18 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     // The sword's extra tile is what lets it answer a blow from there.
     if (traits.twin && twinForm(s, t) === 'sword' && distance(t, u) === reach(s, t))
       result.notes.push('陰陽倒亂 · 黑劍 · 射程 ＋1，還擊得到');
+    if (commandAura(s, t, 'sap'))
+      result.notes.push(leaderBoon(s).name + ' · 還擊攻擊 −' + commandAura(s, t, 'sap'));
     // 金剛 on the striker: the counter comes, and takes nothing off him.
     if (immuneTo(u)) {
       result.counterRaw = result.counter = 0;
       result.notes.push('金剛 · 還擊無功');
+    }
+    // 雪谷回生: a counter that would fell him leaves him at 1 氣血, once a board.
+    const standing = u.hp - result.hpCost + result.selfHeal - (result.rebound || 0);
+    if (result.counter >= standing && spares(s, u)) {
+      result.counter = Math.max(0, standing - 1);
+      result.notes.push(leaderBoon(s).name + ' · 留住 1 點氣血（每局一次）');
     }
   }
   if (s && (art?.splash || result.forms.includes('line') || result.forms.includes('arc'))) {
@@ -2514,6 +2591,12 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.notes.push(
       result.amount >= t.hp ? '連環 · 此擊可擊倒，本回合可再出手' : '連環 · 擊倒則可再出手'
     );
+  // 北冥真氣: a blow that lands gives the striker back 內力.
+  const absorb = ally(u) && !result.void ? commandBonus(s, u, 'absorb') : 0;
+  if (absorb) {
+    result.absorb = absorb;
+    result.notes.push(leaderBoon(s).name + ' · 內力 ＋' + absorb);
+  }
   zoneNote(s, u, art, t, result); // 布陣 rider: the tiles round the target's feet
   selfLoss(s, u, art, result, true); // 內傷 and 反噬: what the strike costs its caster after
   result.notes.push(...guardNotes(art), ...priceNotes(art));
@@ -2670,7 +2753,13 @@ function wound(s, u, n, source) {
     if (!shield.power) delete u.conditions.shield;
   }
   // 不敗: nothing takes him below 1 氣血.
-  const d = Math.min(n, traitsOf(u).unfelled ? Math.max(0, u.hp - 1) : u.hp);
+  let d = Math.min(n, traitsOf(u).unfelled ? Math.max(0, u.hp - 1) : u.hp);
+  // 雪谷回生: the first hero it covers who would fall this board is left at 1 氣血.
+  if (d > 0 && d >= u.hp && spares(s, u)) {
+    d = u.hp - 1;
+    s.tally.spared = u.id;
+    log(s, 'combat', leaderBoon(s).name + '：留住一口氣，氣血剩 1。', unitDetails(u).name);
+  }
   u.hp -= d;
   if (!living(u)) delete u.conditions;
   // 領隊無傷 counts what enemies take from the leader, through any blow, counter or poison.
@@ -2931,6 +3020,8 @@ function resolve(s, u, t, skill) {
       log(s, 'move', art?.push ? '被掌力震退一格。' : '被牽近一格。', unitDetails(t).name);
     }
     if (art?.recover) u.mp = Math.min(u.maxMp, u.mp + art.recover);
+    if (f.absorb) u.mp = Math.min(u.maxMp, u.mp + f.absorb); // 北冥真氣
+    if (f.opening) s.tally.opened = s.round; // 越女試劍 is spent for the round
     for (const other of f.splash) {
       const v = find(s, other.id),
         dealt = blowing({ how: 'splash', art: skill ? id : null }, () => wound(s, v, other.raw, u));

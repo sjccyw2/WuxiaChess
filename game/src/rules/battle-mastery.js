@@ -48,81 +48,120 @@ const COMMANDS = {
     text: '出招少耗 3 點內力，最低消耗 2 點。',
     icon: 'drop'
   },
-  qiaoFeng: { name: '一呼百應', stat: 'atk', power: 4, text: '攻擊增加 4。', icon: 'flag' },
+  // The ten who came later each lead in a way of their own.
+  // 聚賢莊: the more foes press round him, the harder he hits.
+  qiaoFeng: {
+    name: '聚賢豪氣',
+    stat: 'throng',
+    power: 3,
+    most: 2,
+    text: '每有一名敵人相鄰，攻擊增加 3，至多增加 6。',
+    icon: 'flag'
+  },
   xuZhu: {
-    name: '靈鷲慈心',
-    stat: 'renew',
-    power: 8,
-    text: '我方回合結束時回復 8 點氣血。',
-    icon: 'leaf'
+    name: '北冥真氣',
+    stat: 'absorb',
+    power: 3,
+    text: '出手擊中敵人時，回復 3 點內力。',
+    icon: 'drop'
   },
   hongQi: {
-    name: '九指點撥',
-    stat: 'basic',
-    power: 6,
-    text: '普攻與還擊的基礎傷害增加 6。',
-    icon: 'sword'
-  },
-  yaoShi: { name: '東邪奇學', stat: 'power', power: 7, text: '絕技威力增加 7。', icon: 'star' },
-  sanFeng: { name: '真武鎮山', stat: 'def', power: 5, text: '防禦增加 5。', icon: 'shield' },
-  zhaoMin: {
-    name: '郡主妙算',
-    stat: 'economy',
-    power: 3,
-    text: '出招少耗 3 點內力，最低消耗 2 點。',
-    icon: 'drop'
-  },
-  lingSu: {
-    name: '藥王調息',
-    stat: 'restoreMp',
-    power: 5,
-    text: '我方新回合額外回復 5 點內力。',
-    icon: 'drop'
-  },
-  diYun: {
-    name: '血刀破甲',
-    stat: 'pierce',
-    power: 30,
-    text: '普攻與還擊穿透三成防禦。',
-    icon: 'sword'
-  },
-  chengZhi: {
-    name: '金蛇追影',
-    stat: 'pursuit',
+    name: '打狗陣法',
+    stat: 'held',
     power: 8,
-    text: '擊中氣血不過半的敵人時，傷害增加 8。',
+    text: '擊中絆足、封穴、纏械、失神、定身或閉穴的敵人時，傷害增加 8。',
     icon: 'target'
   },
-  aQing: { name: '越女輕步', stat: 'step', power: 1, text: '移動力增加 1 步。', icon: 'feather' },
+  yaoShi: {
+    name: '桃花迷陣',
+    stat: 'linger',
+    power: 1,
+    text: '出手加在敵人身上的中毒、攻勢受挫、破防、絆足、破綻、內傷與纏械，多留 1 回合。',
+    icon: 'star'
+  },
+  sanFeng: {
+    name: '太極圓轉',
+    stat: 'retort',
+    power: 20,
+    text: '還擊的比例加兩成，至多全力。',
+    icon: 'shield'
+  },
+  // 十香軟筋散: it is the foes near her who are weakened, so the boon names them (commandDescription).
+  zhaoMin: { name: '軟筋餘香', stat: 'sap', power: 3, foes: true, text: '攻擊減少 3。', icon: 'drop' },
+  lingSu: {
+    name: '碧蠶毒蠱',
+    stat: 'venom',
+    power: 4,
+    turns: 2,
+    text: '出手擊中的敵人中毒兩回合，每回合失去 4 氣血。',
+    icon: 'leaf'
+  },
+  diYun: {
+    name: '雪谷回生',
+    stat: 'spare',
+    power: 1,
+    text: '將要倒下時留住 1 點氣血；每局只有一次。',
+    icon: 'shield'
+  },
+  chengZhi: {
+    name: '金蛇轉鋒',
+    stat: 'bend',
+    power: 1,
+    text: '出手與還擊無視目標所在地形的防禦，旁人也不能替目標代受。',
+    icon: 'sword'
+  },
+  aQing: {
+    name: '越女試劍',
+    stat: 'opening',
+    power: 1,
+    text: '每回合頭一次會招來還擊的出手，敵人不能還擊。',
+    icon: 'feather'
+  },
   // 無名: he does not give up a stone.
   youth: { name: '不棄一子', stat: 'def', power: 4, text: '防禦增加 4。', icon: 'shield' }
 };
+// What 打狗陣法 counts as a held foe, and what 桃花迷陣 keeps on a foe a round longer.
+const HELD_KINDS = ['pin', 'seal', 'disarm', 'daze', 'freeze', 'mute'];
+const LINGER_KINDS = ['poison', 'weak', 'exposed', 'pin', 'mark', 'wound', 'disarm'];
 function commandDescription(id) {
-  return '領隊與距離兩格內的友軍' + COMMANDS[id].text;
+  return (COMMANDS[id].foes ? '距離領隊兩格內的敵人' : '領隊與距離兩格內的友軍') + COMMANDS[id].text;
 }
-function commandBonus(s, unit, stat) {
+const apart = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+// Where a hero stands for the boon in 整備: his seat's post, since the posts are not yet walked.
+function prepPost(s, id) {
+  const seat = seatsFor(s.run).indexOf(id);
+  return seat < 0 ? null : mapLayout(s.mapIndex).allies[seat];
+}
+// The leader's boon and where it is centred: in 整備 the first seat's post, in the fight the
+// living leader. Null when no boon is in force.
+function boonSource(s) {
   if (s?.run?.scene === 'prep') {
-    const seats = seatsFor(s.run),
-      seat = seats.indexOf(unit.id),
-      boon = COMMANDS[s.run.next[0]];
-    if (seat < 0 || boon?.stat !== stat) return 0;
-    const posts = mapLayout(s.mapIndex).allies,
-      a = posts[seats.indexOf(s.run.next[0])],
-      b = posts[seat];
-    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) <= 2 ? boon.power : 0;
+    const boon = COMMANDS[s.run.next[0]],
+      at = boon && prepPost(s, s.run.next[0]);
+    return at ? { boon, at } : null;
   }
-  if (
-    s?.run?.status !== 'battle' ||
-    unit.side !== 'ally' ||
-    unit.hp <= 0 ||
-    !s.units.includes(unit)
-  )
-    return 0;
+  if (s?.run?.status !== 'battle') return null;
   const captain = s.units.find((v) => v.id === s.leader && v.hp > 0);
-  const boon = captain && COMMANDS[captain.id];
-  return boon?.stat === stat && Math.abs(captain.x - unit.x) + Math.abs(captain.y - unit.y) <= 2
-    ? boon.power
-    : 0;
+  return captain && COMMANDS[captain.id] ? { boon: COMMANDS[captain.id], at: captain } : null;
+}
+// The boon in force now, or null.
+const leaderBoon = (s) => boonSource(s)?.boon || null;
+// What the leader's boon gives this hero for `stat`: its power if he is the leader or within two
+// tiles of him, else 0.
+function commandBonus(s, unit, stat) {
+  const prep = s?.run?.scene === 'prep';
+  if (!prep && (unit.side !== 'ally' || unit.hp <= 0 || !s?.units?.includes(unit))) return 0;
+  const from = boonSource(s);
+  if (!from || from.boon.stat !== stat || from.boon.foes) return 0;
+  const at = prep ? prepPost(s, unit.id) : unit;
+  return at && apart(from.at, at) <= 2 ? from.boon.power : 0;
+}
+// What a boon that names the foes (軟筋餘香) takes off this enemy for `stat`: its power while he
+// stands within two tiles of the leader. Asked of a copy of the piece too (a forecast's counter).
+function commandAura(s, foe, stat) {
+  if (foe?.side !== 'enemy' || foe.hp <= 0) return 0;
+  const from = boonSource(s);
+  return from?.boon.foes && from.boon.stat === stat && apart(from.at, foe) <= 2 ? from.boon.power : 0;
 }
 const CONDITION_NAMES = {
   poison: '中毒',
@@ -268,4 +307,4 @@ function progress(unit, metric, delta) {
   if (unit?.mastery && delta > 0) unit.mastery[metric] += delta;
 }
 
-export { COMMANDS, commandDescription, commandBonus, CONDITION_NAMES, effectsOf, selfEffectsOf, effectDescription, activeEffects, applyCondition, blankRecord, progress };
+export { COMMANDS, HELD_KINDS, LINGER_KINDS, commandDescription, commandBonus, commandAura, leaderBoon, prepPost, CONDITION_NAMES, effectsOf, selfEffectsOf, effectDescription, activeEffects, applyCondition, blankRecord, progress };
