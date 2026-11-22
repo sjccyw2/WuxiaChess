@@ -17,7 +17,7 @@ function youth() {
     sections: [
       rows('人物誌', [
         ['身分', '玩家所扮的角色。他是在睡夢裡闖進劍境的，不會武功。他不上盤，只落子。'],
-        ['名字', '第一輪由玩家輸入，此後求敗一直記得。未輸入時叫「' + G.YOUTH.name + '」。']
+        ['名字', '「' + G.YOUTH.name + '」。他在夢裡記不起自己的名字，便這樣叫自己。求敗也早忘了自己的本名。']
       ]),
       speech('頭一句話', said(YOUTH_NAME, t.prologue.first[3].text)),
       speech('為何由他執子', said(YOUTH_NAME, t.command.text, t.command.note)),

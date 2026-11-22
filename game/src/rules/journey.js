@@ -44,7 +44,9 @@ const LEGACY = {
 const MAPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 // A name typed by the player: no spaces or line breaks, at most eight characters.
 const cleanName = (value) => [...String(value ?? '').replace(/\s+/g, '')].slice(0, 8).join('');
-const youthName = (s) => s.run?.chronicle?.name || YOUTH.name;
+// The youth is 無名 (he cannot recall his own name in the dream). A name typed in an older save is
+// kept in the profile but no longer shown.
+const youthName = () => YOUTH.name;
 // The 境界 a run is played in: the one the player picked before it began, from those open.
 const realmOf = (r) => Math.min(WAKES.length, Math.max(1, r?.realm || 1));
 const REALM_NUMBERS = Array.from({ length: REALM_COUNT }, (_, i) => i + 1);
@@ -163,7 +165,6 @@ function startRun(draw = drawLots(), legacy = LEGACY) {
   s.version = 5;
   s.mapIndex = 0;
   s.run = initialRun(ids, draw.seed, legacy, draw.realm);
-  if (cleanName(draw.name)) s.run.chronicle.name = cleanName(draw.name);
   s.logs = [];
   s.stock = { remedy: 2 + (legacy.best >= 7 ? 1 : 0), elixir: 2, travelBlade: 1, bracer: 1 };
   s.run.manuals.push('softPalm');
@@ -857,13 +858,13 @@ function devFinish(s, won, side = false) {
 // as in play, and the heroes are raised as a recruit at that stage would be. After the board the
 // run goes on as usual. `legacy` is the profile, which the run carries as any other.
 const DEV_TEST = { points: 20, coins: 1000 };
-function devTestRun({ map = 0, realm = 1, heroes = [], seed = newSeed(), name } = {}, legacy = LEGACY) {
+function devTestRun({ map = 0, realm = 1, heroes = [], seed = newSeed() } = {}, legacy = LEGACY) {
   const ids = [...new Set(heroes)].filter((id) => G.PARTY.includes(id));
   if (!ids.length || !Number.isInteger(map) || !BATTLES[map]) return null;
   // A save holds the route its seed makes, so find a seed whose route meets the board at its stage.
   const stage = mapStages(map)[0] ?? 0;
   while (routeFor(seed)[stage] !== map) seed = (seed + 1) >>> 0;
-  const s = startRun({ seed, realm, name }, legacy),
+  const s = startRun({ seed, realm }, legacy),
     r = s.run;
   // Any 境界, open or not: this is for testing.
   r.realm = realmIndex(realm);
