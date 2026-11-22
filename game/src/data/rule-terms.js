@@ -330,7 +330,7 @@ const RULE_GROUPS = [
 // number every art has, or something its own page already shows as a figure.
 const PLAIN_FIELDS = {
   // debuff and shield are carried by the terms 攻勢受挫, 破防 and 護勁 through the state they leave.
-  art: ['name', 'owner', 'root', 'kind', 'tier', 'needs', 'points', 'icon', 'visual', 'basicBonus', 'desc', 'source', 'forms', 'mp', 'range', 'target', 'factor', 'gate', 'debuff', 'shield', 'price', 'stock', 'manual'],
+  art: ['name', 'family', 'owner', 'root', 'kind', 'tier', 'needs', 'points', 'icon', 'visual', 'basicBonus', 'desc', 'source', 'forms', 'mp', 'range', 'target', 'factor', 'gate', 'debuff', 'shield', 'price', 'stock', 'manual'],
   item: ['name', 'kind', 'owner', 'atk', 'icon', 'desc', 'forms', 'power', 'def', 'step', 'hp', 'mp'],
   // mods and sig are numbers; the rest are read by a term's own test above (護駕, 刀陣, 盾牆 …).
   trait: ['mods', 'sig', 'cover', 'stance', 'post', 'prefers']

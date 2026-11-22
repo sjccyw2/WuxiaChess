@@ -29,22 +29,22 @@ const SHEETS = {
 };
 
 // Which art plays which sheet, at what share of its full size. A famous art's summit plays it
-// whole; a form named after the art (「降龍十八掌・亢龍有悔」) shares it, smaller, so the summit
-// still reads as the grandest. Forms with their own names (破劍式, 少商劍 …) keep their own
+// whole; a form of the same art (亢龍有悔, of 降龍十八掌) shares it, smaller, so the summit
+// still reads as the grandest. Some forms (破劍式, 少商劍 …) keep their own
 // strokes, as does 見龍在田, a ward raised on oneself rather than a blow. 金蛇劍法 has a sheet
 // too; it waits for 袁承志.
 const ARTS = {
   ninefoldIntent: ['nine-swords', 1], // 獨孤九劍, 令狐冲's summit
-  ninefoldFormula: ['nine-swords', 0.78], // 獨孤九劍・總訣式
+  ninefoldFormula: ['nine-swords', 0.78], // 總訣式
   dragonReserve: ['dragon-palms', 1], // 降龍十八掌, 郭靖's summit
-  flyingDragon: ['dragon-palms', 0.88], // 降龍十八掌・飛龍在天
-  kanglongRegret: ['dragon-palms', 0.8], // 降龍十八掌・亢龍有悔
-  sixMeridians: ['six-meridians', 1], // 六脈神劍・六脈齊發, 段譽's summit
+  flyingDragon: ['dragon-palms', 0.88], // 飛龍在天
+  kanglongRegret: ['dragon-palms', 0.8], // 亢龍有悔
+  sixMeridians: ['six-meridians', 1], // 六脈齊發, 段譽's summit
   solitaryPalm: ['lone-palm', 1], // 黯然銷魂掌, 楊過's summit
-  mournfulCloud: ['lone-palm', 0.85], // 黯然銷魂掌・杞人憂天
-  staffWithoutDogs: ['bamboo-staff', 1], // 打狗棒法・天下無狗, 黃蓉's summit
-  beggarTrip: ['bamboo-staff', 0.86], // 打狗棒法・絆字訣
-  beggarBind: ['bamboo-staff', 0.8], // 打狗棒法・纏字訣
+  mournfulCloud: ['lone-palm', 0.85], // 杞人憂天
+  staffWithoutDogs: ['bamboo-staff', 1], // 天下無狗, 黃蓉's summit
+  beggarTrip: ['bamboo-staff', 0.86], // 絆字訣
+  beggarBind: ['bamboo-staff', 0.8], // 纏字訣
   'signature:yang': ['toad-qi', 0.75], // 蛤蟆功, 楊過's starting art
   toadLunge: ['toad-qi', 1], // 蛤蟆功, 歐陽鋒's signature
   fingerFlick: ['jade-flick', 0.85] // 彈指神通, the shop manual

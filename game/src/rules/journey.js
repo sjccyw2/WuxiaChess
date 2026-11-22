@@ -1835,6 +1835,8 @@ function studyState(s, u, id) {
   return {
     id,
     name: (a || root).name,
+    // The art a new art belongs to (亢龍有悔 → 降龍十八掌), shown beneath its name.
+    family: a?.family || '',
     icon: (a || root).icon,
     kind,
     tier: a?.tier || 0,

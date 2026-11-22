@@ -18,13 +18,24 @@ const glyph = (name, size = 17) => icon(name || 'diamond', size);
 const tiers = ['根基', '一階', '二階', '三階', '四階', '五階', '六階'];
 const tierName = (n) => tiers[whole(n)] || `第 ${whole(n)} 階`;
 const slotName = (i) => ['第一格', '第二格', '第三格'][i];
+// What a node does when learned. Only 普攻精進 upgrades something (the basic attack, and its name
+// is written 「本招・式名」); a 新招 or the 成名絕技 is an art of its own in a slot.
 const kindNames = {
   root: '根基',
-  basic: '基本招式',
+  basic: '普攻精進',
   signature: '根基',
-  active: '主動招式',
-  refinement: '絕技精修'
+  active: '新招',
+  refinement: '成名絕技'
 };
+const kindNotes = {
+  basic: '取代原本的普攻。',
+  active: '另成一招，配入招式欄的一格。',
+  refinement: '另成一招，配入招式欄的一格。'
+};
+// The small line above a node's name in the tree: the art it belongs to, or 普攻 for an upgrade.
+const nodeKicker = (node) => (node.kind === 'basic' ? '普攻精進' : node.family || '');
+// An upgrade's name breaks only at its 「・」, never inside 南山掌法.
+const nodeTitle = (name) => String(name).split('・').map((part) => `<span class="mj-nowrap">${text(part)}</span>`).join('・<wbr>');
 const skillTabs = [
   ['school', 'tree', '門派武學'],
   ['guides', 'book', '授業武譜'],
@@ -144,7 +155,7 @@ function schoolMap(nodes, selected) {
         active = node.id === selected.id;
       return btn(
         'skill-node',
-        `<span class="mj-node-title">${text(node.name)}</span><span class="mj-node-state">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 10)}${text(rootRank(node) ? `${rootRank(node)} 重` : node.learned ? '已習' : node.canLearn ? '可修' : '未習')}</span>`,
+        `${nodeKicker(node) ? `<span class="mj-node-family">${text(nodeKicker(node))}</span>` : ''}<span class="mj-node-title">${nodeTitle(node.name)}</span><span class="mj-node-state">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 10)}${text(rootRank(node) ? `${rootRank(node)} 重` : node.learned ? '已習' : node.canLearn ? '可修' : '未習')}</span>`,
         `mj-node mj-${state}`,
         `${data(node.id)} data-tab="school" aria-controls="mj-inspector" ${pressed(active)} style="grid-column:${col + 1};grid-row:${row + 1}" aria-label="${text(node.name)}，${tierName(node.tier)}，${text(statusOf(node))}"`
       );
@@ -190,7 +201,7 @@ function nodeDetails(node, tab, nodes, library) {
     );
   else if (inLibrary)
     action = btn('skill-tab', glyph('swords', 15) + '前往招式配置', 'mj-action', data('loadout'));
-  return `<section class="mj-detail" id="mj-inspector" tabindex="-1" aria-label="招式詳情"><div class="mj-detail-top"><span class="mj-seal">${glyph(node.icon, 22)}</span><small>${tab === 'guides' ? '授業武譜' : text(kindNames[node.kind] || '門派武學')} · ${tierName(node.tier)}</small></div><h4>${text(node.name)}</h4><div class="mj-state mj-state-${nodeState(node)}">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 13)}${text(statusOf(node))}</div>${factBadge(node.facts)}${node.description ? `<details class="fo-lore"><summary>招式解說</summary><p>${text(node.description)}</p>${(node.facts?.formRules || []).map((rule) => '<p>' + text(rule) + '</p>').join('')}${node.facts?.factor ? '<p>攻擊倍率 × ' + text(node.facts.factor) + '</p>' : ''}${node.facts?.animation ? '<p>' + text(node.facts.animation) + '</p>' : ''}</details>` : ''}${facts.length ? `<dl class="mj-facts">${facts.join('')}</dl>` : ''}${node.sourceNote ? `<p class="mj-source">${text(node.sourceNote)}</p>` : ''}${action ? `<div class="mj-detail-action">${action}</div>` : ''}<button type="button" class="mj-return-map mj-text-button" data-frame-return>回看${tab === 'guides' ? '武譜' : '脈絡'}</button></section>`;
+  return `<section class="mj-detail" id="mj-inspector" tabindex="-1" aria-label="招式詳情"><div class="mj-detail-top"><span class="mj-seal">${glyph(node.icon, 22)}</span><small>${tab === 'guides' ? '授業武譜' : text(kindNames[node.kind] || '門派武學')} · ${tierName(node.tier)}</small></div><h4>${text(node.name)}${node.family ? `<small class="mj-family">${text(node.family)}</small>` : ''}</h4>${kindNotes[node.kind] ? `<p class="mj-kind-note">${text((kindNames[node.kind] || '') + '：' + kindNotes[node.kind])}</p>` : ''}<div class="mj-state mj-state-${nodeState(node)}">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 13)}${text(statusOf(node))}</div>${factBadge(node.facts)}${node.description ? `<details class="fo-lore"><summary>招式解說</summary><p>${text(node.description)}</p>${(node.facts?.formRules || []).map((rule) => '<p>' + text(rule) + '</p>').join('')}${node.facts?.factor ? '<p>攻擊倍率 × ' + text(node.facts.factor) + '</p>' : ''}${node.facts?.animation ? '<p>' + text(node.facts.animation) + '</p>' : ''}</details>` : ''}${facts.length ? `<dl class="mj-facts">${facts.join('')}</dl>` : ''}${node.sourceNote ? `<p class="mj-source">${text(node.sourceNote)}</p>` : ''}${action ? `<div class="mj-detail-action">${action}</div>` : ''}<button type="button" class="mj-return-map mj-text-button" data-frame-return>回看${tab === 'guides' ? '武譜' : '脈絡'}</button></section>`;
 }
 function schoolContents(model, ui) {
   const nodes = list(model.school),
@@ -257,7 +268,7 @@ function loadout(model, ui) {
             ? '根基'
             : '門派武學';
       const label = here ? '已配置' : used >= 0 ? '移至此格' : '配置此格';
-      return `<li class="mj-library-row"><span class="mj-item-symbol">${glyph(a.icon, 20)}</span><div><small>${what}${used >= 0 ? ` · ${slotName(used)}` : ''}</small><h4>${text(a.name)}</h4>${reach(a.facts)}${factBadge(a.facts)}</div>${btn('slot-set', label, 'mj-action mj-compact', `${data(a.id)} data-slot="${index}" ${here || a.canEquip === false ? 'disabled' : ''} aria-label="${text(a.name)}${here ? '已配置於' : '配置到'}${slotName(index)}"`)}</li>`;
+      return `<li class="mj-library-row"><span class="mj-item-symbol">${glyph(a.icon, 20)}</span><div><small>${what}${used >= 0 ? ` · ${slotName(used)}` : ''}</small><h4>${text(a.name)}${a.family ? `<small class="mj-family">${text(a.family)}</small>` : ''}</h4>${reach(a.facts)}${factBadge(a.facts)}</div>${btn('slot-set', label, 'mj-action mj-compact', `${data(a.id)} data-slot="${index}" ${here || a.canEquip === false ? 'disabled' : ''} aria-label="${text(a.name)}${here ? '已配置於' : '配置到'}${slotName(index)}"`)}</li>`;
     })
     .join('');
   const clear = slots[index]

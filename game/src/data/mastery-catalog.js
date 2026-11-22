@@ -15,6 +15,11 @@ const GATE_LABELS = {
   steps: '實際行走格數',
   side: '在場生還並完成支線'
 };
+// 左右互搏術 is one art, the same for every hero who learns it (郭靖 and 小龍女).
+const PAIRED_HANDS_DESC = '左右手各使一路，在兩格內連擊兩次。習得後，合璧之招即使身旁無人也有同伴相鄰之效。';
+// Naming (the producer's rule, 2026-11-22): 「本招・式名」 with 「・」 marks an upgrade, and only the
+// basic attack is upgraded (kind 'basic'). Every other node is a new art in its own slot and has a
+// name of its own; `family` names the art it belongs to (降龍十八掌 for 亢龍有悔), shown beneath it.
 const HERO_PATHS = {
   hero: {
     title: '思過崖劍訣',
@@ -67,8 +72,8 @@ const HERO_PATHS = {
       '入境之時，郭靖手上只剩江南七位恩師所授的南山掌法與分筋錯骨手，那是他最早學的功夫。降龍十八掌要從頭一掌想起，一掌一掌想到十八掌俱全。',
     layout: [
       ['southernStance', 'kanglongRegret', null],
-      ['guoPairedHands', null, 'fieldDragonWard'],
-      [null, 'flyingDragon', 'armyBookRally'],
+      [null, null, 'fieldDragonWard'],
+      ['guoPairedHands', 'flyingDragon', 'armyBookRally'],
       [null, 'dragonReserve', null]
     ]
   },
@@ -363,7 +368,8 @@ const MASTERY_ARTS = {
     source: '華山劍法及白虹貫日招名見《笑傲江湖》。'
   },
   ninefoldFormula: {
-    name: '獨孤九劍・總訣式',
+    name: '總訣式',
+    family: '獨孤九劍',
     owner: 'hero',
     root: 'force',
     kind: 'active',
@@ -381,6 +387,7 @@ const MASTERY_ARTS = {
   },
   breakSword: {
     name: '破劍式',
+    family: '獨孤九劍',
     owner: 'hero',
     root: 'force',
     kind: 'active',
@@ -401,6 +408,7 @@ const MASTERY_ARTS = {
   },
   breakArrow: {
     name: '破箭式',
+    family: '獨孤九劍',
     owner: 'hero',
     root: 'guard',
     kind: 'active',
@@ -439,6 +447,7 @@ const MASTERY_ARTS = {
   },
   breakQi: {
     name: '破氣式',
+    family: '獨孤九劍',
     owner: 'hero',
     root: 'breath',
     kind: 'active',
@@ -512,7 +521,8 @@ const MASTERY_ARTS = {
     source: '黑血神針是《笑傲江湖》中日月神教的毒針，這一局配給任盈盈使用。'
   },
   returningSong: {
-    name: '清心普善・回春',
+    name: '回春',
+    family: '清心普善咒',
     owner: 'medic',
     root: 'breath',
     kind: 'active',
@@ -636,7 +646,8 @@ const MASTERY_ARTS = {
     source: '取向問天的豪烈身手，破陣鞭路為本作演繹。'
   },
   reverseForce: {
-    name: '吸功入地・返勁',
+    name: '返勁',
+    family: '吸功入地小法',
     owner: 'guard',
     root: 'guard',
     kind: 'active',
@@ -676,7 +687,8 @@ const MASTERY_ARTS = {
     source: '捨身截騎為本作給向問天的搏命招式。'
   },
   earthThroughChain: {
-    name: '吸功入地・涼亭鐵鏈',
+    name: '涼亭鐵鏈',
+    family: '吸功入地小法',
     owner: 'guard',
     root: 'guard',
     kind: 'refinement',
@@ -714,7 +726,8 @@ const MASTERY_ARTS = {
     source: '以江南七怪中南希仁一脈的南山掌法為本。「穩」取馬鈺在懸崖上傳他的全真呼吸，為本作的讀法。'
   },
   kanglongRegret: {
-    name: '降龍十八掌・亢龍有悔',
+    name: '亢龍有悔',
+    family: '降龍十八掌',
     owner: 'guo',
     root: 'force',
     kind: 'active',
@@ -736,21 +749,24 @@ const MASTERY_ARTS = {
     owner: 'guo',
     root: 'guard',
     kind: 'active',
-    tier: 2,
+    tier: 3,
     needs: ['kanglongRegret'],
-    points: 2,
-    mp: 12,
-    range: 1,
+    points: 3,
+    // The same art as 小龍女's (pairedHands): one effect and one tier, whoever learned it.
+    mp: 15,
+    range: 2,
     icon: 'hand',
     visual: 'guo',
     target: 'enemy',
-    factor: 1.3,
-    cover: true,
-    desc: '一手出掌擊中相鄰敵人，一手護住身旁：至下回合，敵人對相鄰同伴的直接攻擊改由自己承受。',
-    source: '周伯通在桃花島傳郭靖左右互搏。一手攻、一手守是本作的演繹。'
+    factor: 1.25,
+    hits: [0.75, 0.75],
+    pairsSelf: true,
+    desc: PAIRED_HANDS_DESC,
+    source: '周伯通在桃花島傳郭靖左右互搏：左手畫方，右手畫圓，一人可使兩路。'
   },
   fieldDragonWard: {
-    name: '降龍十八掌・見龍在田',
+    name: '見龍在田',
+    family: '降龍十八掌',
     owner: 'guo',
     root: 'guard',
     kind: 'active',
@@ -768,7 +784,8 @@ const MASTERY_ARTS = {
     source: '見龍在田是降龍十八掌中的守勢，此處將掌力展作護住同伴的掌牆。'
   },
   flyingDragon: {
-    name: '降龍十八掌・飛龍在天',
+    name: '飛龍在天',
+    family: '降龍十八掌',
     owner: 'guo',
     root: 'force',
     kind: 'active',
@@ -786,7 +803,8 @@ const MASTERY_ARTS = {
     source: '飛龍在天是洪七公所授降龍十八掌的招式。'
   },
   armyBookRally: {
-    name: '武穆遺書・合陣',
+    name: '合陣',
+    family: '武穆遺書',
     owner: 'guo',
     root: 'guard',
     kind: 'active',
@@ -909,7 +927,7 @@ const MASTERY_ARTS = {
     factor: 1.25,
     hits: [0.75, 0.75],
     pairsSelf: true,
-    desc: '左右手各領一劍，在兩格內連擊兩次。習得後，合璧之招即使身旁無人也有同伴相鄰之效。',
+    desc: PAIRED_HANDS_DESC,
     source: '周伯通在絕情谷授小龍女左右互搏，自此一人可使兩人之劍。'
   },
   maidenHarmony: {
@@ -949,6 +967,7 @@ const MASTERY_ARTS = {
   },
   shangYang: {
     name: '商陽劍',
+    family: '六脈神劍',
     owner: 'duan',
     root: 'force',
     kind: 'active',
@@ -985,6 +1004,7 @@ const MASTERY_ARTS = {
   },
   lesserMarsh: {
     name: '少澤劍',
+    family: '六脈神劍',
     owner: 'duan',
     root: 'breath',
     kind: 'active',
@@ -1003,6 +1023,7 @@ const MASTERY_ARTS = {
   },
   guanChong: {
     name: '關衝劍',
+    family: '六脈神劍',
     owner: 'duan',
     root: 'force',
     kind: 'active',
@@ -1021,6 +1042,7 @@ const MASTERY_ARTS = {
   },
   shaoShang: {
     name: '少商劍',
+    family: '六脈神劍',
     owner: 'duan',
     root: 'force',
     kind: 'active',
@@ -1037,7 +1059,8 @@ const MASTERY_ARTS = {
     source: '六脈神劍中少商劍劍路雄勁，有石破天驚之勢。'
   },
   sixMeridians: {
-    name: '六脈神劍・六脈齊發',
+    name: '六脈齊發',
+    family: '六脈神劍',
     owner: 'duan',
     root: 'force',
     kind: 'refinement',
@@ -1072,7 +1095,8 @@ const MASTERY_ARTS = {
     source: '落英神劍掌出於桃花島。拂花是為這一局擬定的基礎修習名。'
   },
   peachWard: {
-    name: '奇門五行・布陣',
+    name: '五行布陣',
+    family: '奇門五行',
     owner: 'huang',
     root: 'guard',
     kind: 'active',
@@ -1089,7 +1113,8 @@ const MASTERY_ARTS = {
     source: '黃蓉通曉桃花島奇門五行，曾以亂石陣獨擋金輪國師。陣勢規則為本作演繹。'
   },
   beggarBind: {
-    name: '打狗棒法・纏字訣',
+    name: '纏字訣',
+    family: '打狗棒法',
     owner: 'huang',
     root: 'force',
     kind: 'active',
@@ -1108,7 +1133,8 @@ const MASTERY_ARTS = {
     source: '纏是丐幫打狗棒法的棒訣之一，洪七公在君山傳黃蓉打狗棒。'
   },
   beggarTrip: {
-    name: '打狗棒法・絆字訣',
+    name: '絆字訣',
+    family: '打狗棒法',
     owner: 'huang',
     root: 'force',
     kind: 'active',
@@ -1126,7 +1152,8 @@ const MASTERY_ARTS = {
     source: '絆是打狗棒法的棒訣之一。失神的條件為本作演繹。'
   },
   peachGate: {
-    name: '桃花陣・開生門',
+    name: '開生門',
+    family: '桃花陣',
     owner: 'huang',
     root: 'guard',
     kind: 'active',
@@ -1144,7 +1171,8 @@ const MASTERY_ARTS = {
     source: '取桃花島石陣與生門的意象，行軍步數為戰棋規則。'
   },
   staffWithoutDogs: {
-    name: '打狗棒法・天下無狗',
+    name: '天下無狗',
+    family: '打狗棒法',
     owner: 'huang',
     root: 'force',
     kind: 'refinement',
@@ -1218,7 +1246,8 @@ const MASTERY_ARTS = {
     source: '黃藥師曾將彈指神通及玉簫劍法傳給楊過。'
   },
   tideBreaker: {
-    name: '玄鐵重劍・擊流',
+    name: '擊流',
+    family: '玄鐵劍法',
     owner: 'yang',
     root: 'force',
     kind: 'active',
@@ -1237,7 +1266,8 @@ const MASTERY_ARTS = {
     source: '取神鵰引楊過迎擊激流的練劍情節，擊流為本作所擬。'
   },
   mournfulCloud: {
-    name: '黯然銷魂掌・杞人憂天',
+    name: '杞人憂天',
+    family: '黯然銷魂掌',
     owner: 'yang',
     root: 'force',
     kind: 'active',
@@ -1279,7 +1309,8 @@ const MASTERY_ARTS = {
     source: '楊過久候小龍女十六年，自創黯然銷魂掌十七式。'
   },
   nineYangMantle: {
-    name: '九陽神功・護體',
+    name: '九陽護體',
+    family: '九陽神功',
     owner: 'zhang',
     root: 'breath',
     kind: 'active',
@@ -1297,7 +1328,8 @@ const MASTERY_ARTS = {
     source: '張無忌於崑崙山谷得九陽真經，護體真氣能化寒毒、震開來勁。'
   },
   qiankunYield: {
-    name: '乾坤大挪移・卸力',
+    name: '卸力',
+    family: '乾坤大挪移',
     owner: 'zhang',
     root: 'guard',
     kind: 'active',
@@ -1314,7 +1346,8 @@ const MASTERY_ARTS = {
     source: '張無忌在光明頂密道習成乾坤大挪移，借力移勁。'
   },
   qiankunShove: {
-    name: '乾坤大挪移・移勁',
+    name: '移勁',
+    family: '乾坤大挪移',
     owner: 'zhang',
     root: 'force',
     kind: 'active',
@@ -1367,7 +1400,8 @@ const MASTERY_ARTS = {
     source: '張三丰在武當山為張無忌演太極拳，以靜制動，後發制人。'
   },
   qiankunSeventh: {
-    name: '乾坤大挪移・第七層',
+    name: '第七層',
+    family: '乾坤大挪移',
     owner: 'zhang',
     root: 'guard',
     kind: 'refinement',
@@ -1418,7 +1452,8 @@ const MASTERY_ARTS = {
     source: '胡斐輕功了得，人稱雪山飛狐。以四象步為其步法名，是本作的讀法。'
   },
   foxFeint: {
-    name: '胡家刀法・懷中抱月',
+    name: '懷中抱月',
+    family: '胡家刀法',
     owner: 'hu',
     root: 'force',
     kind: 'active',
@@ -1473,7 +1508,8 @@ const MASTERY_ARTS = {
     source: '胡、苗兩家武功互為剋制。胡斐習得苗家劍法是本作的讀法。'
   },
   heartCut: {
-    name: '胡家刀法・纏身摘心刀',
+    name: '纏身摘心刀',
+    family: '胡家刀法',
     owner: 'hu',
     root: 'force',
     kind: 'active',
@@ -1491,7 +1527,8 @@ const MASTERY_ARTS = {
     source: '纏身摘心刀取作胡家刀法的一式名，是本作的讀法。'
   },
   cliffCut: {
-    name: '胡家刀法・懸崖一刀',
+    name: '懸崖一刀',
+    family: '胡家刀法',
     owner: 'hu',
     root: 'force',
     kind: 'refinement',
