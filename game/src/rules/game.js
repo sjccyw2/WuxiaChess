@@ -568,13 +568,16 @@ function stageRows(map, depth, realm = 1) {
 // The last board's two rows: 求敗 himself ('master'), and each of the run's ten masters as he
 // stands there ('guest'): no 戰意 on him and no men of his own, a good deal less than on his own
 // board. A guest's own `mods` still apply. Measured with `node tools/sim-battles.mjs --last`: with
-// these the simulated player, who is far weaker than a person, wins about two boards in three in
-// some eight rounds at hero level 11 (50%, 68% and 76% at levels 10, 11 and 12, with a company of
-// twelve drawn from the twenty heroes), and loses mostly by 無名 falling. 求敗 had 2000 氣血 when
-// there were ten heroes; the ten added on 2026-11-22 made that seven to thirteen points easier.
+// these the simulated player, who is far weaker than a person, wins about two boards in five in
+// some ten rounds at hero level 11 (22%, 39% and 54% at levels 10, 11 and 12, with a company of
+// twelve drawn from the twenty heroes), losing about as often by 無名 falling as by the round
+// limit. The board is meant to be a challenge (the producer, 2026-11-22: an even chance or less).
+// These are the numbers for the board as the producer set it that day: all ten masters come
+// (five, then two and three at 求敗's side), they guard him, he falls back, and 無名 is stronger
+// (journey.js LAST_BOON). At 求敗 1600 / 60 and each master 260 / 56 the same player won 68%.
 const LAST_ROWS = {
-  master: [2130, 56, 28, 3, 2],
-  guest: [365, 46, 20, 3, 1]
+  master: [1700, 64, 28, 3, 2],
+  guest: [280, 60, 20, 3, 1]
 };
 function stageBase(map, depth) {
   if (map === 0 && depth === 0)
@@ -779,6 +782,13 @@ function stanceHolds(s, v) {
 // 代受: who would take a direct blow aimed at t, if not t. A hero under the cover condition takes
 // it for any companion beside him; a piece with `cover: 'master'`, for its board's master. Of
 // several, the one with most 氣血, then the earlier in the unit list. A coverer is never covered.
+// The last board's master once he is at or below half his 氣血: from then on the masters who
+// stand with him guard him (coverer, enemyAction).
+function pressed(s) {
+  if (!boardOf(s)?.last) return null;
+  const m = find(s, commanderId(s));
+  return m && living(m) && m.hp <= m.maxHp / 2 ? m : null;
+}
 function coverer(s, t) {
   if (!s?.units || !t?.id) return null;
   let best = null;
@@ -791,7 +801,9 @@ function coverer(s, t) {
     const covers = ally(v)
       ? !!v.conditions?.cover
       : (cover === 'master' && t.id === commanderId(s)) ||
-        (cover === 'kin' && pieceKey(v) === pieceKey(t) && v.hp > t.hp);
+        (cover === 'kin' && pieceKey(v) === pieceKey(t) && v.hp > t.hp) ||
+        // 護駕 (the last board): once 求敗 is at half, a master beside him takes the blow.
+        (!!v.guest && pressed(s) === t);
     if (covers && (!best || v.hp > best.hp)) best = v;
   }
   return best;
@@ -932,6 +944,8 @@ function walkCells(s, u, field = availableField(s, u)) {
 function standCells(s, u, all = walkCells(s, u)) {
   const flight = fleeStep(s, u, all); // 遁走: the one tile its flight takes it to
   if (flight) return [flight];
+  const back = withdrawStep(s, u, all); // 退守: the one tile it falls back to
+  if (back) return [back];
   const hold = holdOf(s, u);
   if (!hold) return all;
   return all.filter((c, i) => !i || distance(c, hold.tile) <= hold.tether);
@@ -1060,6 +1074,13 @@ function enemyTraitLines(s, u) {
     say('坐鎮', words);
   }
   if (t.unfelled) say('不敗', '氣血不會低於 1 點，他不會倒下；削至 1 點，這一局便完了。');
+  // The last board: who comes to 求敗's side, who guards him, and where he falls back to.
+  if (boardOf(s)?.last && u.id === commanderId(s))
+    say('護駕', '氣血過半，兩位局主趕到他身旁；只剩四分之一，再來三位。此後與他相鄰的局主替他承受俠客的直接攻擊（氣血較多者先上）；波及、穿行、走勁與毒傷仍會落在他身上。');
+  if (t.withdraw)
+    say('退守', '氣血只剩' + (t.withdraw.below === 0.25 ? '四分之一' : Math.round(t.withdraw.below * 100) + '%') + '時，退到離俠客較遠、身旁有局主之處；退定之後，攻擊範圍內有人才出手。');
+  if (boardOf(s)?.last && u.guest && master)
+    say('護駕', master + '氣血過半之後，守在他身旁，相鄰時替他受招。');
   if (t.formless) say('無招', '手中只是一根枯枝，沒有招式可破：任何一式的破招對他都不成。');
   // What he fights with, for the forms that answer a kind of weapon: said once 無名 is on the board.
   if (armOf(u, s) && party(s).some((v) => v.id === YOUTH_ID)) say('兵刃', ARM_NAMES[armOf(u, s)] + '。');
@@ -3127,6 +3148,7 @@ function check(s) {
       (s.run ? '倒下，這一輪的眼破了。' : '負傷倒下，曲譜落入青城弟子手中。');
   } else {
     markHalved(s); // 變招, and reinforcements that wait on a master's half
+    rally(s); // 護駕: those who come to the master's side as his 氣血 falls
     const broken = brokenKeep(s);
     if (broken) {
       s.result = 'loss';
@@ -3319,6 +3341,40 @@ function pendingWaves(s) {
 // wave is announced nothing on the screen gives it away (the producer's ruling of 2026-11-21:
 // reinforcements come as a surprise); the interface reads this, never pendingWaves.
 const announcedWaves = (s) => pendingWaves(s).filter((p) => p.due <= s.round + 1);
+// 護駕 (the last board): a wave that waits on the board's master (`when.below`, a share of his
+// 氣血) enters the moment he is at or below it, on the free tiles nearest him (those nearer the
+// heroes first), unhurt and unacted, so its pieces act in the enemy phase that follows. A piece
+// with nowhere to stand within three tiles comes at the next check. No round announces them.
+function besideTile(s, m) {
+  const heroes = party(s).filter(living);
+  const near = (c) => Math.min(99, ...heroes.map((h) => distance(c, h)));
+  return (
+    fieldCells(s.mapIndex)
+      .filter((c) => walkable(c.x, c.y, s.mapIndex) && !at(s, c.x, c.y) && distance(c, m) >= 1 && distance(c, m) <= 3)
+      .sort((a, b) => distance(a, m) - distance(b, m) || near(a) - near(b) || a.y - b.y || a.x - b.x)[0] || null
+  );
+}
+function rally(s) {
+  const m = find(s, commanderId(s));
+  if (s.result || !m || !living(m) || (boardKind(s) === 'yield' && spent(s, m.id))) return;
+  for (const w of boardOf(s).waves) {
+    if (!w.when.below || m.hp > w.when.below * m.maxHp) continue;
+    const came = [];
+    for (const piece of w.pieces) {
+      if (entered(s, piece.id)) continue;
+      const tile = besideTile(s, m);
+      if (!tile) break;
+      const u = pieceUnit(s, { ...piece, at: [tile.x, tile.y] }, s.round);
+      s.units.push(u);
+      came.push(piece);
+      noteStanding(s, u);
+    }
+    if (!came.length) continue;
+    if (s.run && boardOf(s).last) log(s, 'story', MAZE_TALE.finale.rally, YOUTH.role);
+    log(s, 'system', waveList(came) + '趕到' + unitDetails(m).name + '身旁。', '敵援');
+    for (const piece of came) strangerSteps(s, piece.id);
+  }
+}
 // The start of a round: every wave due now enters, in data order, piece by piece. A piece whose
 // entry tile is taken enters beside it; one with nowhere to stand waits a round. They enter
 // unhurt and unacted, after every piece already on the board, so they act last.
@@ -3380,10 +3436,9 @@ function announce(s) {
     if (w.when.halved && s.logs.some((l) => l.who === '敵援' && l.round === s.round - 1 && l.text.endsWith(fireLine(s, w))))
       continue;
     if (defs.length) {
-      // 求敗 sets a stone down: the sound comes a round before the person. On the last board he
-      // is on it himself, and those who come walk on of their own accord.
-      if (s.run && boardOf(s).last) log(s, 'story', MAZE_TALE.finale.walkOn, YOUTH.role);
-      else if (s.run) log(s, 'story', shade(MAZE_TALE.clack, s.run.plus), acrossTable(s.run.plus).name);
+      // 求敗 sets a stone down: the sound comes a round before the person. (The last board has
+      // no such waves: those who come there walk on of their own accord, at once: rally.)
+      if (s.run) log(s, 'story', shade(MAZE_TALE.clack, s.run.plus), acrossTable(s.run.plus).name);
       log(s, 'system', '下一回合，' + waveList(defs) + '自' + w.place + '入場。', '敵援');
     }
   }
@@ -3583,6 +3638,8 @@ function enemyAction(s, u) {
     ]),
     ...kept.map((t) => [t.id, objectCost(s, u, t)])
   ]);
+  // 護駕 (the last board): once 求敗 is at half, the masters with him keep to his side.
+  const liege = u.guest ? pressed(s) : null;
   // 挑釁: a taunter it can strike this turn is all it may choose from.
   const bound = taunters(s, u, cells, range),
     prey = bound.length ? bound : [...friends, ...kept];
@@ -3600,12 +3657,19 @@ function enemyAction(s, u) {
           (can && lineDue && lineVictim(s, c, t) ? 30 : 0) -
           // 近身失準: it would rather strike from beyond its weak distance.
           (can && crowded && d <= crowded.within ? crowded.atk * 4 : 0) +
+          // 護駕: beside the one it guards, or failing that a step away.
+          (liege ? [0, 320, 120][distance(c, liege)] || 0 : 0) +
           // 守: the 戰意 is aimed at a kept object, so the walk is drawn to it: it counts as nearer
           // by its `pull` in steps (a step weighs 40 here).
           (!can && isProp(t) ? (BOARD_OBJECTS[pieceKey(t)]?.pull || 0) * 40 : 0);
       if (!best || score > best.score) best = { c, t, can, score };
     }
   u.acted = true;
+  // 退守: the first time he falls back, the page says so.
+  if (withdrawing(s, u) && !u.withdrew) {
+    u.withdrew = true;
+    if (s.run && boardOf(s).last) log(s, 'story', MAZE_TALE.finale.withdraw, YOUTH.role);
+  }
   if (!best) return [];
   // 坐鎮: a held piece with no one to strike from its ground walks back toward its post.
   const hold = !best.can && holdOf(s, u);
@@ -3614,6 +3678,8 @@ function enemyAction(s, u) {
   if (u.moved) followRoute(u, tracePath(field, best.c));
   if (!best.can) {
     if (fleeing(s, u)) log(s, 'move', '退向藥草地。', unitDetails(u).name);
+    else if (withdrawing(s, u)) log(s, 'move', '退到眾人身後。', unitDetails(u).name);
+    else if (liege) log(s, 'move', '守在' + unitDetails(liege).name + '身旁。', unitDetails(u).name);
     else if (!hold) log(s, 'move', '逼近我方陣地。', unitDetails(u).name);
     else if (u.moved) log(s, 'move', '退回崗位。', unitDetails(u).name);
     return [];
@@ -3844,6 +3910,23 @@ function fleeStep(s, u, all) {
   const back = movementField(s, u, [herb], Infinity, true).costs;
   const left = (c) => (c.x === herb.x && c.y === herb.y ? 0 : back.get(key(c.x, c.y)) ?? Infinity);
   return all.reduce((a, c) => (left(c) < left(a) || (left(c) === left(a) && c.n < a.n) ? c : a));
+}
+// 退守 (the last board): at or below its `withdraw.below` share of 氣血 a piece falls back, to the
+// tile it can reach that is farthest from the nearest hero (four tiles is far enough) and has
+// most of its own side beside it (two count), then the fewest steps. From there it strikes whoever
+// is in reach, as on any turn. Null when it is not withdrawing.
+const withdrawing = (s, u) => {
+  const w = traitsOf(u).withdraw;
+  return !!w && living(u) && u.hp <= w.below * u.maxHp;
+};
+function withdrawStep(s, u, all) {
+  if (ally(u) || !withdrawing(s, u)) return null;
+  const heroes = party(s).filter(living);
+  if (!heroes.length) return null;
+  const own = s.units.filter((v) => v !== u && !ally(v) && !isProp(v) && living(v) && !charmed(v));
+  const worth = (c) =>
+    Math.min(4, ...heroes.map((h) => distance(c, h))) + 2 * Math.min(2, own.filter((v) => distance(c, v) === 1).length);
+  return all.reduce((a, c) => (worth(c) > worth(a) || (worth(c) === worth(a) && c.n < a.n) ? c : a));
 }
 // The signature an enemy strikes with this turn, if it is due and is a blow at all (a mend or a
 // mirror is not: on its turn such a villain makes its plain strike).

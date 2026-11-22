@@ -58,17 +58,22 @@ function stageMission(stage) {
           return [o.kindName, o.name + (n > 1 ? ' × ' + n : '')];
         }),
         ...(m.waves.length ? m.waves.map((w) => ['援軍', w.line]) : [['援軍', m.noWaves]]),
-        ['通關獎勵', NOTES.clearReward(G.REWARDS)]
+        ['通關獎勵', G.hasFour(stage) ? NOTES.clearReward(G.REWARDS) : '沒有賞銀：勝了這一局，便是結局。']
       ]),
       rows('敵方', [
         ...m.foes.map((f) => [f.rank + ' · ' + f.name, f.gist || NOTES.noGist]),
         ...m.force.chips.map((c) => [c.name + ' × ' + c.count, c.gist || NOTES.noGist])
       ]),
-      rows('支線（每輪抽出一道）', [
-        ...pool.map((side) => [side.name, side.detail + '獎勵：' + side.reward + '。']),
-        ['支線獎勵', NOTES.sideReward(G.REWARDS)]
-      ]),
-      speech('支線紀事', ...[...new Set(pool.map((side) => sideTale(side.kind)))]),
+      // The last board has no secondary: 韋小寶 opens no book on it.
+      ...(pool.length
+        ? [
+            rows('支線（每輪抽出一道）', [
+              ...pool.map((side) => [side.name, side.detail + '獎勵：' + side.reward + '。']),
+              ['支線獎勵', NOTES.sideReward(G.REWARDS)]
+            ]),
+            speech('支線紀事', ...[...new Set(pool.map((side) => sideTale(side.kind)))])
+          ]
+        : [rows('支線', [['沒有', '終局沒有支線：莊家自己下了場，韋小寶不開盤口。']])]),
       links('同局條目', [
         link('maps', stage, stageName(stage)),
         ...namedOn(stage).map(foeLink),

@@ -166,7 +166,9 @@ function memberLine(s, u, ui) {
     '</header><dl>' +
     row('勝利', esc(model.win)) +
     row('敗退', esc(model.loss)) +
-    row(
+    (model.noSide
+      ? ''
+      : row(
       '支線',
       side
         ? '<strong>' +
@@ -178,7 +180,7 @@ function memberLine(s, u, ui) {
             '</small>' +
             (side.warning ? '<small class="warn">' + esc(side.warning) + '</small>' : '')
         : esc(model.sideNote)
-    ) +
+    )) +
     (model.recruit ? row('入局', esc(model.recruit)) : '') +
     '</dl></section>';
   return (
