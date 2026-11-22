@@ -5741,16 +5741,16 @@ section('leader boons of the later ten');
     lead.hp = 0;
     check('not with the leader fallen', G.forecast(near, foe, false, s).amount === free);
   }
-  // 黃藥師 桃花迷陣: the conditions a blow puts on a foe stay a round longer.
+  // 黃藥師 桃花迷陣: the conditions a blow puts on a foe stay two rounds longer.
   {
     const { s, lead, near, far, foe, other } = led('yaoShi');
     const art = defineArt({ debuff: { stat: 'atk', power: 3, turns: 2 }, safe: true, mp: 2 });
     teach(near, art);
     teach(far, art);
     const f = G.forecast(near, foe, true, s);
-    check('桃花迷陣: 攻勢受挫 for 3 rounds, and the forecast says so', f.effects.find((e) => e.kind === 'weak')?.turns === 3 && f.notes.includes('桃花迷陣 · 攻勢受挫多留 1 回合'), f.notes);
+    check('桃花迷陣: 攻勢受挫 for 4 rounds, and the forecast says so', f.effects.find((e) => e.kind === 'weak')?.turns === 4 && f.notes.includes('桃花迷陣 · 攻勢受挫多留 2 回合'), f.notes);
     G.resolve(s, near, foe, true);
-    check('…and the strike puts it on for 3', foe.conditions.weak?.through === s.round + 2, foe.conditions.weak?.through);
+    check('…and the strike puts it on for 4', foe.conditions.weak?.through === s.round + 3, foe.conditions.weak?.through);
     check('not eight tiles off', G.forecast(far, other, true, s).effects.find((e) => e.kind === 'weak')?.turns === 2);
     lead.hp = 0;
     check('not with the leader fallen', G.forecast(near, other, true, s).effects.find((e) => e.kind === 'weak')?.turns === 2);

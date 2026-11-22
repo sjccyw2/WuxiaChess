@@ -364,7 +364,7 @@ function boonBlows(plain, lead, unit) {
   // 碧蠶毒蠱: the poison the forecast puts on him, over its rounds.
   const poison = f.effects.find((e) => e.kind === 'poison');
   if (has('venom') && poison) n += (BOON_SHARE.venom * poison.power * poison.turns) / BLOW;
-  // 桃花迷陣: a round more of the conditions his own arts leave, at what a round of each is worth
+  // 桃花迷陣: rounds more of the conditions his own arts leave (the boon's power), at what a round of each is worth
   // in damage (攻勢受挫, 中毒, 內傷, 纏械 by their power; 破防 by the blows it opens; 絆足 and 破綻
   // as the support axis weighs them).
   if (has('linger')) {
@@ -378,7 +378,7 @@ function boonBlows(plain, lead, unit) {
       if (forms.includes('mark')) v += (0.1 / 2) * BLOW;
       return v * uptime(art);
     };
-    n += (BOON_SHARE.linger * Math.max(0, ...lead.parts.known.map((k) => round(k.art)))) / BLOW;
+    n += (BOON_SHARE.linger * G.commandBonus(lead.s, lead.u, 'linger') * Math.max(0, ...lead.parts.known.map((k) => round(k.art)))) / BLOW;
   }
   // 金蛇轉鋒: the blow at a foe on 苔石掩體 or 疏竹林, and one no disciple steps in front of.
   if (has('bend')) {

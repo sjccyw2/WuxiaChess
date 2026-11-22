@@ -75,8 +75,8 @@ const COMMANDS = {
   yaoShi: {
     name: '桃花迷陣',
     stat: 'linger',
-    power: 1,
-    text: '出手加在敵人身上的中毒、攻勢受挫、破防、絆足、破綻、內傷與纏械，多留 1 回合。',
+    power: 2,
+    text: '出手加在敵人身上的中毒、攻勢受挫、破防、絆足、破綻、內傷與纏械，多留 2 回合。',
     icon: 'star'
   },
   sanFeng: {
@@ -120,7 +120,7 @@ const COMMANDS = {
   // 無名: he does not give up a stone.
   youth: { name: '不棄一子', stat: 'def', power: 4, text: '防禦增加 4。', icon: 'shield' }
 };
-// What 打狗陣法 counts as a held foe, and what 桃花迷陣 keeps on a foe a round longer.
+// What 打狗陣法 counts as a held foe, and what 桃花迷陣 keeps on a foe longer (by its power).
 const HELD_KINDS = ['pin', 'seal', 'disarm', 'daze', 'freeze', 'mute'];
 const LINGER_KINDS = ['poison', 'weak', 'exposed', 'pin', 'mark', 'wound', 'disarm'];
 function commandDescription(id) {
