@@ -37,6 +37,9 @@ const CONTROL = 0.8; // holding a foe helps companions less surely than mending 
 const AURA = 0.75; // companions an aura finds, per tile of it
 const STEP_WORTH = 0.15; // one step for one companion, in blows
 const AGAIN = 0.3; // 連環: the kill that buys another action
+// 武學點 a hero has gained by each level: one per level from the game, and about as many again
+// from secondaries that pay a point (tools/sim-battles.mjs: some 20 spent by level 10).
+const POINTS_PER_LEVEL = 2;
 const UPSIDE = 0.5; // a conditional art's room above its expected blow, counted at half
 const TWO = [0.65, 0.35],
   THREE = [1, 0.7, 0.5];
@@ -93,9 +96,12 @@ const REGEN = (() => {
 
 // Bare-handed: the weapon HERO_STATS gives and the gear STARTING_GEAR gives are taken off.
 const bareHero = (id) => ({ ...G.startingHero(id), weapon: null, gear: null });
+// 無名 is scored as he takes the field on the last board, where he first enters: with the boon
+// he is mustered with there (LAST_BOON in journey.js).
 function build(id, level, learned, talents) {
   const u = bareHero(id);
   G.raiseLevel(u, level - 1);
+  if (id === G.YOUTH_ID) for (const [k, n] of Object.entries(G.LAST_BOON)) k === 'hp' ? (u.maxHp += n, u.hp += n) : k === 'mp' ? (u.maxMp += n, u.mp += n) : (u[k] += n);
   return { ...u, learned: [...learned], talents: { ...talents }, x: A.x, y: A.y };
 }
 
@@ -313,6 +319,9 @@ function measure(id, level, learned, talents, lead, unit, kit = learned) {
 
 // The leader boon, for a companion: what it adds to this hero's own numbers, as a proxy for
 // what it adds to each of the two others, in blows' worth.
+// 聚賢豪氣 (one foe beside him in the scene), 太極圓轉 (his counter) and 軟筋餘香 (the foe within two
+// tiles of him) show in his numbers as they are. The rest bear on a blow the scene does not
+// strike, so each is read off the rules on that blow, at how often it is met (BOON_SHARE).
 function boonWorth(plain, lead, unit) {
   const BLOW = unit.blow;
   return (
@@ -320,9 +329,74 @@ function boonWorth(plain, lead, unit) {
     ((plain.I - lead.I) * TAKEN) / BLOW +
     (lead.step - plain.step) * STEP_WORTH +
     ((lead.regen - plain.regen + 0.6 * (plain.cost - lead.cost)) * unit.mpWorth) / BLOW +
-    G.commandBonus(lead.s, lead.u, 'renew') / BLOW
+    G.commandBonus(lead.s, lead.u, 'renew') / BLOW +
+    boonBlows(plain, lead, unit)
   );
 }
+// How often a boon's moment comes, as a share of a round's blows (judgement, not game values).
+const BOON_SHARE = {
+  held: 0.3, // 打狗陣法: the foe struck is already held
+  venom: 0.5, // 碧蠶毒蠱: the foe struck is not yet poisoned, and lives to suffer it
+  linger: 0.5, // 桃花迷陣: a blow that leaves a condition, of those struck
+  ground: 0.25, // 金蛇轉鋒: the foe struck stands on ground that guards him
+  covered: 0.05, // ...or behind someone who would take the blow for him
+  opening: 0.3, // 越女試劍: once a round for the side; this companion's share of it
+  spare: 1 / ROUNDS // 雪谷回生: a fall turned aside once a board, about a blow a board
+};
+// 越女試劍 and 雪谷回生 keep count in a board's facts, which the scene has not: they are read off
+// the boon itself, on the counter his basic draws and the blow he takes.
+function boonBlows(plain, lead, unit) {
+  const BLOW = unit.blow,
+    { s, u } = lead,
+    foe = s.units.find((v) => v.side === 'enemy');
+  const has = (stat) => G.commandBonus(s, u, stat) > 0;
+  const blow = (v, t) => G.damage(v.u, t, false, 0, v.s);
+  const swing = 1.5; // the best blow and half a basic, as the scene weighs them above
+  const f = G.forecast(u, foe, false, s);
+  let n = 0;
+  // 北冥真氣: 內力 back for the round's blow.
+  n += ((f.absorb || 0) * unit.mpWorth) / BLOW;
+  // 打狗陣法: the same blow at a foe under 絆足.
+  if (has('held')) {
+    const held = { ...foe, conditions: { pin: { power: 2, through: s.round + 1 } } };
+    n += (BOON_SHARE.held * swing * (blow(lead, held) - blow(plain, foe))) / BLOW;
+  }
+  // 碧蠶毒蠱: the poison the forecast puts on him, over its rounds.
+  const poison = f.effects.find((e) => e.kind === 'poison');
+  if (has('venom') && poison) n += (BOON_SHARE.venom * poison.power * poison.turns) / BLOW;
+  // 桃花迷陣: rounds more of the conditions his own arts leave (the boon's power), at what a round of each is worth
+  // in damage (攻勢受挫, 中毒, 內傷, 纏械 by their power; 破防 by the blows it opens; 絆足 and 破綻
+  // as the support axis weighs them).
+  if (has('linger')) {
+    const round = (art) => {
+      let v = 0;
+      for (const e of G.effectsOf(art))
+        if (['weak', 'poison', 'wound', 'disarm'].includes(e.kind)) v += e.power;
+        else if (e.kind === 'exposed') v += e.power * 0.65 * TAKEN;
+      const forms = G.formsFor(u, art, G.basicFor(u));
+      if (forms.includes('pin')) v += (0.15 / 2) * BLOW;
+      if (forms.includes('mark')) v += (0.1 / 2) * BLOW;
+      return v * uptime(art);
+    };
+    n += (BOON_SHARE.linger * G.commandBonus(lead.s, lead.u, 'linger') * Math.max(0, ...lead.parts.known.map((k) => round(k.art)))) / BLOW;
+  }
+  // 金蛇轉鋒: the blow at a foe on 苔石掩體 or 疏竹林, and one no disciple steps in front of.
+  if (has('bend')) {
+    const sheltered = { ...foe, ...SHELTER };
+    n += (BOON_SHARE.ground * swing * (blow(lead, sheltered) - blow(plain, sheltered))) / BLOW;
+    n += (BOON_SHARE.covered * lead.bestE) / BLOW;
+  }
+  // 越女試劍: the counter his basic draws, not drawn.
+  if (has('opening')) n += (BOON_SHARE.opening * plain.attacks[0].counter) / BLOW;
+  // 雪谷回生: a blow that would have felled him.
+  if (has('spare')) n += (BOON_SHARE.spare * plain.I) / BLOW;
+  return n;
+}
+// A tile of the first board whose ground guards whoever stands on it.
+const SHELTER = (() => {
+  for (let y = 0; y < 20; y++)
+    for (let x = 0; x < 20; x++) if (G.tileInfo(x, y, 0)?.defense > 0 && G.walkable(x, y, 0)) return { x, y };
+})();
 
 // Both ways of fighting, blended: led by someone else, and leading.
 function profile(id, level, learned, talents, unit, kit) {
@@ -368,10 +442,13 @@ function purchases(id) {
     talents = { force: 0, guard: 0, breath: 0 },
     at = {},
     steps = [];
-  let sp = 0;
+  let sp = 0,
+    total = 0;
   const ready = (k) => T[k].needs.every((p) => p === 'signature' || (G.TALENTS[p] ? talents[p] > 0 : learned.includes(p)));
   for (const level of LEVELS) {
-    sp++;
+    const gain = level === 1 ? 1 : POINTS_PER_LEVEL;
+    sp += gain;
+    total += gain;
     for (let guard = 0; guard < 30 && sp > 0; guard++) {
       const open = tree.filter((k) => !learned.includes(k) && ready(k));
       const pick = (list) => list.filter((k) => sp >= T[k].points).sort(order)[0];
@@ -385,7 +462,7 @@ function purchases(id) {
       if (open.some((k) => toward.has(k)) || !train(id, talents)) break;
       sp--;
     }
-    steps.push({ level, points: level, learned: [...learned], talents: { ...talents } });
+    steps.push({ level, points: total, learned: [...learned], talents: { ...talents } });
   }
   return { steps, at };
 }
@@ -393,7 +470,7 @@ function purchases(id) {
 function summitSet(id) {
   const tree = treeOf(id),
     talents = { force: 0, guard: 0, breath: 0 };
-  let spare = TOP - tree.reduce((n, k) => n + G.TECHNIQUES[k].points, 0);
+  let spare = 1 + POINTS_PER_LEVEL * (TOP - 1) - tree.reduce((n, k) => n + G.TECHNIQUES[k].points, 0);
   while (spare-- > 0 && train(id, talents));
   return { learned: tree, talents };
 }
@@ -455,13 +532,14 @@ function artList(id, unit, at) {
 // ── The whole comparison ─────────────────────────────────────────────────────
 const NOTES = [
   '雷達圖：等級 12，本門武學樹全數學成，餘下的武學點照模擬的買法修習根基。',
-  '成長曲線：每升一級多一點武學點，照模擬的買法（先買通往成名絕技最便宜的一招，買不到時修習根基）逐級學起，歷練門檻當作已過。',
+  '成長曲線：每升一級約得兩點武學點（升級一點，支線賞點約一點，與模擬相符），照模擬的買法（先買通往成名絕技最便宜的一招，買不到時修習根基）逐級學起，歷練門檻當作已過。',
   '每一項以等級 12 時全體俠客中最高者為 100；成長曲線用同一把尺，所以前期分數較低。綜合分是六項的平均。',
   '傷害、承傷、療傷與內力消耗都照遊戲本身的算式，對手取第十局四名守將的平均（氣血 ' + FOE.maxHp + '、攻擊 ' + FOE.atk + '、防禦 ' + FOE.def + '），站在無地形加成的平地上。',
   '破招、孤行、合璧、黯然、還報、斬殘這些條件加成，按成立的機會折算，再加上全部成立時多出部分的一半，連環另加三成；依招式射程計入近身或遠程。',
   '遊戲目前沒有暴擊與閃避，一招打多少是定數，故不列此項；閃身、金剛與免受還擊之效計入「氣血防禦」，越障身法計入「身法速度」。',
   '領隊陣法只有一人能用，按三分之一計入本人各項，並計入「輔助同伴」。',
-  '不計兵器、裝備與丹藥：每位俠客空手入局，只看等級、根基與武學。'
+  '不計兵器、裝備與丹藥：每位俠客空手入局，只看等級、根基與武學。',
+  '無名以他初次入盤（終局）時的身手計，含入盤加成（氣血 ＋' + G.LAST_BOON.hp + '、內力 ＋' + G.LAST_BOON.mp + '、攻擊 ＋' + G.LAST_BOON.atk + '、防禦 ＋' + G.LAST_BOON.def + '、移動 ＋' + G.LAST_BOON.step + '）；勝過終局後的輪次，他是不帶加成的尋常一子。'
 ];
 
 function compute() {

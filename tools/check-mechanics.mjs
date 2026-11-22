@@ -1444,7 +1444,7 @@ section('glide');
   BM.applyCondition(p, pinned, { kind: 'pin', power: 2, turns: 1 }, pinned);
   check('絆足 shortens it', G.resolve(p, pinned, unit(p, 'blade'), true).glide === 2);
   const full = board(['hero', 'xiao', 'medic']);
-  const h = put(full, 'hero', 3, 7);
+  const h = Object.assign(put(full, 'hero', 3, 7), { step: 3 }); // three steps to (6,7), whatever his own
   put(full, 'blade', 7, 7);
   teach(h, defineArt({ forms: ['glide'], mp: 2, safe: true }));
   G.move(full, h, 6, 7);
@@ -3109,6 +3109,11 @@ section('prefers');
       const s = board();
       s.run.stage = stage;
       const chief = put(s, 'chief', 5, 3);
+      // The three heroes as these checks were written for (氣血 and 內力), so a rebalance of their
+      // numbers does not decide who is struck.
+      Object.assign(unit(s, 'medic'), { hp: 94, maxHp: 94, mp: 76, maxMp: 76 });
+      Object.assign(unit(s, 'guard'), { hp: 148, maxHp: 148, mp: 44, maxMp: 44 });
+      Object.assign(unit(s, 'hero'), { hp: 112, maxHp: 112 });
       setup(s);
       const before = new Map(G.party(s).map((v) => [v.id, v.hp]));
       G.startEnemy(s);
@@ -3212,7 +3217,7 @@ section('phase');
     const s = board();
     const hero = put(s, 'hero', 4, 3),
       chief = put(s, 'chief', 5, 3);
-    teach(hero, defineArt({ hits: [0.5, 0.5], factor: 2 }));
+    teach(hero, defineArt({ hits: [0.5, 0.5], factor: 1.5 }));
     hero.mp = 40;
     chief.hp = Math.floor(chief.maxHp / 2) + 10;
     const f = G.forecast(hero, chief, true, s);
@@ -3871,7 +3876,7 @@ section('board 7 寒玉石室: the venom that stops the healing');
   s.round = 2;
   const ring = mapLayout(7).cells.filter((p) => G.distance(p, li) === 3 && G.walkable(p.x, p.y, 7) && !G.at(s, p.x, p.y));
   for (const v of G.party(s)) if (['hero', 'medic', 'guard'].includes(v.id)) Object.assign(v, { x: -9, y: -9 }); else v.hp = 0; // the three are put again below; a recruit sits out
-  put(s, 'medic', ring[0].x, ring[0].y);
+  Object.assign(put(s, 'medic', ring[0].x, ring[0].y), { hp: 94, maxHp: 94 }); // as written for: one volley does not fell her
   const guardAt = ring.find((p) => G.distance(p, ring[0]) > 2);
   put(s, 'guard', guardAt.x, guardAt.y).hp = 60;
   put(s, 'hero', mapLayout(7).allies[0].x, mapLayout(7).allies[0].y);
@@ -5664,6 +5669,227 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   ended.run.last.terminal = true;
   const reloaded = R.restoreRun(copy(ended));
   check('…and a run that ended there then goes on to the last board', !!reloaded && R.enterLast(reloaded) && reloaded.run.stage === 10 && reloaded.leader === 'youth' && !R.enterLast(reloaded));
+}
+
+// ── The later ten's leader boons: each on and off ───────────────────────────────
+// Each is tried on a hero within two tiles of the leader, on one beyond, and with the leader
+// fallen. Where a boon changes a blow, the forecast says so and the strike does what it said.
+section('leader boons of the later ten');
+{
+  const MF = await load('rules/move-facts.js');
+  const LATER = ['qiaoFeng', 'xuZhu', 'hongQi', 'yaoShi', 'sanFeng', 'zhaoMin', 'lingSu', 'diYun', 'chengZhi', 'aQing'];
+  const stats = G.PARTY.filter((id) => id !== 'youth').map((id) => BM.COMMANDS[id].stat);
+  check('every hero leads with a boon of his own kind', new Set(stats).size === stats.length && LATER.every((id) => stats.includes(BM.COMMANDS[id].stat)), stats);
+  // A board led by `id` from (4,7), 令狐冲 beside him at (5,7) with the lieutenant past him at
+  // (6,7); 藍鳳凰 eight tiles off at (8,3), the archer beside her at (7,3).
+  const led = (id) => {
+    const s = board([id, 'hero', 'medic']);
+    return { s, lead: put(s, id, 4, 7), near: put(s, 'hero', 5, 7), far: put(s, 'medic', 8, 3), foe: put(s, 'blade', 6, 7), other: put(s, 'bow', 7, 3) };
+  };
+  const pin = (s, v, kind = 'pin') => BM.applyCondition(s, v, { kind, power: 2, turns: 2 }, unit(s, s.leader));
+
+  // 蕭峰 聚賢豪氣: 攻擊 ＋3 for each foe beside, up to two.
+  {
+    const per = BM.COMMANDS.qiaoFeng.power;
+    const s = board(['qiaoFeng', 'hero', 'medic']);
+    const lead = put(s, 'qiaoFeng', 4, 7),
+      mate = put(s, 'medic', 6, 7),
+      hero = put(s, 'hero', 7, 3);
+    const [own, mates, far] = [G.stat(lead, 'atk', s), G.stat(mate, 'atk', s), G.stat(hero, 'atk', s)];
+    const blade = put(s, 'blade', 5, 7);
+    put(s, 'bow', 8, 3);
+    const one = G.forecast(lead, blade, false, s).amount;
+    check('聚賢豪氣: a foe beside the leader adds 3 攻擊', per === 3 && G.stat(lead, 'atk', s) === own + per);
+    check('…and so beside a hero two tiles off', G.stat(mate, 'atk', s) === mates + per);
+    check('…but not beside one eight tiles off', G.stat(hero, 'atk', s) === far);
+    put(s, 'scout', 3, 7);
+    check('two foes beside: ＋6, and the forecast deals the 3 more', G.stat(lead, 'atk', s) === own + 2 * per && G.forecast(lead, blade, false, s).amount === one + per);
+    put(s, 'chief', 4, 6);
+    check('a third adds nothing more', G.stat(lead, 'atk', s) === own + 2 * per);
+    lead.hp = 0;
+    check('with the leader fallen, nothing', G.stat(mate, 'atk', s) === mates);
+  }
+  // 虛竹 北冥真氣: a blow that lands gives back 3 內力.
+  {
+    const { s, lead, near, far, foe, other } = led('xuZhu');
+    near.mp = 0;
+    const f = G.forecast(near, foe, false, s);
+    check('北冥真氣: the forecast gives back 3 內力', f.absorb === 3 && f.notes.includes('北冥真氣 · 內力 ＋3'), f.notes);
+    check('…and the move’s page says so', MF.moveFacts(s, near, 'basic').effectLines.includes('北冥真氣 · 出手擊中敵人時，回復 3 點內力'));
+    G.resolve(s, near, foe, false);
+    check('…and the strike gives it', near.mp === 3, near.mp);
+    check('not eight tiles off', !G.forecast(far, other, false, s).absorb);
+    BM.applyCondition(s, foe, { kind: 'evade', power: 1, turns: 1 }, foe);
+    check('not for a blow 閃身 makes miss', !G.forecast(lead, foe, false, s).absorb);
+    lead.hp = 0;
+    delete foe.conditions.evade;
+    check('not with the leader fallen', !G.forecast(near, foe, false, s).absorb);
+  }
+  // 洪七公 打狗陣法: ＋8 on a held foe.
+  {
+    const { s, lead, near, far, foe, other } = led('hongQi');
+    const free = G.forecast(near, foe, false, s).amount,
+      distant = G.forecast(far, other, false, s).amount;
+    pin(s, foe);
+    const f = G.forecast(near, foe, false, s);
+    check('打狗陣法: ＋8 on a foe under 絆足, and the forecast says so', f.amount === free + 8 && f.notes.includes('打狗陣法 · 傷害 ＋8'), [free, f.amount]);
+    delete foe.conditions.pin;
+    pin(s, foe, 'seal');
+    check('…and under 封穴', G.forecast(near, foe, false, s).amount === free + 8);
+    pin(s, other);
+    check('not eight tiles off', G.forecast(far, other, false, s).amount === distant);
+    lead.hp = 0;
+    check('not with the leader fallen', G.forecast(near, foe, false, s).amount === free);
+  }
+  // 黃藥師 桃花迷陣: the conditions a blow puts on a foe stay two rounds longer.
+  {
+    const { s, lead, near, far, foe, other } = led('yaoShi');
+    const art = defineArt({ debuff: { stat: 'atk', power: 3, turns: 2 }, safe: true, mp: 2 });
+    teach(near, art);
+    teach(far, art);
+    const f = G.forecast(near, foe, true, s);
+    check('桃花迷陣: 攻勢受挫 for 4 rounds, and the forecast says so', f.effects.find((e) => e.kind === 'weak')?.turns === 4 && f.notes.includes('桃花迷陣 · 攻勢受挫多留 2 回合'), f.notes);
+    G.resolve(s, near, foe, true);
+    check('…and the strike puts it on for 4', foe.conditions.weak?.through === s.round + 3, foe.conditions.weak?.through);
+    check('not eight tiles off', G.forecast(far, other, true, s).effects.find((e) => e.kind === 'weak')?.turns === 2);
+    lead.hp = 0;
+    check('not with the leader fallen', G.forecast(near, other, true, s).effects.find((e) => e.kind === 'weak')?.turns === 2);
+  }
+  // 張三丰 太極圓轉: counters two tenths fuller, up to a full one.
+  {
+    const { s, lead, near, far, foe } = led('sanFeng');
+    check('太極圓轉: counters at 0.75 in range', G.counterRatio(s, near) === 0.75 && G.counterRatio(s, lead) === 0.75);
+    check('…0.55 eight tiles off', G.counterRatio(s, far) === 0.55);
+    BM.applyCondition(s, near, { kind: 'stance', power: 30, turns: 1 }, near);
+    check('…and a full counter stays full', G.counterRatio(s, near) === 1);
+    delete near.conditions.stance;
+    loose(() => {
+      Object.assign(foe, { step: 0, range: 1 });
+      const want = Math.max(2, Math.round(G.damage(near, foe, false, 0, s) * 0.75)),
+        hp = foe.hp;
+      G.startEnemy(s);
+      G.enemyAct(s, foe);
+      check('…and the enemy phase’s counter is that share', hp - foe.hp === want, [hp - foe.hp, want]);
+    });
+    lead.hp = 0;
+    check('with the leader fallen, 0.55', G.counterRatio(s, near) === 0.55);
+  }
+  // 趙敏 軟筋餘香: foes within two tiles of her strike 3 lighter.
+  {
+    const { s, lead, near, foe, other } = led('zhaoMin');
+    check('軟筋餘香 names the foes', BM.commandDescription('zhaoMin') === '距離領隊兩格內的敵人攻擊減少 3。');
+    const weak = [G.stat(foe, 'atk', s), G.damage(foe, near, false, 0, s), G.forecast(near, foe, false, s)],
+      farAtk = G.stat(other, 'atk', s);
+    put(s, 'zhaoMin', 3, 3);
+    const full = [G.stat(foe, 'atk', s), G.damage(foe, near, false, 0, s), G.forecast(near, foe, false, s)];
+    check('軟筋餘香: 攻擊 −3 on a foe two tiles off, none once she is five off', weak[0] === full[0] - 3, [weak[0], full[0]]);
+    check('…so its blow lands 3 lighter', weak[1] === full[1] - 3, [weak[1], full[1]]);
+    check('…and the forecast’s counter is lighter and says why', weak[2].counterRaw < full[2].counterRaw && weak[2].notes.includes('軟筋餘香 · 還擊攻擊 −3'), weak[2].notes);
+    check('the archer eight tiles off keeps his', farAtk === G.stat(other, 'atk', s));
+    check('a hero takes nothing from it', BM.commandBonus(s, near, 'sap') === 0);
+    put(s, 'zhaoMin', 4, 7);
+    lead.hp = 0;
+    check('with her fallen, nothing', G.stat(foe, 'atk', s) === full[0]);
+    // 整備: centred on her seat's post.
+    lead.hp = lead.maxHp;
+    s.run.scene = 'prep';
+    const post = BM.prepPost(s, 'zhaoMin');
+    Object.assign(foe, { x: post.x + 1, y: post.y });
+    const prepAtk = G.stat(foe, 'atk', s);
+    Object.assign(foe, { x: post.x + 3, y: post.y });
+    check('in 整備 it reads her seat’s post', prepAtk === G.stat(foe, 'atk', s) - 3);
+    s.run.scene = 'fight';
+  }
+  // 程靈素 碧蠶毒蠱: a blow that lands poisons, 4 for two rounds.
+  {
+    const { s, lead, near, far, foe, other } = led('lingSu');
+    const f = G.forecast(near, foe, false, s);
+    check('碧蠶毒蠱: the forecast poisons 4 for 2 rounds', same(f.effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: 4, turns: 2 }]) && f.notes.includes('碧蠶毒蠱 · 中毒 4，2 回合'), JSON.stringify(f.effects));
+    G.resolve(s, near, foe, false);
+    check('…and the strike does', foe.conditions.poison?.power === 4 && foe.conditions.poison.through === s.round + 1);
+    teach(lead, defineArt({ poison: { power: 6, turns: 1 }, safe: true, mp: 2 }));
+    const scout = put(s, 'scout', 3, 7);
+    check('an art’s own poison and the boon’s are one: the stronger, the longer', same(G.forecast(lead, scout, true, s).effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: 6, turns: 2 }]));
+    check('not eight tiles off', !G.forecast(far, other, false, s).effects.some((e) => e.kind === 'poison'));
+    BM.applyCondition(s, scout, { kind: 'evade', power: 1, turns: 1 }, scout);
+    check('not on a blow 閃身 makes miss, nor its line', !G.forecast(lead, scout, false, s).effects.length && !G.forecast(lead, scout, false, s).notes.some((n) => n.startsWith('碧蠶毒蠱')));
+    lead.hp = 0;
+    check('not with the leader fallen', !G.forecast(near, foe, false, s).effects.some((e) => e.kind === 'poison'));
+  }
+  // 狄雲 雪谷回生: the first hero in range who would fall this board is left at 1 氣血.
+  {
+    const { s, near, far, foe } = led('diYun');
+    near.hp = 5;
+    G.wound(s, near, 50, foe);
+    check('雪谷回生: a felling blow leaves him at 1', near.hp === 1 && s.tally.spared === 'hero' && s.logs.some((l) => l.text === '雪谷回生：留住一口氣，氣血剩 1。'));
+    G.wound(s, near, 50, foe);
+    check('…once a board', near.hp === 0);
+    const t = led('diYun');
+    t.far.hp = 5;
+    G.wound(t.s, t.far, 50, t.other);
+    check('not eight tiles off', t.far.hp === 0 && !t.s.tally.spared);
+    t.lead.hp = 3;
+    G.wound(t.s, t.lead, 50, t.foe);
+    check('the leader himself', t.lead.hp === 1);
+    const u = led('diYun');
+    u.near.hp = 2;
+    const f = G.forecast(u.near, u.foe, false, u.s);
+    check('the forecast shows the counter leaving him at 1, and says so', f.counter === 1 && f.counterRaw >= 2 && f.notes.includes('雪谷回生 · 留住 1 點氣血（每局一次）'), [f.counter, f.counterRaw]);
+    G.resolve(u.s, u.near, u.foe, false);
+    check('…and so it does', u.near.hp === 1 && u.s.tally.spared === 'hero');
+    const v = led('diYun');
+    v.lead.hp = 0;
+    v.near.hp = 5;
+    G.wound(v.s, v.near, 50, v.foe);
+    check('not with the leader fallen', v.near.hp === 0);
+    check('a new board’s facts have it again', !G.blankTally().spared);
+  }
+  // 袁承志 金蛇轉鋒: blows pass the ground's defence and every 代受.
+  {
+    const s = board(['chengZhi', 'hero', 'medic']);
+    const lead = put(s, 'chengZhi', 3, 3),
+      chief = put(s, 'chief', 2, 3); // 疏竹林: 防禦 ＋5
+    const bent = G.damage(lead, chief, false, 0, s);
+    check('金蛇轉鋒: the forecast says the ground does not count', G.forecast(lead, chief, false, s).notes.includes('金蛇轉鋒 · 無視地形防禦'));
+    lead.hp = 0;
+    check('…and with the leader fallen it counts again', G.damage(lead, chief, false, 0, s) < bent, [G.damage(lead, chief, false, 0, s), bent]);
+    withTraits('scout-0', { cover: 'master' }, () => {
+      Object.assign(G.DETAILS['scout-0'], { ...G.DETAILS.scout, name: '星宿弟子', traits: { cover: 'master' } });
+      const t = board(['chengZhi', 'hero', 'medic']);
+      const cz = put(t, 'chengZhi', 4, 7),
+        boss = put(t, 'chief', 5, 7);
+      put(t, 'scout', 6, 7);
+      const f = G.forecast(cz, boss, false, t),
+        life = boss.hp;
+      check('no disciple takes the blow for his master', !f.coveredBy);
+      G.resolve(t, cz, boss, false);
+      check('…and it lands on the master', boss.hp === life - f.amount && f.amount > 0);
+      put(t, 'chengZhi', 8, 3);
+      put(t, 'hero', 4, 7);
+      check('a hero beyond two tiles of the leader is met by the disciple', G.forecast(unit(t, 'hero'), boss, false, t).coveredBy === 'scout');
+    });
+  }
+  // 阿青 越女試劍: the first blow each round that would draw a counter draws none.
+  {
+    const { s, lead, near, far, foe, other } = led('aQing');
+    const f = G.forecast(near, foe, false, s),
+      hp = near.hp;
+    check('越女試劍: the forecast draws no counter, and says so', f.opening && f.counter === 0 && f.notes.includes('越女試劍 · 本回合頭一次，敵人不能還擊'), f.notes);
+    G.resolve(s, near, foe, false);
+    check('…the strike draws none, and spends it for the round', near.hp === hp && s.tally.opened === s.round);
+    const scout = put(s, 'scout', 3, 7);
+    const second = G.forecast(lead, scout, false, s);
+    check('the next blow that round is countered', !second.opening && second.counter > 0);
+    quietTurn(s);
+    check('a new round, a new first blow', G.forecast(lead, scout, false, s).opening === true);
+    const t = led('aQing');
+    teach(t.near, defineArt({ safe: true, mp: 2 }));
+    G.resolve(t.s, t.near, t.foe, true);
+    check('a blow that draws no counter anyway does not spend it', !t.s.tally.opened && G.forecast(t.lead, put(t.s, 'scout', 3, 7), false, t.s).opening === true);
+    check('not eight tiles off', !G.forecast(t.far, t.other, false, t.s).opening);
+    t.lead.hp = 0;
+    check('not with the leader fallen', !G.forecast(t.near, t.foe, false, t.s).opening);
+  }
 }
 
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
