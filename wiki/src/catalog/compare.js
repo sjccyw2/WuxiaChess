@@ -37,6 +37,9 @@ const CONTROL = 0.8; // holding a foe helps companions less surely than mending 
 const AURA = 0.75; // companions an aura finds, per tile of it
 const STEP_WORTH = 0.15; // one step for one companion, in blows
 const AGAIN = 0.3; // 連環: the kill that buys another action
+// 武學點 a hero has gained by each level: one per level from the game, and about as many again
+// from secondaries that pay a point (tools/sim-battles.mjs: some 20 spent by level 10).
+const POINTS_PER_LEVEL = 2;
 const UPSIDE = 0.5; // a conditional art's room above its expected blow, counted at half
 const TWO = [0.65, 0.35],
   THREE = [1, 0.7, 0.5];
@@ -93,9 +96,12 @@ const REGEN = (() => {
 
 // Bare-handed: the weapon HERO_STATS gives and the gear STARTING_GEAR gives are taken off.
 const bareHero = (id) => ({ ...G.startingHero(id), weapon: null, gear: null });
+// 無名 is scored as he takes the field on the last board, where he first enters: with the boon
+// he is mustered with there (LAST_BOON in journey.js).
 function build(id, level, learned, talents) {
   const u = bareHero(id);
   G.raiseLevel(u, level - 1);
+  if (id === G.YOUTH_ID) for (const [k, n] of Object.entries(G.LAST_BOON)) k === 'hp' ? (u.maxHp += n, u.hp += n) : k === 'mp' ? (u.maxMp += n, u.mp += n) : (u[k] += n);
   return { ...u, learned: [...learned], talents: { ...talents }, x: A.x, y: A.y };
 }
 
@@ -368,10 +374,13 @@ function purchases(id) {
     talents = { force: 0, guard: 0, breath: 0 },
     at = {},
     steps = [];
-  let sp = 0;
+  let sp = 0,
+    total = 0;
   const ready = (k) => T[k].needs.every((p) => p === 'signature' || (G.TALENTS[p] ? talents[p] > 0 : learned.includes(p)));
   for (const level of LEVELS) {
-    sp++;
+    const gain = level === 1 ? 1 : POINTS_PER_LEVEL;
+    sp += gain;
+    total += gain;
     for (let guard = 0; guard < 30 && sp > 0; guard++) {
       const open = tree.filter((k) => !learned.includes(k) && ready(k));
       const pick = (list) => list.filter((k) => sp >= T[k].points).sort(order)[0];
@@ -385,7 +394,7 @@ function purchases(id) {
       if (open.some((k) => toward.has(k)) || !train(id, talents)) break;
       sp--;
     }
-    steps.push({ level, points: level, learned: [...learned], talents: { ...talents } });
+    steps.push({ level, points: total, learned: [...learned], talents: { ...talents } });
   }
   return { steps, at };
 }
@@ -393,7 +402,7 @@ function purchases(id) {
 function summitSet(id) {
   const tree = treeOf(id),
     talents = { force: 0, guard: 0, breath: 0 };
-  let spare = TOP - tree.reduce((n, k) => n + G.TECHNIQUES[k].points, 0);
+  let spare = 1 + POINTS_PER_LEVEL * (TOP - 1) - tree.reduce((n, k) => n + G.TECHNIQUES[k].points, 0);
   while (spare-- > 0 && train(id, talents));
   return { learned: tree, talents };
 }
@@ -455,13 +464,14 @@ function artList(id, unit, at) {
 // ── The whole comparison ─────────────────────────────────────────────────────
 const NOTES = [
   '雷達圖：等級 12，本門武學樹全數學成，餘下的武學點照模擬的買法修習根基。',
-  '成長曲線：每升一級多一點武學點，照模擬的買法（先買通往成名絕技最便宜的一招，買不到時修習根基）逐級學起，歷練門檻當作已過。',
+  '成長曲線：每升一級約得兩點武學點（升級一點，支線賞點約一點，與模擬相符），照模擬的買法（先買通往成名絕技最便宜的一招，買不到時修習根基）逐級學起，歷練門檻當作已過。',
   '每一項以等級 12 時全體俠客中最高者為 100；成長曲線用同一把尺，所以前期分數較低。綜合分是六項的平均。',
   '傷害、承傷、療傷與內力消耗都照遊戲本身的算式，對手取第十局四名守將的平均（氣血 ' + FOE.maxHp + '、攻擊 ' + FOE.atk + '、防禦 ' + FOE.def + '），站在無地形加成的平地上。',
   '破招、孤行、合璧、黯然、還報、斬殘這些條件加成，按成立的機會折算，再加上全部成立時多出部分的一半，連環另加三成；依招式射程計入近身或遠程。',
   '遊戲目前沒有暴擊與閃避，一招打多少是定數，故不列此項；閃身、金剛與免受還擊之效計入「氣血防禦」，越障身法計入「身法速度」。',
   '領隊陣法只有一人能用，按三分之一計入本人各項，並計入「輔助同伴」。',
-  '不計兵器、裝備與丹藥：每位俠客空手入局，只看等級、根基與武學。'
+  '不計兵器、裝備與丹藥：每位俠客空手入局，只看等級、根基與武學。',
+  '無名以他初次入盤（終局）時的身手計，含入盤加成（氣血 ＋' + G.LAST_BOON.hp + '、內力 ＋' + G.LAST_BOON.mp + '、攻擊 ＋' + G.LAST_BOON.atk + '、防禦 ＋' + G.LAST_BOON.def + '、移動 ＋' + G.LAST_BOON.step + '）；勝過終局後的輪次，他是不帶加成的尋常一子。'
 ];
 
 function compute() {
