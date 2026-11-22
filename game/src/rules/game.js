@@ -990,9 +990,16 @@ function enemyTraitLines(s, u) {
         (form && s.units?.includes(u) && s.logs ? '本回合：' + (form === 'sabre' ? '金刀' : '黑劍') + '。' : '')
     );
   }
-  if (t.lone) say('獨行', '身旁沒有其他敵人時，出手或還擊攻擊 ＋' + (t.lone.atk + halfStage(s)) + '。');
+  if (t.lone)
+    say(
+      '獨行',
+      '身旁沒有其他敵人時，出手或還擊攻擊 ＋' +
+        (t.lone.atk + halfStage(s)) +
+        '。' +
+        (s.logs ? (alone(s, u) ? '此刻獨行。' : '此刻有同夥在旁。') : '')
+    );
   if (t.pincer)
-    say('夾擊', '目標身旁另有敵人時，出手或還擊攻擊 ＋' + (t.pincer.atk + halfStage(s)) + '。');
+    say('夾衛', '目標身旁另有敵人時，出手或還擊攻擊 ＋' + (t.pincer.atk + halfStage(s)) + '。');
   if (t.stepPoison)
     say(
       '步裡藏毒',
@@ -1844,7 +1851,7 @@ const alone = (s, u) =>
   !(s?.units || []).some(
     (v) => v.id !== u.id && living(v) && v.side === 'enemy' && distance(v, u) === 1
   );
-// 夾擊: another living black stone stands beside the hero this one strikes.
+// 夾衛: another living black stone stands beside the hero this one strikes.
 const flanked = (s, u, target) =>
   (s?.units || []).some(
     (v) => v.id !== u.id && living(v) && v.side === 'enemy' && distance(v, target) === 1
@@ -2117,7 +2124,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       result.notes.push('斬殘 · 還擊攻擊 ＋' + executeBonus(s, traits));
     if (traits.lone && alone(s, t)) result.notes.push('獨行 · 還擊攻擊 ＋' + (traits.lone.atk + halfStage(s)));
     if (traits.pincer && flanked(s, t, u))
-      result.notes.push('夾擊 · 還擊攻擊 ＋' + (traits.pincer.atk + halfStage(s)));
+      result.notes.push('夾衛 · 還擊攻擊 ＋' + (traits.pincer.atk + halfStage(s)));
     if (traits.twin && twinForm(s, t) === 'sabre')
       result.notes.push('陰陽倒亂 · 金刀 · 還擊攻擊 ＋' + (traits.twin.atk + halfStage(s)));
   }
@@ -3298,7 +3305,6 @@ function enemyAction(s, u) {
     basicPoison(s, u, t, effects); // 蛇毒
     basicRiders(s, u, t, effects); // 步裡藏毒, 墜網
   }
-  secondNeedle(s, u, t, strikePower, friends, effects); // 分刺
   reflectStrike(s, t, u, n, effects);
   if (barbsOf(t) && !blow.void && distance(u, t) === 1)
     barbStrike(s, t, u, afterWard(barbsOf(t), wardPercent(s, u)), effects); // 反刺
@@ -3319,6 +3325,8 @@ function enemyAction(s, u) {
     log(s, 'combat', '還擊，造成 ' + hit + ' 點傷害。', unitDetails(t).name);
     exp(s, t, living(u) ? 12 : 35);
   }
+  // 分刺: the second needle, once the first blow's exchange is over (and only if it still stands).
+  secondNeedle(s, u, t, strikePower, friends, effects);
   woundSelfLoss(s, u, effects); // 內傷: the attacker pays once the exchange is over
   // 擒拿: the hero is dragged in after his counter and 反刺 were judged from where he was struck.
   if (drag) dragNear(s, u, t);

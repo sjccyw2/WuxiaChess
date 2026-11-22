@@ -4534,15 +4534,16 @@ section('boards built round one villain');
   };
   const held = (x, y) => ({ tile: { x, y }, tether: 0, wake: false });
 
-  // 獨行 and 夾擊
+  // 獨行 and 夾衛
   troopAs({ lone: { atk: 6 } }, () => {
     const s = board();
     s.run.stage = 4;
     const scout = put(s, 'scout', 5, 3),
       hero = put(s, 'hero', 4, 3);
     check('獨行: alone, its attack on a hero is 6 + ⌊stage/2⌋ higher', G.traitEdge(s, scout, hero) === -8);
-    check('獨行: its page says so', G.enemyTraitLines(s, scout).includes('【獨行】身旁沒有其他敵人時，出手或還擊攻擊 ＋8。'));
+    check('獨行: its page says so, and that it is alone now', G.enemyTraitLines(s, scout).includes('【獨行】身旁沒有其他敵人時，出手或還擊攻擊 ＋8。此刻獨行。'));
     put(s, 'blade', 5, 4);
+    check('獨行: its page says when a fellow stands beside it', G.enemyTraitLines(s, scout).includes('【獨行】身旁沒有其他敵人時，出手或還擊攻擊 ＋8。此刻有同夥在旁。'));
     check('獨行: with another black stone beside it, nothing', G.traitEdge(s, scout, hero) === 0);
     unit(s, 'blade').hp = 0;
     check('獨行: a fallen neighbour does not count', G.traitEdge(s, scout, hero) === -8);
@@ -4551,12 +4552,12 @@ section('boards built round one villain');
     const s = board();
     const scout = put(s, 'scout', 5, 3),
       hero = put(s, 'hero', 4, 3);
-    check('夾擊: a hero with no other black stone beside him is struck plainly', G.traitEdge(s, scout, hero) === 0);
+    check('夾衛: a hero with no other black stone beside him is struck plainly', G.traitEdge(s, scout, hero) === 0);
     put(s, 'blade', 4, 2);
-    check('夾擊: with another beside the hero, attack ＋8', G.traitEdge(s, scout, hero) === -8);
-    check('夾擊: its page says so', G.enemyTraitLines(s, scout).includes('【夾擊】目標身旁另有敵人時，出手或還擊攻擊 ＋8。'));
+    check('夾衛: with another beside the hero, attack ＋8', G.traitEdge(s, scout, hero) === -8);
+    check('夾衛: its page says so', G.enemyTraitLines(s, scout).includes('【夾衛】目標身旁另有敵人時，出手或還擊攻擊 ＋8。'));
     const plain = withTraits('scout-0', {}, () => G.damage(scout, hero, false, 0, s));
-    check('夾擊: the blow is that much heavier', G.damage(scout, hero, false, 0, s) === plain + 8);
+    check('夾衛: the blow is that much heavier', G.damage(scout, hero, false, 0, s) === plain + 8);
   });
 
   // 步裡藏毒 and 墜網
@@ -4627,6 +4628,10 @@ section('boards built round one villain');
     const lost = (id) => before[id] - unit(s, id).hp;
     check('分刺: the first blow lands whole, the second on the other hero at its share', lost(first) === raw[first] && lost(second) === Math.max(1, Math.round(raw[first] * 0.5)), JSON.stringify(effects));
     check('分刺: only the hero first struck counters', effects.filter((e) => e[0] === 'chief').length <= 1 && s.logs.filter((l) => l.text.startsWith('還擊')).length <= 1);
+    const told = s.logs.map((l) => l.text),
+      counterAt = told.findIndex((t) => t.startsWith('還擊')),
+      needleAt = told.findIndex((t) => t.startsWith('針影一分'));
+    check('分刺: the log tells the first blow’s counter before the second needle', counterAt < 0 || counterAt < needleAt, told.slice(-6).join(' / '));
     check('分刺: the log tells it, and the board’s tally counts it', s.logs.some((l) => l.text.startsWith('針影一分')) && s.tally.fired.flurry === 1);
     check('分刺: its page says so', G.enemyTraitLines(s, chief).some((l) => l.startsWith('【分刺】') && l.includes('50%')));
     const one = board();
@@ -4751,18 +4756,18 @@ section('boards built round one villain');
     const off = MAPS15.filter((m) => !t.run.route.includes(m));
     check('a run lost on its eighth board has seen eight, none of them off its route', t.run.chronicle.seen.length === 8 && off.length === 5 && off.every((m) => !t.run.chronicle.seen.includes(m)), t.run.chronicle.seen.join());
   }
-  // 夾擊 and 獨行 when the forecast asks with a copy of the piece (an art that lowers its attack).
+  // 夾衛 and 獨行 when the forecast asks with a copy of the piece (an art that lowers its attack).
   troopAs({ pincer: { atk: 8 } }, () => {
     const s = board();
     const scout = put(s, 'scout', 5, 3),
       hero = put(s, 'hero', 4, 3);
     const ghost = { ...scout, conditions: { weak: { power: 1, through: 9, source: 'hero' } } };
-    check('夾擊: a copy of the piece is not its own flanker', G.traitEdge(s, ghost, hero) === 0);
+    check('夾衛: a copy of the piece is not its own flanker', G.traitEdge(s, ghost, hero) === 0);
     hero.activeArt = null;
     const plain = G.forecast(hero, scout, false, s).counterRaw;
     const art = teach(hero, defineArt({ debuff: { stat: 'atk', power: 4, turns: 2 } }));
     const weakened = G.forecast(hero, scout, true, s, G.artFor(hero, art)).counterRaw;
-    check('夾擊: an art that lowers its attack draws a lighter counter, not a heavier one', weakened <= plain, plain + ' → ' + weakened);
+    check('夾衛: an art that lowers its attack draws a lighter counter, not a heavier one', weakened <= plain, plain + ' → ' + weakened);
   });
   troopAs({ lone: { atk: 6 } }, () => {
     const s = board();

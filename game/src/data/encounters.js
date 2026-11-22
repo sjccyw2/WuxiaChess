@@ -21,7 +21,7 @@
 //   fleet    true: 水上飄, every tile it can walk costs it one step
 //   twin     { atk }: 陰陽倒亂, odd rounds the sabre (攻擊 up), even rounds the sword (射程 +1)
 //   lone     { atk }: 獨行, stronger with no other black stone beside it
-//   pincer   { atk }: 夾擊, stronger on a hero another black stone stands beside
+//   pincer   { atk }: 夾衛, stronger on a hero another black stone stands beside
 //   stepPoison { power, turns }: 步裡藏毒, a blow struck after walking poisons
 //   lastStand  { below, cut }: 沉樁, at or below that share of its 氣血 it takes less from blows
 //   snare    { power, turns }: 墜網, its plain blow leaves the hero 絆足

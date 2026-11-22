@@ -908,7 +908,8 @@ const MAP_LAYOUTS = fields.map(
 const regionalNotes = {
   plain: '地勢平緩，移動消耗 1 步。',
   bridge: '過橋移動消耗 1 步。',
-  rock: '此處阻路，須繞道。'
+  rock: '此處阻路，須繞道。',
+  crate: '此物擋路，須繞道。'
 };
 const localTerrain = fields.map(({ names }) => {
   if (!names) return TERRAIN_TYPES;

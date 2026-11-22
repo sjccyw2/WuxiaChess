@@ -291,7 +291,7 @@ const RULE_GROUPS = [
         text: '兩件兵刃輪著使：單數回合攻擊提高，雙數回合射程多一格'
       },
       { id: 'prowl', name: '獨行', trait: 'lone', text: '身旁沒有其他敵人時，出手或還擊攻擊提高' },
-      { id: 'pincer', name: '夾擊', trait: 'pincer', text: '目標身旁另有敵人時，出手或還擊攻擊提高' },
+      { id: 'pincer', name: '夾衛', trait: 'pincer', text: '目標身旁另有敵人時，出手或還擊攻擊提高' },
       {
         id: 'stepPoison',
         name: '步裡藏毒',

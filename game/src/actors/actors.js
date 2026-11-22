@@ -437,6 +437,14 @@ class ActorLayer {
             kill
           );
           number.lane = lanes.get(id) || 0;
+          // The first number over a piece beside one that already has numbers rises above
+          // them, so two adjacent targets' numbers are not printed on top of each other.
+          if (!lanes.has(id) && number.tone !== 'word' && struck)
+            for (const [other, taken] of lanes) {
+              const beside = G.find(this.state, other);
+              if (beside && G.distance(beside, struck) === 1)
+                number.lane = Math.max(number.lane, taken);
+            }
           if (number.tone !== 'word') lanes.set(id, number.lane + 1);
           number.end = start + 1100;
         }
