@@ -1838,12 +1838,15 @@ function traitEdge(s, u, target, struckHp = target?.hp) {
 }
 const halfStage = (s) => Math.floor((s?.run?.stage || 0) / 2);
 // 獨行: no other living black stone stands beside this one.
+// (Compared by id: the forecast asks with a copy of the piece.)
 const alone = (s, u) =>
-  !(s?.units || []).some((v) => v !== u && living(v) && v.side === 'enemy' && distance(v, u) === 1);
+  !(s?.units || []).some(
+    (v) => v.id !== u.id && living(v) && v.side === 'enemy' && distance(v, u) === 1
+  );
 // 夾擊: another living black stone stands beside the hero this one strikes.
 const flanked = (s, u, target) =>
   (s?.units || []).some(
-    (v) => v !== u && living(v) && v.side === 'enemy' && distance(v, target) === 1
+    (v) => v.id !== u.id && living(v) && v.side === 'enemy' && distance(v, target) === 1
   );
 const executeBonus = (s, t) => t.execute.atk + Math.floor((s?.run?.stage || 0) / 2);
 function damage(
@@ -2108,6 +2111,11 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       result.notes.push('近身失準 · 還擊攻擊 −' + traits.crowded.atk);
     if (traits.execute && after <= u.maxHp / 2)
       result.notes.push('斬殘 · 還擊攻擊 ＋' + executeBonus(s, traits));
+    if (traits.lone && alone(s, t)) result.notes.push('獨行 · 還擊攻擊 ＋' + (traits.lone.atk + halfStage(s)));
+    if (traits.pincer && flanked(s, t, u))
+      result.notes.push('夾擊 · 還擊攻擊 ＋' + (traits.pincer.atk + halfStage(s)));
+    if (traits.twin && twinForm(s, t) === 'sabre')
+      result.notes.push('陰陽倒亂 · 金刀 · 還擊攻擊 ＋' + (traits.twin.atk + halfStage(s)));
   }
   if (s && (art?.splash || result.forms.includes('line') || result.forms.includes('arc'))) {
     const targets = secondaryTargets(s, u, t, result.push || t, art, result.forms, walkable);
@@ -3244,6 +3252,7 @@ function enemyAction(s, u) {
   if (n) t.hurtRound = s.round;
   const effects = [[t.id, '−' + n]];
   effects.signature = !!art; // for the board: a signature blow or a plain one
+  let drag = false;
   const attack = art?.name || basicFor(u).name;
   log(
     s,
@@ -3278,7 +3287,7 @@ function enemyAction(s, u) {
       if (art.extra === 'wound') applyCondition(s, t, { kind: 'wound', power: 5, turns: 2 }, u);
       if (art.extra === 'pin') applyCondition(s, t, { kind: 'pin', power: 2, turns: 2 }, u);
       log(s, 'combat', art.note, unitDetails(u).name);
-      if (traitsOf(u).pull) dragNear(s, u, t); // 擒拿
+      drag = !!traitsOf(u).pull; // 擒拿: once the exchange is over
     }
     if (lineKind(art)) lineThrough(s, u, t, strikePower, effects); // 穿行
   } else if (living(t) && !blow.void && !isProp(t)) {
@@ -3307,6 +3316,8 @@ function enemyAction(s, u) {
     exp(s, t, living(u) ? 12 : 35);
   }
   woundSelfLoss(s, u, effects); // 內傷: the attacker pays once the exchange is over
+  // 擒拿: the hero is dragged in after his counter and 反刺 were judged from where he was struck.
+  if (drag) dragNear(s, u, t);
   // 游擊: having struck, it walks off with what steps it has left.
   if (unitDetails(u)?.traits?.glide) glideAway(s, u, best.c.n, step);
   check(s);
@@ -3468,6 +3479,8 @@ function secondNeedle(s, u, first, strikePower, friends, effects) {
 }
 // 擒拿 (`pull`): the signature drags the hero it landed on to the free tile beside the villain that
 // is nearest where the hero stood. A hero already beside it, or with no free tile to come to, stays.
+// It comes after the exchange: whether he counters is judged from where he was struck. The board
+// plays the drag along his walk there when that is nearly straight, and as a jump otherwise.
 function dragNear(s, u, t) {
   if (!living(t) || !living(u) || distance(u, t) <= 1) return;
   let best = null;
@@ -3479,7 +3492,8 @@ function dragNear(s, u, t) {
   if (!best) return;
   const from = { x: t.x, y: t.y },
     path = movementPath(s, t, from, best);
-  if (routeConnects(path, from, best, s.mapIndex)) followRoute(t, path);
+  if (routeConnects(path, from, best, s.mapIndex) && path.length - 1 <= distance(from, best) + 2)
+    followRoute(t, path);
   else {
     delete t.route;
     t.x = best.x;

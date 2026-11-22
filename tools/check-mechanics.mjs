@@ -4431,7 +4431,8 @@ section('boards built round one villain');
   check('a sweep’s note states its own share', SIGNATURE_RULES.sweep({ sweep: 0.33 }).includes('三分之一') && SIGNATURE_RULES.sweep({ sweep: 0.25 }).includes('四分之一') && SIGNATURE_RULES.sweep({ sweep: 0.4 }).includes('四成'));
   check('西夏夜苑: 李秋水’s page says her sweep takes 四成', G.pieceLines(13, 'master', 7)[0] === '相鄰的其他我方俠客也會受到四成傷害。', G.pieceLines(13, 'master', 7)[0]);
   const { FINAL_MAP } = await load('data/battles.js');
-  const NEW = [10, 11, 12, 13, 14];
+  const NEW = [10, 11, 12, 13, 14],
+    MAPS15 = Array.from({ length: 15 }, (_, m) => m);
   const TIERS = { 1: [1, 2, 10], 2: [1, 2, 10], 3: [3, 4, 11], 4: [3, 4, 11], 5: [5, 6, 12], 6: [5, 6, 12], 7: [7, 13], 8: [8, 14] };
 
   // The route: ten of fifteen, the first and the last fixed, each stage from its tier.
@@ -4705,8 +4706,12 @@ section('boards built round one villain');
     const far = (traits) => withTraits('chief', traits, () => G.reachable(s, chief).has('1,3'));
     check('水上飄: every tile costs one step', !far({}) && far({ fleet: true }));
     check('水上飄: its page says so', withTraits('chief', { fleet: true }, () => G.enemyTraitLines(s, chief).some((l) => l.startsWith('【水上飄】'))));
-    const hero = put(s, 'hero', 3, 2);
-    check('水上飄: a hero’s walk is as before', withTraits('chief', { fleet: true }, () => !G.reachable(s, hero).has('1,3') || G.stat(hero, 'step', s) >= 4));
+    const hero = put(s, 'hero', 4, 3),
+      walk = () => [...G.reachable(s, hero).keys()].sort().join(' ');
+    check('水上飄: a hero’s walk is as before', withTraits('chief', {}, walk) === withTraits('chief', { fleet: true }, walk));
+    const blade = put(s, 'blade', 4, 4),
+      slog = () => [...G.reachable(s, blade).keys()].sort().join(' ');
+    check('水上飄: and so is another black stone’s', withTraits('chief', {}, slog) === withTraits('chief', { fleet: true }, slog));
   }
 
   // 陰陽倒亂
@@ -4730,6 +4735,74 @@ section('boards built round one villain');
     const even = new Set(dangerTiles(s));
     check('陰陽倒亂: the danger zone reaches one tile further on a sword round', !odd.has('5,3') && odd.has('4,3') && even.has('5,3'));
   });
+
+  // Found in review. The profile's `seen`: only the boards a run reached, not the five it never drew.
+  {
+    const s = board();
+    s.result = 'loss';
+    s.phase = 'done';
+    R.settle(s);
+    check('a run lost on its first board has seen that board only', same(s.run.chronicle.seen, [0]), s.run.chronicle.seen.join());
+    const t = realBoard(13, 7);
+    t.result = 'loss';
+    t.phase = 'done';
+    R.settle(t);
+    const off = MAPS15.filter((m) => !t.run.route.includes(m));
+    check('a run lost on its eighth board has seen eight, none of them off its route', t.run.chronicle.seen.length === 8 && off.length === 5 && off.every((m) => !t.run.chronicle.seen.includes(m)), t.run.chronicle.seen.join());
+  }
+  // 夾擊 and 獨行 when the forecast asks with a copy of the piece (an art that lowers its attack).
+  troopAs({ pincer: { atk: 8 } }, () => {
+    const s = board();
+    const scout = put(s, 'scout', 5, 3),
+      hero = put(s, 'hero', 4, 3);
+    const ghost = { ...scout, conditions: { weak: { power: 1, through: 9, source: 'hero' } } };
+    check('夾擊: a copy of the piece is not its own flanker', G.traitEdge(s, ghost, hero) === 0);
+    hero.activeArt = null;
+    const plain = G.forecast(hero, scout, false, s).counterRaw;
+    const art = teach(hero, defineArt({ debuff: { stat: 'atk', power: 4, turns: 2 } }));
+    const weakened = G.forecast(hero, scout, true, s, G.artFor(hero, art)).counterRaw;
+    check('夾擊: an art that lowers its attack draws a lighter counter, not a heavier one', weakened <= plain, plain + ' → ' + weakened);
+  });
+  troopAs({ lone: { atk: 6 } }, () => {
+    const s = board();
+    const scout = put(s, 'scout', 5, 3),
+      hero = put(s, 'hero', 4, 3);
+    put(s, 'blade', 5, 4);
+    check('獨行: a copy of the piece still counts its neighbour', G.traitEdge(s, { ...scout }, hero) === 0);
+    unit(s, 'blade').hp = 0;
+    hero.activeArt = null;
+    check('獨行: the forecast names it on the counter', G.forecast(hero, scout, false, s).notes.includes('獨行 · 還擊攻擊 ＋6'));
+  });
+  // 擒拿: the counter is judged from where the hero was struck, so a hero of reach 1 dragged in
+  // from three tiles away does not counter.
+  {
+    const prior = G.DETAILS.chief.style;
+    G.DETAILS.chief.style = 'drain';
+    try {
+      withTraits('chief', { sig: { reach: 3 }, pull: true, post: held(3, 3) }, () => {
+        const s = board();
+        s.round = 3;
+        only(s, 'hero');
+        const chief = put(s, 'chief', 3, 3),
+          hero = put(s, 'hero', 6, 3),
+          hp = chief.hp;
+        hero.range = 1;
+        G.startEnemy(s);
+        G.enemyAct(s, chief);
+        check('擒拿: dragged in from beyond his reach, the hero does not counter', hero.x === 4 && chief.hp === hp && !s.logs.some((l) => l.text.startsWith('還擊')));
+      });
+    } finally {
+      G.DETAILS.chief.style = prior;
+    }
+  }
+  // 兵力: the troop in the lieutenant's seat is counted with its fellows.
+  for (const map of NEW) {
+    const brief = R.boardBrief(map, R.mapStages(map)[0]),
+      troop = G.DETAILS[GARRISONS[map]].name,
+      extra = [...BATTLES[map].pieces, ...BATTLES[map].waves.flatMap((w) => w.pieces)].length;
+    const chip = brief.force.chips.find((c) => c.name === troop);
+    check(mapLayout(map).name + ': the briefing counts every ' + troop + ', the three in fixed seats included', chip?.count === 3 + extra, JSON.stringify(brief.force.chips.map((c) => [c.name, c.count])));
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────

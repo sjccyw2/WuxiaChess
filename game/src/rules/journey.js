@@ -1252,8 +1252,9 @@ function boardModel(map, stage, s = null, live = false) {
   const start = 4 + board.pieces.length,
     later = board.waves.reduce((n, w) => n + w.pieces.length, 0);
   const chips = new Map();
+  // Every fixed seat that is not a named opponent: on a board with no lieutenant, three of them.
   for (const key of [
-    ...G.encounterKeys(map).slice(2),
+    ...G.encounterKeys(map).slice(1),
     ...[...board.pieces, ...board.waves.flatMap((w) => w.pieces)].map((p) => p.id.split('#')[0])
   ]) {
     if (villain(key)) continue;
@@ -1401,7 +1402,9 @@ function settle(s) {
     const past = fillProfile(r.chronicle);
     past.returns++;
     for (const u of G.company(s)) past.walked[u.id] = (past.walked[u.id] || 0) + 1;
-    past.seen = MAPS.filter((map) => past.seen.includes(map) || r.route.indexOf(map) <= r.stage);
+    // The boards this run reached. A run draws ten of fifteen: a board not on its route is not seen.
+    const reached = r.route.slice(0, r.stage + 1);
+    past.seen = MAPS.filter((map) => past.seen.includes(map) || reached.includes(map));
   }
   const bonus = optional ? paySide(s) : null;
   delete r.devSide;
