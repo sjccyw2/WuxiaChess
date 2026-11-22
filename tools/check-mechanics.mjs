@@ -4607,7 +4607,8 @@ section('boards built round one villain');
     check('沉樁: above half it takes blows whole', G.stanceCut(s, scout) === 0);
     scout.hp = Math.floor(scout.maxHp / 2);
     check('沉樁: at half or below, 40% less', G.stanceCut(s, scout) === 40 && G.forecast(hero, scout, false, s).amount === Math.round((full * 60) / 100), full + ' → ' + G.forecast(hero, scout, false, s).amount);
-    check('沉樁: its page says so', G.enemyTraitLines(s, scout).includes('【沉樁】氣血不過半時，受到的傷害減 40%。'));
+    check('沉樁: the forecast names it once it cuts the blow, and not before', G.forecast(hero, scout, false, s).notes.includes('沉樁 · 傷害 −40%') && !G.forecast(hero, { ...scout, hp: scout.maxHp }, false, s).notes.some((n) => n.startsWith('沉樁')));
+    check('沉樁: its page says so, and that it is up', G.enemyTraitLines(s, scout).includes('【沉樁】氣血不過半時，受到的傷害減 40%。現已沉樁。'));
   });
 
   // 分刺

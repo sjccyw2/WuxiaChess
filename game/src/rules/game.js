@@ -1009,7 +1009,8 @@ function enemyTraitLines(s, u) {
         (t.lastStand.below === 0.5 ? '半' : Math.round(t.lastStand.below * 100) + '%') +
         '時，受到的傷害減 ' +
         t.lastStand.cut +
-        '%。'
+        '%。' +
+        (s.logs && u.hp <= u.maxHp * t.lastStand.below ? '現已沉樁。' : '')
     );
   if (t.snare)
     say('墜網', '普攻令目標絆足，移動減 ' + t.snare.power + '，持續至下回合；還擊不帶網。');
@@ -2053,6 +2054,9 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   result.rawHits = blow.hits;
   const wall = unitDetails(t)?.traits?.stance;
   if (wall?.while === 'posted' && !blow.void && stanceHolds(s, t)) result.notes.push('盾牆 · 傷害 −' + wall.cut + '%');
+  // 沉樁: told when it is what cuts this blow.
+  const last = !ally(t) && unitDetails(t)?.traits?.lastStand;
+  if (last && !blow.void && t.hp <= t.maxHp * last.below) result.notes.push('沉樁 · 傷害 −' + last.cut + '%');
   let shield = t.conditions?.shield?.power || 0;
   result.hits = result.rawHits.map((hit) => {
     const stopped = Math.min(hit, shield);
