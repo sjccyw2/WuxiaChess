@@ -67,7 +67,7 @@ for (const part of ['again', 'invite', 'before', 'after', 'lost']) {
     if (!line.text || ![undefined, 'qiu', 'youth', 'wei'].includes(line.who)) fail('the last board, ' + part + ': a line has no speaker or no text');
 }
 if (!finaleTale.lost.some((line) => !line.who && line.text.includes('請回吧'))) fail('a lost last board does not end with 請回吧');
-for (const key of ['walkOn', 'half', 'muster', 'missed', 'epilogue', 'name']) if (!finaleTale[key]) fail('the last board has no ' + key);
+for (const key of ['rally', 'withdraw', 'half', 'muster', 'missed', 'epilogue', 'name']) if (!finaleTale[key]) fail('the last board has no ' + key);
 for (const key of ['title', 'text', 'joins', 'draw']) if (!finaleTale.plus?.[key]) fail('new game plus has no ' + key);
 if (!finaleTale.ending?.length || finaleTale.ending.some((line) => !line.note && !line.text)) fail('the ending has a line with no words');
 // What the producer fixed for the ending: 求敗 thanks the youth, knows him in one line, and leaves.
@@ -319,7 +319,7 @@ for (let player = 0; player < 60; player++) {
         for (const beat of MAZE_TALE.finale.before)
           if (!before.some((line) => line.text === beat.text)) fail(at + ': a line before the last board is missing');
         const guests = G.enemies(s).filter((u) => u.guest);
-        if (guests.length !== 4 || G.boardOf(s).waves.flatMap((w) => w.pieces).length !== 6) fail(at + ': the ten masters of the run are not all on the last board');
+        if (guests.length !== 5 || G.boardOf(s).waves.flatMap((w) => w.pieces).length !== 5) fail(at + ': the ten masters of the run are not all on the last board');
         // 無名 is on the board and has drawn the sword before he looks about him.
         if (before[0]?.text !== MAZE_TALE.finale.before[0].text) fail(at + ': the last board does not open with 無名 stepping onto it');
         const cast = [...G.boardOf(s).pieces, ...G.boardOf(s).waves.flatMap((w) => w.pieces)].slice(1).map((p) => p.id);
@@ -343,7 +343,8 @@ for (let player = 0; player < 60; player++) {
       if (won && onLast) G.find(s, G.commanderId(s)).hp = 1;
       // Sometimes the secondary is done, which pays a bonus; every win brings a hero.
       s.round = 9;
-      const forced = won && roll() < 0.7;
+      const forced = won && roll() < 0.7 && !!r.side; // the last board has no secondary
+      if (onLast && r.side !== null) fail(at + ': the last board drew a secondary');
       if (forced) forceSide(s);
       if (!R.settle(s)) {
         fail(at + ': could not settle');
@@ -365,7 +366,9 @@ for (let player = 0; player < 60; player++) {
       // (After the last board he says only which way the bet went: the ending is at hand.)
       if (won && r.last.optional && !(weiSays(SIDE_TALES[r.side.kind] || SIDE_TALES.done) && (onLast || weiSays(SIDE_PAY[r.last.side.reward]))))
         fail(at + ': 韋小寶 did not settle the bet ' + r.side.kind);
-      if (won && !r.last.optional && !weiSays(SIDE_MISS)) fail(at + ': nothing said about the bet missed');
+      if (won && r.side && !r.last.optional && !weiSays(SIDE_MISS)) fail(at + ': nothing said about the bet missed');
+      // The last board has no bet: after it won he says nothing, and keeps his one line for the ending.
+      if (won && onLast && after.some((line) => line.speaker === WEI.name)) fail(at + ': 韋小寶 speaks after the last board won');
       // 求敗 speaks after every board: what he makes of a win, 請回吧 at the end of the run.
       const qiu = after.filter((line) => [QIUBAI.name, QIUBAI_SHADOW.name].includes(line.speaker));
       if (!qiu.length) fail(at + ': 求敗 says nothing');

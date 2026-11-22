@@ -116,10 +116,19 @@ fifteen boards a run draws from; the entry marked `last` in `game/src/data/battl
 `FINAL_MAP` there is the tenth board, 無刻漏臺).
 
 - **Who is on it.** 無名, the youth, takes the field himself as its leader (眼) and cannot be
-  benched; four heroes stand with him, and every hero remembers every art of their tree. Across
-  the board are 求敗, at the centre with a dry twig, and the masters of the ten boards the run met
-  (`guest` pieces: the first four from the start, the rest walking on two by two in rounds 3, 5
-  and 7).
+  benched; four heroes stand with him, and every hero remembers every art of their tree. 無名 is
+  stronger there than a copied piece (`LAST_BOON` in `journey.js`: 氣血 +100, 內力 +40, 攻擊 +10,
+  防禦 +6, a step more), added once as the company is mustered. Across the board are 求敗, at the
+  centre with a dry twig, and the masters of the ten boards the run met (`guest` pieces): the
+  first five from the start; two more step to his side the moment he is at half his 氣血, and
+  the last three when a quarter is left (waves with `when: { below }`, `rally` in `game.js`;
+  they enter at once on the free tiles nearest him, with no round's notice).
+- **How they guard him.** From half on, a master beside 求敗 takes the heroes' direct blows for
+  him (`coverer`), and the masters keep to his side. With a quarter left he falls back
+  (`withdraw` in his traits): to the tile in his walk farthest from the heroes with most of his
+  own beside it, striking from there only if someone is in reach.
+- **No secondary.** 韋小寶 opens no book on the last board (`sides: []`, `run.side` is null),
+  and its pages show no 支線.
 - **How it is won (問劍, kind `yield`).** 求敗 is 不敗 and never falls: bring him to 1 氣血. No 破招
   answers him (無招), and he does not counter the blow that ends it. If 無名 falls or the twelve
   rounds run out the board is lost, and the ten boards of 無劍境界 must be won again to reach it.
@@ -131,8 +140,7 @@ fifteen boards a run draws from; the entry marked `last` in `game/src/data/battl
   求敗 have none).
 - **The ending.** Winning it plays a 59-second film (`game/assets/finale-film*.mp4`, made in
   `asset-gen/finale-video/`), then the run's last page, which carries the film's words as text
-  (`MAZE_TALE.finale.ending`). There is no shop after it, so the board pays no silver and each of
-  its secondaries pays a manual, kept for the next run.
+  (`MAZE_TALE.finale.ending`). There is no shop after it, so the board pays no silver.
 - **Afterwards (無名入盤).** Once it has been won, every run starts with four pieces: the three
   drawn and 無名, an ordinary piece who grows his nine forms from the first like anyone. 求敗 has
   left the world and does not return: the one across the table in these runs is his shadow
@@ -150,14 +158,18 @@ Its numbers are its own (`LAST_ROWS` in `game/src/rules/game.js`), measured with
 and `game/?dev=off` turns it off. In a battle, from its story, briefing or 整備 as well:
 
 - 速勝 wins the board now, its secondary missed;
-- 速勝・支線 wins it with the secondary met, whatever its kind;
-- 速敗 loses it.
+- 速勝・支線 wins it with the secondary met, whatever its kind (not shown on the last board, which
+  has none);
+- 速敗 loses it;
+- 局主半血, once the fight is on, takes half of what 氣血 the board's master has, as a blow would
+  (`devPress`): his 變招 follows, and on the last board two presses bring all ten masters on.
 
 Each goes through the game's own settling (`devFinish` in `game/src/rules/journey.js`), so
-rewards, the next hero, the story and the end of the run follow as in play. Outside a battle,
-開五重境界 opens all five 境界 (the first four counted as won); 跳至終局 starts the last board at once,
-with the heroes last picked on the 試局 page; 看終局影片 plays the ending film; and 開無名入盤 opens
-what the ending opens, so the next run starts with 無名 on the board.
+rewards, the next hero, the story and the end of the run follow as in play. 跳至終局, always
+there, starts the last board at once with the heroes last picked on the 試局 page, against the ten
+masters of a run of ten boards drawn at random. Outside a battle, 開五重境界 opens all five 境界
+(the first four counted as won); 看終局影片 plays the ending film; and 開無名入盤 opens what the
+ending opens, so the next run starts with 無名 on the board.
 
 試局, always there, sets up a test battle: pick any of the fifteen boards or the last board, any
 境界 (open or not) and any heroes, in order (the first leads, the first five fight, the rest wait on

@@ -175,7 +175,7 @@ const MAZE_TALE = {
     keep: '這一局的戰意不壓在人身上，對著的是我們這邊的一件東西。守住它，撐到那一念自己散了；打醒了局主，也是一樣。',
     break: '這一局的戰意不壓在人身上，釘在東西上。毀了它，人人都醒。',
     // The last board: no 戰意 anywhere, and 求敗 himself across it.
-    yield: '這一局沒有戰意。對面站著的是求敗自己：他不會倒下；逼得他垂下枯枝，這一局便完了。',
+    yield: '這一局沒有戰意，也沒有盤口。對面站著的是求敗自己：他不會倒下；逼得他垂下枯枝，這一局便完了。',
     side: '韋小寶另開盤口',
     // The white stone 求敗 has set by the board: who comes if this board is won.
     next: '盤邊擱著一枚白子：這一局勝了，求敗便借出{hero}。'
@@ -329,7 +329,8 @@ const MAZE_TALE = {
   //   invite   after the close: he keeps every stone one board longer, sets the run's ten masters
   //            down with no 戰意 on them, and sends the youth onto the board with a sword
   //   before   on the board, before the first move
-  //   walkOn   a round before more of the ten masters step on
+  //   rally    more of the ten masters step to 求敗's side (at half his 氣血, and at a quarter)
+  //   withdraw 求敗 falls back among them (a quarter of his 氣血 left)
   //   half     求敗 at half his 氣血 (his 變招)
   //   after    the board won, before the film
   //   lost     the youth fell, or the twelve rounds ran out
@@ -361,7 +362,7 @@ const MAZE_TALE = {
         note: '求敗向盤上一指。四角星位各有一塊大石，石上各插一劍。',
         text: '石上那柄利劍，是老夫弱冠之前所用。你拿去使。'
       },
-      { who: 'wei', text: '多出來的這一局，我照樣開盤口。老爺子，你既瞧得見我，也押一注？' },
+      { who: 'wei', text: '多出來的這一局，我不開盤口了：莊家自己下了場，這盤口開不得。老爺子，你若要押，押誰？' },
       { text: '……老夫押這孩子。' }
     ],
     before: [
@@ -377,8 +378,10 @@ const MAZE_TALE = {
       { who: 'youth', text: '各位，這一回我也在盤上。我若倒了，這一局便輸了。……老伯，小心了！' },
       { text: '老夫求了一世的敗。今日瞧瞧，你給不給得起。' }
     ],
-    // Later black stones walk on by themselves: no stone is set down, so there is no 「嗒」.
-    walkOn: '盤邊有人自行邁步上枰。下一合，人便到。',
+    // Later black stones walk on by themselves: no stone is set down, so there is no 「嗒」. They
+    // come the moment 求敗 is hard pressed, and stand beside him.
+    rally: '盤邊幾條人影搶上枰來，一言不發，逕自站到求敗身旁。',
+    withdraw: '求敗枯枝一收，退了幾步，站到眾人身後。',
     half: '好。這一劍，老夫幾百年來不曾見過。……再來！',
     after: [
       { note: '求敗低頭瞧著手中的枯枝，瞧了很久。', text: '……好。' },
@@ -419,7 +422,7 @@ const MAZE_TALE = {
     closed: '這盤棋下完了。',
     epilogue: '對面那個人撒手而去，再沒有回來。少年後來的事，都刻在劍塚的石上；只有這一場夢，他自己也記不清了。',
     // As the company goes onto the last board (the log).
-    muster: '這一局{name}是眼。同行的人到了這裡，平生所學一招不缺，全都想了起來。',
+    muster: '這一局{name}是眼。他是執子的人，不是拓來的一念，踏上棋枰，氣力比旁人都足。同行的人到了這裡，平生所學一招不缺，全都想了起來。',
     plus: {
       // The first board of a run after the ending (the log).
       joins: '這一回，{name}自己也在盤上。',

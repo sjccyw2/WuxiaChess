@@ -5,10 +5,13 @@
 //
 // In a battle (from its story, briefing or 整備 too) it can win the board now, win it with the
 // secondary met, or lose it; each goes through the game's own settling, so rewards, the next
-// hero, the story and the end of the run follow as in play (journey.js devFinish). Outside a
-// battle it can open all five 境界, jump to the last board (終局) with the heroes last picked for a
-// test battle, play the ending film, and open what the ending opens (無名入盤). Always, 試局 opens
-// a page to start a test battle: any board, any 境界, the heroes picked (journey.js devTestRun).
+// hero, the story and the end of the run follow as in play (journey.js devFinish). Once the
+// fight is on, 局主半血 takes half of what 氣血 the board's master has, as a blow would: his 變招,
+// and on the last board those who come to 求敗's side (journey.js devPress). Outside a battle it
+// can open all five 境界, play the ending film, and open what the ending opens (無名入盤). Always,
+// 跳至終局 jumps to the last board with the heroes last picked for a test battle, against the ten
+// masters of a run drawn at random, and 試局 opens a page to start a test battle: any board, any
+// 境界, the heroes picked (journey.js devTestRun).
 import { btn, titleHead, esc } from './panels.js';
 import { DETAILS, PARTY } from '../rules/game.js';
 import { mapLayout, MAP_LAYOUTS } from '../data/terrain.js';
@@ -38,14 +41,19 @@ function devMode() {
 
 // The panel's buttons, which change with what is on screen (app.js keeps the folding panel).
 //   battle  a board of the run is being played and not yet decided
-function devPanel({ battle }) {
+//   side    it has a secondary (the last board has none)
+//   fight   its fight has begun
+function devPanel({ battle, side = true, fight = false }) {
   return (
     (battle
-      ? btn('dev-win', '速勝', 'dev-btn') + btn('dev-win-side', '速勝・支線', 'dev-btn') + btn('dev-lose', '速敗', 'dev-btn')
+      ? btn('dev-win', '速勝', 'dev-btn') +
+        (side ? btn('dev-win-side', '速勝・支線', 'dev-btn') : '') +
+        btn('dev-lose', '速敗', 'dev-btn') +
+        (fight ? btn('dev-press', '局主半血', 'dev-btn') : '')
       : btn('dev-unlock', '開五重境界', 'dev-btn') +
-        btn('dev-finale', '跳至終局', 'dev-btn') +
         btn('dev-film', '看終局影片', 'dev-btn') +
         btn('dev-plus', '開無名入盤', 'dev-btn')) +
+    btn('dev-finale', '跳至終局', 'dev-btn') +
     btn('dev-test', '試局', 'dev-btn')
   );
 }
@@ -100,7 +108,7 @@ function devTestView(pick) {
   }).join('');
   return `<section class="run-view dev-test">
     ${titleHead('scroll', '試局', '開發者模式')}
-    <p class="dev-test-lead">直接從一局的軍情開始，敵人照該局在一輪中的位置與所選境界。每位俠客 ${DEV_TEST.points} 武學點，行囊 ${DEV_TEST.coins} 兩。終局只在無劍境界，無名自會入盤領隊，眾人招式俱全。打完這一局，這一輪照常往下走。開局會取代目前的存檔。</p>
+    <p class="dev-test-lead">直接從一局的軍情開始，敵人照該局在一輪中的位置與所選境界。每位俠客 ${DEV_TEST.points} 武學點，行囊 ${DEV_TEST.coins} 兩。終局只在無劍境界，無名自會入盤領隊，眾人招式俱全；對面的十位局主，取自隨機抽出的一輪十局。打完這一局，這一輪照常往下走。開局會取代目前的存檔。</p>
     <h3>棋局</h3><div class="dev-chips">${boards}</div>
     <h3>境界</h3><div class="dev-chips">${realms}</div>
     <h3>俠客 <small>按選的先後：第一位領隊，前五位上陣，其餘候補</small></h3><div class="dev-chips">${heroes}</div>

@@ -439,7 +439,10 @@ const BATTLES = [
   },
   // 15 谷底棋臺: the last board (world view §8.4). 求敗 stands at 天元 and is never felled: bring
   // him to 1 氣血. The ten masters of the run stand with him of their own accord, no 戰意 on them:
-  // the first four met from the start, the rest walking on two by two. 無名 is the 眼.
+  // the first five met from the start; two more step to his side the moment he is at half, and the
+  // last three when a quarter is left (`when.below`, game.js rally). From half on a master beside
+  // him takes the heroes' blows for him, and at a quarter he falls back among them (encounters.js
+  // `withdraw`). 無名 is the 眼. There is no secondary here (the producer, 2026-11-22).
   {
     last: true,
     kind: 'yield',
@@ -450,45 +453,33 @@ const BATTLES = [
       { guest: 0, at: [4, 5] },
       { guest: 1, at: [8, 5] },
       { guest: 2, at: [5, 3] },
-      { guest: 3, at: [7, 3] }
+      { guest: 3, at: [7, 3] },
+      { guest: 4, at: [6, 4] }
     ],
+    // The tiles here are where they would stand if 求敗 had not moved: they enter beside him,
+    // wherever he is.
     waves: [
       {
-        id: 'north',
-        when: { round: 3 },
-        place: '北邊',
+        id: 'guard',
+        when: { below: 0.5 },
+        place: '求敗身旁',
         pieces: [
-          { guest: 4, at: [2, 1] },
-          { guest: 5, at: [10, 1] }
+          { guest: 5, at: [5, 6] },
+          { guest: 6, at: [7, 6] }
         ]
       },
       {
-        id: 'flanks',
-        when: { round: 5 },
-        place: '東西兩邊',
+        id: 'ring',
+        when: { below: 0.25 },
+        place: '求敗身旁',
         pieces: [
-          { guest: 6, at: [0, 4] },
-          { guest: 7, at: [12, 4] }
-        ]
-      },
-      {
-        id: 'rear',
-        when: { round: 7 },
-        place: '北邊',
-        pieces: [
-          { guest: 8, at: [5, 0] },
-          { guest: 9, at: [7, 0] }
+          { guest: 7, at: [6, 7] },
+          { guest: 8, at: [5, 5] },
+          { guest: 9, at: [7, 5] }
         ]
       }
     ],
-    // Each pays a manual, kept at 通吃坊 for the next run: silver would be lost, for a won last
-    // board ends on the ending and has no shop after it.
-    sides: [
-      { kind: 'intact', reward: 'manual' },
-      { kind: 'swift', by: 9, reward: 'manual' },
-      { kind: 'noMedicine', reward: 'manual' },
-      { kind: 'double', reward: 'manual' }
-    ]
+    sides: []
   }
 ];
 // The last board's index.
