@@ -40,7 +40,9 @@ const ANSWERED = {
   master: ['target is the master', (c, o) => {
     const rank = G.unitDetails(c.t)?.rank;
     if (rank !== 'boss' && rank !== 'mini' && o.master) c.t.encounterId = o.master.encounterId || o.master.id;
-  }]
+  }],
+  // A form that answers a kind of weapon (無名's): the target fights with that kind.
+  ...Object.fromEntries(Object.entries(G.ARM_NAMES).map(([arm, name]) => [arm, ['target fights with ' + name, (c) => { c.t.arm = arm; }]]))
 };
 export const CONDITIONAL = {
   answer: { when: (art) => ANSWERED[art.answer][0], set: (c, art, o) => ANSWERED[art.answer][1](c, o), share: 0.5 },

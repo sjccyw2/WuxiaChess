@@ -159,6 +159,8 @@ const MAZE_TALE = {
     // Boards whose 戰意 is in a thing (battles.js `objects`).
     keep: '這一局的戰意不壓在人身上，對著的是我們這邊的一件東西。守住它，撐到那一念自己散了；打醒了局主，也是一樣。',
     break: '這一局的戰意不壓在人身上，釘在東西上。毀了它，人人都醒。',
+    // The last board: no 戰意 anywhere, and 求敗 himself across it.
+    yield: '這一局沒有戰意。對面站著的是求敗自己：他不會倒下，逼到他只賸最後一口氣，這一局便完了。',
     side: '韋小寶另開盤口',
     // The white stone 求敗 has set by the board: who comes if this board is won.
     next: '盤邊擱著一枚白子：這一局勝了，求敗便借出{hero}。'
@@ -299,27 +301,111 @@ const MAZE_TALE = {
         note: '求敗怔了半晌，突然間哈哈大笑，笑聲震得谷中落葉紛飛。那頭大鵰跟了他幾百年，從沒聽他這般笑過，不由得側過頭來。',
         text: '原來如此，原來如此！老夫求了幾百年的東西，便在臺邊嗑瓜子。'
       },
-      { text: '小兄弟，多謝你。……還有最後一局，老夫要同你一齊下到盤上去。容老夫備一備。請回吧。' }
+      { text: '小兄弟，多謝你。……還有一局。這一局，老夫不在盤外下了。' }
     ]
   ],
-  // After the fifth 境界 is won (every 境界 won): the last battle, then 求敗 lets go. Both are
-  // placeholders until the producer designs them (ROADMAP workstream 2): `board` stands for the
-  // eleventh board, `letGo` for the ending film, `wake` for the youth's last waking.
+  // The last board (world view §8.4), which follows the tenth board of 無劍境界 in the same run, and
+  // the ending. Everything here is the spine's: it names no board, no hero and no black stone.
+  //   again    the close of 無劍境界 when the last board has been reached before: he has seen
+  //            韋小寶 already, so `close[4]` is not said twice
+  //   invite   after the close: he keeps every stone one board longer, sets the run's ten masters
+  //            down with no 戰意 on them, and sends the youth onto the board with a sword
+  //   before   on the board, before the first move
+  //   walkOn   a round before more of the ten masters step on
+  //   half     求敗 at half his 氣血 (his 變招)
+  //   after    the board won, before the film
+  //   lost     the youth fell, or the twelve rounds ran out
+  //   film     the ending film's two cuts (asset-gen/finale-video)
+  //   ending   the film's words in order, as the film letters them: `note` a caption, `text` a
+  //            balloon. Shown as pages when the film cannot play.
+  //   name     the name that settles beside the youth in the last panel
+  //   epilogue the page after the film; `plus` is what the ending opens
   finale: {
-    board: [
-      { note: '五重境界走完。盤上的子一枚一枚收回盒中，棋盤空了。求敗站起身來，繞過棋臺，走到盤邊。' },
-      { who: 'qiu', text: '這最後一局，老夫不在盤外下了。你也不在盤外。咱們兩個，都到盤上去。' },
-      { who: 'youth', text: '到盤上去？……好，老伯，我陪你下。' }
+    again: [
+      { text: '又到了這一步。利劍、軟劍、重劍、木劍，老夫再放一遍，手裡賸下的，仍是這盤棋。' },
+      { text: '上一回你我到得盤上，還差著一點。小兄弟，再來。這一局，老夫仍不在盤外下。' }
     ],
-    letGo: [
-      { note: '一局下罷。求敗拈著最後一枚黑子，懸在盤上，良久不落。' },
-      { note: '他將那枚子輕輕擱在盤邊。不是落子，是放下。' },
-      { note: '盤上的黑子一枚一枚暗了，白子一枚一枚亮了。盒裡收了幾百年的子，也都亮了起來。' },
-      { who: 'qiu', text: '原來如此。老夫求了一輩子，求的便是這一放。……{name}，多謝你。' },
-      { who: 'qiu', text: '你這孩子，倒有幾分像老夫年輕時候。' },
-      { note: '他向少年拱了拱手，轉身往谷口走去，大袖飄飄，撒手而去，不知所終。那頭大鵰望著他的背影，沒有跟去。' }
+    invite: [
+      {
+        note: '求敗依著局規，伸手要將盤上的白子一枚一枚翻轉，手到半途，卻停住了。',
+        text: '十局皆勝，各位原該放還本尊。老夫卻有一事相求：再留一局。這一局沒有戰意，也沒有局規，願留的便留。'
+      },
+      { who: 'youth', note: '盤邊眾人你瞧我，我瞧你，竟沒有一個肯走。', text: '老伯，他們都不走。' },
+      {
+        note: '求敗打開棋盒，將這一輪十位局主的黑子一一取出，放在盤上，手指卻不在子上按那一按。黑子上人影立起，個個神智清明，竟也無一人離去。',
+        text: '老夫不按了。各位愛打便打，不愛打的，自管請便。'
+      },
+      { who: 'youth', text: '老伯，你也下去？你不是說，你只能在盤外瞧麼？' },
+      { text: '那是手裡握著子的時候。' },
+      { who: 'youth', text: '可是我不會武功。' },
+      {
+        note: '求敗向盤上一指。四角星位各有一塊大石，石上各插一劍。',
+        text: '千年的武功，都在你眼裡過了一遍。手會記得。石上那柄利劍，是老夫弱冠之前所用，你拿去使。'
+      },
+      { who: 'wei', text: '這多出來的一局，我照樣開盤口。老爺子，這一回你瞧得見我啦，要不要也押一注？' },
+      { text: '……老夫押這孩子。' }
     ],
-    wake: '少年醒了。天剛濛濛亮，他提了枕邊那柄劍，到屋後空地上練了一回。練罷抬頭，牆頭立著一頭大鵰，正側著頭瞧他。'
+    before: [
+      {
+        who: 'youth',
+        note: '少年一腳踏上棋枰，石面冰涼。他伸手握住石上那柄利劍，一拔便出，倒似這柄劍已等了他許久。',
+        text: '這劍……好生順手。'
+      },
+      {
+        note: '求敗隨手折了一根枯枝，緩步走到天元，站定了。',
+        text: '老夫四十歲後，不滯於物，草木竹石均可為劍。幾百年不曾同人動手，這一局，老夫不讓。'
+      },
+      { who: 'youth', text: '各位，我這一回同你們站在一起。我若倒了，這一局便輸了。……老伯，得罪！' },
+      { text: '老夫求了一世的敗。今日瞧瞧，你給不給得起。' }
+    ],
+    // Later black stones walk on by themselves: no stone is set down, so there is no 「嗒」.
+    walkOn: '盤邊有人自行邁步上枰。下一合，人便到。',
+    half: '好。這一劍，老夫幾百年來不曾見過。……再來！',
+    after: [
+      { note: '求敗低頭瞧著手中的枯枝，瞧了很久。盤上的人影一齊停了手。', text: '……夠了。' },
+      { who: 'youth', text: '老伯，你還站著。我沒有贏。' },
+      { text: '老夫求了一世的敗，原來不是要誰將老夫打倒。' }
+    ],
+    lost: [
+      {
+        note: '少年手中的劍脫手飛出，釘在石上。盤上的人影一齊停了手。求敗瞧著自己手中的枯枝，半晌不語。',
+        text: '還差著一點。……差的是甚麼，老夫也說不上來。武學的盡頭，想必還在前面。'
+      },
+      { text: '那十局你再下一遍。下完了，老夫仍到這盤上來等你。請回吧。' },
+      { who: 'wei', text: '不打緊，不打緊。差一點便是差一點，下回補上就是。東西照舊放我這兒。' }
+    ],
+    film: {
+      tall: { file: 'finale-film.mp4', poster: 'finale-film.webp' },
+      wide: { file: 'finale-film-wide.mp4', poster: 'finale-film-wide.webp' }
+    },
+    ending: [
+      { note: '那根枯枝，求敗沒有再舉起來。' },
+      { note: '他俯下身去，將枯枝輕輕擱在盤上。不是落子，是放下。', text: '夠了。' },
+      { note: '盤上的黑子白子，一枚一枚亮了。盒中收了幾百年的子，也都亮了起來，各回各的年月。' },
+      { text: '老夫求了一世，求的原來便是這一放。' },
+      { text: '小兄弟，多謝你。' },
+      { note: '韋小寶收了攤子，挑在肩上，自谷口走了出去。那道門，原來一直開著。' },
+      { note: '少年提劍而立。求敗向他瞧了一眼，忽地一怔。', text: '……原來是你。' },
+      { note: '他向少年拱了拱手，大袖飄飄，撒手而去，不知所終。那頭大鵰望著他的背影，沒有跟去。' },
+      { note: '少年醒了。這一回，他沒有再睡回去。' },
+      { note: '他提了枕邊那柄劍，到屋後練將起來。夢裡的事一件也記不起，手卻都記得。' },
+      { note: '練罷抬頭，崖上立著一頭大鵰，正側過了頭瞧他。' },
+      { note: '許多年後，他劍下再無一合之敵，給自己取了一個名字。' }
+    ],
+    name: '獨孤求敗',
+    // A lost last board, on the run's last page.
+    missed: '終局未成。少年的劍脫了手，求敗說還差著一點。那十局須得再下一遍，方能再到這盤上來。',
+    epilogue: '這盤棋下完了。對面那個人撒手而去，再沒有回來。少年後來的事，江湖上人人知道；只有這一場夢，他自己也記不清了。',
+    // As the company goes onto the last board (the log).
+    muster: '{name}提了利劍，頭一個踏上棋枰。這一局他是眼。同行的人到了這裡，平生所學一招不缺，全都想了起來。',
+    plus: {
+      // The first board of a run after the ending (the log).
+      joins: '這一回，{name}自己也在盤上。',
+      // The draw page (抓子), under the three drawn.
+      draw: '{name}自己也在盤上：連這三位，開局共是四人。',
+      title: '無名入盤',
+      text: '此後再入夢，便是將這場舊夢從頭再做一遍。這一回，{name}自己也是盤上一子：開局抓三枚，連他共是四人。他同旁人一樣從根長起，九劍要一式一式想起來。'
+    }
   },
   // The run's last page.
   win: '十局下完，同行的人各歸本尊。棋臺上只剩兩個人，一頭鵰。求敗望著空盤，說道：「好棋。容老夫想一想。請回吧。」',
@@ -378,6 +464,12 @@ const CHAMBER_TALES = [
     name: '無刻漏臺',
     arrival: '銅漏的最後一滴水懸在半空。兩股星索從盤外垂將下來，繫在臺心一位老者身上。',
     victory: '兩股星索斷了，縮回盤外。懸了許久的那滴水終於落下，銅漏響了一聲。'
+  },
+  // The last board. Its victory is 求敗 lowering the twig (finale.yields): he does not fall.
+  {
+    name: '谷底棋臺',
+    arrival: '青石棋枰縱橫十三路，四角星位各插一劍。枰上沒有一道戰意。求敗手持一根枯枝，立在天元。',
+    victory: '求敗手中的枯枝垂了下來。他沒有倒下，也沒有再舉起那根枯枝。'
   }
 ];
 

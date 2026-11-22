@@ -1,12 +1,14 @@
-// 群俠列傳: one page per playable hero.
+// 群俠列傳: one page per playable hero: the ten the box holds, and 無名, who takes the field
+// himself on the last board and in every run after the ending.
 import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, speech, links, link, cells, gameArt } from './parts.js';
 
-export const heroPortrait = (id) => gameArt('portraits-' + G.portraits[id] + '.webp');
+// A hero's portrait: the ten have a painting each; 無名 wears the picture his lines have always worn.
+export const heroPortrait = (id) => gameArt(G.DETAILS[id]?.portraitFile || 'portraits-' + G.portraits[id] + '.webp');
 
 export function heroes() {
-  return G.PARTY.map((id) => {
+  return G.ROSTER.map((id) => {
     const d = G.DETAILS[id],
       unit = G.startingHero(id),
       path = G.HERO_PATHS[id],
@@ -23,7 +25,9 @@ export function heroes() {
           ['稱號', d.epithet],
           ['原著', G.BOOKS[id]],
           ['門派', d.school],
-          partner && ['合璧之人', G.DETAILS[partner].name + '：相鄰時，合璧之招倍率更高']
+          partner && ['合璧之人', G.DETAILS[partner].name + '：相鄰時，合璧之招倍率更高'],
+          // 無名 is in no box: when he is a piece at all.
+          id === G.YOUTH_ID && ['何時上盤', '終局：他是那一局的眼，同行俠客與他自己的九式全都在手。勝過終局之後：' + G.MAZE_TALE.finale.plus.text.replaceAll('{name}', d.name)]
         ]),
         rows('初始屬性', [
           ['氣血', unit.maxHp],
@@ -48,7 +52,8 @@ export function heroes() {
           ...Object.entries(G.TALENTS).map(([key, t]) => link('skills', key, t.name))
         ]),
         partner && links('合璧', [link('heroes', partner, G.DETAILS[partner].name), link('rules', 'paired', G.RULE_TERMS.paired.name)]),
-        speech('想起武學', G.RECALL_NOTE)
+        speech(id === G.YOUTH_ID ? '九式從何而來' : '想起武學', path.recall || G.RECALL_NOTE),
+        id === G.YOUTH_ID && links('相關', [link('folk', 'youth', '少年（執子之人）'), link('story', 'finale', '終局與放下'), link('rules', 'answer', G.RULE_TERMS.answer.name)])
       ].filter(Boolean),
       sources: cites(
         cite(d.name, 'src/data/new-heroes.js', 'src/rules/game.js'),

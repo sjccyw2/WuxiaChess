@@ -3,6 +3,12 @@
 //
 //   node tools/sim-battles.mjs [--runs N] [--seed S] [--boards A-B] [--realm 1-5] [--json out.json]
 //                              [--trace | --trace-map M]
+//
+// Boards are 1 to 11. The eleventh is the last board (終局), which a run reaches only in 無劍境界
+// after its ten are won: `--realm 5 --boards 1-11` plays whole runs to it. This player seldom
+// gets that far in 無劍境界, so `--last [--level N]` measures the last board on its own: each run
+// takes all ten heroes at level N (default 11, what the runs that do get there have), wins the
+// tenth board at once, visits the shop with a test purse, and fights the last board.
 //   node tools/sim-battles.mjs --compare before.json after.json
 //
 // Runs are built the way the game builds them (draw three heroes, start the run, deploy, settle
@@ -55,6 +61,7 @@ const W = {
   reserveSummitUntilStage: 7
 };
 const COMPARE_FLAG = 0.1; // flag a board whose win rate moves by more than this
+const STAGES = 11; // the ten boards of a run, and the last board after them in 無劍境界
 
 // ── Arguments ───────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
@@ -70,6 +77,9 @@ const JSON_OUT = opt('--json', null);
 // --realm N plays every run in the Nth 境界 (data/realms.js), as if it were open.
 const REALM = Math.min(5, Math.max(1, Number(opt('--realm', 1)) || 1));
 const QUIET = args.includes('--quiet');
+// --last: only the last board, with a company as a run in 無劍境界 brings to it (see the header).
+const LAST_ONLY = args.includes('--last');
+const LEVEL = Math.max(1, Number(opt('--level', 11)) || 11);
 // --trace prints the battle log of the first run, board by board, to see how the player plays.
 const TRACE = args.includes('--trace');
 // --trace-map M prints the battle log of the first board fought on map M, in whichever run.
@@ -157,7 +167,8 @@ function dangerAt(s, u, threats, gone = new Set()) {
 // the object by meeting what comes for it, see placeScore and foeValue).
 function objectiveTargets(s) {
   const kind = G.boardKind(s);
-  if (kind === 'slay')
+  // 問劍 (the last board) is won on its master too, by bringing him to 1 氣血.
+  if (kind === 'slay' || kind === 'yield')
     return G.objectiveLeft(s)
       .masters.map((id) => G.find(s, id))
       .filter((u) => u && G.living(u));
@@ -343,6 +354,8 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
   const dealt = Math.min(f.amount, victim.hp);
   score += dealt * foeValue(s, victim, ctx);
   if (dealt > 0 && ctx.sidePolicy.hit) score += ctx.sidePolicy.hit(s, ctx.side, victim);
+  // 問劍: the blow that leaves the board's master at 1 氣血 wins it; no one falls.
+  if (G.boardKind(s) === 'yield' && G.masterIds(s).includes(victim.id) && victim.hp - dealt <= 1) score += W.win;
   if (f.amount >= victim.hp) gone.add(victim);
   else
     for (const e of f.effects) score += (W.foeEffect[e.kind] ?? W.foeEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
@@ -644,7 +657,7 @@ function fight(s) {
   rec.blocked = rec.events.blocked || 0;
   // How much of the objective still stood at the end (masters on 斬將, every enemy on 殲滅).
   // (守 and 破: the objects still standing; on 守 a share left is good, so it is reported as is.)
-  const goal = ['slay', 'keep'].includes(rec.kind) ? G.masterIds(s).map((id) => G.find(s, id)).filter(Boolean) : rec.kind === 'break' ? G.props(s) : G.enemies(s);
+  const goal = ['slay', 'keep', 'yield'].includes(rec.kind) ? G.masterIds(s).map((id) => G.find(s, id)).filter(Boolean) : rec.kind === 'break' ? G.props(s) : G.enemies(s);
   rec.objectLost = !!G.brokenKeep(s);
   rec.heldOut = rec.won && rec.kind === 'keep' && !G.masterIds(s).every((id) => !G.living(G.find(s, id) || { hp: 0 }));
   rec.objectLeft = G.props(s).length ? G.props(s).reduce((n, u) => n + Math.max(0, u.hp), 0) / G.props(s).reduce((n, u) => n + u.maxHp, 0) : null;
@@ -846,15 +859,39 @@ function playRun(seed) {
   return run;
 }
 
+// The last board alone (--last): ten heroes in a seeded order, the first four beside 無名.
+function playLast(seed) {
+  const ids = [...G.PARTY]
+    .map((id, i) => [id, hash(seed, 100 + i)])
+    .sort((a, b) => a[1] - b[1])
+    .map(([id]) => id);
+  const s = R.devTestRun({ map: 9, realm: 5, heroes: ids, seed }, { ...R.LEGACY, realms: 5 });
+  for (const u of G.company(s)) G.raiseLevel(u, LEVEL - u.level);
+  R.devFinish(s, true);
+  R.settle(s);
+  R.turnPage(s, true);
+  shop(s);
+  if (!R.advance(s)) throw new Error('could not advance to the last board, seed ' + seed);
+  const run = { seed, heroes: ids.slice(0, 4), leader: s.leader, boards: [] };
+  R.turnPage(s, true);
+  R.turnPage(s, true);
+  prepare(s);
+  if (!R.deployLineup(s)) throw new Error('could not deploy, seed ' + seed);
+  deploy(s);
+  run.boards.push(fight(s));
+  R.settle(s);
+  return run;
+}
+
 // ── Aggregation ─────────────────────────────────────────────────────────
 function aggregate(runs) {
-  const boards = Array.from({ length: 10 }, (_, i) => ({
+  const boards = Array.from({ length: STAGES }, (_, i) => ({
     board: i + 1, reached: 0, wins: 0, rounds: 0, hpLeft: 0, downed: 0, side: 0, leaderFell: 0, timeout: 0,
     usage: { basic: 0, start: 0, tier1: 0, tier2: 0, tier3: 0, tier4: 0, manual: 0, wait: 0 }, maps: {}
   }));
   const heroes = {};
   // The same, by map: each board's villains fight their own way, whichever stage meets them.
-  const maps = Array.from({ length: 10 }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {}, kind: null, sides: {}, side: 0, arrived: 0, enemies: 0, blocked: 0, lossLeader: 0, lossTime: 0, goalLeft: 0, objectLeft: 0, objectLost: 0, heldOut: 0 }));
+  const maps = Array.from({ length: STAGES }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {}, kind: null, sides: {}, side: 0, arrived: 0, enemies: 0, blocked: 0, lossLeader: 0, lossTime: 0, goalLeft: 0, objectLeft: 0, objectLost: 0, heldOut: 0 }));
   let misfires = 0;
   for (const run of runs)
     for (const b of run.boards) {
@@ -902,7 +939,7 @@ function aggregate(runs) {
       const totalKills = Object.values(b.heroes).reduce((n, h) => n + h.kills, 0),
         totalDealt = Object.values(b.heroes).reduce((n, h) => n + h.dealt, 0);
       for (const [id, h] of Object.entries(b.heroes)) {
-        const H = (heroes[id] ??= { boards: 0, dealt: 0, taken: 0, kills: 0, teamKills: 0, teamDealt: 0, at: Array.from({ length: 10 }, () => ({ n: 0, level: 0, sp: 0, spent: 0 })) });
+        const H = (heroes[id] ??= { boards: 0, dealt: 0, taken: 0, kills: 0, teamKills: 0, teamDealt: 0, at: Array.from({ length: STAGES }, () => ({ n: 0, level: 0, sp: 0, spent: 0 })) });
         H.boards++;
         H.dealt += h.dealt;
         H.taken += h.taken;
@@ -919,7 +956,7 @@ function aggregate(runs) {
   const r1 = (n) => Math.round(n * 10) / 10,
     r2 = (n) => Math.round(n * 100) / 100;
   return {
-    boards: boards.filter((B) => B.board >= FIRST && B.board <= LAST).map((B) => {
+    boards: boards.filter((B) => (LAST_ONLY ? B.board === STAGES : B.board >= FIRST && B.board <= LAST)).map((B) => {
       const acts = Object.values(B.usage).reduce((a, b) => a + b, 0) || 1;
       return {
         board: B.board,
@@ -1014,7 +1051,7 @@ function print(out) {
   for (const m of out.maps || [])
     console.log(pad(m.map, 4) + pad(m.name, 6) + '  ' + (Object.entries(m.events || {}).map(([k, n]) => k + ' ' + n).join(', ') || '-'));
   console.log('\nPer hero (per board fought; shares are of the team on the boards the hero fought)');
-  console.log(pad('hero', 7) + pad('name', 5) + lpad('boards', 7) + lpad('dealt', 7) + lpad('taken', 7) + lpad('kills', 7) + lpad('dmg', 6) + '   level at board 1..10  /  points spent at board 1..10');
+  console.log(pad('hero', 7) + pad('name', 5) + lpad('boards', 7) + lpad('dealt', 7) + lpad('taken', 7) + lpad('kills', 7) + lpad('dmg', 6) + '   level at board 1..' + STAGES + '  /  points spent at board 1..' + STAGES);
   for (const [id, h] of Object.entries(out.heroes))
     console.log(
       pad(id, 7) + pad(h.name, 5) + lpad(h.boards, 6) + lpad(h.dealtPerBoard, 7) + lpad(h.takenPerBoard, 7) + lpad(pc(h.killShare), 7) + lpad(pc(h.damageShare), 6) + '   ' +
@@ -1065,11 +1102,11 @@ const runs = [];
 let tracing = false;
 for (let i = 0; i < RUNS; i++) {
   tracing = TRACE && i === 0;
-  runs.push(playRun(hash(SEED, i)));
+  runs.push(LAST_ONLY ? playLast(hash(SEED, i)) : playRun(hash(SEED, i)));
   if (!QUIET && process.stderr.isTTY && i % 10 === 9) process.stderr.write('\r' + (i + 1) + '/' + RUNS + ' runs');
 }
 if (!QUIET && process.stderr.isTTY) process.stderr.write('\r');
-const out = { meta: { runs: RUNS, seed: SEED, boards: FIRST + '-' + LAST, realm: REALM, seconds: Math.round((Date.now() - started) / 1000) }, ...aggregate(runs) };
+const out = { meta: { runs: RUNS, seed: SEED, boards: LAST_ONLY ? '11-11' : FIRST + '-' + LAST, realm: LAST_ONLY ? 5 : REALM, seconds: Math.round((Date.now() - started) / 1000) }, ...aggregate(runs) };
 print(out);
 if (JSON_OUT) {
   fs.writeFileSync(JSON_OUT, JSON.stringify(out, null, 1) + '\n');

@@ -10,7 +10,7 @@ export const categories = {
   items: ['百物譜', '物', '件'],
   missions: ['任務簿', '令', '項'],
   rules: ['戰鬥規則', '則', '條'],
-  maps: ['十局輿圖', '圖', '圖'],
+  maps: ['棋局輿圖', '圖', '圖'],
   text: ['遊戲原文', '文', '條']
 };
 export const $ = (id) => document.getElementById(id);

@@ -2,7 +2,7 @@
 // Ambience plays at a time; it fades in when made and out when stopped.
 import { note, sweep, hiss, pluck, block } from './instruments.js';
 
-// For each map (index 0-9, named in scene/maze-atmosphere.js):
+// For each map (index 0-10, named in scene/maze-atmosphere.js):
 //   wind: [centre Hz, Q, level] of a band of moving air, or null
 //   water: level of slow lapping water, or 0
 //   room: level of a low hum, or 0
@@ -91,7 +91,17 @@ const BEDS = [
       ['clock', 1.8],
       ['chime', 20]
     ]
-  } // 無刻漏臺
+  }, // 無刻漏臺
+  {
+    // Falling water, the air moving in a deep valley, now and then a bird.
+    wind: [450, 0.9, 0.35],
+    water: 0.65,
+    events: [
+      ['gust', 12],
+      ['bird', 17],
+      ['plip', 9]
+    ]
+  } // 谷底棋臺
 ];
 
 // The sparse sounds that punctuate a bed. Each is scheduled into the bed's own voice.

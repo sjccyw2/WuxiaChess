@@ -47,7 +47,9 @@ const COMMANDS = {
     power: 3,
     text: '出招少耗 3 點內力，最低消耗 2 點。',
     icon: 'drop'
-  }
+  },
+  // 無名: he does not give up a stone.
+  youth: { name: '不棄一子', stat: 'def', power: 4, text: '防禦增加 4。', icon: 'shield' }
 };
 function commandDescription(id) {
   return '領隊與距離兩格內的友軍' + COMMANDS[id].text;

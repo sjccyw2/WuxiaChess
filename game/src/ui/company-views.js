@@ -122,23 +122,28 @@ function memberLine(s, u, ui) {
     chief = line[0] === u.id;
   const role = chief ? '領隊' : active ? '出陣' : '候補';
   const manage = G.managesCompany(s);
+  // On the last board the lead is 無名's: he is not benched, and no one else is appointed.
+  const held = R.fixedLead(s, line[0]);
   const edit = manage
     ? [
         action(
           'lineup',
           active ? '轉為候補' : '加入出陣',
           u.id,
-          active ? line.length > 1 : line.length < 5
+          active ? line.length > 1 && !(held && chief) : line.length < 5
         ),
-        action('appoint', chief ? '現任領隊' : '任為領隊', u.id, active && !chief)
+        action('appoint', chief ? '現任領隊' : '任為領隊', u.id, active && !chief && !held)
       ].join('')
     : active && G.living(u) && s.run.scene === 'fight'
       ? action('field-control', '操控此俠客', u.id)
       : '';
   const map = planningMap(s);
   const upcoming = map !== s.mapIndex;
+  // The next board's named stones: its master and lieutenant, or on the last board everyone it opens with.
   const foes = upcoming
-    ? [{ id: CAPTAINS[map][0] }, { id: 'lieutenant-' + map }]
+    ? G.hasFour(map)
+      ? [{ id: CAPTAINS[map][0] }, { id: 'lieutenant-' + map }]
+      : G.castBoard(map, s.run.route).pieces.map((p) => ({ id: p.id }))
     : G.enemies(s).filter((v) => G.unitDetails(v).rank);
   const board = mapLayout(map);
   // The briefing in short: this board's (or, from the shop, the next board's, whose secondary
@@ -386,9 +391,8 @@ function encounterPage(s, scene, beat, archive = false) {
   const head =
     '<header class="modal-head"><div class="modal-title">' +
     icon('scroll', 20) +
-    '<h2>第' +
-    R.NUMERALS[s.run.stage] +
-    '局 · ' +
+    '<h2>' +
+    R.stageTitle(s.run.stage) +
     map.name +
     '</h2></div><small>' +
     label +

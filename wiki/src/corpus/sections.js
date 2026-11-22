@@ -177,7 +177,8 @@ export const PLACES = {
   'src/ui/journey-pages.js': {
     'stageScenes': ['劇情、對白與旁白', '局中紀事'],
     'equippedMoves': ['武學與效果', '戰場出招'],
-    'journeyEnding': ['目標與棋路', '終局']
+    'journeyEnding': ['目標與棋路', '一輪的結局'],
+    'endingPage': ['劇情、對白與旁白', '終局與放下']
   },
   'src/rules/journey.js': {
     'NUMERALS': ['目標與棋路', '棋路與結算'],
@@ -266,7 +267,7 @@ export const PLACES = {
     'MAZE_TALE.packUp': ['劇情、對白與旁白', '眼破'],
     'MAZE_TALE.release': ['劇情、對白與旁白', '請回吧'],
     'MAZE_TALE.close': ['劇情、對白與旁白', '請回吧'],
-    'MAZE_TALE.finale': ['劇情、對白與旁白', '最後一局（暫代）'],
+    'MAZE_TALE.finale': ['劇情、對白與旁白', '終局與放下'],
     'MAZE_TALE.win': ['劇情、對白與旁白', '請回吧'],
     'MAZE_TALE.winNote': ['劇情、對白與旁白', '請回吧'],
     'MAZE_TALE.loss': ['劇情、對白與旁白', '眼破'],
@@ -298,6 +299,9 @@ export const PLACES = {
     'CHAMBER_TALES[9].name': ['劇情、對白與旁白', '無刻漏臺・局的紀事'],
     'CHAMBER_TALES[9].arrival': ['劇情、對白與旁白', '無刻漏臺・局的紀事'],
     'CHAMBER_TALES[9].victory': ['劇情、對白與旁白', '無刻漏臺・局的紀事'],
+    'CHAMBER_TALES[10].name': ['劇情、對白與旁白', '谷底棋臺・局的紀事'],
+    'CHAMBER_TALES[10].arrival': ['劇情、對白與旁白', '谷底棋臺・局的紀事'],
+    'CHAMBER_TALES[10].victory': ['劇情、對白與旁白', '谷底棋臺・局的紀事'],
     'LAMP_TALE': ['劇情、對白與旁白', '支線紀事'],
     'SIDE_TALES': ['劇情、對白與旁白', '韋小寶的盤口'],
     'SIDE_PAY': ['劇情、對白與旁白', '韋小寶的盤口'],
@@ -370,8 +374,7 @@ export const PLACES = {
     'REALMS': ['開場與操作', '五重境界']
   },
   'src/ui/realm-views.js': {
-    'realmView': ['開場與操作', '五重境界'],
-    'finaleView': ['劇情、對白與旁白', '最後一局（暫代）']
+    'realmView': ['開場與操作', '五重境界']
   },
   'src/ui/dev-mode.js': {
     'devPanel': ['系統與提示', '開發者模式']

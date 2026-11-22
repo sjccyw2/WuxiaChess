@@ -248,7 +248,7 @@ function combination(combo, i) {
 
 export function skills() {
   return [
-    ...G.PARTY.flatMap(starting),
+    ...G.ROSTER.flatMap(starting),
     ...Object.entries(G.TECHNIQUES).map(learned),
     ...Object.keys(G.TALENTS).map(root),
     ...G.ENCOUNTERS.flatMap((pair, stage) => pair.flatMap((_, seat) => opponent(stage, seat))),

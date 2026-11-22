@@ -1,6 +1,18 @@
 // Keys match the combat and mastery catalogues. A weapon's offensive forms belong
 // to deliberate normal attacks. Its support forms belong to support skills.
 const ART_FORMS = {
+  // 無名
+  'signature:youth': ['mark'],
+  youthKeenEdge: [],
+  youthBreakSword: [],
+  youthBreakBlade: [],
+  youthBreakPole: ['collision'],
+  youthBreakSoft: [],
+  youthBreakMace: [],
+  youthBreakArrow: [],
+  youthBreakHand: [],
+  youthBreakQi: ['seal'],
+
   // 令狐冲
   'signature:hero': ['exploit'],
   mountainOpening: ['line'],
@@ -119,6 +131,7 @@ const WEAPON_FORMS = {
   foxSaber: ['flank'],
   frost: ['distill'],
   blueEdge: ['exploit'],
+  keenSword: ['exploit'],
   ironFan: ['mark', 'overflow'],
   silkWhip: ['pull', 'pin'],
   travelBlade: ['arc'],

@@ -8,7 +8,13 @@ const percent = (fraction) => Math.round(fraction * 100) + '%';
 const roots = { force: '攻擊 ＋3', guard: '防禦 ＋2', breath: '絕技威力 ＋5、內力消耗 −2' };
 
 const plus = (n) => '＋' + n.toFixed(2);
-const ANSWERED = { close: '近身（射程 1）', ranged: '遠攻（射程 2 以上）', master: '局主或副手' };
+const ANSWERED = {
+  close: '近身（射程 1）',
+  ranged: '遠攻（射程 2 以上）',
+  master: '局主或副手',
+  // A kind of weapon (無名's forms): 使劍, 使刀, 使長兵 …
+  ...Object.fromEntries(Object.entries(G.ARM_NAMES).map(([arm, name]) => [arm, (arm === 'hand' ? '以' : '使') + name + '者']))
+};
 // The conditional bonuses of an art, as rules rather than as this strike's numbers.
 function bonusLines(u, art) {
   const lines = [];

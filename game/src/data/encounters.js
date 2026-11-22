@@ -15,8 +15,13 @@
 //   execute  { atk }: 斬殘, its blows and counters on a hero at or below half are stronger
 //   ward     the share (percent) a living piece takes off its master's blows (星索護陣; today only
 //            the board objects carry it, board-objects.js)
+//   unfelled 不敗: no blow, counter or poison brings its 氣血 below 1 (求敗, on the last board)
+//   formless 無招: no 破招 answers it, whatever it holds
 // A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
-// without traits plays exactly as before the redesign.
+// without traits plays exactly as before the redesign. `phase.say` is a line the piece speaks as it
+// changes, logged after `phase.log`.
+import { MAZE_TALE } from './maze-tale.js';
+
 function adversary(name, school, book, basic, skill, style, visual, bio, mini, robe, traits = {}) {
   return { name, school, book, basic, skill, style, visual, bio, mini, robe, traits };
 }
@@ -677,7 +682,8 @@ const VILLAIN_FORMS = {
   凝碧截腕: [1.18, 'shangYang'],
   趙府令旗: [1.1, 'foxFeint'],
   金蠶蠱毒: [1.12, 'blackNeedle'],
-  唐詩劍法: [1.2, 'snowPursuit']
+  唐詩劍法: [1.2, 'snowPursuit'],
+  無劍勝有劍: [1.35, 'ninefoldIntent']
 };
 
 // The villains added to the existing boards (battles.js). `rank` 'boss' is a 局主, 'mini' a 副手;
@@ -725,6 +731,30 @@ const VILLAINS = {
     row: 'lieutenant',
     ...adversary('萬震山', '荊州萬門', '連城訣', '萬門劍式', '唐詩劍法', 'exposed', 'hero',
       '荊州萬門的師父。他夜夜夢遊，人睡著了，手自己起來砌牆；給戰意按著動手，於他並不希奇。劍招專向傷重之人招呼。', 'wanZhen', '', { mods: { def: 1 }, prefers: 'wounded' })
+  },
+  // 求敗 himself, on the last board only (battles.js, the entry marked `last`). He stands at 天元
+  // with a dry twig and is never felled: the board ends when he is brought to 1 氣血. What he
+  // says is the spine's (maze-tale.js).
+  qiubai: {
+    map: 10,
+    rank: 'boss',
+    row: 'master',
+    role: '對面的人',
+    ...adversary('求敗', '劍塚', '神鵰俠侶、笑傲江湖', '折枝為劍', '無劍勝有劍', 'sweep', 'hero',
+      '世人叫他求敗，本名早已忘了。利劍、軟劍、重劍、木劍，一柄一柄放下；四十歲後不滯於物，草木竹石均可為劍。幾百年來他只在盤外瞧，這一局放下了棋子，手持一根枯枝，親自立在天元。', 'qiubai', '', {
+        sig: { reach: 2, sweep: 0.5, cadence: 3 },
+        unfelled: true,
+        formless: true,
+        prefers: 'leader',
+        post: { tile: 'spawn', tether: 0, wake: true, note: '立在天元{tile}；有俠客踏入攻擊範圍或受到攻擊後，才離位。' },
+        phase: {
+          atk: 4,
+          step: 1,
+          log: '求敗枯枝一振，劍意陡盛：攻擊增加 4，移動增加 1。',
+          say: MAZE_TALE.finale.half,
+          note: '攻擊 ＋4、移動 ＋1。'
+        }
+      })
   }
 };
 // Troop types that follow those villains. `row` as above; only the traits listed in the RANKS
@@ -827,7 +857,26 @@ const GISTS = {
   qingShield: '守在門前不動；站在原位時受到的傷害減四成。',
   jinBow: '射程四格；兩格以內的目標打得較輕。',
   huaBlade: '相鄰的同門中，氣血較多者替對方受招。',
-  wanDisciple: '對氣血不過半者出手更重；專挑傷重者。'
+  wanDisciple: '對氣血不過半者出手更重；專挑傷重者。',
+  qiubai: '立在天元，有人近身或打他才離位；專挑領隊；氣血不會低於 1，九劍諸式破不了他的招。'
 };
+// What each enemy fights with, by DETAILS key: the kind of weapon one of 無名's nine forms answers
+// (破招, game.js strikeFactor). Archers and dart-throwers are answered by reach, not by this, so
+// they have none; nor has 完顏洪烈, who points a banner, or 求敗, whose twig no form answers.
+const ARM_NAMES = { sword: '劍', blade: '刀', pole: '長兵', mace: '短兵', soft: '軟兵', hand: '拳掌' };
+const ARMS = {
+  sword: ['chief', 'blade', 'lieutenant-0', 'courier', 'qin', 'mirror', 'lieutenant-8', 'scout-4', 'zhaoZhong', 'wanZhen', 'wanDisciple'],
+  blade: ['scout', 'scout-0', 'lieutenant-1', 'snow', 'lieutenant-3', 'echoBlade', 'echoScout', 'scout-3', 'scout-6', 'qingShield', 'huaBlade'],
+  // 長槍、大戟、棍、杖
+  pole: ['peach', 'scout-5', 'fengTiannan', 'fiveTiger'],
+  // 鋼鞭、鐵鐧、點穴橛、摺扇、短棍、匕首、輪
+  mace: ['wall', 'lieutenant-6', 'xianYu', 'scout-1', 'scout-8'],
+  // 長索、軟鞭、拂塵
+  soft: ['jadeHall', 'lieutenant-7', 'scout-7', 'scout-9'],
+  // 拳、腳、指、掌
+  hand: ['reed', 'lieutenant-2', 'lieutenant-4', 'lieutenant-5', 'murong', 'lieutenant-9', 'scout-2']
+};
+const ARM_OF = Object.fromEntries(Object.entries(ARMS).flatMap(([arm, keys]) => keys.map((key) => [key, arm])));
 
-export { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS, VILLAINS, TROOPS, GISTS };
+
+export { ENCOUNTERS, RANKS, STATUS_POWER, SIGNATURE_RULES, VILLAIN_FORMS, VILLAINS, TROOPS, GISTS, ARM_NAMES, ARM_OF };

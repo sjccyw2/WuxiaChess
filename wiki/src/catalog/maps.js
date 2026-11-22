@@ -1,12 +1,13 @@
-// 十局輿圖: each battlefield, drawn from the game's layout tables.
+// 棋局輿圖: each battlefield, drawn from the game's layout tables.
 import * as G from '../game-data.js';
 import { cite, cites } from '../sources.js';
 import { rows, links, link, wikiArt } from './parts.js';
 import { stageName, namedOn, foeLink, extraPieces } from './foes.js';
 import { missionLabel } from './missions.js';
 
-const LAST = G.MAP_LAYOUTS.length - 1;
-const orderOf = (stage) => (stage === 0 ? '第一局' : stage === LAST ? '最後一局' : '中間的局，次序每輪不同');
+// The tenth board is the last of the ten a run shuffles; the last board (終局) follows it in 無劍境界.
+const orderOf = (stage) =>
+  stage === G.LAST_MAP ? '終局：無劍境界十局皆勝之後' : stage === 0 ? '第一局' : stage === G.LAST_MAP - 1 ? '第十局，十局之末' : '中間的局，次序每輪不同';
 const point = ({ x, y }) => ({ x, y });
 
 function map(stage) {

@@ -22,20 +22,24 @@ export function behaviour(map, ref) {
     return [label || '絕技', text];
   });
 }
-// Every piece a board fields beyond its fixed four, with the wave it comes in (if any).
+// Every piece a board fields beyond its fixed four, with the wave it comes in (if any). The last
+// board is read as the game casts it with no run: its guests are the ten masters in board order.
 export const extraPieces = (map) => [
-  ...G.BATTLES[map].pieces.map((piece) => ({ piece, wave: null })),
-  ...G.BATTLES[map].waves.flatMap((wave) => wave.pieces.map((piece) => ({ piece, wave })))
+  ...G.castBoard(map).pieces.map((piece) => ({ piece, wave: null })),
+  ...G.castBoard(map).waves.flatMap((wave) => wave.pieces.map((piece) => ({ piece, wave })))
 ];
+// The ten boards a run shuffles, and the last board that follows them in 無劍境界.
+export const TEN = [...G.MAP_LAYOUTS.keys()].filter((map) => G.hasFour(map));
+export const FINAL = G.LAST_MAP;
 // The boards a troop type or villain stands on, with its first piece there.
 export const boardsOf = (key) =>
-  G.BATTLES.flatMap((_, map) => {
+  TEN.flatMap((map) => {
     const found = extraPieces(map).find(({ piece }) => piece.id.split('#')[0] === key);
     return found ? [{ map, ...found }] : [];
   });
 // The wiki page of the enemy a DETAILS key describes.
 export function foePage(key) {
-  for (const stage of G.MAP_LAYOUTS.keys())
+  for (const stage of TEN)
     for (const seat of [0, 1])
       if (G.refKey(stage, G.SLOTS[seat]) === key) return 'enc-' + stage + '-' + seat;
   if (G.VILLAINS[key]) return 'enc-' + key;
@@ -44,12 +48,13 @@ export function foePage(key) {
 }
 export const foeLink = (key) => link('foes', foePage(key), G.DETAILS[key].name);
 // The named opponents of a board: its master and lieutenant, then any villain who joins them.
-export const namedOn = (map) => [
-  G.refKey(map, 'master'),
-  G.refKey(map, 'lieutenant'),
-  ...Object.keys(G.VILLAINS).filter((id) => G.VILLAINS[id].map === map)
-];
-export const villainRank = (id) => RANKS[G.VILLAINS[id].rank === 'boss' ? 0 : 1];
+// On the last board: 求敗, then the ten masters who stand with him.
+export const namedOn = (map) =>
+  G.hasFour(map)
+    ? [G.refKey(map, 'master'), G.refKey(map, 'lieutenant'), ...Object.keys(G.VILLAINS).filter((id) => G.VILLAINS[id].map === map)]
+    : extraPieces(map).map(({ piece }) => piece.id);
+// 求敗 is neither: he keeps the role his lines have always had.
+export const villainRank = (id) => G.VILLAINS[id].role || RANKS[G.VILLAINS[id].rank === 'boss' ? 0 : 1];
 // The rank-and-file entries a board gives its own names to (bow-1 … scout-9); board 0's two
 // keep the shared 青城 pieces' text and are not listed twice.
 const ownTroop = (id) => /^(bow|scout)-\d$/.test(id) && G.DETAILS[id].name !== G.DETAILS[id.split('-')[0]]?.name;
@@ -90,7 +95,12 @@ export function foes() {
           link('skills', 'foe-' + stage + '-' + seat, foe.skill)
         ]),
         ruleLinks(traitTerms(foe)),
-        links('出現地點', stageLinks(stage))
+        // A master also stands on the last board, of his own accord, and says so in his own words.
+        !seat && {
+          title: '終局',
+          speeches: [{ speaker: foe.name, text: G.guestLine(G.refId(stage, 'master')), note: '十局皆勝之後，他不受戰意所迫，自願留在' + stageName(FINAL) + '。' }]
+        },
+        links('出現地點', [...stageLinks(stage), ...(seat ? [] : stageLinks(FINAL))])
       ].filter(Boolean),
       sources: cites(cite(foe.name, 'src/data/encounters.js'))
     }))
@@ -149,7 +159,7 @@ export function foes() {
 // means for its board (守: kept, 破: broken).
 function objects() {
   return Object.entries(G.BOARD_OBJECTS).map(([id, o]) => {
-    const board = G.BATTLES[o.map],
+    const board = G.castBoard(o.map),
       count = board.objects.filter((p) => p.id.split('#')[0] === id).length,
       row = { master: '局主', lieutenant: '副手' }[o.row] || o.row;
     const rule =

@@ -30,6 +30,7 @@ const DIR = Object.freeze({
   staff: 'weapon',
   whip: 'weapon',
   hero: 'weapon',
+  youth: 'weapon',
   xiao: 'weapon',
   hu: 'weapon',
   huang: 'weapon',

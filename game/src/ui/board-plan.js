@@ -4,7 +4,6 @@
 // Reinforcements are not on it: they come as a surprise.
 // Read from the board's data, so it needs no fight: the shop's look at the next board uses it too.
 import * as G from '../rules/game.js';
-import { BATTLES } from '../data/battles.js';
 import { mapLayout } from '../data/terrain.js';
 import { art } from './artwork.js';
 
@@ -16,7 +15,7 @@ const place = (x, y) => 'grid-column:' + (x + 1) + ';grid-row:' + (y + 1);
 // legacy board's four), or null for a board seen ahead of time.
 function boardPlan(map, s = null) {
   const layout = mapLayout(map),
-    board = s ? G.boardOf(s) : BATTLES[map],
+    board = s ? G.boardOf(s) : G.castBoard(map),
     keys = G.encounterKeys(map);
   const piece = (key, x, y) => {
     const rank = G.DETAILS[key]?.rank;

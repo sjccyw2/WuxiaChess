@@ -22,7 +22,7 @@ import { codexPage } from './ui/gates.js';
 import * as R from './rules/journey.js';
 import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
 import { playFilm } from './ui/intro-film.js';
-import { realmView, finaleView } from './ui/realm-views.js';
+import { realmView } from './ui/realm-views.js';
 import { devMode, devPanel, devTestView, loadPick, changePick } from './ui/dev-mode.js';
 import { MAZE_TALE } from './data/maze-tale.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
@@ -51,9 +51,8 @@ let draft = null,
 // The prologue shown before the draw: which page it is on, whether the
 // opening film told its first pages, and the 境界 picked for the run.
 let prologue = { step: 0, film: false, realm: 1 };
-// The 境界 picker's choice (選境界), and which part of the placeholder last battle is showing.
-let realmPick = 0,
-  finalePhase = 'board';
+// The 境界 picker's choice (選境界).
+let realmPick = 0;
 let prefs = Object.assign(
   {
     sound: false,
@@ -299,7 +298,7 @@ function paint() {
   X.syncDangerButton($('danger-toggle'), prefs.danger);
   const path = mapLayout(state.mapIndex);
   $('medicine-button').disabled = !G.canUseMedicine(state, selected());
-  $('chapter-number').textContent = '第' + R.NUMERALS[state.run.stage] + '局';
+  $('chapter-number').textContent = R.stageTitle(state.run.stage, '');
   $('map-name').textContent = path.name;
   // 敵援: how many enter at the start of next round.
   const coming = state.result
@@ -422,7 +421,7 @@ function noteBoard() {
   if (now === notedSide) return;
   notedSide = now;
   if (r.scene !== 'fight' || state.result || screen !== 'battle') return;
-  if (now === 'met') heldTip('支線達成 · 取勝即得' + R.rewardText(r.side, r.stage), 3600);
+  if (now === 'met') heldTip('支線達成 · 取勝即得' + R.rewardText(r.side, r.stage, null, r), 3600);
   else if (now === 'failed') {
     const line = '支線已失 · ' + R.sideLost(state);
     G.log(state, 'system', line, '支線');
@@ -699,8 +698,6 @@ function pageHtml() {
       return prologuePage(state.run.chronicle, prologue.step, prologue.film, prologue.realm);
     case 'realm':
       return realmView(state.run.chronicle, realmPick);
-    case 'finale':
-      return finaleView(R.youthName(state), finalePhase);
     case 'devtest':
       return devTestView(devPick);
     case 'formation':
@@ -897,6 +894,18 @@ function dismissLayer() {
 }
 function showScene() {
   briefFrom = null;
+  // The last board won: the ending film first, once, and then the run's last page.
+  if (state.run.scene === 'ended' && state.run.last?.ended && !state.run.last.shown) {
+    const outcome = state;
+    update(); // the run is over: the battle screen's own buttons say so under the film
+    playEnding(() => {
+      if (state !== outcome) return;
+      state.run.last.shown = true;
+      save();
+      openPage('result');
+    });
+    return true;
+  }
   const page = {
     before: 'encounter',
     brief: 'brief',
@@ -1206,15 +1215,15 @@ function beginNewRun() {
   const profile = state.run.chronicle,
     open = R.openRealms(profile);
   realmPick = realmPick >= 1 && realmPick <= open ? realmPick : open;
-  if (open > 1 || profile.finale > 0) return openPage('realm');
+  if (open > 1 || profile.ended > 0) return openPage('realm');
   prologue.realm = 1;
   openPrologue();
 }
-// The placeholder last battle, then 求敗 letting go, then the youth waking (realm-views.js).
-function openFinale(phase = 'board') {
-  finalePhase = phase;
-  openPage('finale');
-  audio('page');
+// The ending film (asset-gen/finale-video): 求敗 lets go and is gone, the youth wakes, takes up a
+// sword and meets the eagle. If it cannot play, the run's last page tells the same words.
+function playEnding(onDone) {
+  closePage();
+  playFilm({ ...MAZE_TALE.finale.film, label: '終局影片', onDone: () => onDone?.() });
 }
 // Developer mode (?dev): a small panel, kept inside the open dialog so it stays clickable.
 const dev = devMode() ? document.createElement('aside') : null;
@@ -1265,7 +1274,7 @@ function openTitle() {
           ? '返回通吃坊'
           : state.run.status === 'ended'
             ? '查看本局結局'
-            : '繼續第' + R.NUMERALS[state.run.stage] + '局'
+            : '繼續' + R.stageTitle(state.run.stage, '')
     : '入夢';
   $('title-new').hidden = !hasSave;
   refreshDev();
@@ -1487,12 +1496,20 @@ function command(action, id, data = {}, keyboard = false) {
       prologue.realm = realmPick;
       openPrologue();
       break;
-    case 'finale-open':
-    case 'finale-replay':
-      if (action === 'finale-open' ? state.run.last?.finale : state.run.chronicle.finale > 0) openFinale('board');
+    case 'ending-replay': {
+      // From the run's last page or the 境界 picker: the film again, then back to that page.
+      const back = dialogState;
+      if (!(state.run.chronicle.ended > 0) || !['result', 'realm'].includes(back)) break;
+      playEnding(() => openPage(back));
       break;
-    case 'finale-next':
-      if (dialogState === 'finale') openFinale(finalePhase === 'board' ? 'letGo' : 'wake');
+    }
+    case 'last-enter':
+      // A run that ended at the tenth board of 無劍境界 before the last board was built.
+      if (dialogState !== 'result' || !R.enterLast(state)) break;
+      ++aiRun;
+      strikeData = null;
+      save();
+      enterBattle(true);
       break;
     case 'dev-win':
     case 'dev-win-side':
@@ -1507,8 +1524,29 @@ function command(action, id, data = {}, keyboard = false) {
       notice('五重境界皆已開，前四重境界記作已勝。');
       if (dialogState === 'realm') drawModal(true);
       break;
-    case 'dev-finale':
-      if (dev) openFinale('board');
+    case 'dev-finale': {
+      // The last board at once, with the heroes last picked on the 試局 page.
+      if (!dev) break;
+      const next = R.devTestRun({ ...loadPick(), map: G.LAST_MAP }, state.run.chronicle);
+      if (!next) break;
+      ++aiRun;
+      state = next;
+      save();
+      dev.querySelector('details').open = false;
+      strikeData = null;
+      logFilter = 'all';
+      enterBattle(true);
+      break;
+    }
+    case 'dev-film':
+      if (dev) playEnding(() => refreshDev());
+      break;
+    case 'dev-plus':
+      if (!dev) break;
+      state.run.chronicle.ended = Math.max(1, state.run.chronicle.ended || 0);
+      if (hasSave) save();
+      notice('無名入盤已開：下一輪入夢，無名自己也在盤上。');
+      if (dialogState === 'realm') drawModal(true);
       break;
     case 'dev-test':
       if (!dev) break;

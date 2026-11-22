@@ -24,8 +24,15 @@
 //               broken  as it breaks
 //               lost    a 'keep' object: the board's reason for the loss its breaking is (text only)
 //               held    a 'keep' object: the last round to hold is over and it still stands
+//   guest     what the board's master says on the last board (battles.js `last`), where he stands
+//             with no 戰意 on him, of his own accord: as the board opens if he is there from the
+//             start, as he steps on if he comes later. It is about himself only.
+//
+// The last entry is the last board itself, 谷底棋臺. 求敗 and the youth are on it; what they say
+// there is the spine's (maze-tale.js `finale`), so its own lines are only how the board looks.
 const ENCOUNTER_SCRIPT = [
   {
+    guest: '余某給人按著頭打了這許多場，今日頭一回是自己要打。痛快！',
     before: [
       {
         who: 'boss',
@@ -74,6 +81,7 @@ const ENCOUNTER_SCRIPT = [
     }
   },
   {
+    guest: '沒有人逼，田某原該一走了之。只是這般的對手，一世也未必再遇得上。',
     before: [
       {
         who: 'mini',
@@ -117,6 +125,7 @@ const ENCOUNTER_SCRIPT = [
     extras: { zhaoZhong: {} }
   },
   {
+    guest: '老仙法力無邊，從來用不著旁人來按。今日便教你們見識見識真本事！',
     before: [
       {
         who: 'mini',
@@ -155,6 +164,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '嘿嘿，沒人按著，老祖這口刀照樣要見血。砍人原是老祖自己的主意！',
     before: [
       {
         who: 'mini',
@@ -192,6 +202,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '左某平生不做無益之事。同這位老先生並肩過得一招，勝讀十年劍譜。',
     before: [
       {
         who: 'boss',
@@ -242,6 +253,7 @@ const ENCOUNTER_SCRIPT = [
     }
   },
   {
+    guest: '我是誰？……不管了。那邊有人要打架，我便同他打！',
     before: [
       {
         who: 'mini',
@@ -284,6 +296,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '老衲十層龍象般若功，向來只恨沒有對手。今日這一陣，不必誰來相強。',
     before: [
       {
         who: 'boss',
@@ -350,6 +363,7 @@ const ENCOUNTER_SCRIPT = [
     }
   },
   {
+    guest: '沒有人逼我。我這一口怨氣，原是自己的。',
     before: [
       {
         who: 'mini',
@@ -391,6 +405,7 @@ const ENCOUNTER_SCRIPT = [
     extras: {}
   },
   {
+    guest: '岳某向來以和為貴。只是老前輩有命，晚輩不敢不從，各位包涵。',
     before: [
       {
         who: 'mini',
@@ -447,6 +462,7 @@ const ENCOUNTER_SCRIPT = [
     }
   },
   {
+    guest: '老夫一生只為大燕，沒有一日是為自己打的。今日這一局，算是老夫自己的。',
     before: [
       {
         who: 'youth',
@@ -501,6 +517,17 @@ const ENCOUNTER_SCRIPT = [
         broken: { who: 'boss', text: '索鬆了一股。……老夫這身子，又有一分是自己的了。' }
       }
     }
+  },
+  {
+    before: [
+      {
+        who: 'youth',
+        note: '谷底棋臺。那方青石棋枰到了腳下，竟有一座校場大小，縱橫十三路，一路便是一步。四角星位各有一塊大石，石上各插一劍；東邊一道瀑布，落作淺潭。',
+        text: '原來盤上是這般光景。站在這裡，果然只瞧得見身邊幾步。'
+      }
+    ],
+    win: [{ who: 'youth', note: '瀑布之聲忽然清楚起來。盤上再沒有人動手。', text: '……停了。大家都停了。' }],
+    loss: [{ who: 'youth', note: '利劍釘在石上，劍身猶自顫動。', text: '我……我接不住。' }]
   }
 ];
 

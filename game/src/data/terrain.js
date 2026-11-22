@@ -589,6 +589,69 @@ const fields = [
     },
     tactic:
       '漏盤臺心已塌作星淵，東西雙廊環繞四門。兩根星索樁各替慕容博化去三成半傷害，樁旁各有守索人；須循環廊逐一破樁。'
+  },
+  // The last board (world view §8.4): the valley's own stone table, walked on at last. A square go
+  // board of thirteen lines; the four swords of the tomb stand in rock at its four star points,
+  // 求敗 at 天元, the waterfall's pool at the east edge and 韋小寶's stall at the south-east corner.
+  // It has no fixed four: every piece on it is named in battles.js.
+  {
+    name: '谷底棋臺',
+    shapeName: '十三路方枰',
+    mask: [
+      '#############',
+      '#############',
+      '#############',
+      '#############',
+      '#############',
+      '#############',
+      '#############',
+      '#############',
+      '#############',
+      '#############',
+      '#############',
+      '#############',
+      '#############'
+    ],
+    rows: [
+      '..m.......m..',
+      '....m...m...b',
+      'b.....h......',
+      '...R.....R.m.',
+      '.m...m.m.....',
+      '...........~~',
+      'm..m.....m.~~',
+      '..........=~.',
+      '.....m.m.....',
+      '.h.R.....R..b',
+      '....m...m..h.',
+      'b...........C',
+      '..m.......m..'
+    ],
+    allies: [
+      [6, 11],
+      [5, 12],
+      [7, 12],
+      [4, 11],
+      [8, 11]
+    ],
+    enemies: [],
+    objective: [6, 8],
+    names: {
+      plain: '青石棋枰',
+      bridge: '潭上石樑',
+      reeds: '瀑下淺潭',
+      cover: '棋子石墩',
+      bamboo: '崖畔古松',
+      herbs: '谷底蘭草',
+      rock: '插劍石',
+      crate: '通吃坊布攤'
+    },
+    notes: {
+      rock: '石上插著一柄劍，須繞道。',
+      crate: '韋小寶的攤子擺在這裡，須繞道。'
+    },
+    tactic:
+      '谷底一方青石棋枰，縱橫十三路。四角星位各有一塊插劍石，利劍、軟劍、重劍、木劍分立其上；求敗手持枯枝，立在天元。東邊瀑布落作淺潭，東南角上是韋小寶的布攤。'
   }
 ];
 
@@ -627,12 +690,13 @@ const regionalNotes = {
   bridge: '過橋移動消耗 1 步。',
   rock: '此處阻路，須繞道。'
 };
-const localTerrain = fields.map(({ names }) => {
+// A map's own words for a kind (`names`), and its own note where the usual one does not fit (`notes`).
+const localTerrain = fields.map(({ names, notes = {} }) => {
   if (!names) return TERRAIN_TYPES;
   return Object.fromEntries(
     Object.entries(TERRAIN_TYPES).map(([kind, type]) => [
       kind,
-      names[kind] ? { ...type, name: names[kind], note: regionalNotes[kind] || type.note } : type
+      names[kind] ? { ...type, name: names[kind], note: notes[kind] || regionalNotes[kind] || type.note } : type
     ])
   );
 });

@@ -16,7 +16,7 @@ function youth() {
     image: gameArt(G.YOUTH.portrait),
     sections: [
       rows('人物誌', [
-        ['身分', '玩家所扮的角色。他是在睡夢裡闖進劍境的，不會武功。他不上盤，只落子。'],
+        ['身分', '玩家所扮的角色。他是在睡夢裡闖進劍境的，不會武功。十局之中他不上盤，只落子；到了終局，他親自入盤。'],
         ['名字', '「' + G.YOUTH.name + '」。他在夢裡記不起自己的名字，便這樣叫自己。求敗也早忘了自己的本名。']
       ]),
       speech('頭一句話', said(YOUTH_NAME, t.prologue.first[3].text)),
@@ -26,7 +26,9 @@ function youth() {
       links('相關', [
         link('story', 'opening', TITLES.opening),
         link('story', 'world', TITLES.world),
-        link('story', 'return', TITLES.return)
+        link('story', 'return', TITLES.return),
+        link('heroes', G.YOUTH_ID, G.YOUTH.name + '（入盤之後）'),
+        link('story', 'finale', TITLES.finale)
       ])
     ],
     sources: cites(cite(t.command.text, 'src/data/maze-tale.js'))

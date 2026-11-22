@@ -3,7 +3,13 @@
 //
 //   kind     'slay': every master must fall; 'rout': every enemy, reinforcements included;
 //            'keep' (守): the board's objects must stand until the end of round `hold`, or every
-//            master fall first, and it is lost if one breaks; 'break' (破): every object must break
+//            master fall first, and it is lost if one breaks; 'break' (破): every object must break;
+//            'yield' (問劍): every master must be brought to 1 氣血 (he is 不敗 and never falls)
+//   last     the last board, which follows the ten boards of a run in 無劍境界. It has no fixed
+//            four, and its `commander` is named here
+//   guest    in place of a piece's `id` on the last board: the master of the run's n-th board
+//            (0 the first met). game.js `boardOf` turns it into that master's id, so the last
+//            board is always fought against the ten masters of the run it closes
 //   masters  piece refs of the board's 局主, 'master' first
 //   objects  the board objects (board-objects.js), { id, at }; an id is the object's key, or the
 //            key numbered on its board ('starPost#1') when there are two
@@ -310,7 +316,60 @@ const BATTLES = [
       { kind: 'order', first: 'wanZhen', reward: 'coins' },
       { kind: 'unhurt', reward: 'coins' }
     ]
+  },
+  // 10 谷底棋臺: the last board (world view §8.4). 求敗 stands at 天元 and is never felled: bring
+  // him to 1 氣血. The ten masters of the run stand with him of their own accord, no 戰意 on them:
+  // the first four met from the start, the rest walking on two by two. 無名 is the 眼.
+  {
+    last: true,
+    kind: 'yield',
+    commander: 'qiubai',
+    masters: ['qiubai'],
+    pieces: [
+      { id: 'qiubai', at: [6, 6] },
+      { guest: 0, at: [4, 5] },
+      { guest: 1, at: [8, 5] },
+      { guest: 2, at: [5, 3] },
+      { guest: 3, at: [7, 3] }
+    ],
+    waves: [
+      {
+        id: 'north',
+        when: { round: 3 },
+        place: '北邊',
+        pieces: [
+          { guest: 4, at: [2, 1] },
+          { guest: 5, at: [10, 1] }
+        ]
+      },
+      {
+        id: 'flanks',
+        when: { round: 5 },
+        place: '東西兩邊',
+        pieces: [
+          { guest: 6, at: [0, 4] },
+          { guest: 7, at: [12, 4] }
+        ]
+      },
+      {
+        id: 'rear',
+        when: { round: 7 },
+        place: '北邊',
+        pieces: [
+          { guest: 8, at: [5, 0] },
+          { guest: 9, at: [7, 0] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'intact', reward: 'manual' },
+      { kind: 'swift', by: 9, reward: 'coins' },
+      { kind: 'noMedicine', reward: 'coins' },
+      { kind: 'double', reward: 'coins' }
+    ]
   }
 ];
+// The last board's index.
+const LAST_MAP = BATTLES.findIndex((board) => board.last);
 
-export { BATTLES, SIDE_REWARDS };
+export { BATTLES, SIDE_REWARDS, LAST_MAP };

@@ -1,5 +1,6 @@
 import { POSTS, boardPlan, planGrid, planKey } from './board-plan.js';
 import * as G from '../rules/game.js';
+import * as R from '../rules/journey.js';
 import { seatsFor } from '../rules/formation.js';
 import { art } from './artwork.js';
 import { face, btn, esc, itemBonus, medicineIdle } from './panels.js';
@@ -18,9 +19,7 @@ const dragAttrs = (kind, id, owner) =>
   'data-drag="' + kind + '" data-id="' + id + '" data-owner="' + owner + '" draggable="false"';
 
 function planningMap(s) {
-  return s.run.scene === 'shop' && !s.run.last?.terminal && s.run.stage < 9
-    ? s.run.route[s.run.stage + 1]
-    : s.mapIndex;
+  return s.run.scene === 'shop' && !s.run.last?.terminal ? (R.nextMap(s.run) ?? s.mapIndex) : s.mapIndex;
 }
 // The 起陣圖: the board's plan with its five posts as buttons that take the picked hero; the
 // enemy pieces, the reinforcements' entry tiles and the secondary's lamp or line drawn with it.

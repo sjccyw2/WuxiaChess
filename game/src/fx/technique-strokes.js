@@ -1,4 +1,4 @@
-// Ink strokes for the 72 active arts, and six that only villain signatures still borrow.
+// Ink strokes for the 81 active arts, and six that only villain signatures still borrow.
 // The action's stable ID owns its paint, even when the same manual is used by different
 // heroes. Coordinates in the recipes are tile units.
 const RECIPES = {
@@ -9,6 +9,16 @@ const RECIPES = {
   starSuction: ['吸星大法','obsidian','return','seaFunnel','return','暗色漩渦逐層內收，一束內息流回掌心。'],
   breakQi: ['破氣式','violet','beam','cutVein','pulse','紫白劍線刺破三層斷開的氣環。'],
   ninefoldIntent: ['獨孤九劍','gold','fan','wheelNine','echo','九劍循圓換位，最後一劍斜貫圓心。'],
+
+  'signature:youth': ['總訣式','slate','thrust','swordBind','snap','一劍尋著來路上的空處，搶先點到。'],
+  youthBreakSword: ['破劍式','steel','thrust','swordBind','snap','劍鋒相交，一線從對方的護手旁穿出。'],
+  youthBreakBlade: ['破刀式','frost','thrust','swordBind','quick','輕劍貼著厚重的刀背滑入，卸去刀勢。'],
+  youthBreakPole: ['破槍式','slate','thrust','swordBind','heavy','劍尖沿著長桿欺進圈內，一震而開。'],
+  youthBreakSoft: ['破索式','pearl','dart','splitFletch','quick','劍尖搭上軟索一絞，索梢斷作兩截彈開。'],
+  youthBreakMace: ['破鞭式','bronze','thrust','brokenPalm','snap','薄刃從沉重兵刃的縫隙中遞入。'],
+  youthBreakArrow: ['破箭式','pearl','dart','splitFletch','quick','一劍截斷帶羽的箭桿，兩節向外彈開。'],
+  youthBreakHand: ['破掌式','bronze','thrust','brokenPalm','snap','薄刃從掌影的指縫穿過。'],
+  youthBreakQi: ['破氣式','violet','beam','cutVein','pulse','紫白劍線刺破三層斷開的氣環。'],
 
   'signature:medic': ['清心普善咒','jade','strings','quietSong','glide','古琴橫陳，琴面的一道弦波渡到傷處。'],
   blackNeedle: ['黑血神針','obsidian','dart','blackQuiver','quick','五枚烏針成束疾出，針尾留下一點暗紅。'],

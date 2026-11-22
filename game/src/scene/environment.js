@@ -8,6 +8,7 @@ import { landform6 } from './landforms/landform-6.js';
 import { landform7 } from './landforms/landform-7.js';
 import { landform8 } from './landforms/landform-8.js';
 import { landform9 } from './landforms/landform-9.js';
+import { landform10 } from './landforms/landform-10.js';
 import { buildVillage } from './village.js';
 import { buildLandscape } from './landscape.js';
 import { buildCourtyard, cutFerryLandscape } from './courtyard.js';
@@ -140,7 +141,8 @@ const reliefs = [
   landform6,
   landform7,
   landform8,
-  landform9
+  landform9,
+  landform10
 ];
 function finishTerrain(T, map, scenery) {
   const relief = reliefs[map](T, mapLayout(map));
@@ -150,7 +152,7 @@ function finishTerrain(T, map, scenery) {
   return scenery;
 }
 function makeScenery(T, index = 0) {
-  const map = Number.isInteger(index) && index >= 0 && index < 10 ? index : 0;
+  const map = Number.isInteger(index) && index >= 0 && index < reliefs.length ? index : 0;
   if (map > 0) return finishTerrain(T, map, mazeScenery(T, map, fieldCells(map)));
   const scenery = new T.Group();
   scenery.name = '青竹渡';

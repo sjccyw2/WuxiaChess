@@ -52,6 +52,7 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0]) {
       <details class="hud-disclosure draw-tale"><summary>局規</summary><p>${text(MAZE_TALE.draw)}</p><p>棋臺沿上刻著：「${text(MAZE_TALE.rule)}」</p></details>
       <p class="lot-instruction">選一枚先落的子作領隊，是為這一輪的「眼」。領隊倒下，這一輪便結束。</p>
       <ul class="run-lots" aria-label="這一輪抓到的三位俠客">${ids.map((id) => drawPortrait(id, captain)).join('')}</ul>
+      ${meta.ended > 0 ? `<p class="lot-plus"><img src="${text(art(YOUTH.portrait))}" alt="" decoding="async"><span><strong>${text(MAZE_TALE.finale.plus.title)}</strong>${text(MAZE_TALE.finale.plus.draw.replaceAll('{name}', YOUTH.name))}</span></p>` : ''}
     </div>
     ${rollLeaderInfo(captain, COMMANDS[captain].name, commandDescription(captain))}
     <details class="hud-disclosure draw-records"><summary>歷輪紀錄與開局資源</summary><div class="run-draw-ledger">

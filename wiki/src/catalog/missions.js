@@ -46,6 +46,8 @@ function stageMission(stage) {
     image: wikiArt('map-' + stage + '.webp'),
     sections: [
       rows('勝負與獎勵', [
+        // The last board is no part of the shuffle: it follows the tenth board in 無劍境界 only.
+        ...(G.hasFour(stage) ? [] : [['何時', '在無劍境界勝了第十局之後，同一輪接著下。黑子是那一輪十局的十位局主；此處按十局本來的次序列出。']]),
         ['勝利', m.win],
         ['敗退', m.loss],
         ['兵力', m.force.line],
@@ -73,7 +75,8 @@ function stageMission(stage) {
         ...[...new Set(m.objects.map((o) => o.key))].map(foeLink),
         link('rules', m.kind, m.kindName),
         ...pool.map((side) => link('rules', 'side-' + side.kind, side.name)),
-        link('story', 'map-' + stage, stageName(stage) + '對白')
+        link('story', 'map-' + stage, stageName(stage) + '對白'),
+        ...(G.hasFour(stage) ? [] : [link('story', 'finale', '終局與放下'), link('heroes', G.YOUTH_ID, G.DETAILS[G.YOUTH_ID].name)])
       ])
     ],
     sources: cites(
