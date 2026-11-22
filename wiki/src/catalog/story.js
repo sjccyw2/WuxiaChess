@@ -22,14 +22,14 @@ export const TITLES = {
 const REALMS = '一二三四五';
 // A 境界 is named for its sword: 利劍境界, 軟劍境界, ….
 const realmName = (i) => G.WAKES[i].sword + '境界';
-const LAST = G.MAP_LAYOUTS.length - 1;
+const LAST = G.FINAL_MAP;
 const said = (speaker, text, note) => ({ ...(note ? { note } : {}), ...(speaker ? { speaker } : {}), text });
 
 // Who a line of a board's script belongs to.
 function speakerOf(who, stage) {
   const [boss, second] = G.ENCOUNTERS[stage];
   return (
-    { youth: YOUTH_NAME, boss: boss.name, mini: second.name, leader: '當局領隊', ally: '當局同行俠客', qiu: G.QIUBAI.name, wei: G.WEI.name }[who] ||
+    { youth: YOUTH_NAME, boss: boss.name, mini: second?.name, leader: '當局領隊', ally: '當局同行俠客', qiu: G.QIUBAI.name, wei: G.WEI.name }[who] ||
     G.VILLAINS[who]?.name
   );
 }
@@ -252,7 +252,8 @@ function stage(i) {
     sections: [
       rows('這一局', [
         ['局主', boss.name],
-        ['副手', second.name],
+        // A board built round one villain has no lieutenant: his troop type fills the seats.
+        second ? ['副手', second.name] : ['兵卒', G.DETAILS[G.GARRISONS[i]].name],
         ['支線', missionLabel(i)]
       ]),
       speech('戰前', beats(script.before, i)),
@@ -281,7 +282,7 @@ function stage(i) {
       links('同局條目', [
         link('maps', i, stageName(i)),
         link('foes', 'enc-' + i + '-0', boss.name),
-        link('foes', 'enc-' + i + '-1', second.name),
+        second ? link('foes', 'enc-' + i + '-1', second.name) : link('foes', G.GARRISONS[i], G.DETAILS[G.GARRISONS[i]].name),
         link('missions', 'map-' + i, missionLabel(i))
       ])
     ],

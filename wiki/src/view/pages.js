@@ -106,8 +106,8 @@ export function home() {
       .map(([g, f]) => shelf(g, f))
       .join('') +
     '</div>' +
-    '<div class="home-title"><h2>十局輿圖</h2>' +
-    anchor('#maps', '查看十局 →') +
+    '<div class="home-title"><h2>棋局輿圖</h2>' +
+    anchor('#maps', '查看各局 →') +
     '</div><div class="atlas-strip">' +
     [0, 5, 9].map(artCard).join('') +
     '</div>' +

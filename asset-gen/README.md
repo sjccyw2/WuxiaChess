@@ -25,7 +25,7 @@ from the repository root (see the main README), not as a file.
 - `sprites/<id>.png`, 1152 × 880: 8 columns × 5 rows of 144 × 176 cells, foot at y 162. The rows
   are idle, walk, attack, hurt and special (絕技). The game's own sheets have the first four rows
   only, stored at half size; reading the fifth row is roadmap item 3.6.
-- The ten sheets in the game (the five villains on the existing boards and their troops) are not as
+- Ten of the twenty sheets in the game (the five villains on the first ten boards and their troops) are not as
   the pack came: on 2026-11-21 every strike and hurt row was repainted, and the special rows of
   萬震山, 完顏洪烈, 鮮于通 and 趙王府弓手; 萬門劍徒 was repainted whole at the height of the other troops
   (roadmap Q-N34). Both manifests carry the new checksums.
@@ -39,7 +39,7 @@ Who may be used, by the producer's ruling of 2026-11-21:
 | Group | Characters | Status |
 | --- | --- | --- |
 | Villains to join the existing boards now, each with a troop type | 鳳天南 `fengTiannan` + 五虎門棍徒 `fiveTiger` (青竹渡); 張召重 `zhaoZhong` + 清營刀盾兵 `qingShield` (紅楓驛); 完顏洪烈 `wanYan` + 趙王府弓手 `jinBow` (襄陽殘垣); 鮮于通 `xianYu` + 華山刀陣弟子 `huaBlade` (倒影天街); 萬震山 `wanZhen` + 萬門劍徒 `wanDisciple` (無刻漏臺) | In the game since 2026-11-21, on the boards named (`game/src/data/battles.js`), with placeholder text (roadmap 0.12). |
-| Villains kept for new stages, each with a troop type | 東方不敗 `dongFang` + 黑木崖侍衛 `heiMuGuard`; 李秋水 `liQiu` + 西夏宮禁衛 `xiaGuard`; 洪安通 `hongAn` + 神龍教青龍門眾 `shenLong`; 裘千仞 `qiuRen` + 鐵掌幫拳手 `ironPalm`; 公孫止 `gongSun` + 絕情谷網手 `netHand` | Do not use on the existing boards. |
+| Villains kept for new stages, each with a troop type | 東方不敗 `dongFang` + 黑木崖侍衛 `heiMuGuard` (黑木繡閣); 李秋水 `liQiu` + 西夏宮禁衛 `xiaGuard` (西夏夜苑); 洪安通 `hongAn` + 神龍教青龍門眾 `shenLong` (神龍竹堂); 裘千仞 `qiuRen` + 鐵掌幫拳手 `ironPalm` (鐵掌溪灘); 公孫止 `gongSun` + 絕情谷網手 `netHand` (絕情花徑) | In the game since 2026-11-22, each as the 局主 of a board of his own with his troop type (roadmap 3.4). Not used on the first ten boards. Their sheets are as the pack came. |
 | New heroes | 蕭峰 `qiaoFeng`, 虛竹 `xuZhu`, 洪七公 `hongQi`, 黃藥師 `yaoShi`, 張三丰 `sanFeng`, 趙敏 `zhaoMin`, 程靈素 `lingSu`, 狄雲 `diYun`, 袁承志 `chengZhi`, 阿青 `aQing` | In the game since 2026-11-22 as playable heroes, under these ids (roadmap 3.3). The pack has no full-length painting of them, so the wardrobe's standing figure is the first idle frame enlarged, and none has a weapon picture of their own. |
 
 ## `jianying-item-art/`: effects and items

@@ -8,7 +8,7 @@
     <!--
       Developer preview of one battlefield, drawn by the game's own board, camera and lighting.
       Serve the repository root and open  tools/map-preview.html?map=3
-        map=0..9        which battlefield
+        map=0..14       which battlefield
         bare            scenery only: no pieces and no tile grid
         title           the title screen's low camera (it always shows map 0)
         yaw, pitch      camera angles in radians (the game opens at yaw 0.69, pitch 0.85)
@@ -55,7 +55,7 @@
       import { mapLayout } from './src/data/terrain.js';
 
       const q = new URLSearchParams(location.search);
-      const map = q.has('title') ? 0 : Math.max(0, Math.min(9, Number(q.get('map')) || 0));
+      const map = q.has('title') ? 0 : Math.max(0, Math.min(14, Number(q.get('map')) || 0));
       const title = q.has('title'),
         bare = title || q.has('bare');
       const $ = (id) => document.getElementById(id);
@@ -76,6 +76,9 @@
       state.mapIndex = map;
       const heroes = G.party(state),
         foes = state.units.filter((u) => !heroes.includes(u));
+      // The first board's four pieces stand in for this map's: show them as this map's own.
+      G.identifyEncounter(state);
+      if (foes[0]) foes[0].encounterId = G.encounterKeys(map)[0];
       heroes.forEach((u, i) => Object.assign(u, layout.allies[i]));
       foes.forEach((u, i) => {
         if (layout.enemies[i]) Object.assign(u, layout.enemies[i]);

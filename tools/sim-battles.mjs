@@ -13,7 +13,7 @@
 import fs from 'node:fs';
 import { G, R, TECHNIQUES, HERO_PATHS, profile, classify, mainMeasure, FAMILY, heroTree, ancestors } from './lib/skill-measure.mjs';
 const FM = await import(new URL('../game/src/rules/ferry-market.js', import.meta.url));
-const { mapLayout, fieldCells, tileInfo } = await import(new URL('../game/src/data/terrain.js', import.meta.url));
+const { mapLayout, fieldCells, tileInfo, MAP_LAYOUTS } = await import(new URL('../game/src/data/terrain.js', import.meta.url));
 
 // ── Policy weights: the player's whole character in one place ─────────────
 const W = {
@@ -785,6 +785,8 @@ const EVENTS = [
   ['ropeBroke', (e) => e.who === '星索護陣'],
   ['objectBroke', (e) => (e.who === '守物' || e.who === '破物') && /(毀了|倒了|盡數倒了)/.test(e.text)],
   ['glidedOff', (e) => /^出手後退開/.test(e.text)],
+  ['dragged', (e) => e.text.startsWith('給一把扯到')],
+  ['secondNeedle', (e) => e.text.startsWith('針影一分')],
   // Reinforcements: a wave entering, and a piece whose entry tile was taken (moved or delayed).
   ['arrive', (e) => e.who === '敵援' && /自.+入場。$/.test(e.text) && !/^(下一回合|第.+回合，)/.test(e.text) && !e.text.includes('氣血過半') && !e.text.includes('入場處有人')],
   ['blocked', (e) => e.who === '敵援' && (e.text.endsWith('入場受阻，延至下一回合。') || e.text.includes('入場處有人，改由'))]
@@ -965,7 +967,7 @@ function aggregate(runs) {
   const heroes = {},
     arts = {};
   // The same, by map: each board's villains fight their own way, whichever stage meets them.
-  const maps = Array.from({ length: 10 }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {}, kind: null, sides: {}, side: 0, arrived: 0, enemies: 0, blocked: 0, lossLeader: 0, lossTime: 0, goalLeft: 0, objectLeft: 0, objectLost: 0, heldOut: 0 }));
+  const maps = Array.from({ length: MAP_LAYOUTS.length }, (_, i) => ({ map: i, reached: 0, wins: 0, rounds: 0, hpLeft: 0, stages: {}, events: {}, kind: null, sides: {}, side: 0, arrived: 0, enemies: 0, blocked: 0, lossLeader: 0, lossTime: 0, goalLeft: 0, objectLeft: 0, objectLost: 0, heldOut: 0 }));
   let misfires = 0;
   for (const run of runs)
     for (const b of run.boards) {

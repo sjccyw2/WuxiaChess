@@ -1162,11 +1162,14 @@ async function runEnemy() {
     // 受制 turns it on its own side; 閉穴 lets it walk but not strike.
     const turned = !dazed && !!e.conditions?.charm,
       muted = !dazed && !turned && !!e.conditions?.mute;
+    const pulls = state.tally?.fired?.pull || 0;
     const effects = G.enemyAct(state, e);
     audio(effects.length && !dazed ? 'ready' : 'move'); // footfalls and blows follow as board cues
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
     const struck = effects[0] && G.find(state, effects[0][0]);
+    // 擒拿: who was dragged in, said once the blow and the drag have played.
+    const dragged = (state.tally?.fired?.pull || 0) > pulls && effects[0] ? G.find(state, effects[0][0]) : null;
     if (dazed) mapTip(uName(e) + ' ' + dazed + '，錯過了這一手');
     else if (turned)
       mapTip(uName(e) + (struck ? ' 受制倒戈，出手打向同夥' + uName(struck) : ' 受制倒戈，不向我方出手'), 3000);
@@ -1192,6 +1195,7 @@ async function runEnemy() {
     board.showEffects(effects);
     if (result(true)) return;
     await board.finished();
+    if (dragged) mapTip(uName(e) + ' · 擒拿，將' + uName(dragged) + '扯到身前', 3200);
     await sleep(prefs.motion ? 150 : 45);
   }
 }

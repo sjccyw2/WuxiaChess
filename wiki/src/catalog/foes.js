@@ -27,9 +27,11 @@ export const extraPieces = (map) => [
   ...G.BATTLES[map].pieces.map((piece) => ({ piece, wave: null })),
   ...G.BATTLES[map].waves.flatMap((wave) => wave.pieces.map((piece) => ({ piece, wave })))
 ];
-// The boards a troop type or villain stands on, with its first piece there.
+// The boards a troop type or villain stands on, with its first piece there. On a board built round
+// one villain his troop type fills the fixed seats: its first piece is the seat beside him.
 export const boardsOf = (key) =>
   G.BATTLES.flatMap((_, map) => {
+    if (G.GARRISONS[map] === key) return [{ map, piece: { id: G.SLOTS[1] }, wave: null }];
     const found = extraPieces(map).find(({ piece }) => piece.id.split('#')[0] === key);
     return found ? [{ map, ...found }] : [];
   });
@@ -37,7 +39,7 @@ export const boardsOf = (key) =>
 export function foePage(key) {
   for (const stage of G.MAP_LAYOUTS.keys())
     for (const seat of [0, 1])
-      if (G.refKey(stage, G.SLOTS[seat]) === key) return 'enc-' + stage + '-' + seat;
+      if (G.ENCOUNTERS[stage][seat] && G.refKey(stage, G.SLOTS[seat]) === key) return 'enc-' + stage + '-' + seat;
   if (G.VILLAINS[key]) return 'enc-' + key;
   if (G.BOARD_OBJECTS[key]) return key;
   return troopIds().includes(key) ? key : key.split('-')[0];
@@ -46,7 +48,7 @@ export const foeLink = (key) => link('foes', foePage(key), G.DETAILS[key].name);
 // The named opponents of a board: its master and lieutenant, then any villain who joins them.
 export const namedOn = (map) => [
   G.refKey(map, 'master'),
-  G.refKey(map, 'lieutenant'),
+  ...(G.ENCOUNTERS[map][1] ? [G.refKey(map, 'lieutenant')] : []),
   ...Object.keys(G.VILLAINS).filter((id) => G.VILLAINS[id].map === map)
 ];
 export const villainRank = (id) => RANKS[G.VILLAINS[id].rank === 'boss' ? 0 : 1];
@@ -77,7 +79,7 @@ export function foes() {
       name: foe.name,
       tag: RANKS[seat],
       summary: foe.bio,
-      image: gameArt((seat ? 'lieutenant-' : 'captain-') + stage + '.webp'),
+      image: gameArt(G.DETAILS[G.refKey(stage, G.SLOTS[seat])].portraitFile),
       sections: [
         rows('人物誌', [
           ['門派', foe.school],
