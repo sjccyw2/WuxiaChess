@@ -4726,9 +4726,23 @@ section('boards built round one villain');
     s.run.stage = 3;
     const chief = put(s, 'chief', 3, 3),
       hero = put(s, 'hero', 4, 3);
-    check('陰陽倒亂: an odd round is the sabre’s: attack ＋5 + ⌊stage/2⌋, reach as it is', G.twinForm(s, chief) === 'sabre' && G.traitEdge(s, chief, hero) === -6 && G.reach(s, chief) === chief.range);
+    check('陰陽倒亂: an odd round is the sabre’s: attack ＋5 + ⌊stage/2⌋, reach as it is', G.twinForm(s, chief) === 'sabre' && G.stat(chief, 'atk', s) === chief.atk + 6 && G.traitEdge(s, chief, hero) === 0 && G.reach(s, chief) === chief.range);
     s.round = 2;
-    check('陰陽倒亂: an even round is the sword’s: reach ＋1, attack as it is', G.twinForm(s, chief) === 'sword' && G.traitEdge(s, chief, hero) === 0 && G.reach(s, chief) === chief.range + 1 && G.strikeReach(s, chief) === chief.range + 1);
+    check('陰陽倒亂: an even round is the sword’s: reach ＋1, attack as it is', G.twinForm(s, chief) === 'sword' && G.stat(chief, 'atk', s) === chief.atk && G.reach(s, chief) === chief.range + 1 && G.strikeReach(s, chief) === chief.range + 1);
+    {
+      const far = put(s, 'hero', 5, 3);
+      far.range = 2;
+      far.activeArt = null;
+      check('陰陽倒亂: the forecast says the sword reaches a striker two tiles off', G.forecast(far, chief, false, s).notes.includes('陰陽倒亂 · 黑劍 · 射程 ＋1，還擊得到') && G.forecast(far, chief, false, s).counter > 0);
+      s.round = 1;
+      check('陰陽倒亂: on a sabre round that striker is out of reach, and a striker beside him is told of the sabre', !G.forecast(far, chief, false, s).counter && (() => {
+        put(s, 'hero', 4, 3);
+        return G.forecast(far, chief, false, s).notes.includes('陰陽倒亂 · 金刀 · 還擊攻擊 ＋6');
+      })());
+      s.round = 2;
+      put(s, 'hero', 4, 3);
+      far.range = 1;
+    }
     check('陰陽倒亂: its page says which is up', G.enemyTraitLines(s, chief).some((l) => l.startsWith('【陰陽倒亂】') && l.endsWith('本回合：黑劍。')));
     check('陰陽倒亂: a hero has no such rounds', G.twinForm(s, hero) === null && G.reach(s, hero) === hero.range);
   });

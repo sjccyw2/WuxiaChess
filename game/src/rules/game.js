@@ -1478,7 +1478,11 @@ function stat(u, k, s) {
   const c = u.conditions || {};
   const modifier =
     k === 'atk'
-      ? (c.rally?.power || 0) - (c.weak?.power || 0) - (c.disarm?.power || 0) + bannerBonus(s, u)
+      ? (c.rally?.power || 0) -
+        (c.weak?.power || 0) -
+        (c.disarm?.power || 0) +
+        bannerBonus(s, u) +
+        sabreBonus(s, u)
       : k === 'def'
         ? -(c.exposed?.power || 0) - (c.recoil?.power || 0) + (onZone(s, u) ? 4 : 0)
         : k === 'step'
@@ -1841,9 +1845,12 @@ function traitEdge(s, u, target, struckHp = target?.hp) {
   if (t.execute && struckHp <= target.maxHp / 2) edge -= executeBonus(s, t);
   if (t.lone && alone(s, u)) edge -= t.lone.atk + halfStage(s);
   if (t.pincer && flanked(s, u, target)) edge -= t.pincer.atk + halfStage(s);
-  if (t.twin && twinForm(s, u) === 'sabre') edge -= t.twin.atk + halfStage(s);
   return edge;
 }
+// 陰陽倒亂: on a sabre round the villain's 攻擊 itself is higher (its page shows it), as on a sword
+// round its 射程 is (reach).
+const sabreBonus = (s, u) =>
+  twinForm(s, u) === 'sabre' ? unitDetails(u).traits.twin.atk + halfStage(s) : 0;
 const halfStage = (s) => Math.floor((s?.run?.stage || 0) / 2);
 // 獨行: no other living black stone stands beside this one.
 // (Compared by id: the forecast asks with a copy of the piece.)
@@ -2127,6 +2134,9 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       result.notes.push('夾衛 · 還擊攻擊 ＋' + (traits.pincer.atk + halfStage(s)));
     if (traits.twin && twinForm(s, t) === 'sabre')
       result.notes.push('陰陽倒亂 · 金刀 · 還擊攻擊 ＋' + (traits.twin.atk + halfStage(s)));
+    // The sword's extra tile is what lets it answer a blow from there.
+    if (traits.twin && twinForm(s, t) === 'sword' && distance(t, u) === reach(s, t))
+      result.notes.push('陰陽倒亂 · 黑劍 · 射程 ＋1，還擊得到');
   }
   if (s && (art?.splash || result.forms.includes('line') || result.forms.includes('arc'))) {
     const targets = secondaryTargets(s, u, t, result.push || t, art, result.forms, walkable);
