@@ -47,7 +47,53 @@ const COMMANDS = {
     power: 3,
     text: '出招少耗 3 點內力，最低消耗 2 點。',
     icon: 'drop'
-  }
+  },
+  qiaoFeng: { name: '一呼百應', stat: 'atk', power: 4, text: '攻擊增加 4。', icon: 'flag' },
+  xuZhu: {
+    name: '靈鷲慈心',
+    stat: 'renew',
+    power: 8,
+    text: '我方回合結束時回復 8 點氣血。',
+    icon: 'leaf'
+  },
+  hongQi: {
+    name: '九指點撥',
+    stat: 'basic',
+    power: 6,
+    text: '普攻與還擊的基礎傷害增加 6。',
+    icon: 'sword'
+  },
+  yaoShi: { name: '東邪奇學', stat: 'power', power: 7, text: '絕技威力增加 7。', icon: 'star' },
+  sanFeng: { name: '真武鎮山', stat: 'def', power: 5, text: '防禦增加 5。', icon: 'shield' },
+  zhaoMin: {
+    name: '郡主妙算',
+    stat: 'economy',
+    power: 3,
+    text: '出招少耗 3 點內力，最低消耗 2 點。',
+    icon: 'drop'
+  },
+  lingSu: {
+    name: '藥王調息',
+    stat: 'restoreMp',
+    power: 5,
+    text: '我方新回合額外回復 5 點內力。',
+    icon: 'drop'
+  },
+  diYun: {
+    name: '血刀破甲',
+    stat: 'pierce',
+    power: 30,
+    text: '普攻與還擊穿透三成防禦。',
+    icon: 'sword'
+  },
+  chengZhi: {
+    name: '金蛇追影',
+    stat: 'pursuit',
+    power: 8,
+    text: '擊中氣血不過半的敵人時，傷害增加 8。',
+    icon: 'target'
+  },
+  aQing: { name: '越女輕步', stat: 'step', power: 1, text: '移動力增加 1 步。', icon: 'feather' }
 };
 function commandDescription(id) {
   return '領隊與距離兩格內的友軍' + COMMANDS[id].text;
@@ -99,8 +145,18 @@ const CONDITION_NAMES = {
   backlash: '亂氣',
   wound: '內傷',
   daze: '失神',
-  disarm: '纏械'
+  disarm: '纏械',
+  fortify: '固守',
+  immune: '金剛',
+  freeze: '定身',
+  mute: '閉穴',
+  charm: '受制'
 };
+// Whether an art is aimed at a companion or at its caster (rules/game.js targetType says the same).
+const supportArt = (art) => art.target === 'ally' || art.target === 'self' || (!art.target && !!art.heal);
+// 固守 and 金剛 guard whoever a support art reaches; on any other art they guard its caster
+// (selfEffectsOf), never the foe it strikes.
+const GUARDS = ['fortify', 'immune'];
 // What an art puts on whoever receives it.
 function effectsOf(art) {
   if (!art) return [];
@@ -113,8 +169,19 @@ function effectsOf(art) {
   // `daze: 'setup'` depends on the target at the moment of the strike, so it is decided there.
   if (art.daze === true) effects.push({ kind: 'daze', power: 1, turns: 1 });
   if (art.redirect) effects.push({ kind: 'redirect', power: art.redirect.cap, turns: 1 });
+  if (supportArt(art)) for (const kind of GUARDS) if (art[kind]) effects.push(guardEffect(art, kind));
+  // 定身, 閉穴 and 受制 as the art's page states them; the strike decides what a master takes
+  // (rules/game.js controlPlan).
+  for (const kind of ['freeze', 'mute', 'charm'])
+    if (art[kind]) effects.push({ kind, power: 1, turns: art[kind].turns || 1 });
   return effects;
 }
+// 金剛 has no strength of its own: its power is 1, kept so a save's condition check passes.
+const guardEffect = (art, kind) => ({
+  kind,
+  power: kind === 'immune' ? 1 : art[kind].power,
+  turns: art[kind].turns || 1
+});
 // What an art puts on its caster once it resolves, whatever it was aimed at. One turn lasts until
 // the caster's next turn; two turns cover that next turn too. 亂氣 lasts the rest of the board, so
 // its `turns` is left for the caller, who knows the round limit.
@@ -131,6 +198,8 @@ function selfEffectsOf(art) {
   if (art.rooted) put('rooted', 1, 2);
   if (art.spent) put('spent', 1, 2);
   if (art.backlash) put('backlash', 1, null);
+  if (!supportArt(art))
+    for (const kind of GUARDS) if (art[kind]) effects.push(guardEffect(art, kind));
   return effects;
 }
 function effectDescription(kind, power, turns) {
@@ -157,7 +226,12 @@ function effectDescription(kind, power, turns) {
     backlash: power + '／3 層',
     wound: '療傷減半，出手後自損 ' + power,
     daze: '失去下一次行動',
-    disarm: '攻擊 −' + power + '，只能攻擊相鄰'
+    disarm: '攻擊 −' + power + '，只能攻擊相鄰',
+    fortify: '防禦 ＋' + power,
+    immune: '直接攻擊無功，不受其附帶之效',
+    freeze: '不能移動、出手、施展絕技或還擊',
+    mute: '不能出手、施展絕技或還擊，仍可移動',
+    charm: '倒戈，以普攻攻擊同夥'
   };
   // 亂氣 stays until it bursts or the board ends; a count of rounds would mislead.
   const span = kind === 'backlash' ? '本局' : turns + ' 回合';
@@ -173,7 +247,9 @@ function applyCondition(s, target, effect, caster) {
   const { kind, power, turns } = effect;
   const held = (target.conditions ??= {});
   const old = held[kind];
-  const extra = (kind === 'haste' || kind === 'rally') && target.acted ? 1 : 0;
+  // 金剛: a foe's blow puts nothing on its holder (its own and its companions' effects still do).
+  if (held.immune && caster && caster !== target && caster.side !== target.side) return;
+  const extra = ['haste', 'rally', 'fortify'].includes(kind) && target.acted ? 1 : 0;
   const through = s.round + turns - 1 + extra;
   const owner = old && old.power > power ? old.source : caster.id;
   // 亂氣 counts casts: each application adds a layer instead of keeping the stronger.

@@ -13,7 +13,14 @@ import { Impact } from '../fx/impact.js';
 import { paintCursor } from './cursor.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
 import { watchArt } from './sprite-sheets.js';
-import { paintField, paintReticles, paintFormations, paintFormationAim, paintTauntAim } from './zones.js';
+import {
+  paintField,
+  paintReticles,
+  paintFormations,
+  paintFormationAim,
+  paintTauntAim,
+  paintSplashAim
+} from './zones.js';
 import {
   compactImage,
   compactSheetName,
@@ -30,6 +37,17 @@ import { POLISH } from '../polish.js';
 import { paintFrame } from './sprite-frames.js';
 import { paintBase, paintGauge } from './tokens.js';
 import { spentAmount } from './spent.js';
+import {
+  statusWord,
+  voidBlow,
+  drainFlow,
+  statusLook,
+  heldFrame,
+  paintUnder,
+  paintOver,
+  paintBursts
+} from './status-looks.js';
+import { inSplash } from '../rules/form-rules.js';
 import { CONDITION_NAMES } from '../rules/battle-mastery.js';
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const openingActors = [
@@ -269,7 +287,9 @@ class ActorLayer {
     let end = start + duration;
     if (!friendly) {
       const hurtEnd = hit + (full ? 535 : 420);
-      this.addClip(target.id, { row: 3, start: hit, end: hurtEnd });
+      // statusLooks: 金剛 stands unmoved under the blow.
+      if (!(POLISH.statusLooks && G.immuneTo(target)))
+        this.addClip(target.id, { row: 3, start: hit, end: hurtEnd });
       end = Math.max(end, hurtEnd);
       if (pushed) {
         this.cue(hit, { type: 'skid', id: target.id });
@@ -341,6 +361,7 @@ class ActorLayer {
     // The last blow against a piece that has fallen is the killing blow.
     const lastBlow = new Map();
     const lanes = new Map();
+    const words = new Map();
     for (const [index, [id, value, reason]] of items.entries())
       if (value.startsWith('−') && reason !== 'sacrifice') lastBlow.set(id, index);
     for (const [index, [id, value, reason]] of items.entries()) {
@@ -361,7 +382,7 @@ class ActorLayer {
         start = reply + (full ? 345 : 220);
         this.cue(start - (full ? 150 : 110), { type: 'swing', id: initiator.id });
         const end = start + (full ? 504 : 400);
-        this.addClip(id, { row: 3, start, end });
+        if (!(POLISH.statusLooks && G.immuneTo(recipient))) this.addClip(id, { row: 3, start, end });
         if (recipient.hp <= 0) {
           this.track(id).exit = end + (full ? 200 : 60);
           this.hold(this.track(id).exit);
@@ -381,7 +402,8 @@ class ActorLayer {
         reason !== 'sacrifice'
       ) {
         const end = start + (full ? 504 : 400);
-        this.addClip(id, { row: 3, start, end });
+        if (!(POLISH.statusLooks && G.immuneTo(G.find(this.state, id))))
+          this.addClip(id, { row: 3, start, end });
         if (G.find(this.state, id).hp <= 0) {
           this.track(id).exit = end + (full ? 180 : 60);
           this.hold(this.track(id).exit);
@@ -426,11 +448,34 @@ class ActorLayer {
           lead: counter || index === 0,
           kill
         });
+      // statusLooks: a status word starts its look as it pops; a blow 金剛 voided says 無功, not
+      // −0; a 吸元 draws its health over from the piece struck.
+      statusWord(this, id, value, start);
+      const voided = POLISH.statusLooks && value === '−0' && G.immuneTo(struck);
+      if (voided) voidBlow(this, id, start);
+      if (
+        POLISH.statusLooks &&
+        exchange &&
+        value.startsWith('+') &&
+        id === exchange.actor &&
+        exchange.target !== id &&
+        struck?.activeArt &&
+        G.drainOf(G.artFor(struck))
+      )
+        drainFlow(this, exchange.target, id, start - (full ? 260 : 60));
+      // statusLooks: two states laid by one blow (封穴 and 閉穴) share one word, not one spot.
+      const word = POLISH.statusLooks && full && reason === 'status' && words.get(id);
+      if (word) {
+        word.value += '・' + value;
+        continue;
+      }
       if (full) {
-        const number = { kind: 'number', target: id, value, start, end: start + 800 };
+        const shown = voided ? '無功' : value;
+        const number = { kind: 'number', target: id, value: shown, start, end: start + 800 };
+        if (reason === 'status') words.set(id, number);
         if (POLISH.damagePop) {
           number.tone = this.impact.tone(
-            value,
+            shown,
             reason,
             hurt ? -amount / struck.maxHp : 0,
             rank,
@@ -645,6 +690,7 @@ class ActorLayer {
     paintFormations(this, this.time);
     paintFormationAim(this, this.formationAim(s, u, art, hover), this.time);
     paintTauntAim(this, this.tauntAim(s, u, art, hover), this.time);
+    paintSplashAim(this, this.splashAim(s, u, art, hover), this.time);
     // The deployment step's posts, reinforcements' entry tiles and the secondary's line.
     paintBattleMarks(this);
     const mark = hover && this.mode === 'skill' && G.at(s, hover.x, hover.y);
@@ -736,6 +782,18 @@ class ActorLayer {
     if (!aim) return null;
     const spot = G.targetType(art) === 'ground' ? { x: aim.x, y: aim.y } : G.at(s, aim.x, aim.y);
     return spot && G.targetOK(s, u, spot, true) ? G.zoneTiles(s, spot) : null;
+  }
+  // 廣及: the tiles a splash reaching 2 or 3 tiles would catch, round the piece aimed at (the
+  // preview open, else the one under the pointer), from where the forecast puts the impact.
+  splashAim(s, u, art, hover) {
+    if (!art?.splash || !(art.radius > 1)) return null;
+    const aim = this.aim?.id ? G.find(s, this.aim.id) : hover && G.at(s, hover.x, hover.y);
+    if (!aim || !G.targetOK(s, u, aim, true)) return null;
+    const f = G.forecast(u, aim, true, s),
+      center = f.push || aim;
+    return fieldCells(s.mapIndex).filter(
+      (p) => inSplash(art, center, p) && G.walkable(p.x, p.y, s.mapIndex)
+    );
   }
   // 挑釁 (SPEC-mechanics §6): the radius is counted from where the hero stands when the art
   // resolves: his own tile, or for an art that carries him to the ground, the tile aimed at.
@@ -863,15 +921,18 @@ class ActorLayer {
       POLISH.actedDim && !title
         ? spentAmount(this, u, spent && this.state.phase === 'ally', now)
         : 0;
-    if (tokens) paintBase(this, u, pos, now, { human, selected, spent: grey > 0.5 });
+    // statusLooks: what 定身, 閉穴, 受制 and 金剛 look like on this piece now (null for none).
+    const look = title ? null : statusLook(this, u, now),
+      turned = !!look?.charm;
+    if (tokens) paintBase(this, u, pos, now, { human, selected, spent: grey > 0.5, turned });
     else this.circle(pos.x + 0.055, pos.y + 0.035, title ? 0.25 : 0.33, 0.094);
     c.fillStyle = 'rgba(27,32,25,.32)';
     if (!tokens) c.fill();
     if (!title && !tokens) {
       this.circle(pos.x, pos.y, 0.308, 0.099);
-      c.fillStyle = human ? '#254b41bb' : '#692e25bb';
+      c.fillStyle = human ? '#254b41bb' : turned ? '#5a6420bb' : '#692e25bb';
       c.fill();
-      c.strokeStyle = selected ? '#ffe1a0' : human ? '#b7ebc4' : '#f2ac86';
+      c.strokeStyle = selected ? '#ffe1a0' : human ? '#b7ebc4' : turned ? '#e4ef8a' : '#f2ac86';
       c.lineWidth = selected ? 2.4 : 1.4;
       c.stroke();
       if (selected) {
@@ -900,6 +961,12 @@ class ActorLayer {
       }
       this.headings.set(u.id, dir);
     }
+    paintUnder(this, u, pos, now, look);
+    // 定身: with no blow to play, the figure stays on the frame it was caught on.
+    if (look?.freeze && !clip) {
+      row = 0;
+      frame = heldFrame(this, u, frame);
+    }
     if (title) dir = u.id === 'hero' ? [1, -0.5] : [-1, 0.6];
     const flip = dir[0] * Math.cos(this.view.yaw) - dir[1] * Math.sin(this.view.yaw) < 0;
     const details = G.unitDetails(u),
@@ -911,7 +978,7 @@ class ActorLayer {
     c.save();
     // The cached copy of a frame already carries the robe tint, so with unitTokens no
     // canvas filter is set while painting.
-    const cached = sheet && (tokens || grey > 0);
+    const cached = sheet && (tokens || grey > 0 || !!look?.freeze || !!look?.immune);
     if (details.robe && !tokens && !cached) c.filter = details.robe;
     c.translate(p.x, p.y);
     if (flip) c.scale(-1, 1);
@@ -921,10 +988,21 @@ class ActorLayer {
     }
     if (spent && !POLISH.actedDim) c.globalAlpha *= 0.82;
     if (cached) {
-      const look = { robe: details.robe, team: tokens ? u.side : null };
-      if (grey < 1) paintFrame(this, sheet, row, frame, w, h, look);
+      const copy = {
+        robe: details.robe,
+        team: tokens ? (turned ? 'turned' : u.side) : null,
+        finish: look?.freeze ? 'frost' : null
+      };
+      if (grey < 1) paintFrame(this, sheet, row, frame, w, h, copy);
       // The grey copy is laid over the coloured one while the fade runs.
-      if (grey > 0) paintFrame(this, sheet, row, frame, w, h, { ...look, grey: true }, grey);
+      if (grey > 0) paintFrame(this, sheet, row, frame, w, h, { ...copy, grey: true }, grey);
+      // 金剛: a gold copy of the figure, added over it, comes and goes.
+      if (look?.immune) {
+        c.globalCompositeOperation = 'lighter';
+        const sheen = this.prefs.motion ? 0.34 + 0.18 * Math.sin(now / 320) : 0.4;
+        paintFrame(this, sheet, row, frame, w, h, { robe: details.robe, team: null, finish: 'gold' }, sheen);
+        c.globalCompositeOperation = 'source-over';
+      }
       // Combat feel: the hit flash and the defeat break-up, over the cached frame as well.
       if (!title) this.impact.sprite(c, u, pos, sheet, frame, row, w, h, flip);
     } else if (sheet) {
@@ -954,6 +1032,7 @@ class ActorLayer {
       }
     }
     c.restore();
+    paintOver(this, u, p, scale, h, now, look);
     const visibleHP = title ? 0 : this.healthAt(u, now);
     if (!title && visibleHP > 0) {
       if (u.hp > 0)
@@ -971,6 +1050,7 @@ class ActorLayer {
           scale,
           now,
           human,
+          turned,
           selected,
           shown: visibleHP,
           spent: grey > 0.5,
@@ -985,7 +1065,7 @@ class ActorLayer {
         y = top + h * 0.135;
       c.fillStyle = '#17241fe8';
       c.fillRect(p.x - len / 2 - 1, y - 1, len + 2, 4);
-      c.fillStyle = human ? '#abe9c4' : '#ffa280';
+      c.fillStyle = human ? '#abe9c4' : turned ? '#d6e27a' : '#ffa280';
       c.fillRect(p.x - len / 2, y, (len * visibleHP) / u.maxHp, 2);
       if (selected) {
         c.fillStyle = '#ffe0a0';
@@ -1222,6 +1302,7 @@ class ActorLayer {
       .sort((a, b) => b.z - a.z);
     for (const { u, p } of units) this.actor(u, p, time, title);
     if (!title) this.drawEffects(time, !covered && !this.waitingForArt);
+    if (!title) paintBursts(this, time); // statusLooks: a state starting, ending, a blow voided
     for (const tr of this.tracks.values()) {
       tr.clips = tr.clips.filter((clip) => clip.end > time);
       tr.impacts = tr.impacts.filter((impact) => impact.at > time);

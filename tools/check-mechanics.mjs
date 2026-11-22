@@ -2174,6 +2174,576 @@ section('daze');
   }
 }
 
+// ── 吸元 drain ───────────────────────────────────────────────────────────
+section('drain');
+{
+  const MF = await load('rules/move-facts.js');
+  function setup(drain, extra = {}, hurt = 60) {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    u.hp = u.maxHp - hurt;
+    const t = put(s, 'scout', 5, 7);
+    const art = teach(u, defineArt({ drain, safe: true, mp: 2, ...extra }));
+    return { s, u, t, art };
+  }
+  const half = (t, f) => Math.min(30, Math.floor(0.5 * Math.min(t.hp, f.amount)));
+  {
+    const { s, u, t, art } = setup({ share: 0.5, cap: 30 });
+    const f = G.forecast(u, t, true, s);
+    const want = half(t, f);
+    check('吸元 recovers its share of what the main target lost, rounded down', f.amount > 0 && want > 0 && f.selfHeal === want, [f.amount, f.selfHeal]);
+    check('the preview says so', f.notes.includes('吸元 · 回復 ' + want + ' 氣血'), f.notes);
+    const hp = u.hp;
+    G.resolve(s, u, t, true);
+    check('the strike gives it', u.hp === hp + want, [hp, u.hp]);
+    check('the art’s page states it', MF.moveFacts(s, u, art).effectLines.includes('吸元 · 回復主目標損血的 50%，最多 30 氣血'), MF.moveFacts(s, u, art).effectLines);
+  }
+  {
+    const { s, u, t } = setup({ share: 1, cap: 5 });
+    check('no more than its cap', G.forecast(u, t, true, s).selfHeal === 5);
+    check('a bare share, or one without a cap, has the cap 30', same(G.drainOf({ drain: 0.5 }), { share: 0.5, cap: 30 }) && same(G.drainOf({ drain: { share: 0.4 } }), { share: 0.4, cap: 30 }));
+    const bare = setup(0.5);
+    const f = G.forecast(bare.u, bare.t, true, bare.s);
+    check('…and a bare share works on a strike', f.selfHeal === half(bare.t, f) && f.selfHeal > 0);
+  }
+  {
+    const { s, u, t } = setup({ share: 1, cap: 30 }, {}, 3);
+    check('never past his greatest 氣血', G.forecast(u, t, true, s).selfHeal === 3);
+  }
+  {
+    const { s, u, t } = setup({ share: 0.5, cap: 30 });
+    BM.applyCondition(s, u, { kind: 'wound', power: 5, turns: 2 }, t);
+    const f = G.forecast(u, t, true, s);
+    check('內傷 halves it', f.selfHeal === Math.floor(half(t, f) / 2) && f.selfHeal > 0, [f.amount, f.selfHeal]);
+  }
+  {
+    // The same strike with a second foe beside its target: the splash lands, the recovery is the same.
+    const a = setup({ share: 0.5, cap: 30 }, { splash: 0.5 });
+    const alone = G.forecast(a.u, a.t, true, a.s).selfHeal;
+    put(a.s, 'bow', 6, 7);
+    const f = G.forecast(a.u, a.t, true, a.s);
+    check('the splash adds nothing to it', f.splash.some((v) => v.id === 'bow' && v.amount > 0) && f.selfHeal === alone, [alone, f.selfHeal]);
+  }
+  {
+    const { s, u, t } = setup({ share: 0.5, cap: 30 });
+    BM.applyCondition(s, t, { kind: 'evade', power: 1, turns: 1 }, t);
+    const f = G.forecast(u, t, true, s);
+    check('a blow that does no damage recovers nothing', f.amount === 0 && f.selfHeal === 0 && !f.notes.some((n) => n.startsWith('吸元')));
+  }
+  {
+    const { s, u } = setup({ share: 0.5, cap: 30 });
+    const post = G.makeUnit('starPost', 'prop', 5, 3, 60, 0, 0, 5, 0, 0);
+    s.units.push(post);
+    put(s, 'hero', 4, 3);
+    const f = G.forecast(u, post, true, s);
+    check('a blow a board object takes recovers nothing', f.amount > 0 && f.selfHeal === 0);
+  }
+}
+
+// ── 廣及 splash radius ───────────────────────────────────────────────────
+section('radius');
+{
+  const MF = await load('rules/move-facts.js');
+  const s = board();
+  const u = put(s, 'hero', 4, 7);
+  const t = put(s, 'scout', 5, 7);
+  put(s, 'bow', 6, 7); // one tile from the target
+  put(s, 'blade', 7, 7); // two
+  put(s, 'chief', 8, 7); // three
+  put(s, 'guard', 5, 6); // a hero beside the target
+  const post = G.makeUnit('starPost', 'prop', 3, 7, 60, 0, 0, 5, 0, 0); // an object two tiles off
+  s.units.push(post);
+  const hit = (radius) => {
+    teach(u, defineArt({ splash: 0.5, safe: true, mp: 2, ...(radius ? { radius } : {}) }));
+    return G.forecast(u, t, true, s).splash.map((v) => v.id).sort().join();
+  };
+  check('without it, splash reaches the four neighbours', hit(0) === 'bow', hit(0));
+  check('radius 1 is the same', hit(1) === 'bow', hit(1));
+  check('radius 2 reaches every other enemy within two tiles', hit(2) === 'blade,bow', hit(2));
+  check('radius 3 within three', hit(3) === 'blade,bow,chief', hit(3));
+  check('heroes and objects in range are left alone, as by any splash', !hit(3).includes('guard') && !hit(3).includes('starPost'));
+  check('the reach test is one helper', FR.inSplash({ radius: 2 }, t, { x: 7, y: 7 }) && !FR.inSplash({ radius: 2 }, t, { x: 8, y: 7 }) && !FR.inSplash({}, t, t) && FR.splashRadius({ radius: 3 }) === 3 && FR.splashRadius({}) === 1);
+  const art = teach(u, defineArt({ splash: 0.5, radius: 2, safe: true, mp: 2 }));
+  check('the art’s page says how far', MF.moveFacts(s, u, art).effectLines.includes('2 格內濺射 50%'), MF.moveFacts(s, u, art).effectLines);
+  const f = G.forecast(u, t, true, s);
+  const hp = Object.fromEntries(['bow', 'blade', 'chief'].map((id) => [id, unit(s, id).hp]));
+  G.resolve(s, u, t, true);
+  const lost = (id) => hp[id] - unit(s, id).hp;
+  check('the strike hits exactly those the preview named, by its amounts', lost('bow') === f.splash.find((v) => v.id === 'bow').amount && lost('blade') === f.splash.find((v) => v.id === 'blade').amount && lost('chief') === 0);
+  // 代受: a master’s escort takes direct blows for him, not splash; the same for the wider reach.
+  withTraits('lieutenant-0', { cover: 'master' }, () => {
+    const c = board();
+    const h = put(c, 'hero', 4, 7);
+    put(c, 'scout', 5, 7);
+    put(c, 'chief', 7, 7);
+    put(c, 'blade', 8, 7);
+    teach(h, defineArt({ splash: 0.5, radius: 2, safe: true, mp: 2 }));
+    const g = G.forecast(h, unit(c, 'scout'), true, c);
+    check('a master two tiles off takes the splash himself, his escort beside him or not', g.splash.some((v) => v.id === 'chief' && v.amount > 0) && !g.splash.some((v) => v.id === 'blade'));
+  });
+}
+
+// ── 固守 fortify ─────────────────────────────────────────────────────────
+section('fortify');
+{
+  const MF = await load('rules/move-facts.js');
+  const s = board(['medic', 'guard', 'hero']);
+  const m = put(s, 'medic', 4, 7),
+    g = put(s, 'guard', 5, 7),
+    h = put(s, 'hero', 7, 7);
+  const art = teach(m, defineArt({ target: 'ally', fortify: { power: 6, turns: 1 }, aura: 1, mp: 2, factor: undefined }));
+  const def = [G.stat(m, 'def', s), G.stat(g, 'def', s), G.stat(h, 'def', s)];
+  check('a support art with 固守 may be aimed at a companion', G.targetOK(s, m, g, true));
+  check('the art’s page shows its strength', MF.moveFacts(s, m, art).powerText === '6 防禦' && MF.moveFacts(s, m, art).effectLines.includes('固守 · 防禦 ＋6 · 1 回合'), JSON.stringify(MF.moveFacts(s, m, art).effectLines));
+  G.resolve(s, m, g, true);
+  check('固守 lands on everyone its aura reaches, no one else', !!g.conditions?.fortify && !!m.conditions?.fortify && !h.conditions?.fortify);
+  check('防禦 ＋power', G.stat(g, 'def', s) === def[1] + 6 && G.stat(m, 'def', s) === def[0] + 6 && G.stat(h, 'def', s) === def[2]);
+  check('the chip shows it', BM.activeEffects(g, s.round).some((l) => l.startsWith('固守 · 防禦 ＋6')));
+  check('a save keeps it', unit(R.restoreRun(copy(s)), 'guard').conditions?.fortify?.power === 6);
+  check('解厄 does not lift it', !FR.supportEntry(['cleanse'], m, g, 10).clean.includes('fortify'));
+  BM.applyCondition(s, g, { kind: 'fortify', power: 3, turns: 1 }, m);
+  check('a weaker 固守 does not replace a stronger', g.conditions.fortify.power === 6);
+  G.startEnemy(s);
+  check('it holds through the enemy phase', !!g.conditions?.fortify);
+  for (const e of G.enemies(s)) e.acted = true;
+  G.nextRound(s);
+  check('it is gone when the heroes’ next turn begins', !g.conditions?.fortify && G.stat(g, 'def', s) === def[1]);
+  // As 振奮: a companion who has acted keeps it through his own next turn.
+  h.acted = true;
+  put(s, 'hero', 5, 6);
+  m.mp = m.maxMp;
+  G.resolve(s, m, g, true);
+  check('on a companion who has acted it lasts a round longer, as 振奮 does', h.conditions?.fortify?.through === s.round + 1 && g.conditions?.fortify?.through === s.round);
+  // On a strike it guards the caster, never the foe.
+  const t = board();
+  const u = put(t, 'hero', 4, 7),
+    foe = put(t, 'scout', 5, 7);
+  teach(u, defineArt({ fortify: { power: 5, turns: 1 }, safe: true, mp: 2 }));
+  const f = G.forecast(u, foe, true, t);
+  check('on a strike the preview gives it to the caster', !f.effects.some((e) => e.kind === 'fortify') && f.notes.includes('固守 · 至下回合，自身防禦 ＋5'), f.notes);
+  G.resolve(t, u, foe, true);
+  check('…and the strike does', u.conditions?.fortify?.power === 5 && !foe.conditions?.fortify);
+  check('a save from before 固守 still loads', !!R.restoreRun(copy(board())));
+}
+
+// ── 金剛 immune ──────────────────────────────────────────────────────────
+section('immune');
+{
+  const MF = await load('rules/move-facts.js');
+  const immune = (s, v, turns = 1) => BM.applyCondition(s, v, { kind: 'immune', power: 1, turns }, v);
+  {
+    const s = board(['medic', 'guard', 'hero']);
+    const m = put(s, 'medic', 4, 7),
+      g = put(s, 'guard', 5, 7);
+    const art = teach(m, defineArt({ target: 'ally', immune: { turns: 1 }, mp: 2, factor: undefined }));
+    check('the art’s page states it', MF.moveFacts(s, m, art).effectLines.includes('金剛 · 直接攻擊無功，不受其附帶之效 · 1 回合') && MF.moveFacts(s, m, art).powerText === '1 回合', JSON.stringify(MF.moveFacts(s, m, art)));
+    G.resolve(s, m, g, true);
+    check('金剛 lands on the recipient until the end of this enemy phase', g.conditions?.immune?.through === 1 && !m.conditions?.immune);
+    check('the chip shows it', BM.activeEffects(g, s.round).some((l) => l.startsWith('金剛')));
+    check('a save keeps it', !!unit(R.restoreRun(copy(s)), 'guard').conditions?.immune);
+    // A plain blow and its poison: nothing lands; he still counters.
+    const foe = Object.assign(put(s, 'scout', 6, 7), { step: 0 });
+    withTraits('scout-0', { basicPoison: { power: 4, turns: 2 } }, () => {
+      G.startEnemy(s);
+      G.enemyAct(s, foe);
+    });
+    check('an enemy’s blow takes off nothing', g.hp === g.maxHp);
+    check('and puts nothing on him', !g.conditions?.poison && Object.keys(g.conditions).join() === 'immune', Object.keys(g.conditions || {}));
+    check('he still counters', foe.hp < foe.maxHp);
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    check('it is gone when the heroes’ next turn begins', !g.conditions?.immune);
+  }
+  {
+    // A signature: no damage, no condition; the signature is spent all the same.
+    const s = board();
+    const g = put(s, 'guard', 5, 7);
+    const chief = put(s, 'chief', 6, 7);
+    immune(s, g);
+    s.round = 3;
+    check('the master’s signature is due', G.signatureDue(s, chief));
+    G.startEnemy(s);
+    G.enemyAct(s, chief);
+    check('an enemy signature takes off nothing and lays nothing', g.hp === g.maxHp && Object.keys(g.conditions).join() === 'immune' && chief.signatureRound === 3, Object.keys(g.conditions || {}));
+  }
+  {
+    // His own blow: the counter takes nothing off him; his own price still does.
+    const s = board(['guard', 'hero', 'medic']);
+    const g = put(s, 'guard', 5, 7),
+      foe = put(s, 'scout', 6, 7);
+    immune(s, g);
+    const f = G.forecast(g, foe, false, s);
+    check('the preview shows the counter taking nothing', f.counterRaw === 0 && f.counter === 0 && f.notes.includes('金剛 · 還擊無功'), f.notes);
+    G.resolve(s, g, foe, false);
+    check('the counter takes nothing', g.hp === g.maxHp);
+    const p = board(['guard', 'hero', 'medic']);
+    const pg = put(p, 'guard', 5, 7),
+      pf = put(p, 'scout', 6, 7);
+    BM.applyCondition(p, pg, { kind: 'poison', power: 4, turns: 2 }, pf);
+    immune(p, pg);
+    teach(pg, defineArt({ hpCost: 5, safe: true, mp: 2 }));
+    G.resolve(p, pg, pf, true);
+    check('his own 氣血 price is paid', pg.hp === pg.maxHp - 5);
+    quietTurn(p);
+    check('a poison laid before still bites', pg.hp === pg.maxHp - 9 && !!pg.conditions?.poison);
+  }
+  {
+    // A blow at an immune piece: 0, nothing put on, the preview says so; splash on one is 0.
+    const s = board();
+    const u = put(s, 'hero', 4, 7),
+      t = put(s, 'scout', 5, 7),
+      v = put(s, 'bow', 6, 7);
+    immune(s, t);
+    immune(s, v);
+    teach(u, defineArt({ splash: 0.5, mp: 2, debuff: { stat: 'def', power: 3, turns: 2 }, freeze: { turns: 1 } }));
+    const f = G.forecast(u, t, true, s);
+    check('the preview of a blow at him says 金剛 and shows 0', f.amount === 0 && f.hits.every((n) => n === 0) && f.notes.includes('金剛 · 此擊無功'), f.notes);
+    check('…with none of its effects, and no line of them', !f.effects.length && !f.notes.some((n) => n.startsWith('定身')), f.notes);
+    check('…and he still counters', f.counterRaw > 0);
+    check('splash on an immune piece is 0', f.splash.every((x) => x.amount === 0 && x.raw === 0));
+    G.resolve(s, u, t, true);
+    check('the strike takes nothing and lays nothing', t.hp === t.maxHp && v.hp === v.maxHp && !t.conditions.exposed && !t.conditions.freeze);
+  }
+  {
+    // Two turns cover two enemy phases.
+    const s = board(['medic', 'guard', 'hero']);
+    const m = put(s, 'medic', 4, 7),
+      g = put(s, 'guard', 5, 7);
+    teach(m, defineArt({ target: 'ally', immune: { turns: 2 }, mp: 2, factor: undefined }));
+    G.resolve(s, m, g, true);
+    quietTurn(s);
+    check('turns 2 holds into the second enemy phase', !!g.conditions?.immune);
+    quietTurn(s);
+    check('and is gone after it', !g.conditions?.immune);
+  }
+  {
+    // On a strike it guards the caster.
+    const s = board();
+    const u = put(s, 'hero', 4, 7),
+      t = put(s, 'scout', 5, 7);
+    teach(u, defineArt({ immune: { turns: 1 }, safe: true, mp: 2 }));
+    const f = G.forecast(u, t, true, s);
+    check('on a strike the preview gives it to the caster', f.notes.includes('金剛 · 至下回合，敵人的直接攻擊對自己無功') && !f.effects.some((e) => e.kind === 'immune'), f.notes);
+    G.resolve(s, u, t, true);
+    check('…and the strike does', u.conditions?.immune?.through === 1 && !t.conditions?.immune);
+  }
+  // The enemy goes for another, as from 閃身.
+  const ai = (guarded) => {
+    const a = board(['medic', 'hero', 'guard']);
+    const foe = Object.assign(put(a, 'blade', 6, 7), { step: 0, range: 2 });
+    const weak = Object.assign(put(a, 'medic', 4, 7), { hp: 30 });
+    const other = put(a, 'hero', 8, 7);
+    if (guarded) immune(a, weak);
+    G.startEnemy(a);
+    const hp = [weak.hp, other.hp];
+    withTraits('lieutenant-0', {}, () => G.enemyAct(a, foe));
+    return { weak: weak.hp < hp[0], other: other.hp < hp[1] };
+  };
+  check('an enemy strikes the weakest when she has no 金剛', ai(false).weak);
+  const shy = ai(true);
+  check('it goes for another when she has', !shy.weak && shy.other);
+}
+
+// ── 定身 freeze ──────────────────────────────────────────────────────────
+section('freeze');
+{
+  const MF = await load('rules/move-facts.js');
+  function setup(turns, foe = 'scout') {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, foe, 5, 7);
+    const art = teach(u, defineArt({ freeze: { turns }, safe: true, mp: 2, factor: 0.2 }));
+    return { s, u, t, art };
+  }
+  {
+    const { s, u, t, art } = setup(2);
+    const f = G.forecast(u, t, true, s);
+    check('the preview says how long', f.notes.includes('定身 · 2 回合不能行動') && f.effects.some((e) => e.kind === 'freeze' && e.turns === 2), f.notes);
+    check('the art’s page states it', MF.moveFacts(s, u, art).effectLines.includes('定身 · 不能移動、出手、施展絕技或還擊 · 2 回合') && MF.moveFacts(s, u, art).effectLines.includes('局主只受一回合，下一回合可抵抗'));
+    G.resolve(s, u, t, true);
+    check('定身 lands through the second enemy phase', t.conditions?.freeze?.through === 2);
+    check('the chip shows it', BM.activeEffects(t, s.round).some((l) => l.startsWith('定身')));
+    check('a save keeps it', unit(R.restoreRun(copy(s)), 'scout').conditions?.freeze?.through === 2);
+    check('it is no ailment a hero’s 解厄 lifts', !FR.AILMENTS.includes('freeze'));
+    const guard = put(s, 'guard', 5, 6);
+    const g = G.forecast(guard, t, false, s);
+    check('a frozen piece does not counter, and the preview says so', g.counterRaw === 0 && g.notes.includes('定身 · 青城斥候本回合不能行動，不還擊'), g.notes);
+    const held = new Set(dangerTiles(s));
+    const c = t.conditions.freeze;
+    delete t.conditions.freeze;
+    const free = new Set(dangerTiles(s));
+    t.conditions.freeze = c;
+    check('the danger zone leaves it out', free.has('6,7') && !held.has('6,7'));
+    for (const round of [1, 2]) {
+      const hp = [u.hp, guard.hp],
+        at = [t.x, t.y];
+      G.startEnemy(s);
+      const effects = G.enemyAct(s, t);
+      check('enemy phase ' + round + ': it neither moves nor strikes', t.x === at[0] && t.y === at[1] && u.hp === hp[0] && guard.hp === hp[1] && t.acted && same(effects, [['scout', '定身', 'status']]));
+      for (const e of G.enemies(s)) e.acted = true;
+      G.nextRound(s);
+    }
+    check('after its two turns it is free', !t.conditions?.freeze);
+    G.startEnemy(s);
+    const hp = u.hp + guard.hp;
+    G.enemyAct(s, t);
+    check('and acts again', u.hp + guard.hp < hp);
+  }
+  {
+    // A master: one turn at most, then he shakes off the next the round after.
+    const { s, u, t } = setup(2, 'chief');
+    const f = G.forecast(u, t, true, s);
+    check('a master is frozen one turn, and the preview says so', f.effects.some((e) => e.kind === 'freeze' && e.turns === 1) && f.notes.includes('定身 · 1 回合不能行動（局主只受一回合）'), f.notes);
+    G.resolve(s, u, t, true);
+    check('…and the strike does', t.conditions?.freeze?.through === 1 && t.lastFreezeRound === 1);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    const g = G.forecast(u, t, true, s);
+    check('the round after, he resists', !g.effects.some((e) => e.kind === 'freeze') && g.notes.includes('局主已換氣，本回合抵抗定身'), g.notes);
+    G.resolve(s, u, t, true);
+    check('and is not frozen', !t.conditions?.freeze);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    G.resolve(s, u, t, true);
+    check('the round after that he can be again', !!t.conditions?.freeze && t.lastFreezeRound === 3);
+    const l = setup(1, 'blade');
+    G.resolve(l.s, l.u, l.t, true);
+    quietTurn(l.s);
+    l.u.mp = l.u.maxMp;
+    G.resolve(l.s, l.u, l.t, true);
+    check('a lieutenant is frozen two rounds running', !!l.t.conditions?.freeze);
+  }
+  {
+    // A due signature waits.
+    const { s, u, t } = setup(1, 'chief');
+    s.round = 3;
+    G.resolve(s, u, t, true);
+    check('while frozen a due signature does not fire', !G.signatureDue(s, t) && G.roundsToSignature(s, t) === 0);
+    G.startEnemy(s);
+    G.enemyAct(s, t);
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    check('and is due once he is free', G.signatureDue(s, t) && !Number.isInteger(t.signatureRound));
+  }
+  {
+    // A blow that does not land freezes no one.
+    const { s, u, t } = setup(1);
+    BM.applyCondition(s, t, { kind: 'evade', power: 1, turns: 1 }, t);
+    const f = G.forecast(u, t, true, s);
+    check('a blow 閃身 voids lays no 定身, and its line goes', !f.effects.length && !f.notes.some((n) => n.startsWith('定身')), f.notes);
+  }
+}
+
+// ── a blow that holds its target is not answered ─────────────────────────
+section('held, so no counter');
+{
+  for (const [kind, name] of [['freeze', '定身'], ['mute', '閉穴'], ['charm', '受制']]) {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, 'scout', 5, 7);
+    const plain = teach(u, defineArt({ mp: 2, factor: 0.2 }));
+    const before = G.forecast(u, t, true, s);
+    check(name + ': without it the scout answers a blow from beside', before.counterRaw > 0, before.counterRaw);
+    u.learned = u.learned.filter((id) => id !== plain);
+    teach(u, defineArt({ [kind]: { turns: 1 }, mp: 2, factor: 0.2 }));
+    const f = G.forecast(u, t, true, s);
+    check(name + ': the blow that lays it is not answered, and the preview says so', f.counterRaw === 0 && f.counter === 0 && f.notes.includes(name + ' · 無從還擊'), [f.counterRaw, f.notes]);
+    const hp = u.hp;
+    G.resolve(s, u, t, true);
+    check(name + ': the strike takes nothing back', u.hp === hp && !!t.conditions?.[kind], [hp, u.hp]);
+  }
+  {
+    // A master who has just been frozen resists the next one, so he answers it.
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, 'chief', 5, 7);
+    teach(u, defineArt({ freeze: { turns: 1 }, mp: 2, factor: 0.2 }));
+    t.lastFreezeRound = s.round - 1;
+    const f = G.forecast(u, t, true, s);
+    check('a master who resists the 定身 still answers', !f.effects.some((e) => e.kind === 'freeze') && f.counterRaw > 0, [f.effects, f.counterRaw]);
+  }
+}
+
+// ── 閉穴 mute ────────────────────────────────────────────────────────────
+section('mute');
+{
+  const MF = await load('rules/move-facts.js');
+  function setup(turns, foe = 'scout') {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, foe, 5, 7);
+    const art = teach(u, defineArt({ mute: { turns }, safe: true, mp: 2, factor: 0.2 }));
+    return { s, u, t, art };
+  }
+  {
+    const { s, u, t, art } = setup(2);
+    const f = G.forecast(u, t, true, s);
+    check('the preview says how long', f.notes.includes('閉穴 · 2 回合不能出手') && f.effects.some((e) => e.kind === 'mute' && e.turns === 2), f.notes);
+    check('the art’s page states it', MF.moveFacts(s, u, art).effectLines.includes('閉穴 · 不能出手、施展絕技或還擊，仍可移動 · 2 回合'));
+    G.resolve(s, u, t, true);
+    check('閉穴 lands through the second enemy phase', t.conditions?.mute?.through === 2);
+    check('a save keeps it', unit(R.restoreRun(copy(s)), 'scout').conditions?.mute?.through === 2);
+    const guard = put(s, 'guard', 5, 6);
+    const g = G.forecast(guard, t, false, s);
+    check('a muted piece does not counter, and the preview says so', g.counterRaw === 0 && g.notes.includes('閉穴 · 青城斥候本回合不能出手，不還擊'), g.notes);
+    const held = new Set(dangerTiles(s));
+    const c = t.conditions.mute;
+    delete t.conditions.mute;
+    const free = new Set(dangerTiles(s));
+    t.conditions.mute = c;
+    check('the danger zone shows no strike for it', free.has('6,7') && !held.has('6,7'));
+    G.startEnemy(s);
+    const hp = [u.hp, guard.hp];
+    G.enemyAct(s, t);
+    check('beside two heroes it strikes neither', u.hp === hp[0] && guard.hp === hp[1] && t.acted);
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    quietTurn(s);
+    check('after its two turns it is gone', !t.conditions?.mute);
+  }
+  {
+    // It still walks: toward the heroes as its kind does, or back to its post.
+    const s = board();
+    const h = put(s, 'hero', 3, 7);
+    const t = put(s, 'scout', 8, 7);
+    BM.applyCondition(s, t, { kind: 'mute', power: 1, turns: 1 }, h);
+    const d = G.distance(h, t);
+    soloTurn(s, t);
+    check('a muted piece still advances', G.distance(h, t) < d && h.hp === h.maxHp, [d, G.distance(h, t)]);
+    const p = board();
+    const ph = put(p, 'hero', 4, 7);
+    const chief = put(p, 'chief', 5, 7);
+    BM.applyCondition(p, chief, { kind: 'mute', power: 1, turns: 1 }, ph);
+    soloTurn(p, chief);
+    const back = p.logs.at(-1);
+    check('a muted piece on a post walks back toward it rather than strike', chief.moved && back.text === '退回崗位。' && back.who === '余滄海' && ph.hp === ph.maxHp, JSON.stringify(back));
+  }
+  {
+    const { s, u, t } = setup(2, 'chief');
+    s.round = 3;
+    const f = G.forecast(u, t, true, s);
+    check('a master is muted one turn', f.notes.includes('閉穴 · 1 回合不能出手（局主只受一回合）'), f.notes);
+    G.resolve(s, u, t, true);
+    check('…and his due signature waits', t.conditions?.mute?.through === 3 && !G.signatureDue(s, t) && t.lastMuteRound === 3);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    const g = G.forecast(u, t, true, s);
+    check('the round after, he resists', !g.effects.some((e) => e.kind === 'mute') && g.notes.includes('局主已換氣，本回合抵抗閉穴'), g.notes);
+  }
+}
+
+// ── 受制 charm ───────────────────────────────────────────────────────────
+section('charm');
+{
+  const MF = await load('rules/move-facts.js');
+  function setup(foe = 'scout', turns = 1) {
+    const s = board();
+    const u = put(s, 'hero', 4, 7);
+    const t = put(s, foe, 5, 7);
+    const art = teach(u, defineArt({ charm: { turns }, safe: true, mp: 2, factor: 0.2 }));
+    return { s, u, t, art };
+  }
+  {
+    const { s, u, t, art } = setup('scout', 1);
+    const f = G.forecast(u, t, true, s);
+    check('the preview says it turns', f.notes.includes('受制 · 倒戈 1 回合') && f.effects.some((e) => e.kind === 'charm'), f.notes);
+    check('the art’s page states it', MF.moveFacts(s, u, art).effectLines.includes('受制 · 倒戈，以普攻攻擊同夥 · 1 回合') && MF.moveFacts(s, u, art).effectLines.includes('局主與副手不受制，改為失神'));
+    G.resolve(s, u, t, true);
+    check('受制 lands until the end of this enemy phase', t.conditions?.charm?.through === 1 && G.charmed(t));
+    check('a save keeps it', !!unit(R.restoreRun(copy(s)), 'scout').conditions?.charm);
+    const guard = put(s, 'guard', 5, 6);
+    check('heroes cannot strike it, with a plain blow or an art', !G.hostile(guard, t) && !G.targetOK(s, guard, t, false) && !G.targetOK(s, guard, t, true));
+    check('it still counts as an enemy', G.enemies(s).includes(t) && G.objectiveLeft(s).foes === 4);
+    const swayed = new Set(dangerTiles(s));
+    const c = t.conditions.charm;
+    delete t.conditions.charm;
+    const free = new Set(dangerTiles(s));
+    t.conditions.charm = c;
+    check('the danger zone leaves it out', free.has('6,7') && !swayed.has('6,7'));
+    const bow = put(s, 'bow', 7, 7);
+    const art2 = teach(guard, defineArt({ splash: 0.5, radius: 3, safe: true, mp: 2, range: 3 }));
+    const sf = G.forecast(guard, bow, true, s, TECHNIQUES[art2]);
+    check('no hero’s splash falls on it', sf.splash.length === 0 && G.distance(t, bow) <= 3, JSON.stringify(sf.splash));
+    // The enemy phase: it walks to the nearest uncharmed enemy and strikes it; that one counters.
+    G.startEnemy(s);
+    const hp = [bow.hp, u.hp, guard.hp];
+    const effects = G.enemyAct(s, t);
+    check('it strikes the nearest enemy with its plain attack', bow.hp < hp[0] && effects[0][0] === 'bow' && G.distance(t, bow) === 1 && !effects.signature, JSON.stringify(effects));
+    check('the log says so', s.logs.some((l) => l.who === '青城斥候' && l.text.startsWith('受制倒戈，以「快刀」擊中青城弓手')));
+    check('the piece struck counters by the ordinary rules', t.hp < t.maxHp && effects.some((e) => e[0] === 'scout'));
+    check('no hero is touched', u.hp === hp[1] && guard.hp === hp[2]);
+    const mine = t.hp;
+    G.enemyAct(s, bow);
+    check('the other enemies do not strike it', t.hp === mine);
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    check('once it wears off it is an ordinary enemy again', !G.charmed(t) && G.hostile(u, t));
+  }
+  {
+    // Masters and lieutenants are not charmed: the art takes their next action instead.
+    const { s, u, t } = setup('chief');
+    const f = G.forecast(u, t, true, s);
+    check('a master is dazed instead, and the preview says so', !f.effects.some((e) => e.kind === 'charm') && f.effects.some((e) => e.kind === 'daze') && f.notes.includes('局主不受制，改為失神') && f.notes.includes('失神 · 余滄海失去下一次行動'), f.notes);
+    G.resolve(s, u, t, true);
+    check('…by 失神’s own rule', !!t.conditions?.daze && !t.conditions?.charm && t.lastDazeRound === 1);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    const g = G.forecast(u, t, true, s);
+    check('the round after, he resists the 失神', !g.effects.some((e) => e.kind === 'daze' || e.kind === 'charm') && g.notes.includes('局主已換氣，本回合抵抗失神'), g.notes);
+    const l = setup('blade');
+    const lf = G.forecast(l.u, l.t, true, l.s);
+    check('a lieutenant is dazed instead', lf.notes.includes('副手不受制，改為失神') && lf.effects.some((e) => e.kind === 'daze') && !lf.effects.some((e) => e.kind === 'charm'), lf.notes);
+  }
+  {
+    // The board: 殲滅 still needs it down; 斬將 is won with the master down, whoever is charmed.
+    const { s, u, t } = setup();
+    G.resolve(s, u, t, true);
+    s.arrivals = {};
+    for (const e of G.enemies(s)) if (e !== t) e.hp = 0;
+    check('殲滅 is not won while a charmed piece stands', !G.KIND_RULES.rout.won(s));
+    t.hp = 0;
+    check('…and is once it falls', G.KIND_RULES.rout.won(s));
+    const w = setup();
+    G.resolve(w.s, w.u, w.t, true);
+    unit(w.s, 'chief').hp = 0;
+    G.check(w.s);
+    check('斬將 is won with the master down, a charmed piece standing', w.s.result === 'win');
+  }
+  {
+    // Alone, it stands; under 閉穴 as well, it only walks.
+    const { s, u, t } = setup();
+    G.resolve(s, u, t, true);
+    for (const e of G.enemies(s)) if (e !== t) e.hp = 0;
+    const at = [t.x, t.y];
+    G.startEnemy(s);
+    check('with no enemy left it stands still', same(G.enemyAct(s, t), []) && t.x === at[0] && t.y === at[1]);
+    const m = setup();
+    G.resolve(m.s, m.u, m.t, true);
+    BM.applyCondition(m.s, m.t, { kind: 'mute', power: 1, turns: 1 }, m.u);
+    const bow = put(m.s, 'bow', 7, 7);
+    G.startEnemy(m.s);
+    G.enemyAct(m.s, m.t);
+    check('charmed and muted, it walks up and does not strike', bow.hp === bow.maxHp && G.distance(m.t, bow) === 1);
+  }
+  {
+    // It gives and takes none of its side’s traits.
+    const { s, u, t } = setup();
+    G.resolve(s, u, t, true);
+    const bow = unit(s, 'bow');
+    const plain = [G.stat(bow, 'atk', s), G.stat(t, 'atk', s)];
+    withTraits('scout-0', { banner: { atk: 3 } }, () => check('a charmed bearer gives no 盟令', G.stat(bow, 'atk', s) === plain[0]));
+    withTraits('bow-0', { banner: { atk: 3 } }, () => check('…and a charmed piece takes none', G.stat(t, 'atk', s) === plain[1] && G.stat(unit(s, 'chief'), 'atk', s) > 0));
+    const chief = put(s, 'chief', 5, 6);
+    withTraits('scout-0', { cover: 'master' }, () => {
+      check('a charmed escort covers no master', G.distance(t, chief) === 1 && !G.coverer(s, chief));
+      const c = t.conditions.charm;
+      delete t.conditions.charm;
+      check('…as it would uncharmed', G.coverer(s, chief) === t);
+      t.conditions.charm = c;
+    });
+  }
+}
+
 // ── Where the two stages meet (§8) ───────────────────────────────────────
 section('interactions');
 {

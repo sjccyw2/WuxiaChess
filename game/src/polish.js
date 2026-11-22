@@ -25,6 +25,7 @@ const SWITCHES = {
   skillCutIn: true, // portrait cut-in for high-tier techniques
   paintedEffects: true, // hand-painted effect sheets for the famous arts (fx/painted-effects.js)
   battleMarks: true, // reinforcements' entry markers and amber strike outline, the secondary's line, the picked post's pulse
+  statusLooks: true, // 定身 frost and held pose, 閉穴 talisman, 受制 green-gold side, 金剛 gold ring and 無功, 固守 ward (actors/status-looks.js)
 
   // World
   lighting: true, // key light, shadow and colour grade

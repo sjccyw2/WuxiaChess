@@ -29,6 +29,16 @@ const TEAMS = {
     barTop: '#ffc1ad',
     frame: '#240b07'
   },
+  // statusLooks: an enemy under 受制, fighting for the heroes for now (green-gold, its barbs kept).
+  turned: {
+    rim: '#e4ef8a',
+    rimLow: '#9aa83a',
+    core: 'rgba(118,132,40,.80)',
+    deep: 'rgba(36,42,8,.93)',
+    bar: '#cfe05a',
+    barTop: '#f4ffc0',
+    frame: '#1b2006'
+  },
   // A hero who has acted this turn.
   spent: {
     rim: '#93a39d',
@@ -78,7 +88,7 @@ function baseTexture(team, selected) {
   disc(0.47);
   c.fill();
   // Enemy bases carry four barbs, so the two sides differ in shape as well as colour.
-  if (team === 'enemy') {
+  if (team === 'enemy' || team === 'turned') {
     for (let i = 0; i < 4; i++) {
       c.save();
       c.rotate((i * TAU) / 4 + TAU / 8);
@@ -141,7 +151,7 @@ function onGround(layer, c, x, y, level) {
 function paintBase(layer, u, pos, now, look) {
   const c = layer.ctx,
     motion = layer.prefs.motion,
-    team = look.spent ? 'spent' : look.human ? 'ally' : 'enemy';
+    team = look.spent ? 'spent' : look.human ? 'ally' : look.turned ? 'turned' : 'enemy';
   c.save();
   onGround(layer, c, pos.x, pos.y, 0.099);
   c.drawImage(baseTexture(team, look.selected), -0.5, -0.5, 1, 1);
@@ -201,6 +211,11 @@ const STATUS_COLOURS = {
   evade: '#c9ecf5',
   taunt: '#f2a07a',
   wound: '#d9796a',
+  freeze: '#bfe8ff',
+  mute: '#ff8f7a',
+  charm: '#d6e27a',
+  immune: '#ffd45e',
+  fortify: '#d8c7a0',
   formation: '#ffd98c'
 };
 const STATUS_SIGNS = {
@@ -220,6 +235,11 @@ const STATUS_SIGNS = {
   evade: '閃',
   taunt: '挑',
   wound: '傷',
+  freeze: '定',
+  mute: '閉',
+  charm: '倒',
+  immune: '金',
+  fortify: '固',
   formation: '陣' // derived: the piece has a 布陣 on the board
 };
 
@@ -253,7 +273,7 @@ function paintGauge(layer, u, g) {
     ratio = layer.canvas.width / layer.width || 1,
     snap = (v) => Math.round(v * ratio) / ratio,
     one = Math.max(1, Math.round(ratio)) / ratio, // one crisp line
-    tone = TEAMS[g.spent ? 'spent' : g.human ? 'ally' : 'enemy'],
+    tone = TEAMS[g.spent ? 'spent' : g.human ? 'ally' : g.turned ? 'turned' : 'enemy'],
     motion = layer.prefs.motion;
   const len = snap(clamp(g.scale * 0.68, 20, 50)),
     tall = snap(g.scale >= 36 ? 5 : 4),
@@ -377,4 +397,13 @@ function paintGauge(layer, u, g) {
   }
 }
 
-export { paintBase, paintGauge, STATUS_SIGNS };
+// How the states that hold a piece look on the board (statusLooks, actors/status-looks.js).
+const STATUS_LOOKS = {
+  freeze: '身形凝在中途，通體霜白，腳下結冰；解凍時冰屑四散',
+  mute: '手邊懸一道封穴符，人照走，卻不出手；解穴時符紙飛散',
+  charm: '底座、輪廓與氣血條轉為青金，腳下青金弧光繞行；受制一解，便轉回赤色',
+  immune: '腳下金環，身上金光流轉；受擊不傷，跳出「無功」並響起金色波紋',
+  fortify: '固守加身時，腳下升起一圈六角石紋'
+};
+
+export { paintBase, paintGauge, STATUS_SIGNS, STATUS_LOOKS };
