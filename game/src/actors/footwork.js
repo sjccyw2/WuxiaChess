@@ -3,6 +3,9 @@ import { FRAMES } from './sprite-sheets.js';
 
 // Distances are in board squares. Corners have a short planted step so even a
 // slow display paints the exact center before either foot starts the next edge.
+// PACE scales every leg and planted step: 0.8 walks a quarter faster than the first
+// timings below (the producer's choice, 2026-11-22). Strikes and other actions keep theirs.
+const PACE = 0.8;
 function planFootwork(path, full, map = 0) {
   const legs = [];
   let duration = 0;
@@ -12,8 +15,8 @@ function planFootwork(path, full, map = 0) {
     const turn = next && (next.x - to.x !== direction[0] || next.y - to.y !== direction[1]);
     const plant = Boolean(turn || !next);
     const rough = tileInfo(to.x, to.y, map).cost > 1;
-    const travel = full ? (rough ? 460 : 360) : (rough ? 392 : 336);
-    const resume = duration + travel + (plant ? (full ? 72 : 52) : 0);
+    const travel = Math.round(PACE * (full ? (rough ? 460 : 360) : (rough ? 392 : 336)));
+    const resume = duration + travel + Math.round(PACE * (plant ? (full ? 72 : 52) : 0));
     legs.push({ from, to, direction, start: duration, travel, resume, plant });
     duration = resume;
   }
