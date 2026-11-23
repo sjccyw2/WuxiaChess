@@ -4,42 +4,52 @@ import { FerryCamera } from './camera.js';
 import { makeScenery, decorateWorld, Cutaway } from './environment.js';
 import { SoftwareScene } from './software.js';
 import { ActorLayer } from '../actors/actors.js';
+import { PULSE_MS } from '../actors/zones.js';
 import { POLISH } from '../polish.js';
 import { installGrade } from './stage-light.js';
 import { FramePacer } from './pacing.js';
 
-// A legal destination always owns its entire projected tile, including pixels painted by a sprite.
-function resolveBoardPick(s, mode, ground, body, reach) {
+// What a tap on the board means: a piece (its id) or a ground tile.
+//
+// `ground` is the tile under the tap; `figures` the pieces whose drawn figure the tap is on or just
+// beside, nearest the camera first (actors/figure-pick.js). A figure is painted over the tiles
+// behind it, so the two often disagree. Players aim at the figure, so:
+//   - a tap on a figure is that piece: the one in front or, while an art is aimed, the first of
+//     them the art can be used on (then whoever stands on the tile under the tap, if it can);
+//   - a tap on open ground is a tile the selected hero may walk to, or whoever stands on it;
+//   - a tap just beside a figure, a fingertip's width, is that figure only where the ground under
+//     it has nothing to offer, so the tiles round a figure stay easy to walk to.
+// A move is only ever accepted for the tile under the tap, never through a figure.
+function resolveBoardPick(s, mode, ground, figures, reach) {
   if (!s) return null;
   if (ground && !G.valid(ground.x, ground.y, s.mapIndex)) ground = null;
   const actor = G.find(s, s.selected),
     occupant = ground && G.at(s, ground.x, ground.y);
-  const silhouette = body && G.find(s, body);
-  if (
-    ground &&
-    mode === 'move' &&
-    G.canAct(s, actor) &&
-    !actor.moved &&
-    !occupant &&
-    (reach || G.reachable(s, actor)).has(G.key(ground.x, ground.y))
-  )
-    return ground;
-  if (
-    ground &&
-    mode === 'glide' &&
-    G.canGlide(s, actor) &&
-    !occupant &&
-    (reach || G.glideField(s, actor).costs).has(G.key(ground.x, ground.y))
-  )
-    return ground;
-  if (mode === 'skill' && G.targetType(G.artFor(actor)) === 'ground' && ground) return ground;
-  if (mode === 'attack' || mode === 'skill') {
-    if (G.targetOK(s, actor, occupant, mode === 'skill')) return { id: occupant.id };
-    if (G.targetOK(s, actor, silhouette, mode === 'skill')) return { id: silhouette.id };
+  // A ground art (輕功, 布陣) is aimed at tiles; the figures on them do not come into it.
+  if (mode === 'skill' && ground && G.targetType(G.artFor(actor)) === 'ground') return ground;
+  const pieces = (figures || [])
+    .map(({ id, gap }) => ({ unit: G.find(s, id), gap }))
+    .filter(({ unit }) => unit && G.living(unit));
+  const on = pieces.filter((f) => !f.gap).map((f) => f.unit),
+    beside = pieces
+      .filter((f) => f.gap)
+      .sort((a, b) => a.gap - b.gap)
+      .map((f) => f.unit);
+  const aiming = mode === 'attack' || mode === 'skill',
+    open = (t) => G.targetOK(s, actor, t, mode === 'skill');
+  const aimed = aiming && (on.find(open) || (open(occupant) && occupant));
+  if (aimed) return { id: aimed.id };
+  if (on.length) return { id: on[0].id };
+  if (ground && !occupant) {
+    const here = G.key(ground.x, ground.y),
+      walk = mode === 'move' && G.canAct(s, actor) && !actor.moved,
+      glide = mode === 'glide' && G.canGlide(s, actor); // 回身: the walk left after the strike
+    if (walk && (reach || G.reachable(s, actor)).has(here)) return ground;
+    if (glide && (reach || G.glideField(s, actor).costs).has(here)) return ground;
   }
   if (occupant) return { id: occupant.id };
-  if (silhouette && G.living(silhouette)) return { id: silhouette.id };
-  return ground;
+  const near = (aiming && beside.find(open)) || beside[0];
+  return near ? { id: near.id } : ground;
 }
 class BattleBoard {
   constructor({
@@ -245,6 +255,15 @@ class BattleBoard {
   strikeEffect(u, t, kind, origin) {
     this.layers.pose(u, t, kind, origin);
   }
+  // The tiles the aimed art reaches swell for a moment (actors/zones.js, reachPulse): what the
+  // board shows when an enemy outside them is tapped.
+  pulseReach() {
+    this.layers.reachPulse = performance.now();
+    this.draw();
+    // With motion off nothing else would redraw the board to take the highlight away again.
+    clearTimeout(this.pulseTimer);
+    this.pulseTimer = setTimeout(() => this.draw(), PULSE_MS + 40);
+  }
   // ---- Combat feel: camera direction (polish switch cameraFollow; see scene/camera.js) ----
   // The enemy phase begins (true) or hands back to the player (false).
   watch(on) {
@@ -338,6 +357,9 @@ class BattleBoard {
         pace.chain();
       } else this.timer = setTimeout(() => this.draw(), 105);
     }
+    // The reach pulse is short: every frame of it is drawn, whatever pace idle motion keeps.
+    const pulsed = performance.now() - (this.layers.reachPulse ?? -Infinity);
+    if (this.prefs.motion && pulsed < PULSE_MS) this.draw();
     // Combat feel: keep frames coming until a camera ease has finished.
     if (this.view.easing) {
       this.draw();
@@ -347,6 +369,16 @@ class BattleBoard {
   pointFromEvent(e) {
     const r = this.scene.getBoundingClientRect();
     return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
+  }
+  // What the pointer of this event is on: a piece's id or a ground tile (resolveBoardPick).
+  pickAt(e) {
+    const p = this.pointFromEvent(e),
+      g = this.view.ground(p.x, p.y),
+      scale = this.layers.scaleAt(g ? g.x : this.view.centerX, g ? g.y : this.view.centerZ);
+    // A fingertip hides the figure it aims at and lands a little off it; a mouse pointer does not.
+    const slack = e.pointerType === 'touch' ? Math.max(7, Math.min(14, scale * 0.34)) : 3;
+    const figures = this.layers.figures(p.x * this.layers.width, p.y * this.layers.height, slack);
+    return resolveBoardPick(this.s, this.mode, g, figures, this.reach);
   }
   addInput() {
     const el = this.scene;
@@ -412,8 +444,10 @@ class BattleBoard {
           this.onCamera?.();
         }
       } else if (!this.title) {
-        const k = this.pointFromEvent(e),
-          g = this.view.ground(k.x, k.y);
+        // The pointer over a figure is on that piece's tile, as a click there would be.
+        const pick = this.pickAt(e),
+          piece = pick?.id && G.find(this.s, pick.id),
+          g = piece ? { x: piece.x, y: piece.y } : pick;
         if (g?.x !== this.hover?.x || g?.y !== this.hover?.y) {
           this.hover = g;
           this.onHover?.(g?.x, g?.y);
@@ -431,10 +465,7 @@ class BattleBoard {
       if (this.pointers.size) return;
       el.classList.remove('orbiting');
       if (!cancel && !this.dragged && !this.title) {
-        const p = this.pointFromEvent(e),
-          g = this.view.ground(p.x, p.y);
-        const body = this.layers.body(p.x * this.layers.width, p.y * this.layers.height);
-        const pick = resolveBoardPick(this.s, this.mode, g, body, this.reach);
+        const pick = this.pickAt(e);
         if (pick?.id) this.onUnit(pick.id);
         else if (pick) this.onCell(pick.x, pick.y);
       }

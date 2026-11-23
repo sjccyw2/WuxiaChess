@@ -156,8 +156,29 @@ Its numbers are its own (`LAST_ROWS` in `game/src/rules/game.js`), measured with
 
 ## Developer mode
 
-`game/?dev` turns on a small panel (at the left edge, folded under 開發); the browser remembers it,
-and `game/?dev=off` turns it off. In a battle, from its story, briefing or 整備 as well:
+`game/?dev` turns on a small floating window (folded to a bar that reads 開發); the browser
+remembers it, and `game/?dev=off` turns it off.
+
+- **Moving it.** Drag the bar, with the mouse or a finger; the button on the bar folds the window
+  down to the bar and opens it again (by a tap, or Enter or Space; held and moved, it drags like
+  the rest of the bar); a double tap or double click on the bar sends it back to its default
+  corner. It cannot leave the screen: it is kept inside when dragged, when the window
+  is resized and when the phone is turned. It stays where it was put as pages open and close.
+- **What it remembers.** Where it was put (by the two screen edges it was nearest, so it holds
+  its corner when the phone is turned) and whether it was folded, in `jianying.dev-window.v1`.
+  In the lower half of the screen it opens upward, the bar under its buttons.
+- **Its default corner.** Upright phone: the left edge, under the board and over where the arts
+  list opens (clear of both, of the top row, the tutorial's card and 結束回合). Sideways phone: the
+  top edge, right of the board's plaque (off the board, and in the empty middle of a page's title
+  bar). Desktop: the left edge, a little above the middle (beside the pages, off the board).
+- **How it stays above the pages.** The game's pages are modal dialogs, and everything outside
+  an open one is inert, so the window is moved inside the open dialog (`refreshDev` in
+  `app.js`). It is also shown as a popover (`devWindow` in `game/src/ui/dev-mode.js`), which puts
+  it in the browser's top layer in its own right: placed against the screen, not against a
+  dialog that is easing in. A browser without popovers gets an ordinary fixed element whose
+  place is corrected for the dialog. It hides while a film plays.
+
+In a battle, from its story, briefing or 整備 as well:
 
 - 速勝 wins the board now, its secondary missed;
 - 速勝・支線 wins it with the secondary met, whatever its kind (not shown on the last board, which
@@ -182,6 +203,39 @@ in the 境界 picked; every hero has 20 武學點 and the purse 1000 兩 (`DEV_T
 `game/src/rules/journey.js`). After the board the run goes on as usual. The last pick is
 remembered. Starting a test battle replaces the save, and its result counts in the profile like
 any run.
+
+Two more buttons, always there and set apart, are for seeing the first visit again (the opening
+film, the empty record, the first board's tutorial):
+
+- 清空紀錄 puts this browser back to the state of someone who has never opened the game and loads
+  the page again at the title. Every key the game keeps in the browser goes (all begin with
+  `jianying.`: the save, the settings, the draw being set up, the tutorial's record), except
+  developer mode's own, which begin with `jianying.dev-` (that it is on, the last 試局 pick, the
+  window's place).
+- 清空・首局 does the same and then opens on the first board's 起陣 in an ordinary first run: a
+  fresh draw kept as the game keeps one (the first three of the five, the first leading), with
+  the film, the prologue, the draw, the story, 軍情 and 整備 skipped (`devFirstBoard` in
+  `game/src/rules/journey.js`, which is the run 落子 starts, taken on by the game's own steps). It
+  is not a 試局, so the tutorial shows.
+
+Both destroy the save in that browser, so each takes two presses: the first arms the button for
+four seconds and its label asks (確定清空？); a second press on it, not sooner than 0.4 seconds
+after the first, clears. A press anywhere else, any other key, or the four seconds passing lets
+go of it.
+
+## The first board's tutorial
+
+The first time someone plays, the first board (青竹渡) carries coach marks: a small card says what the step in hand is (起陣, walking, the arts list and 撤步, aiming and the rule that only straight lines count, 交鋒預覽, the other heroes, ending the turn, and from round two the danger zone, the view, the goal and the leader, the guide), and a gold outline marks what to tap. It is not a scripted battle: the step is worked out from the state of the game, so it blocks nothing, catches up with a player who ignores it, and resumes after a reload.
+
+Three things the board does for every player, tutorial or not (the playtest of 2026-11-22, R-14 to R-16):
+
+- **An enemy out of reach.** With an art ready, the first tap on an enemy the art cannot reach says why in the board's message (naming the diagonal case: 斜角不算相鄰) and swells the tiles the art does reach (`pulseReach` in `scene/board.js`); the same enemy tapped again opens 敵情查探 (`unitClick` in `app.js`). With no art ready a tap opens it at once.
+- **The whole figure is the target.** A tap is measured against each figure as it is drawn, the sprite's own shape and not only the tile under it (`actors/figure-pick.js`, `resolveBoardPick` in `scene/board.js`): the figure in front wins, an aimed art prefers a piece it can be used on, and a fingertip may land a little beside a figure. Open ground beside a figure is still the tile.
+- **A way back to walking.** While an art is ready and the hero has not walked, the arts list ends with 走位, which shows the walk tiles again (`walkRow` in `ui/action-flow.js`); a tap on open ground the art has no use for does the same, and so does Esc.
+
+- **When it shows.** Once per browser (`jianying.tutorial.v1` in the browser's storage), on the first board of an ordinary run, for a record with no board won and no run finished; not in a 試局, not in a run with 無名 on the board, and not under `game/?classic`. 略過指引 ends it at once, and so does the end of the board.
+- **Seeing it again.** In any battle, 選單 › 指南 › 重看新手指引 plays it from the top on the board being fought.
+- **Where it is.** `game/src/ui/tutorial.js` (the steps and how each ends), `game/src/data/tutorial-text.js` (every word it shows, in one place) and `game/styles/18-tutorial.css` (where the card sits on each screen format). `app.js` only installs it and calls it when the game repaints.
 
 ## How the story is put together
 

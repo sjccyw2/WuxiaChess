@@ -53,6 +53,7 @@ export const FILE_GROUP = {
   'src/ui/intro-film.js': '開場與操作',
   'src/fx/technique-strokes.js': '系統與提示',
   'src/data/terrain.js': '地圖與地形',
+  'src/data/tutorial-text.js': '開場與操作',
   'src/data/wake-tale.js': '劇情、對白與旁白',
   'src/ui/wake-views.js': '系統與提示'
 };
@@ -379,6 +380,9 @@ export const PLACES = {
   },
   'src/ui/dev-mode.js': {
     'devPanel': ['系統與提示', '開發者模式']
+  },
+  'src/data/tutorial-text.js': {
+    'TUTORIAL_TEXT': ['開場與操作', '新手指引']
   },
   'src/ui/wake-views.js': {
     'wakeJournal': ['系統與提示', '介面用語'],

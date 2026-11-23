@@ -956,6 +956,15 @@ function devFinish(s, won, side = false) {
   G.log(s, 'story', s.reason, won ? '破關' : '敗退');
   return true;
 }
+// Developer mode: an ordinary first run, taken to the first board's 起陣, for seeing the
+// tutorial again. It is the run 落子 starts (startRun: the draw's first three kept, the first of
+// them leading), in the first 境界 of a record with nothing in it, its story and 軍情 turned
+// and its line-up sent out as it stands by the game's own steps.
+function devFirstBoard(draw = drawLots()) {
+  const s = startRun(draw);
+  while (s.run.scene !== 'prep') if (!turnPage(s, true)) return null;
+  return deployLineup(s) ? s : null;
+}
 // Developer mode: a test battle. Starts a run straight at one board (`map`, 0–10), in one 境界, with
 // the heroes picked (the first five take the seats, the rest wait on the bench), and opens on the
 // board's 軍情 page. Every hero gets DEV_TEST.points 武學點 and the run DEV_TEST.coins 兩. The board
@@ -2106,5 +2115,5 @@ function campModel(s) {
   };
 }
 
-export { LAST_BOON, devPress, stagesOf, nextMap, TENTH, LAST_STAGE, endsWithLast, finalStage, mapAt, plusRun, enterLast, fixedLead, stageTitle, KIND_NAMES };
+export { LAST_BOON, devPress, devFirstBoard, stagesOf, nextMap, TENTH, LAST_STAGE, endsWithLast, finalStage, mapAt, plusRun, enterLast, fixedLead, stageTitle, KIND_NAMES };
 export { DRAWN, KEPT, keptLots, routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

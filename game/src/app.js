@@ -23,12 +23,14 @@ import * as R from './rules/journey.js';
 import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
 import { playFilm } from './ui/intro-film.js';
 import { realmView } from './ui/realm-views.js';
-import { devMode, devPanel, devTestView, loadPick, changePick } from './ui/dev-mode.js';
+import { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick } from './ui/dev-mode.js';
 import { MAZE_TALE } from './data/maze-tale.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
 import { mapLayout } from './data/terrain.js';
 import { showPhase, phaseLead } from './ui/phase-banner.js';
+// The first board's tutorial: coach marks, the first time someone plays.
+import { installTutorial } from './ui/tutorial.js';
 import * as S from './audio/index.js';
 
 const $ = (id) => document.getElementById(id);
@@ -63,6 +65,7 @@ let prefs = Object.assign(
 );
 let mode = 'move',
   dialogState = null,
+  closingPage = false,
   viewId = state.selected,
   logFilter = 'all',
   storyIndex = 0,
@@ -126,7 +129,7 @@ function audio(kind = 'tap', details) {
   S.setEnabled(prefs.sound);
   if (prefs.sound) S.play(kind, details);
 }
-function notice(msg) {
+function notice(msg, ms = 2650) {
   const t = $('toast');
   clearTimeout(toastTimer);
   t.textContent = msg;
@@ -135,7 +138,7 @@ function notice(msg) {
     dialog.querySelector('.modal-shell').append(t);
   } else if (screen === 'battle') $('field').append(t);
   else document.body.append(t);
-  toastTimer = setTimeout(() => t.classList.remove('visible'), 2650);
+  toastTimer = setTimeout(() => t.classList.remove('visible'), ms);
 }
 // A tip that must be read (a villain's 變招) holds the board tip until it has been shown.
 let tipHeld = 0;
@@ -259,6 +262,18 @@ const board = new BattleBoard({
   }
 });
 const hud = new FieldHud(document, () => board.resize(), notice);
+// The first board's tutorial reads the game through this and changes nothing in it.
+const coach = installTutorial({
+  dialog,
+  field: $('field'),
+  scene: $('scene'),
+  board,
+  view: () => ({ state, screen, mode, page: dialogState, strike: strikeData, subject: subjectId, prefs }),
+  close: closePage,
+  notice,
+  // Skipped while deploying: the game's own 起陣 tip takes over again.
+  ended: () => deploying() && !dialog.open && showDeployTip()
+});
 function selected() {
   return G.find(state, state.selected);
 }
@@ -282,6 +297,8 @@ function holdLineAt(x, y) {
   );
 }
 function paint() {
+  coach.sync();
+  missedId = null; // something was done since the tap that missed (see unitClick)
   if (screen === 'title') {
     board.prefs = prefs;
     board.layers.prefs = prefs;
@@ -350,8 +367,10 @@ function paint() {
   );
   $('commander').innerHTML = P.commander(state, mode);
   // 回身: a hero who has struck with a glide art has only the walk, or staying, in his list.
+  // Under the arts: 撤步 once he has walked; before that, while an art is ready, 走位.
   $('field-arts').innerHTML =
-    F.glideRows(state, u) || equippedMoves(state, u) + F.undoRow(state, u);
+    F.glideRows(state, u) ||
+    equippedMoves(state, u) + F.undoRow(state, u) + F.walkRow(state, u, mode);
   F.markReady($('field-arts'), state, u, mode);
   markAnswers($('field-arts'), state, u, board.hover && G.at(state, board.hover.x, board.hover.y));
   if (hud.panel === 'arts' && !G.canAct(state, u) && !(F.ON && G.canGlide(state, u)))
@@ -496,6 +515,7 @@ function openArts(keyboard = false) {
 const DEPLOY_TIP =
   '起陣 · 子還在手上，換得：點選一位俠客，再點另一位俠客或亮起的空格互換位置。一按「開戰」，落子無悔。';
 function showDeployTip() {
+  if (coach.running()) return; // the tutorial's card says it instead
   deployTip = true;
   mapTip(DEPLOY_TIP, 3600000);
 }
@@ -579,6 +599,7 @@ function cellClick(x, y) {
     unitClick(occ.id);
     return;
   }
+  missedId = null;
   // An entry marker of a wave still to come opens its page, unless the tile is a step to take.
   const entry = entryAt(x, y);
   if (
@@ -639,6 +660,14 @@ function cellClick(x, y) {
             ? '本回合已移動，可在出招前撤步'
             : G.terrain(x, y, state.mapIndex) + ' · 本回合無法抵達。'
       );
+  } else if (G.canMove(state, u)) {
+    // An art is ready, the hero has not walked, and the tap is on open ground the art has no use
+    // for: he means to walk. This tap brings the walk tiles back; the next one walks.
+    hud.closePanel();
+    mode = 'move';
+    paint();
+    audio('tap');
+    mapTip('已回到走位 · 點選青綠色地格移動');
   } else
     mapTip(mode === 'skill' ? targetHint(G.artFor(u)) : zoneTip(x, y) || '請選擇範圍內的敵方棋子');
 }
@@ -653,6 +682,9 @@ function zoneTip(x, y) {
     ' 回合敵方行動結束'
   );
 }
+// The enemy a tap has just missed, out of an aimed art's reach (see below), until anything else
+// is done: every repaint and every tap elsewhere forgets him.
+let missedId = null;
 function unitClick(id) {
   if (screen !== 'battle' || dialog.open || state.run.scene !== 'fight') return;
   if (deploying()) {
@@ -662,7 +694,9 @@ function unitClick(id) {
   }
   const u = selected(),
     t = G.find(state, id),
-    skill = mode === 'skill';
+    skill = mode === 'skill',
+    again = missedId === id;
+  missedId = null;
   if ((mode === 'attack' || skill) && G.targetOK(state, u, t, skill)) {
     strikeData = { source: u.id, target: id, skill };
     openPage('attack-preview');
@@ -684,13 +718,37 @@ function unitClick(id) {
     mapTip(targetHint(G.artFor(u)));
     return;
   }
-  if (G.canAct(state, u) && ['attack', 'skill'].includes(mode)) {
-    if (!skill || !G.artFor(u).heal) {
-      notice('目標在招式範圍外，可先移動或查探敵情。');
-    }
+  // An art is aimed and this enemy is outside its reach. Opening his page at once hid the reason
+  // and read as a blow that did nothing, so the first tap says why on the board and shows the
+  // tiles the art does reach; the same enemy tapped again is a wish to read his page.
+  if (
+    !again &&
+    G.canAct(state, u) &&
+    ['attack', 'skill'].includes(mode) &&
+    G.distance(u, t) > G.rangeFor(u, skill)
+  ) {
+    missedId = id;
+    audio('deny');
+    notice(missText(u, t, skill), 4200);
+    board.pulseReach();
+    return;
   }
+  // The second tap: the message that asked for it has been answered.
+  if (again) $('toast').classList.remove('visible');
   subjectId = id;
   openPage('enemy-info');
+}
+// Why the aimed art cannot be used on an enemy out of its reach. Reach is counted along rows and
+// columns, and on the turned board a diagonal neighbour looks adjacent: that case is said plainly.
+function missText(u, t, skill) {
+  const art = '「' + (skill ? G.artFor(u) : G.basicFor(u)).name + '」',
+    diagonal =
+      G.rangeFor(u, skill) === 1 && Math.abs(u.x - t.x) === 1 && Math.abs(u.y - t.y) === 1;
+  return (
+    uName(t) +
+    (diagonal ? '站在斜角，斜角不算相鄰，' + art + '打不到。' : '不在' + art + '的射程內。') +
+    '再點一次可查探敵情。'
+  );
 }
 const groundArt = (u) => G.targetType(G.artFor(u)) === 'ground';
 function targetHint(art) {
@@ -753,7 +811,7 @@ function pageHtml() {
           })
         : P.briefPage(state);
     case 'help':
-      return P.helpPage();
+      return P.helpPage(coach.helpRow());
     case 'terrain':
       return P.terrainPage(state);
     case 'settings':
@@ -875,8 +933,31 @@ function openPage(name, heroId) {
   refreshDev();
 }
 function closePage() {
-  if (dialog.open) dialog.close();
-  else dialogState = null;
+  if (dialog.open) {
+    // Read and cleared by the dialog's close event, which arrives after this has returned.
+    closingPage = true;
+    dialog.close();
+  } else dialogState = null;
+}
+// A page that is a step of the game itself: the prologue, 選境界, the draw, a story, 軍情, 整備, the
+// shop, the run's last page. Leaving one drops the player out to the title screen, so only its
+// own buttons do that: a tap outside it or Esc never does (dismissOutside). A page opened from
+// another page, and a panel opened over a battle or the title, still step back or close that way.
+const RUN_STEPS = ['prologue', 'realm', 'formation'];
+function stepOfRun() {
+  if (RUN_STEPS.includes(dialogState)) return true;
+  if (dialogState === 'brief' && briefFrom) return false;
+  if (dialogState === 'team' && state.run.scene === 'shop') return false;
+  return (
+    ['team', 'encounter', 'brief', 'camp', 'result'].includes(dialogState) &&
+    state.run.scene !== 'fight'
+  );
+}
+// A tap outside the open page (tap), or Esc. Beside a story, a tap turns its page.
+function dismissOutside(tap) {
+  if (!stepOfRun()) dismissLayer();
+  else if (tap && dialogState === 'encounter') command('scene-next');
+  else if (tap && dialogState === 'prologue') command('prologue-next');
 }
 function dismissLayer() {
   if (dialogState === 'brief' && briefFrom) {
@@ -936,10 +1017,21 @@ function showScene() {
 }
 dialog.addEventListener('cancel', (e) => {
   e.preventDefault();
-  dismissLayer();
+  dismissOutside(false);
+});
+// Esc on a step of the run does nothing at all. Stopping the key itself (not only the cancel it
+// would raise) matters: a browser lets a page refuse a cancel once, then closes the dialog anyway.
+dialog.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !e.defaultPrevented && stepOfRun()) e.preventDefault();
 });
 dialog.addEventListener('close', () => {
+  const own = closingPage;
+  closingPage = false;
   if (dialog.open) return;
+  // Closed by the browser and not by the game (a second back gesture on a phone, say) while it
+  // showed a step of the run: put the step back, so the player is never left on a bare screen.
+  const lost = !own && stepOfRun() ? dialogState : null;
+  if (lost) setTimeout(() => !dialog.open && (RUN_STEPS.includes(lost) ? openPage(lost) : showScene()));
   dialogState = null;
   if (board?.layers) board.layers.aim = null;
   board.uncover();
@@ -954,7 +1046,7 @@ dialog.addEventListener('click', (e) => {
   if (e.target === dialog) {
     const r = dialog.getBoundingClientRect();
     if (e.clientX < r.left || e.clientY < r.top || e.clientX > r.right || e.clientY > r.bottom)
-      dismissLayer();
+      dismissOutside(true);
   }
 });
 function result(afterMotion = false) {
@@ -1290,6 +1382,7 @@ function openPrologue() {
   closePage();
   playFilm({
     ...MAZE_TALE.prologue.film,
+    muted: filmMuted(),
     // If the film could not play, the pages tell the whole prologue instead.
     onDone: (shown) => {
       prologue.film = shown;
@@ -1311,25 +1404,18 @@ function beginNewRun() {
 // sword and meets the eagle. If it cannot play, the run's last page tells the same words.
 function playEnding(onDone) {
   closePage();
-  playFilm({ ...MAZE_TALE.finale.film, label: '終局影片', onDone: () => onDone?.() });
+  playFilm({ ...MAZE_TALE.finale.film, muted: filmMuted(), label: '終局影片', onDone: () => onDone?.() });
 }
-// Developer mode (?dev): a small panel, kept inside the open dialog so it stays clickable.
-const dev = devMode() ? document.createElement('aside') : null;
+// Developer mode (?dev): a small floating window (dev-mode.js), kept inside the open dialog so
+// that it stays clickable.
+const dev = devMode() ? devWindow() : null;
 // The test battle being set up on the 試局 page (dev-mode.js).
 let devPick = dev ? loadPick() : null;
-if (dev) {
-  dev.className = 'dev-panel';
-  dev.setAttribute('aria-label', '開發者模式');
-  dev.innerHTML = '<details class="dev-fold"><summary>開發</summary><div class="dev-buttons"></div></details>';
-}
 function refreshDev() {
   if (!dev) return;
   const battle = screen === 'battle' && state.run.status === 'battle' && !state.result;
   const html = devPanel({ battle, side: !!state.run.side, fight: battle && state.run.scene === 'fight' && !state.run.deploying });
-  const list = dev.querySelector('.dev-buttons');
-  if (list.innerHTML !== html) list.innerHTML = html;
-  const host = dialog.open ? dialog : document.body;
-  if (dev.parentElement !== host) host.append(dev);
+  dev.show(html, dialog.open ? dialog : document.body);
 }
 function devFinish(won, side = false) {
   if (screen !== 'battle' || !R.devFinish(state, won, side)) return notice('此刻不能這樣做。');
@@ -1407,8 +1493,12 @@ function enterBattle(fresh) {
   if (state.result && state.run.status === 'battle') result();
   else if (!showScene() && state.phase === 'enemy') runEnemy();
 }
+// The films follow the sound setting once the player has set it either way; until then they play
+// with their sound on, though the game's own sound starts off (the music is half of a film).
+const filmMuted = () => prefs.soundSet === true && !prefs.sound;
 function toggleSound() {
   prefs.sound = !prefs.sound;
+  prefs.soundSet = true;
   savePrefs();
   refreshSound();
   audio('chime');
@@ -1624,7 +1714,7 @@ function command(action, id, data = {}, keyboard = false) {
       ++aiRun;
       state = next;
       save();
-      dev.querySelector('details').open = false;
+      dev.fold();
       strikeData = null;
       logFilter = 'all';
       enterBattle(true);
@@ -1643,7 +1733,7 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-test':
       if (!dev) break;
       devPick = loadPick();
-      dev.querySelector('details').open = false;
+      dev.fold();
       openPage('devtest');
       audio('page');
       break;
@@ -1663,10 +1753,23 @@ function command(action, id, data = {}, keyboard = false) {
       ++aiRun;
       state = next;
       save();
-      dev.querySelector('details').open = false;
+      dev.fold();
       strikeData = null;
       logFilter = 'all';
       enterBattle(true);
+      break;
+    }
+    case 'dev-wipe':
+    case 'dev-first': {
+      // Two presses each (dev-mode.js). 清空紀錄: this browser as on a first visit, at the title.
+      // 清空・首局: the same, and an ordinary first run saved at the first board's 起陣, which the
+      // page opens on when it has loaded again.
+      if (!dev || !dev.confirm(action)) break;
+      const next = action === 'dev-first' ? R.devFirstBoard() : null;
+      if (action === 'dev-first' && !next) break;
+      ++aiRun;
+      if (next) state = next;
+      devRestart(next && save);
       break;
     }
     case 'prologue-prev':
@@ -2100,6 +2203,7 @@ function command(action, id, data = {}, keyboard = false) {
     }
     case 'pref':
       prefs[id] = !prefs[id];
+      if (id === 'sound') prefs.soundSet = true;
       savePrefs();
       paint();
       drawModal(true);
@@ -2175,8 +2279,13 @@ document.addEventListener('keydown', (e) => {
   if (k === 'escape') {
     // Polish (actionFlow): Esc takes back the move while the hero has not yet struck.
     const u = screen === 'battle' && F.ON && state.phase === 'ally' ? selected() : null;
-    if (u?.moved && u.origin && G.canAct(state, u) && (!hud.panel || hud.panel === 'arts'))
-      doCommand('move');
+    // For a hero who readied an art before walking it is the list's 走位: back to the walk tiles.
+    // (Either way one press does one thing: he has no move to take back.)
+    const stepBack =
+      u &&
+      G.canAct(state, u) &&
+      (u.moved ? !!u.origin : G.canMove(state, u) && ['attack', 'skill'].includes(mode));
+    if (stepBack && (!hud.panel || hud.panel === 'arts')) doCommand('move');
     else if (hud.panel) hud.closePanel(true);
     else if (hud.fallback) hud.setFallback(false);
     else {
@@ -2231,5 +2340,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 openTitle();
+// Developer mode's 清空・首局 loaded the page again: on to the board it saved, as 繼續 would.
+if (dev && devEnter() && hasSave) enterBattle(false);
 
 export {};
