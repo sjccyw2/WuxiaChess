@@ -1,4 +1,4 @@
-import { btn, esc, titleHead } from './panels.js';
+import { btn, esc, titleHead, itemBonus } from './panels.js';
 import { art } from './artwork.js';
 import { icon } from './icons.js';
 import { ITEMS } from '../rules/game.js';
@@ -8,21 +8,20 @@ import { itemPicture } from './item-art.js';
 const places = ['一', '二', '三'];
 const picture = (file, cls = '') =>
   '<img class="' + cls + '" draggable="false" src="' + esc(art(file)) + '" alt="">';
+// The shop's one row for the bowls: 「三盅通吃 · 免費揭一盅」 and the button that opens them.
 function visitorInvite(v) {
   if (!v) return '';
   return (
     '<div class="lk-invite">' +
     picture(VISITOR.portrait) +
-    '<div><small>通吃坊開局</small><h3>' +
+    '<p><strong>' +
     VISITOR.title +
-    '</h3><span>' +
-    VISITOR.name +
-    ' · ' +
+    '</strong> · ' +
     (v.phase === 'claimed' ? '已得一物' : '免費揭一盅') +
-    '</span></div>' +
+    '</p>' +
     btn(
       'meet-zhou',
-      v.phase === 'claimed' ? '查看所得' : v.phase === 'hidden' ? '返回盅局' : '同他賭一手',
+      v.phase === 'claimed' ? '查看所得' : v.phase === 'hidden' ? '返回盅局' : '揭盅',
       'mj-action'
     ) +
     '</div>'
@@ -46,9 +45,11 @@ function bowlsPage(s, mixing) {
         '<strong>' +
         esc(label) +
         '</strong>' +
+        // What an item does, in numbers, as the shop's rows say it.
+        (face && ITEMS[id] ? '<b class="lk-bonus">' + esc(itemBonus(ITEMS[id])) + '</b>' : '') +
         (face
           ? '<small>' +
-            esc(ITEMS[id]?.desc || '武譜 · 參悟需 ' + TECHNIQUES[id].points + ' 武學點') +
+            esc(ITEMS[id]?.desc || '武譜 · 修習需 ' + TECHNIQUES[id].points + ' 武學點') +
             '</small>'
           : '');
       if (shown || done)

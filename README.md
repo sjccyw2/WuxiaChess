@@ -98,17 +98,20 @@ rule there is scoped under an `html.polish-…` class that the switch controls.
 
 The briefing page (軍情) and the deployment step before round one are game flow, not polish:
 
-整備 (and the team page in battle and in the shop) has three tabs, 陣容 · 武學 · 裝備物資. Each 陣容 card shows the hero's numbers, equipped arts and unspent 武學點; tapping a card opens a pane beside the line-up with the whole sheet, the line-up buttons and 習武, which opens the 武學 tab (the skill tree, the slots and the manuals) for that hero. This is game flow, not polish: its styles are in `styles/17-preparation.css`, with no switch.
+整備 (and the team page in battle and in the shop) has three tabs, 陣容 · 武學 · 裝備物資. Each 陣容 card shows the hero's numbers, equipped arts and unspent 武學點; tapping a card opens a pane beside the line-up with the whole sheet, the line-up buttons and 修習, which opens the 武學 tab (the skill tree, the slots and the manuals) for that hero. This is game flow, not polish: its styles are in `styles/17-preparation.css`, with no switch.
 they have no switch. Their styles are in `styles/14-battles.css`.
 
 ## The five 境界 (difficulty)
 
 The five 境界 are difficulty levels, listed in `game/src/data/realms.js` with what each does to
-the enemies' numbers (the first 境界 changes nothing). Before each run the player picks one from
-those open (選境界). The first is open from the start; winning a run in the highest open 境界 opens
-the next. The profile keeps `realms` (highest open), `cleared` (won), `finale` (times the last
-board was reached) and `ended` (times it was won); saves from before work these out from the runs
-won.
+the enemies' numbers (the first 境界 changes nothing). The line each shows on the picker (`note`)
+is built from those numbers, so the words cannot drift from the rule: 「敵方數值不變。」 for the
+first, then 「敵方氣血 ＋6%、攻擊 ＋3%。」, 「敵方氣血 ＋12%、攻擊 ＋6%、防禦 ＋1。」,
+「敵方氣血 ＋22%、攻擊 ＋11%、防禦 ＋2。」 and 「敵方氣血 ＋30%、攻擊 ＋15%、防禦 ＋2。」. Before
+each run the player picks one from those open (選境界). The first is open from the start; winning
+a run in the highest open 境界 opens the next. The profile keeps `realms` (highest open),
+`cleared` (won), `finale` (times the last board was reached) and `ended` (times it was won);
+saves from before work these out from the runs won.
 
 ## The last board (終局) and the ending
 

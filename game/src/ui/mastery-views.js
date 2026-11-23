@@ -1,10 +1,10 @@
 import { visitorInvite } from './bowl-views.js';
 import { factBadge } from './panels.js';
-import { btn, titleHead, face, esc, bookCitation } from './panels.js';
+import { btn, titleHead, face, esc, bookCitation, itemBonus } from './panels.js';
 import { icon } from './icons.js';
 import { art } from './artwork.js';
 import { itemPicture } from './item-art.js';
-import { DETAILS } from '../rules/game.js';
+import { DETAILS, ITEMS } from '../rules/game.js';
 
 const text = (value) => esc(value ?? '');
 const whole = (value) => Math.max(0, Math.trunc(Number(value) || 0));
@@ -27,10 +27,10 @@ const kindNames = {
   active: '新招',
   refinement: '成名絕技'
 };
+// Said under the name only where the kind needs a word more: an upgrade takes the basic
+// attack's place. (新招 and 成名絕技 are named on the line above and go in a slot like any art.)
 const kindNotes = {
-  basic: '取代原本的普攻。',
-  active: '另成一招，配入招式欄的一格。',
-  refinement: '另成一招，配入招式欄的一格。'
+  basic: '取代原本的普攻。'
 };
 // The small line above a node's name in the tree: the art it belongs to, or 普攻 for an upgrade.
 const nodeKicker = (node) => (node.kind === 'basic' ? '普攻精進' : node.family || '');
@@ -73,22 +73,15 @@ function rollLeaderInfo(heroOrId, boonName, boonDesc) {
   return `<div class="mj-boon">${glyph('flag', 19)}<div><p><span>領隊效果${hero?.name ? ` · ${text(hero.name)}` : ''}</span><strong>${text(title)}</strong></p>${desc ? `<small>${text(desc)}</small>` : ''}</div></div>`;
 }
 
-function skillHeading(model) {
+// `details` is the team page's 俠客詳情 button (the hero's own page has no use for one).
+function skillHeading(model, details = '') {
   const title = model.pathTitle || model.name;
   const citation = model.book ? bookCitation(model.book) : '';
-  return `<div class="mj-path">${illustration('run-meridians.webp')}<div class="mj-path-copy"><div class="mj-citation">${text(model.name)}${citation && model.name ? '<i></i>' : ''}${citation}</div><h3>${text(title)}</h3></div><div class="mj-sp">${glyph('spark', 16)}<b>${whole(model.sp)}</b><span>武學點</span></div></div>`;
+  return `<div class="mj-path">${illustration('run-meridians.webp')}<div class="mj-path-copy"><div class="mj-citation">${text(model.name)}${citation && model.name ? '<i></i>' : ''}${citation}</div><h3>${text(title)}</h3></div><div class="mj-sp">${glyph('spark', 16)}<b>${whole(model.sp)}</b><span>武學點</span></div>${details}</div>`;
 }
 function pathOrigin(model) {
-  if (!model.origin && !model.leaderDesc && !model.basicName) return '';
-  const source = model.origin ? `<p>${text(model.origin)}</p>` : '';
-  const basic = model.basicName
-    ? `<div><dt>基本招式</dt><dd>${text(model.basicName)}</dd></div>`
-    : '';
-  const leader =
-    model.leaderName || model.leaderDesc
-      ? `<div><dt>領隊效果</dt><dd><b>${text(model.leaderName)}</b>${model.leaderDesc ? ` ${text(model.leaderDesc)}` : ''}</dd></div>`
-      : '';
-  return `<details class="mj-origin"><summary>${glyph('scroll', 14)}師承與行功${glyph('down', 14)}</summary>${source}${model.originNote ? `<p>${text(model.originNote)}</p>` : ''}${basic || leader ? `<dl>${basic}${leader}</dl>` : ''}</details>`;
+  if (!model.origin) return '';
+  return `<details class="mj-origin"><summary>${glyph('scroll', 14)}師承與行功${glyph('down', 14)}</summary><p>${text(model.origin)}</p></details>`;
 }
 function statusOf(node) {
   if (node.status) return node.status;
@@ -155,7 +148,7 @@ function schoolMap(nodes, selected) {
         active = node.id === selected.id;
       return btn(
         'skill-node',
-        `${nodeKicker(node) ? `<span class="mj-node-family">${text(nodeKicker(node))}</span>` : ''}<span class="mj-node-title">${nodeTitle(node.name)}</span><span class="mj-node-state">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 10)}${text(rootRank(node) ? `${rootRank(node)} 重` : node.learned ? '已習' : node.canLearn ? '可修' : '未習')}</span>`,
+        `${nodeKicker(node) ? `<span class="mj-node-family">${text(nodeKicker(node))}</span>` : ''}<span class="mj-node-title">${nodeTitle(node.name)}</span><span class="mj-node-state">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 10)}${text(rootRank(node) ? `${rootRank(node)} 重` : node.learned ? '已習' : node.canLearn ? '可修習' : '未習')}</span>`,
         `mj-node mj-${state}`,
         `${data(node.id)} data-tab="school" aria-controls="mj-inspector" ${pressed(active)} style="grid-column:${col + 1};grid-row:${row + 1}" aria-label="${text(node.name)}，${tierName(node.tier)}，${text(statusOf(node))}"`
       );
@@ -171,7 +164,7 @@ function nodeDetails(node, tab, nodes, library) {
   const facts = [];
   if (node.rank) facts.push(`<div><dt>修為</dt><dd>${text(node.rank)}</dd></div>`);
   if (visibleStudy && hasCost)
-    facts.push(`<div><dt>研習所需</dt><dd>${text(node.cost)} 武學點</dd></div>`);
+    facts.push(`<div><dt>修習所需</dt><dd>${text(node.cost)} 武學點</dd></div>`);
   if (Number(node.mp) > 0) facts.push(`<div><dt>內力消耗</dt><dd>${text(node.mp)} 點</dd></div>`);
   if (Number(node.hpCost) > 0)
     facts.push(`<div><dt>氣血消耗</dt><dd>${text(node.hpCost)} 點</dd></div>`);
@@ -194,21 +187,24 @@ function nodeDetails(node, tab, nodes, library) {
         (rootRank(node) || node.learned
           ? '精進一重'
           : node.kind === 'root'
-            ? '研習根基'
+            ? '修習根基'
             : '修習此招'),
       'mj-action mj-primary',
       `${data(node.id)} ${node.canLearn ? '' : 'disabled'} aria-label="修習${text(node.name)}"`
     );
   else if (inLibrary)
     action = btn('skill-tab', glyph('swords', 15) + '前往招式配置', 'mj-action', data('loadout'));
-  return `<section class="mj-detail" id="mj-inspector" tabindex="-1" aria-label="招式詳情"><div class="mj-detail-top"><span class="mj-seal">${glyph(node.icon, 22)}</span><small>${tab === 'guides' ? '授業武譜' : text(kindNames[node.kind] || '門派武學')} · ${tierName(node.tier)}</small></div><h4>${text(node.name)}${node.family ? `<small class="mj-family">${text(node.family)}</small>` : ''}</h4>${kindNotes[node.kind] ? `<p class="mj-kind-note">${text((kindNames[node.kind] || '') + '：' + kindNotes[node.kind])}</p>` : ''}<div class="mj-state mj-state-${nodeState(node)}">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 13)}${text(statusOf(node))}</div>${factBadge(node.facts)}${node.description ? `<details class="fo-lore"><summary>招式解說</summary><p>${text(node.description)}</p>${(node.facts?.formRules || []).map((rule) => '<p>' + text(rule) + '</p>').join('')}${node.facts?.factor ? '<p>攻擊倍率 × ' + text(node.facts.factor) + '</p>' : ''}${node.facts?.animation ? '<p>' + text(node.facts.animation) + '</p>' : ''}</details>` : ''}${facts.length ? `<dl class="mj-facts">${facts.join('')}</dl>` : ''}${node.sourceNote ? `<p class="mj-source">${text(node.sourceNote)}</p>` : ''}${action ? `<div class="mj-detail-action">${action}</div>` : ''}<button type="button" class="mj-return-map mj-text-button" data-frame-return>回看${tab === 'guides' ? '武譜' : '脈絡'}</button></section>`;
+  // The small line at the top: what the node is and its tier, said once where the two are one
+  // word (根基). The fold holds the readable version of the badges, then the note on the novel.
+  const kind = tab === 'guides' ? '授業武譜' : kindNames[node.kind] || '門派武學',
+    tier = tierName(node.tier);
+  return `<section class="mj-detail" id="mj-inspector" tabindex="-1" aria-label="招式詳情"><div class="mj-detail-top"><span class="mj-seal">${glyph(node.icon, 22)}</span><small>${text(kind === tier ? kind : kind + ' · ' + tier)}</small></div><h4>${text(node.name)}${node.family ? `<small class="mj-family">${text(node.family)}</small>` : ''}</h4>${kindNotes[node.kind] ? `<p class="mj-kind-note">${text((kindNames[node.kind] || '') + '：' + kindNotes[node.kind])}</p>` : ''}<div class="mj-state mj-state-${nodeState(node)}">${glyph(node.learned ? 'check' : node.canLearn ? 'plus' : 'diamond', 13)}${text(statusOf(node))}</div>${factBadge(node.facts)}${node.description ? `<details class="fo-lore"><summary>招式解說</summary><p>${text(node.description)}</p>${(node.facts?.formRules || []).map((rule) => '<p>' + text(rule) + '</p>').join('')}${node.facts?.factor ? '<p>攻擊倍率 × ' + text(node.facts.factor) + '</p>' : ''}${node.sourceNote ? `<p class="mj-source">${text(node.sourceNote)}</p>` : ''}</details>` : ''}${facts.length ? `<dl class="mj-facts">${facts.join('')}</dl>` : ''}${action ? `<div class="mj-detail-action">${action}</div>` : ''}<button type="button" class="mj-return-map mj-text-button" data-frame-return>回看${tab === 'guides' ? '武譜' : '脈絡'}</button></section>`;
 }
 function schoolContents(model, ui) {
   const nodes = list(model.school),
     current = chooseNode(nodes, ui.node);
   if (!current) return '<p class="mj-empty">此俠客尚無門派武學可供查看。</p>';
-  const recall = model.recallNote ? `<p class="mj-recall">${text(model.recallNote)}</p>` : '';
-  return `${recall}<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
+  return `<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
 }
 // In the team page (inTeam) the company's spare manuals are listed under this page, so the empty
 // page points down to them instead of away to the team.
@@ -283,14 +279,12 @@ function loadout(model, ui) {
         `${data(index)} ${model.canConfigure === false ? 'disabled' : ''} aria-label="卸下${slotName(index)}的${slotTitle(slots[index])}"`
       )
     : '';
-  const studyLinks = [btn('skill-tab', '查看門派武學', 'mj-text-button', data('school'))];
-  if (list(model.guides).some((n) => !n.learned))
-    studyLinks.push(btn('skill-tab', '修習已授武譜', 'mj-text-button', data('guides')));
-  return `<div class="mj-slot-bar${basicBox ? ' mj-with-basic' : ''}" role="group" aria-label="基本攻擊與三格出戰招式">${basicBox}${slotControls}</div><div class="mj-subhead"><div><h4>可用招式</h4><p>${model.fieldStudy ? '可將剛參悟的招式配置一次。' : model.canConfigure === false ? '可於戰前整備、通吃坊，或全隊尚未行動時換招。' : `選擇招式，裝入${slotName(index)}。`}</p></div>${clear}</div>${entries ? `<ul class="mj-library">${entries}</ul>` : '<p class="mj-empty">尚未習得可配置的招式。</p>'}<div class="mj-study-links">${studyLinks.join('')}</div>`;
+  return `<div class="mj-slot-bar${basicBox ? ' mj-with-basic' : ''}" role="group" aria-label="基本攻擊與三格出戰招式">${basicBox}${slotControls}</div><div class="mj-subhead"><div><h4>可用招式</h4><p>${model.fieldStudy ? '可將剛修習的招式配置一次。' : model.canConfigure === false ? '可於戰前整備、通吃坊，或全隊尚未行動時換招。' : `選擇招式，裝入${slotName(index)}。`}</p></div>${clear}</div>${entries ? `<ul class="mj-library">${entries}</ul>` : '<p class="mj-empty">尚未習得可配置的招式。</p>'}`;
 }
 
 // The hero's 武學: tree, manuals and slots. `more` adds a page's own lines under a sub-tab (the
-// team page's spare manuals under 授業武譜), and `more.team` says it is drawn in the team page.
+// team page's spare manuals under 授業武譜), `more.team` says it is drawn in the team page, and
+// `more.details` is that page's 俠客詳情 button for the header card.
 function personalTraining(model, ui, more = {}) {
   const tab = skillTabs.some(([id]) => id === ui.tab) ? ui.tab : 'school';
   const body =
@@ -301,7 +295,7 @@ function personalTraining(model, ui, more = {}) {
         : loadout(model, ui);
   return (
     tabs('skill', skillTabs, tab) +
-    tabPanel(tab, skillHeading(model) + body + (more[tab] || ''), skillTabs)
+    tabPanel(tab, skillHeading(model, more.details) + body + (more[tab] || ''), skillTabs)
   );
 }
 function treeView(model, ui = {}) {
@@ -322,6 +316,8 @@ const groups = [
   ['manual', '武譜抄本', 'book']
 ];
 const coin = '<i class="mj-coin" aria-hidden="true"></i>';
+// The board just played, in one line (「青竹渡 · 勝 · ＋36 兩 · 袁承志入隊」, after a loss
+// 「紅楓驛 · 敗」), and its record in a fold.
 function campRecap(model) {
   const reward =
     typeof model.reward === 'number'
@@ -329,8 +325,8 @@ function campRecap(model) {
         ? `＋${whole(model.reward)} 兩`
         : ''
       : text(model.reward);
-  const provenance = model.lost ? '此局失利' : '此局已過';
-  return `<section class="mj-berth">${illustration('run-merchant.webp')}<img class="fo-shop-face" src="${text(art('npc-wei.webp'))}" alt="通吃坊掌櫃韋小寶"><div class="mj-berth-copy"><small>${glyph('pin', 13)}韋小寶的通吃坊</small><h3>${text(model.stageName)}</h3><p>${provenance}${reward ? ` · ${reward}` : ''}${model.recruit ? ` · ${text(model.recruit)}入隊` : ''}</p></div></section>${model.objective || model.story ? `<details class="mj-origin mj-recap"><summary>${glyph('scroll', 14)}本局紀錄${glyph('down', 14)}</summary>${model.story ? `<p>${text(model.story)}</p>` : ''}${model.objective ? `<dl><div><dt>支線</dt><dd>${text(model.objective)}</dd></div></dl>` : ''}</details>` : ''}`;
+  const line = [text(model.stageName), model.lost ? '敗' : '勝', reward, model.recruit ? `${text(model.recruit)}入隊` : ''].filter(Boolean).join(' · ');
+  return `<p class="mj-outcome">${line}</p>${model.objective || model.story ? `<details class="mj-origin mj-recap"><summary>${glyph('scroll', 14)}本局紀錄${glyph('down', 14)}</summary>${model.story ? `<p>${text(model.story)}</p>` : ''}${model.objective ? `<dl><div><dt>支線</dt><dd>${text(model.objective)}</dd></div></dl>` : ''}</details>` : ''}`;
 }
 function productRow(item, coins) {
   const left = whole(item.left),
@@ -343,7 +339,10 @@ function productRow(item, coins) {
     'mj-buy',
     `${data(item.id)} ${item.canBuy ? '' : 'disabled'} aria-label="${caption}${text(item.name)}，${price} 兩"`
   );
-  return `<li class="mj-product"><span class="mj-item-symbol">${item.group === 'manual' ? glyph(item.icon, 20) : itemPicture(item.id, 'fo-mini')}</span><div>${item.description ? `<details class="shop-item-detail"><summary>${text(item.name)}</summary><p>${text(item.description)}</p></details>` : `<h5>${text(item.name)}</h5>`}<small>庫存 ${left}<i></i>持有 ${owned}</small></div>${action}</li>`;
+  // What the item does, in numbers, as the armoury says it (「絕技威力 ＋7」): always in sight
+  // under the name. The item's own description stays in the fold. (A manual has no such line.)
+  const bonus = ITEMS[item.id] ? `<span class="mj-bonus">${text(itemBonus(ITEMS[item.id]))}</span>` : '';
+  return `<li class="mj-product"><span class="mj-item-symbol">${item.group === 'manual' ? glyph(item.icon, 20) : itemPicture(item.id, 'fo-mini')}</span><div>${item.description ? `<details class="shop-item-detail"><summary>${text(item.name)}${bonus}</summary><p>${text(item.description)}</p></details>` : `<h5>${text(item.name)}</h5>${bonus}`}<small>庫存 ${left}<i></i>持有 ${owned}</small></div>${action}</li>`;
 }
 function shop(model) {
   const offers = list(model.offers);
@@ -361,7 +360,7 @@ function shop(model) {
 }
 function campView(model) {
   const destination = model.final ? '結束此行' : '前往' + text(model.nextName);
-  return `<section class="mj-view mj-market">${titleHead('bag', '通吃坊')}<div class="mj-tools fy-shopbar" data-frame-tools><strong>貨架</strong><div class="mj-wallet">${coin}<b>${whole(model.coins)}</b> 兩</div></div>${visitorInvite(model.visit)}${shop(model)}${btn('story', '重讀戰後對話', 'mj-text-button', 'data-id="after"')}<footer class="mj-footer">${model.final ? btn('home', '主畫面', 'mj-action') : btn('team', glyph('people', 16) + ' 整理隊伍', 'mj-action')}${btn('march', destination, 'gold-btn')}</footer></section>`;
+  return `<section class="mj-view mj-market">${titleHead('bag', '通吃坊')}<div class="mj-tools fy-shopbar" data-frame-tools><div class="mj-wallet">${coin}<b>${whole(model.coins)}</b> 兩</div></div>${visitorInvite(model.visit)}${shop(model)}${btn('story', '重讀戰後對話', 'mj-text-button', 'data-id="after"')}<footer class="mj-footer">${model.final ? btn('home', '主畫面', 'mj-action') : btn('team', glyph('people', 16) + ' 整理隊伍', 'mj-action')}${btn('march', destination, 'gold-btn')}</footer></section>`;
 }
 
 function selectionKeys(container, strip, selector) {

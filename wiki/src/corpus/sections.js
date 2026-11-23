@@ -373,7 +373,8 @@ export const PLACES = {
     'NO_MARK': ['劇情、對白與旁白', '臺邊的五行字']
   },
   'src/data/realms.js': {
-    'REALMS': ['開場與操作', '五重境界']
+    'REALMS': ['開場與操作', '五重境界'],
+    'realmNote': ['開場與操作', '五重境界']
   },
   'src/ui/realm-views.js': {
     'realmView': ['開場與操作', '五重境界']
@@ -386,6 +387,8 @@ export const PLACES = {
   },
   'src/ui/wake-views.js': {
     'wakeJournal': ['系統與提示', '介面用語'],
+    'journalLeaf': ['系統與提示', '介面用語'],
+    'lineCount': ['系統與提示', '介面用語'],
     'journalPage': ['系統與提示', '介面用語'],
   }
 };

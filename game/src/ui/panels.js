@@ -398,14 +398,11 @@ function sheetPage(s, id) {
 }
 function profileContents(s, id) {
   const u = find(s, id);
-  const location = tileInfo(u.x, u.y, s.mapIndex);
-  const footing = !s.units.includes(u)
-    ? '盤邊候補'
-    : s.run?.status === 'camp'
-      ? '通吃坊・歇手中'
-      : s.run?.scene === 'prep'
-        ? '整備中'
-        : location.name + ' · ' + location.note;
+  // The tile the hero stands on and what it does: only on the board, in a battle.
+  const location =
+    s.units.includes(u) && s.run?.status !== 'camp' && s.run?.scene !== 'prep'
+      ? tileInfo(u.x, u.y, s.mapIndex)
+      : null;
   return (
     portraitSummary(u) +
     conditionChips(s, u) +
@@ -428,10 +425,11 @@ function profileContents(s, id) {
     stat(u, 'step', s) +
     ' 步</b></span><span>攻距 <b>' +
     u.range +
-    ' 格</b></span></div><p class="footnote">' +
-    icon('stone', 15) +
-    footing +
-    '</p></div><div><h4>隨身裝備</h4>' +
+    ' 格</b></span></div>' +
+    (location
+      ? '<p class="footnote">' + icon('stone', 15) + location.name + ' · ' + location.note + '</p>'
+      : '') +
+    '</div><div><h4>隨身裝備</h4>' +
     equippedCard(u, u.weapon, '兵器') +
     equippedCard(u, u.gear, '護具／佩飾') +
     btn('inventory', '整理行囊 ' + arrow, 'text-btn inline') +
@@ -588,7 +586,7 @@ function skillPage(s, id) {
     ' 內力　／　招式距離 ' +
     i.skillRange +
     ' 格</em></div></div>' +
-    '<div class="subhead"><h4>內功修為</h4><span class="point-balance">可用點數 <b>' +
+    '<div class="subhead"><h4>內功修為</h4><span class="point-balance">武學點 <b>' +
     u.sp +
     '</b></span></div><div class="talent-list">' +
     Object.entries(TALENTS)
@@ -617,7 +615,7 @@ function skillPage(s, id) {
       .join('') +
     '</div><p class="footnote">' +
     icon('star', 15) +
-    '每升一級獲得 1 點武學點數。每次修習耗用 1 點。</p>'
+    '每升一級獲得 1 武學點。每次修習耗用 1 點。</p>'
   );
 }
 function storyPage(s, page) {
@@ -780,15 +778,14 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     '<section class="mj-view brief-view">' +
     titleHead('flag', '軍情', esc(model.heading)) +
     (L ? '<p class="brief-live">' + esc(L.line) + '</p>' : '') +
-    (model.lead && !live ? '<p class="brief-lead">' + esc(model.lead) + '</p>' : '') +
     '<div class="brief-body"><div class="brief-plan">' +
     planGrid(plan, post) +
     planKey(plan) +
     '</div><div class="brief-text">' +
-    sect('brief-kind', '戰局', p(model.battle)) +
-    sect('brief-win', '勝利', p(model.win) + progress) +
+    // (On the last board, what 無名 gains stands on a line of its own under the progress.)
+    sect('brief-win', '勝利', p(model.win) + progress + p(model.boon, 'brief-small')) +
     sect('brief-loss', '敗退', p(model.loss)) +
-    (model.noSide ? '' : sect('brief-side', '支線', (model.sideLead ? p(model.sideLead + '：', 'brief-small') : '') + side)) +
+    (model.noSide ? '' : sect('brief-side', '支線', side)) +
     (model.recruit ? sect('brief-recruit', '入局', p(model.recruit)) : '') +
     '</div></div>' +
     extra +
@@ -816,11 +813,6 @@ function goalsPage(s) {
             stageTitle(i, '') +
             '</small><strong>' +
             mapLayout(map).name +
-            ' · ' +
-            mapLayout(map).shapeName +
-            ' · ' +
-            fieldCells(map).length +
-            ' 格' +
             '</strong><span>' +
             (i === s.run.stage
               ? '目前所在'
@@ -887,7 +879,10 @@ function terrainPage(s) {
     }
     rows.push(row + '</tr>');
   }
+  // The key lists the kinds of ground this board has, not every kind its tile set names.
+  const present = new Set([...cells.values()].map((cell) => String(cell.kind)));
   const legend = Object.entries(types)
+    .filter(([kind]) => present.has(kind))
     .map(
       ([kind, tile]) =>
         '<li><i class="ground-' +
@@ -901,15 +896,7 @@ function terrainPage(s) {
     .join('');
   return (
     titleHead('grid', mapLayout(s.mapIndex).name + ' · 地形圖') +
-    '<p class="fy-geometry">' +
-    esc(mapLayout(s.mapIndex).shapeName) +
-    ' · ' +
-    cells.size +
-    ' 格 · ' +
-    width +
-    ' × ' +
-    height +
-    '</p><div class="terrain-survey"><div class="survey-chart" style="--tile-pct:' +
+    '<div class="terrain-survey"><div class="survey-chart" style="--tile-pct:' +
     100 / (width + 1) +
     '%"><p>北</p><table aria-label="' +
     width +
@@ -1025,7 +1012,7 @@ function objectPage(s, u) {
   const rule = keep
     ? '守住它：撐過第' + NUMERALS[(boardOf(s).hold || LIMIT) - 1] + '回合，或擊敗' + masters.join('與') + '。它一毀，這一局便輸了。' + (left ? '尚須守 ' + left + ' 回合。' : '')
     : '毀了它。盤上的' + i.name + '盡數倒下，這一局便勝了。它不還手，也不閃避。';
-  const ward = i.traits?.ward ? '星索護陣 · 立著一日，' + (unitDetails(find(s, commanderId(s)))?.name || '局主') + '所受之傷便減 ' + i.traits.ward + '%。' : '';
+  const ward = i.traits?.ward ? '星索護陣 · 未被擊毀時，' + (unitDetails(find(s, commanderId(s)))?.name || '局主') + '所受傷害減 ' + i.traits.ward + '%。' : '';
   return (
     titleHead('target', keep ? '守物' : '破物') +
     '<div class="enemy-summary"><img class="enemy-face object-face" src="' +
@@ -1081,9 +1068,9 @@ function enemyPage(s, id) {
     i.role +
     '</small><h3>' +
     i.name +
-    '</h3><p>' +
-    (i.bio || '對面落下的一枚黑子，守著這一局的要道。') +
-    '</p></div></div>' +
+    '</h3>' +
+    (i.bio ? '<p>' + i.bio + '</p>' : '') +
+    '</div></div>' +
     (special
       ? '<div class="enemy-forecast"><strong>' +
         special.name +

@@ -61,7 +61,7 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0], kept = ids.
     <div class="run-lacquer">
       ${scene(TALE_ART.board, 'run-scene')}
       <details class="hud-disclosure draw-tale"><summary>局規</summary><p>${text(MAZE_TALE.draw)}</p><p>棋臺沿上刻著：「${text(MAZE_TALE.rule)}」</p></details>
-      <p class="lot-instruction">抓起五枚：點選留下三枚，另兩枚放回盒裡，日後求敗或會再借出。留下的三枚中選一枚先落的子作領隊，是為這一輪的「眼」。領隊倒下，這一輪便結束。<strong class="lot-count">已留 ${kept.length}／3</strong></p>
+      <p class="lot-instruction">從五位中留下三位，再選一位作領隊。領隊倒下，這一輪便結束。<strong class="lot-count">已留 ${kept.length}／3</strong></p>
       <ul class="run-lots run-lots-five${meta.settled ? ' settled' : ''}" aria-label="這一輪抓到的五位俠客，留下三位">${ids.map((id) => drawPortrait(id, captain, kept, kept.length >= 3)).join('')}</ul>
       ${meta.ended > 0 ? `<p class="lot-plus"><img src="${text(art(YOUTH.portrait))}" alt="" decoding="async"><span><strong>${text(MAZE_TALE.finale.plus.title)}</strong>${text(MAZE_TALE.finale.plus.draw.replaceAll('{name}', YOUTH.name))}</span></p>` : ''}
     </div>
@@ -72,7 +72,7 @@ function rollView(ids, meta = {}, hasSave = false, captain = ids[0], kept = ids.
       </dl>
       <div class="run-benefits" aria-label="這一輪的開局資源">${benefits.join('')}</div>
     </div></details>
-    ${wakeJournal(meta, meta.returns ?? meta.wins ?? 0)}
+    ${wakeJournal(meta)}
     ${hasSave ? `<p class="run-save-note">${icon('info', 15)}<span>按下「落子」時，這一輪會取代目前的存檔。</span></p>` : ''}
     <footer class="run-footer run-roll-footer">${btn('close', '返回', 'outline-btn')}${btn('deploy', kept.length === 3 ? '落子' : '先留下三枚', 'gold-btn', kept.length === 3 ? '' : 'disabled')}</footer>
   </section>`;

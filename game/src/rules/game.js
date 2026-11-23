@@ -2793,7 +2793,7 @@ function settleExperience(s, u) {
   u.xp %= GROWTH.levelXp;
   u.sp += levels;
   raiseLevel(u, levels);
-  log(s, 'grow', '升至等級 ' + u.level + '，獲得 ' + levels + ' 點武學點數。', unitDetails(u).name);
+  log(s, 'grow', '升至等級 ' + u.level + '，獲得 ' + levels + ' 武學點。', unitDetails(u).name);
   return true;
 }
 function exp(s, u, n) {
@@ -2901,7 +2901,7 @@ function holdObjective(s, u) {
   const marker = unclaimedObjectiveTile(s);
   if (marker && ally(u) && living(u) && distance(u, marker) === 0) {
     s.run.marked = true;
-    log(s, 'story', '點亮了引路燈。盤外瞧這一局，瞧得清清楚楚了。', unitDetails(u).name);
+    log(s, 'story', '點亮了引路燈。', unitDetails(u).name);
   }
 }
 function commitSteps(u) {

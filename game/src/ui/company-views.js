@@ -26,6 +26,8 @@ const tag = (id) => 'data-id="' + esc(id) + '"';
 const action = (key, label, id, enabled = true, more = '') =>
   btn(key, label, 'mj-action', tag(id) + ' ' + more + (enabled ? '' : ' disabled'));
 const name = (u) => G.unitDetails(u).name;
+// 俠客詳情 for the 武學 tab's header card and the 裝備物資 tab's name row.
+const detailsButton = (u) => btn('hero-details', '俠客詳情', 'mj-action mj-compact fy-details', tag(u.id));
 function tabs(group, choices, current) {
   return (
     '<div class="mj-tabs fy-tabs" role="tablist" aria-label="' +
@@ -123,7 +125,7 @@ function footprint(layout) {
   );
 }
 // The pane beside the 陣容 cards: the picked hero's numbers, rank and points, the leader's boon,
-// the arts carried, and what can be done with them here (seat, bench, appoint, 習武).
+// the arts carried, and what can be done with them here (seat, bench, appoint, 修習).
 function heroPane(s, u, line) {
   const active = line.includes(u.id),
     chief = line[0] === u.id;
@@ -218,7 +220,7 @@ function heroPane(s, u, line) {
     '</section><footer class="fy-pane-foot">' +
     btn(
       'hero-train',
-      icon('tree', 16) + '習武' + (u.sp > 0 ? '<b>' + u.sp + '</b>' : ''),
+      icon('tree', 16) + '修習' + (u.sp > 0 ? '<b>' + u.sp + '</b>' : ''),
       'mj-action fy-train',
       tag(u.id) + ' title="在「武學」頁為' + name(u) + '修習與配招"'
     ) +
@@ -243,11 +245,15 @@ function memberLine(s, u, ui) {
     : G.enemies(s).filter((v) => G.unitDetails(v).rank);
   const board = mapLayout(map);
   // The briefing in short: this board's (or, from the shop, the next board's, whose secondary
-  // is not drawn yet). 軍情 opens the whole briefing; the brief folds away to leave room.
+  // is not drawn yet). It repeats the 軍情 page just left, so it starts folded (app.js teamUI):
+  // the folded header keeps the 支線's name, and the one line that bears on the line-up, the
+  // warning for a 支線 whose hero is not sent out, shows folded or not (folded, under the header;
+  // open, in the 支線 row). 軍情 opens the whole page.
   const model = upcoming ? R.boardBrief(map, s.run.stage + 1, s.run.route) : R.briefing(s);
   const side = model.side;
   const shut = !!ui.missionShut;
   const row = (term, body) => '<div><dt>' + term + '</dt><dd>' + body + '</dd></div>';
+  const warning = side?.warning ? '<small class="warn fy-mission-warn">' + icon('info', 14) + esc(side.warning) + '</small>' : '';
   const brief =
     '<section class="wake-mission' +
     (shut ? ' folded' : '') +
@@ -256,6 +262,7 @@ function memberLine(s, u, ui) {
     '<h3>作戰目標</h3><span>' +
     esc(board.name) +
     '</span>' +
+    (shut && side ? '<small class="fy-mission-side">支線 · <strong>' + esc(side.name) + '</strong></small>' : '') +
     btn('brief-open', icon('flag', 14) + '軍情', 'mj-action brief-open', 'title="軍情"') +
     btn(
       'mission-fold',
@@ -263,26 +270,17 @@ function memberLine(s, u, ui) {
       'mj-action fy-fold',
       'aria-expanded="' + !shut + '" aria-controls="fy-mission-body"'
     ) +
-    '</header><dl id="fy-mission-body"' +
+    '</header>' +
+    (shut ? warning : '') +
+    '<dl id="fy-mission-body"' +
     (shut ? ' hidden' : '') +
     '>' +
     row('勝利', esc(model.win)) +
     row('敗退', esc(model.loss)) +
-    (model.noSide
-      ? ''
-      : row(
-      '支線',
-      side
-        ? '<strong>' +
-            esc(side.name) +
-            '</strong>　' +
-            esc(side.detail) +
-            '<small>' +
-            esc(side.rewardText) +
-            '</small>' +
-            (side.warning ? '<small class="warn">' + esc(side.warning) + '</small>' : '')
-        : esc(model.sideNote)
-    )) +
+    // (No row while no 支線 is drawn yet: the shop's look at the next board, and the last board.)
+    (side
+      ? row('支線', '<strong>' + esc(side.name) + '</strong>　' + esc(side.detail) + '<small>' + esc(side.rewardText) + '</small>' + (shut ? '' : warning))
+      : '') +
     (model.recruit ? row('入局', esc(model.recruit)) : '') +
     '</dl></section>';
   return (
@@ -295,11 +293,7 @@ function memberLine(s, u, ui) {
     footprint(board) +
     '<span><strong>' +
     board.name +
-    ' · 地勢與敵情</strong><small>' +
-    board.shapeName +
-    ' · ' +
-    board.cells.length +
-    ' 格</small></span></summary><div class="fy-opponents">' +
+    ' · 地勢與敵情</strong></span></summary><div class="fy-opponents">' +
     foes
       .map(
         (v) =>
@@ -326,7 +320,7 @@ function arts(s, u, ui) {
   const shelf = R.guideInventory(s).map((n) =>
     row(
       '《' + n.name + '》' + factBadge(moveFacts(s, u, n.id)),
-      '公庫 ×' + n.count + ' · 參悟 ' + TECHNIQUES[n.id].points + ' 點',
+      '公庫 ×' + n.count + ' · 修習需 ' + TECHNIQUES[n.id].points + ' 武學點',
       action(
         'teach-guide',
         u.guides.includes(n.id) ? '已獲授' : '授予' + name(u),
@@ -348,6 +342,7 @@ function arts(s, u, ui) {
     { tab: ui.skill, node: ui.node, slot: ui.slot },
     {
       team: true,
+      details: detailsButton(u),
       guides: list('公庫武譜', shelf, '公庫目前沒有抄本。'),
       loadout: combos
     }
@@ -360,7 +355,7 @@ function teamPage(s, u, ui) {
     ui.tab === 'line'
       ? memberLine(s, u, ui)
       : ui.tab === 'stores'
-        ? armory(s, u, ui)
+        ? armory(s, u, ui, detailsButton(u))
         : arts(s, u, ui);
   const back = prep
     ? btn('home', '主畫面', 'mj-action')
@@ -368,14 +363,6 @@ function teamPage(s, u, ui) {
   const right = prep
     ? btn('field-deploy', icon('flag', 16) + ' 出陣 · ' + s.run.next.length + ' 人', 'gold-btn')
     : '';
-  const recipient =
-    ui.tab === 'line'
-      ? ''
-      : '<div class="fy-recipient"><strong>' +
-        name(u) +
-        '</strong>' +
-        action('hero-details', '俠客詳情', u.id) +
-        '</div>';
   return (
     '<section class="mj-view fy-team' +
     (ui.tab === 'arts' ? ' mj-mastery' : '') +
@@ -387,7 +374,6 @@ function teamPage(s, u, ui) {
     '</div><div id="fy-section" role="tabpanel" aria-label="' +
     teamTabs.find(([id]) => id === ui.tab)[2] +
     '">' +
-    recipient +
     content +
     '</div><footer class="mj-footer">' +
     back +

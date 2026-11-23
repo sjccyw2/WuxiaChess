@@ -10,7 +10,7 @@ import {
   blankRecord,
   CONDITION_NAMES
 } from './battle-mastery.js';
-import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE, RECALL_NOTE } from '../data/mastery-catalog.js';
+import { HERO_PATHS, GATE_LABELS } from '../data/mastery-catalog.js';
 import * as G from './game.js';
 import { NUMERALS } from './game.js';
 import { mapLayout } from '../data/terrain.js';
@@ -320,7 +320,7 @@ function migrateSave(s, removed = TECHNIQUES_REMOVED, renamed = TECHNIQUES_RENAM
   if (Array.isArray(r.shop))
     for (const o of r.shop) if (o && names.has(o.id)) o.id = names.get(o.id);
   if (refunded && Array.isArray(s.logs))
-    G.log(s, 'system', '武學譜重修：已失傳的招式退還武學點數。', '武學傳承');
+    G.log(s, 'system', '武學譜重修：已失傳的招式退還武學點。', '武學傳承');
   return s;
 }
 // Per-board bookkeeping kept on a hero; `advance` clears it for the next board.
@@ -1334,30 +1334,22 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     const n = board.objects.filter((o) => o.id.split('#')[0] === key).length;
     return G.DETAILS[key].name + (n > 1 ? COUNT_WORDS[n] + '根' : '');
   });
-  // The kind of battle, as the youth reads it from the table: where the 戰意 sits.
-  const battle =
-    kind === 'rout'
-      ? '殲滅 · ' + MAZE_TALE.brief.rout
-      : kind === 'keep'
-        ? '守 · ' + MAZE_TALE.brief.keep
-        : kind === 'break'
-          ? '破 · ' + MAZE_TALE.brief.break
-          : kind === 'yield'
-            ? '問劍 · ' + MAZE_TALE.brief.yield + boonLine()
-            : masters.length > 1
-              ? '斬將 · ' + MAZE_TALE.brief.slayTwo
-              : '斬將 · ' + MAZE_TALE.brief.slay;
+  // How the board is won, in one plain line (the producer's ruling of 2026-11-23: this page
+  // states rules, once): the kind's name, the board's own condition, then what need not be done.
   const hold = board.hold ? '第' + NUMERALS[board.hold - 1] + '回合' : '';
+  const within = '在第十二回合結束前';
   const win =
-    kind === 'rout'
-      ? '在第十二回合結束前擊敗全部敵人。' + (board.waves.length ? '援軍亦須擊敗。' : '')
+    KIND_NAMES[kind] +
+    ' · ' +
+    (kind === 'rout'
+      ? within + '擊敗全部敵人' + (board.waves.length ? '，援軍也算' : '') + '。'
       : kind === 'keep'
-        ? '守住' + things.join('、') + '，撐到' + hold + '結束；或在此之前擊敗' + masters.join('與') + '。'
+        ? '守住' + things.join('、') + '到' + hold + '結束；或提前擊敗' + masters.join('與') + '。'
         : kind === 'break'
-          ? '在第十二回合結束前擊毀' + things.join('、') + '。'
+          ? within + '擊毀' + things.join('、') + '；局主不必擊敗。'
           : kind === 'yield'
-            ? '在第十二回合結束前，將' + masters.join('與') + '的氣血削至 1 點。他不會倒下；其餘的人不必擊敗。'
-            : '在第十二回合結束前擊敗' + masters.join('與') + '。';
+            ? within + '將' + masters.join('與') + '的氣血削至 1 點；他不會倒下，其餘的人不必擊敗。'
+            : within + '擊敗' + masters.join('與') + (masters.length > 1 ? '，' + COUNT_WORDS[masters.length] + '人都要擊敗' : '') + '；其餘敵人不必打完。');
   const leader = s ? heroName(r.scene === 'fight' ? s.leader : r.next[0]) : '領隊';
   // 敵情: each 局主, then each 副手; the board's own first, then the leaders of its waves.
   const villain = (key) => G.DETAILS[key]?.rank;
@@ -1429,8 +1421,9 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     heading: stageTitle(stage) + layout.name,
     kind,
     kindName: KIND_NAMES[kind],
-    battle,
     win,
+    // The last board: what 無名 gains as he steps onto it, a line of its own under 勝利.
+    boon: kind === 'yield' ? boonLine() : '',
     loss: kind === 'keep' ? leader + '倒下，或' + things.join('、') + '被毀。' : leader + '倒下，或第十二回合結束仍未取勝。',
     // The board's objects for the plan and the page: each with its picture and what it is.
     objects: (board.objects || []).map((o) => {
@@ -1443,8 +1436,6 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     // The last board has no secondary: its pages show no 支線 at all.
     noSide: !board.sides.length,
     sideNote: s || !board.sides.length ? '' : '支線於入局時抽定。',
-    lead: MAZE_TALE.brief.lead,
-    sideLead: MAZE_TALE.brief.side,
     recruit: recruitId ? MAZE_TALE.brief.next.replace('{hero}', heroName(recruitId)) : '',
     foes,
     force: {
@@ -1866,7 +1857,7 @@ function giveGuide(s, u, id) {
   G.log(
     s,
     'grow',
-    '受授《' + TECHNIQUES[id].name + '》，可在「授業武譜」參悟。',
+    '受授《' + TECHNIQUES[id].name + '》，可在「授業武譜」修習。',
     G.DETAILS[u.id].name
   );
   return true;
@@ -1915,6 +1906,10 @@ const eligibleArt = (u, id) =>
 function canPlaceLearned(s, u, id) {
   return G.canConfigure(s, u) || (!!id && G.canAct(s, u) && !!u.unplacedArts?.includes(id));
 }
+// An art's note as the game shows it: what the novels say. A sentence about this adaptation
+// (「…是本作的讀法」) is for the wiki, which prints `source` whole; with nothing left, no note.
+const novelNote = (source = '') =>
+  (source.match(/[^。]+。?/g) || []).filter((sentence) => !sentence.includes('本作')).join('');
 function studyState(s, u, id) {
   if (!u) return null;
   const root = G.TALENTS[id],
@@ -1947,7 +1942,7 @@ function studyState(s, u, id) {
     tier: a?.tier || 0,
     parents,
     source,
-    sourceNote: a?.source || '',
+    sourceNote: novelNote(a?.source),
     description: (a || root).desc,
     facts: moveFacts(s, u, id),
     cost: price,
@@ -1966,7 +1961,7 @@ function studyState(s, u, id) {
           : u.sp < price
             ? '武學點不足'
             : allowed
-              ? '可參悟'
+              ? '可修習'
               : '整備時修習',
     canEquip: kind !== 'basic' && kind !== 'root' && learned && canPlaceLearned(s, u, id),
     equipped: u.slots.includes(id),
@@ -2040,13 +2035,8 @@ function treeModel(s, u) {
     book: path.book,
     pathTitle: path.title,
     origin: path.origin,
-    originNote: CATALOG_NOTE,
-    // A tree may say in its own words how its arts come back (無名 is no copy).
-    recallNote: HERO_PATHS[u.id].recall || RECALL_NOTE,
     sp: u.sp,
     camp: s.run.status === 'camp',
-    leaderName: COMMANDS[u.id].name,
-    leaderDesc: commandDescription(u.id),
     basicName: G.basicFor(u).name,
     basicFacts: moveFacts(s, u, 'basic'),
     school,
@@ -2078,8 +2068,9 @@ function campModel(s) {
       : last.optional
         ? '支線達成：' + sideName(r.side) + '。' + rewardText(r.side, r.stage, last.side?.manual, r) + '。'
         : '支線未成：' + sideName(r.side) + '。',
+    // A lost board: the board's reason alone. What follows it is the banner of the next page.
     story: !last.won
-      ? s.reason + MAZE_TALE.loss
+      ? s.reason
       : r.stage === TENTH && final
         ? MAZE_TALE.win
         : CHAMBER_TALES[s.mapIndex].victory,
@@ -2094,7 +2085,7 @@ function campModel(s) {
         name: item?.name || '《' + a.name + '》',
         group: item?.kind || 'manual',
         icon: item?.icon || 'book',
-        description: item?.desc || a.desc + '　每冊限授一人，另花 ' + a.points + ' 武學點參悟。',
+        description: item?.desc || a.desc + '　每冊限授一人，另花 ' + a.points + ' 武學點修習。',
         owned,
         canBuy: o.left > 0 && r.coins >= o.price
       };

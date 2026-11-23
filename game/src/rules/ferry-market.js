@@ -57,7 +57,7 @@ const MARKET_STOCK = {
   beeNectar: [12, 1]
 };
 const MARKET_RULES =
-  '每局重排貨架，各抽兩件兵器、兩件護具、兩種丹藥與兩卷武譜。銀價較底價浮動零至三兩。武譜購回後須授予俠客並花武學點參悟。';
+  '每局重排貨架，各抽兩件兵器、兩件護具、兩種丹藥與兩卷武譜。銀價較底價浮動零至三兩。武譜購回後須授予俠客並花武學點修習。';
 function pools(s) {
   const depth = s.run.stage + 1,
     roster = G.company(s);

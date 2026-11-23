@@ -435,9 +435,7 @@ function installTutorial({ dialog, field, scene, board, view, close, notice, end
       replayable(view())
         ? '<p class="tut-replay"><button type="button" class="outline-btn" data-tut="replay">' +
           TEXT.replay +
-          '</button><span>' +
-          TEXT.replayNote +
-          '</span></p>'
+          '</button></p>'
         : ''
   };
 }

@@ -454,9 +454,12 @@
 .fy-slots small {
   color: var(--mj-quiet);
 }
-.fy-sectionhead,
-.fy-shopbar {
+.fy-sectionhead {
   justify-content: space-between;
+}
+/* The shop's bar holds the purse alone. */
+.fy-shopbar {
+  justify-content: flex-end;
 }
 #modal .fy-shopbar {
   min-height: 42px;
@@ -594,16 +597,23 @@
   }
 }
 
-.fy-recipient {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0 0 12px;
+/* 俠客詳情, at the end of the 武學 header card and of the 裝備物資 name row. */
+#modal .fy-details {
+  flex: none;
+  min-height: 40px;
+  margin-left: 8px;
 }
-.fy-recipient strong {
-  font: 600 20px/1.3 var(--serif);
-  color: var(--mj-paper);
+#modal .fo-section .fy-details {
+  margin-left: auto;
+}
+/* In a narrow column 氣血 and 內力 fold onto two lines between the name and 俠客詳情, so the
+   row stays one row. */
+.fo-doll .fo-section > small {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.fo-doll .fo-section > small > span {
+  white-space: nowrap;
 }
 
 .fy-brief summary {
@@ -611,14 +621,8 @@
   align-items: center;
   gap: 12px;
 }
-.fy-brief summary strong,
-.fy-brief summary small {
+.fy-brief summary strong {
   display: block;
-}
-.fy-brief summary small,
-.fy-geometry {
-  color: var(--mj-quiet);
-  font-size: 13px;
 }
 .fy-footprint {
   flex: none;
@@ -784,8 +788,7 @@
   color: var(--fo-gold);
   font-variant-numeric: tabular-nums;
 }
-.fo-instruction,
-.fo-reserves > small {
+.fo-instruction {
   margin: 6px 0;
   color: var(--fo-quiet);
   font-size: 12px;
@@ -1293,17 +1296,6 @@
   overflow: auto;
   overscroll-behavior: contain;
 }
-.mj-berth .fo-shop-face {
-  position: relative;
-  align-self: center;
-  width: clamp(53px, 9vw, 78px);
-  aspect-ratio: 1;
-  object-fit: cover;
-  object-position: 50% 35%;
-  border: 1px solid #b59b69;
-  border-radius: 4px;
-  margin-right: 13px;
-}
 .mj-item-symbol:has(.fo-mini),
 .item-icon:has(.fo-mini) {
   padding: 0;
@@ -1357,6 +1349,11 @@
   }
   .fo-doll .fo-section {
     margin-bottom: 5px;
+  }
+  /* 丹藥: the face takes room, so 氣血 and 內力 go under the name and 俠客詳情. */
+  .fo-medicine .fo-doll .fo-section > small {
+    order: 1;
+    flex-basis: 100%;
   }
   .fo-figure {
     max-width: none;
@@ -1530,26 +1527,39 @@
   border: 1px solid #b3a479;
   border-radius: 3px;
 }
-.lk-invite > div,
+.lk-invite > p,
 .lk-guest > div {
   flex: 1;
   min-width: 0;
 }
-.lk-invite small,
 .lk-guest small,
 .lk-status {
   color: var(--fo-gold);
   font-size: 0.81rem;
 }
-.lk-invite h3,
 .lk-guest h3 {
   margin: 2px 0;
   color: var(--fo-paper);
   font-size: 1.15rem;
 }
-.lk-invite span {
+/* The shop's row for the bowls: one line, the face small beside it. */
+.lk-invite {
+  gap: 10px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+}
+.lk-invite img {
+  width: 36px;
+}
+.lk-invite > p {
+  margin: 0;
   color: var(--fo-quiet);
   font-size: 0.86rem;
+  line-height: 1.4;
+}
+.lk-invite strong {
+  color: var(--fo-paper);
+  font: 700 1rem/1.4 var(--serif);
 }
 .lk-guest {
   margin-bottom: 8px;
@@ -1595,6 +1605,13 @@
   margin-top: 7px;
   font: 700 1rem/1.45 var(--serif);
 }
+/* What a prize does, in numbers, between its name and its description. */
+.lk-lot .lk-bonus {
+  margin-top: 2px;
+  color: #78392d;
+  font: 600 0.81rem/1.5 var(--fo-sans);
+  font-variant-numeric: tabular-nums;
+}
 .lk-lot small {
   margin-top: 4px;
   font-size: 0.78rem;
@@ -1632,10 +1649,7 @@
 @media (max-width: 480px) {
   .lk-invite {
     gap: 7px;
-    padding: 8px;
-  }
-  .lk-invite img {
-    width: 45px;
+    padding: 5px 8px;
   }
   .lk-guest {
     align-items: flex-start;
@@ -1686,6 +1700,8 @@
   padding: 9px 12px;
 }
 .fo-medicine .fo-doll .fo-section {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;

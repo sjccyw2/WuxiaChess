@@ -1,10 +1,13 @@
 // Rows in each layout are tiers. Columns are lanes. Prerequisite ids are the actual edges.
 // 'signature' means the hero's initially known art. The three common passives keep their existing ids.
+// The wiki's convention line. (It also closed the 師承與行功 fold in the game until 2026-11-23.)
 const CATALOG_NOTE =
-  '傳承所記為原著人物、武學或器物。招式分支、戰棋效果、武譜流傳與參悟條件為本作演繹。';
+  '傳承所記為原著人物、武學或器物。招式分支、戰棋效果、武譜流傳與修習條件為本作演繹。';
 // Why a famous hero arrives holding only an early art, said once above every tree: 求敗 wants
 // to watch an art grow, so every stone starts each game from its root, and buying a node is that
 // hero remembering. The art that made their name comes last, with the days it was paid for in.
+// (Shown on the wiki's hero pages. It stood above every tree in the game until 2026-11-23, when
+// the producer had it taken off the 武學 page to make room for the tree.)
 const RECALL_NOTE =
   '入局的只是拓來的一念，每一盤都從根長起。手上最熟的功夫還在；後來所學，要在局中一招一招想起來。成名的那一招排在最後：要連換來它的那段日子，一併想起。';
 const GATE_LABELS = {
@@ -717,7 +720,7 @@ const MASTERY_ARTS = {
     fortify: { power: 4, turns: 2 },
     aura: 1,
     desc: '抖響鐵索挑釁四周，自身與相鄰同伴防禦增加 4 點，持續兩回合。至下回合，兩格內能攻到他的敵人只能攻擊他。',
-    source: '依向問天與令狐冲在涼亭並肩、獨引群敵的情節另擬。'
+    source: '向問天與令狐冲在涼亭並肩，獨引群敵。此招為本作所擬。'
   },
   sweepingWhip: {
     name: '長鞭破陣',
@@ -1093,7 +1096,7 @@ const MASTERY_ARTS = {
     blink: true,
     evade: true,
     desc: '依卦位換身，移至縱橫合計三格內可落腳的空格，並得閃身：至下回合，下一次受到的直接攻擊落空。施展會用去當次行動。',
-    source: '段譽在無量山洞與北冥神功同時習得凌波微步。跨格落位與閃身為戰棋演繹。'
+    source: '段譽在無量山洞與北冥神功同時習得凌波微步。跨格落位與閃身為本作演繹。'
   },
   lesserMarsh: {
     name: '少澤劍',
@@ -1185,7 +1188,7 @@ const MASTERY_ARTS = {
     visual: 'huang',
     basicBonus: 4,
     desc: '以虛掌引開視線，普攻命中時傷害增加 4 點，並留下破綻。',
-    source: '落英神劍掌出於桃花島。拂花是為這一局擬定的基礎修習名。'
+    source: '落英神劍掌出於桃花島。拂花為本作所擬的修習名。'
   },
   peachWard: {
     name: '五行布陣',
@@ -1261,7 +1264,7 @@ const MASTERY_ARTS = {
     haste: { power: 2, turns: 2 },
     aura: 3,
     desc: '點出陣中捷徑，目標及三格內友軍移動增加 2 步，持續兩回合，並解除不良狀態。',
-    source: '取桃花島石陣與生門的意象，行軍步數為戰棋規則。'
+    source: '取桃花島石陣與生門的意象，行軍步數為本作的戰棋規則。'
   },
   staffWithoutDogs: {
     name: '天下無狗',
@@ -2989,7 +2992,7 @@ const TRADE_MANUALS = {
     target: 'ground',
     blink: true,
     desc: '提氣掠過阻隔，落在縱橫合計兩格內可站立的空格。施展會用去當次行動。',
-    source: '取《射鵰英雄傳》中裘千仞「鐵掌水上漂」的輕功，境中抄本將它寫成短渡身法。'
+    source: '「鐵掌水上漂」是《射鵰英雄傳》中裘千仞的輕功。通吃坊的抄本將它寫成短渡身法，出自本作。'
   }
 };
 

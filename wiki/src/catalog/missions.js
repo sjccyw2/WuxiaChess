@@ -42,7 +42,7 @@ function stageMission(stage) {
     id: 'map-' + stage,
     name: stageName(stage) + ' · ' + m.kindName,
     tag: '戰局',
-    summary: m.battle,
+    summary: m.win + m.boon,
     image: wikiArt('map-' + stage + '.webp'),
     sections: [
       rows('勝負與獎勵', [

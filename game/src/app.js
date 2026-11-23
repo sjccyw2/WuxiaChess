@@ -78,7 +78,8 @@ let deployPick = null,
 // reads the next board.
 let briefFrom = null;
 let studyUI = { tab: 'school', node: null, slot: 0 };
-let teamUI = { tab: 'line', slot: 0, skill: 'school', node: null };
+// (作戰目標 on 整備 starts folded: it repeats the 軍情 page the player has just left.)
+let teamUI = { tab: 'line', slot: 0, skill: 'school', node: null, missionShut: true };
 let heroParent = null,
   archiveScene = 'before',
   archiveReturn = null;
@@ -511,9 +512,8 @@ function openArts(keyboard = false) {
   );
 }
 // ── The deployment step ─────────────────────────────────────────────────────
-// The stones are still in the youth's hand: 落子無悔 once the battle is begun.
-const DEPLOY_TIP =
-  '起陣 · 子還在手上，換得：點選一位俠客，再點另一位俠客或亮起的空格互換位置。一按「開戰」，落子無悔。';
+// Heroes may still be swapped; once the battle is begun they may not (落子無悔).
+const DEPLOY_TIP = '起陣 · 點一位俠客，再點另一位或亮起的空格換位。按「開戰」後不能再換。';
 function showDeployTip() {
   if (coach.running()) return; // the tutorial's card says it instead
   deployTip = true;
@@ -906,7 +906,7 @@ function openPage(name, heroId) {
   }
   if (name === 'team' && dialogState !== 'team' && !personalPages.includes(dialogState)) {
     viewId = state.selected;
-    // (A folded 作戰目標 stays folded the next time the page opens.)
+    // (作戰目標 stays as it was left, folded or open, the next time the page opens.)
     teamUI = { tab: 'line', slot: 0, skill: 'school', node: null, missionShut: teamUI.missionShut };
   }
   if (personalPages.includes(name)) {
@@ -1504,6 +1504,16 @@ function toggleSound() {
   audio('chime');
   notice(prefs.sound ? '遊戲音效已開啟' : '遊戲音效已關閉');
 }
+// On an upright phone a node's detail, with its learn button, sits under the skill tree. Once the
+// node is learned the page goes back up to the tree, so the next one can be picked at once.
+function backToTree() {
+  if (!window.matchMedia('(max-width: 620px)').matches) return;
+  requestAnimationFrame(() => {
+    const tree = dialog.querySelector('.mj-map-window'),
+      scroller = tree?.closest('.mj-scroll');
+    if (scroller) scroller.scrollTop += tree.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 8;
+  });
+}
 function armState() {
   return dialogState === 'team' ? teamUI : studyUI;
 }
@@ -1854,7 +1864,7 @@ function command(action, id, data = {}, keyboard = false) {
         drawModal();
       }
       break;
-    // 習武 in the 陣容 pane: the 武學 tab, on the tree, for that hero.
+    // 修習 in the 陣容 pane: the 武學 tab, on the tree, for that hero.
     case 'hero-train':
       if (dialogState === 'team' && G.company(state).some((v) => v.id === id)) {
         viewId = id;
@@ -2077,12 +2087,13 @@ function command(action, id, data = {}, keyboard = false) {
         if (chooseSlot && dialogState === 'team') teamUI.skill = 'loadout';
         update();
         drawModal(!chooseSlot);
+        if (!chooseSlot) backToTree();
         audio('grow');
         notice(
           chooseSlot
-            ? '新招已悟，請選一格帶入此戰。'
+            ? '新招已修習，請選一格帶入此戰。'
             : u.slots.includes(id)
-              ? '新招已悟，已裝入空格。'
+              ? '新招已修習，已裝入空格。'
               : '修習有成。'
         );
       }
@@ -2156,6 +2167,7 @@ function command(action, id, data = {}, keyboard = false) {
         audio('grow');
         update();
         drawModal(true);
+        backToTree();
         notice(uName(u) + '已修習「' + G.TALENTS[id].name + '」');
       }
       break;
@@ -2197,7 +2209,7 @@ function command(action, id, data = {}, keyboard = false) {
       advanceAfterStrike(u.id, hit);
       if (hit.leveled) {
         audio('level');
-        notice(uName(u) + '升至等級 ' + u.level + '，武學點數 +1');
+        notice(uName(u) + '升至等級 ' + u.level + '，武學點 +1');
       } else if (!state.result && !skill) notice(uName(u) + '施展「' + G.basicFor(u).name + '」');
       break;
     }

@@ -33,7 +33,7 @@ function realmView(profile, picked) {
     plus = MAZE_TALE.finale.plus;
   return `<section class="run-view run-realm">
     ${titleHead('scroll', '選境界')}
-    <p class="realm-lead">棋臺邊的石上刻著五柄劍的來歷。每勝一輪，求敗便放下一樣，他的黑子便多一分自己，也多一分難纏。選一重境界入夢。勝了已開的最高一重境界，下一重境界方開。無劍境界十局皆勝，便是終局：求敗與${esc(YOUTH.name)}都放下棋子，親自入盤。</p>
+    <p class="realm-lead">境界即難度，越後敵人越強。勝了已開的最高一重，下一重方開；無劍境界十局皆勝，接著打終局。</p>
     <ol class="realm-list" aria-label="五重境界">${cards}</ol>
     ${ended ? `<p class="realm-plus">${icon('spark', 15)}<span><strong>${esc(plus.title)}</strong>${esc(plus.text.replaceAll('{name}', YOUTH.name))}</span></p>` : ''}
     <footer class="run-footer">${btn('close', '返回', 'outline-btn')}<span class="realm-actions">${ended ? btn('ending-replay', '重看終局', 'outline-btn') : ''}${btn('realm-go', '入夢・' + REALMS[picked - 1].sword + '境界', 'gold-btn')}</span></footer>
