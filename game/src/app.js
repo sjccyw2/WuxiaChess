@@ -23,7 +23,7 @@ import * as R from './rules/journey.js';
 import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
 import { playFilm } from './ui/intro-film.js';
 import { realmView } from './ui/realm-views.js';
-import { devMode, devPanel, devTestView, loadPick, changePick } from './ui/dev-mode.js';
+import { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick } from './ui/dev-mode.js';
 import { MAZE_TALE } from './data/maze-tale.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
@@ -1363,23 +1363,16 @@ function playEnding(onDone) {
   closePage();
   playFilm({ ...MAZE_TALE.finale.film, muted: filmMuted(), label: '終局影片', onDone: () => onDone?.() });
 }
-// Developer mode (?dev): a small panel, kept inside the open dialog so it stays clickable.
-const dev = devMode() ? document.createElement('aside') : null;
+// Developer mode (?dev): a small floating window (dev-mode.js), kept inside the open dialog so
+// that it stays clickable.
+const dev = devMode() ? devWindow() : null;
 // The test battle being set up on the 試局 page (dev-mode.js).
 let devPick = dev ? loadPick() : null;
-if (dev) {
-  dev.className = 'dev-panel';
-  dev.setAttribute('aria-label', '開發者模式');
-  dev.innerHTML = '<details class="dev-fold"><summary>開發</summary><div class="dev-buttons"></div></details>';
-}
 function refreshDev() {
   if (!dev) return;
   const battle = screen === 'battle' && state.run.status === 'battle' && !state.result;
   const html = devPanel({ battle, side: !!state.run.side, fight: battle && state.run.scene === 'fight' && !state.run.deploying });
-  const list = dev.querySelector('.dev-buttons');
-  if (list.innerHTML !== html) list.innerHTML = html;
-  const host = dialog.open ? dialog : document.body;
-  if (dev.parentElement !== host) host.append(dev);
+  dev.show(html, dialog.open ? dialog : document.body);
 }
 function devFinish(won, side = false) {
   if (screen !== 'battle' || !R.devFinish(state, won, side)) return notice('此刻不能這樣做。');
@@ -1678,7 +1671,7 @@ function command(action, id, data = {}, keyboard = false) {
       ++aiRun;
       state = next;
       save();
-      dev.querySelector('details').open = false;
+      dev.fold();
       strikeData = null;
       logFilter = 'all';
       enterBattle(true);
@@ -1697,7 +1690,7 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-test':
       if (!dev) break;
       devPick = loadPick();
-      dev.querySelector('details').open = false;
+      dev.fold();
       openPage('devtest');
       audio('page');
       break;
@@ -1717,10 +1710,23 @@ function command(action, id, data = {}, keyboard = false) {
       ++aiRun;
       state = next;
       save();
-      dev.querySelector('details').open = false;
+      dev.fold();
       strikeData = null;
       logFilter = 'all';
       enterBattle(true);
+      break;
+    }
+    case 'dev-wipe':
+    case 'dev-first': {
+      // Two presses each (dev-mode.js). 清空紀錄: this browser as on a first visit, at the title.
+      // 清空・首局: the same, and an ordinary first run saved at the first board's 起陣, which the
+      // page opens on when it has loaded again.
+      if (!dev || !dev.confirm(action)) break;
+      const next = action === 'dev-first' ? R.devFirstBoard() : null;
+      if (action === 'dev-first' && !next) break;
+      ++aiRun;
+      if (next) state = next;
+      devRestart(next && save);
       break;
     }
     case 'prologue-prev':
@@ -2286,5 +2292,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 openTitle();
+// Developer mode's 清空・首局 loaded the page again: on to the board it saved, as 繼續 would.
+if (dev && devEnter() && hasSave) enterBattle(false);
 
 export {};
