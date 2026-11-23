@@ -394,6 +394,8 @@ const ENCOUNTERS = [
       '',
     {
       redirect: { while: 'charged', keep: 0, back: 0.5 },
+      // Once one 星索樁 has fallen he guards the other (the producer, 2026-11-23).
+      post: { tile: 'ward', tether: 2, wake: false },
       phase: {
         atk: 5,
         range: 1,
@@ -1016,7 +1018,7 @@ const GISTS = {
   'lieutenant-7': '守在石頸北口一格內。',
   mirror: '出手後退開；半血後身法更快。',
   'lieutenant-8': '專挑領隊。',
-  murong: '蓄勢時第一下直接攻擊被反震；星索樁立著時替他減傷。',
+  murong: '蓄勢時第一下直接攻擊被反震；星索樁立著時替他減傷；倒一根，他便退守另一根。',
   'lieutenant-9': '火焰刀隔四格傷人並削去內力；專挑內力深厚者。',
   fengTiannan: '長棍令目標絆足。',
   zhaoZhong: '守在東院兩格內，受擊才離位；截腕令目標攻擊降低；專挑領隊。',

@@ -1428,10 +1428,35 @@ function playEnding(onDone) {
 const dev = devMode() ? devWindow() : null;
 // The test battle being set up on the 試局 page (dev-mode.js).
 let devPick = dev ? loadPick() : null;
+// 重試此局: the run as it stood when the board's 起陣 began, kept for this tab (so a reload keeps
+// it too). It is offered while the run is still on that board: fought, won or lost.
+const RETRY_KEY = 'jianying.dev-retry.v1';
+let retryPoint = (() => {
+  try {
+    return dev ? JSON.parse(sessionStorage.getItem(RETRY_KEY)) : null;
+  } catch {
+    return null;
+  }
+})();
+const boardMark = (s) => (s.run ? [s.run.seed, s.run.realm, s.run.voyage, s.run.stage].join(':') : '');
+function keepRetry() {
+  if (!dev || screen !== 'battle' || !deploying() || retryPoint?.mark === boardMark(state)) return;
+  retryPoint = { mark: boardMark(state), save: JSON.stringify(state) };
+  try {
+    sessionStorage.setItem(RETRY_KEY, JSON.stringify(retryPoint));
+  } catch {}
+}
+const canRetry = () => !!retryPoint && retryPoint.mark === boardMark(state) && screen === 'battle';
 function refreshDev() {
   if (!dev) return;
+  keepRetry();
   const battle = screen === 'battle' && state.run.status === 'battle' && !state.result;
-  const html = devPanel({ battle, side: !!state.run.side, fight: battle && state.run.scene === 'fight' && !state.run.deploying });
+  const html = devPanel({
+    battle,
+    side: !!state.run.side,
+    fight: battle && state.run.scene === 'fight' && !state.run.deploying,
+    retry: canRetry()
+  });
   dev.show(html, dialog.open ? dialog : document.body);
 }
 function devFinish(won, side = false) {
@@ -1721,6 +1746,21 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-lose':
       if (dev) devFinish(action !== 'dev-lose', action === 'dev-win-side');
       break;
+    case 'dev-retry': {
+      // Back to this board's 起陣, everything as it was then (the run, the heroes, the purse).
+      if (!dev || !canRetry()) break;
+      const next = R.restoreRun(JSON.parse(retryPoint.save));
+      if (!next) return notice('此刻不能這樣做。');
+      ++aiRun;
+      state = next;
+      save();
+      strikeData = null;
+      logFilter = 'all';
+      mapTip(null);
+      enterBattle(true);
+      notice('已回到本局起陣。');
+      break;
+    }
     case 'dev-press':
       // The board's master loses half the 氣血 he has, as a blow would take it.
       if (dev && state.phase === 'ally' && R.devPress(state)) update();

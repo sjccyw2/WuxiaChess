@@ -3639,6 +3639,7 @@ function postsReachable(s) {
     const post = G.traitsOf(u).post;
     if (!post || post.tile === 'master') return true;
     const tile = G.postTile(s, u, post);
+    if (!tile) return post.tile === 'ward'; // 慕容博 keeps no post until a 星索樁 has fallen
     const ghost = { ...unit(s, s.leader), x: from.x, y: from.y, side: 'ally' };
     return G.walkable(tile.x, tile.y, s.mapIndex) && G.movementPath({ ...s, units: [] }, ghost, from, tile).length > 0;
   });
@@ -3923,7 +3924,8 @@ section('board 9 無刻漏臺: the mirror');
   const [mu, jiu, bow, scout] = foesOf(s);
   check('慕容博 and 鳩摩智 have the spec’s numbers', same(numbersOf(mu), [867, 93, 24, 4, 2]) && same(numbersOf(jiu), [337, 86, 16, 3, 2]), numbersOf(mu) + ' / ' + numbersOf(jiu));
   check('斗轉星移 is the mirror, no blow', G.enemyTechnique(mu, s).style === 'mirror' && !G.enemyTechnique(mu, s).strikes);
-  check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。', '【星索護陣】每根立著的星索樁替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
+  check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。', '【坐鎮】星索樁倒下一根，便退到另一根旁守著，守在兩格內，不離位。', '【星索護陣】每根立著的星索樁替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
+  check('while both posts stand he keeps no post', G.holdOf(s, mu) === null);
   check('鳩摩智’s page', same(pageOf(s, jiu), ['另外削去目標 24 點內力。', '絕技射程 4 格。', '【偏好】專挑內力深厚者。']), JSON.stringify(pageOf(s, jiu)));
   check('the rope-holders’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【坐鎮】守在索樁一格內，不離位。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
   check('the posts are ground the heroes can walk to', postsReachable(s));
@@ -3951,6 +3953,23 @@ section('board 9 無刻漏臺: the mirror');
   hero.acted = hero.moved = false;
   G.resolve(s, hero, post, false);
   check('one rope down: the ward is 35% and the log says so', G.wardShare(s, mu) === 35 && s.logs.some((l) => l.text === '一條星索斷了。慕容博的護勁降至三成半。'));
+  // He falls back to guard the post still standing (the producer, 2026-11-23).
+  const other = unit(s, 'starPost#2');
+  const hold = G.holdOf(s, mu);
+  check('one rope down: 慕容博 holds within two of the other post', !!hold && hold.tile.x === other.x && hold.tile.y === other.y && hold.tether === 2, JSON.stringify(hold));
+  check('…and his page says where', G.enemyTraitLines(s, mu).includes('【坐鎮】退守星索樁（' + (other.x + 1) + '，' + (other.y + 1) + '）兩格內，不離位。'), JSON.stringify(G.enemyTraitLines(s, mu)));
+  // No hero near the other post: turn by turn he walks back to it and stays there.
+  for (const v of G.party(s)) v.hp = 0;
+  const leader = unit(s, s.leader);
+  leader.hp = leader.maxHp;
+  const far = mapLayout(9).cells.filter((c) => G.walkable(c.x, c.y, 9) && !G.at(s, c.x, c.y) && G.distance(c, other) >= 9 && G.distance(c, mu) >= 6)[0];
+  put(s, s.leader, far.x, far.y);
+  const start = G.distance(mu, other);
+  for (let r = 0; r < 6 && G.distance(mu, other) > 2; r++) {
+    soloTurn(s, mu);
+    closeRound(s);
+  }
+  check('…he walks back to it with no hero near', start > 2 && G.distance(mu, other) <= 2, [start, mu.x, mu.y]);
 }
 
 // ── Board objects (roadmap 0.11 stage two): 守 the qin and the drum, 破 the star posts ─────

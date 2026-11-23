@@ -191,6 +191,10 @@ In a battle, from its story, briefing or 整備 as well:
 - 速敗 loses it;
 - 局主半血, once the fight is on, takes half of what 氣血 the board's master has, as a blow would
   (`devPress`): his 變招 follows, and on the last board two presses bring all ten masters on.
+- 重試此局 puts the run back to the board's 起陣, everything as it was then: the heroes, the purse
+  and the record (`retryPoint` in `app.js`). The run is copied the first time a board reaches
+  起陣 and kept for the tab in `sessionStorage` (`jianying.dev-retry.v1`). The button stays while
+  the run is still on that board, so it also works from the page after a win or a loss.
 
 Each goes through the game's own settling (`devFinish` in `game/src/rules/journey.js`), so
 rewards, the next hero, the story and the end of the run follow as in play. 跳至終局, always

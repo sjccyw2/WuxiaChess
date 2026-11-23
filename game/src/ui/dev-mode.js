@@ -322,9 +322,11 @@ function devWindow() {
 //   battle  a board of the run is being played and not yet decided
 //   side    it has a secondary (the last board has none)
 //   fight   its fight has begun
+//   retry   the board's 起陣 is kept and this is still that board (won, lost or being fought)
 // The two clearing buttons come last, apart from the rest (the window words them: CLEAR).
-function devPanel({ battle, side = true, fight = false }) {
+function devPanel({ battle, side = true, fight = false, retry = false }) {
   return (
+    (retry ? btn('dev-retry', '重試此局', 'dev-btn') : '') +
     (battle
       ? btn('dev-win', '速勝', 'dev-btn') +
         (side ? btn('dev-win-side', '速勝・支線', 'dev-btn') : '') +

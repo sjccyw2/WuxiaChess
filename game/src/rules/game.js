@@ -920,6 +920,14 @@ function traitsOf(u) {
 // 坐鎮: the tile a posted piece guards — its spawn on this board, a tile its traits name, or its
 // board master's tile as its own action begins ('master'; none once the master has fallen).
 function postTile(s, u, post) {
+  // 'ward': no post while every board object that wards him stands; once one has broken, the
+  // nearest still standing (慕容博 falls back to guard the last 星索樁).
+  if (post.tile === 'ward') {
+    const wards = props(s).filter((v) => unitDetails(v)?.traits?.ward);
+    if (!wards.some((v) => !living(v))) return null;
+    const left = wards.filter(living).sort((a, b) => distance(a, u) - distance(b, u))[0];
+    return left ? { x: left.x, y: left.y } : null;
+  }
   if (post.tile === 'master') {
     const m = find(s, commanderId(s));
     return m && living(m) && m !== u ? { x: m.x, y: m.y } : null;
@@ -1070,7 +1078,16 @@ function enemyTraitLines(s, u) {
         .join('；') + '。'
     );
   else if (t.post && u.woke) say('坐鎮', '已離位追擊。');
-  else if (t.post) {
+  else if (t.post?.tile === 'ward') {
+    const tile = postTile(s, u, t.post),
+      within = COUNTS[t.post.tether] + '格內';
+    say(
+      '坐鎮',
+      tile
+        ? '退守' + unitDetails(at(s, tile.x, tile.y)).name + tileName(tile) + within + '，不離位。'
+        : '星索樁倒下一根，便退到另一根旁守著，守在' + within + '，不離位。'
+    );
+  } else if (t.post) {
     const tile = postTile(s, u, t.post);
     const words = t.post.note
       ? fill(t.post.note, { tile: tile ? tileName(tile) : '' })
