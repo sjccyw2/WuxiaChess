@@ -114,14 +114,15 @@ const BATTLES = [
       { kind: 'swift', by: 5, reward: 'coins' }
     ]
   },
-  // 4 空山琴臺: keep the qin on its stone seat on the open terrace, east of the steps, through
-  // round 8; 嵩山弟子 up both wings, east in round 3 and west in round 5. 左冷禪 and 費彬 hold
-  // their posts; their men go for the qin.
+  // 4 空山琴臺: keep the qin on its stone seat at the foot of the heroes' steps, through round 8
+  // (the producer, 2026-11-23: east of the steps it closed the road across the terrace and was
+  // a long way from the heroes); 嵩山弟子 up both wings, east in round 3 and west in round 5.
+  // 左冷禪 and 費彬 hold their posts, 費彬 three tiles south of the qin; their men go for it.
   {
     kind: 'keep',
     legacyKind: 'slay',
     masters: ['master'],
-    objects: [{ id: 'guqin', at: [8, 5] }],
+    objects: [{ id: 'guqin', at: [5, 5] }],
     hold: 8,
     pieces: [],
     waves: [
@@ -192,15 +193,16 @@ const BATTLES = [
       { kind: 'lamp', reward: 'coins' }
     ]
   },
-  // 6 襄陽殘垣: keep the city's war drum where the one passage south opens, through round 9: whoever
-  // gets through the passage is at the drum. Riders twice from
-  // the east, 完顏洪烈 and his archers from the west. 完顏洪烈 is its second master (Q-N28): a
+  // 6 襄陽殘垣: keep the city's war drum through round 9 in the passage below the wall, where the
+  // heroes stand (the producer, 2026-11-23). They come at it three ways: through the two gaps in
+  // the wall to the north, the riders twice from 金輪國師's east, and from the south, where
+  // 完顏洪烈 and his archers come into the camp from its east end. 完顏洪烈 is its second master (Q-N28): a
   // master still to come has not fallen, so felling 金輪國師 alone does not end it.
   {
     kind: 'keep',
     legacyKind: 'slay',
     masters: ['master', 'wanYan'],
-    objects: [{ id: 'warDrum', at: [6, 9] }],
+    objects: [{ id: 'warDrum', at: [3, 8] }],
     hold: 9,
     pieces: [],
     waves: [
@@ -209,18 +211,18 @@ const BATTLES = [
         when: { round: 3 },
         place: '東面缺口',
         pieces: [
-          { id: 'scout-6#1', at: [12, 4], mods: { hp: 0.75 } },
-          { id: 'scout-6#2', at: [11, 4], mods: { hp: 0.75 } }
+          { id: 'scout-6#1', at: [13, 5], mods: { hp: 0.75 } },
+          { id: 'scout-6#2', at: [12, 5], mods: { hp: 0.75 } }
         ]
       },
       {
         id: 'zhao',
         when: { round: 4 },
-        place: '西北甬道',
+        place: '東南營地',
         pieces: [
-          { id: 'wanYan', at: [0, 1] },
-          { id: 'jinBow#1', at: [0, 2] },
-          { id: 'jinBow#2', at: [2, 0] }
+          { id: 'wanYan', at: [15, 10] },
+          { id: 'jinBow#1', at: [13, 9] },
+          { id: 'jinBow#2', at: [13, 11] }
         ]
       },
       {
@@ -228,8 +230,8 @@ const BATTLES = [
         when: { round: 6 },
         place: '東面缺口',
         pieces: [
-          { id: 'scout-6#3', at: [12, 4], mods: { hp: 0.75 } },
-          { id: 'scout-6#4', at: [11, 4], mods: { hp: 0.75 } }
+          { id: 'scout-6#3', at: [13, 5], mods: { hp: 0.75 } },
+          { id: 'scout-6#4', at: [12, 5], mods: { hp: 0.75 } }
         ]
       }
     ],
