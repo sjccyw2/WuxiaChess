@@ -934,9 +934,9 @@ function openPage(name, heroId) {
 }
 function closePage() {
   if (dialog.open) {
+    // Read and cleared by the dialog's close event, which arrives after this has returned.
     closingPage = true;
     dialog.close();
-    closingPage = false;
   } else dialogState = null;
 }
 // A page that is a step of the game itself: the prologue, 選境界, the draw, a story, 軍情, 整備, the
@@ -1025,10 +1025,12 @@ dialog.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !e.defaultPrevented && stepOfRun()) e.preventDefault();
 });
 dialog.addEventListener('close', () => {
+  const own = closingPage;
+  closingPage = false;
   if (dialog.open) return;
   // Closed by the browser and not by the game (a second back gesture on a phone, say) while it
   // showed a step of the run: put the step back, so the player is never left on a bare screen.
-  const lost = !closingPage && stepOfRun() ? dialogState : null;
+  const lost = !own && stepOfRun() ? dialogState : null;
   if (lost) setTimeout(() => !dialog.open && (RUN_STEPS.includes(lost) ? openPage(lost) : showScene()));
   dialogState = null;
   if (board?.layers) board.layers.aim = null;
