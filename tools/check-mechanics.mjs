@@ -2022,7 +2022,12 @@ section('zone');
     unit(s, 'hero').hp = unit(s, 'medic').hp = 0;
     const scout = put(s, 'scout', 3, 7);
     put(s, 'guard', 8, 7);
-    s.zones = [{ owner: 'medic', tiles: G.zoneTiles(s, { x: 5, y: 7 }), through: 2 }];
+    // The south bridge's way crosses the medic's formation; the north bridge's way crosses a
+    // second one, laid on the east bank's neck (9,5).
+    s.zones = [
+      { owner: 'medic', tiles: G.zoneTiles(s, { x: 5, y: 7 }), through: 2 },
+      { owner: 'hero', tiles: G.zoneTiles(s, { x: 9, y: 5 }), through: 2 }
+    ];
     G.startEnemy(s);
     G.enemyAct(s, scout);
     check('an enemy whose only way runs through it stops on it', inZone(s, scout), scout.x + ',' + scout.y);
