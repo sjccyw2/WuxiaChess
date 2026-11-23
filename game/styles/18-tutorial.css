@@ -1,0 +1,308 @@
+/* The first board's tutorial (src/ui/tutorial.js): the coach card, the outlines it draws on the
+   board, and the mark it puts on a control. Game flow, not polish: it has no switch.
+
+   Where the card sits, so that it covers no lit tile, hero, arts list, 撤步 or 結束回合:
+     desktop          the top row, between the map plaque and the tools
+     upright phone    under the top row, over the scenery behind the board
+     sideways phone   the bottom row, between the unit tools and the turn button
+     (the script measures the HUD and sets --tut-top, --tut-left and --tut-right)
+     in a dialog      a band at the head of the dialog, which gives up that much height
+   Text is 14px (13px on a sideways phone); buttons are 44px high under a finger. */
+.tut-card {
+  --tut-gold: #e6c988;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 7px 8px 7px 15px;
+  border: 1px solid #c9b07a;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #24403af7, #142529f7 72%);
+  box-shadow:
+    0 4px 16px #07111266,
+    inset 3px 0 0 var(--tut-gold);
+  color: #f4ebd3;
+  font: 14px/1.5 var(--sans);
+  text-align: start;
+}
+.tut-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+.tut-count {
+  margin-inline-end: 8px;
+  color: var(--tut-gold);
+  font: inherit;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+/* The counter is written twice: before the words, and beside the buttons for the upright
+   phone, where the words take the whole width. */
+.tut-acts .tut-count {
+  display: none;
+}
+.tut-count i {
+  font-style: normal;
+}
+.tut-icon {
+  display: inline-block;
+  vertical-align: -2px;
+  color: var(--tut-gold);
+}
+.tut-acts {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+.tut-card button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 4px;
+  font: 600 14px/1 var(--sans);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.tut-card button[hidden] {
+  display: none;
+}
+.tut-ok {
+  border: 1px solid #ecd49c;
+  background: linear-gradient(110deg, #c7a669, #e2c389 54%, #c8aa72);
+  color: #2a2518;
+}
+.tut-skip {
+  border: 1px solid #93a59a80;
+  background: #0d1b1cb3;
+  color: #d5dccf;
+}
+.tut-card button:hover {
+  filter: brightness(1.1);
+}
+.tut-card button:focus-visible {
+  outline: 2px solid #ffe3a4;
+  outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .tut-card button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* On the battlefield. Under the HUD's lists, which open over it. */
+.battlefield > .tut-card {
+  position: absolute;
+  z-index: 3;
+  top: var(--top);
+  left: 50%;
+  width: min(640px, calc(100% - 580px));
+  min-height: 50px;
+  padding-block: 5px;
+  line-height: 1.4;
+  transform: translateX(-50%);
+}
+/* A window too narrow for the top row to hold it: under the top row. */
+@media (max-width: 1179px) {
+  .battlefield > .tut-card {
+    top: var(--tut-top, calc(var(--top) + 60px));
+    width: min(640px, calc(100% - var(--left) - var(--right)));
+  }
+}
+/* Upright phone (styles/08-phone-portrait.css): the words, then the buttons under them. */
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  .battlefield > .tut-card {
+    top: var(--tut-top, calc(var(--top) + 55px));
+    left: var(--left);
+    right: var(--right);
+    width: auto;
+    transform: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 7px 8px 7px 14px;
+  }
+  .battlefield > .tut-card .tut-acts {
+    justify-content: flex-end;
+  }
+  .battlefield > .tut-card .tut-text .tut-count {
+    display: none;
+  }
+  .battlefield > .tut-card .tut-acts .tut-count {
+    display: block;
+    margin-inline: 0 auto;
+  }
+}
+/* Sideways phone (styles/09-phone-landscape.css): a strip in the bottom row. */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 480px) {
+  .battlefield > .tut-card {
+    top: auto;
+    bottom: var(--bottom);
+    left: var(--tut-left, 310px);
+    right: var(--tut-right, 100px);
+    width: auto;
+    min-height: 0;
+    transform: none;
+    gap: 6px;
+    padding: 3px 4px 3px 11px;
+    font-size: 13px;
+    line-height: 1.38;
+  }
+  .tut-card .tut-count {
+    margin-inline-end: 6px;
+  }
+  /* No room for the counter's word, and 略過指引 is set in two lines. */
+  .tut-card .tut-count i {
+    display: none;
+  }
+  .tut-card button {
+    padding: 0 7px;
+    font-size: 13px;
+    letter-spacing: 0;
+  }
+  .tut-card .tut-skip {
+    width: 46px;
+    padding: 0 6px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+  /* Too little room in the row (the script marks it): above the row, at the left edge or the
+     right, whichever the arts list is not at. */
+  .battlefield > .tut-card[data-place] {
+    left: var(--left);
+    right: auto;
+    bottom: calc(var(--bottom) + var(--dock-height) + 6px);
+    width: min(300px, 47%);
+  }
+  .battlefield > .tut-card[data-place='right'] {
+    left: auto;
+    right: var(--right);
+  }
+  /* The game's messages rise from the bottom edge, where the strip is: they sit above it. */
+  .battlefield:has(> .tut-card:not([data-place])) > .toast {
+    bottom: calc(var(--bottom) + 62px);
+  }
+}
+
+/* Inside an open dialog (the attack preview, the enemy page, the end-of-turn question): a band
+   at its head. The reading area below gives up the band's height, so the dialog's own buttons
+   stay where they can be pressed. */
+.modal-shell > .tut-card {
+  position: relative;
+  z-index: 3;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  box-shadow: inset 3px 0 0 var(--tut-gold);
+}
+#modal:has(.modal-shell > .tut-card) .mj-frame {
+  max-height: calc(var(--mj-max-h) - 2px - var(--tut-h, 0px));
+}
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 480px) {
+  .modal-shell > .tut-card {
+    gap: 6px;
+    padding: 3px 4px 3px 11px;
+    font-size: 13px;
+    line-height: 1.38;
+  }
+}
+
+/* The outlines on the board: the tile a piece stands on (it is tapped at its feet), and the
+   tiles the hero can walk to. Drawn over the board and under the HUD; taps pass through. */
+.tut-marks {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.tut-marks path {
+  fill: none;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.tut-hero {
+  stroke: #ffe6a8;
+  stroke-width: 2.5;
+}
+.tut-foe {
+  stroke: #fff3d2;
+  stroke-width: 2.5;
+}
+/* The soft line under a piece's outline (a filter here would cost a pass over the whole board). */
+.tut-marks .tut-halo {
+  stroke: #ffc65a;
+  stroke-width: 8;
+  stroke-opacity: 0.38;
+}
+.tut-marks .tut-halo.tut-foe {
+  stroke: #ff7a4d;
+}
+.tut-marks .tut-walk {
+  fill: #d9fff3;
+  fill-opacity: 0.1;
+  stroke: #e9fff8;
+  stroke-width: 1.5;
+  stroke-opacity: 0.85;
+}
+
+/* The mark on a control the step points at. */
+.tut-glow {
+  outline: 2px solid #ffe09a !important;
+  outline-offset: 2px !important;
+}
+#arts-panel .tut-glow,
+.hud-tools .tut-glow,
+.unit-tools .tut-glow {
+  outline-offset: -3px !important;
+}
+
+/* The pulse, under the game's motion setting (body.no-motion) and the system's. Without it the
+   outlines and marks are still. */
+@media (prefers-reduced-motion: no-preference) {
+  body:not(.no-motion) .tut-glow {
+    animation: tut-glow 1.5s ease-in-out infinite;
+  }
+  body:not(.no-motion) .tut-marks .tut-halo {
+    animation: tut-ring 1.5s ease-in-out infinite;
+  }
+  body:not(.no-motion) .tut-marks .tut-walk {
+    animation: tut-walk 1.5s ease-in-out infinite;
+  }
+}
+@keyframes tut-glow {
+  50% {
+    outline-color: #ffe09a40;
+  }
+}
+@keyframes tut-ring {
+  50% {
+    stroke-opacity: 0.12;
+    stroke-width: 13;
+  }
+}
+@keyframes tut-walk {
+  50% {
+    fill-opacity: 0.26;
+    stroke-opacity: 0.4;
+  }
+}
+
+/* The guide's control that plays the tutorial again (ui/panels.js helpPage). */
+.tut-replay {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+  color: #c9d2c6;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.tut-replay .outline-btn {
+  min-height: 44px;
+  font-size: 14px;
+}

@@ -928,11 +928,13 @@ function terrainPage(s) {
     '</ul></div>'
   );
 }
-function helpPage() {
+// `extra` is put above the paragraphs: in a battle, the control that replays the tutorial.
+function helpPage(extra = '') {
   // The paragraphs are worded in data/rule-terms.js, which the wiki reads too.
   const rules = guideEntries({ actionFlow });
   return (
     titleHead('help', '操作指南') +
+    extra +
     '<div class="field-help">' +
     rules
       .map(

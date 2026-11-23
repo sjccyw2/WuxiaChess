@@ -183,6 +183,14 @@ in the 境界 picked; every hero has 20 武學點 and the purse 1000 兩 (`DEV_T
 remembered. Starting a test battle replaces the save, and its result counts in the profile like
 any run.
 
+## The first board's tutorial
+
+The first time someone plays, the first board (青竹渡) carries coach marks: a small card says what the step in hand is (起陣, walking, the arts list and 撤步, aiming and the rule that only straight lines count, 交鋒預覽, the other heroes, ending the turn, and from round two the danger zone, the view, the goal and the leader, the guide), and a gold outline marks what to tap. It is not a scripted battle: the step is worked out from the state of the game, so it blocks nothing, catches up with a player who ignores it, and resumes after a reload. Tapping an enemy that is out of reach opens 敵情查探 as before, and the card says there why no blow was struck.
+
+- **When it shows.** Once per browser (`jianying.tutorial.v1` in the browser's storage), on the first board of an ordinary run, for a record with no board won and no run finished; not in a 試局, not in a run with 無名 on the board, and not under `game/?classic`. 略過指引 ends it at once, and so does the end of the board.
+- **Seeing it again.** In any battle, 選單 › 指南 › 重看新手指引 plays it from the top on the board being fought.
+- **Where it is.** `game/src/ui/tutorial.js` (the steps and how each ends), `game/src/data/tutorial-text.js` (every word it shows, in one place) and `game/styles/18-tutorial.css` (where the card sits on each screen format). `app.js` only installs it and calls it when the game repaints.
+
 ## How the story is put together
 
 Heroes are drawn at random (five are drawn and the player keeps three; the two put back may be lent later, `drawLots` and `keptLots` in `rules/journey.js`) and the boards come in a different order each run, so the story text is kept in three layers that never refer to one another:
