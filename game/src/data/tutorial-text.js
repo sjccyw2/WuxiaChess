@@ -29,7 +29,7 @@ const TUTORIAL_TEXT = {
     // The selected hero has not walked yet.
     move: '金框標出的{name}由你指揮。青綠地格是這回合走得到的地方，點一格走過去。',
     // The hero has walked: the arts list, and 撤步.
-    arts: '招式表寫著各招的射程與威力。走錯了可按「撤步」。',
+    arts: '招式表寫著各招的射程與威力；按住一招不放，可看它的完整效果。選好招式，戰盤才標出射程。走錯了可按「撤步」。',
     // An art is ready and an enemy stands in its reach.
     aim: '紅色地格是這招的範圍：只算橫直，斜角不算相鄰。點範圍內的敵人。',
     // An art is ready and nobody stands in its reach.
