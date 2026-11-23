@@ -11,6 +11,7 @@ import { paintSkillEffect } from '../fx/skill-effects.js';
 import { paintPaintedEffect } from '../fx/painted-effects.js';
 import { Impact } from '../fx/impact.js';
 import { paintCursor } from './cursor.js';
+import { figuresAt } from './figure-pick.js';
 import { planFootwork, sampleFootwork } from './footwork.js';
 import { watchArt } from './sprite-sheets.js';
 import {
@@ -19,7 +20,8 @@ import {
   paintFormations,
   paintFormationAim,
   paintTauntAim,
-  paintSplashAim
+  paintSplashAim,
+  reachPulse
 } from './zones.js';
 import {
   compactImage,
@@ -675,6 +677,13 @@ class ActorLayer {
         c.lineWidth = 0.85;
       }
       c.stroke();
+      // The reach pulse (zones.js), tile by tile: the answer to a tap on an enemy out of reach.
+      const pulse = aim ? reachPulse(this) : 0;
+      if (pulse) {
+        c.strokeStyle = 'rgba(255,243,230,' + (0.35 + 0.65 * pulse).toFixed(3) + ')';
+        c.lineWidth = 1.15 + 2.2 * pulse;
+        c.stroke();
+      }
       if (this.prefs.grid && G.cover(x, y, s.mapIndex)) {
         const p = this.point(x - 0.32, y + 0.29);
         c.fillStyle = '#495f4d';
@@ -1038,7 +1047,18 @@ class ActorLayer {
           left: left + w * 0.17,
           right: left + w * 0.84,
           top: top + h * 0.15,
-          bottom: p.y
+          bottom: p.y,
+          // The figure as drawn, for a tap on it (figure-pick.js): the frame showing, where its
+          // cell stands, and the gauge over its head.
+          x: p.x,
+          y: p.y,
+          w,
+          h,
+          flip,
+          sheet,
+          row,
+          frame,
+          bar: { y: top + h * 0.135, half: scale * 0.34 }
         });
       if (tokens) {
         paintGauge(this, u, {
@@ -1339,10 +1359,9 @@ class ActorLayer {
       } catch {}
     }
   }
-  body(px, py) {
-    return [...this.boxes]
-      .reverse()
-      .find((b) => px >= b.left && px <= b.right && py >= b.top && py <= b.bottom)?.id;
+  // The pieces whose drawn figure a tap is on or within `slack` pixels of, nearest first.
+  figures(px, py, slack) {
+    return figuresAt(this.boxes, px, py, slack);
   }
 }
 

@@ -185,7 +185,13 @@ any run.
 
 ## The first board's tutorial
 
-The first time someone plays, the first board (青竹渡) carries coach marks: a small card says what the step in hand is (起陣, walking, the arts list and 撤步, aiming and the rule that only straight lines count, 交鋒預覽, the other heroes, ending the turn, and from round two the danger zone, the view, the goal and the leader, the guide), and a gold outline marks what to tap. It is not a scripted battle: the step is worked out from the state of the game, so it blocks nothing, catches up with a player who ignores it, and resumes after a reload. Tapping an enemy that is out of reach opens 敵情查探 as before, and the card says there why no blow was struck.
+The first time someone plays, the first board (青竹渡) carries coach marks: a small card says what the step in hand is (起陣, walking, the arts list and 撤步, aiming and the rule that only straight lines count, 交鋒預覽, the other heroes, ending the turn, and from round two the danger zone, the view, the goal and the leader, the guide), and a gold outline marks what to tap. It is not a scripted battle: the step is worked out from the state of the game, so it blocks nothing, catches up with a player who ignores it, and resumes after a reload.
+
+Three things the board does for every player, tutorial or not (the playtest of 2026-11-22, R-14 to R-16):
+
+- **An enemy out of reach.** With an art ready, the first tap on an enemy the art cannot reach says why in the board's message (naming the diagonal case: 斜角不算相鄰) and swells the tiles the art does reach (`pulseReach` in `scene/board.js`); the same enemy tapped again opens 敵情查探 (`unitClick` in `app.js`). With no art ready a tap opens it at once.
+- **The whole figure is the target.** A tap is measured against each figure as it is drawn, the sprite's own shape and not only the tile under it (`actors/figure-pick.js`, `resolveBoardPick` in `scene/board.js`): the figure in front wins, an aimed art prefers a piece it can be used on, and a fingertip may land a little beside a figure. Open ground beside a figure is still the tile.
+- **A way back to walking.** While an art is ready and the hero has not walked, the arts list ends with 走位, which shows the walk tiles again (`walkRow` in `ui/action-flow.js`); a tap on open ground the art has no use for does the same, and so does Esc.
 
 - **When it shows.** Once per browser (`jianying.tutorial.v1` in the browser's storage), on the first board of an ordinary run, for a record with no board won and no run finished; not in a 試局, not in a run with 無名 on the board, and not under `game/?classic`. 略過指引 ends it at once, and so does the end of the board.
 - **Seeing it again.** In any battle, 選單 › 指南 › 重看新手指引 plays it from the top on the board being fought.

@@ -277,15 +277,18 @@ function installTutorial({ dialog, field, scene, board, view, close, notice, end
     if (s.phase !== 'ally') return null;
     const others = G.party(s).filter((h) => h !== u && G.canAct(s, h));
     // An art picked before walking, and nothing it can be used on from here (no enemy in reach;
-    // for an art cast on a friend, no friend it would do anything for): choosing a companion and
-    // then this hero again brings the walk back.
-    const mates = G.party(s).filter((h) => h !== u && G.living(h));
+    // for an art cast on a friend, no friend it would do anything for): the list's 走位 row
+    // brings the walk back (or, when the list is shut, the chip that opens it).
     const friendly = can && skill && ['ally', 'self'].includes(G.targetType(G.artFor(u)));
     const aimless = armed
       ? !inReach.length
       : friendly && !G.party(s).some((t) => G.living(t) && G.targetOK(s, u, t, true));
-    if (aimless && !u.moved && !u.conditions?.rooted && mates.length)
-      return { id: '', key: 'stuck', name: nameOf(u), tiles: { hero: mates } };
+    if (aimless && G.canMove(s, u))
+      return {
+        id: '',
+        key: 'stuck',
+        glow: ['.field-walk', '#field:has(#arts-panel[hidden]) #arts-toggle']
+      };
     const idle = G.party(s).filter((h) => G.canAct(s, h) && !h.moved);
     // The last card waits for the steps that need an enemy in reach, but not for ever.
     const rest = ORDER.slice(0, -1).filter((id) => !seen.has(id));

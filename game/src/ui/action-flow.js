@@ -3,7 +3,8 @@
 //   - no move button: selecting a hero shows where it can go
 //   - the arts list opens by itself once a hero has finished moving, or when the selected hero
 //     is clicked again; on wide screens it sits beside the hero
-//   - undo appears in that list, only after a move
+//   - undo appears in that list, only after a move; before one, while an art is ready, 走位
+//     stands in its place and brings the walk tiles back
 //   - no wait button: heroes who have not struck brace by themselves when the turn ends, which
 //     is exactly what the wait button did
 //   - the bottom bar is gone; the end-turn button stands alone in its corner
@@ -23,6 +24,18 @@ function undoRow(s, u) {
     '<button class="field-loadout field-undo" data-do="move" title="撤步">' +
     icon('undo', 15) +
     '撤步</button>'
+  );
+}
+
+// 走位, in the same place while the hero has not walked and an art is ready: back to the walk
+// tiles. Picking an art first hid them, and without this row the only way back was to choose a
+// companion and return, which nothing said and which the last hero left to act could not do.
+function walkRow(s, u, mode) {
+  if (!ON || !G.canMove(s, u) || !['attack', 'skill'].includes(mode)) return '';
+  return (
+    '<button class="field-loadout field-undo field-walk" data-do="move" title="走位">' +
+    icon('move', 15) +
+    '走位</button>'
   );
 }
 
@@ -136,4 +149,4 @@ function followHero(panel, layer, who) {
 const flowHotkeys =
   '<kbd>1</kbd>–<kbd>4</kbd> 招式 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 撤步・返回 <kbd>?</kbd> 指南';
 
-export { ON, markReady, undoRow, glideRows, nextToAct, anyIdle, shouldConfirmEnd, braceTheRest, followHero, flowHotkeys };
+export { ON, markReady, undoRow, walkRow, glideRows, nextToAct, anyIdle, shouldConfirmEnd, braceTheRest, followHero, flowHotkeys };
