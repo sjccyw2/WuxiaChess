@@ -1,10 +1,10 @@
 # 劍影江湖 · Script package for a prose edit
 
-This package holds the whole story of the game *劍影江湖* (WuxiaChess): the world, the story design, every line of in-game story text, and how the game plays. It is meant for a writer, human or AI, who will **improve the writing without changing the story**.
+This package holds the whole story of the game *劍影江湖* (WuxiaChess): the world, the story design, every line of in-game story text, and how the game plays. It is meant for a writer, human or AI, who will **rewrite the text as good fiction without changing the story**. The instructions for that writer are in `PROMPT.md`.
 
 ## Your task
 
-The story, the structure and every plot beat are approved and stay as they are. What needs work is the prose: rhythm, word choice, clarity, voice, and how natural each line reads aloud. Rewrite lines in `10-主線劇本.md`, `11-各局劇本.md` and `12-俠客劇本.md` so they read better, and return those three files.
+The story, the structure and every plot beat are approved and stay as they are. What needs work is the writing: dialogue that sounds like people talking to each other, one line leading to the next, and prose worthy of 金庸. Rewrite lines in `10-主線劇本.md`, `11-各局劇本.md` and `12-俠客劇本.md`, and return those three files. `PROMPT.md` sets out the task in full.
 
 Lines in this package: S001–S267 (267 lines), B001–B370 (370), H001–H223 (223): 860 lines, about 32,000 characters.
 
@@ -13,9 +13,11 @@ Lines in this package: S001–S267 (267 lines), B001–B370 (370), H001–H223 (
 | File | What it is | Edit it? |
 | --- | --- | --- |
 | `README.md` | this brief | no |
+| `PROMPT.md` | the task for the writer: what is wrong with the writing now, and how to work | no |
 | `01-世界觀設定.md` | the world: who 求敗 is, why heroes from different centuries meet on one board, the rules of the sword realm (劍境), the five 境界 and the ending | no, background |
 | `02-單輪劇本.md` | the story of one run, scene by scene, and **§15 筆法：金庸體, the style rules** | no, background |
 | `03-遊戲機制.md` | how the game plays and when each kind of line appears | no, background |
+| `04-試玩劇本.md` | three runs played by the game and printed as a player sees them, with each line's id as ［S012］. The only place to see how lines from different files follow one another | no, read it closely |
 | `10-主線劇本.md` | the spine: prologue, 求敗's lines, 韋小寶, the close of each run, the last board and the ending | **yes** |
 | `11-各局劇本.md` | the fifteen boards and the last board: each board's scene, its masters' lines, bios | **yes** |
 | `12-俠客劇本.md` | the twenty heroes: bio, tree introduction, and their own lines | **yes** |
@@ -48,7 +50,7 @@ These are not style preferences. Breaking one breaks the game, because the game 
    - Lines labelled 領隊 or 同行 may be said by any of the twenty heroes, man or woman, young or old. Keep them neutral.
 2. **Who knows what.** The youth forgets each run when he wakes; 求敗 remembers every move; the heroes are fresh copies each run and know nothing of earlier runs (their 似曾相識 lines are only a feeling). 求敗 cannot see or hear 韋小寶 until the close of the fifth 境界. Until the second 境界 the heroes do not know they are copies.
 3. **Facts stay.** Names, places, the rule cut in the table (白子勝滿十局，放還本尊。中道而敗，收子入盒。), what each scene says happens, and every reference to the original novels. Do not add events, characters or backstory, and do not take any away.
-4. **Length.** Keep each line roughly the length it is now (within about a third). Narration is at most two or three sentences; dialogue at most three short clauses (§15). The text is shown in a small dialogue box.
+4. **Length.** Narration is at most two or three sentences; a spoken line at most three short clauses (§15). The text is shown in a small dialogue box. A line may be shorter or longer than it is now within those limits.
 
 ## The style the producer wants
 
@@ -67,11 +69,11 @@ The producer's instruction is that all story text is written in 金庸's manner.
 
 ## What to send back
 
-The three files `10-主線劇本.md`, `11-各局劇本.md` and `12-俠客劇本.md`, same names, with every id line still in them. If you want to explain a choice or flag a line you think is wrong in substance (not only in wording), put it in a separate file, `notes.md`, citing the id. Do not change the substance of a line to fix it; flag it.
+The three files `10-主線劇本.md`, `11-各局劇本.md` and `12-俠客劇本.md`, with every id line still in them. If they are too long for one reply, return them one at a time, or split a file into parts (`11-各局劇本-1.md`, `11-各局劇本-2.md`): every id must appear once across the parts. An id left out keeps its current text. If you want to explain a choice or flag a line you think is wrong in substance (not only in wording), put it in a separate file, `notes.md`, citing the id. Do not change the substance of a line to fix it; flag it.
 
 ## For the producer: bringing the edit back
 
-Put the returned files in a folder (for example `script-edit/`) and run, from the repository:
+Put the returned files in a folder (for example `script-edit/`), and run, from the repository:
 
 ```bash
 node tools/script-package.mjs --apply script-edit --dry   # report what would change
@@ -80,4 +82,4 @@ node tools/check-story.mjs && node tools/check-wiki.mjs
 python3 tools/extra-fonts.py --check                       # new characters need the font supplements rebuilt
 ```
 
-The tool writes each changed line back into the game data file it came from, and only that line. It refuses a line whose placeholders changed, a line that came back empty, and a line whose source has been edited since the package was made. `node tools/script-package.mjs` rebuilds this package from the current game.
+The tool reads only the files whose names start with `10-`, `11-` or `12-`, so `notes.md` and the rest are never taken as edits. It writes each changed line back into the game data file it came from, and only that line. It refuses a line whose placeholders changed, a line that came back empty, and a line whose source has been edited since the package was made. `node tools/script-package.mjs` rebuilds this package from the current game.

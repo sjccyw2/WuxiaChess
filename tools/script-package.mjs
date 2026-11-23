@@ -13,8 +13,8 @@
 // the current source, checks it still holds the exported text, and replaces it. Only lines whose
 // text changed are touched; nothing else in the source moves.
 //
-// The hand-written parts of the package (the brief for the editor and the mechanics overview)
-// are in tools/script-package/. The two design documents are copied from wiki/content/.
+// The hand-written parts of the package (the brief, the prompt for the writer and the mechanics
+// overview) are in tools/script-package/, with playthrough.mjs, which prints three sample runs. The two design documents are copied from wiki/content/.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -392,6 +392,7 @@ async function build() {
   write('README.md', fs.readFileSync(path.join(HAND, 'brief.md'), 'utf8').replace('{{COUNTS}}', 'S' + '001–S' + String(counts.spine).padStart(3, '0') + ' (' + counts.spine + ' lines), B001–B' + String(counts.boards).padStart(3, '0') + ' (' + counts.boards + '), H001–H' + String(counts.heroes).padStart(3, '0') + ' (' + counts.heroes + '): ' + total + ' lines, about ' + Math.round(chars / 1000) + ',000 characters'));
   write('01-世界觀設定.md', fs.readFileSync(at('wiki/content/世界觀設定.md'), 'utf8'));
   write('02-單輪劇本.md', fs.readFileSync(at('wiki/content/單輪劇本.md'), 'utf8'));
+  write('PROMPT.md', fs.readFileSync(path.join(HAND, 'prompt.md'), 'utf8'));
   write('03-遊戲機制.md', fs.readFileSync(path.join(HAND, 'mechanics.md'), 'utf8') + glossary());
   write('10-主線劇本.md', number(spineFile(), 'S'));
   write('11-各局劇本.md', number(boardsFile(), 'B'));
@@ -405,6 +406,8 @@ async function build() {
     lines: all.map((e) => ({ id: e.id, file: e.file, path: e.path, text: e.value }))
   };
   write('manifest.json', JSON.stringify(manifest, null, 1));
+  const { playthrough } = await import('./script-package/playthrough.mjs');
+  write('04-試玩劇本.md', await playthrough(manifest.lines));
   // Every exported id must appear exactly once in the scripts.
   const scripts = ['10-主線劇本.md', '11-各局劇本.md', '12-俠客劇本.md'].map((f) => fs.readFileSync(path.join(OUT, f), 'utf8')).join('\n');
   for (const e of manifest.lines) {
@@ -429,7 +432,9 @@ function apply(dir, dry) {
   const byId = new Map(manifest.lines.map((e) => [e.id, e]));
   const edited = new Map(),
     problems = [];
-  const files = fs.readdirSync(dir).filter((f) => /\.(md|txt)$/.test(f) && f !== 'README.md');
+  // Only the scripts (10-, 11-, 12-, and parts of them): notes.md may cite ids, and is not an edit.
+  const files = fs.readdirSync(dir).filter((f) => /^1[0-2]-.*\.(md|txt)$/.test(f));
+  if (!files.length) throw new Error('no script files (10-…, 11-…, 12-…) in ' + dir);
   for (const f of files)
     fs.readFileSync(path.join(dir, f), 'utf8')
       .split('\n')
