@@ -202,9 +202,10 @@ class ActorLayer {
       this.time += this.impact.tick(this.playing ? Math.min(dt, 40) : dt, dt);
     }
   }
-  sync(state, mode, prefs) {
+  sync(state, mode, prefs, hideAim = false) {
     this.state = state;
     this.mode = mode;
+    this.hideAim = hideAim;
     this.prefs = prefs;
     this.preview = null;
     this.warm(state.units.filter((u) => G.living(u) && !G.isProp(u)).map((u) => G.unitDetails(u).mini));
@@ -641,7 +642,7 @@ class ActorLayer {
       s = this.state,
       u = G.find(s, s.selected);
     const can = G.canAct(s, u),
-      cast = ['attack', 'skill'].includes(this.mode) && can;
+      cast = ['attack', 'skill'].includes(this.mode) && can && !this.hideAim;
     drawDanger(this); // Polish (dangerZone): the enemy's strike zone, under everything else
     const art = cast && this.mode === 'skill' ? G.artFor(u) : null;
     const range = cast ? (art ? art.range : u.range) : 0;

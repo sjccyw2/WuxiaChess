@@ -31,6 +31,8 @@ import { mapLayout } from './data/terrain.js';
 import { showPhase, phaseLead } from './ui/phase-banner.js';
 // The first board's tutorial: coach marks, the first time someone plays.
 import { installTutorial } from './ui/tutorial.js';
+import { installArtDetail } from './ui/art-detail.js';
+import { MAX_ZOOM } from './scene/camera.js';
 import * as S from './audio/index.js';
 
 const $ = (id) => document.getElementById(id);
@@ -63,6 +65,10 @@ let prefs = Object.assign(
   },
   read(prefKey, {})
 );
+// A hero who has walked (or is held in place) starts with the basic strike ready, but its reach is
+// not drawn until an art is picked from the list: the player may mean a ranged art, and tiles
+// drawn for the basic strike read as all the hero can hit from here.
+let aimHidden = false;
 let mode = 'move',
   dialogState = null,
   closingPage = false,
@@ -263,13 +269,18 @@ const board = new BattleBoard({
   }
 });
 const hud = new FieldHud(document, () => board.resize(), notice);
+// An art's full rules on a long press or a resting pointer in the arts list (ui/art-detail.js).
+const artCard = installArtDetail($('field-arts'), () => ({
+  state,
+  unit: state?.run ? selected() : null
+}));
 // The first board's tutorial reads the game through this and changes nothing in it.
 const coach = installTutorial({
   dialog,
   field: $('field'),
   scene: $('scene'),
   board,
-  view: () => ({ state, screen, mode, page: dialogState, strike: strikeData, subject: subjectId, prefs }),
+  view: () => ({ state, screen, mode, aimHidden: mode === 'attack' && aimHidden, page: dialogState, strike: strikeData, subject: subjectId, prefs }),
   close: closePage,
   notice,
   // Skipped while deploying: the game's own 起陣 tip takes over again.
@@ -374,6 +385,7 @@ function paint() {
     equippedMoves(state, u) + F.undoRow(state, u) + F.walkRow(state, u, mode);
   F.markReady($('field-arts'), state, u, mode);
   markAnswers($('field-arts'), state, u, board.hover && G.at(state, board.hover.x, board.hover.y));
+  artCard.sync();
   if (hud.panel === 'arts' && !G.canAct(state, u) && !(F.ON && G.canGlide(state, u)))
     hud.closePanel();
   hud.syncPanelButtons();
@@ -383,7 +395,7 @@ function paint() {
     );
     next?.focus({ preventScroll: true });
   }
-  board.sync(state, mode, prefs);
+  board.sync(state, mode, prefs, mode === 'attack' && aimHidden);
   warmPaintedEffects(state, G.enemyTechnique); // the painted effects this board can need
   refreshSound();
   syncZoom();
@@ -392,7 +404,7 @@ function syncZoom() {
   let z = board.zoom;
   $('zoom-value').textContent = Math.round(z * 100) + '%';
   $('zoom-out').disabled = z <= 0.781;
-  $('zoom-in').disabled = z >= 2.399;
+  $('zoom-in').disabled = z >= MAX_ZOOM - 0.001;
   const high = board.view.pitch >= 1.12;
   $('camera').innerHTML = icon('cube', 16) + '<span>' + (high ? '斜視' : '俯視') + '</span>';
   $('camera').setAttribute('aria-pressed', String(high));
@@ -497,6 +509,7 @@ function choose(id, quiet = false) {
   // 回身: a hero with a walk left comes back to it (the tiles drawn, the list offering it).
   const gliding = G.canGlide(state, u);
   mode = gliding ? 'glide' : placed && !u.acted ? 'attack' : 'move';
+  aimHidden = mode === 'attack';
   update();
   if (!quiet) audio('select');
   if (F.ON && ((placed && G.canAct(state, u)) || gliding)) openArts();
@@ -643,6 +656,7 @@ function cellClick(x, y) {
   if (mode === 'move') {
     if (G.move(state, u, x, y)) {
       mode = 'attack';
+      aimHidden = true;
       audio('move');
       update();
       mapTip('已移動');
@@ -724,13 +738,14 @@ function unitClick(id) {
   if (
     !again &&
     G.canAct(state, u) &&
-    ['attack', 'skill'].includes(mode) &&
+    (skill || (mode === 'attack' && !aimHidden)) &&
     G.distance(u, t) > G.rangeFor(u, skill)
   ) {
     missedId = id;
     audio('deny');
     notice(missText(u, t, skill), 4200);
     board.pulseReach();
+    board.holdCycle(); // the tap that reads his page must land on him, not the one behind
     return;
   }
   // The second tap: the message that asked for it has been answered.
@@ -1071,6 +1086,7 @@ function autoSelect() {
   if (n) {
     state.selected = n.id;
     mode = n.moved || n.conditions?.rooted ? 'attack' : 'move';
+    aimHidden = mode === 'attack';
   } else mode = '';
 }
 function finishAlly() {
@@ -1164,6 +1180,7 @@ function doCommand(action, selectedArt = false, keyboard = false) {
     return;
   }
   mode = action;
+  aimHidden = false;
   paint();
   audio(action === 'move' ? 'tap' : 'ready');
   mapTip(
