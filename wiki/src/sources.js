@@ -49,6 +49,7 @@ export const TEXT_FILES = [
   'src/fx/technique-strokes.js',
   'src/data/terrain.js',
   'src/actors/tokens.js',
+  'src/data/tutorial-text.js',
   'src/data/wake-tale.js',
   'src/ui/wake-views.js'
 ];
