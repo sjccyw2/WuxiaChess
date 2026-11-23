@@ -129,7 +129,7 @@ function audio(kind = 'tap', details) {
   S.setEnabled(prefs.sound);
   if (prefs.sound) S.play(kind, details);
 }
-function notice(msg) {
+function notice(msg, ms = 2650) {
   const t = $('toast');
   clearTimeout(toastTimer);
   t.textContent = msg;
@@ -138,7 +138,7 @@ function notice(msg) {
     dialog.querySelector('.modal-shell').append(t);
   } else if (screen === 'battle') $('field').append(t);
   else document.body.append(t);
-  toastTimer = setTimeout(() => t.classList.remove('visible'), 2650);
+  toastTimer = setTimeout(() => t.classList.remove('visible'), ms);
 }
 // A tip that must be read (a villain's 變招) holds the board tip until it has been shown.
 let tipHeld = 0;
@@ -298,6 +298,7 @@ function holdLineAt(x, y) {
 }
 function paint() {
   coach.sync();
+  missedId = null; // something was done since the tap that missed (see unitClick)
   if (screen === 'title') {
     board.prefs = prefs;
     board.layers.prefs = prefs;
@@ -366,8 +367,10 @@ function paint() {
   );
   $('commander').innerHTML = P.commander(state, mode);
   // 回身: a hero who has struck with a glide art has only the walk, or staying, in his list.
+  // Under the arts: 撤步 once he has walked; before that, while an art is ready, 走位.
   $('field-arts').innerHTML =
-    F.glideRows(state, u) || equippedMoves(state, u) + F.undoRow(state, u);
+    F.glideRows(state, u) ||
+    equippedMoves(state, u) + F.undoRow(state, u) + F.walkRow(state, u, mode);
   F.markReady($('field-arts'), state, u, mode);
   markAnswers($('field-arts'), state, u, board.hover && G.at(state, board.hover.x, board.hover.y));
   if (hud.panel === 'arts' && !G.canAct(state, u) && !(F.ON && G.canGlide(state, u)))
@@ -596,6 +599,7 @@ function cellClick(x, y) {
     unitClick(occ.id);
     return;
   }
+  missedId = null;
   // An entry marker of a wave still to come opens its page, unless the tile is a step to take.
   const entry = entryAt(x, y);
   if (
@@ -656,6 +660,14 @@ function cellClick(x, y) {
             ? '本回合已移動，可在出招前撤步'
             : G.terrain(x, y, state.mapIndex) + ' · 本回合無法抵達。'
       );
+  } else if (G.canMove(state, u)) {
+    // An art is ready, the hero has not walked, and the tap is on open ground the art has no use
+    // for: he means to walk. This tap brings the walk tiles back; the next one walks.
+    hud.closePanel();
+    mode = 'move';
+    paint();
+    audio('tap');
+    mapTip('已回到走位 · 點選青綠色地格移動');
   } else
     mapTip(mode === 'skill' ? targetHint(G.artFor(u)) : zoneTip(x, y) || '請選擇範圍內的敵方棋子');
 }
@@ -670,6 +682,9 @@ function zoneTip(x, y) {
     ' 回合敵方行動結束'
   );
 }
+// The enemy a tap has just missed, out of an aimed art's reach (see below), until anything else
+// is done: every repaint and every tap elsewhere forgets him.
+let missedId = null;
 function unitClick(id) {
   if (screen !== 'battle' || dialog.open || state.run.scene !== 'fight') return;
   if (deploying()) {
@@ -679,7 +694,9 @@ function unitClick(id) {
   }
   const u = selected(),
     t = G.find(state, id),
-    skill = mode === 'skill';
+    skill = mode === 'skill',
+    again = missedId === id;
+  missedId = null;
   if ((mode === 'attack' || skill) && G.targetOK(state, u, t, skill)) {
     strikeData = { source: u.id, target: id, skill };
     openPage('attack-preview');
@@ -701,13 +718,37 @@ function unitClick(id) {
     mapTip(targetHint(G.artFor(u)));
     return;
   }
-  if (G.canAct(state, u) && ['attack', 'skill'].includes(mode)) {
-    if (!skill || !G.artFor(u).heal) {
-      notice('目標在招式範圍外，可先移動或查探敵情。');
-    }
+  // An art is aimed and this enemy is outside its reach. Opening his page at once hid the reason
+  // and read as a blow that did nothing, so the first tap says why on the board and shows the
+  // tiles the art does reach; the same enemy tapped again is a wish to read his page.
+  if (
+    !again &&
+    G.canAct(state, u) &&
+    ['attack', 'skill'].includes(mode) &&
+    G.distance(u, t) > G.rangeFor(u, skill)
+  ) {
+    missedId = id;
+    audio('deny');
+    notice(missText(u, t, skill), 4200);
+    board.pulseReach();
+    return;
   }
+  // The second tap: the message that asked for it has been answered.
+  if (again) $('toast').classList.remove('visible');
   subjectId = id;
   openPage('enemy-info');
+}
+// Why the aimed art cannot be used on an enemy out of its reach. Reach is counted along rows and
+// columns, and on the turned board a diagonal neighbour looks adjacent: that case is said plainly.
+function missText(u, t, skill) {
+  const art = '「' + (skill ? G.artFor(u) : G.basicFor(u)).name + '」',
+    diagonal =
+      G.rangeFor(u, skill) === 1 && Math.abs(u.x - t.x) === 1 && Math.abs(u.y - t.y) === 1;
+  return (
+    uName(t) +
+    (diagonal ? '站在斜角，斜角不算相鄰，' + art + '打不到。' : '不在' + art + '的射程內。') +
+    '再點一次可查探敵情。'
+  );
 }
 const groundArt = (u) => G.targetType(G.artFor(u)) === 'ground';
 function targetHint(art) {
@@ -2230,8 +2271,13 @@ document.addEventListener('keydown', (e) => {
   if (k === 'escape') {
     // Polish (actionFlow): Esc takes back the move while the hero has not yet struck.
     const u = screen === 'battle' && F.ON && state.phase === 'ally' ? selected() : null;
-    if (u?.moved && u.origin && G.canAct(state, u) && (!hud.panel || hud.panel === 'arts'))
-      doCommand('move');
+    // For a hero who readied an art before walking it is the list's 走位: back to the walk tiles.
+    // (Either way one press does one thing: he has no move to take back.)
+    const stepBack =
+      u &&
+      G.canAct(state, u) &&
+      (u.moved ? !!u.origin : G.canMove(state, u) && ['attack', 'skill'].includes(mode));
+    if (stepBack && (!hud.panel || hud.panel === 'arts')) doCommand('move');
     else if (hud.panel) hud.closePanel(true);
     else if (hud.fallback) hud.setFallback(false);
     else {

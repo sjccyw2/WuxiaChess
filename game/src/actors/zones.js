@@ -199,6 +199,7 @@ function plan(layer, reach) {
       fringe.size && { style: STYLES.fringe, ...outline(fringe, cells, (k) => move.has(k)) },
       move.size > 1 && { style: STYLES.move, ...outline(move, cells, () => false) },
       aim.size && {
+        aim: true,
         style: heal ? STYLES.heal : STYLES.strike,
         // The caster's own tile sits unlit inside a strike region, with no line round it.
         ...outline(aim, cells, (k) => u && k === cellKey(u.x, u.y))
@@ -378,7 +379,52 @@ function paintField(layer, reach, now) {
   if (p.regions.length) c.globalAlpha = alpha * (0.84 + breath * 0.16);
   c.drawImage(sheet.canvas, 0, 0, sheet.pw, sheet.ph, sheet.x, sheet.y, sheet.w, sheet.h);
   c.globalAlpha = alpha;
+  paintReachPulse(layer, p);
   return true;
+}
+
+// A tap on an enemy the aimed art cannot reach is answered on the board: the tiles the art does
+// reach swell twice, so the eye goes from the enemy to where the blow can land. The board sets
+// `reachPulse` (scene/board.js, pulseReach). With motion off the edge is held bright and steady
+// for the same time instead.
+const PULSE_MS = 1100;
+function reachPulse(layer) {
+  const since = performance.now() - (layer.reachPulse ?? -Infinity);
+  if (!(since >= 0 && since < PULSE_MS)) return 0;
+  return layer.prefs.motion ? Math.sin((since / PULSE_MS) * TAU) ** 2 : 0.7;
+}
+function paintReachPulse(layer, p) {
+  const k = reachPulse(layer),
+    region = k && p.regions.find((r) => r.aim);
+  if (!region) return;
+  const c = layer.ctx,
+    at = (i, j) => layer.point(i - 0.5, j - 0.5),
+    width = clamp(layer.scaleAt(p.unit.x, p.unit.y) * 0.04, 1.5, 2.6);
+  c.save();
+  c.beginPath();
+  for (const loop of region.loops) {
+    for (let i = 0; i < loop.length; i += 2) {
+      const point = at(loop[i], loop[i + 1]);
+      if (i) c.lineTo(point.x, point.y);
+      else c.moveTo(point.x, point.y);
+    }
+    c.closePath();
+  }
+  c.fillStyle = 'rgba(255,128,96,' + (0.3 * k).toFixed(3) + ')';
+  c.fill();
+  c.beginPath();
+  for (let i = 0; i < region.border.length; i += 4) {
+    const a = at(region.border[i], region.border[i + 1]),
+      b = at(region.border[i + 2], region.border[i + 3]);
+    c.moveTo(a.x, a.y);
+    c.lineTo(b.x, b.y);
+  }
+  c.lineCap = c.lineJoin = 'round';
+  c.globalAlpha *= 0.35 + 0.65 * k;
+  c.strokeStyle = '#fff3e6';
+  c.lineWidth = width * (1.6 + 2.2 * k);
+  c.stroke();
+  c.restore();
 }
 
 // A turning, breathing ring with four inward ticks round every piece the pending strike
@@ -645,4 +691,13 @@ function paintAimOutline(layer, list, now, caches, style) {
   c.restore();
 }
 
-export { paintField, paintReticles, paintFormations, paintFormationAim, paintTauntAim, paintSplashAim };
+export {
+  paintField,
+  paintReticles,
+  paintFormations,
+  paintFormationAim,
+  paintTauntAim,
+  paintSplashAim,
+  reachPulse,
+  PULSE_MS
+};
