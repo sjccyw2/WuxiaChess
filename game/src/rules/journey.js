@@ -1488,14 +1488,49 @@ function briefing(s, { live = false } = {}) {
 function boardBrief(map, stage, route = null) {
   return boardModel(map, stage, null, false, route);
 }
+// How a hero who has not fought keeps up (the producer, 2026-11-23: a hero who joins late, or
+// waits on the bench, should not fall so far behind that nobody fields him).
+//   joinGap   a newcomer joins at the fielded heroes' average level, rounded down, less this
+//   benchShare after a board won, each hero on the bench gains this share of the experience he
+//              trails the fielded heroes' average by (levels and experience, as one number)
+const CATCH_UP = { joinGap: 0, benchShare: 0.5 };
+const totalXp = (u) => u.level * G.GROWTH.levelXp + u.xp;
+// The level a newcomer joins at: about the fielded heroes', never below the old rule (one level
+// for every two boards).
+function joinLevel(s) {
+  const team = G.party(s),
+    floor = 1 + Math.floor(s.run.stage / 2);
+  if (!team.length) return floor;
+  const mean = team.reduce((n, u) => n + u.level, 0) / team.length;
+  return Math.max(floor, Math.floor(mean) - CATCH_UP.joinGap);
+}
+// After a board won, the bench gains experience towards the fielded heroes. Returns who rose a
+// level, and to which.
+function benchExperience(s) {
+  const team = G.party(s);
+  if (!team.length) return [];
+  const mark = team.reduce((n, u) => n + totalXp(u), 0) / team.length,
+    rose = [];
+  for (const u of s.run.bench) {
+    const n = Math.round(CATCH_UP.benchShare * (mark - totalXp(u)));
+    if (n <= 0) continue;
+    const level = u.level;
+    u.xp += n;
+    G.settleExperience(s, u);
+    if (u.level > level) rose.push({ id: u.id, level: u.level });
+  }
+  return rose;
+}
 function recruit(s) {
   const r = s.run,
     id = r.pool.shift();
   if (!id) return '';
   const u = prepareHero(G.startingHero(id)),
-    tier = Math.floor(r.stage / 2);
-  G.raiseLevel(u, tier);
-  u.sp += 1 + r.stage;
+    level = joinLevel(s);
+  G.raiseLevel(u, level - u.level);
+  // The points a hero who had walked every board would have: one for each level, one for each
+  // board won (this one included).
+  u.sp += level - 1 + r.stage + 1;
   r.bench.push(u);
   if (r.next.length < 5) r.next.push(id);
   G.log(s, 'story', shade(fill(MAZE_TALE.lend[r.stage % MAZE_TALE.lend.length], s, { hero: G.DETAILS[id].name }), r.plus), acrossTable(r.plus).name);
@@ -1556,6 +1591,8 @@ function settle(s) {
   const bonus = optional ? paySide(s) : null;
   delete r.devSide;
   if (bonus?.reward === 'coins') reward += bonus.amount;
+  // The bench gains experience first, so the newcomer is not counted among it.
+  const benchRose = won && !last ? benchExperience(s) : [];
   // Every win before the tenth brings the next hero, whatever the secondary.
   const newcomer = won && r.stage < TENTH ? recruit(s) : '';
   r.last = {
@@ -1564,6 +1601,7 @@ function settle(s) {
     terminal,
     reward,
     recruit: newcomer,
+    ...(benchRose.length ? { bench: benchRose } : {}),
     survivors: G.party(s).filter(G.living).length,
     ...(bonus ? { side: bonus } : {}),
     // What the tenth board won opened: the next 境界, or the last board (`finale`).
@@ -2063,6 +2101,9 @@ function campModel(s) {
     coins: r.coins,
     reward: last.reward,
     recruit: G.DETAILS[last.recruit]?.name || '',
+    recruitLevel: G.company(s).find((u) => u.id === last.recruit)?.level || 0,
+    // Heroes on the bench who rose a level from the experience it gains.
+    benchRose: (last.bench || []).map(({ id, level }) => (G.DETAILS[id]?.name || id) + ' 升至 Lv.' + level),
     objective: !last.won || !r.side
       ? ''
       : last.optional

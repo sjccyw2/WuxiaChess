@@ -4818,6 +4818,28 @@ section('rewards and recruit');
   unit(s, 'medic').hp = 0;
   b = win(s, { kind: 'intact', reward: 'points' });
   check('a failed secondary pays nothing more, and still a hero comes', !s.run.last.optional && s.run.coins - b.coins === 36 && !!s.run.last.recruit);
+  // Catching up (the producer, 2026-11-23): a newcomer joins about level with the fielded heroes,
+  // with a point for each level and each board won; the bench gains half the experience it trails by.
+  s = realBoard(0, 0);
+  for (const [u, level] of G.party(s).map((u, i) => [u, i ? 6 : 7])) {
+    G.raiseLevel(u, level - u.level);
+    u.xp = 0;
+  }
+  const benched = G.startingHero(s.run.pool.pop());
+  benched.xp = 0;
+  s.run.bench.push(benched);
+  const team = G.party(s),
+    mean = team.reduce((n, u) => n + u.level, 0) / team.length,
+    mark = team.reduce((n, u) => n + u.level * 100, 0) / team.length;
+  win(s, { kind: 'intact', reward: 'coins' }, 4);
+  const joined = s.run.bench.find((u) => u.id === s.run.last.recruit);
+  check('a newcomer joins at the fielded heroes’ average level, rounded down', joined?.level === Math.floor(mean), joined?.level + ' vs ' + mean);
+  check('…with a point for each level above the first and each board won, beside his own', joined?.sp === 1 + (joined.level - 1) + 5, String(joined?.sp));
+  const gained = Math.round((mark - 100) / 2),
+    total = benched.level * 100 + benched.xp;
+  check('the bench gains half the experience it trails the fielded heroes by', total === 100 + gained, total + ' vs ' + (100 + gained));
+  check('…and the page names who rose a level', s.run.last.bench?.some((r) => r.id === benched.id && r.level === benched.level));
+  check('…the newcomer gains nothing from it on the board he joins', joined.xp === 20);
   s = realBoard(0, 0);
   unit(s, 'medic').hp = 0;
   b = win(s, { kind: 'noMedicine', reward: 'points' });
