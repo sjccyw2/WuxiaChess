@@ -299,8 +299,7 @@
 .mj-tab:focus-visible {
   outline-offset: -4px !important;
 }
-.mj-path,
-.mj-berth {
+.mj-path {
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -318,8 +317,7 @@
   object-position: 63% 44%;
   opacity: 0.87;
 }
-.mj-path::before,
-.mj-berth::before {
+.mj-path::before {
   content: '';
   z-index: -1;
   position: absolute;
@@ -361,8 +359,7 @@
   margin: 0 3px;
   background: #6b7e6c;
 }
-.mj-path h3,
-.mj-berth h3 {
+.mj-path h3 {
   margin: 2px 0 0;
   color: #f3e3be;
   font: 700 clamp(21px, 2.35vw, 27px) / 1.35 var(--serif);
@@ -944,33 +941,13 @@
   top: 50%;
   transform: translate(-50%, -50%) rotate(3deg);
 }
-.mj-berth {
-  min-height: 104px;
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-color: #5c664f;
-}
-.mj-berth .mj-illustration {
-  object-position: 72% 54%;
-  opacity: 0.96;
-}
-.mj-berth::before {
-  background: linear-gradient(90deg, #152620 3%, #15271fe6 26%, #192c23ad 49%, #16241a05 82%);
-}
-.mj-berth-copy {
-  max-width: 80%;
-}
-.mj-berth-copy > small {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  color: #d7c698;
-}
-.mj-berth-copy > p {
-  color: #dae3cd;
-  font-size: 12px;
-  margin-top: 5px;
+/* The board just played, in one line above its record. */
+.mj-outcome {
+  margin: 0;
+  padding: 2px 4px 0;
+  color: #f3e3be;
+  font: 650 15px/1.5 var(--serif);
+  letter-spacing: 0.03em;
 }
 .mj-recap {
   margin: 0;
@@ -1019,6 +996,14 @@
   align-items: center;
   gap: 2px;
   margin-top: 4px;
+}
+/* What the item does, in numbers, always in sight under its name (the prose is in the fold). */
+#modal .mj-product .mj-bonus {
+  display: block;
+  color: #78392d;
+  font: 600 13px/1.5 var(--sans);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
 }
 .mj-buy {
   min-width: 66px;
@@ -1325,12 +1310,8 @@
   .mj-roster {
     grid-template-columns: minmax(0, 1fr);
   }
-  .mj-path,
-  .mj-berth {
+  .mj-path {
     margin-bottom: 9px;
-  }
-  .mj-berth {
-    margin-bottom: 0;
   }
   .mj-prep-block + .mj-prep-block {
     margin-top: 15px;
@@ -1506,16 +1487,6 @@
   .mj-lineup,
   .mj-text-button {
     min-height: 40px;
-  }
-  .mj-berth {
-    min-height: 82px;
-    padding: 8px 12px;
-  }
-  .mj-berth h3 {
-    font-size: 20px;
-  }
-  .mj-berth-copy {
-    max-width: 82%;
   }
   .mj-wallet {
     padding-right: 0;

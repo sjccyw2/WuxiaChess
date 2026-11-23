@@ -104,11 +104,14 @@ they have no switch. Their styles are in `styles/14-battles.css`.
 ## The five 境界 (difficulty)
 
 The five 境界 are difficulty levels, listed in `game/src/data/realms.js` with what each does to
-the enemies' numbers (the first 境界 changes nothing). Before each run the player picks one from
-those open (選境界). The first is open from the start; winning a run in the highest open 境界 opens
-the next. The profile keeps `realms` (highest open), `cleared` (won), `finale` (times the last
-board was reached) and `ended` (times it was won); saves from before work these out from the runs
-won.
+the enemies' numbers (the first 境界 changes nothing). The line each shows on the picker (`note`)
+is built from those numbers, so the words cannot drift from the rule: 「敵方數值不變。」 for the
+first, then 「敵方氣血 ＋6%、攻擊 ＋3%。」, 「敵方氣血 ＋12%、攻擊 ＋6%、防禦 ＋1。」,
+「敵方氣血 ＋22%、攻擊 ＋11%、防禦 ＋2。」 and 「敵方氣血 ＋30%、攻擊 ＋15%、防禦 ＋2。」. Before
+each run the player picks one from those open (選境界). The first is open from the start; winning
+a run in the highest open 境界 opens the next. The profile keeps `realms` (highest open),
+`cleared` (won), `finale` (times the last board was reached) and `ended` (times it was won);
+saves from before work these out from the runs won.
 
 ## The last board (終局) and the ending
 

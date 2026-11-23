@@ -181,16 +181,20 @@ function formationCards(s, u, ui) {
     seats.map(card).join('') +
     '</div>' +
     (manage && s.run.scene === 'prep' ? '<p class="fo-redeploy">出陣後可在戰盤上再換位置。</p>' : '') +
+    // The bench. With nobody on it, it shows only while a hero is in hand to be sent there
+    // (picked, or being dragged: the styles show a `vacant` bench then), so it can still be reached.
     (manage
-      ? '<div class="fo-bench" ' +
+      ? '<div class="fo-bench' +
+        (bench.length ? '' : ' vacant') +
+        '" ' +
         dropAttrs('post', -1) +
         '><div class="fo-section"><h3>候補</h3>' +
         (picked && seats.includes(picked)
           ? small('place-post', '移至候補', 'data-id="-1"', seats.filter(Boolean).length === 1)
           : '') +
-        '</div><div class="fo-reserves">' +
-        (bench.map((v) => card(v.id, -1)).join('') || '<small>無候補俠客</small>') +
-        '</div></div>' +
+        '</div>' +
+        (bench.length ? '<div class="fo-reserves">' + bench.map((v) => card(v.id, -1)).join('') + '</div>' : '') +
+        '</div>' +
         '<div class="fo-instruction" aria-live="polite">' +
         (picked
           ? '已選' + who(G.find(s, picked)) + ' · 點選陣位放置'

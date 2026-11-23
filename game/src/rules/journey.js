@@ -1334,30 +1334,22 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     const n = board.objects.filter((o) => o.id.split('#')[0] === key).length;
     return G.DETAILS[key].name + (n > 1 ? COUNT_WORDS[n] + '根' : '');
   });
-  // The kind of battle and what it asks, in one plain line.
-  const battle =
-    kind === 'rout'
-      ? '殲滅 · ' + MAZE_TALE.brief.rout
-      : kind === 'keep'
-        ? '守 · ' + MAZE_TALE.brief.keep
-        : kind === 'break'
-          ? '破 · ' + MAZE_TALE.brief.break
-          : kind === 'yield'
-            ? '問劍 · ' + MAZE_TALE.brief.yield + boonLine()
-            : masters.length > 1
-              ? '斬將 · ' + MAZE_TALE.brief.slayTwo
-              : '斬將 · ' + MAZE_TALE.brief.slay;
+  // How the board is won, in one plain line (the producer's ruling of 2026-11-23: this page
+  // states rules, once): the kind's name, the board's own condition, then what need not be done.
   const hold = board.hold ? '第' + NUMERALS[board.hold - 1] + '回合' : '';
+  const within = '在第十二回合結束前';
   const win =
-    kind === 'rout'
-      ? '在第十二回合結束前擊敗全部敵人。' + (board.waves.length ? '援軍亦須擊敗。' : '')
+    KIND_NAMES[kind] +
+    ' · ' +
+    (kind === 'rout'
+      ? within + '擊敗全部敵人' + (board.waves.length ? '，援軍也算' : '') + '。'
       : kind === 'keep'
-        ? '守住' + things.join('、') + '，撐到' + hold + '結束；或在此之前擊敗' + masters.join('與') + '。'
+        ? '守住' + things.join('、') + '到' + hold + '結束；或提前擊敗' + masters.join('與') + '。'
         : kind === 'break'
-          ? '在第十二回合結束前擊毀' + things.join('、') + '。'
+          ? within + '擊毀' + things.join('、') + '；局主不必擊敗。'
           : kind === 'yield'
-            ? '在第十二回合結束前，將' + masters.join('與') + '的氣血削至 1 點。他不會倒下；其餘的人不必擊敗。'
-            : '在第十二回合結束前擊敗' + masters.join('與') + '。';
+            ? within + '將' + masters.join('與') + '的氣血削至 1 點；他不會倒下，其餘的人不必擊敗。'
+            : within + '擊敗' + masters.join('與') + (masters.length > 1 ? '，' + COUNT_WORDS[masters.length] + '人都要擊敗' : '') + '；其餘敵人不必打完。');
   const leader = s ? heroName(r.scene === 'fight' ? s.leader : r.next[0]) : '領隊';
   // 敵情: each 局主, then each 副手; the board's own first, then the leaders of its waves.
   const villain = (key) => G.DETAILS[key]?.rank;
@@ -1429,8 +1421,9 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     heading: stageTitle(stage) + layout.name,
     kind,
     kindName: KIND_NAMES[kind],
-    battle,
     win,
+    // The last board: what 無名 gains as he steps onto it, a line of its own under 勝利.
+    boon: kind === 'yield' ? boonLine() : '',
     loss: kind === 'keep' ? leader + '倒下，或' + things.join('、') + '被毀。' : leader + '倒下，或第十二回合結束仍未取勝。',
     // The board's objects for the plan and the page: each with its picture and what it is.
     objects: (board.objects || []).map((o) => {
@@ -1443,7 +1436,6 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     // The last board has no secondary: its pages show no 支線 at all.
     noSide: !board.sides.length,
     sideNote: s || !board.sides.length ? '' : '支線於入局時抽定。',
-    sideLead: MAZE_TALE.brief.side,
     recruit: recruitId ? MAZE_TALE.brief.next.replace('{hero}', heroName(recruitId)) : '',
     foes,
     force: {
@@ -2076,8 +2068,9 @@ function campModel(s) {
       : last.optional
         ? '支線達成：' + sideName(r.side) + '。' + rewardText(r.side, r.stage, last.side?.manual, r) + '。'
         : '支線未成：' + sideName(r.side) + '。',
+    // A lost board: the board's reason alone. What follows it is the banner of the next page.
     story: !last.won
-      ? s.reason + MAZE_TALE.loss
+      ? s.reason
       : r.stage === TENTH && final
         ? MAZE_TALE.win
         : CHAMBER_TALES[s.mapIndex].victory,
