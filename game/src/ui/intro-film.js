@@ -14,9 +14,10 @@ let layer = null,
 // tall, wide: { file, poster }, picture names in game/assets, for each cut; label: what the film
 // is, for a screen reader; onDone(shown): called once, with true when the player skips or
 // continues and false when the file cannot play.
-// The film starts with its sound on even though the game's own sound starts off: the music is
-// half of it. A button in the corner mutes it.
-function playFilm({ tall, wide, onDone, label = '序幕影片' }) {
+// muted: whether the film starts silent. The caller passes the player's sound setting once they
+// have set it; until then the film starts with its sound on even though the game's own sound
+// starts off: the music is half of it. A button in the corner mutes or unmutes it.
+function playFilm({ tall, wide, onDone, label = '序幕影片', muted = false }) {
   closeFilm();
   const doc = globalThis.document;
   layer = doc.createElement('div');
@@ -38,6 +39,7 @@ function playFilm({ tall, wide, onDone, label = '序幕影片' }) {
   const media = globalThis.matchMedia?.(TALL);
   const cut = () => (media?.matches ? tall : wide);
   let showing = cut();
+  video.muted = muted;
   video.poster = art(showing.poster);
   video.src = art(showing.file);
   // Turned mid-film: the other cut, from the same moment.

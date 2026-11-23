@@ -63,6 +63,7 @@ let prefs = Object.assign(
 );
 let mode = 'move',
   dialogState = null,
+  closingPage = false,
   viewId = state.selected,
   logFilter = 'all',
   storyIndex = 0,
@@ -875,8 +876,31 @@ function openPage(name, heroId) {
   refreshDev();
 }
 function closePage() {
-  if (dialog.open) dialog.close();
-  else dialogState = null;
+  if (dialog.open) {
+    closingPage = true;
+    dialog.close();
+    closingPage = false;
+  } else dialogState = null;
+}
+// A page that is a step of the game itself: the prologue, 選境界, the draw, a story, 軍情, 整備, the
+// shop, the run's last page. Leaving one drops the player out to the title screen, so only its
+// own buttons do that: a tap outside it or Esc never does (dismissOutside). A page opened from
+// another page, and a panel opened over a battle or the title, still step back or close that way.
+const RUN_STEPS = ['prologue', 'realm', 'formation'];
+function stepOfRun() {
+  if (RUN_STEPS.includes(dialogState)) return true;
+  if (dialogState === 'brief' && briefFrom) return false;
+  if (dialogState === 'team' && state.run.scene === 'shop') return false;
+  return (
+    ['team', 'encounter', 'brief', 'camp', 'result'].includes(dialogState) &&
+    state.run.scene !== 'fight'
+  );
+}
+// A tap outside the open page (tap), or Esc. Beside a story, a tap turns its page.
+function dismissOutside(tap) {
+  if (!stepOfRun()) dismissLayer();
+  else if (tap && dialogState === 'encounter') command('scene-next');
+  else if (tap && dialogState === 'prologue') command('prologue-next');
 }
 function dismissLayer() {
   if (dialogState === 'brief' && briefFrom) {
@@ -936,10 +960,19 @@ function showScene() {
 }
 dialog.addEventListener('cancel', (e) => {
   e.preventDefault();
-  dismissLayer();
+  dismissOutside(false);
+});
+// Esc on a step of the run does nothing at all. Stopping the key itself (not only the cancel it
+// would raise) matters: a browser lets a page refuse a cancel once, then closes the dialog anyway.
+dialog.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !e.defaultPrevented && stepOfRun()) e.preventDefault();
 });
 dialog.addEventListener('close', () => {
   if (dialog.open) return;
+  // Closed by the browser and not by the game (a second back gesture on a phone, say) while it
+  // showed a step of the run: put the step back, so the player is never left on a bare screen.
+  const lost = !closingPage && stepOfRun() ? dialogState : null;
+  if (lost) setTimeout(() => !dialog.open && (RUN_STEPS.includes(lost) ? openPage(lost) : showScene()));
   dialogState = null;
   if (board?.layers) board.layers.aim = null;
   board.uncover();
@@ -954,7 +987,7 @@ dialog.addEventListener('click', (e) => {
   if (e.target === dialog) {
     const r = dialog.getBoundingClientRect();
     if (e.clientX < r.left || e.clientY < r.top || e.clientX > r.right || e.clientY > r.bottom)
-      dismissLayer();
+      dismissOutside(true);
   }
 });
 function result(afterMotion = false) {
@@ -1290,6 +1323,7 @@ function openPrologue() {
   closePage();
   playFilm({
     ...MAZE_TALE.prologue.film,
+    muted: filmMuted(),
     // If the film could not play, the pages tell the whole prologue instead.
     onDone: (shown) => {
       prologue.film = shown;
@@ -1311,7 +1345,7 @@ function beginNewRun() {
 // sword and meets the eagle. If it cannot play, the run's last page tells the same words.
 function playEnding(onDone) {
   closePage();
-  playFilm({ ...MAZE_TALE.finale.film, label: '終局影片', onDone: () => onDone?.() });
+  playFilm({ ...MAZE_TALE.finale.film, muted: filmMuted(), label: '終局影片', onDone: () => onDone?.() });
 }
 // Developer mode (?dev): a small panel, kept inside the open dialog so it stays clickable.
 const dev = devMode() ? document.createElement('aside') : null;
@@ -1407,8 +1441,12 @@ function enterBattle(fresh) {
   if (state.result && state.run.status === 'battle') result();
   else if (!showScene() && state.phase === 'enemy') runEnemy();
 }
+// The films follow the sound setting once the player has set it either way; until then they play
+// with their sound on, though the game's own sound starts off (the music is half of a film).
+const filmMuted = () => prefs.soundSet === true && !prefs.sound;
 function toggleSound() {
   prefs.sound = !prefs.sound;
+  prefs.soundSet = true;
   savePrefs();
   refreshSound();
   audio('chime');
@@ -2100,6 +2138,7 @@ function command(action, id, data = {}, keyboard = false) {
     }
     case 'pref':
       prefs[id] = !prefs[id];
+      if (id === 'sound') prefs.soundSet = true;
       savePrefs();
       paint();
       drawModal(true);
