@@ -181,7 +181,7 @@ section('save migration');
   check('its slot is emptied', h && same(h.slots, ['signature', null, null]), h && h.slots);
   check('the active art falls back to the first filled slot', h?.activeArt === 'signature');
   check('its points are refunded', h?.sp === 5, h?.sp);
-  const lines = restored?.logs.filter((l) => l.text === '武學譜重修：已失傳的招式退還武學點數。');
+  const lines = restored?.logs.filter((l) => l.text === '武學譜重修：已失傳的招式退還武學點。');
   check('the refund is logged once, by 武學傳承', lines?.length === 1 && lines[0].who === '武學傳承');
 
   // nineYang → yijinjing: the manual was replaced, and a save holding the old id follows it.

@@ -511,9 +511,8 @@ function openArts(keyboard = false) {
   );
 }
 // ── The deployment step ─────────────────────────────────────────────────────
-// The stones are still in the youth's hand: 落子無悔 once the battle is begun.
-const DEPLOY_TIP =
-  '起陣 · 子還在手上，換得：點選一位俠客，再點另一位俠客或亮起的空格互換位置。一按「開戰」，落子無悔。';
+// Heroes may still be swapped; once the battle is begun they may not (落子無悔).
+const DEPLOY_TIP = '起陣 · 點一位俠客，再點另一位或亮起的空格換位。按「開戰」後不能再換。';
 function showDeployTip() {
   if (coach.running()) return; // the tutorial's card says it instead
   deployTip = true;
@@ -1864,7 +1863,7 @@ function command(action, id, data = {}, keyboard = false) {
         drawModal();
       }
       break;
-    // 習武 in the 陣容 pane: the 武學 tab, on the tree, for that hero.
+    // 修習 in the 陣容 pane: the 武學 tab, on the tree, for that hero.
     case 'hero-train':
       if (dialogState === 'team' && G.company(state).some((v) => v.id === id)) {
         viewId = id;
@@ -2091,9 +2090,9 @@ function command(action, id, data = {}, keyboard = false) {
         audio('grow');
         notice(
           chooseSlot
-            ? '新招已悟，請選一格帶入此戰。'
+            ? '新招已修習，請選一格帶入此戰。'
             : u.slots.includes(id)
-              ? '新招已悟，已裝入空格。'
+              ? '新招已修習，已裝入空格。'
               : '修習有成。'
         );
       }
@@ -2209,7 +2208,7 @@ function command(action, id, data = {}, keyboard = false) {
       advanceAfterStrike(u.id, hit);
       if (hit.leveled) {
         audio('level');
-        notice(uName(u) + '升至等級 ' + u.level + '，武學點數 +1');
+        notice(uName(u) + '升至等級 ' + u.level + '，武學點 +1');
       } else if (!state.result && !skill) notice(uName(u) + '施展「' + G.basicFor(u).name + '」');
       break;
     }

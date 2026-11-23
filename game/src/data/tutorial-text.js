@@ -23,7 +23,6 @@ const TUTORIAL_TEXT = {
   skipped: '指引已略過。想重看，可到選單的「指南」。',
   // The control in the in-battle guide (遊玩指南) that plays the tutorial again on this board.
   replay: '重看新手指引',
-  replayNote: '在這一局把新手指引從頭再看一遍。',
   steps: {
     // 起陣, until 開戰.
     deploy: '起陣：點一位俠客，再點另一位俠客或亮起的空格，可互換位置。排好後按「開戰」。',
@@ -54,7 +53,7 @@ const TUTORIAL_TEXT = {
     viewTouch: '雙指開合可縮放，單指拖曳可旋轉戰場。「視角」裡可切換俯視、重設視角。',
     viewMouse: '滾輪可縮放，拖曳可旋轉戰場。「視角」裡可切換俯視、重設視角。',
     goal: '點左上角的地名牌，可看這一局的勝敗條件。領隊{name}倒下，這一輪便結束。',
-    guide: '其餘規則都在「選單」的「指南」裡，也可從那裡重看這份指引。指引到此為止。'
+    guide: '其餘規則都在「選單」的「指南」裡，也可從那裡重看這份指引。'
   }
 };
 

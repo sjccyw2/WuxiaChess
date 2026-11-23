@@ -1606,6 +1606,12 @@ body:has(dialog[open]) {
   font: 11px var(--sans);
   color: #d6cdaf;
 }
+/* No keyboard to press them on: the same test the tutorial uses for its touch wording. */
+@media (pointer: coarse) {
+  .hotkeys {
+    display: none;
+  }
+}
 .setting-row > svg {
   color: var(--gold);
 }

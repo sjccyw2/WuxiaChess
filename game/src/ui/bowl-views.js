@@ -48,7 +48,7 @@ function bowlsPage(s, mixing) {
         '</strong>' +
         (face
           ? '<small>' +
-            esc(ITEMS[id]?.desc || '武譜 · 參悟需 ' + TECHNIQUES[id].points + ' 武學點') +
+            esc(ITEMS[id]?.desc || '武譜 · 修習需 ' + TECHNIQUES[id].points + ' 武學點') +
             '</small>'
           : '');
       if (shown || done)

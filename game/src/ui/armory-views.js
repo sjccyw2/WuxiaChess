@@ -130,7 +130,7 @@ function formationCards(s, u, ui) {
     const attrs = manage ? dragAttrs('hero', id, '') : 'data-id="' + id + '"';
     const stamp = chief === id ? '<b class="fo-seal">領隊</b>' : '';
     const label = (manage && picked && picked !== id ? '放至' : '') + position;
-    const points = member.sp > 0 ? '<b class="fo-points">可參悟 ' + member.sp + '</b>' : '';
+    const points = member.sp > 0 ? '<b class="fo-points">可修習 ' + member.sp + '</b>' : '';
     return (
       '<article class="fo-seat' +
       (id === u.id ? ' inspected' : '') +
@@ -235,7 +235,8 @@ function equipmentPlacement(s, u, id, owner, dest) {
     ? G.equip(s, u, id)
     : G.transferEquipment(s, u, G.find(s, owner), id);
 }
-function armory(s, u, ui) {
+// `more` is put at the end of the hero's name row: the team page's 俠客詳情 button.
+function armory(s, u, ui, more = '') {
   const all = available(s, u);
   const filter = ui.filter || 'all';
   const visible = all.filter((v) => filter === 'all' || v.item.kind === filter);
@@ -359,7 +360,8 @@ function armory(s, u, ui) {
     (filter === 'use' ? '<img class="fo-recipient" alt="" src="' + esc(face(u.id)) + '">' : '') +
     section(
       who(u),
-      '<small>氣血 ' + u.hp + '／' + u.maxHp + ' · 內力 ' + u.mp + '／' + u.maxMp + '</small>'
+      '<small><span>氣血 ' + u.hp + '／' + u.maxHp + '</span> · <span>內力 ' + u.mp + '／' + u.maxMp + '</span></small>' +
+        more
     ) +
     (filter === 'use' ? '' : figure) +
     '</section><section class="fo-cabinet">' +
