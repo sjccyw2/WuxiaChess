@@ -70,6 +70,8 @@ asset-gen/            art not yet in the game (see asset-gen/README.md)
 tools/
   check-wiki.mjs      builds the wiki outside a browser and checks its links
   check-story.mjs     plays hundreds of shuffled runs and checks the story holds
+  script-package.mjs  writes script-package/ for a prose edit, and writes an edited one back (see below)
+  script-package/     the brief, the writer's prompt, the mechanics overview and the sample runs that go into it
   extra-fonts.py      regenerates the extra font characters for the game and the wiki
   map-preview.html    draws one battlefield with the game's own board, camera and lighting
   shoot-map.mjs       photographs a battlefield from a set of camera angles
@@ -280,6 +282,34 @@ A run is ten boards drawn from fifteen (`routeFor` in `game/src/rules/journey.js
 A run saved before then has no `routes` field and keeps the route its seed made at the time (the first ten boards only).
 
 The five added boards are each built round one villain: he is the 局主, there is no lieutenant, and the other three of the board's fixed four pieces are his troop type (`GARRISONS` in `game/src/data/encounters.js`). A board needs an entry in each of these, by map index: `data/terrain.js` (layout), `data/encounters.js` (`ENCOUNTERS`, `RANKS`, and `GARRISONS` if it has no lieutenant), `data/martial-arts.js` (`CAPTAINS`), `data/battles.js`, `data/encounter-script.js`, `data/maze-tale.js` (`CHAMBER_TALES`), a tier in `routeFor`, `scene/maze-atmosphere.js` (sky and the plane below), `scene/stage-light.js` (light rig), `audio/ambience.js` (sound bed), `scene/maze-scenery.js` (palette, depth and, for boards 10 on, the earlier board whose tile language it borrows) and a landform module `scene/landforms/landform-N.js` listed in `scene/environment.js`, plus a picture `wiki/assets/map-N.webp`. For the last board it also needs its master's `guest` line (`data/encounter-script.js`, said when he walks onto 谷底棋臺 of his own accord), his `GUEST_GISTS` note if his own board's note speaks of things only that board has, and a kind of weapon in `ARM_OF` for each of its enemies (`data/encounters.js`; what 無名's nine forms answer). The last board itself is map 15 and stays there: a new board takes the next free index after it (16 on), and nothing reads the last board as the last index (`LAST_MAP` finds it by its `last` mark).
+
+## A script package for a prose edit
+
+`script-package/` holds everything a writer, or another LLM, needs to rewrite the story's prose
+without touching the story: a brief (`README.md`), the prompt to give the writer (`PROMPT.md`), the
+two design documents, an overview of how the game plays and when each line is shown, a sample
+playthrough (`04-試玩劇本.md`: three runs played by the game's own `dialogue` and printed scene by
+scene with each line's id, the one place to see how lines from different layers follow one
+another), and the three script files, one per story layer
+(`10-主線劇本.md`, `11-各局劇本.md`, `12-俠客劇本.md`). Every editable line is listed once, with an id
+(`〔S012〕`), who says it and a note on when it plays: 860 lines, from the spine, the boards (with the
+villains' bios and 變招 lines) and the heroes (with their bios and tree introductions). Names and
+labels are left out.
+
+```bash
+node tools/script-package.mjs                          # rebuild the package from the game
+node tools/script-package.mjs --apply DIR --dry        # report what an edited package would change
+node tools/script-package.mjs --apply DIR              # write the edited lines back into the game
+```
+
+`--apply` reads every `〔id〕` line in the files in `DIR` whose names start with `10-`, `11-` or `12-`
+(so a returned `notes.md` is never read as an edit), finds each line's string literal by
+its path in `manifest.json` (`MAZE_TALE.after[2][4].text`) and replaces only the ones whose text
+changed. It refuses a line that came back empty, a line whose placeholders (`{name}`, `{hero}`)
+changed, and a line whose source was edited after the package was made. Run the story, wiki and
+font checks afterwards. Rebuild the package after changing story text, so the next editor gets the
+current lines. The hand-written parts are in `tools/script-package/` (`brief.md`, `prompt.md`, `mechanics.md`,
+and `playthrough.mjs`, which picks the three sample runs).
 
 ## How the wiki stays in step with the game
 
