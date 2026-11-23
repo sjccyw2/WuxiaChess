@@ -10,7 +10,7 @@ import {
   blankRecord,
   CONDITION_NAMES
 } from './battle-mastery.js';
-import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE } from '../data/mastery-catalog.js';
+import { HERO_PATHS, GATE_LABELS } from '../data/mastery-catalog.js';
 import * as G from './game.js';
 import { NUMERALS } from './game.js';
 import { mapLayout } from '../data/terrain.js';
@@ -320,7 +320,7 @@ function migrateSave(s, removed = TECHNIQUES_REMOVED, renamed = TECHNIQUES_RENAM
   if (Array.isArray(r.shop))
     for (const o of r.shop) if (o && names.has(o.id)) o.id = names.get(o.id);
   if (refunded && Array.isArray(s.logs))
-    G.log(s, 'system', '武學譜重修：已失傳的招式退還武學點數。', '武學傳承');
+    G.log(s, 'system', '武學譜重修：已失傳的招式退還武學點。', '武學傳承');
   return s;
 }
 // Per-board bookkeeping kept on a hero; `advance` clears it for the next board.
@@ -1865,7 +1865,7 @@ function giveGuide(s, u, id) {
   G.log(
     s,
     'grow',
-    '受授《' + TECHNIQUES[id].name + '》，可在「授業武譜」參悟。',
+    '受授《' + TECHNIQUES[id].name + '》，可在「授業武譜」修習。',
     G.DETAILS[u.id].name
   );
   return true;
@@ -1914,6 +1914,10 @@ const eligibleArt = (u, id) =>
 function canPlaceLearned(s, u, id) {
   return G.canConfigure(s, u) || (!!id && G.canAct(s, u) && !!u.unplacedArts?.includes(id));
 }
+// An art's note as the game shows it: what the novels say. A sentence about this adaptation
+// (「…是本作的讀法」) is for the wiki, which prints `source` whole; with nothing left, no note.
+const novelNote = (source = '') =>
+  (source.match(/[^。]+。?/g) || []).filter((sentence) => !sentence.includes('本作')).join('');
 function studyState(s, u, id) {
   if (!u) return null;
   const root = G.TALENTS[id],
@@ -1946,7 +1950,7 @@ function studyState(s, u, id) {
     tier: a?.tier || 0,
     parents,
     source,
-    sourceNote: a?.source || '',
+    sourceNote: novelNote(a?.source),
     description: (a || root).desc,
     facts: moveFacts(s, u, id),
     cost: price,
@@ -1965,7 +1969,7 @@ function studyState(s, u, id) {
           : u.sp < price
             ? '武學點不足'
             : allowed
-              ? '可參悟'
+              ? '可修習'
               : '整備時修習',
     canEquip: kind !== 'basic' && kind !== 'root' && learned && canPlaceLearned(s, u, id),
     equipped: u.slots.includes(id),
@@ -2039,12 +2043,8 @@ function treeModel(s, u) {
     book: path.book,
     pathTitle: path.title,
     origin: path.origin,
-    originNote: CATALOG_NOTE,
-    // A tree may say in its own words how its arts come back (無名 is no copy).
     sp: u.sp,
     camp: s.run.status === 'camp',
-    leaderName: COMMANDS[u.id].name,
-    leaderDesc: commandDescription(u.id),
     basicName: G.basicFor(u).name,
     basicFacts: moveFacts(s, u, 'basic'),
     school,
@@ -2092,7 +2092,7 @@ function campModel(s) {
         name: item?.name || '《' + a.name + '》',
         group: item?.kind || 'manual',
         icon: item?.icon || 'book',
-        description: item?.desc || a.desc + '　每冊限授一人，另花 ' + a.points + ' 武學點參悟。',
+        description: item?.desc || a.desc + '　每冊限授一人，另花 ' + a.points + ' 武學點修習。',
         owned,
         canBuy: o.left > 0 && r.coins >= o.price
       };

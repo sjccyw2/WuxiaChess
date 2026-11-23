@@ -557,6 +557,11 @@
 .wake-combinations {
   margin-top: 0.8rem;
 }
+/* Straight after the list of arts, whose last row is already ruled off. */
+.mj-library + .wake-combinations {
+  border-block-start: 0;
+  margin-top: 0;
+}
 .wake-combinations details {
   margin: 0.35rem 0.6rem;
   padding: 0.3rem 0;

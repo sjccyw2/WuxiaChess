@@ -594,16 +594,23 @@
   }
 }
 
-.fy-recipient {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0 0 12px;
+/* 俠客詳情, at the end of the 武學 header card and of the 裝備物資 name row. */
+#modal .fy-details {
+  flex: none;
+  min-height: 40px;
+  margin-left: 8px;
 }
-.fy-recipient strong {
-  font: 600 20px/1.3 var(--serif);
-  color: var(--mj-paper);
+#modal .fo-section .fy-details {
+  margin-left: auto;
+}
+/* In a narrow column 氣血 and 內力 fold onto two lines between the name and 俠客詳情, so the
+   row stays one row. */
+.fo-doll .fo-section > small {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.fo-doll .fo-section > small > span {
+  white-space: nowrap;
 }
 
 .fy-brief summary {
@@ -615,8 +622,7 @@
 .fy-brief summary small {
   display: block;
 }
-.fy-brief summary small,
-.fy-geometry {
+.fy-brief summary small {
   color: var(--mj-quiet);
   font-size: 13px;
 }
@@ -1358,6 +1364,11 @@
   .fo-doll .fo-section {
     margin-bottom: 5px;
   }
+  /* 丹藥: the face takes room, so 氣血 and 內力 go under the name and 俠客詳情. */
+  .fo-medicine .fo-doll .fo-section > small {
+    order: 1;
+    flex-basis: 100%;
+  }
   .fo-figure {
     max-width: none;
     aspect-ratio: auto;
@@ -1686,6 +1697,8 @@
   padding: 9px 12px;
 }
 .fo-medicine .fo-doll .fo-section {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
