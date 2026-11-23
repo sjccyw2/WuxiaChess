@@ -780,7 +780,6 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     '<section class="mj-view brief-view">' +
     titleHead('flag', '軍情', esc(model.heading)) +
     (L ? '<p class="brief-live">' + esc(L.line) + '</p>' : '') +
-    (model.lead && !live ? '<p class="brief-lead">' + esc(model.lead) + '</p>' : '') +
     '<div class="brief-body"><div class="brief-plan">' +
     planGrid(plan, post) +
     planKey(plan) +

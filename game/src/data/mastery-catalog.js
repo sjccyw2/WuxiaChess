@@ -5,6 +5,8 @@ const CATALOG_NOTE =
 // Why a famous hero arrives holding only an early art, said once above every tree: 求敗 wants
 // to watch an art grow, so every stone starts each game from its root, and buying a node is that
 // hero remembering. The art that made their name comes last, with the days it was paid for in.
+// (Shown on the wiki's hero pages. It stood above every tree in the game until 2026-11-23, when
+// the producer had it taken off the 武學 page to make room for the tree.)
 const RECALL_NOTE =
   '入局的只是拓來的一念，每一盤都從根長起。手上最熟的功夫還在；後來所學，要在局中一招一招想起來。成名的那一招排在最後：要連換來它的那段日子，一併想起。';
 const GATE_LABELS = {

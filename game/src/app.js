@@ -1504,6 +1504,16 @@ function toggleSound() {
   audio('chime');
   notice(prefs.sound ? '遊戲音效已開啟' : '遊戲音效已關閉');
 }
+// On an upright phone a node's detail, with its learn button, sits under the skill tree. Once the
+// node is learned the page goes back up to the tree, so the next one can be picked at once.
+function backToTree() {
+  if (!window.matchMedia('(max-width: 620px)').matches) return;
+  requestAnimationFrame(() => {
+    const tree = dialog.querySelector('.mj-map-window'),
+      scroller = tree?.closest('.mj-scroll');
+    if (scroller) scroller.scrollTop += tree.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 8;
+  });
+}
 function armState() {
   return dialogState === 'team' ? teamUI : studyUI;
 }
@@ -2077,6 +2087,7 @@ function command(action, id, data = {}, keyboard = false) {
         if (chooseSlot && dialogState === 'team') teamUI.skill = 'loadout';
         update();
         drawModal(!chooseSlot);
+        if (!chooseSlot) backToTree();
         audio('grow');
         notice(
           chooseSlot
@@ -2156,6 +2167,7 @@ function command(action, id, data = {}, keyboard = false) {
         audio('grow');
         update();
         drawModal(true);
+        backToTree();
         notice(uName(u) + '已修習「' + G.TALENTS[id].name + '」');
       }
       break;

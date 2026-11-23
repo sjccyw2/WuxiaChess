@@ -10,7 +10,7 @@ import {
   blankRecord,
   CONDITION_NAMES
 } from './battle-mastery.js';
-import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE, RECALL_NOTE } from '../data/mastery-catalog.js';
+import { HERO_PATHS, GATE_LABELS, CATALOG_NOTE } from '../data/mastery-catalog.js';
 import * as G from './game.js';
 import { NUMERALS } from './game.js';
 import { mapLayout } from '../data/terrain.js';
@@ -1334,7 +1334,7 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     const n = board.objects.filter((o) => o.id.split('#')[0] === key).length;
     return G.DETAILS[key].name + (n > 1 ? COUNT_WORDS[n] + '根' : '');
   });
-  // The kind of battle, as the youth reads it from the table: where the 戰意 sits.
+  // The kind of battle and what it asks, in one plain line.
   const battle =
     kind === 'rout'
       ? '殲滅 · ' + MAZE_TALE.brief.rout
@@ -1443,7 +1443,6 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     // The last board has no secondary: its pages show no 支線 at all.
     noSide: !board.sides.length,
     sideNote: s || !board.sides.length ? '' : '支線於入局時抽定。',
-    lead: MAZE_TALE.brief.lead,
     sideLead: MAZE_TALE.brief.side,
     recruit: recruitId ? MAZE_TALE.brief.next.replace('{hero}', heroName(recruitId)) : '',
     foes,
@@ -2042,7 +2041,6 @@ function treeModel(s, u) {
     origin: path.origin,
     originNote: CATALOG_NOTE,
     // A tree may say in its own words how its arts come back (無名 is no copy).
-    recallNote: HERO_PATHS[u.id].recall || RECALL_NOTE,
     sp: u.sp,
     camp: s.run.status === 'camp',
     leaderName: COMMANDS[u.id].name,
