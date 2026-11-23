@@ -4930,8 +4930,21 @@ for (const [map, b] of BATTLES.entries())
     check(tag + 'the drawn secondary is one of the pool', b.sides.some((e) => e.kind === s.run.side.kind));
     check(tag + 'the briefing model is complete', (() => {
       const m = R.briefing(s);
-      return m.battle && m.win && m.loss && m.side?.name && m.side.detail && m.waves.length === b.waves.length && m.force.line === '開局 ' + start + ' 名，援軍 ' + (total - start) + ' 名，共 ' + total + ' 名。' && !JSON.stringify(m).includes('undefined');
+      return m.win.startsWith(m.kindName + ' · ') && m.win.endsWith('。') && m.win.length > m.kindName.length + 4 && !('battle' in m) && m.boon === '' && m.loss && m.side?.name && m.side.detail && m.waves.length === b.waves.length && m.force.line === '開局 ' + start + ' 名，援軍 ' + (total - start) + ' 名，共 ' + total + ' 名。' && !JSON.stringify(m).includes('undefined');
     })());
+    // 勝利 in one line: after the board's own condition, what need not be done (or, on 殲滅, that
+    // reinforcements count; on 守, that felling the master early wins too).
+    check(tag + '勝利 says what need not be done, as its kind does', (() => {
+      const w = R.briefing(s).win,
+        names = G.masterIds(s).map((id) => G.DETAILS[id].name);
+      return b.kind === 'rout'
+        ? w.endsWith(b.waves.length ? '，援軍也算。' : '全部敵人。')
+        : b.kind === 'keep'
+          ? w.endsWith('結束；或提前擊敗' + names.join('與') + '。')
+          : b.kind === 'break'
+            ? w.endsWith('；局主不必擊敗。')
+            : w.endsWith('；其餘敵人不必打完。') && names.every((n) => w.includes(n)) && w.includes('人都要擊敗') === names.length > 1;
+    })(), R.briefing(s).win);
     // Played forward quietly: every round wave enters on its round on its tiles.
     for (const v of G.party(s)) Object.assign(v, mapLayout(map).allies[G.party(s).indexOf(v)]);
     const entries = [];
@@ -4976,7 +4989,7 @@ for (const [map, b] of BATTLES.entries())
   check('蘆花汀: six disciples, all covering their master', piecesOf(realBoard(2, 1)).filter((u) => G.unitDetails(u).traits?.cover === 'master').length === 6);
   // 倒影天街 played forward: both must fall.
   const s8 = realBoard(8, 8);
-  check('倒影天街: the briefing says both must fall', R.briefing(s8).battle === '斬將 · ' + MAZE_TALE.brief.slayTwo && R.briefing(s8).win === '在第十二回合結束前擊敗岳不群與鮮于通。');
+  check('倒影天街: the briefing says both must fall', R.briefing(s8).win === '斬將 · 在第十二回合結束前擊敗岳不群與鮮于通，兩人都要擊敗；其餘敵人不必打完。', R.briefing(s8).win);
   check('倒影天街: the trigger wave line', R.briefing(s8).waves[0].line === '岳不群或鮮于通氣血首次過半，兩回合後，華山刀陣弟子兩名自中街入場。');
   unit(s8, 'xianYu').hp = 0;
   G.check(s8);
@@ -5438,7 +5451,7 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   check('a guest’s traits scale by the stage this run met his board at, not by the last board’s', guestsOf(s).every((u) => G.traitStage(s, u) === s.run.route.indexOf(s.run.route.find((m) => G.refId(m, 'master') === u.id))) && G.traitStage(s, qiu) === 10);
   check('each of the ten masters has a line for the briefing as a guest', s.run.route.every((m) => !!GUEST_GISTS[G.refId(m, 'master')]) && R.briefing(s).foes.slice(1).every((f) => f.gist === GUEST_GISTS[f.key] && !/橋|琴臺|弟子|索樁|半血/.test(f.gist)));
   check('a guest keeps his mods and loses his post', !G.traitsOf(chief).post && !!G.unitDetails(chief).traits.post === !!G.DETAILS[chief.id].traits.post && chief.maxHp === Math.round(G.stageRows(G.LAST_MAP, 10).guest[0] * (G.DETAILS[chief.id].traits.mods?.hp ?? 1)));
-  check('the briefing: 問劍, its win and its loss', R.briefing(s).kindName === '問劍' && R.briefing(s).win.includes('削至 1 點') && R.briefing(s).loss.startsWith('無名倒下') && R.briefing(s).heading.startsWith('終局'));
+  check('the briefing: 問劍, its win and its loss', R.briefing(s).kindName === '問劍' && R.briefing(s).win.startsWith('問劍 · ') && R.briefing(s).win.includes('削至 1 點') && R.briefing(s).loss.startsWith('無名倒下') && R.briefing(s).heading.startsWith('終局'));
   check('ten masters and 求敗 in the briefing, the later five marked as coming', R.briefing(s).foes.length === 11 && R.briefing(s).foes[0].rank === '對弈' && R.briefing(s).foes.filter((f) => f.note).length === 5);
   check('a wave of masters is named man by man, and by the share of 求敗’s 氣血 it waits on', /^求敗氣血只剩一半時，.+、.+趕到他身旁。$/.test(R.briefing(s).waves[0].line) && /^求敗氣血只剩四分之一時，.+、.+、.+趕到他身旁。$/.test(R.briefing(s).waves[1].line) && !R.briefing(s).waves[0].line.includes('率'));
 
@@ -5583,7 +5596,7 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
     G.raiseLevel(plain, youth.level - plain.level);
     const B = R.LAST_BOON;
     check('無名 steps onto the last board stronger: 氣血, 內力, 攻擊, 防禦 and a step more', youth.boon && youth.maxHp === plain.maxHp + B.hp && youth.maxMp === plain.maxMp + B.mp && youth.atk === plain.atk + B.atk && youth.def === plain.def + B.def && youth.step === plain.step + B.step && B.hp > 0 && B.atk > 0, [youth.maxHp, plain.maxHp, youth.atk, plain.atk].join());
-    check('and the briefing says by how much', R.briefing(s).battle.includes('氣血 ＋' + B.hp) && R.briefing(s).battle.includes('攻擊 ＋' + B.atk));
+    check('and the briefing says by how much, on a line of its own under 勝利', R.briefing(s).boon.includes('氣血 ＋' + B.hp) && R.briefing(s).boon.includes('攻擊 ＋' + B.atk) && !R.briefing(s).win.includes('＋'), R.briefing(s).boon);
   }
 
   // From the tenth board to the last, and the end of the run

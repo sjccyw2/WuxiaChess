@@ -349,7 +349,6 @@ function wake(w, i) {
 
 // The five 境界 as difficulty levels: what each changes, and how they open.
 function realms() {
-  const pct = (m) => (m === 1 ? '如常' : '×' + m);
   return {
     id: 'realms',
     name: TITLES.realms,
@@ -359,14 +358,12 @@ function realms() {
     sections: [
       rows(
         '各重境界的黑子',
-        G.REALMS.map((r, i) => [
-          r.sword + '境界',
-          '氣血 ' + pct(r.hp) + '，攻擊 ' + pct(r.atk) + '，防禦 ' + (r.def ? '+' + r.def : '如常') + '。' + r.note
-        ])
+        // The game's own line, which it builds from the 境界's numbers (realms.js `note`).
+        G.REALMS.map((r) => [r.sword + '境界', r.note])
       ),
       links('五重境界', [...G.WAKES.map((w, i) => link('story', wakeId(i), w.name)), link('story', 'finale', TITLES.finale)])
     ],
-    sources: cites(cite(G.REALMS[1].note, 'src/data/realms.js'))
+    sources: cites(cite(G.REALMS[1].sword, 'src/data/realms.js'))
   };
 }
 

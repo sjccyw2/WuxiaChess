@@ -92,7 +92,7 @@ function endingPage(s) {
       .map((u) => esc(G.unitDetails(u).name))
       .join('、') +
     '</p>' +
-    wakeJournal(r.chronicle, r.voyage) +
+    wakeJournal(r.chronicle) +
     '<div class="modal-foot right">' +
     btn('home', '返回主畫面', 'outline-btn') +
     btn('ending-replay', '重看終局', 'outline-btn') +
@@ -155,7 +155,7 @@ function journeyEnding(s) {
     (r.last?.opened
       ? '<p class="realm-opened">' + icon('spark', 15) + '<span>' + WAKES[r.last.opened - 1].sword + '境界已開。下一輪入夢之前，可以選它。</span></p>'
       : '') +
-    wakeJournal(r.chronicle, r.voyage) +
+    wakeJournal(r.chronicle) +
     '<div class="modal-foot right">' +
     btn('home', '返回主畫面', 'outline-btn') +
     // A save that ended at the tenth board of 無劍境界 before the last board was built goes on to it.

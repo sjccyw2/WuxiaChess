@@ -166,21 +166,12 @@ const MAZE_TALE = {
   deploy: '盤上只有五個落子的位置。先落的一枚是「眼」；眼破，全盤皆輸。其餘的人在盤邊等著，下一局仍可換上。',
   // Before round one the stones are still in his hand.
   inHand: '子還在手上，換得。一按「開戰」，落子無悔。',
-  // The briefing (軍情). What each kind of board asks, in plain words: by the producer's ruling of
-  // 2026-11-23 this page states rules, and the story's telling of them (where the 戰意 sits) stays
-  // in the scenes before the board.
+  // The briefing (軍情). By the producer's ruling of 2026-11-23 this page states rules in plain
+  // words, and the story's telling of them stays in the scenes before the board. How each kind
+  // of board is won is put together from the board itself (journey.js boardModel, `win`).
   brief: {
-    slay: '擊敗局主即勝，其餘敵人不必打完。',
-    slayTwo: '有兩名局主，兩人都擊敗才算勝。',
-    rout: '擊敗所有敵人即勝。',
-    // Boards with a thing to guard or to break (battles.js `objects`).
-    keep: '守住我方的器物到指定回合即勝；提前擊敗局主也算勝。',
-    break: '擊毀指定的器物即勝。',
-    // The last board: 求敗 himself across it.
-    yield: '將求敗的氣血削至 1 點即勝。他不會倒下，其餘局主不必擊敗。',
-    side: '韋小寶另開盤口',
-    // The white stone 求敗 has set by the board: who comes if this board is won.
-    next: '盤邊擱著一枚白子：這一局勝了，求敗便借出{hero}。'
+    // Who comes if this board is won.
+    next: '取勝後，{hero}加入。'
   },
   // 求敗 sets stones down during a board too. The sound comes a round before the person.
   clack: '嗒。求敗又落一子。下一合，人便到。',

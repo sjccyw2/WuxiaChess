@@ -454,9 +454,12 @@
 .fy-slots small {
   color: var(--mj-quiet);
 }
-.fy-sectionhead,
-.fy-shopbar {
+.fy-sectionhead {
   justify-content: space-between;
+}
+/* The shop's bar holds the purse alone. */
+.fy-shopbar {
+  justify-content: flex-end;
 }
 #modal .fy-shopbar {
   min-height: 42px;
@@ -611,11 +614,9 @@
   align-items: center;
   gap: 12px;
 }
-.fy-brief summary strong,
-.fy-brief summary small {
+.fy-brief summary strong {
   display: block;
 }
-.fy-brief summary small,
 .fy-geometry {
   color: var(--mj-quiet);
   font-size: 13px;
@@ -784,8 +785,7 @@
   color: var(--fo-gold);
   font-variant-numeric: tabular-nums;
 }
-.fo-instruction,
-.fo-reserves > small {
+.fo-instruction {
   margin: 6px 0;
   color: var(--fo-quiet);
   font-size: 12px;
@@ -1293,17 +1293,6 @@
   overflow: auto;
   overscroll-behavior: contain;
 }
-.mj-berth .fo-shop-face {
-  position: relative;
-  align-self: center;
-  width: clamp(53px, 9vw, 78px);
-  aspect-ratio: 1;
-  object-fit: cover;
-  object-position: 50% 35%;
-  border: 1px solid #b59b69;
-  border-radius: 4px;
-  margin-right: 13px;
-}
 .mj-item-symbol:has(.fo-mini),
 .item-icon:has(.fo-mini) {
   padding: 0;
@@ -1530,26 +1519,39 @@
   border: 1px solid #b3a479;
   border-radius: 3px;
 }
-.lk-invite > div,
+.lk-invite > p,
 .lk-guest > div {
   flex: 1;
   min-width: 0;
 }
-.lk-invite small,
 .lk-guest small,
 .lk-status {
   color: var(--fo-gold);
   font-size: 0.81rem;
 }
-.lk-invite h3,
 .lk-guest h3 {
   margin: 2px 0;
   color: var(--fo-paper);
   font-size: 1.15rem;
 }
-.lk-invite span {
+/* The shop's row for the bowls: one line, the face small beside it. */
+.lk-invite {
+  gap: 10px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+}
+.lk-invite img {
+  width: 36px;
+}
+.lk-invite > p {
+  margin: 0;
   color: var(--fo-quiet);
   font-size: 0.86rem;
+  line-height: 1.4;
+}
+.lk-invite strong {
+  color: var(--fo-paper);
+  font: 700 1rem/1.4 var(--serif);
 }
 .lk-guest {
   margin-bottom: 8px;
@@ -1595,6 +1597,13 @@
   margin-top: 7px;
   font: 700 1rem/1.45 var(--serif);
 }
+/* What a prize does, in numbers, between its name and its description. */
+.lk-lot .lk-bonus {
+  margin-top: 2px;
+  color: #78392d;
+  font: 600 0.81rem/1.5 var(--fo-sans);
+  font-variant-numeric: tabular-nums;
+}
 .lk-lot small {
   margin-top: 4px;
   font-size: 0.78rem;
@@ -1632,10 +1641,7 @@
 @media (max-width: 480px) {
   .lk-invite {
     gap: 7px;
-    padding: 8px;
-  }
-  .lk-invite img {
-    width: 45px;
+    padding: 5px 8px;
   }
   .lk-guest {
     align-items: flex-start;

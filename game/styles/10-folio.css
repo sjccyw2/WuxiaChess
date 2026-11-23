@@ -460,10 +460,18 @@
   align-items: center;
   gap: 0.75em;
 }
-.wake-journal > summary span {
+.wake-journal > summary span,
+.modal-title .wake-count {
   margin-left: auto;
   font-variant-numeric: tabular-nums;
   color: var(--gold, #c5a668);
+}
+/* 石刻: the count of lines beside the page's title. */
+.modal-title .wake-count {
+  margin-left: 0.8em;
+  font: 500 14px/1 var(--sans);
+  letter-spacing: 0;
+  vertical-align: middle;
 }
 .wake-leaf {
   padding: 0.2rem 0.75rem 0.8rem;
@@ -488,6 +496,8 @@
 .wake-leaf li {
   display: grid;
   justify-items: center;
+  /* (A line not yet cut is shorter than its neighbours: its numeral keeps its circle.) */
+  align-content: start;
   gap: 0.18rem;
   color: #a89c87;
 }

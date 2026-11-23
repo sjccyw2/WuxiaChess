@@ -78,7 +78,8 @@ let deployPick = null,
 // reads the next board.
 let briefFrom = null;
 let studyUI = { tab: 'school', node: null, slot: 0 };
-let teamUI = { tab: 'line', slot: 0, skill: 'school', node: null };
+// (作戰目標 on 整備 starts folded: it repeats the 軍情 page the player has just left.)
+let teamUI = { tab: 'line', slot: 0, skill: 'school', node: null, missionShut: true };
 let heroParent = null,
   archiveScene = 'before',
   archiveReturn = null;
@@ -906,7 +907,7 @@ function openPage(name, heroId) {
   }
   if (name === 'team' && dialogState !== 'team' && !personalPages.includes(dialogState)) {
     viewId = state.selected;
-    // (A folded 作戰目標 stays folded the next time the page opens.)
+    // (作戰目標 stays as it was left, folded or open, the next time the page opens.)
     teamUI = { tab: 'line', slot: 0, skill: 'school', node: null, missionShut: teamUI.missionShut };
   }
   if (personalPages.includes(name)) {

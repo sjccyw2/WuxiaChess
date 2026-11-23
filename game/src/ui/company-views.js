@@ -243,11 +243,15 @@ function memberLine(s, u, ui) {
     : G.enemies(s).filter((v) => G.unitDetails(v).rank);
   const board = mapLayout(map);
   // The briefing in short: this board's (or, from the shop, the next board's, whose secondary
-  // is not drawn yet). 軍情 opens the whole briefing; the brief folds away to leave room.
+  // is not drawn yet). It repeats the 軍情 page just left, so it starts folded (app.js teamUI):
+  // the folded header keeps the 支線's name, and the one line that bears on the line-up, the
+  // warning for a 支線 whose hero is not sent out, shows folded or not (folded, under the header;
+  // open, in the 支線 row). 軍情 opens the whole page.
   const model = upcoming ? R.boardBrief(map, s.run.stage + 1, s.run.route) : R.briefing(s);
   const side = model.side;
   const shut = !!ui.missionShut;
   const row = (term, body) => '<div><dt>' + term + '</dt><dd>' + body + '</dd></div>';
+  const warning = side?.warning ? '<small class="warn fy-mission-warn">' + icon('info', 14) + esc(side.warning) + '</small>' : '';
   const brief =
     '<section class="wake-mission' +
     (shut ? ' folded' : '') +
@@ -256,6 +260,7 @@ function memberLine(s, u, ui) {
     '<h3>作戰目標</h3><span>' +
     esc(board.name) +
     '</span>' +
+    (shut && side ? '<small class="fy-mission-side">支線 · <strong>' + esc(side.name) + '</strong></small>' : '') +
     btn('brief-open', icon('flag', 14) + '軍情', 'mj-action brief-open', 'title="軍情"') +
     btn(
       'mission-fold',
@@ -263,26 +268,17 @@ function memberLine(s, u, ui) {
       'mj-action fy-fold',
       'aria-expanded="' + !shut + '" aria-controls="fy-mission-body"'
     ) +
-    '</header><dl id="fy-mission-body"' +
+    '</header>' +
+    (shut ? warning : '') +
+    '<dl id="fy-mission-body"' +
     (shut ? ' hidden' : '') +
     '>' +
     row('勝利', esc(model.win)) +
     row('敗退', esc(model.loss)) +
-    (model.noSide
-      ? ''
-      : row(
-      '支線',
-      side
-        ? '<strong>' +
-            esc(side.name) +
-            '</strong>　' +
-            esc(side.detail) +
-            '<small>' +
-            esc(side.rewardText) +
-            '</small>' +
-            (side.warning ? '<small class="warn">' + esc(side.warning) + '</small>' : '')
-        : esc(model.sideNote)
-    )) +
+    // (No row while no 支線 is drawn yet: the shop's look at the next board, and the last board.)
+    (side
+      ? row('支線', '<strong>' + esc(side.name) + '</strong>　' + esc(side.detail) + '<small>' + esc(side.rewardText) + '</small>' + (shut ? '' : warning))
+      : '') +
     (model.recruit ? row('入局', esc(model.recruit)) : '') +
     '</dl></section>';
   return (
@@ -295,11 +291,7 @@ function memberLine(s, u, ui) {
     footprint(board) +
     '<span><strong>' +
     board.name +
-    ' · 地勢與敵情</strong><small>' +
-    board.shapeName +
-    ' · ' +
-    board.cells.length +
-    ' 格</small></span></summary><div class="fy-opponents">' +
+    ' · 地勢與敵情</strong></span></summary><div class="fy-opponents">' +
     foes
       .map(
         (v) =>
