@@ -5792,7 +5792,7 @@ section('leader boons of the later ten');
     near.mp = 0;
     const f = G.forecast(near, foe, false, s);
     check('北冥真氣: the forecast gives back 3 內力', f.absorb === 3 && f.notes.includes('北冥真氣 · 內力 ＋3'), f.notes);
-    check('…and the move’s page says so', MF.moveFacts(s, near, 'basic').effectLines.includes('北冥真氣 · 出手擊中敵人時，回復 3 點內力'));
+    check('…but the move’s own page does not: a leader’s boon is the team’s, not the move’s', !MF.moveFacts(s, near, 'basic').effectLines.some((l) => l.startsWith('北冥真氣')));
     G.resolve(s, near, foe, false);
     check('…and the strike gives it', near.mp === 3, near.mp);
     check('not eight tiles off', !G.forecast(far, other, false, s).absorb);

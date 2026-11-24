@@ -2,10 +2,8 @@ import { FORM_RULES, splashRadius } from './form-rules.js';
 import { STROKE_NOTES } from '../fx/technique-strokes.js';
 import * as G from './game.js';
 import { TECHNIQUES } from '../data/martial-arts.js';
-import { leaderBoon, commandBonus, effectsOf, effectDescription } from './battle-mastery.js';
+import { effectsOf, effectDescription } from './battle-mastery.js';
 
-// The leader's boons (COMMANDS) that change what a hero's blow does, beyond its numbers.
-const STRIKE_BOONS = ['held', 'absorb', 'venom', 'linger', 'bend', 'opening'];
 const percent = (fraction) => Math.round(fraction * 100) + '%';
 const roots = { force: '攻擊 ＋3', guard: '防禦 ＋2', breath: '絕技威力 ＋5、內力消耗 −2' };
 
@@ -124,7 +122,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
       lines.push(
         forecast ? '分段傷害 ' + forecast.hits.join(' ＋ ') : '連擊 ' + hits.length + ' 段'
       );
-    const pierce = art ? art.pierce : commandBonus(s, u, 'pierce') / 100;
+    const pierce = art?.pierce;
     if (pierce) lines.push('穿透 ' + percent(pierce) + ' 防禦');
     if (art?.splash)
       lines.push(
@@ -136,11 +134,8 @@ function moveFacts(s, u, id = 'basic', target = null) {
     if (art?.push) lines.push('擊退 1 格，須有空位');
     if (art?.safe) lines.push('敵人無法反擊');
     if (art?.recover) lines.push('命中回復 ' + art.recover + ' 內力');
-    const bonus = commandBonus(s, u, 'pursuit');
-    if (bonus) lines.push('敵方半血以下威力 ＋' + bonus);
-    // The leader's boons that change a blow, in their own words.
-    for (const stat of STRIKE_BOONS)
-      if (commandBonus(s, u, stat)) lines.push(leaderBoon(s).name + ' · ' + leaderBoon(s).text.replace(/。$/, ''));
+    // (The leader's boons, 領隊陣法, are the whole team's and not the art's: they are said once, on
+    // the leader, and not on every art. The producer, 2026-11-24.)
     if (basic && definition.basicBonus) lines.push('普攻威力 ＋' + definition.basicBonus);
     if (!lines.length && !effectsOf(art).length) lines.push('單體攻擊，射程內可受反擊');
   } else if (art.heal) {
