@@ -325,8 +325,9 @@ function campRecap(model) {
         ? `＋${whole(model.reward)} 兩`
         : ''
       : text(model.reward);
-  const line = [text(model.stageName), model.lost ? '敗' : '勝', reward, model.recruit ? `${text(model.recruit)}入隊` : ''].filter(Boolean).join(' · ');
-  return `<p class="mj-outcome">${line}</p>${model.objective || model.story ? `<details class="mj-origin mj-recap"><summary>${glyph('scroll', 14)}本局紀錄${glyph('down', 14)}</summary>${model.story ? `<p>${text(model.story)}</p>` : ''}${model.objective ? `<dl><div><dt>支線</dt><dd>${text(model.objective)}</dd></div></dl>` : ''}</details>` : ''}`;
+  const line = [text(model.stageName), model.lost ? '敗' : '勝', reward, model.recruit ? `${text(model.recruit)}入隊（Lv.${model.recruitLevel}）` : ''].filter(Boolean).join(' · ');
+  const bench = model.benchRose?.length ? `<div><dt>場下</dt><dd>${text(model.benchRose.join('、'))}</dd></div>` : '';
+  return `<p class="mj-outcome">${line}</p>${model.objective || model.story || bench ? `<details class="mj-origin mj-recap"><summary>${glyph('scroll', 14)}本局紀錄${glyph('down', 14)}</summary>${model.story ? `<p>${text(model.story)}</p>` : ''}${model.objective || bench ? `<dl>${model.objective ? `<div><dt>支線</dt><dd>${text(model.objective)}</dd></div>` : ''}${bench}</dl>` : ''}</details>` : ''}`;
 }
 function productRow(item, coins) {
   const left = whole(item.left),

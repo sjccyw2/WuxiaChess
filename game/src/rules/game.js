@@ -797,18 +797,25 @@ function pressed(s) {
   const m = find(s, commanderId(s));
   return m && living(m) && m.hp <= m.maxHp / 2 ? m : null;
 }
+// A board object that wards a master, once another such object has fallen (護樁: 慕容博 then
+// guards the one still standing, and takes the blows aimed at it).
+const wardLeft = (s, t) =>
+  isProp(t) && !!unitDetails(t)?.traits?.ward && props(s).some((v) => v !== t && unitDetails(v)?.traits?.ward && !living(v));
 function coverer(s, t) {
   if (!s?.units || !t?.id) return null;
   let best = null;
   for (const v of s.units) {
-    // 受制 gives and takes no cover; under 定身 a piece cannot step in.
-    if (v === t || !living(v) || v.side !== t.side || distance(v, t) !== 1) continue;
-    if (charmed(v) || charmed(t) || v.conditions?.freeze) continue;
     const cover = !ally(v) && unitDetails(v)?.traits?.cover;
+    // 護樁: a piece with `cover: 'ward'` beside the last object that wards him takes its blows.
+    const guard = cover === 'ward' && wardLeft(s, t);
+    // 受制 gives and takes no cover; under 定身 a piece cannot step in.
+    if (v === t || !living(v) || (v.side !== t.side && !guard) || distance(v, t) !== 1) continue;
+    if (charmed(v) || charmed(t) || v.conditions?.freeze) continue;
     // 刀陣 ('kin'): one of a pair of the same type, the healthier taking the blow for the other.
     const covers = ally(v)
       ? !!v.conditions?.cover
-      : (cover === 'master' && t.id === commanderId(s)) ||
+      : guard ||
+        (cover === 'master' && t.id === commanderId(s)) ||
         (cover === 'kin' && pieceKey(v) === pieceKey(t) && v.hp > t.hp) ||
         // 護駕 (the last board): once 求敗 is at half, a master beside him takes the blow.
         (!!v.guest && pressed(s) === t);
@@ -920,6 +927,14 @@ function traitsOf(u) {
 // 坐鎮: the tile a posted piece guards — its spawn on this board, a tile its traits name, or its
 // board master's tile as its own action begins ('master'; none once the master has fallen).
 function postTile(s, u, post) {
+  // 'ward': no post while every board object that wards him stands; once one has broken, the
+  // nearest still standing (慕容博 falls back to guard the last 星索樁).
+  if (post.tile === 'ward') {
+    const wards = props(s).filter((v) => unitDetails(v)?.traits?.ward);
+    if (!wards.some((v) => !living(v))) return null;
+    const left = wards.filter(living).sort((a, b) => distance(a, u) - distance(b, u))[0];
+    return left ? { x: left.x, y: left.y } : null;
+  }
   if (post.tile === 'master') {
     const m = find(s, commanderId(s));
     return m && living(m) && m !== u ? { x: m.x, y: m.y } : null;
@@ -1070,7 +1085,18 @@ function enemyTraitLines(s, u) {
         .join('；') + '。'
     );
   else if (t.post && u.woke) say('坐鎮', '已離位追擊。');
-  else if (t.post) {
+  else if (t.post?.tile === 'ward') {
+    const tile = postTile(s, u, t.post),
+      within = COUNTS[t.post.tether] + '格內';
+    say(
+      '坐鎮',
+      (tile
+        ? '退守' + unitDetails(at(s, tile.x, tile.y)).name + tileName(tile) + within + '。'
+        : '星索樁倒下一根，便退到另一根旁守著，守在' + within + '。') +
+        (t.cover === 'ward' ? '與那根樁相鄰時，替它承受俠客的直接攻擊。' : '') +
+        (t.cover === 'ward' && t.post.wake === 'struck' ? '直接打他，他才離位追擊。' : WAKES[t.post.wake])
+    );
+  } else if (t.post) {
     const tile = postTile(s, u, t.post);
     const words = t.post.note
       ? fill(t.post.note, { tile: tile ? tileName(tile) : '' })
@@ -2973,6 +2999,8 @@ function resolve(s, u, t, skill) {
     id = u.activeArt || 'signature',
     art = skill ? artFor(u, id) : null;
   // 代受: from here on the strike is on the coverer the forecast found.
+  // 護樁: a blow taken for the post it guards does not send its guard off; one aimed at him does.
+  const guarding = f.coveredBy && isProp(t);
   if (f.coveredBy) t = takeCover(s, t);
   const verb = art?.name || basicFor(u).name,
     who = unitDetails(u).name;
@@ -3052,7 +3080,7 @@ function resolve(s, u, t, skill) {
       who
     );
     // 閃身 is used up by the blow it made miss; 挪移 turns its share back on the striker.
-    if (!ally(t)) wakePost(s, t, true); // 坐鎮: a struck piece may leave its post
+    if (!ally(t) && !guarding) wakePost(s, t, true); // 坐鎮: a struck piece may leave its post
     if (f.evaded) dodge(s, t, effects);
     if (f.turned) turnBack(s, u, t, f.turned, effects);
     // 布陣 rider: centred where the target stood when struck; a blow that did not land lays none.

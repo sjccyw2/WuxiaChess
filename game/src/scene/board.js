@@ -5,6 +5,10 @@ import { makeScenery, decorateWorld, Cutaway } from './environment.js';
 import { SoftwareScene } from './software.js';
 import { ActorLayer } from '../actors/actors.js';
 import { PULSE_MS } from '../actors/zones.js';
+// Tap again to take the enemy behind (BattleBoard.tapPick): within this long, and this near.
+const CYCLE_MS = 6000,
+  CYCLE_PX = 22,
+  STACK_SLACK = 6; // px
 import { POLISH } from '../polish.js';
 import { installGrade } from './stage-light.js';
 import { FramePacer } from './pacing.js';
@@ -226,12 +230,14 @@ class BattleBoard {
     this.onCamera?.();
     return high;
   }
-  sync(s, mode, prefs) {
+  // hideAim: an art is ready but not yet picked by the player (app.js, aimHidden), so its reach
+  // is not drawn; taps still prefer a piece it can strike.
+  sync(s, mode, prefs, hideAim = false) {
     this.changeMap(s.mapIndex || 0);
     this.s = s;
     this.mode = mode;
     this.prefs = prefs;
-    this.layers.sync(s, mode, prefs);
+    this.layers.sync(s, mode, prefs, hideAim);
     const u = G.find(s, s.selected);
     this.reach =
       G.canAct(s, u) && !u.moved
@@ -380,6 +386,40 @@ class BattleBoard {
     const figures = this.layers.figures(p.x * this.layers.width, p.y * this.layers.height, slack);
     return resolveBoardPick(this.s, this.mode, g, figures, this.reach);
   }
+  // A tap. Where figures overlap, the one in front hides those behind it, and zooming in does not
+  // change the angle they are seen from. So a tap again on the same spot, within a few seconds,
+  // takes the next enemy behind the one taken last (and after the last, the front one again).
+  // The time allowed covers a 交鋒預覽 or 敵情查探 opened by the first tap and closed again.
+  tapPick(e) {
+    let pick = this.pickAt(e);
+    // The enemy figures (and board objects) the pointer is on, front-most first. A few pixels of
+    // slack, since an idle figure's outline sways from frame to frame. Heroes are left out: a
+    // second tap on a hero opens his arts list.
+    const p = this.pointFromEvent(e),
+      stack = this.layers
+        .figures(p.x * this.layers.width, p.y * this.layers.height, STACK_SLACK)
+        .map((f) => G.find(this.s, f.id))
+        .filter((v) => v && G.living(v) && !G.ally(v))
+        .map((v) => v.id);
+    const now = performance.now(),
+      prev = this.cycle,
+      same =
+        prev &&
+        now - prev.time < CYCLE_MS &&
+        Math.hypot(e.clientX - prev.x, e.clientY - prev.y) <= CYCLE_PX;
+    if (pick?.id && stack.length > 1 && same && stack.includes(prev.id))
+      pick = { id: prev.hold ? prev.id : stack[(stack.indexOf(prev.id) + 1) % stack.length] };
+    this.cycle =
+      pick?.id && stack.includes(pick.id)
+        ? { x: e.clientX, y: e.clientY, time: now, id: pick.id }
+        : null;
+    return pick;
+  }
+  // The next tap on the same spot takes the same enemy again, not the next one: the game
+  // asked for that tap (an enemy out of reach: once more to read his page).
+  holdCycle() {
+    if (this.cycle) this.cycle.hold = true;
+  }
   addInput() {
     const el = this.scene;
     const pairDistance = () => {
@@ -465,7 +505,7 @@ class BattleBoard {
       if (this.pointers.size) return;
       el.classList.remove('orbiting');
       if (!cancel && !this.dragged && !this.title) {
-        const pick = this.pickAt(e);
+        const pick = this.tapPick(e);
         if (pick?.id) this.onUnit(pick.id);
         else if (pick) this.onCell(pick.x, pick.y);
       }

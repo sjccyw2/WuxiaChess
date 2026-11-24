@@ -251,7 +251,9 @@ function installTutorial({ dialog, field, scene, board, view, close, notice, end
       skill = v.mode === 'skill';
     // An art that strikes an enemy is ready, and the pieces it can strike from here.
     const armed =
-      can && (v.mode === 'attack' || (skill && G.targetType(G.artFor(u)) === 'enemy'));
+      can &&
+      ((v.mode === 'attack' && !v.aimHidden) ||
+        (skill && G.targetType(G.artFor(u)) === 'enemy'));
     const inReach = armed
       ? s.units.filter((t) => !G.ally(t) && G.living(t) && G.targetOK(s, u, t, skill))
       : [];

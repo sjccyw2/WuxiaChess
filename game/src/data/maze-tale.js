@@ -150,7 +150,7 @@ const MAZE_TALE = {
       {
         who: 'youth',
         // He forgets each run when he wakes; what he says here he cannot tell whether he remembers or
-        // has worked out at the table (producer's word to decide, 2026-11-24, Q-N139).
+        // has worked out at the table (producer's word to decide, 2026-11-24, Q-N141).
         note: '少年瞧瞧手中剩下的白子，又瞧瞧眾人。這件事，他說不出是記得的，還是自己想通的。',
         text: '還有一件事得說明白：各位是老伯從本人身上拓來的一份。本尊仍在各自的年月裡。贏滿十局，便能回到本尊那裡。'
       },
@@ -214,8 +214,8 @@ const MAZE_TALE = {
   // (the last board has its own close). He never names a board or a hero, and never says the
   // player did something particular on it: a run may not have done it. An entry is one line of his,
   // or a short exchange (a list of lines; `who: 'youth'` for the youth's), so that what the youth
-  // answers is said by the youth himself and not quoted by 求敗 (producer, 2026-11-24, Q-N138).
-  // Until the last board he only presses the 戰意 more lightly; he lifts it there (Q-N136).
+  // answers is said by the youth himself and not quoted by 求敗 (producer, 2026-11-24, Q-N140).
+  // Until the last board he only presses the 戰意 more lightly; he lifts it there (Q-N138).
   after: [
     [
       { note: '求敗頭也不抬，隨手又落一子。', text: '僥倖。' },

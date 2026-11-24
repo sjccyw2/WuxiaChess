@@ -8,8 +8,8 @@ they did not write into the text). Made from the script package of 2026-11-23 (`
 Brought into the game on 2026-11-24 with `node tools/script-package.mjs --apply`: 774 of 860 lines
 changed, every check passing. One part was not taken: the ending's words (S181–S194,
 `MAZE_TALE.finale.ending`) stay as the ending film letters them, because the run's last page shows
-them straight after the film (Q-N135). The rewritten ending is in `10-主線劇本.md` here, to take
-with `--apply` if the film is re-lettered. The ten concerns are Q-N136 to Q-N145 in `ROADMAP.md`.
+them straight after the film (Q-N137). The rewritten ending is in `10-主線劇本.md` here, to take
+with `--apply` if the film is re-lettered. The ten concerns are Q-N138 to Q-N147 in `ROADMAP.md`.
 
 These files are kept as the writer returned them. The ids are those of the package they were made
 from, so to apply any of them again, use that package's manifest (`git show c85ca13:script-package/manifest.json`).

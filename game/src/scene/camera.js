@@ -1,6 +1,9 @@
 // The drawn grid, pointer picking, touch and keyboard all use this camera and ground plane.
 import { fieldSize, validTile } from '../data/terrain.js';
 import { POLISH } from '../polish.js';
+// How far the battle view can be brought in: far enough that a figure in a crowd shows enough of
+// itself to be tapped (it was 2.4).
+const MAX_ZOOM = 3.4;
 const FLOOR = 0.09;
 const smooth = (t) => t * t * (3 - 2 * t);
 class FerryCamera {
@@ -123,7 +126,7 @@ class FerryCamera {
   }
   setZoom(z) {
     this.yield();
-    this.zoom = Math.max(0.78, Math.min(this.title ? 1.72 : 2.4, z));
+    this.zoom = Math.max(0.78, Math.min(this.title ? 1.72 : MAX_ZOOM, z));
     if (this.zoom <= 1) this.focusX = this.focusZ = 0;
     this.rebuild();
     return this.zoom;
@@ -306,4 +309,4 @@ class FerryCamera {
   }
 }
 
-export { FLOOR, FerryCamera };
+export { MAX_ZOOM, FLOOR, FerryCamera };

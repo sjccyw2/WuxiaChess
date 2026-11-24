@@ -103,10 +103,17 @@ const plans = new WeakMap();
 function plan(layer, reach) {
   const s = layer.state,
     old = plans.get(layer);
-  if (old && old.reach === reach && old.state === s && old.mode === layer.mode) return old;
+  if (
+    old &&
+    old.reach === reach &&
+    old.state === s &&
+    old.mode === layer.mode &&
+    old.hideAim === layer.hideAim
+  )
+    return old;
   const u = G.find(s, s.selected),
     can = G.canAct(s, u),
-    cast = ['attack', 'skill'].includes(layer.mode) && can,
+    cast = ['attack', 'skill'].includes(layer.mode) && can && !layer.hideAim,
     skill = layer.mode === 'skill',
     art = cast && skill ? G.artFor(u) : null,
     range = cast ? (art ? art.range : u.range) : 0,
@@ -192,6 +199,7 @@ function plan(layer, reach) {
     reach,
     state: s,
     mode: layer.mode,
+    hideAim: layer.hideAim,
     unit: u,
     grid,
     covers: cells.filter(({ x, y }) => G.cover(x, y, s.mapIndex)),

@@ -191,6 +191,10 @@ In a battle, from its story, briefing or 整備 as well:
 - 速敗 loses it;
 - 局主半血, once the fight is on, takes half of what 氣血 the board's master has, as a blow would
   (`devPress`): his 變招 follows, and on the last board two presses bring all ten masters on.
+- 重試此局 puts the run back to the board's 起陣, everything as it was then: the heroes, the purse
+  and the record (`retryPoint` in `app.js`). The run is copied the first time a board reaches
+  起陣 and kept for the tab in `sessionStorage` (`jianying.dev-retry.v1`). The button stays while
+  the run is still on that board, so it also works from the page after a win or a loss.
 
 Each goes through the game's own settling (`devFinish` in `game/src/rules/journey.js`), so
 rewards, the next hero, the story and the end of the run follow as in play. 跳至終局, always
@@ -232,11 +236,14 @@ go of it.
 
 The first time someone plays, the first board (青竹渡) carries coach marks: a small card says what the step in hand is (起陣, walking, the arts list and 撤步, aiming and the rule that only straight lines count, 交鋒預覽, the other heroes, ending the turn, and from round two the danger zone, the view, the goal and the leader, the guide), and a gold outline marks what to tap. It is not a scripted battle: the step is worked out from the state of the game, so it blocks nothing, catches up with a player who ignores it, and resumes after a reload.
 
-Three things the board does for every player, tutorial or not (the playtest of 2026-11-22, R-14 to R-16):
+What the board does for every player, tutorial or not (the playtest of 2026-11-22, R-14 to R-16, and the producer's notes of 2026-11-23):
 
 - **An enemy out of reach.** With an art ready, the first tap on an enemy the art cannot reach says why in the board's message (naming the diagonal case: 斜角不算相鄰) and swells the tiles the art does reach (`pulseReach` in `scene/board.js`); the same enemy tapped again opens 敵情查探 (`unitClick` in `app.js`). With no art ready a tap opens it at once.
 - **The whole figure is the target.** A tap is measured against each figure as it is drawn, the sprite's own shape and not only the tile under it (`actors/figure-pick.js`, `resolveBoardPick` in `scene/board.js`): the figure in front wins, an aimed art prefers a piece it can be used on, and a fingertip may land a little beside a figure. Open ground beside a figure is still the tile.
 - **A way back to walking.** While an art is ready and the hero has not walked, the arts list ends with 走位, which shows the walk tiles again (`walkRow` in `ui/action-flow.js`); a tap on open ground the art has no use for does the same, and so does Esc.
+- **Enemies in a crowd** (2026-11-23). A tap again on the same spot within six seconds takes the next enemy behind the one taken last, then the front one again (`tapPick` in `scene/board.js`); heroes are left out, since a second tap on a hero opens his list. The second tap that an out-of-reach message asks for stays on the same enemy (`holdCycle`). The view also zooms to 340% (`MAX_ZOOM` in `scene/camera.js`; it was 240%).
+- **No reach drawn until an art is picked** (2026-11-23). A hero who has walked, or is held in place, has the basic strike ready, but its red tiles appear only once an art (the basic strike included) is picked from the list (`aimHidden` in `app.js`, `hideAim` in the board and the actor layer). A tap on an enemy in the basic strike's reach still opens 交鋒預覽 for it.
+- **An art's full rules.** A long press on an entry of the arts list, a resting mouse pointer or keyboard focus shows a card with everything `moveFacts` knows about the art (濺射, 擊退, 連擊, conditions, 破招 …) and its description (`ui/art-detail.js`, `styles/19-art-detail.css`). The press only reads: the tap that ends it does not pick the art.
 
 - **When it shows.** Once per browser (`jianying.tutorial.v1` in the browser's storage), on the first board of an ordinary run, for a record with no board won and no run finished; not in a 試局, not in a run with 無名 on the board, and not under `game/?classic`. 略過指引 ends it at once, and so does the end of the board.
 - **Seeing it again.** In any battle, 選單 › 指南 › 重看新手指引 plays it from the top on the board being fought.
@@ -388,7 +395,7 @@ node tools/sim-battles.mjs --runs 1 --trace            # the battle log of one r
 node tools/sim-battles.mjs --runs 40 --arts            # also: how often each art was equipped and used
 ```
 
-A fixed, deterministic headless player fights whole runs with the real rules and enemy code: it draws heroes, starts the run, spends points (cheapest node toward the summit, spare points into talents), equips its three strongest arts with distinct jobs, buys medicine and gear, and on every turn scores each legal move-and-action with `forecast` (kills, damage minus counter, cover, the enemy reach it ends in, the leader's safety, the board's marker or time limit), with a value for every enemy turn an art takes away (失神, 定身, 閉穴, 受制) and every blow a guard voids (金剛, 固守). Per board it reports win rate, rounds to win, health left, heroes downed, side objectives and how often the basic attack, the starting art and each tier were used; per hero, damage dealt and taken, share of kills and damage, and level and points at each board. `--compare` prints what moved between two saved runs and flags boards whose win rate changed by more than ten points. The same seed always gives the same result, so compare runs made with the same `--runs` and `--seed`.
+A fixed, deterministic headless player fights whole runs with the real rules and enemy code: it draws heroes, starts the run, spends points (cheapest node toward the summit, spare points into talents), equips its three strongest arts with distinct jobs, buys medicine and gear, and on every turn scores each legal move-and-action with `forecast` (kills, damage minus counter, cover, the enemy reach it ends in, the leader's safety, the board's marker or time limit), with a value for every enemy turn an art takes away (失神, 定身, 閉穴, 受制) and every blow a guard voids (金剛, 固守). Per board it reports win rate, rounds to win, health left, heroes downed, side objectives and how often the basic attack, the starting art and each tier were used; per hero, damage dealt and taken, share of kills and damage, and level and points at each board. `--compare` prints what moved between two saved runs and flags boards whose win rate changed by more than ten points. `--growth` adds a table, per board won, of the average level and points of the heroes who fought it, of those on the bench, and of the hero who joins (the simulated player never changes its line-up, so everyone recruited after the second board stays on the bench). The same seed always gives the same result, so compare runs made with the same `--runs` and `--seed`.
 
 ### Scenery and sound
 

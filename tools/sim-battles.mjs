@@ -10,6 +10,8 @@
 // takes twelve heroes at level N (default 11, what the runs that do get there have), wins the
 // tenth board at once, visits the shop with a test purse, and fights the last board.
 //   node tools/sim-battles.mjs --compare before.json after.json
+//   node tools/sim-battles.mjs --growth   (also: the levels and points of the team, the bench and
+//                                          each recruit after every board won)
 //
 // Runs are built the way the game builds them (draw three heroes, start the run, deploy, settle
 // a won board, take the reward, visit the shop, move on), so recruits join, levels accumulate and
@@ -100,6 +102,10 @@ const TRACE = args.includes('--trace');
 // --trace-map M prints the battle log of the first board fought on map M, in whichever run.
 const TRACE_MAP = opt('--trace-map', null) == null ? null : Number(opt('--trace-map'));
 const traced = new Set();
+// --growth prints, after each board won, the levels and 武學點 of the heroes who fought it, of
+// those on the bench, and of the hero who joins: how far a recruit and the bench trail the team.
+const GROWTH_REPORT = args.includes('--growth');
+const growthRows = [];
 
 const hash = (a, b) => {
   let n = Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x632be5ab, 0xc2b2ae35);
@@ -964,12 +970,50 @@ function playRun(seed) {
     const rec = fight(s);
     run.boards.push(rec);
     R.settle(s);
+    if (GROWTH_REPORT && rec.won) noteGrowth(s);
     R.turnPage(s, true);
     if (s.run.last.terminal || s.run.stage + 1 >= LAST) break;
     shop(s);
     if (!R.advance(s)) throw new Error('could not advance, seed ' + seed);
   }
   return run;
+}
+
+// --growth: one row per board won, measured when it is settled (the recruit has just joined).
+function noteGrowth(s) {
+  const r = s.run,
+    row = (growthRows[r.stage] ??= { n: 0, field: [0, 0], bench: [0, 0, 0], newcomer: [0, 0, 0] });
+  const points = (u) => u.sp + spentPoints(u);
+  const field = G.party(s),
+    newcomer = r.bench.find((u) => u.id === r.last.recruit),
+    bench = r.bench.filter((u) => u !== newcomer);
+  row.n++;
+  row.field[0] += field.reduce((n, u) => n + u.level, 0) / field.length;
+  row.field[1] += field.reduce((n, u) => n + points(u), 0) / field.length;
+  if (bench.length) {
+    row.bench[0] += bench.reduce((n, u) => n + u.level, 0) / bench.length;
+    row.bench[1] += bench.reduce((n, u) => n + points(u), 0) / bench.length;
+    row.bench[2]++;
+  }
+  if (newcomer) {
+    row.newcomer[0] += newcomer.level;
+    row.newcomer[1] += points(newcomer);
+    row.newcomer[2]++;
+  }
+}
+function printGrowth() {
+  const f = (v) => (Number.isFinite(v) ? v.toFixed(1) : '-').padStart(6);
+  console.log('\nAfter board  won   field lv  pts   bench lv  pts   newcomer lv  pts');
+  growthRows.forEach((row, stage) => {
+    if (!row) return;
+    console.log(
+      String(stage + 1).padStart(11) +
+        String(row.n).padStart(5) +
+        '   ' + f(row.field[0] / row.n) + f(row.field[1] / row.n) +
+        '   ' + f(row.bench[0] / row.bench[2]) + f(row.bench[1] / row.bench[2]) +
+        '      ' + f(row.newcomer[0] / row.newcomer[2]) + f(row.newcomer[1] / row.newcomer[2])
+    );
+  });
 }
 
 // The last board alone (--last): the twelve heroes a run has by then (three drawn and one more
@@ -1241,6 +1285,7 @@ for (let i = 0; i < RUNS; i++) {
 if (!QUIET && process.stderr.isTTY) process.stderr.write('\r');
 const out = { meta: { runs: RUNS, seed: SEED, boards: LAST_ONLY ? '11-11' : FIRST + '-' + LAST, realm: LAST_ONLY ? 5 : REALM, seconds: Math.round((Date.now() - started) / 1000) }, ...aggregate(runs) };
 print(out);
+if (GROWTH_REPORT) printGrowth();
 if (JSON_OUT) {
   fs.writeFileSync(JSON_OUT, JSON.stringify(out, null, 1) + '\n');
   console.log('\nWrote ' + JSON_OUT);

@@ -1,0 +1,79 @@
+/* An art's full rules, beside the battle's arts list (src/ui/art-detail.js): a long press on a
+   phone, a resting pointer or keyboard focus on a desktop. The script places it beside the list,
+   or above the entry where there is no room beside it. */
+.art-detail {
+  position: fixed;
+  z-index: 120;
+  box-sizing: border-box;
+  width: max-content;
+  padding: 10px 13px 11px;
+  border: 1px solid #c9b07a;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #24403afa, #142529fa 72%);
+  box-shadow:
+    0 6px 20px #07111288,
+    inset 3px 0 0 #e6c988;
+  color: #f4ebd3;
+  font: 14px/1.5 var(--sans);
+  pointer-events: none;
+}
+.art-detail[hidden] {
+  display: none;
+}
+.art-detail header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+}
+.art-detail header strong {
+  color: #e6c988;
+  font-size: 16px;
+}
+.art-detail header small,
+.art-detail .ad-power small {
+  color: #cfc4a8;
+  font-size: 13px;
+}
+.art-detail .ad-power {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  margin: 4px 0 0;
+}
+.art-detail .ad-power b {
+  font-size: 16px;
+}
+.art-detail ul {
+  margin: 6px 0 0;
+  padding: 0 0 0 1.1em;
+}
+.art-detail li {
+  margin: 1px 0;
+}
+.art-detail p {
+  margin: 6px 0 0;
+}
+.art-detail .ad-desc {
+  color: #e2d8bd;
+}
+.art-detail .ad-form {
+  color: #cfc4a8;
+  font-size: 13px;
+}
+.art-detail .ad-held {
+  color: #f0a58e;
+}
+/* A long press reads the card; it must not select the entry's words or open the browser's menu. */
+#field-arts .field-art {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .art-detail {
+    font-size: 13px;
+    padding: 8px 11px 9px;
+  }
+}
