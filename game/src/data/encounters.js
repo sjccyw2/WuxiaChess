@@ -394,8 +394,12 @@ const ENCOUNTERS = [
       '',
     {
       redirect: { while: 'charged', keep: 0, back: 0.5 },
-      // Once one 星索樁 has fallen he guards the other (the producer, 2026-11-23).
-      post: { tile: 'ward', tether: 2, wake: false },
+      // While both 星索樁 stand he hunts the heroes; once one has fallen his goal is the other (the
+      // producer, 2026-11-23/24): he stands beside it, takes the blows aimed at it and does not
+      // leave. Simulated against the board before (200 runs, seed 1): won 55% (70%) at 利劍境界,
+      // 54% (63%) at 重劍, 38% (41%) at 無劍.
+      post: { tile: 'ward', tether: 1, wake: false },
+      cover: 'ward',
       phase: {
         atk: 5,
         range: 1,
@@ -1018,7 +1022,7 @@ const GISTS = {
   'lieutenant-7': '守在石頸北口一格內。',
   mirror: '出手後退開；半血後身法更快。',
   'lieutenant-8': '專挑領隊。',
-  murong: '蓄勢時第一下直接攻擊被反震；星索樁立著時替他減傷；倒一根，他便退守另一根。',
+  murong: '蓄勢時第一下直接攻擊被反震；星索樁立著時替他減傷；倒一根，他便守在另一根旁替它受招，不再離開。',
   'lieutenant-9': '火焰刀隔四格傷人並削去內力；專挑內力深厚者。',
   fengTiannan: '長棍令目標絆足。',
   zhaoZhong: '守在東院兩格內，受擊才離位；截腕令目標攻擊降低；專挑領隊。',

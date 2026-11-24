@@ -116,8 +116,10 @@ const BATTLES = [
   },
   // 4 空山琴臺: keep the qin on its stone seat at the foot of the heroes' steps, through round 8
   // (the producer, 2026-11-23: east of the steps it closed the road across the terrace and was
-  // a long way from the heroes); 嵩山弟子 up both wings, east in round 3 and west in round 5.
-  // 左冷禪 and 費彬 hold their posts, 費彬 three tiles south of the qin; their men go for it.
+  // a long way from the heroes). 嵩山弟子 come at it from three sides, three at a time: the east
+  // wing in round 2, the west in round 3, the south (南席) in round 4, and two more from the
+  // east in round 5 (the producer asked for 80–95% won by 境界; simulated, 99% at 利劍, 93% at
+  // 重劍, 82% at 無劍). 左冷禪 and 費彬 hold their posts, 費彬 three tiles south of the qin.
   {
     kind: 'keep',
     legacyKind: 'slay',
@@ -128,20 +130,41 @@ const BATTLES = [
     waves: [
       {
         id: 'east',
-        when: { round: 3 },
+        when: { round: 2 },
         place: '東翼花圃',
         pieces: [
           { id: 'scout-4#1', at: [12, 6] },
-          { id: 'bow-4#1', at: [11, 6] }
+          { id: 'bow-4#1', at: [11, 6] },
+          { id: 'scout-4#4', at: [10, 6] }
         ]
       },
       {
         id: 'west',
-        when: { round: 5 },
+        when: { round: 3 },
         place: '西翼',
         pieces: [
           { id: 'scout-4#2', at: [0, 6] },
-          { id: 'bow-4#2', at: [1, 6] }
+          { id: 'bow-4#2', at: [1, 6] },
+          { id: 'scout-4#5', at: [0, 5] }
+        ]
+      },
+      {
+        id: 'south',
+        when: { round: 4 },
+        place: '南席',
+        pieces: [
+          { id: 'scout-4#3', at: [4, 12] },
+          { id: 'bow-4#3', at: [8, 12] },
+          { id: 'scout-4#6', at: [2, 12] }
+        ]
+      },
+      {
+        id: 'east2',
+        when: { round: 5 },
+        place: '東翼花圃',
+        pieces: [
+          { id: 'scout-4#7', at: [12, 6] },
+          { id: 'bow-4#7', at: [11, 6] }
         ]
       }
     ],
