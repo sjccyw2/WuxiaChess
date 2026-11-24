@@ -3036,13 +3036,13 @@
    "id": "H136",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.arrival.note",
-   "text": "他盤膝而坐，手還停在比劃棒招的半途，嘴裡有半句未完的訣。"
+   "text": "他盤膝而坐，棒招已比劃到了盡頭，側著頭，像在等人答話。"
   },
   {
    "id": "H137",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.arrival.text",
-   "text": "第六變便是……老毒物，聽著沒有？怎麼連山也換了。老叫化莫非餓花了眼？"
+   "text": "天下無狗。老毒物，這一變你破得了麼？……咦，山怎麼也換了？老叫化莫非餓花了眼？"
   },
   {
    "id": "H138",
@@ -3809,1379 +3809,1385 @@
   {
    "id": "S042",
    "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.told.plain[0].note",
+   "text": "少年瞧瞧手中剩下的白子，又瞧瞧眾人。這件事，他說不出是記得的，還是自己想通的。"
+  },
+  {
+   "id": "S043",
+   "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.told.plain[0].text",
    "text": "還有一件事得說明白：各位是老伯從本人身上拓來的一份。本尊仍在各自的年月裡。贏滿十局，便能回到本尊那裡。"
   },
   {
-   "id": "S043",
+   "id": "S044",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.told.plain[1].note",
    "text": "求敗抬眼看著少年，半晌沒有移開目光。"
   },
   {
-   "id": "S044",
+   "id": "S045",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.told.plain[1].text",
    "text": "對著子，也肯說實話。"
   },
   {
-   "id": "S045",
+   "id": "S046",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.inHand",
    "text": "子在手上，尚可換位；按了「開戰」，便落子無悔。"
   },
   {
-   "id": "S046",
+   "id": "S047",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.clack",
    "text": "嗒，求敗又落一子。下一合便有人到。"
   },
   {
-   "id": "S047",
+   "id": "S048",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.clackSave",
    "text": "嗒，眼見子危，求敗補了一手。"
   },
   {
-   "id": "S048",
+   "id": "S049",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.shop",
    "text": "頭一局罷，韋小寶攤開貨物，掛起「通吃坊」的布招；貨色前後相差數百年，有的銅綠未褪，有的式樣無人見過。藥照價賣，兵器任掂量，武譜卻各只一份，給誰修習、花多少心力，須由客人自己商量。"
   },
   {
-   "id": "S049",
+   "id": "S050",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.opened.note",
    "text": "「通吃坊」的布招掛了起來，韋小寶將貨物一字排開。銅綠未褪的舊物旁，擺著誰也沒見過的式樣，前後竟隔了數百年。"
   },
   {
-   "id": "S050",
+   "id": "S051",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.opened.text",
    "text": "放心，這裡樣樣真貨。藥照價錢買，兵器隨你掂。武譜各只一份，給誰練可得商量好。"
   },
   {
-   "id": "S051",
+   "id": "S052",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.origins.note",
    "text": "少年看罷貨物，便問韋小寶怎麼到了這谷裡。"
   },
   {
-   "id": "S052",
+   "id": "S053",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.origins.tales[0]",
    "text": "來收租呀，玉皇大帝是我姐夫。這谷裡寸寸地皮都是我家的。你踩著的也是。"
   },
   {
-   "id": "S053",
+   "id": "S054",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.origins.tales[1]",
    "text": "這回說真的：三粒骰子擲出個一二三。啪，連人帶骰子便到這裡啦。"
   },
   {
-   "id": "S054",
+   "id": "S055",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.origins.tales[2]",
    "text": "我奉旨在廟裡做和尚。經念得太悶，打了個盹。睜眼便到這裡，省了盤纏。"
   },
   {
-   "id": "S055",
+   "id": "S056",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.origins.tales[3]",
    "text": "我是天上的賭神。贏了王母娘娘的蟠桃不肯還，罰我下來擺攤。你說冤不冤？"
   },
   {
-   "id": "S056",
+   "id": "S057",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.origins.tales[4]",
    "text": "家裡七個老婆，七張嘴一齊開。出來擺攤圖個清靜。賺不賺錢倒在其次。"
   },
   {
-   "id": "S057",
+   "id": "S058",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.origins.tales[5]",
    "text": "這回不騙你，我也不曉得。別再問啦。再問，我又要編了。"
   },
   {
-   "id": "S058",
+   "id": "S059",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[0].note",
    "text": "求敗抬起頭來。"
   },
   {
-   "id": "S059",
+   "id": "S060",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[0].text",
    "text": "你同誰說話？谷中除你我，只一頭鵰。睡糊塗了。"
   },
   {
-   "id": "S060",
+   "id": "S061",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[1].note",
    "text": "求敗眼也不抬。"
   },
   {
-   "id": "S061",
+   "id": "S062",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[1].text",
    "text": "又對空處說話。由你。"
   },
   {
-   "id": "S062",
+   "id": "S063",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[2].note",
    "text": "求敗眼也不抬。"
   },
   {
-   "id": "S063",
+   "id": "S064",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[2].text",
    "text": "又是那塊空地？……由你。"
   },
   {
-   "id": "S064",
+   "id": "S065",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[3].note",
    "text": "求敗向那塊空地多瞧了一眼。"
   },
   {
-   "id": "S065",
+   "id": "S066",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[3].text",
    "text": "那裡當真有人？罷了，落子。"
   },
   {
-   "id": "S066",
+   "id": "S067",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[4].note",
    "text": "求敗向那塊空地瞧了許久。"
   },
   {
-   "id": "S067",
+   "id": "S068",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[4].text",
    "text": "瞧不見的，未必沒有。落子。"
   },
   {
-   "id": "S068",
+   "id": "S069",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseenAgain.note",
    "text": "求敗向那塊空地瞧了許久。"
   },
   {
-   "id": "S069",
+   "id": "S070",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseenAgain.text",
    "text": "上回分明瞧見了。今日怎又不見？……落子。"
   },
   {
-   "id": "S070",
+   "id": "S071",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.night",
    "text": "求敗拈著黑子，遲遲不落，竟閉上了眼。韋小寶向燈邊一招手：「老兒有得想啦，過來坐坐。」"
   },
   {
-   "id": "S071",
+   "id": "S072",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][0].note",
    "text": "求敗頭也不抬，隨手又落一子。"
   },
   {
-   "id": "S072",
+   "id": "S073",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][0].text",
    "text": "僥倖。"
   },
   {
-   "id": "S073",
+   "id": "S074",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][1].note",
    "text": "求敗仍不抬頭。"
   },
   {
-   "id": "S074",
+   "id": "S075",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][1].text",
    "text": "又勝了。倒有幾分手氣。"
   },
   {
-   "id": "S075",
+   "id": "S076",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][2].note",
    "text": "求敗低低「咦」了一聲，這才抬眼看少年。"
   },
   {
-   "id": "S076",
+   "id": "S077",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][2].text",
    "text": "對手太弱，看不出棋。老夫添些分量。"
   },
   {
-   "id": "S077",
+   "id": "S078",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][3].text",
    "text": "你的子比開局時強了。幾時學的？"
   },
   {
-   "id": "S078",
+   "id": "S079",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][4].text",
    "text": "老夫算了半日你的去路。仍是沒算中。"
   },
   {
-   "id": "S079",
+   "id": "S080",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][5].text",
    "text": "這一著，老夫左右手都未下過。……有趣。"
   },
   {
-   "id": "S080",
+   "id": "S081",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][6].text",
    "text": "且慢收子。方才那幾步，你怎地想的？說來聽聽。"
   },
   {
-   "id": "S081",
+   "id": "S082",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][7].text",
    "text": "幾百年了，竟猜不中你下一著。"
   },
   {
-   "id": "S082",
+   "id": "S083",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][8].text",
    "text": "最後一局，老夫不留手。"
   },
   {
-   "id": "S083",
+   "id": "S084",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[1][0].text",
    "text": "你上回怎樣起手，老夫記得。今日換個下法。"
   },
   {
-   "id": "S084",
+   "id": "S085",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[1][1].text",
    "text": "殘子該棄便棄。你肯麼？"
   },
   {
-   "id": "S085",
+   "id": "S086",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[1][2].text",
    "text": "不答？老夫記下了。"
   },
   {
-   "id": "S086",
+   "id": "S087",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[1][3].text",
    "text": "倒下的子，下局自會回來。何必掛心。"
   },
   {
-   "id": "S087",
+   "id": "S088",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[1][4].text",
    "text": "你還同子商量？老夫落子，從不出聲。"
   },
   {
-   "id": "S088",
+   "id": "S089",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[1][5].text",
    "text": "棄一子而全局活，三歲孩童皆知。你學是不學？"
   },
   {
-   "id": "S089",
+   "id": "S090",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[1][6].text",
    "text": "一子不棄，竟也勝到這裡。"
   },
   {
-   "id": "S090",
+   "id": "S091",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[1][7].text",
    "text": "老夫少年時，也曾不捨得棄。……落子。"
   },
   {
-   "id": "S091",
+   "id": "S092",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[1][8].text",
    "text": "最後一局。一子不棄，試試。"
   },
   {
-   "id": "S092",
+   "id": "S093",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[2][0].text",
    "text": "老夫加了三分力。如何？"
   },
   {
-   "id": "S093",
+   "id": "S094",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[2][1].text",
    "text": "力加了，子卻未強。怪。"
   },
   {
-   "id": "S094",
+   "id": "S095",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[2][2].text",
    "text": "方才那枚黑子說甚麼？你聽得見？老夫竟未聽清。"
   },
   {
-   "id": "S095",
+   "id": "S096",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[2][3].text",
    "text": "按得重，招數反倒死了。掙開那一刻，才像些樣子。"
   },
   {
-   "id": "S096",
+   "id": "S097",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[2][4].text",
    "text": "盤上的子，近來像有話要說。幾百年了，老夫從不答子的話。……替老夫回一句：聽見了。"
   },
   {
-   "id": "S097",
+   "id": "S098",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[2][5].text",
    "text": "「這念頭不是我的。」黑子都這般說，是不是？"
   },
   {
-   "id": "S098",
+   "id": "S099",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[2][6].text",
    "text": "原來說了幾百年。今日才聽見。"
   },
   {
-   "id": "S099",
+   "id": "S100",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[2][7].text",
    "text": "重劍無鋒，大巧不工。四十歲前恃此橫行，只道力大便有理。"
   },
   {
-   "id": "S100",
+   "id": "S101",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[2][8].text",
    "text": "最後一局。聽聽他們還說甚麼。"
   },
   {
-   "id": "S101",
+   "id": "S102",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][0].text",
    "text": "抓了便留？你不掂子力？"
   },
   {
-   "id": "S102",
+   "id": "S103",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][1].text",
    "text": "老夫只揀最強的。你倒像揀朋友。"
   },
   {
-   "id": "S103",
+   "id": "S104",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][2].text",
    "text": "盒中強過這幾枚的，多的是。你抓著誰便用誰，也勝了。"
   },
   {
-   "id": "S104",
+   "id": "S105",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][3][0].text",
    "text": "你不嫌他們弱麼？"
   },
   {
-   "id": "S105",
+   "id": "S106",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][3][1].text",
    "text": "來的都是朋友。"
   },
   {
-   "id": "S106",
+   "id": "S107",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][3][2].text",
    "text": "……這句話，老夫幾百年沒聽人說過了。"
   },
   {
-   "id": "S107",
+   "id": "S108",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][4].text",
    "text": "今日按得輕些。他們倒比按著時打得好看。"
   },
   {
-   "id": "S108",
+   "id": "S109",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][5].text",
    "text": "不滯於物，草木竹石均可為劍。這話，還是老夫說的。"
   },
   {
-   "id": "S109",
+   "id": "S110",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][6].text",
    "text": "既不擇劍，何以擇子？……只懂了一半。"
   },
   {
-   "id": "S110",
+   "id": "S111",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][7][0].text",
    "text": "落子之時，你心裡想些甚麼？"
   },
   {
-   "id": "S111",
+   "id": "S112",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][7][1].text",
    "text": "想他們平安回去。"
   },
   {
-   "id": "S112",
+   "id": "S113",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][7][2].text",
    "text": "……嗯。"
   },
   {
-   "id": "S113",
+   "id": "S114",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[3][8].text",
    "text": "最後一局。老夫也隨手抓一把。"
   },
   {
-   "id": "S114",
+   "id": "S115",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[4][0].text",
    "text": "這回只輕輕一按。看他們還肯不肯打。"
   },
   {
-   "id": "S115",
+   "id": "S116",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[4][1].text",
    "text": "按得這般輕，他們仍掙不開。是戰意，還是他們自己要打？"
   },
   {
-   "id": "S116",
+   "id": "S117",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[4][2].text",
    "text": "少年那柄利劍，最是凌厲。那時只想贏，倒快活。"
   },
   {
-   "id": "S117",
+   "id": "S118",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[4][3].text",
    "text": "後來換了軟劍。也棄了。"
   },
   {
-   "id": "S118",
+   "id": "S119",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[4][4].text",
    "text": "重劍、木劍，也一一放下。放一柄，進一步。"
   },
   {
-   "id": "S119",
+   "id": "S120",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[4][5].text",
    "text": "到了無劍，只道手中已空。"
   },
   {
-   "id": "S120",
+   "id": "S121",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[4][6].text",
    "text": "可這枚子，還在指間。"
   },
   {
-   "id": "S121",
+   "id": "S122",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[4][7].text",
    "text": "這麼拈了幾百年。小兄弟，你說重不重？"
   },
   {
-   "id": "S122",
+   "id": "S123",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[4][8].text",
    "text": "最後一局。下完，老夫有話說。"
   },
   {
-   "id": "S123",
+   "id": "S124",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.lend[0]",
    "text": "求敗說了聲「再借你一子」，推過一枚白子，子一落盤，{hero}的人影便立了起來。"
   },
   {
-   "id": "S124",
+   "id": "S125",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.lend[1]",
    "text": "求敗又推來一枚白子，口中道「對手太弱，無棋可看，再添一子」，子上隨即立起{hero}的身影。"
   },
   {
-   "id": "S125",
+   "id": "S126",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.lend[2]",
    "text": "求敗拈起白子向少年一拋，問了聲「還要人麼」，便道「拿去」，子上立起的正是{hero}。"
   },
   {
-   "id": "S126",
+   "id": "S127",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.step",
    "text": "這局一勝，眾人手上便各多想起一點功夫。"
   },
   {
-   "id": "S127",
+   "id": "S128",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.fade",
    "text": "局主醒轉，他那一念中帶來的人便逐個淡去。"
   },
   {
-   "id": "S128",
+   "id": "S129",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.scatter.note",
    "text": "白子一齊暗下，求敗逐枚拾起，放進盒中。盒蓋合上了，少年望著那隻盒子，喉頭一句話也說不出。"
   },
   {
-   "id": "S129",
+   "id": "S130",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.scatter.text[0]",
    "text": "還差得遠。請回吧。"
   },
   {
-   "id": "S130",
+   "id": "S131",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.scatter.text[1]",
    "text": "……可惜。請回吧，改日再來。"
   },
   {
-   "id": "S131",
+   "id": "S132",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.packUp.text",
    "text": "收攤啦，東西替你存著。丟不了。下回早些來。"
   },
   {
-   "id": "S132",
+   "id": "S133",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.release.note",
    "text": "索已斷盡，求敗依約逐枚翻轉白子。每翻過一枚，那子上的人影便淡了一分。"
   },
   {
-   "id": "S133",
+   "id": "S134",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.release.text",
    "text": "十局皆勝。依約，放還本尊。"
   },
   {
-   "id": "S134",
+   "id": "S135",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[0][0].text",
    "text": "老夫的子仍是原樣，你的卻越鬥越強。好棋，容老夫想想這緣故。請回吧。"
   },
   {
-   "id": "S135",
+   "id": "S136",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[1][0].text",
    "text": "這一輪，老夫幾回擺下可棄之子。棄一子，便快三步。你為何不棄？"
   },
   {
-   "id": "S136",
+   "id": "S137",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[1][1].text",
    "text": "他是我同伴。"
   },
   {
-   "id": "S137",
+   "id": "S138",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[1][2].text",
    "text": "老夫那柄軟劍誤傷義士，便棄入深谷。棄劍容易……好棋，容老夫再想想。請回吧。"
   },
   {
-   "id": "S138",
+   "id": "S139",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[2][0].text",
    "text": "「這念頭不是我的」……說了幾百年，老夫今日才聽見。好棋，容老夫想一想。請回吧。"
   },
   {
-   "id": "S139",
+   "id": "S140",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[3][0].text",
    "text": "你不擇子，老夫卻只要最強的。「不滯於物，草木竹石均可為劍」，老夫只懂一半。好棋，請回吧。"
   },
   {
-   "id": "S140",
+   "id": "S141",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][0].text",
    "text": "利劍、軟劍、重劍、木劍，放一柄便進一步。到了無劍，只道再無可放。卻還握著這盤棋，幾百年了。"
   },
   {
-   "id": "S141",
+   "id": "S142",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][1].note",
    "text": "求敗將黑子輕輕放回盒中，抬頭忽地怔住。棋臺旁竟有一方布攤，攤後那人翹著腳，兀自嗑瓜子。"
   },
   {
-   "id": "S142",
+   "id": "S143",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][1].text",
    "text": "你是何人？幾時來的？"
   },
   {
-   "id": "S143",
+   "id": "S144",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][2].text",
    "text": "啊喲，總算瞧見我啦！我在這裡擺了多少日子的攤。老爺子，你眼皮可真沉。"
   },
   {
-   "id": "S144",
+   "id": "S145",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][3].text",
    "text": "此境四面皆牆。你怎生進來的？"
   },
   {
-   "id": "S145",
+   "id": "S146",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][4].text",
    "text": "走進來的啊。你又沒關門。"
   },
   {
-   "id": "S146",
+   "id": "S147",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][5].text",
    "text": "……你練的是哪一門功夫？"
   },
   {
-   "id": "S147",
+   "id": "S148",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][6].text",
    "text": "一門也不會。師父拜過好幾位，個個都肯教。是我懶得學。"
   },
   {
-   "id": "S148",
+   "id": "S149",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][7].note",
    "text": "求敗怔了半晌，忽然放聲大笑，谷中落葉紛紛而下。大鵰側過頭來，跟了他幾百年，還是頭一回聽見這樣的笑聲。"
   },
   {
-   "id": "S149",
+   "id": "S150",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][7].text",
    "text": "原來如此。老夫苦求幾百年，它倒在臺邊嗑瓜子。"
   },
   {
-   "id": "S150",
+   "id": "S151",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][8].text",
    "text": "還有一局。這回，老夫下去。"
   },
   {
-   "id": "S151",
+   "id": "S152",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.again[0].text",
    "text": "又到這一步了。四柄劍再放一遍，手裡仍剩這盤棋。"
   },
   {
-   "id": "S152",
+   "id": "S153",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.again[1].text",
    "text": "上回到得盤上，還差一點。小兄弟，再來。"
   },
   {
-   "id": "S153",
+   "id": "S154",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[0].note",
    "text": "求敗伸手要翻白子，到了半途卻停住。十局既勝，照他自己的規矩，便該放人。"
   },
   {
-   "id": "S154",
+   "id": "S155",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[0].text",
    "text": "各位本該放還，老夫卻有一請。再留一局。願留便留。"
   },
   {
-   "id": "S155",
+   "id": "S156",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[1].note",
    "text": "眾人相互看看，仍站在盤邊，竟無一人肯走。"
   },
   {
-   "id": "S156",
+   "id": "S157",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[1].text",
    "text": "老伯，他們都不走。"
   },
   {
-   "id": "S157",
+   "id": "S158",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[2].note",
    "text": "求敗取出這一輪十位局主的黑子，一一擱在盤邊，這回沒有再往子上按。人影立起，眼中都已清明，卻也無人離去。"
   },
   {
-   "id": "S158",
+   "id": "S159",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[2].text",
    "text": "不再按了。肯打的留下。不肯的，請便。"
   },
   {
-   "id": "S159",
+   "id": "S160",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[3].text",
    "text": "老伯，你也下去？你不是只在外頭看麼？"
   },
   {
-   "id": "S160",
+   "id": "S161",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[4].text",
    "text": "那是手裡握著子的時候。"
   },
   {
-   "id": "S161",
+   "id": "S162",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[5].text",
    "text": "可是我不會武功。"
   },
   {
-   "id": "S162",
+   "id": "S163",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[6].text",
    "text": "千年武功，都從你眼前過了。試試。手記得。"
   },
   {
-   "id": "S163",
+   "id": "S164",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[7].note",
    "text": "求敗朝盤上一指。四角星位各有一塊大石，石上各插著一柄劍。"
   },
   {
-   "id": "S164",
+   "id": "S165",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[7].text",
    "text": "那柄利劍，老夫弱冠前所用。拿去。"
   },
   {
-   "id": "S165",
+   "id": "S166",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[8].text",
    "text": "莊家也下場，這盤口開不得。這一局不押啦。老爺子，換了你會押誰？"
   },
   {
-   "id": "S166",
+   "id": "S167",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[9].text",
    "text": "……老夫押這孩子。"
   },
   {
-   "id": "S167",
+   "id": "S168",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.before[0].note",
    "text": "少年踏上棋枰，腳底一涼。他握住石上的利劍，輕輕一拔便出了，倒像這劍一直在等他的手。"
   },
   {
-   "id": "S168",
+   "id": "S169",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.before[0].text",
    "text": "咦，這劍好順手。"
   },
   {
-   "id": "S169",
+   "id": "S170",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.before[1].note",
    "text": "求敗隨手折了一根枯枝，緩步走到天元，站定了。"
   },
   {
-   "id": "S170",
+   "id": "S171",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.before[1].text",
    "text": "四十歲後，草木竹石皆可為劍。幾百年未曾動手了。這一局，老夫不讓。"
   },
   {
-   "id": "S171",
+   "id": "S172",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.before[2].text",
    "text": "這回我也在盤上，倒了便全局都輸。各位幫我看著些。老伯，小心了！"
   },
   {
-   "id": "S172",
+   "id": "S173",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.before[3].text",
    "text": "老夫求敗一世。看你給不給得起。"
   },
   {
-   "id": "S173",
+   "id": "S174",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.rally",
    "text": "盤邊幾條人影搶上棋枰，未發一言，便站到了求敗身旁。"
   },
   {
-   "id": "S174",
+   "id": "S175",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.withdraw",
    "text": "求敗收回枯枝，退了幾步，站到眾人身後。"
   },
   {
-   "id": "S175",
+   "id": "S176",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.half",
    "text": "好劍！幾百年未見這一著。再來。"
   },
   {
-   "id": "S176",
+   "id": "S177",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.after[0].note",
    "text": "求敗低下頭，看著那根垂在手中的枯枝，久久不動。"
   },
   {
-   "id": "S177",
+   "id": "S178",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.after[0].text",
    "text": "……好。"
   },
   {
-   "id": "S178",
+   "id": "S179",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.after[1].text",
    "text": "老伯，你還站著呢。我沒贏。"
   },
   {
-   "id": "S179",
+   "id": "S180",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.after[2].text",
    "text": "求了一世的敗，原來不須人來打倒。"
   },
   {
-   "id": "S180",
+   "id": "S181",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.lost[0].note",
    "text": "求敗望著手裡的枯枝，良久沒有開口。"
   },
   {
-   "id": "S181",
+   "id": "S182",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.lost[0].text",
    "text": "還差一點。差在哪裡，老夫也未明白。"
   },
   {
-   "id": "S182",
+   "id": "S183",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.lost[1].note",
    "text": "白子上的人影逐一淡去，仍依十局之約，各回本尊。"
   },
   {
-   "id": "S183",
+   "id": "S184",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.lost[1].text",
    "text": "重下那十局罷。下完，老夫仍到盤上等你。請回吧。"
   },
   {
-   "id": "S184",
+   "id": "S185",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.lost[2].text",
    "text": "只差一點，下回補上便是。東西照舊替你存著。別愁啦。"
   },
   {
-   "id": "S185",
+   "id": "S186",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[0].note",
    "text": "那根枯枝，求敗沒有再舉起來。"
   },
   {
-   "id": "S186",
+   "id": "S187",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[1].note",
    "text": "他俯下身去，將枯枝輕輕擱在盤上。不是落子，是放下。"
   },
   {
-   "id": "S187",
+   "id": "S188",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[1].text",
    "text": "夠了。"
   },
   {
-   "id": "S188",
+   "id": "S189",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[2].note",
    "text": "盤上的黑子白子，一枚一枚亮了。盒中收了幾百年的子，也都亮了起來，各回各的年月。"
   },
   {
-   "id": "S189",
+   "id": "S190",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[3].text",
    "text": "老夫求了一世，求的原來便是這一放。"
   },
   {
-   "id": "S190",
+   "id": "S191",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[4].text",
    "text": "小兄弟，多謝你。"
   },
   {
-   "id": "S191",
+   "id": "S192",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[5].note",
    "text": "韋小寶收了攤子，挑在肩上，自谷口走了出去。那道門，原來一直開著。"
   },
   {
-   "id": "S192",
+   "id": "S193",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[6].note",
    "text": "少年提劍而立。求敗向他瞧了一眼，忽地一怔。"
   },
   {
-   "id": "S193",
+   "id": "S194",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[6].text",
    "text": "……原來是你。"
   },
   {
-   "id": "S194",
+   "id": "S195",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[7].note",
    "text": "他向少年拱了拱手，大袖飄飄，撒手而去，不知所終。那頭大鵰望著他的背影，沒有跟去。"
   },
   {
-   "id": "S195",
+   "id": "S196",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[8].note",
    "text": "少年醒了。這一回，他沒有再睡回去。"
   },
   {
-   "id": "S196",
+   "id": "S197",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[9].note",
    "text": "他提了枕邊那柄劍，到屋後練將起來。夢裡的事一件也記不起，手卻都記得。"
   },
   {
-   "id": "S197",
+   "id": "S198",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[10].note",
    "text": "練罷抬頭，崖上立著一頭大鵰，正側過了頭瞧他。"
   },
   {
-   "id": "S198",
+   "id": "S199",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[11].note",
    "text": "許多年後，他劍下再無一合之敵，給自己取了一個名字。"
   },
   {
-   "id": "S199",
+   "id": "S200",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.missed",
    "text": "終局仍差一點，同行的人已依約各回本尊。那十局須得重下，方能再到盤上。"
   },
   {
-   "id": "S200",
+   "id": "S201",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.closed",
    "text": "這盤棋下完了。"
   },
   {
-   "id": "S201",
+   "id": "S202",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.epilogue",
    "text": "對面那人撒手而去，從此再未回來。少年往後的事都留在劍塚石上，唯獨這場夢，連他自己也記不清。"
   },
   {
-   "id": "S202",
+   "id": "S203",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.muster",
    "text": "這局以{name}為眼；他是執子之人，並非拓來的一念，上盤便比旁人氣力充足。同行諸人也已想起平生所學，一招不缺。"
   },
   {
-   "id": "S203",
+   "id": "S204",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.plus.joins",
    "text": "這一回，{name}自己也在盤上。"
   },
   {
-   "id": "S204",
+   "id": "S205",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.plus.draw",
    "text": "{name}自己也在盤上：連這三位，開局共是四人。"
   },
   {
-   "id": "S205",
+   "id": "S206",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.plus.text",
    "text": "求敗已去，棋臺邊只餘棋中留影，陪{name}把舊夢從頭做過。這回{name}也成了盤上一子，抓來三位同伴，開局共四人。九式仍須從根長起，同旁人一般，一式一式使出。"
   },
   {
-   "id": "S206",
+   "id": "S207",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.win",
    "text": "十局已盡，同伴各回本尊，棋臺旁僅餘一老一少與大鵰。求敗望著空盤，說是好棋，要獨自再想一想，便請少年回去。"
   },
   {
-   "id": "S207",
+   "id": "S208",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.winNote",
    "text": "通吃坊代存買下的東西，下回入夢便可取用。"
   },
   {
-   "id": "S208",
+   "id": "S209",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.loss",
    "text": "白子盡暗，都收回了盒中。少年耳裡仍是那一聲「請回吧」。"
   },
   {
-   "id": "S209",
+   "id": "S210",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.lamp",
    "text": "燈亮了，盤外看得清清楚楚。這口算你贏。"
   },
   {
-   "id": "S210",
+   "id": "S211",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.swift",
    "text": "茶葉還沒泡開，你們便打完了？我押的就是個快。中啦！"
   },
   {
-   "id": "S211",
+   "id": "S212",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.intact",
    "text": "一個也沒少，我數過了。上去幾個，回來幾個。"
   },
   {
-   "id": "S212",
+   "id": "S213",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.lastBlow",
    "text": "點誰收局，便是誰收的。這面子給得足。"
   },
   {
-   "id": "S213",
+   "id": "S214",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.order",
    "text": "翅膀先剪，正主後拿。次序半點不差，我押中了。"
   },
   {
-   "id": "S214",
+   "id": "S215",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.double",
    "text": "一合放倒兩個！骰子擲一對，也沒你們這麼齊。"
   },
   {
-   "id": "S215",
+   "id": "S216",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.spare",
    "text": "他那手絕活憋到散場，也沒使出來。這口「使不出」，算我押著啦。"
   },
   {
-   "id": "S216",
+   "id": "S217",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.combo",
    "text": "同一招，你起手、我收尾。好一對！"
   },
   {
-   "id": "S217",
+   "id": "S218",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.noMedicine",
    "text": "一粒藥也沒吃？藥賣不掉，這口還要賠你。兩頭蝕本！"
   },
   {
-   "id": "S218",
+   "id": "S219",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.unhurt",
    "text": "你那隻「眼」連油皮也沒破。敢押毫髮無傷的，只有我。"
   },
   {
-   "id": "S219",
+   "id": "S220",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.holdLine",
    "text": "後來那幾個，誰也沒越線。我在外頭數著呢。"
   },
   {
-   "id": "S220",
+   "id": "S221",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.answer",
    "text": "他出一招，便給你們那位拆一招。拆得乾淨，這口中了。"
   },
   {
-   "id": "S221",
+   "id": "S222",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.done",
    "text": "這一口，你押中啦。"
   },
   {
-   "id": "S222",
+   "id": "S223",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_PAY.coins",
    "text": "這是你那一份。點一點。"
   },
   {
-   "id": "S223",
+   "id": "S224",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_PAY.manual",
    "text": "銀子一時轉不開，這卷武譜抵給你。真貨，放心。"
   },
   {
-   "id": "S224",
+   "id": "S225",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_PAY.points",
    "text": "這口賺的比銀子好。瞧瞧他們，手上又想起功夫啦。"
   },
   {
-   "id": "S225",
+   "id": "S226",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_MISS",
    "text": "這注沒中，倒也不必愁。棋是贏了的。"
   },
   {
-   "id": "S226",
+   "id": "S227",
    "file": "game/src/rules/ferry-market.js",
    "path": "VISITOR.bio",
    "text": "韋小寶不會武功，也無求於武，劍境的牆便攔不住他，任他來去。谷裡那爿通吃坊是他的，賣藥賣兵器，局局還另開盤口，求敗卻聽不見也看不見。問起來路，他每回都另編一個大話。"
   },
   {
-   "id": "S227",
+   "id": "S228",
    "file": "game/src/rules/ferry-market.js",
    "path": "VISITOR.arrival",
    "text": "上回無人帶走的零碎，都到了韋小寶手中。他排開三隻木盅，說是白送，單看客人眼力。"
   },
   {
-   "id": "S228",
+   "id": "S229",
    "file": "game/src/rules/ferry-market.js",
    "path": "VISITOR.reveal",
    "text": "看好，老規矩，三樣揀一樣。甚麼老規矩？我可沒說，是你聽錯。"
   },
   {
-   "id": "S229",
+   "id": "S230",
    "file": "game/src/rules/ferry-market.js",
    "path": "VISITOR.blind",
    "text": "三隻盅一樣重，掂也沒用。別盯我這雙揚州練的手。揭一隻罷。"
   },
   {
-   "id": "S230",
+   "id": "S231",
    "file": "game/src/rules/ferry-market.js",
    "path": "VISITOR.win",
    "text": "成，歸你。另兩件我留下。下回再賭。"
   },
   {
-   "id": "S231",
+   "id": "S232",
    "file": "game/src/data/wake-tale.js",
    "path": "WORLD[0].text",
    "text": "棋臺上刻著：「白子勝滿十局，放還本尊。中道而敗，收子入盒。」姓韋的說，贏足十場便回家，輸了便全進盒子。"
   },
   {
-   "id": "S232",
+   "id": "S233",
    "file": "game/src/data/wake-tale.js",
    "path": "WORLD[1].text",
    "text": "黑白子各是一位高手，落盤便立起人影，個個都說自己來前正逢絕處。開局抓五枚留三枚，此後每勝一局，老伯便再借一枚白子。"
   },
   {
-   "id": "S233",
+   "id": "S234",
    "file": "game/src/data/wake-tale.js",
    "path": "WORLD[2].text",
    "text": "盤裡只看得見幾步，盤外才看得全，指路便由盤外的人來。白子至多上五枚，先落的一枚叫「眼」，它倒了便全盤皆輸。其餘的人倒下，只離盤一局，下局仍可再落。"
   },
   {
-   "id": "S234",
+   "id": "S235",
    "file": "game/src/data/wake-tale.js",
    "path": "WORLD[3].text",
    "text": "老伯自稱求敗，本名已忘，左右手對弈了幾百年。落黑子時，他把戰意按在人眉心，逼人交手；人雖不服，卻要等這局輸了才能掙開。聽見臺上「嗒」的一聲，便是他又添了子。"
   },
   {
-   "id": "S235",
+   "id": "S236",
    "file": "game/src/data/wake-tale.js",
    "path": "WORLD[4].text",
    "text": "夢醒人事便模糊，手上的功夫卻沒忘。老伯一手棋也記得；姓韋的明明也記得，一問便賴。"
   },
   {
-   "id": "S236",
+   "id": "S237",
    "file": "game/src/data/wake-tale.js",
    "path": "WORLD[5].text",
    "text": "在已開的最高境界勝一輪，老伯便刻下一柄舊劍的來歷。輸了，或重下已勝過的境界，石上都不添字。"
   },
   {
-   "id": "S237",
+   "id": "S238",
    "file": "game/src/data/wake-tale.js",
    "path": "WORLD[6].text",
    "text": "十局全勝，同行的人便回本尊那裡。老伯說了「好棋」，又說「請回吧」，少年便醒了。"
   },
   {
-   "id": "S238",
+   "id": "S239",
    "file": "game/src/data/wake-tale.js",
    "path": "WORLD[7].text",
    "text": "姓韋的局局開盤口，押少年能贏出甚麼花樣。中注便分銀子、武譜，有時一場打得順手，賺的是人人又想起些功夫。老伯看不見這門生意，也聽不見。"
   },
   {
-   "id": "S239",
+   "id": "S240",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[0].title",
    "text": "深谷一枰逢稚子"
   },
   {
-   "id": "S240",
+   "id": "S241",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[0].mark",
    "text": "利劍：弱冠之前所用"
   },
   {
-   "id": "S241",
+   "id": "S242",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[0].echo.note",
    "text": "谷口的月亮，三天沒有動過分毫。"
   },
   {
-   "id": "S242",
+   "id": "S243",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[0].echo.text",
    "text": "看各位動手，我倒像是在學劍，劍卻不在我手裡。等贏了回去，各位要做甚麼？"
   },
   {
-   "id": "S243",
+   "id": "S244",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[0].carve",
    "text": "少年臨走回頭，見求敗正持舊劍刻石，寫下弱冠前那柄利劍的來歷。刻完了，他仍望著那行字。"
   },
   {
-   "id": "S244",
+   "id": "S245",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[1].title",
    "text": "棄劍容易棄子難"
   },
   {
-   "id": "S245",
+   "id": "S246",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[1].mark",
    "text": "軟劍：誤傷義士，棄之深谷"
   },
   {
-   "id": "S246",
+   "id": "S247",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[1].echo.note",
    "text": "燈光照著少年的臉，求敗說過的話又在他心頭轉了一遍。"
   },
   {
-   "id": "S247",
+   "id": "S248",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[1].echo.text",
    "text": "老伯說各位是拓來的。可哪有拓片會渴、會想家的？這話聽著惱不惱？"
   },
   {
-   "id": "S248",
+   "id": "S249",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[1].carve",
    "text": "第二行刻的是軟劍：「誤傷義士，棄之深谷。」劍尖行到「棄」字，停了一停。"
   },
   {
-   "id": "S249",
+   "id": "S250",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[2].title",
    "text": "始聞盤上不平聲"
   },
   {
-   "id": "S250",
+   "id": "S251",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[2].mark",
    "text": "重劍：重劍無鋒，大巧不工"
   },
   {
-   "id": "S251",
+   "id": "S252",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[2].echo.note",
    "text": "少年從燈邊望去，求敗雙目雖閉，眉間仍皺著。"
   },
   {
-   "id": "S252",
+   "id": "S253",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[2].echo.text",
    "text": "對手一說那念頭不是他的，老伯便抬了頭。各位給人拓來，心裡又怎麼想？"
   },
   {
-   "id": "S253",
+   "id": "S254",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[2].carve",
    "text": "求敗刻下第三行：「重劍無鋒，大巧不工。」劍尖落得甚輕，只掉了些許石屑。"
   },
   {
-   "id": "S254",
+   "id": "S255",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[3].title",
    "text": "草木竹石皆可劍"
   },
   {
-   "id": "S255",
+   "id": "S256",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[3].mark",
    "text": "木劍：不滯於物，草木竹石均可為劍"
   },
   {
-   "id": "S256",
+   "id": "S257",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[3].echo.note",
    "text": "少年在燈下一個個數過身邊的人。"
   },
   {
-   "id": "S257",
+   "id": "S258",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[3].echo.text",
    "text": "老伯問我怎麼不挑人，我說來的都是朋友。本人也好，拓來的也好，都一樣。各位怎麼想？"
   },
   {
-   "id": "S258",
+   "id": "S259",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[3].carve",
    "text": "第四行是木劍：「不滯於物，草木竹石均可為劍。」刻罷，求敗把劍橫在膝頭，沒有收起。"
   },
   {
-   "id": "S259",
+   "id": "S260",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[4].title",
    "text": "無劍猶握一枰棋"
   },
   {
-   "id": "S260",
+   "id": "S261",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[4].mark",
    "text": "最後一行，他沒有刻"
   },
   {
-   "id": "S261",
+   "id": "S262",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[4].echo.note",
    "text": "想起求敗說這是最後一盤，少年在燈下把眾人的臉一張張看過，像要記牢些。"
   },
   {
-   "id": "S262",
+   "id": "S263",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[4].echo.text",
    "text": "下完各位歸本尊，我回被窩。醒了怕要忘，各位別怪。各位說是拓來的，心裡怎麼想？"
   },
   {
-   "id": "S263",
+   "id": "S264",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[4].carve",
    "text": "石上還餘一行空處，求敗提劍看了看，卻把劍輕輕放到石旁。那一行終究空著。"
   },
   {
-   "id": "S264",
+   "id": "S265",
    "file": "game/src/data/wake-tale.js",
    "path": "NO_MARK",
    "text": "這輪棋未下完，石上也未添字。"
   },
   {
-   "id": "S265",
+   "id": "S266",
    "file": "game/src/data/wake-tale.js",
    "path": "CLOSING.win",
    "text": "耳邊那聲「請回吧」未散，少年已醒。"
   },
   {
-   "id": "S266",
+   "id": "S267",
    "file": "game/src/data/wake-tale.js",
    "path": "CLOSING.loss",
    "text": "耳邊合盒的聲音未散，少年已醒。"
   },
   {
-   "id": "S267",
+   "id": "S268",
    "file": "game/src/data/wake-tale.js",
    "path": "FRAGMENTS[0]",
    "text": "一條濕熱的舌頭正舔著他的臉，是家裡的狗。谷中只剩一張棋臺、一個老人的模糊影子，手指卻還拈著，彷彿那枚子尚未落下。"
   },
   {
-   "id": "S268",
+   "id": "S269",
    "file": "game/src/data/wake-tale.js",
    "path": "FRAGMENTS[1]",
    "text": "鍋鏟嚓嚓碰著鐵鍋，飯香從灶前飄來，娘正忙著做飯。他拾起灶邊一根柴枝，手腕一抖，竟挽出個劍花。"
   },
   {
-   "id": "S269",
+   "id": "S270",
    "file": "game/src/data/wake-tale.js",
    "path": "FRAGMENTS[2]",
    "text": "娘喊他起身，那名字聽了十幾年，這時卻有些生疏，像是夢裡一直有人叫他另一個名字。他到屋後翻找，找出一柄生鏽的舊劍。"
   },
   {
-   "id": "S270",
+   "id": "S271",
    "file": "game/src/data/wake-tale.js",
    "path": "FRAGMENTS[3]",
    "text": "雞啼聲起，窗紙已白，被窩外頭冷得很。他還想睡回去，把那盤棋下完；磨亮的劍，就擱在枕邊。"
   },
   {
-   "id": "S271",
+   "id": "S272",
    "file": "game/src/data/wake-tale.js",
    "path": "FRAGMENTS[4]",
    "text": "被窩裡那隻手仍握著，彷彿還留著許多人掌心的暖意。他握住枕邊的劍，走出屋去，天尚未亮。"

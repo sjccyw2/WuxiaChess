@@ -149,6 +149,9 @@ const MAZE_TALE = {
     plain: [
       {
         who: 'youth',
+        // He forgets each run when he wakes; what he says here he cannot tell whether he remembers or
+        // has worked out at the table (producer's word to decide, 2026-11-24, Q-N139).
+        note: '少年瞧瞧手中剩下的白子，又瞧瞧眾人。這件事，他說不出是記得的，還是自己想通的。',
         text: '還有一件事得說明白：各位是老伯從本人身上拓來的一份。本尊仍在各自的年月裡。贏滿十局，便能回到本尊那裡。'
       },
       { who: 'qiu', note: '求敗抬眼看著少年，半晌沒有移開目光。', text: '對著子，也肯說實話。' }
