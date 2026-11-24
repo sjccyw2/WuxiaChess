@@ -103,7 +103,12 @@ function qiubai() {
       ...t.after.map((lines, i) =>
         speech(
           realmName(i) + '：每勝一局之後',
-          lines.map((line, n) => said(G.QIUBAI.name, line.text, '第' + G.NUMERALS[n] + '局勝後。' + (line.note || '')))
+          // An entry is one line of his, or a short exchange with the youth.
+          lines.flatMap((entry, n) =>
+            [entry].flat().map((line, k) =>
+              said(line.who === 'youth' ? YOUTH_NAME : G.QIUBAI.name, line.text, (k ? '' : '第' + G.NUMERALS[n] + '局勝後。') + (line.note || ''))
+            )
+          )
         )
       ),
       speech('添子', t.lend),

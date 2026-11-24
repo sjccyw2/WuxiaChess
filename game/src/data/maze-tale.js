@@ -208,27 +208,31 @@ const MAZE_TALE = {
   // Before the fifth board 求敗 thinks long, and the company sits down by the shop's lamp.
   night: '求敗拈著黑子，遲遲不落，竟閉上了眼。韋小寶向燈邊一招手：「老兒有得想啦，過來坐坐。」',
   // What 求敗 says after a board is won, by 境界 and by how many boards have been won this run
-  // (the last board has its own close). He never names a board or a hero.
+  // (the last board has its own close). He never names a board or a hero, and never says the
+  // player did something particular on it: a run may not have done it. An entry is one line of his,
+  // or a short exchange (a list of lines; `who: 'youth'` for the youth's), so that what the youth
+  // answers is said by the youth himself and not quoted by 求敗 (producer, 2026-11-24, Q-N138).
+  // Until the last board he only presses the 戰意 more lightly; he lifts it there (Q-N136).
   after: [
     [
       { note: '求敗頭也不抬，隨手又落一子。', text: '僥倖。' },
       { note: '求敗仍不抬頭。', text: '又勝了。倒有幾分手氣。' },
       { note: '求敗低低「咦」了一聲，這才抬眼看少年。', text: '對手太弱，看不出棋。老夫添些分量。' },
-      { text: '這一手，方才還不會。幾時學的？' },
-      { text: '老夫算了半日左路。你倒走右路。' },
+      { text: '你的子比開局時強了。幾時學的？' },
+      { text: '老夫算了半日你的去路。仍是沒算中。' },
       { text: '這一著，老夫左右手都未下過。……有趣。' },
-      { text: '且慢收子。方才為何叫他退？說來聽聽。' },
+      { text: '且慢收子。方才那幾步，你怎地想的？說來聽聽。' },
       { text: '幾百年了，竟猜不中你下一著。' },
       { text: '最後一局，老夫不留手。' }
     ],
     [
-      { text: '上回也是這般起手。老夫今日換個下法。' },
-      { text: '殘子也救？白費人手。' },
-      { text: '又救。老夫記下了。' },
-      { text: '皺甚麼眉？不過倒了一子。下局自會回來。' },
+      { text: '你上回怎樣起手，老夫記得。今日換個下法。' },
+      { text: '殘子該棄便棄。你肯麼？' },
+      { text: '不答？老夫記下了。' },
+      { text: '倒下的子，下局自會回來。何必掛心。' },
       { text: '你還同子商量？老夫落子，從不出聲。' },
-      { text: '棄一子而全局活，三歲孩童皆知。你偏不肯。' },
-      { text: '一子未棄，竟也勝了。' },
+      { text: '棄一子而全局活，三歲孩童皆知。你學是不學？' },
+      { text: '一子不棄，竟也勝到這裡。' },
       { text: '老夫少年時，也曾不捨得棄。……落子。' },
       { text: '最後一局。一子不棄，試試。' }
     ],
@@ -237,8 +241,8 @@ const MAZE_TALE = {
       { text: '力加了，子卻未強。怪。' },
       { text: '方才那枚黑子說甚麼？你聽得見？老夫竟未聽清。' },
       { text: '按得重，招數反倒死了。掙開那一刻，才像些樣子。' },
-      { text: '你的同伴在同老夫說話？幾百年了，未曾答過。替老夫回一句：聽見了。' },
-      { text: '「這念頭不是我的。」方才說的是這句？' },
+      { text: '盤上的子，近來像有話要說。幾百年了，老夫從不答子的話。……替老夫回一句：聽見了。' },
+      { text: '「這念頭不是我的。」黑子都這般說，是不是？' },
       { text: '原來說了幾百年。今日才聽見。' },
       { text: '重劍無鋒，大巧不工。四十歲前恃此橫行，只道力大便有理。' },
       { text: '最後一局。聽聽他們還說甚麼。' }
@@ -246,17 +250,17 @@ const MAZE_TALE = {
     [
       { text: '抓了便留？你不掂子力？' },
       { text: '老夫只揀最強的。你倒像揀朋友。' },
-      { text: '盒中強他十倍的也有。你偏用他，也勝了。' },
-      { text: '不嫌弱麼？「來的都是朋友」……幾百年沒聽過了。' },
-      { text: '今日鬆手，讓他們自己打。倒比按著好看。' },
+      { text: '盒中強過這幾枚的，多的是。你抓著誰便用誰，也勝了。' },
+      [{ text: '你不嫌他們弱麼？' }, { who: 'youth', text: '來的都是朋友。' }, { text: '……這句話，老夫幾百年沒聽人說過了。' }],
+      { text: '今日按得輕些。他們倒比按著時打得好看。' },
       { text: '不滯於物，草木竹石均可為劍。這話，還是老夫說的。' },
       { text: '既不擇劍，何以擇子？……只懂了一半。' },
-      { text: '落子時想甚麼？「想他們平安回去」……嗯。' },
+      [{ text: '落子之時，你心裡想些甚麼？' }, { who: 'youth', text: '想他們平安回去。' }, { text: '……嗯。' }],
       { text: '最後一局。老夫也隨手抓一把。' }
     ],
     [
-      { text: '這回不按了。由黑子自己打。' },
-      { text: '不逼，也肯打。你瞧。' },
+      { text: '這回只輕輕一按。看他們還肯不肯打。' },
+      { text: '按得這般輕，他們仍掙不開。是戰意，還是他們自己要打？' },
       { text: '少年那柄利劍，最是凌厲。那時只想贏，倒快活。' },
       { text: '後來換了軟劍。也棄了。' },
       { text: '重劍、木劍，也一一放下。放一柄，進一步。' },
@@ -291,7 +295,7 @@ const MAZE_TALE = {
   close: [
     [{ text: '老夫的子仍是原樣，你的卻越鬥越強。好棋，容老夫想想這緣故。請回吧。' }],
     [
-      { text: '有一局，棄一子便可三步取勝。為何不棄？' },
+      { text: '這一輪，老夫幾回擺下可棄之子。棄一子，便快三步。你為何不棄？' },
       { who: 'youth', text: '他是我同伴。' },
       { text: '老夫那柄軟劍誤傷義士，便棄入深谷。棄劍容易……好棋，容老夫再想想。請回吧。' }
     ],
@@ -428,7 +432,7 @@ const MAZE_TALE = {
   // The run's last page.
   win: '十局已盡，同伴各回本尊，棋臺旁僅餘一老一少與大鵰。求敗望著空盤，說是好棋，要獨自再想一想，便請少年回去。',
   winNote: '通吃坊代存買下的東西，下回入夢便可取用。',
-  loss: '這一輪眼已破，白子盡暗，都收回了盒中。少年耳裡仍是求敗那句「還差得遠，請回吧」。'
+  loss: '白子盡暗，都收回了盒中。少年耳裡仍是那一聲「請回吧」。'
 };
 
 // One entry per board: what is seen on arriving, and what changes when the board is won.
