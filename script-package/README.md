@@ -6,7 +6,7 @@ This package holds the whole story of the game *劍影江湖* (WuxiaChess): the 
 
 The story, the structure and every plot beat are approved and stay as they are. What needs work is the writing: dialogue that sounds like people talking to each other, one line leading to the next, and prose worthy of 金庸. Rewrite lines in `10-主線劇本.md`, `11-各局劇本.md` and `12-俠客劇本.md`, and return those three files. `PROMPT.md` sets out the task in full.
 
-Lines in this package: S001–S267 (267 lines), B001–B370 (370), H001–H223 (223): 860 lines, about 32,000 characters.
+Lines in this package: S001–S267 (267 lines), B001–B370 (370), H001–H223 (223): 860 lines, about 26,000 characters.
 
 ## What to read first
 

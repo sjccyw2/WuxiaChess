@@ -9,7 +9,7 @@ const CATALOG_NOTE =
 // (Shown on the wiki's hero pages. It stood above every tree in the game until 2026-11-23, when
 // the producer had it taken off the 武學 page to make room for the tree.)
 const RECALL_NOTE =
-  '入局的只是拓來的一念，每一盤都從根長起。手上最熟的功夫還在；後來所學，要在局中一招一招想起來。成名的那一招排在最後：要連換來它的那段日子，一併想起。';
+  '拓來的一念，入盤便從根長起，只留手上最熟的功夫。往後的招式須逐一想回，成名絕學留到最後，連換來它的那段日子也得重過一遍。';
 const GATE_LABELS = {
   kills: '親手擊倒敵人',
   casts: '親自施展絕技',
@@ -30,7 +30,7 @@ const HERO_PATHS = {
     boon: '料敵先機',
     signature: '石壁劍招',
     origin:
-      '入境之時，令狐冲手上只剩華山劍法，與思過崖石壁上瞧來的幾招。風清揚所授的九劍，要在局中一式一式想起；想到最後，才是那有進無退的一路。',
+      '令狐冲初入境，只記得華山劍法與思過崖石壁上的幾招。風清揚所授九劍須逐式想回，直到最後，才連成那一路有進無退的劍。',
     layout: [
       ['mountainOpening', 'ninefoldFormula', null],
       ['breakArrow', 'breakSword', 'starSuction'],
@@ -44,7 +44,7 @@ const HERO_PATHS = {
     boon: '綠竹清音',
     signature: '清心普善咒',
     origin:
-      '入境之時，任盈盈手上只剩一柄短劍，與綠竹巷中彈熟了的清心普善咒。號令群豪的威儀、琴簫合奏的那一曲，都要在局中慢慢想起。',
+      '任盈盈入境只剩短劍與綠竹巷彈熟的清心普善咒。號令群豪的威儀，直到琴簫合奏的那一曲，都須在局中慢慢想回。',
     layout: [
       ['sheathedDagger', 'blackNeedle', null],
       [null, 'qinXiaoRally', 'returningSong'],
@@ -58,7 +58,7 @@ const HERO_PATHS = {
     boon: '肝膽相照',
     signature: '吸功入地小法',
     origin:
-      '入境之時，向問天手上只剩一條鐵鞭，與卸力入地的一點粗淺功夫。他雙手猶帶鐐銬；涼亭中獨抗數百人的那一番光景，要到最後方才想起。',
+      '向問天雙腕帶銬，入境只餘鐵鞭與卸力入地的粗淺功夫。涼亭裡獨對數百人的情景，要到最後才想得全。',
     layout: [
       ['ironChainForm', 'chainShelter', null],
       ['sweepingWhip', null, 'reverseForce'],
@@ -72,7 +72,7 @@ const HERO_PATHS = {
     boon: '襄陽軍聲',
     signature: '分筋錯骨手',
     origin:
-      '入境之時，郭靖手上只剩江南七位恩師所授的南山掌法與分筋錯骨手，那是他最早學的功夫。降龍十八掌要從頭一掌想起，一掌一掌想到十八掌俱全。',
+      '郭靖入境記得的，是江南七位恩師最早教的南山掌法、分筋錯骨手。降龍十八掌須從第一掌想回，直到十八掌俱全。',
     layout: [
       ['southernStance', null, null],
       ['kanglongRegret', null, 'fieldDragonWard'],
@@ -86,7 +86,7 @@ const HERO_PATHS = {
     boon: '古墓輕身',
     signature: '天羅地網勢',
     origin:
-      '入境之時，小龍女手上只剩古墓派入門的天羅地網勢，伸手攔得住滿室麻雀的那一路。雙手互搏、一人使兩柄劍，都是很後來的事，要在局中想起。',
+      '小龍女入境只餘天羅地網勢，古墓入門便練的那一路，能伸手攔住滿室麻雀。雙手互搏、一人分使兩劍，都要在局中想回。',
     layout: [
       ['jadeThread', null, 'jadeNeedle'],
       ['jadeHeart', null, 'silkBell'],
@@ -100,7 +100,7 @@ const HERO_PATHS = {
     boon: '無量清風',
     signature: '北冥神功',
     origin:
-      '入境之時，段譽手上只剩無量山洞中學來的北冥神功，那是他平生所學的第一門功夫。六脈神劍要一脈一脈想起；六脈齊發，須到最後。',
+      '段譽入境只餘無量山洞所得的北冥神功，是他平生學的第一門功夫。六脈神劍須逐脈想回，直到最後才能齊發。',
     layout: [
       ['fingerPrimer', null, 'ripplingSteps'],
       ['shangYang', null, null],
@@ -114,7 +114,7 @@ const HERO_PATHS = {
     boon: '奇門布陣',
     signature: '蘭花拂穴手',
     origin:
-      '入境之時，黃蓉手上只剩家傳的落英神劍掌與蘭花拂穴手，都是自小在桃花島上練熟的。打狗棒法要一訣一訣想起，最後一路天下無狗，須到最後。',
+      '黃蓉入境只餘桃花島上自小練熟的落英神劍掌、蘭花拂穴手。打狗棒法須逐訣想回，天下無狗一路仍留到最後。',
     layout: [
       ['huangPetals', null, 'peachWard'],
       ['beggarBind', null, null],
@@ -128,7 +128,7 @@ const HERO_PATHS = {
     boon: '重劍開路',
     signature: '蛤蟆功',
     origin:
-      '入境之時，楊過手上只剩義父所教的蛤蟆功，與古墓中練熟的劍。重劍是後來的事，那一路掌法更在後頭，要一局一局想將回去。',
+      '楊過入境只餘義父所教蛤蟆功，與古墓中練熟的劍。後來的重劍、再後來的掌法，須一局局想回。',
     layout: [
       [null, null, 'quanzhenSword'],
       ['darkIronEdge', null, 'jadeFluteCut'],
@@ -142,7 +142,7 @@ const HERO_PATHS = {
     boon: '九陽護元',
     signature: '蝶谷醫術',
     origin:
-      '入境之時，張無忌手上只剩武當長拳，與少年時在蝴蝶谷學來的醫術。九陽神功、乾坤大挪移，要在局中一層一層想起。',
+      '張無忌入境只記得武當長拳，與少年在蝴蝶谷學的醫術。九陽神功、乾坤大挪移，都須在局中逐層想回。',
     layout: [
       [null, 'nineYangMantle', null],
       ['qiankunShove', null, 'qiankunYield'],
@@ -156,7 +156,7 @@ const HERO_PATHS = {
     boon: '雪野追鋒',
     signature: '胡家刀法',
     origin:
-      '入境之時，胡斐手上只剩照著父親遺下的刀譜練熟的胡家刀法。那部刀譜他自小練全，刀路想起得極快；雪山絕頂舉在半空的那一刀，要親手擊倒幾人方才想起。',
+      '胡斐入境只餘父親刀譜上的胡家刀法，自小便已練全，因而想得極快。雪山頂上那懸而未下的一刀，卻須親手擊倒幾人才會想起。',
     layout: [
       ['huQuickDraw', 'foxFeint', 'snowPursuit'],
       ['miaoSword', 'heartCut', null],
@@ -170,7 +170,7 @@ const HERO_PATHS = {
     boon: '一呼百應',
     signature: '太祖長拳',
     origin:
-      '入境之時，蕭峰手上只剩一路太祖長拳，那是江湖上人人會使的尋常拳法。恩師所傳的降龍掌法，要一掌一掌想起；廿八掌俱全，須到最後。',
+      '蕭峰入境只餘江湖上最尋常的太祖長拳。恩師所傳降龍掌法須逐掌想回，直到末了，廿八掌才會俱全。',
     layout: [
       ['qfSeize', 'qfRegret', 'qfDragonGrab'],
       ['qfField', null, 'qfWine'],
@@ -184,7 +184,7 @@ const HERO_PATHS = {
     boon: '靈鷲慈心',
     signature: '韋陀掌',
     origin:
-      '入境之時，虛竹手上只剩少林寺的韋陀掌，那是他最早學的功夫。逍遙派的種種際遇都在他落子之後；求敗拓的是攤開的一張譜，後面的功夫也在譜上，要在局中一樣一樣長出來。',
+      '虛竹入境只會最早學的少林韋陀掌，逍遙派的際遇尚在落子之後。求敗卻把一生攤作一張譜，連後面的功夫也拓在其中，須待局中逐樣長出。',
     layout: [
       ['xzArhat', 'xzNorthQi', null],
       ['xzPlum', 'xzSixYang', null],
@@ -198,7 +198,7 @@ const HERO_PATHS = {
     boon: '九指點撥',
     signature: '逍遙遊',
     origin:
-      '入境之時，洪七公手上只剩少年時練熟的一路逍遙遊，那是他最早學的功夫。降龍的掌、打狗的棒，要一招一訣想起；三十六路棒法使全，須到最後。',
+      '洪七公入境只餘少年最早學的逍遙遊。降龍掌、打狗棒須逐招逐訣想起，直到三十六路棒法使全。',
     layout: [
       ['hqTap', 'hqTail', null],
       [null, null, 'hqSeal'],
@@ -212,7 +212,7 @@ const HERO_PATHS = {
     boon: '東邪奇學',
     signature: '落英神劍掌',
     origin:
-      '入境之時，黃藥師手上只剩一路落英神劍掌。劈空的掌、島上的陣、簫中之劍、指上之石，要一樣一樣想起；那一曲碧海潮生，須到最後。',
+      '黃藥師入境只餘落英神劍掌。劈空掌、島上奇陣、簫中劍、指上飛石須逐樣想回，碧海潮生曲留在最後。',
     layout: [
       ['ysFlick', 'ysPalm', 'ysMaze'],
       ['ysFlute', 'ysSnap', null],
@@ -226,7 +226,7 @@ const HERO_PATHS = {
     boon: '真武鎮山',
     signature: '羅漢拳',
     origin:
-      '入境之時，張三丰手上只剩少年時照著一對鐵羅漢學來的羅漢拳，那是他最早學的功夫。武當一派的拳劍都是後來自創，要在局中從頭想起；太極拳排在最後。',
+      '張三丰入境只餘少年照一對鐵羅漢學成的羅漢拳，是他最早的拳路。自創武當拳劍須從頭想回，太極拳仍在最後。',
     layout: [
       ['sfSoft', 'sfPureYang', null],
       ['sfSword', null, 'sfSeven'],
@@ -240,7 +240,7 @@ const HERO_PATHS = {
     boon: '郡主妙算',
     signature: '萬安寺劍招',
     origin:
-      '入境之時，趙敏手上只剩在萬安寺中向各派高手偷學來的零碎劍招。靈蛇島上那三招與敵偕亡的劍法，要一招一招想起；天地同壽，須到最後。',
+      '趙敏入境只餘萬安寺向各派偷學的零碎劍招。靈蛇島那三招與敵偕亡的劍法須逐招想回，天地同壽留到最後。',
     layout: [
       ['zmSwift', null, 'zmPowder'],
       ['zmJade', 'zmYitian', 'zmSalve'],
@@ -254,7 +254,7 @@ const HERO_PATHS = {
     boon: '藥王調息',
     signature: '藥王方脈',
     origin:
-      '入境之時，程靈素手上只剩師父所傳的方脈醫理。辨毒、使毒的種種手段，要在局中一樣一樣想起；七心海棠，須到最後。',
+      '程靈素入境只餘師父傳的方脈醫理。辨毒使毒須逐樣想回，七心海棠在最後。',
     layout: [
       ['lsNeedle', 'lsScorpion', null],
       ['lsGold', null, 'lsBlue'],
@@ -268,7 +268,7 @@ const HERO_PATHS = {
     boon: '血刀破甲',
     signature: '躺屍劍法',
     origin:
-      '入境之時，狄雲手上只剩師父教錯了名目的一路躺屍劍法，那是他最早學的功夫。老丐所傳的三招、雪谷中的血刀，要在局中想起；丁典傳他的神照經，須到最後。',
+      '狄雲入境只餘最早學的躺屍劍法，連名目都是師父教錯的。老丐三招、雪谷血刀須逐樣想回，丁典的神照經在最後。',
     layout: [
       ['dyShoulder', 'dySlap', null],
       ['dyBlade', null, 'dyDisarm'],
@@ -282,7 +282,7 @@ const HERO_PATHS = {
     boon: '金蛇追影',
     signature: '伏虎掌',
     origin:
-      '入境之時，袁承志手上只剩幼時崔秋山所教的伏虎掌，那是他最早學的功夫。石洞中得來的金蛇秘笈，他少年時便已練全，想起得最快；華山的混元功、木桑道人的身法，反倒要在局中慢慢想起。',
+      '袁承志入境只餘幼時崔秋山教的伏虎掌。石洞裡所得的金蛇秘笈早在少年練全，因而想回得最快，反是華山混元功、木桑身法須慢慢想起。',
     layout: [
       ['czHunyuan', null, 'czSteps'],
       ['czCone', null, 'czFist'],
@@ -296,7 +296,7 @@ const HERO_PATHS = {
     boon: '越女輕步',
     signature: '白猿竹枝',
     origin:
-      '入境之時，阿青手上只剩一根竹棒，與同白猿打著玩的那幾下。她不曉得這是劍法；一人敵得過三千甲士的那一路，要到最後方才想起。',
+      '阿青入境只餘竹棒與同白猿打著玩的幾下，自己並不知是劍法。獨敵三千甲士的那一路，須最後才會想起。',
     layout: [
       ['aqPoint', 'aqThread', null],
       ['aqEyes', null, 'aqApe'],
@@ -316,7 +316,7 @@ const HERO_PATHS = {
     recall:
       '無名不是拓來的一念，身上本來半點功夫也無。他在盤外瞧過的招數，要到了盤上，一式一式使將出來，手上才算是有了。',
     origin:
-      '入盤之時，無名手上甚麼也沒有，只有在棋臺邊瞧了千百局的一雙眼。千年的招數在他眼裡過了一遍；他瞧著對手的兵刃，劍便自己尋到了空處。這九式沒有誰教過他，要在局中一式一式使將出來。',
+      '無名入盤時兩手空空，只有一雙在臺邊看過千百局的眼睛。千年招數從眼前過，他再看對手兵刃，劍便自行尋向空處。無人傳授的九式，就這樣在局中一式式使出。',
     layout: [
       ['youthKeenEdge', 'youthBreakBlade', null],
       ['youthBreakPole', 'youthBreakSword', 'youthBreakArrow'],
