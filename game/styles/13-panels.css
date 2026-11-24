@@ -1415,6 +1415,19 @@ html.polish-action-flow .battlefield .field-action.armed-art svg:last-child {
   height: 12px;
   opacity: 0.75;
 }
+/* 換招: beside the chip while a picked art waits for its target; back to the list. */
+html.polish-action-flow .battlefield .field-action.aim-back {
+  flex-direction: row;
+  gap: 4px;
+  min-width: 0;
+  padding-inline: 10px;
+  color: #f3e6c8;
+}
+html.polish-action-flow .battlefield .field-action.aim-back svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
 html.polish-action-flow .battlefield .field-action.armed-art[aria-expanded='true'] {
   color: #fff3d2;
   background: #50635285;

@@ -377,7 +377,7 @@ function paint() {
       u.maxMp +
       '。查看俠客資料'
   );
-  $('commander').innerHTML = P.commander(state, mode);
+  $('commander').innerHTML = P.commander(state, mode, { picked: mode === 'skill' || (mode === 'attack' && !aimHidden) });
   // 回身: a hero who has struck with a glide art has only the walk, or staying, in his list.
   // Under the arts: 撤步 once he has walked; before that, while an art is ready, 走位.
   $('field-arts').innerHTML =
@@ -1663,6 +1663,22 @@ function command(action, id, data = {}, keyboard = false) {
       if (hud.panel === 'arts') hud.closePanel(true);
       else openArts(keyboard);
       break;
+    case 'aim-back': {
+      // 換招: back to before the art was picked. No reach is drawn, the list opens to pick
+      // another, and a hero who has not walked has his walk tiles back.
+      const u = selected();
+      if (screen !== 'battle' || !['attack', 'skill'].includes(mode) || !G.canAct(state, u)) break;
+      if (G.canMove(state, u)) mode = 'move';
+      else {
+        mode = 'attack';
+        aimHidden = true;
+      }
+      paint();
+      openArts(keyboard);
+      audio('tap');
+      mapTip(G.canMove(state, u) ? '已換招 · 可重選招式，或點青綠色地格移動' : '已換招 · 請在招式表重選招式');
+      break;
+    }
     case 'hud-close':
       hud.closePanel(true);
       break;

@@ -204,7 +204,8 @@ function activeHero(s) {
     <span class="unit-name"><strong>${DETAILS[u.id].name}</strong><small>Lv.${u.level}</small>${stateMark}${turnPips(s, u)}</span>
     ${vitality('heart', 'hp', u.hp, u.maxHp)}${vitality('drop', 'mp', u.mp, u.maxMp)}</span>`;
 }
-function commander(s, mode) {
+// `picked`: the player picked the ready art from the list (app.js aimHidden), so 換招 is offered.
+function commander(s, mode, { picked = false } = {}) {
   const u = find(s, s.selected);
   if (s.result)
     return btn(
@@ -247,6 +248,10 @@ function commander(s, mode) {
           : artFor(u)
         : null;
     return (
+      // 換招: back to before the art was picked, the list open to pick another.
+      (armed && picked
+        ? btn('aim-back', icon('undo', 16) + '<span>換招</span>', 'field-action aim-back', 'title="換招・回到招式表重選"')
+        : '') +
       (armed
         ? btn(
             'arts-open',
