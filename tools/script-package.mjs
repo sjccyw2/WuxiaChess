@@ -232,7 +232,7 @@ async function build() {
         }
         const film = /prologue\.first\[(\d+)\]/.exec(e.path);
         const star = film && T.MAZE_TALE.prologue.first[+film[1]]?.afterFilm ? '★ ' : '';
-        const won = /^MAZE_TALE\.after\[\d\]\[(\d)\]\.text$/.exec(e.path);
+        const won = /^MAZE_TALE\.after\[\d\]\[(\d)\](?:\[\d\])?\.text$/.exec(e.path);
         const when = won ? '・第' + '一二三四五六七八九'[+won[1]] + '局勝後' : '';
         out.push(row(star + spineSpeaker(e) + when, e));
       }

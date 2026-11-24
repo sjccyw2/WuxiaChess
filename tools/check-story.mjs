@@ -47,7 +47,9 @@ for (const id of G.PARTY) {
 if (MAZE_TALE.after.length !== WAKES.length || MAZE_TALE.close.length !== WAKES.length)
   fail('求敗 does not have lines for all five 境界');
 MAZE_TALE.after.forEach((lines, i) => {
-  if (lines.length !== 9 || lines.some((line) => !line.text)) fail('境界 ' + (i + 1) + ': 求敗 needs a line after each of nine boards');
+  // An entry is one line of his, or a short exchange with the youth that he opens.
+  if (lines.length !== 9 || lines.some((entry) => [entry].flat().some((b) => !b.text) || [entry].flat()[0].who)) fail('境界 ' + (i + 1) + ': 求敗 needs a line after each of nine boards');
+  for (const b of lines.flat()) if (![undefined, 'youth'].includes(b.who)) fail('境界 ' + (i + 1) + ': a line after a board is given to ' + b.who);
 });
 // Every close but the fifth sends the youth home; the fifth leads on to the last board.
 MAZE_TALE.close.forEach((lines, i) => {
@@ -401,7 +403,7 @@ for (let player = 0; player < 60; player++) {
           if (after.some((line) => line.text === MAZE_TALE.release.text || line.text.includes('請回吧'))) fail(at + ': the stones are sent home before the last board');
         }
       }
-      if (won && !r.last.terminal && !tenth && !qiu.some((line) => line.text === MAZE_TALE.after[realm - 1][r.stage].text))
+      if (won && !r.last.terminal && !tenth && ![MAZE_TALE.after[realm - 1][r.stage]].flat().every((b) => after.some((line) => line.text === b.text && line.speaker === (b.who === 'youth' ? R.youthName(s) : qiu[0]?.speaker))))
         fail(at + ': 求敗 has the wrong line for 境界 ' + realm + ' board ' + (r.stage + 1));
       if (won && !r.last.terminal && !tenth && !r.last.recruit && r.pool.length > 0)
         fail(at + ': a win brought no hero');

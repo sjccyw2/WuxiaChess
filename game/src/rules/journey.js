@@ -797,7 +797,8 @@ function dialogue(s, scene = s.run.scene) {
       for (const beat of tale.invite) beats.push({ who: 'qiu', ...beat });
     } else if (!r.last?.terminal) {
       // What 求敗 makes of the board just won, and the stone he lends for it.
-      beats.push({ who: 'qiu', ...MAZE_TALE.after[realm - 1][Math.min(8, r.stage)] });
+      // (One line of his, or a short exchange with the youth.)
+      for (const beat of [MAZE_TALE.after[realm - 1][Math.min(8, r.stage)]].flat()) beats.push({ who: 'qiu', ...beat });
       const who = r.last?.recruit;
       if (who) {
         const arrival = HERO_VOICES[who].arrival;

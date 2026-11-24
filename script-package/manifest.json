@@ -1,270 +1,270 @@
 {
  "note": "Maps each 〔id〕 in 10–12 to the string literal it came from. Used by `node tools/script-package.mjs --apply`. Editors: do not change this file.",
- "made": "2026-11-23",
+ "made": "2026-11-24",
  "lines": [
   {
    "id": "B001",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[0].arrival",
-   "text": "一道石橋橫跨淺水，橋頭橋尾各立一人，凝然不動，便如兩枚落定了的黑子。"
+   "text": "淺水上橫著一道石橋，橋頭橋尾各立一人，動也不動，恰似兩枚落定的黑子。"
   },
   {
    "id": "B002",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[0].victory",
-   "text": "橋頭的鐵鏈鬆了。兩人眉心的戰意一散，各自退了半步，橋下流水重又穿過橋孔。"
+   "text": "橋頭鐵鏈已鬆，兩人眉間的戰意也散了，各自讓開半步。橋孔底下，流水又穿了過來。"
   },
   {
    "id": "B003",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].before[0].note",
-   "text": "青竹渡。一道石橋橫跨淺水，橋頭橋尾各立一人，凝然不動，便如兩枚落定了的黑子。"
+   "text": "橋上靜得很，兩人的手卻都緊扣著兵刃。橋頭那人望向橋尾，先開了口。"
   },
   {
    "id": "B004",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].before[0].text",
-   "text": "木駝子，你我為那部劍譜鬥了半世，今日余某竟提不起半分搶它的念頭，心中翻來覆去只是一句話：誰上橋來，便打誰。這可奇了。"
+   "text": "木駝子，爭了半世的劍譜，余某今日竟不想搶了。只想打上橋的人。你也是麼？"
   },
   {
    "id": "B005",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].before[1].text",
-   "text": "余矮子，駝子也是一般。這根杖自己要往外探，收也收不住。他奶奶的，是哪一個王八羔子在駝子心裡擱了這個念頭？有種的給我滾出來！"
+   "text": "余矮子，你看這杖，駝子收不回來！哪個王八羔子擺佈駝子？有種便滾出來！"
   },
   {
    "id": "B006",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].before[2].text",
-   "text": "他們眉心各壓著一道戰意，是對面老伯落子時按下去的。他們不想打，卻不能不打。……要過橋，只有先贏了他們。"
+   "text": "是老伯落子時按在他們眉心的戰意。他們不肯打也得打。要過橋，先打醒他們。"
   },
   {
    "id": "B007",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].before[3].text",
-   "text": "給人按著頭來廝殺，這滋味想必不大好受。既然躲不過，那就將他們打醒。上橋！"
+   "text": "那就上橋。早些打醒，早些讓他們鬆手。"
   },
   {
    "id": "B008",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].heroLines.hero",
-   "text": "余觀主，木駝子，兩位為一部劍譜追了我林師弟千里，今日竟說提不起興致？那可真是給人拿住了。好，在下替兩位鬆一鬆筋骨。"
+   "text": "余觀主、木駝子，追了我林師弟千里，劍譜倒不想要了？看來給拿得不輕。在下替兩位鬆鬆筋骨。"
   },
   {
    "id": "B009",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].heroLines.medic",
-   "text": "余滄海這等人，眼中除了劍譜再無別物。連他也給壓得只曉得動手，那落子之人本事不小。"
+   "text": "連余滄海也忘了劍譜？他眼裡向來沒有別的。落子之人好本事。"
   },
   {
    "id": "B010",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].heroLines.guard",
-   "text": "兩個老兒教人拴著打架，還說不出是誰拴的。老子這條鐵鏈，專解這等扣子。"
+   "text": "拴住了，還不知繩頭在誰手裡？老子這條鐵鏈，倒可替兩位解解扣。"
   },
   {
    "id": "B011",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].extras.fengTiannan.enter",
-   "text": "這渡口不是鳳某的地頭，鳳某來封它作甚？……奇了，棍子倒先橫了過來。"
+   "text": "這又不是鳳某的地頭，封甚麼渡口？……棍子倒先橫過去了。"
   },
   {
    "id": "B012",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].extras.fengTiannan.reply.text",
-   "text": "橋那頭來的是誰？瞧他腦後拖一條辮子，是哪一路的打扮？"
+   "text": "橋那頭是誰？腦後一條辮子，甚麼打扮？"
   },
   {
    "id": "B013",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].extras.fengTiannan.heroes.hu",
-   "text": "鳳天南！你從佛山一路逃到這裡來了？……不對。你這雙眼睛，不是在逃。"
+   "text": "鳳天南，逃出佛山還要逃到這裡？……不對。你眼裡竟沒有逃的意思。"
   },
   {
    "id": "B014",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].extras.fengTiannan.heroes.lingSu",
-   "text": "這位便是鳳老爺了。我大哥追了你千里，說起你時，牙關咬得很緊。……你眼裡的神色不對，像是服了甚麼藥，卻又不是藥。"
+   "text": "鳳老爺，大哥追你千里，提起便咬牙。你這眼神卻像中了藥。……又不像藥。"
   },
   {
    "id": "B015",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].win[0].note",
-   "text": "木高峰的駝杖噹的一聲，落在橋板之上。他低頭瞧著自己一雙手，便如頭一回見到一般。"
+   "text": "駝杖噹地落在橋板上，木高峰低頭看手，一時竟沒去拾。"
   },
   {
    "id": "B016",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].win[0].text",
-   "text": "鬆了。……余矮子，適才是哪一個拿駝子的手使喚？駝子可沒答應替人打這一架！"
+   "text": "總算鬆了！余矮子，是誰借駝子的手打架？駝子何曾答應過他？"
   },
   {
    "id": "B017",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].win[1].text",
-   "text": "戰意散了。兩個人醒了過來，連自己為甚麼守在橋上也說不出。橋讓出來了。"
+   "text": "問他也沒用，他也不知道為甚麼守橋。兩個人都醒了。橋已讓開，走罷。"
   },
   {
    "id": "B018",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].loss[0].note",
-   "text": "橋鏈重又絞緊。余滄海立在橋頭，眼中殊無喜色。"
+   "text": "鐵鏈又將橋口絞緊。余滄海仍站在橋頭，臉上看不出半分得意。"
   },
   {
    "id": "B019",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].loss[0].text",
-   "text": "勝了。……勝了又怎地？那念頭還在：下一個上橋的，照打不誤。"
+   "text": "贏了又如何？心裡還是那一句。下一個上橋的，照打。"
   },
   {
    "id": "B020",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].loss[1].text",
-   "text": "橋又封上了。那道戰意還壓在他們眉心，一分也沒有鬆。"
+   "text": "還不肯放人……橋又封住了。他們眉心那股力，一點也沒鬆。"
   },
   {
    "id": "B021",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[0].guest",
-   "text": "沒人按著余某，余某照樣要打。青城派的劍，向來不必旁人使喚。"
+   "text": "余某要出劍，何須誰來按？今日便使青城派自己的劍。"
   },
   {
    "id": "B022",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[0][0].bio",
-   "text": "青城派掌門，為林家的辟邪劍譜結下滿門血仇。他給落在橋頭，心裡只剩一個念頭：誰上橋便打誰。森冷一掌，能壓低對手的攻勢。"
+   "text": "青城派掌門，為奪林家辟邪劍譜，結下滿門血仇。如今守著橋頭，心中只剩「誰上橋便打誰」，一記森冷掌力，能壓住對手攻勢。"
   },
   {
    "id": "B023",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[0][1].bio",
-   "text": "塞北明駝，也在追尋辟邪劍譜。他與余滄海素來不和，此刻卻給同一道戰意按在橋尾，駝杖想收也收不回來。"
+   "text": "塞北明駝也在追奪辟邪劍譜，向與余滄海不睦。這回卻同受戰意驅使，站定橋尾，連駝杖也收不回。"
   },
   {
    "id": "B024",
    "file": "game/src/data/encounters.js",
    "path": "VILLAINS.fengTiannan.bio",
-   "text": "佛山五虎門掌門，霸著一個鎮，離了自己的地頭從不出頭。今日給落在一處不相干的渡口，手中長棍自己橫了過來，專絆人腳步。"
+   "text": "佛山五虎門掌門，霸住一鎮，出了自己地頭便不肯出頭。如今無端守著渡口，長棍橫出，專絆過路人的腳步。"
   },
   {
    "id": "B025",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[1].arrival",
-   "text": "雨水將驛桌洗得發亮。桌旁數人手按兵刃，眼光卻望著別處，似在傾聽一句旁人聽不見的言語。"
+   "text": "雨水把驛桌洗得發亮，桌旁幾人手按兵刃，目光卻偏向別處，像在聽人說話。"
   },
   {
    "id": "B026",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[1].victory",
-   "text": "驛鈴又響了。那幾人如夢初醒，頭一件事便是各自退後一步。"
+   "text": "驛鈴又能響了。那幾人醒過神來，腳下都先向後退。"
   },
   {
    "id": "B027",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].before[0].note",
-   "text": "紅楓驛。驛桌之旁立著數人，手都按在兵刃之上，眼光卻望著別處，似在傾聽一句旁人聽不見的言語。"
+   "text": "桌面映著幾隻握兵刃的手，握得甚緊，誰也沒望自己的手。閻基側耳聽了一會，轉向田歸農。"
   },
   {
    "id": "B028",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].before[0].text",
-   "text": "田兄，兄弟下了半世的藥，人中了甚麼，一搭脈便知。眼下這個卻不是藥。是有人將一個「戰」字，硬生生擱進了心裡。"
+   "text": "田兄，別疑心是藥，兄弟搭過自己的脈了。下了半世藥，從沒見過這一味。心裡只催一個「戰」字。"
   },
   {
    "id": "B029",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].before[1].text",
-   "text": "閻基，田某一生不打沒把握的仗。可你瞧我這兩條腿，自己往前走，叫也叫不回來。"
+   "text": "不是藥，你便叫我這雙腳停下！田某一生不打沒把握的仗。它倒不問把握，自己往前走。"
   },
   {
    "id": "B030",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].before[2].text",
-   "text": "下官一生，上頭有令方才動手。今日這道令沒有印信，下官竟也照辦了。更可惱的是，它壓這等草莽，同壓下官一般的重。"
+   "text": "連印信也無，下官竟聽了令。平日奉命才出手，今日倒同草莽一般。壓在誰身上都一樣重！"
   },
   {
    "id": "B031",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].before[3].text",
-   "text": "幾個都是惜身的人，偏偏給一道戰意按著，非上前不可。……他們不會讓路。這一局只有打。"
+   "text": "他們都想保命，卻誰也不肯讓路。這場只得打。各位準備接招。"
   },
   {
    "id": "B032",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].before[4].text",
-   "text": "不想打的人給逼著打，下手最沒分寸。大家留神。"
+   "text": "這時候最容易亂下狠手。大家留神。"
   },
   {
    "id": "B033",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].heroLines.hu",
-   "text": "田歸農，我爹爹的事，我有許多話要問你。可你這雙眼睛，此刻不是你自己的。先打醒了你，再問。"
+   "text": "田歸農，我爹爹的事還沒問清。你眼裡卻全不是自己的意思。先打醒你再問。"
   },
   {
    "id": "B034",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].heroLines.lingSu",
-   "text": "田相公，苗大俠那一雙眼睛是我治好的，你下的斷腸草，出自我師叔之手。今日你這雙眼比他當日瞎得還厲害：睜著，卻作不得自己的主。"
+   "text": "苗大俠的眼，是我治好的；你的斷腸草，出自我師叔。田相公，今日輪到你睜眼做瞎子了。"
   },
   {
    "id": "B035",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].win[0].note",
-   "text": "田歸農長劍脫手落地。他退了一步，又退一步，這一回兩條腿肯聽他的了。"
+   "text": "長劍落地，田歸農往後退了一步，又退一步。這回雙腳終於聽使喚了。"
   },
   {
    "id": "B036",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].win[0].text",
-   "text": "……田某怎會在此同人拚命？閻大夫，這等蝕本買賣，我幾時做過？"
+   "text": "閻大夫，田某何曾肯做蝕本買賣？怎會在這裡同人拚命？"
   },
   {
    "id": "B037",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].win[1].text",
-   "text": "這一仗打完，記在誰的名下？……罷了。此事不可上聞。"
+   "text": "這一仗算在誰名下？……罷了。不可上聞。"
   },
   {
    "id": "B038",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].win[2].text",
-   "text": "戰意散了。他一醒過來，頭一件事便是往後退。這才是他自己。"
+   "text": "他可肯退了。剛醒便顧著退，這才像他自己。"
   },
   {
    "id": "B039",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].loss[0].note",
-   "text": "驛鈴啞了。閻基收了刀，手卻兀自發抖。"
+   "text": "驛鈴已啞，閻基把刀收好，手仍抖個不停。"
   },
   {
    "id": "B040",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].loss[0].text",
-   "text": "贏了也不讓歇手。田兄，你聽見沒有？它還在說：再來。"
+   "text": "刀收了，還不准歇？田兄，你聽。它又在說「再來」。"
   },
   {
    "id": "B041",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].loss[1].text",
-   "text": "他們贏了這一局，那道戰意卻沒有走。幾個人還立在原地，等下一個上門的。"
+   "text": "贏的人也走不了。他們還得站在這裡，等下一個上門。"
   },
   {
    "id": "B042",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[1].guest",
-   "text": "沒有人逼，田某原該一走了之。只是站在這位老前輩身邊，這一仗總算有了七分把握。"
+   "text": "原該走的，偏又想留。挨著這位老前輩，田某便有七分把握。"
   },
   {
    "id": "B043",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[1][0].bio",
-   "text": "天龍門北宗掌門，一生不打沒有把握的仗。這一回由不得他，兩隻腳自己往前走。快劍專破對手的守勢。"
+   "text": "天龍門北宗掌門，沒有把握的仗從來不打。如今雙腳自行向前，快劍仍照舊專破對手守勢，進退卻輪不到他選。"
   },
   {
    "id": "B044",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[1][1].bio",
-   "text": "昔日的跌打醫生，靠暗中下藥起家。他搭得出自己沒有中藥，卻說不出心裡那個「戰」字是誰擱的。逼他動手的是戰意；同夥傷了，替人接骨續筋，卻是他自己的老本行。"
+   "text": "原是跌打醫生，靠暗中下藥起家；搭得出自己沒有中藥，卻尋不到心裡催戰的病根。動手出於受逼，替受傷同夥接骨續筋，倒是他的老本行。"
   },
   {
    "id": "B045",
@@ -282,121 +282,121 @@
    "id": "B047",
    "file": "game/src/data/encounters.js",
    "path": "VILLAINS.zhaoZhong.bio",
-   "text": "武當出身的清廷武官，上頭有令方才動手。壓著他的這一道令沒有印信，他竟也照辦了，守著東院，專尋為首之人，一劍截其手腕。"
+   "text": "武當出身的清廷武官，素來奉令才動手，如今沒見印信也得聽命。他守在東院，專尋為首的人，一劍截向手腕。"
   },
   {
    "id": "B048",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[2].arrival",
-   "text": "蘆葉齊齊向西點頭。蘆叢中立著一老一少，衣袖無風自動，身周一群弟子高聲頌揚。"
+   "text": "蘆葉一齊向西低下，蘆叢裡一老一少衣袖無風自動。弟子圍在四下，頌揚之聲一陣高過一陣。"
   },
   {
    "id": "B049",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[2].victory",
-   "text": "蘆花各往各的方向散開。壓在灘頭的那道戰意散了，頌揚之聲登時止歇。"
+   "text": "頌揚聲已止住，壓在灘頭的戰意也散了。蘆花不再倒向一處，各自隨風飄開。"
   },
   {
    "id": "B050",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].before[0].note",
-   "text": "蘆花汀。蘆叢中立著一老一少，衣袖無風自動。老的那個皺著眉頭，似在同自己一雙手較勁。四下裡一群弟子齊聲頌揚。"
+   "text": "頌聲裡，老者皺著眉看自己的雙手，袖口兀自鼓動。少年卻把這當作顯威的徵兆，愈發喊得起勁。"
   },
   {
    "id": "B051",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].before[0].text",
-   "text": "師父神功蓋世，今日要在此地大展神威，弟子早已瞧出來啦！星宿老仙，法力無邊！"
+   "text": "弟子早瞧出來了，師父今日要大展神威！星宿老仙，法力無邊！"
   },
   {
    "id": "B052",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].before[1].text",
-   "text": "放屁！老仙要不要動手，自己難道不曉得？是有甚麼東西伸進老仙心裡，撥了一下。向來只有老仙化旁人的功，幾時輪到旁人來撥弄老仙？是誰？給老仙滾出來！"
+   "text": "放屁，老仙何時說要動手？向來只有老仙化人的功，誰敢撥弄老仙的手？滾出來！"
   },
   {
    "id": "B053",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].before[2].text",
-   "text": "這一局的戰意不只壓著他一個，他那些弟子人人有份。唱的人一個不停，他便醒不了。……散開些，別站在下風。"
+   "text": "不只他，他的弟子也人人受制，非全打醒不可。別站在下風。散開些。"
   },
   {
    "id": "B054",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].before[3].text",
-   "text": "連他這等人物也作不得自己的主。看來不打過這一場，誰也走不脫。"
+   "text": "連他也作不得主，這一場便躲不掉了。先散開。"
   },
   {
    "id": "B055",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].heroLines.duan",
-   "text": "丁老先生，在下瞧你老人家是真不想動手，這一節你我倒是同道。只可惜你的袖子不作此想。得罪了。"
+   "text": "丁老先生不願動手，在下倒有同感。可惜你那袖子不答應。得罪了。"
   },
   {
    "id": "B056",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].heroLines.qiaoFeng",
-   "text": "星宿老怪的名頭，喬某久有所聞，只道你最愛聽旁人吹捧。今日一句大話不說便動手，倒教人意外。想是有人按著你的頭了。"
+   "text": "喬某久聞你愛聽吹捧。今日弟子誇你，你倒先罵他。這一仗，果然不由你作主。"
   },
   {
    "id": "B057",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].heroLines.xuZhu",
-   "text": "這位老先生，適才在棋局旁邊，令高徒敲鑼打鼓的頌你功德，好不熱鬧，怎地此刻一聲不響了？小僧瞧你的眼睛，倒像是給人點了穴道。"
+   "text": "令高徒只管誇，老先生卻像沒聽見。可是身上不由自主？阿彌陀佛。"
   },
   {
    "id": "B058",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].win[0].note",
-   "text": "丁春秋袖中的毒粉灑了一地。四下裡頌揚之聲忽然止歇，他盯著自己的手掌，瞧了半晌。"
+   "text": "丁春秋袖中的毒粉落了一地。他看著掌心，耳邊再聽不見一句頌辭。"
   },
   {
    "id": "B059",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].win[0].text",
-   "text": "走了。……摘星子，適才那東西壓著老仙之時，你可曾瞧見是誰？說！"
+   "text": "走了……摘星子！誰按著老仙，你可瞧清？說！"
   },
   {
    "id": "B060",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].win[1].text",
-   "text": "戰意散了。他醒過來不問輸贏，只問是誰。……我若說是對面那位老伯，他多半要罵上三天三夜。"
+   "text": "他一醒便追問是誰，輸贏倒不問了。我若指指老伯，怕要聽他罵三天三夜。"
   },
   {
    "id": "B061",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].loss[0].note",
-   "text": "蘆花齊齊伏倒。丁春秋立在灘頭，臉上殊無得色。"
+   "text": "蘆花盡伏，丁春秋獨立灘頭，臉色比開打時還難看。"
   },
   {
    "id": "B062",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].loss[0].text",
-   "text": "勝了，那東西還不肯走。摘星子，不許喝采！這一場不是老仙打的。"
+   "text": "不許喝采！那東西還壓著老仙。這場勝仗算誰的？"
   },
   {
    "id": "B063",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].loss[1].text",
-   "text": "他贏了，卻半點也不歡喜。那道戰意還壓著他。"
+   "text": "贏了也不准喝采。他心口還壓著東西，哪裡歡喜得起來。"
   },
   {
    "id": "B064",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[2].guest",
-   "text": "老仙法力無邊，從來用不著旁人來按。今日便教你們見識見識真本事！"
+   "text": "這回沒人擺佈老仙。法力無邊四個字，今日教你們親眼瞧瞧！"
   },
   {
    "id": "B065",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[2][0].bio",
-   "text": "星宿老怪，向來只有他化旁人的功。他認得出心裡那個念頭不是自己的，偏偏掙不開，化功大法照舊削人內力。"
+   "text": "星宿老怪，向來只有他化人內力，如今心中卻添了別人的念頭。他認得出，也掙不開，袖下的化功大法仍在削人內力。"
   },
   {
    "id": "B066",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[2][1].bio",
-   "text": "星宿派大弟子，只當師父是自己要大展神威。毒焰順著中空的蘆稈游走。"
+   "text": "星宿派大弟子，只道師父有意顯威，頌揚得格外起勁。毒焰藏在中空的蘆稈中，順稈游走。"
   },
   {
    "id": "B067",
@@ -414,85 +414,85 @@
    "id": "B069",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[10].arrival",
-   "text": "海風裡夾著一股腥氣。竹堂之前的高臺上端坐一個白鬚老者，臺下教眾齊聲念誦，他卻皺著眉頭，一句也沒有聽進去。"
+   "text": "海風帶腥，竹堂前的高臺上坐著一個白鬚老者。臺下頌聲不絕，他卻蹙著眉，竟似一句也沒聽入耳。"
   },
   {
    "id": "B070",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[10].victory",
-   "text": "念誦之聲止了。臺上那人眉心的戰意一散，五指緩緩鬆開，海風重又吹進竹堂。"
+   "text": "頌聲歇了，老者眉間也鬆開。海風重新穿堂而過。"
   },
   {
    "id": "B071",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].before[0].note",
-   "text": "神龍竹堂。海島之上好大一座竹堂，堂前高臺上端坐一個白鬚老者，臺下教眾齊聲念誦，聲震竹瓦。"
+   "text": "海島上這座竹堂，瓦片給頌聲震得輕響，白鬚老者仍端坐高臺。聲音愈響，他的眉頭便皺得愈緊。"
   },
   {
    "id": "B072",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].before[0].text",
-   "text": "住口！……本座叫你們住口。「仙福永享，壽與天齊」這八個字，本座聽了幾十年，今日聽來，竟像是在祝另一個人。心裡有一道號令，卻不是本座下的。"
+   "text": "住口，這句「仙福永享，壽與天齊」究竟祝誰？聽了幾十年，今日倒像祝別人。這道號令不是本座下的！"
   },
   {
    "id": "B073",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].before[1].text",
-   "text": "他一向坐在臺上，叫旁人去拚命。今日一道戰意壓著，連他自己也得下臺來。……他的手長，隔著幾步也抓得到人。給他扯了過去，旁邊的人要接應得上。"
+   "text": "他慣叫人賣命，這回自己也非動手不可。那手隔幾步便抓得到人。誰給扯過去，旁邊快接應。"
   },
   {
    "id": "B074",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].before[2].text",
-   "text": "發號令的給人號令了去，底下念咒的還不曉得。先打醒了臺上那一個，臺下的自然散了。"
+   "text": "臺下還當他在發令。先打醒臺上的，底下自然散。"
   },
   {
    "id": "B075",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].win[0].note",
-   "text": "念誦之聲忽然止歇。洪安通立在臺前，低頭瞧著自己一雙手，五指兀自作擒拿之勢。"
+   "text": "洪安通立在臺前，低頭看手，五指兀自屈成擒拿之形，這才慢慢鬆開。身後那片頌聲已無聲無息地歇了。"
   },
   {
    "id": "B076",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].win[0].text",
-   "text": "散了。……都跪著作甚？適才本座親自下場，是誰的主意？哪一個說得出那人是誰，本座賞他一顆豹胎易筋丸的解藥！"
+   "text": "還跪著作甚？是誰作主叫本座下場？說得出來，賞一顆豹胎易筋丸的解藥！"
   },
   {
    "id": "B077",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].win[1].text",
-   "text": "戰意散了。他醒過來頭一件事，是查問誰敢越過他去發號令。……那個人，他是查不著的。"
+   "text": "才鬆開手，便又查起誰越過他發令。這個人，他可查不著。"
   },
   {
    "id": "B078",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].loss[0].note",
-   "text": "臺下念誦之聲又起，一聲高過一聲。"
+   "text": "臺下又念起頌辭，一聲壓過一聲。"
   },
   {
    "id": "B079",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].loss[0].text",
-   "text": "勝了。念甚麼？不許念！……這一仗不是本座要打的，這仙福也不是祝給本座的。"
+   "text": "不准念！這仗不是本座要打的。祝誰的仙福？"
   },
   {
    "id": "B080",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].loss[1].text",
-   "text": "他贏了，臺下念得更響，他的臉色卻更難看。那道戰意還壓著他。"
+   "text": "底下越賀勝，他臉色越差。壓著他的那股力，還沒肯走。"
   },
   {
    "id": "B081",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[10].guest",
-   "text": "今日心裡清清淨淨，一道號令也無。本座親自下場，這一回是本座自己的旨意。"
+   "text": "都退開，本座自己來。心裡清淨得很。這回的旨意，是本座下的。"
   },
   {
    "id": "B082",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[10][0].bio",
-   "text": "神龍教教主，教眾開口先得祝他仙福永享，壽與天齊。他號令旁人慣了，今日卻有一個念頭越過他去號令他的一雙手。擒拿手隔著數步將人扯到身前，鎖住脈門，削人內力。"
+   "text": "神龍教主聽慣了「仙福永享，壽與天齊」，今日卻有一道號令越過他，直使喚他雙手。他的擒拿能隔數步扯人到身前，鎖住脈門，削去內力。"
   },
   {
    "id": "B083",
@@ -504,109 +504,109 @@
    "id": "B084",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[3].victory",
-   "text": "崖口的冰鈴終於響了。兩柄血刀各自回鞘，這一回沒有再彈出來。"
+   "text": "崖口的冰鈴終於響了，聲音從空下來的棧道傳了出去。"
   },
   {
    "id": "B085",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].before[0].note",
-   "text": "聽雪棧。兩個僧人背靠崖壁，立在棧道當中，便如兩枚給人擺在那裡的棋子。刀已出鞘。"
+   "text": "兩柄刀橫在窄窄的棧道上，刀後的僧人背靠崖壁。小的看看來人，又低頭看刀，像是算不清這筆買賣。"
   },
   {
    "id": "B086",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].before[0].text",
-   "text": "老祖，咱們同這幾個人無冤無仇，他們身上也沒有油水。弟子這把刀，怎地自己便出了鞘？"
+   "text": "老祖，這幾人沒油水，又沒仇。弟子拔刀作甚？它倒自己出鞘了。"
   },
   {
    "id": "B087",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].before[1].text",
-   "text": "寶象，老祖也在琢磨。有個念頭壓將下來，叫你非砍不可。老祖試過不理它，試了三回，三回都是刀先動。奶奶的，那就砍罷，砍完了再同那人算帳。"
+   "text": "老祖想不砍，試了三回，三回都是刀先動。奶奶的，索性砍罷。砍完再找那人算帳！"
   },
   {
    "id": "B088",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].before[2].text",
-   "text": "他試過掙開，掙不開，索性順著它。這樣的人最難纏，他不會留手。……棧道窄，一個一個守穩了。"
+   "text": "他掙不開，便索性往狠裡打。棧道窄，大家一個個守穩。別指望他留手。"
   },
   {
    "id": "B089",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].before[3].text",
-   "text": "給人牽著的刀，一樣是刀。各位留神腳下，莫教他逼到崖邊。"
+   "text": "刀可不管誰叫它砍。看穩腳下，別給逼到崖邊。"
   },
   {
    "id": "B090",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].heroLines.diYun",
-   "text": "老和尚！你的手適才還在我喉頭……不對，你認不得我了。你這雙眼睛是空的，同牢裡給人打怕了的犯人一般。"
+   "text": "老和尚，你的手還掐著我……怎麼不認得我了？你這眼神，跟牢裡給打怕的人一樣。"
   },
   {
    "id": "B091",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].win[0].note",
-   "text": "寶象的刀插入雪中。他晃了晃腦袋，便如剛從水底浮上來一般。"
+   "text": "寶象的刀插進雪裡，他晃了晃頭，像才浮出水面。兩人隨即各自收刀入鞘，這回刀沒有再彈出。"
   },
   {
    "id": "B092",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].win[0].text",
-   "text": "老祖，那念頭沒了。咱們……咱們適才是替誰賣命？"
+   "text": "老祖，這回不催了。方才拚命，究竟替誰？"
   },
   {
    "id": "B093",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].win[1].text",
-   "text": "替一個不露面的傢伙。老祖吃了一世的黑心飯，頭一回吃這等悶虧。"
+   "text": "誰知道是哪個不露面的！老祖吃了一世黑心飯，倒頭一回吃這等悶虧。"
   },
   {
    "id": "B094",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].win[2].text",
-   "text": "戰意散了。兩個人收了刀，誰也說不出適才為甚麼要拚命。"
+   "text": "虧是吃了，卻連替誰賣命也說不出。如今刀總算肯收了。"
   },
   {
    "id": "B095",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].loss[0].note",
-   "text": "血刀回鞘，鞘上的雪還沒抖落，刀又自己彈出了半寸。"
+   "text": "刀才入鞘，鞘上積雪未落，刃口又自行彈出半寸。"
   },
   {
    "id": "B096",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].loss[0].text",
-   "text": "砍完了，它還不放人。寶象，守著棧口罷。看來要砍到它心滿意足為止。"
+   "text": "砍完還不准收？寶象，守棧口。只怕得砍到它滿意。"
   },
   {
    "id": "B097",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].loss[1].text",
-   "text": "他們贏了，刀卻收不回去。棧道還封著。"
+   "text": "贏了，刀還不肯歇。這條棧道走不過去了。"
   },
   {
    "id": "B098",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[3].guest",
-   "text": "嘿嘿，沒人按著，老祖這口刀照樣要見血。砍人原是老祖自己的主意！"
+   "text": "嘿嘿，誰也別按老祖的手。老祖自己想砍人！"
   },
   {
    "id": "B099",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[3][0].bio",
-   "text": "血刀門第四代掌門，一生只打划算的架。他試過不理心裡那個念頭，三回都是刀先動，索性放手去砍。一刀掃過棧道兩側。"
+   "text": "血刀門第四代掌門，一生只打划算的架。心裡催他出刀，他三番不理，卻三番都是刀先動，索性任它橫掃棧道兩側。"
   },
   {
    "id": "B100",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[3][0].traits.phase.log",
-   "text": "血刀老祖刀勢一收，踏雪往藥草地退去。打到半醒，他那本算盤回來了：先養傷，再砍人。"
+   "text": "血刀老祖忽收刀勢，踏雪退往藥草地。這半醒之間，他已算定：傷先養好，人留著再砍。"
   },
   {
    "id": "B101",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[3][1].bio",
-   "text": "血刀門僧。他同來人無冤無仇，刀卻自己出了鞘，借坡下冰雪遮掩刀鋒。"
+   "text": "血刀門僧，與來人無仇，血刀卻自行出鞘。冰雪沿坡而下，正好替他遮掩刀鋒。"
   },
   {
    "id": "B102",
@@ -624,115 +624,115 @@
    "id": "B104",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[4].arrival",
-   "text": "臺上的琴無人彈奏。石階上一高一低立著兩人，掌心都凝著勁力。"
+   "text": "石階上一高一低立著兩人，掌中勁力已聚。臺上那張琴，卻無人撫弄。"
   },
   {
    "id": "B105",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[4].victory",
-   "text": "石階上的霜化了。兩人收了掌，琴絃給山風一撥，自己響了一聲。"
+   "text": "階上霜已融，兩人也收了掌。山風拂過琴絃，輕輕一響。"
   },
   {
    "id": "B106",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].before[0].note",
-   "text": "空山琴臺。臺上的琴無人彈奏。兩人一高一低立在石階之上，掌心都凝著勁力，望的卻不是同一處。"
+   "text": "兩人手中都蓄著力，目光卻各望一處。高處那人的掌心透出寒氣，先往自己手上看了看。"
   },
   {
    "id": "B107",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].before[0].text",
-   "text": "費師弟，左某一生每出一掌，事先都算過值與不值。今日這一掌還沒有算，寒氣已到了掌心。"
+   "text": "費師弟，左某哪一掌不是算過才發？這回尚未算，掌心先冷了。"
   },
   {
    "id": "B108",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].before[1].text",
-   "text": "掌門師兄，小弟也是一般。心裡有個聲音，不是你的號令，卻比你的號令還難違抗。"
+   "text": "師兄尚未發令，小弟便得出手。心裡那聲催促，比師兄的令還重。"
   },
   {
    "id": "B109",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].before[2].text",
-   "text": "一道戰意壓在他們眉心，對著的卻是臺上那張琴。連這等事事盤算的人，也算不出自己為甚麼要打。……琴在我們這邊。守住它，撐到那一念自己散了。"
+   "text": "眉心那股力催著他們，打的卻是我們這邊的琴。把琴守好。拖到那一念散了，便能停手。"
   },
   {
    "id": "B110",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].before[3].text",
-   "text": "號令旁人慣了的人，如今給別的甚麼號令著。打贏了他，才算幫他一把。"
+   "text": "那就守住。若先打醒他，也能教他不再聽那號令。"
   },
   {
    "id": "B111",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].heroLines.hero",
-   "text": "左盟主，你要併五嶽，使的是自己的心計，這一節在下向來知道。今日這一掌卻不是你要發的。連你也作不得主，那人好大的手筆。"
+   "text": "左盟主併五嶽，一向自己算得精。如今連發這一掌也由不得你？擺佈你的人倒好手段。"
   },
   {
    "id": "B112",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].heroLines.medic",
-   "text": "左冷禪這一世只肯聽自己的。能教他不由自主的人，我倒想見上一見。先破了這一局再說。"
+   "text": "先破這局。左冷禪從來只聽自己的，我倒要瞧瞧誰能叫他聽話。"
   },
   {
    "id": "B113",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].heroLines.guard",
-   "text": "左冷禪，你也有給人當刀使的一日？老子本該大笑三聲。可惜那使刀的，連老子也一併算計在內。"
+   "text": "左冷禪也給人當刀使，原該大笑三聲。偏那使刀的，連老子也算進去了！"
   },
   {
    "id": "B114",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].objects.guqin.hit.text",
-   "text": "琴絃給震得嗡的一聲。……他們要的不是我們，是這張琴。"
+   "text": "琴絃震響了！他們衝著琴來的，快護住。"
   },
   {
    "id": "B115",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].objects.guqin.half.text",
-   "text": "琴身裂了一道縫。再挨得幾下，這一曲便沒處彈了。"
+   "text": "琴身裂了。再挨幾下，便沒法彈了。"
   },
   {
    "id": "B116",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].objects.guqin.broken.text",
-   "text": "斷了。左某恨這一曲恨了半輩子，今日斷它的，卻不是左某自己的手。"
+   "text": "斷了……左某恨此曲半生。今日斷它，卻未能自己作主。"
   },
   {
    "id": "B117",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].objects.guqin.lost",
-   "text": "琴斷絃絕，那道戰意得了它要的東西。這一局輸了。"
+   "text": "琴斷絃絕，戰意所逼的事已成，這一局輸了。"
   },
   {
    "id": "B118",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].objects.guqin.held.text",
-   "text": "八合過了。借來的那一念撐不住，自己散了。琴還在。"
+   "text": "八合了，那一念撐不住了。琴還在！"
   },
   {
    "id": "B119",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].win[0].note",
-   "text": "費彬掌上的勁力散了。他扶住石階，長長吁了一口氣。"
+   "text": "費彬扶著石階，把胸中那口氣緩緩吐出。掌上的勁力已留不住了。"
   },
   {
    "id": "B120",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].win[0].text",
-   "text": "掌門師兄，那個聲音走了。……適才小弟險些以為，自己這一世便是為了打這一場。"
+   "text": "師兄，那聲音總算停了。小弟險些真信了，一輩子便為打這場仗。"
   },
   {
    "id": "B121",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].win[1].text",
-   "text": "左某記下了。世上竟有人能越過左某，去號令左某的人，連左某自己也在其內。"
+   "text": "記下了。敢越過左某號令門人，還把左某也算在內。"
   },
   {
    "id": "B122",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].win[2].text",
-   "text": "戰意散了。他醒過來頭一件事，是記下有人比他更會發號令。"
+   "text": "剛能自己作主，便記起這筆帳。有人比他更會發號令，他可忘不了。"
   },
   {
    "id": "B123",
@@ -744,31 +744,31 @@
    "id": "B124",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].loss[0].text",
-   "text": "費彬，守住石階。左某贏了這一場，卻不知是替誰贏的。"
+   "text": "費彬，守階。這仗雖勝，竟不知替誰贏的。"
   },
   {
    "id": "B125",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].loss[1].text",
-   "text": "他贏了，卻不知道為誰而贏。那道戰意還在。"
+   "text": "連勝仗是替誰贏的也不知道。他還得守著。"
   },
   {
    "id": "B126",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[4].guest",
-   "text": "左某平生不做無益之事。同這位前輩並肩過得一招，勝讀十年劍譜。"
+   "text": "同前輩並肩過一招，抵得上十年劍譜。這等有益之事，左某豈肯錯過。"
   },
   {
    "id": "B127",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[4][0].bio",
-   "text": "嵩山掌門、五嶽盟主，每出一掌都先算過值與不值。這一掌沒有算，寒氣已到掌心，能沿斷絃侵人經脈。"
+   "text": "嵩山掌門、五嶽盟主，每出一掌都算過利害。今日未及算計，寒氣已到掌心，仍能沿斷絃侵入人的經脈。"
   },
   {
    "id": "B128",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[4][1].bio",
-   "text": "大嵩陽手，替盟主守住上臺的石階。催他動手的聲音不是掌門的號令，卻比號令更難違抗。一掌落下，兩旁石座同時作響。"
+   "text": "大嵩陽手守住上臺石階，心裡催他出手的，竟比掌門號令更難違。一掌落下，兩邊石座一齊作響。"
   },
   {
    "id": "B129",
@@ -798,193 +798,193 @@
    "id": "B133",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].before[0].note",
-   "text": "絕情花徑。谷中遍地奇花，嬌艷無比，枝上卻生滿小刺。花徑盡頭一人寬袍緩帶，左手金刀，右手黑劍，臉上猶帶三分笑意。"
+   "text": "花間小刺密密匝匝，花徑盡頭那人寬袍緩帶，臉上含笑。左手金刀、右手黑劍都亮了出來，與那笑意全不相稱。"
   },
   {
    "id": "B134",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].before[0].text",
-   "text": "貴客光降，公孫某本當掃徑相迎。只是有一事好生奇怪：本谷之中，向來是公孫某替旁人拿主意，今日卻有人替公孫某拿了主意。這一刀一劍並非待客之道，也並非公孫某的本心。"
+   "text": "貴客光降，原該掃徑相迎……這刀劍失禮了。谷中一向由公孫某作主。今日倒有人替我作主！"
   },
   {
    "id": "B135",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].before[1].text",
-   "text": "他笑著說話，手上的刀劍卻一點不慢。一道戰意壓著他，也壓著他那些張網的弟子，這一局要一個個都打醒才算。……花叢有刺，走不快，小心給網罩在裡頭。"
+   "text": "他笑他的，刀劍可沒停；張網的弟子也都給壓著，須全打醒。花叢帶刺，腳下走不快。小心網罩下來。"
   },
   {
    "id": "B136",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].before[2].text",
-   "text": "嘴上愈客氣的人，下手愈不容情。他那一刀一劍輪著使，一回重，一回長，瞧準了再近身。"
+   "text": "客氣話聽聽便罷。那刀劍輪著來，一回重、一回長。看準才近身。"
   },
   {
    "id": "B137",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].heroLines.yang",
-   "text": "公孫谷主，你我的帳本來不少。只是今日你這對刀劍來得不由自主，倒比你平日那張笑臉老實些。我先打散那個替你作主的，再同你算你自己的。"
+   "text": "公孫谷主，這刀劍倒比你笑臉老實。替你作主的，我先打散。你我自己的帳，隨後再算。"
   },
   {
    "id": "B138",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].heroLines.xiao",
-   "text": "公孫先生，你救過我，也騙過我。今日攔路的不是你。我不怪你，可也不讓。"
+   "text": "公孫先生，救我騙我都是你。今日卻不是你作主。我不怪你，也不讓。"
   },
   {
    "id": "B139",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].heroLines.huang",
-   "text": "這位谷主笑得斯文，手上可一點不斯文。給人算計到這步田地，連一句漂亮話也說不周全，那人手段倒高。"
+   "text": "好斯文的谷主，好不斯文的手！給算計得連客套也說不順，算計你的人倒厲害。"
   },
   {
    "id": "B140",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].win[0].note",
-   "text": "金刀黑劍雙雙垂下。公孫止整了整衣冠，卻先回頭望了一眼石屋的門。"
+   "text": "刀劍雙雙垂下，公孫止先回頭看了石屋一眼，才整好衣冠。"
   },
   {
    "id": "B141",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].win[0].text",
-   "text": "失禮，失禮。適才之事，公孫某全然作不得主。諸位請便，石屋那邊卻不必去了。"
+   "text": "方才實在作不得主，失禮了。諸位請便。石屋那邊，不必去了。"
   },
   {
    "id": "B142",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].win[1].text",
-   "text": "戰意散了。他醒過來頭一件事，是回頭瞧那扇門閂好了沒有。……他有不想給人瞧見的東西，那是他自己的事了。"
+   "text": "醒了便先看門閂，原來他怕人進石屋。裡頭藏甚麼，是他自己的事了。"
   },
   {
    "id": "B143",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].loss[0].note",
-   "text": "漁網四面收攏。公孫止臉上的笑意，一分一分的淡了下去。"
+   "text": "漁網從四面收緊，公孫止嘴邊那點笑意卻漸漸沒了。"
   },
   {
    "id": "B144",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].loss[0].text",
-   "text": "客人是留下了，公孫某卻歡喜不起來。這個主意不是公孫某拿的。……收網，再張開。它還要公孫某等下一批客人。"
+   "text": "客是留下了，卻非公孫某的主意。收網……還得再張開。它又要等客了。"
   },
   {
    "id": "B145",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].loss[1].text",
-   "text": "他贏了，笑卻掛不住了。那道戰意還在替他拿主意。"
+   "text": "留下了人，他也笑不出來。連下一步做甚麼，還是由那股力替他定。"
   },
   {
    "id": "B146",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[11].guest",
-   "text": "這一回無人替公孫某拿主意。一刀一劍，都是公孫某自己要使的，貴客休怪。"
+   "text": "這回刀劍由公孫某自己使。無人代作主張。貴客休怪。"
   },
   {
    "id": "B147",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[11][0].bio",
-   "text": "絕情谷谷主，左手金刀，右手黑劍，一生替旁人作主。今日有一個念頭替他作了主，他臉上的斯文便有些掛不住。刀使劍招，劍使刀招，一回合重、一回合長，教人算不準他下一招。"
+   "text": "絕情谷主左手金刀、右手黑劍，一向替旁人作主，今日反被別人的念頭驅使，連笑臉也掛不住。刀使劍招，劍使刀招，一回合重、一回合長，令人難料。"
   },
   {
    "id": "B148",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[5].arrival",
-   "text": "桃瓣落在石上，無人去拂。陣心伏著一人，口中翻來覆去只問一句話。"
+   "text": "桃瓣落滿石面，無人去拂。陣心那人伏著，只管反覆問同一句話。"
   },
   {
    "id": "B149",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[5].victory",
-   "text": "陣心的勁道平了。一片桃花從石縫中鑽出，沾了鞋尖，這才落地。"
+   "text": "陣心勁力平息，桃瓣從石縫間飄出，沾住鞋尖，終於落下。"
   },
   {
    "id": "B150",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].before[0].note",
-   "text": "桃花石陣。桃瓣落在石上，無人去拂。陣心立著兩人，白衣的那個握著摺扇，指節發白。"
+   "text": "白衣人緊握摺扇，指節已發白。他望著身旁那人，想問一句話，扇子卻始終收不回去。"
   },
   {
    "id": "B151",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].before[0].text",
-   "text": "叔父，姪兒心裡多了一個念頭，教我見人便打。這不是姪兒的主意。你老人家那裡，是不是也有一個？"
+   "text": "叔父，姪兒並不想打，手卻不依。你心裡是不是也有人催？"
   },
   {
    "id": "B152",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].before[1].text",
-   "text": "有。有人教我打。……是誰教的？是我麼？克兒，我分不出來。我連我是誰都不曉得，怎知道哪一個念頭是我的？"
+   "text": "有，是我在催麼？克兒，我連自己是誰也不知道。哪個才是我的念頭？"
   },
   {
    "id": "B153",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].before[2].note",
-   "text": "少年的手停在半空。棋臺對面，求敗拈著的一枚黑子，也頓了一頓。"
+   "text": "少年的手停在半空。對面求敗指間的黑子，竟也停了一停。"
   },
   {
    "id": "B154",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].before[2].text",
-   "text": "……他問的那一句，我答不上來。可是我瞧得見：那念頭是從盤外壓下來的，不是他的。先贏了這一局，替他將它拿開。"
+   "text": "他是誰，我答不上。可那股力從盤外來，我看得清楚。先贏了，替他拿開。"
   },
   {
    "id": "B155",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].before[3].text",
-   "text": "自己的主意，旁人塞進來的主意，他分不清了。那更不能由得它擺佈他。"
+   "text": "分不清便更不能任它擺佈。先替他解了這一重。"
   },
   {
    "id": "B156",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].heroLines.huang",
-   "text": "歐陽伯伯，你瘋了這些年，倒比誰都老實：旁人只說「我要打」，你卻問這是誰的主意。我說與你知道，不是你的。"
+   "text": "歐陽伯伯，瘋了倒肯說實話。人家只說要打，你還肯問誰的意思。告訴你，不是你的。"
   },
   {
    "id": "B157",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].heroLines.guo",
-   "text": "歐陽先生，你害過我恩師，這筆帳我記得。可今日要打我的不是你，是壓著你的那東西。我先打它。"
+   "text": "你害過我恩師，我記得。今日這一掌卻是旁人逼的。我先打散它。"
   },
   {
    "id": "B158",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].heroLines.yang",
-   "text": "……爸爸。是我，過兒。你不認得我也不打緊。那個教你動手的聲音不是你，你別聽它。"
+   "text": "爸爸，我是過兒。不認得也沒甚麼。那聲音不是你的，別聽。"
   },
   {
    "id": "B159",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].heroLines.hongQi",
-   "text": "老毒物！適才你還坐在我對面想那一招的破法，怎地轉眼便動起手來？……不對，你這不是瘋，是有人在你心裡擱了東西。老叫化替你敲它出來。"
+   "text": "老毒物，你還沒想出那招的破法，便動手了？這回不像瘋病。老叫化替你把心裡那東西敲出來！"
   },
   {
    "id": "B160",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].heroLines.yaoShi",
-   "text": "鋒兄，你我鬥了半生，你的心計我向來佩服三分。今日你出手全無章法，是誰敢將西毒當一枚棋子來使？我瞧著很不痛快。"
+   "text": "鋒兄半生心計，今日竟出手無章。誰把西毒當棋子使？我看著不痛快。"
   },
   {
    "id": "B161",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].win[0].note",
-   "text": "歐陽克的摺扇落在桃瓣之上。他鬆開了手，去扶叔父。"
+   "text": "歐陽克手一鬆，摺扇落在桃瓣上。他顧不得拾，先去扶叔父。"
   },
   {
    "id": "B162",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].win[0].text",
-   "text": "叔父，沒有了，那念頭走了。往後你老人家想打誰、不想打誰，都是自己的主意。"
+   "text": "叔父，催你的已走了。往後想打不想打，都隨你自己。"
   },
   {
    "id": "B163",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].win[1].text",
-   "text": "走了？……那麼剩下的這個是我。我是誰？"
+   "text": "走了，留下的便是我？……我是誰？"
   },
   {
    "id": "B164",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].win[2].text",
-   "text": "戰意散了。他還在問他是誰。……這一句，對面的老伯也答不上來。他說他連自己的姓名也忘了。"
+   "text": "壓他的已經沒了，這句話卻還在。老伯也忘了自己的名字。怕也答不出。"
   },
   {
    "id": "B165",
@@ -996,19 +996,19 @@
    "id": "B166",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].loss[0].text",
-   "text": "打完了，還要打。是誰要打？克兒，你叫我一聲，我便記得起來。"
+   "text": "打完還要打，誰要打？克兒，叫我一聲。我就記得了。"
   },
   {
    "id": "B167",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].loss[1].text",
-   "text": "他停不下來。那念頭還壓著他，他還當是他自己的。"
+   "text": "他還當是自己要打。那股力沒鬆，手便停不了。"
   },
   {
    "id": "B168",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[5].guest",
-   "text": "我是誰？……不管了。那邊有人要打架，我便同他打！"
+   "text": "我是誰？不管啦，那邊要打。我也去！"
   },
   {
    "id": "B169",
@@ -1020,13 +1020,13 @@
    "id": "B170",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[5][0].traits.phase.log",
-   "text": "歐陽鋒逆運經脈，狀若瘋狂。他醒了一半，醒過來的卻是那個瘋了的自己。"
+   "text": "歐陽鋒逆運經脈，身形愈見狂亂。人醒了一半，露出來的卻仍是那個瘋了的自己。"
   },
   {
    "id": "B171",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[5][1].bio",
-   "text": "白駝山少主。他明白心裡那個念頭不是自己的主意，摺扇卻照樣指使蛇奴，一撥一撥從桃溪趕將上來。"
+   "text": "白駝山少主明知催他動手的不是自己，摺扇卻仍向前指。蛇奴奉扇而行，一撥撥從桃溪趕來。"
   },
   {
    "id": "B172",
@@ -1044,115 +1044,115 @@
    "id": "B174",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[6].arrival",
-   "text": "襄陽東門的門洞之下立著兩人。更鼓不響，城頭無人，他二人卻似在等一聲號令。"
+   "text": "襄陽東門下站著兩人，像在等一聲軍令。更鼓不響，城頭也不見人。"
   },
   {
    "id": "B175",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[6].victory",
-   "text": "城頭的鼓槌終於落下。門洞裡那股勁道散了，五隻金輪停在地下，不再轉動。"
+   "text": "鼓槌已在城頭落下，門洞裡逼人的勁力也消了。五隻金輪停在地上，不再轉動。"
   },
   {
    "id": "B176",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].before[0].note",
-   "text": "襄陽殘垣。東門的門洞之下立著兩人。更鼓不響，城頭無人，他二人卻似在等一聲號令。"
+   "text": "門洞裡一人手持五輪，另一人想走，雙腳卻仍停在原處。兩人望向無聲的城頭，都沒有先開口。"
   },
   {
    "id": "B177",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].before[0].text",
-   "text": "霍都，為師要立功，憑的是自己這五隻輪子，用不著旁人來推。眼下卻有一股勁道推著為師，非同來人動手不可。這不是為師的本意。"
+   "text": "霍都，為師立功自有五輪，何須旁人推我？今日偏有人推著，非打不可。這算誰的本事？"
   },
   {
    "id": "B178",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].before[1].text",
-   "text": "師父，弟子向來見勢不妙便走。今日兩條腿卻似釘在這門洞之中，要走也走不成。"
+   "text": "師父，弟子倒想走。見勢不妙原該退，腿卻釘住了。"
   },
   {
    "id": "B179",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].before[2].text",
-   "text": "一個不肯受人擺佈，一個只想脫身，都給同一道戰意按在這裡。那戰意對著的，是城頭那面鼓。……鼓在我們這邊，守住它。門洞窄，他的輪子掃得開，別擠在一處。"
+   "text": "他們給逼在門下，要打的是我們這邊的鼓。守住鼓。門洞窄、五輪掃得寬，別擠著。"
   },
   {
    "id": "B180",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].before[3].text",
-   "text": "他不是自己要擋這道門。那就不必同他講道理，贏了再說。"
+   "text": "那就護鼓。此刻同他講理也無用，打醒再說。"
   },
   {
    "id": "B181",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].heroLines.guo",
-   "text": "這道城門我認得。……只是我守的襄陽，城牆是齊整的。國師，你我是敵非友，可今日你眼中無神。我不佔這個便宜，只求早些打醒了你。"
+   "text": "這門我認得，城牆卻比我守的殘了。國師，你我雖是敵人，我不佔你失神的便宜。早些醒罷。"
   },
   {
    "id": "B182",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].heroLines.huang",
-   "text": "靖哥哥守的城，我閉著眼也認得每一條巷子。大和尚今日連攻城的心思也沒有，只曉得動手。有人拿他當棋子使。"
+   "text": "靖哥哥守的城，每條巷子我都認得。大和尚連攻城也忘了，只管動手。這枚子可真聽話。"
   },
   {
    "id": "B183",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].heroLines.yang",
-   "text": "大和尚，你我交手不止一回，你幾時這般悶聲不響？有人捂著你的嘴呢。我替你揭開。"
+   "text": "大和尚，你我打過幾回，何曾見你這樣悶？有人捂著嘴罷。楊某替你揭開。"
   },
   {
    "id": "B184",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].heroLines.xiao",
-   "text": "過兒說過，這座城裡有他敬重的人。攔在門口的人不由自主，我也一樣不讓。"
+   "text": "過兒敬重的人在這城裡。你雖身不由己，我也不讓。"
   },
   {
    "id": "B185",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].heroLines.zhang",
-   "text": "太師父說起過這座城。說到後來，他老人家沒有往下講。……這位大師神志受制，出手不知輕重，各位小心。"
+   "text": "太師父提過這城，說到後來便不說了。這位大師失了神，下手不知輕重。各位小心。"
   },
   {
    "id": "B186",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].heroLines.hongQi",
-   "text": "這座城老叫化認得，靖兒同蓉兒守的便是它，城裡的羊肉湯是一絕。這位大和尚我卻不識。不識也罷，瞧你這模樣，是給人牽著鼻子來的。"
+   "text": "靖兒蓉兒守的城，老叫化認得，羊肉湯也好。大和尚卻沒見過。看來也是給人牽著鼻子來的。"
   },
   {
    "id": "B187",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].heroLines.sanFeng",
-   "text": "襄陽……老道少年之時，識得一位從這座城裡出來的姑娘。她說起這道城牆，眼睛是亮的。大師神志受制，老道不同你計較。"
+   "text": "少年時認得一位姑娘，來自襄陽。她說起城牆，眼睛便亮了。大師受了制，老道不同你計較。"
   },
   {
    "id": "B188",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].heroLines.zhaoMin",
-   "text": "這座城是我曾祖一輩的人打下來的，軍中的老人說，足足攻了許多年。大和尚是我們蒙古的國師罷？今日連你也身不由己，這可有趣。"
+   "text": "我曾祖那輩攻了多年才下的城，軍中老人常說。這位是蒙古國師罷？連你也不聽自己的，倒有趣。"
   },
   {
    "id": "B189",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].extras.wanYan.enter",
-   "text": "攻城？本王要的是一部兵書，不是這堵殘牆。……令旗怎地自己舉了起來？"
+   "text": "本王要兵書，要這殘牆作甚？……令旗卻舉起來了。"
   },
   {
    "id": "B190",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].extras.wanYan.reply.text",
-   "text": "王爺，貴國亡了有些年了。你我今日，都是替旁人打這一仗。"
+   "text": "王爺，貴國已亡了些年。今日你我，都替旁人出力。"
   },
   {
    "id": "B191",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].extras.wanYan.heroes.guo",
-   "text": "完顏洪烈！我爹爹的血債，我記了一世。……你這雙眼睛卻是空的。今日這一掌，不算報仇。"
+   "text": "完顏洪烈，我爹爹的血債沒忘。你眼裡卻空空的。這一掌，不算報仇。"
   },
   {
    "id": "B192",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].extras.wanYan.heroes.huang",
-   "text": "趙王爺，當年你千方百計要那部兵書，到頭來一場空。今日連這面令旗，也不是你自己要舉的。"
+   "text": "趙王爺，千方百計求兵書，到頭來得了甚麼？如今連舉不舉旗，也輪不到你選。"
   },
   {
    "id": "B193",
@@ -1164,109 +1164,109 @@
    "id": "B194",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].extras.wanYan.heroes.hongQi",
-   "text": "完顏洪烈！你到臨安皇宮裡偷那部兵書的那一晚，老叫化正在御廚房裡偷菜吃。今日你手裡沒有兵書，眼裡也沒有神。"
+   "text": "你到臨安宮裡偷兵書那晚，老叫化正偷御廚的菜。今日書沒拿著，魂也丟了麼？"
   },
   {
    "id": "B195",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].extras.wanYan.heroes.yaoShi",
-   "text": "趙王爺。騙我說小女葬身大海的那個番僧，是你府上養的。這筆帳……哼。你這雙眼睛此刻是空的，我同一枚棋子算甚麼帳。"
+   "text": "騙我說蓉兒葬身海裡的番僧，是你府上的。趙王爺，這筆帳……哼。我何苦同一枚失神的子算帳。"
   },
   {
    "id": "B196",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].objects.warDrum.hit.text",
-   "text": "鼓面悶悶的響了一聲。……他們要的是這面鼓破。"
+   "text": "鼓響得不對。他們是要打破鼓面！"
   },
   {
    "id": "B197",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].objects.warDrum.half.text",
-   "text": "蒙皮裂開了。鼓一破，這座城便再沒有聲音。"
+   "text": "蒙皮裂了！再打破，城上便沒聲音了。"
   },
   {
    "id": "B198",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].objects.warDrum.broken.text",
-   "text": "鼓破了。……為師攻過這座城，從沒有這般容易。這一下，不是為師要打的。"
+   "text": "攻這城從未如此容易……鼓破了。這一下，卻非為師本意。"
   },
   {
    "id": "B199",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].objects.warDrum.lost",
-   "text": "鼓破了，城頭再無聲息。那道戰意得了它要的東西，這一局輸了。"
+   "text": "鼓破聲止，城頭再無聲息。戰意所逼之事既成，這局便輸了。"
   },
   {
    "id": "B200",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].objects.warDrum.held.text",
-   "text": "九合過了，那一念散了。鼓還好端端的在架上。"
+   "text": "九合已過，那一念散了。鼓好好地留在架上。"
   },
   {
    "id": "B201",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].win[0].note",
-   "text": "霍都的摺扇合上了。他試著退了一步，腳下居然動了，轉身便走。"
+   "text": "霍都啪地合扇，試著退了一步。腳下一能動，便轉身要走。"
   },
   {
    "id": "B202",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].win[0].text",
-   "text": "師父，那股勁道散了！此地不可久留。"
+   "text": "師父，能走了！那股力散了，快離開這裡。"
   },
   {
    "id": "B203",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].win[1].text",
-   "text": "且慢。為師輸了這一陣，是輸在自己手上，還是輸在那推我之人手上？這筆帳，為師要算個明白。"
+   "text": "慢著！究竟輸在為師自己，還是那推我之人？這帳得算清。"
   },
   {
    "id": "B204",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].win[2].text",
-   "text": "大金……亡了？是那和尚說的。本王不信。本王要回去瞧個明白。"
+   "text": "大金亡了？本王不信那和尚的話。回去，自會看個明白。"
   },
   {
    "id": "B205",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].win[3].text",
-   "text": "戰意散了。一個拔腿便走，一個站著不肯走。都是他們自己了。"
+   "text": "一個急著走，一個偏要留下算帳。都能自己拿主意了。"
   },
   {
    "id": "B206",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].loss[0].note",
-   "text": "五隻金輪落回掌中，嗡嗡的轉個不停。"
+   "text": "五輪回到掌中，嗡嗡旋轉，半分不歇。"
   },
   {
    "id": "B207",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].loss[0].text",
-   "text": "勝了。這一陣卻不算為師的。霍都，站好了，那股勁道還沒有走。"
+   "text": "此勝不算為師的。霍都，站好。它還沒走。"
   },
   {
    "id": "B208",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].loss[1].text",
-   "text": "他贏了，卻不肯認這一陣。那道戰意還將他們釘在門洞裡。"
+   "text": "贏也不肯認，走也走不得。他們還給釘在門洞裡。"
   },
   {
    "id": "B209",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[6].guest",
-   "text": "老衲十層龍象般若功，正要尋個配得上的對手。今日這一陣，不必誰來相強。"
+   "text": "十層龍象般若功，正缺個配得上的對手。今日老衲自己要打。"
   },
   {
    "id": "B210",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[6][0].bio",
-   "text": "蒙古國師，立功只肯憑自己的五隻輪子。此刻有一股勁道推著他動手，他不認這是自己的本意。五輪一轉，身旁的人也受波及。"
+   "text": "蒙古國師，立功只肯憑手中五輪。如今給一股勁道推著出手，心中不服，五輪卻仍旋轉不休，連對手身旁的人也會受傷。"
   },
   {
    "id": "B211",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[6][1].bio",
-   "text": "蒙古王子，拜金輪國師為師，向來見勢不妙便走。今日兩條腿給釘在門洞裡，只好摺扇一指，專挑對手的弱處下手。"
+   "text": "蒙古王子，師承金輪國師，向來一見勢危便走。今日雙腳困在門洞，只好揮動摺扇，照舊專取人的弱處。"
   },
   {
    "id": "B212",
@@ -1284,121 +1284,121 @@
    "id": "B214",
    "file": "game/src/data/encounters.js",
    "path": "VILLAINS.wanYan.bio",
-   "text": "金國趙王，一生延攬豪傑，為的是他的國家。他從不親自衝陣；今日令旗自己舉了起來，指著誰，弓手便射誰。"
+   "text": "金國趙王，延攬豪傑只為國事，從不親自衝陣。今日令旗自行舉起，弓手卻仍照旗所指，把箭射向那人。"
   },
   {
    "id": "B215",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[12].arrival",
-   "text": "溪水撞在石上，濺起一人來高的白沫。對岸山門之前立著一個老者，雙掌垂在身側，望著這一邊。"
+   "text": "湍溪撞石，白沫濺起一人多高。對岸山門前的老者垂著雙掌，直望這邊。"
   },
   {
    "id": "B216",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[12].victory",
-   "text": "溪水照舊的流。那老者翻過右掌，瞧了半晌；一片白沫濺上鞋面，他也沒有去避。"
+   "text": "溪水仍照舊奔流，白沫濺到老者鞋面。他竟連避也不避。"
   },
   {
    "id": "B217",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].before[0].note",
-   "text": "鐵掌溪灘。一道湍溪橫在山前，水聲轟轟。對岸山門之前立著一個黃葛短衫的老者，雙掌垂在身側，凝然不動。"
+   "text": "水聲轟轟，那身黃葛短衫立在山門前，半步不動。老者雙掌本垂在兩側，目光一到來人身上，掌便提了起來。"
   },
   {
    "id": "B218",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].before[0].text",
-   "text": "老夫一雙鐵掌，要打誰便打誰，從不問第二句。今日心裡卻有人替老夫點了名，連問也不容老夫問。嘿，裘某幾時成了旁人掌上的一枚子？"
+   "text": "裘某打誰，何須旁人點名？今日偏有人在心裡點了，問也不許問。好，連老夫也作了棋子！"
   },
   {
    "id": "B219",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].before[1].text",
-   "text": "他不服，可是掌已經提起來了。一道戰意壓在他眉心。……溪水急，我們涉水走不快，他卻踏著水面便過來了。別在水裡同他糾纏，佔住石頭再打。"
+   "text": "嘴還不服，掌已提起來了。我們涉不過急水，他卻踏水便來。先上石頭，別在水裡打。"
   },
   {
    "id": "B220",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].before[2].text",
-   "text": "掌力再重，也是給人牽著打出來的。各位先搶踏腳的石頭，在水裡是鬥他不過的。"
+   "text": "踏腳石先站穩。在水裡接掌，正中他的下懷。"
   },
   {
    "id": "B221",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].heroLines.guo",
-   "text": "裘幫主，蓉兒當年中你一掌，險些送了性命，我沒有一日忘記。可今日這一掌不是你要打的。這筆帳，等你醒了再算。"
+   "text": "裘幫主，蓉兒中你那掌險些喪命，我沒忘。今日卻是別人逼你出掌。舊帳待你醒了再算。"
   },
   {
    "id": "B222",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].heroLines.huang",
-   "text": "裘老兒，當年你一掌打去我半條命，這筆帳我記到如今。可你今日兩眼發直，倒像你那位愛吹牛皮的兄長給人點了穴道。先打醒了你，再同你算。"
+   "text": "裘老兒，我那半條命還欠著呢。瞧你兩眼發直，倒像你那吹牛兄長給點了穴。先醒醒，再算帳。"
   },
   {
    "id": "B223",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].heroLines.yang",
-   "text": "這一雙鐵掌我認得。我見到他時，他已落髮為僧，法號慈恩。……原來他也有過這般不肯回頭的時候。"
+   "text": "鐵掌我認得。見他時已是慈恩和尚了。原來從前這般不肯回頭。"
   },
   {
    "id": "B224",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].heroLines.hongQi",
-   "text": "裘千仞！老叫化一生殺過二百三十一人，個個是惡徒，這句話當面同你說過。今日你這雙鐵掌不由自己，老叫化不佔這個便宜，先替你將那念頭打出來。"
+   "text": "老叫化殺過二百三十一個惡徒，當面向你說過。今日卻不佔你受制的便宜。先打掉那個念頭！"
   },
   {
    "id": "B225",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].heroLines.yaoShi",
-   "text": "鐵掌水上飄？在歸雲莊上口吐煙霧、裝神弄鬼的便是閣下罷。……不對。那人的眼神油滑，你的卻是空的。原來世上有兩個。"
+   "text": "歸雲莊吐煙裝神的「鐵掌水上飄」，是你麼？那人眼滑，你卻眼空。原來有兩個。"
   },
   {
    "id": "B226",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].win[0].note",
-   "text": "裘千仞雙掌一垂，立在當地，再不移動半步。他將右掌翻了過來，瞧了半晌。"
+   "text": "裘千仞垂下雙掌，腳下再不挪動。右手翻過來之後，他便一直看著。"
   },
   {
    "id": "B227",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].win[0].text",
-   "text": "散了。適才那幾掌，不是老夫要打的。……這倒奇了。那麼老夫從前要打的那許多掌，又有幾掌是該打的？"
+   "text": "方才的掌，不是老夫想打的。那麼從前想打的那些，又有幾掌該打？"
   },
   {
    "id": "B228",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].win[1].text",
-   "text": "戰意散了。他沒有走，也沒有發怒，只站在那裡瞧自己的手掌。……這一句他問的是自己，旁人答不上。"
+   "text": "他不走，也不罵了。這句是在問自己，我答不了。"
   },
   {
    "id": "B229",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].loss[0].note",
-   "text": "溪水照舊轟轟的流。裘千仞立在溪邊，掌心的勁力一吐一收，停不下來。"
+   "text": "溪聲不歇，裘千仞立在水邊，掌心勁力一吐一收，竟也停不了。"
   },
   {
    "id": "B230",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].loss[0].text",
-   "text": "贏了。老夫贏過的陣仗多了，從沒有一陣贏得這般不由自主。……它還要老夫守著這條溪。"
+   "text": "贏過這許多回，沒一次這般不由自己。它還要老夫守溪！"
   },
   {
    "id": "B231",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].loss[1].text",
-   "text": "他贏了，掌卻收不回去。那道戰意還壓在他眉心。"
+   "text": "贏了還得守，掌也收不回。他眉心那股力仍在。"
   },
   {
    "id": "B232",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[12].guest",
-   "text": "今日沒有人替老夫點名。老夫一雙鐵掌，要打誰便打誰，這一掌是老夫自己要打的。"
+   "text": "今日無人點名。老夫想打誰，便打誰。這一掌，是裘某自己要出的。"
   },
   {
    "id": "B233",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[12][0].bio",
-   "text": "鐵掌幫幫主，人稱鐵掌水上飄，掌力裂石，踏水如履平地。他一生只認強弱二字；給一道戰意按著動手，他心裡不服，每出一掌，心裡又總有個聲音問他：這一掌該不該打。鐵掌專破對手的守勢。"
+   "text": "鐵掌幫主號稱鐵掌水上飄，能裂石破守，也能踏水如平地，平生只認強弱。給戰意逼著出掌，他雖不服，心底卻漸有另一句話：這掌該不該打？"
   },
   {
    "id": "B234",
@@ -1416,91 +1416,91 @@
    "id": "B236",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].before[0].note",
-   "text": "寒玉石室。玉壁之前立著兩個道姑打扮的女子。年長的那個拂塵低垂，三枚銀針卻已扣在指間。"
+   "text": "兩個女子都作道姑打扮，立在結霜的玉壁前。年長的拂塵低垂，指間三枚銀針卻扣得牢牢的。"
   },
   {
    "id": "B237",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].before[0].text",
-   "text": "師父，弟子不想動手。可是心裡有個聲音不住的催，催得弟子連拂塵也放不下。"
+   "text": "師父，弟子不想打。心裡催個不停，這拂塵怎麼也放不下。"
   },
   {
    "id": "B238",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].before[1].text",
-   "text": "凌波，我殺人，向來為的是心裡那個人。今日我心裡沒有想他，針卻自己到了指間。這一回，連恨也不是我自己的。"
+   "text": "我也沒想起那個人，針卻到了手裡。凌波，從前殺人還有自己的恨。今日連恨也借了別人的。"
   },
   {
    "id": "B239",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].before[2].text",
-   "text": "她連恨誰都由不得自己了。一道戰意壓著，只剩下動手這一件事。……銀針有毒，別讓她瞧準了再出手。"
+   "text": "連恨誰都不由自己，手還得打。小心銀針上的毒。別讓她瞄準。"
   },
   {
    "id": "B240",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].before[3].text",
-   "text": "連愛恨都給人拿了去，只剩一雙手在打。早些分出勝負，她也早些醒。"
+   "text": "手不聽使喚，愛恨也由不得自己。早些打醒她罷。"
   },
   {
    "id": "B241",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].heroLines.xiao",
-   "text": "師姐，你恨了這許多年，那至少是你自己的恨。今日這個不是。我替你打散它。"
+   "text": "師姐，恨了這許多年，總還是自己的。今日這個不是。我替你去掉。"
   },
   {
    "id": "B242",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].heroLines.yang",
-   "text": "李莫愁，你我有仇，要算便算你自己欠下的。此刻動手的不是你，這筆帳我不記在今日。"
+   "text": "李莫愁，我只算你自己欠的帳。今日出手由不得你。今日不算。"
   },
   {
    "id": "B243",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].heroLines.huang",
-   "text": "李莫愁，你一世給一個「情」字拿住，今日又多一個拿住你的。前一個我幫不了你，後一個倒可以試試。"
+   "text": "一個情字已困住你，今日又添一重。前一重我沒法子。後一重倒可試試。"
   },
   {
    "id": "B244",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].win[0].note",
-   "text": "洪凌波的拂塵落在地下。她先瞧自己的手，再去瞧師父。"
+   "text": "洪凌波鬆開手，拂塵落地。她看了看掌心，隨即望向師父。"
   },
   {
    "id": "B245",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].win[0].text",
-   "text": "師父，那個聲音停了。……你老人家的針，也放下了。"
+   "text": "師父，不催了。你的針也放下了。"
   },
   {
    "id": "B246",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].win[1].text",
-   "text": "放下了。原來不替旁人恨的時候，手是這般輕的。"
+   "text": "是放下了。不替旁人恨，手竟這麼輕。"
   },
   {
    "id": "B247",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].win[2].text",
-   "text": "戰意散了。她低頭瞧著自己的手，瞧了很久。"
+   "text": "針不在手裡了，她還看著。看了這麼久。"
   },
   {
    "id": "B248",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].loss[0].note",
-   "text": "玉壁上的霜花一朵朵碎開。李莫愁指間的銀針少了三枚，又自己補上了三枚。"
+   "text": "霜花在玉壁上紛紛碎落。李莫愁射去三枚銀針，指間轉眼又自行補上三枚。"
   },
   {
    "id": "B249",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].loss[0].text",
-   "text": "凌波，站到我身後去。它還要我打，我停不了手。"
+   "text": "凌波，到我身後。還得打。我收不住手。"
   },
   {
    "id": "B250",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[7].loss[1].text",
-   "text": "她贏了，針還扣在指間。那道戰意沒有鬆。"
+   "text": "明明已贏了，針還扣著。那股力不肯鬆。"
   },
   {
    "id": "B251",
@@ -1512,13 +1512,13 @@
    "id": "B252",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[7][0].bio",
-   "text": "赤練仙子殺人，向來為的是心裡那個人。這一回連恨都不是她自己的，指間卻仍扣著冰魄銀針。"
+   "text": "赤練仙子每次殺人，心裡總有那個人。今日連恨也非出自本心，冰魄銀針卻照舊扣在指間。"
   },
   {
    "id": "B253",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[7][1].bio",
-   "text": "李莫愁的徒弟，守著寒玉室的出口。她不想動手，心裡的聲音卻催得她放不下拂塵。"
+   "text": "李莫愁的弟子，守住寒玉室出口。心中那聲催促不歇，明明不願打，拂塵卻放不下。"
   },
   {
    "id": "B254",
@@ -1536,253 +1536,253 @@
    "id": "B256",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[13].arrival",
-   "text": "宮燈一盞盞亮著，照得蓮池如鏡。殿階之前立著一個白衫女子，面上垂一幅白綢，池水裡也照不見她的容顏。"
+   "text": "宮燈照著平平的蓮池，殿階前一個白衫女子面垂白綢。連水中倒影，也看不見她的臉。"
   },
   {
    "id": "B257",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[13].victory",
-   "text": "掌風斂了，池水重又平如鏡面。一盞宮燈的燈花爆了一下，再無別的聲息。"
+   "text": "掌風已斂，蓮池又平了。一點燈花忽地爆開，隨即重歸寂靜。"
   },
   {
    "id": "B258",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].before[0].note",
-   "text": "西夏夜苑。宮燈一盞盞亮著，蓮池無波。殿階之前立著一個白衫女子，面上垂一幅白綢，話聲輕柔婉轉。"
+   "text": "白綢遮住女子的面目，話聲卻輕柔地送了過來。身旁宮燈亮著，蓮池尚無一絲波紋。"
   },
   {
    "id": "B259",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].before[0].text",
-   "text": "我同人鬥了一世，為的是誰，自己心裡明白。今夜卻奇了：心裡這一個「戰」字，不是為他，也不是為師姊。是誰這般大膽，敢借我的手來使？"
+   "text": "鬥了一世，原為誰我自明白。今夜卻既非為他，也非為師姊。哪位這樣大膽，借我的手？"
   },
   {
    "id": "B260",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].before[1].text",
-   "text": "她說話好聽，掌力卻會拐彎。一道戰意壓著她。……躲在石欄後面沒有用，她的掌力繞得過來。那些禁衛喜歡兩個夾一個，別教他們圍上。"
+   "text": "她說得輕，手卻給催著出掌；掌力會轉彎，石欄後頭也躲不了。禁衛愛兩個夾一個。別讓他們合圍。"
   },
   {
    "id": "B261",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].before[2].text",
-   "text": "話聲這般柔，出手卻這般狠。她這掌力不走直路，大家不必指望誰替誰擋。"
+   "text": "連擋在前面的人也攔不住這掌。各自留心，替人硬擋不得。"
   },
   {
    "id": "B262",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].heroLines.duan",
-   "text": "這位前輩的身形，在下好生眼熟，倒像無量山石洞之中那一尊玉像。……只是神仙姊姊決不會出手傷人。得罪了。"
+   "text": "前輩這身形，好像無量山洞中的玉像。神仙姊姊卻不會出手傷人。在下得罪了。"
   },
   {
    "id": "B263",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].win[0].note",
-   "text": "掌風一斂，宮燈不再搖晃。李秋水抬起手來，先按了按面上的白綢。"
+   "text": "宮燈不晃了。李秋水抬手按住白綢，先把自己的臉遮妥。"
   },
   {
    "id": "B264",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].win[0].text",
-   "text": "散了。適才那些掌，不是我要打的。……你們當中，可有人瞧見了我的臉？沒有便好。"
+   "text": "剛才那些掌非我本意。你們可曾瞧見我的臉？沒有便好。"
   },
   {
    "id": "B265",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].win[1].text",
-   "text": "戰意散了。她醒過來頭一件事，是按住面上那幅白綢，問有沒有人瞧見。……她怕的原來是這個。"
+   "text": "她先不問輸贏，只問那塊白綢遮住了沒有。原來怕的是這個。"
   },
   {
    "id": "B266",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].loss[0].note",
-   "text": "宮燈一盞一盞，自己又亮了回來。李秋水立在殿階之前，袖中的掌力吞吐不定。"
+   "text": "宮燈逐盞復明，李秋水仍立殿階前。衣袖裡掌力吞吐，未曾稍歇。"
   },
   {
    "id": "B267",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].loss[0].text",
-   "text": "贏了又如何？這一場不是為他打的，贏來作甚。……它還不肯走。"
+   "text": "不是為他打的，贏來何用？……還不肯走麼？"
   },
   {
    "id": "B268",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].loss[1].text",
-   "text": "她贏了，半點也不歡喜。那道戰意還壓著她。"
+   "text": "她連贏也不想要了。偏那股力還壓著。"
   },
   {
    "id": "B269",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[13].guest",
-   "text": "沒有誰借我的手。我同人鬥了一世，再多鬥這一場，是我自己歡喜。"
+   "text": "鬥了一世，再鬥一場也好。這回是我歡喜，沒誰借手。"
   },
   {
    "id": "B270",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[13][0].bio",
-   "text": "逍遙派高手，西夏皇太妃，面上常垂一幅白綢。她同師姊鬥了一世，為的是一個心裡另有旁人的人；今夜心裡這一個「戰」字，竟不是為他。白虹掌力曲直如意，繞過石欄花樹與擋在前面的人，打到料想不到之處。"
+   "text": "逍遙派高手、西夏皇太妃，常以白綢遮面；同師姊鬥了一世，為的卻是心裡另有旁人的人。今夜逼她出手的念頭與他無關，白虹掌力仍能轉折，繞過欄杆花樹，連旁人也擋不住。"
   },
   {
    "id": "B271",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[8].arrival",
-   "text": "長街上店門都閂著。街心一人青衫佩劍，街尾一人輕搖摺扇，水中倒影，一般的儒雅。"
+   "text": "街上店門盡閉，一人青衫佩劍立在街心，一人在街尾搖扇。水中映出兩張一般儒雅的面孔。"
   },
   {
    "id": "B272",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[8].victory",
-   "text": "長劍歸鞘，摺扇合攏，這一回都沒有再動。街邊有一扇窗，悄悄推開了一道縫。"
+   "text": "劍已入鞘，扇也合起，這回都未再動。街旁一扇窗悄悄開了條縫。"
   },
   {
    "id": "B273",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].before[0].note",
-   "text": "倒影天街。長街上店門都閂著。街心一人青衫佩劍，街尾一人輕搖摺扇，水中倒影，竟是一般的儒雅。"
+   "text": "兩道倒影在水面相望，劍光與扇影卻各自逼向前。佩劍人的弟子望望這頭，又望望那頭。"
   },
   {
    "id": "B274",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].before[0].text",
-   "text": "師父，弟子這些年聽過兩頭的號令，一頭明，一頭暗。眼下心裡這一個，兩頭都不是。"
+   "text": "師父，弟子向來聽兩頭的令，一明一暗。心裡這一道，卻兩頭都不是。"
   },
   {
    "id": "B275",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].before[1].text",
-   "text": "德諾，岳某與人動手，向來先佔住一個「理」字。今日無理可佔，劍卻已經出鞘。這不是君子所為，也不是岳某的本意。"
+   "text": "動手須先占理，這規矩你忘了？……岳某尚未占理，劍已出鞘。豈是君子本意。"
   },
   {
    "id": "B276",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].before[2].text",
-   "text": "鮮于某向來動口不動手，動手必先留下後著。今日連後著也來不及佈。……那位青衫的朋友，你腰間所佩，怎地也是我華山掌門的劍？"
+   "text": "在下鮮于通，動口為上，動手必留後著。今日竟來不及……青衫朋友，你怎也佩華山掌門的劍？"
   },
   {
    "id": "B277",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].before[3].text",
-   "text": "鮮于……華山歷代掌門的名錄之上，有這兩個字。閣下是前代的人物。"
+   "text": "鮮于……歷代掌門名錄，有此二字。原是前代人物。"
   },
   {
    "id": "B278",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].before[4].text",
-   "text": "兩位都是掌門，隔了不知多少年，一個便像另一個的倒影。這一局的戰意壓著兩個人，醒了一個不算。……一個劍快，一個扇毒，別讓他們近身。"
+   "text": "隔了這麼多年，兩位掌門倒像一對倒影；兩個都得打醒才行。一個劍快，一個扇裡有毒。別讓近身。"
   },
   {
    "id": "B279",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].before[5].text",
-   "text": "平日最講名正言順的人，今日師出無名。可見不是他們自己要打。那就不必客氣。"
+   "text": "連動手的名目也找不出。這回不是他們作主，便不必客氣了。"
   },
   {
    "id": "B280",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].heroLines.hero",
-   "text": "師父。……弟子還是這般叫你。你教我出劍須有個道理，今日你劍上卻沒有道理。弟子斗膽，替師父將這個道理找回來。"
+   "text": "師父教我出劍要有道理，今日卻沒了。弟子仍叫你師父。這道理，斗膽替你尋回來。"
   },
   {
    "id": "B281",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].heroLines.medic",
-   "text": "岳先生連一句場面話也沒說便拔劍，這可是頭一遭。壓著他的那人，比他更不講客套。"
+   "text": "岳先生這回拔劍，連客套也來不及。使喚他的人，比他還不講客氣。"
   },
   {
    "id": "B282",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].heroLines.guard",
-   "text": "岳先生今日不講仁義道德了？老子愛聽的便是這個。可惜是給人捂了嘴，不算你的長進。"
+   "text": "岳先生不講仁義道德，老子原該愛聽。偏是給捂了嘴。這可不算長進。"
   },
   {
    "id": "B283",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].extras.xianYu.heroes.zhang",
-   "text": "鮮于掌門，適才在光明頂上，你扇中的物事已露過一回了。這一次，可別再誤傷了自己。"
+   "text": "鮮于掌門，光明頂上才露過扇中機關。這回當心些。別又傷了自己。"
   },
   {
    "id": "B284",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].extras.xianYu.heroes.sanFeng",
-   "text": "鮮于掌門也在此處？六派上光明頂去，至今沒有音信，老道正自掛心。……閣下眼中無神，只怕不是自己走來的。"
+   "text": "六派上光明頂，至今無信，老道正掛心。鮮于掌門卻在此處？眼神這般，怕非自己來的。"
   },
   {
    "id": "B285",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].extras.xianYu.heroes.zhaoMin",
-   "text": "華山派的鮮于掌門？我請六大派的高手到萬安寺作客，點名之時獨獨少了閣下，原來是到這裡來了。"
+   "text": "鮮于掌門，萬安寺請六派作客，點名獨少了你。原來在這裡。"
   },
   {
    "id": "B286",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].win[0].note",
-   "text": "勞德諾退了半步，手從劍柄上鬆開。"
+   "text": "勞德諾先鬆開劍柄，隨即退了半步。"
   },
   {
    "id": "B287",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].win[0].text",
-   "text": "師父，那個號令沒了。……適才那一陣，弟子頭一回不曉得自己是替誰辦事。"
+   "text": "師父，那道令沒了。弟子頭一回打完一仗，還不知替誰辦事。"
   },
   {
    "id": "B288",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].win[1].text",
-   "text": "岳某失態了。適才之事並非出於本心，還望各位明鑒。"
+   "text": "方才失態，岳某愧甚。實非本心，諸位明鑒。"
   },
   {
    "id": "B289",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].win[2].text",
-   "text": "好險，好險。鮮于某竟給人當了一回槍使，傳將出去，「神機子」三字還要不要了？各位，今日之事，就此揭過如何？"
+   "text": "連「神機子」也給當槍使，好險！這事傳出去，還有甚麼臉面？諸位便揭過這頁罷。"
   },
   {
    "id": "B290",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].win[3].text",
-   "text": "戰意散了。一個先理衣襟，一個先顧名聲，再說場面話。都是他們自己了。"
+   "text": "一個醒了先整衣襟，一個先怕丟名聲。客氣話又來了，倒聽得出是他們自己。"
   },
   {
    "id": "B291",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].loss[0].note",
-   "text": "長街的窗戶一扇也沒有開。岳不群還劍入鞘，劍又自己滑出了三寸。"
+   "text": "街上窗戶仍無一扇打開。岳不群把劍推回鞘裡，劍鋒卻又滑出三寸。"
   },
   {
    "id": "B292",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].loss[0].text",
-   "text": "德諾，今日之事不可外傳。……為師收不住這口劍。"
+   "text": "德諾，不可外傳。……為師這劍，竟收不住。"
   },
   {
    "id": "B293",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].loss[1].text",
-   "text": "他們贏了，劍卻收不回鞘。那道戰意還在街上。"
+   "text": "說不外傳，也藏不住那口劍。逼他們的還在街上。"
   },
   {
    "id": "B294",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[8].guest",
-   "text": "岳某向來以和為貴。只是老前輩有命，晚輩不敢不從，各位包涵。"
+   "text": "岳某本願以和為貴。奈何前輩有命，不敢不從。諸位包涵。"
   },
   {
    "id": "B295",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[8][0].bio",
-   "text": "華山掌門，人稱君子劍，與人動手向來先佔一個「理」字。今日無理可佔，劍已出鞘，專破對手的守勢。"
+   "text": "華山掌門號君子劍，每次出手必先占理。今日名目未立，劍已出鞘，仍專破對手守勢。"
   },
   {
    "id": "B296",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[8][0].traits.phase.log",
-   "text": "岳不群撕下君子面目，身形快得看不清。打到半醒，君子劍底下的那個人先露了出來。"
+   "text": "岳不群身形陡快，臉上的君子神氣再也遮不住了。半醒之間，先露出本來面目。"
   },
   {
    "id": "B297",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[8][1].bio",
-   "text": "埋在華山多年的嵩山耳目，聽慣了兩頭的號令。心裡這一個，兩頭都不是。"
+   "text": "嵩山埋在華山的耳目，慣於聽兩頭號令。今日心中那聲催促，竟不出於任何一頭。"
   },
   {
    "id": "B298",
@@ -1800,115 +1800,115 @@
    "id": "B300",
    "file": "game/src/data/encounters.js",
    "path": "VILLAINS.xianYu.bio",
-   "text": "華山派掌門，人稱神機子，動手之前必先留下後著。今日連後著也來不及佈，只剩摺扇中的蠱毒，專尋已受傷的人下手。"
+   "text": "華山掌門號神機子，出手前總留退路。如今未及佈後著，摺扇便已揚起，扇中蠱毒照舊專取傷重之人。"
   },
   {
    "id": "B301",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[14].arrival",
-   "text": "花香濃得化不開。梅樹下一間小舍，門前坐著一人，手持繃架，那枚繡花針卻懸在半空，不肯落下。"
+   "text": "梅樹下有間小舍，花香濃得不散。門前那人持著繃架，一枚繡花針懸在手中，遲遲不往繃子上落。"
   },
   {
    "id": "B302",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[14].victory",
-   "text": "繡花針落回了繃架。園中的梅瓣這才紛紛落地，池裡一對鴛鴦游了開去。"
+   "text": "園中梅瓣紛紛落定，池裡那對鴛鴦也游開了。"
   },
   {
    "id": "B303",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].before[0].note",
-   "text": "黑木繡閣。崖頂一座花園，紅梅翠竹，佈置得極是精雅。小舍門前坐著一人，一身粉紅衣衫，膝上擱著繃架，指間拈一枚繡花針。"
+   "text": "崖頂紅梅翠竹，處處佈置精雅。門前那身粉紅衣衫映著膝上繃架，唯獨指間的針，偏指向了人。"
   },
   {
    "id": "B304",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].before[0].text",
-   "text": "我早已不同人動手了。天下英雄，在我眼裡不及繃架上這一朵花。偏偏今日這枚針不肯繡花，自己離了繃子，要去刺人。……是誰擾我？"
+   "text": "我早不動手了，天下英雄哪及這朵花。針卻自己離了繃子。誰來擾我？"
   },
   {
    "id": "B305",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].before[1].note",
-   "text": "少年說到這裡，棋臺對面的求敗抬了抬眼。"
+   "text": "少年低聲念了念「不敗」二字，棋臺對面，求敗抬起眼來。"
   },
   {
    "id": "B306",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].before[1].text",
-   "text": "他叫不敗。旁人求了一世的東西，他拿來作了名字，轉頭便去繡花。……一道戰意壓著他，針才離了繃子。他快得瞧不清，一出手便是兩個人，別一齊擠到他身前。"
+   "text": "他把人家求的「不敗」當名字，只管繡花，偏給逼著出針。快得看不清，一出手便刺兩人。別擠在他身前。"
   },
   {
    "id": "B307",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].before[2].text",
-   "text": "一枚繡花針，也是給人按著手刺出來的。他身法再快，總有落腳之處。各位散開些，別擠作一堆。"
+   "text": "再快也須落腳。分開站，別讓他接連刺中。"
   },
   {
    "id": "B308",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].heroLines.hero",
-   "text": "東方教主！在下久聞大名，只道是個三頭六臂的人物，原來教主愛的是繡花。給人逼著放下針線來廝殺，這滋味想來比給人逼著戒酒還要難受。"
+   "text": "久聞教主大名，只道三頭六臂，原來愛繡花。逼你扔下針線動手，怕比逼在下戒酒還難受。"
   },
   {
    "id": "B309",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].heroLines.medic",
-   "text": "東方叔叔。……小時候你常抱我去山上採果子，我至今記得。今日教你我動手的，不是我爹爹的舊帳，是壓在你針上的那東西。"
+   "text": "東方叔叔，小時候你抱我上山採果子，我還記得。今日先不算爹爹的舊帳。是那股力逼你出針。"
   },
   {
    "id": "B310",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].heroLines.guard",
-   "text": "東方不敗，你奪了任教主的位子，老子同你有的是帳算。可你今日連教主也不想當，只想繡花，偏有人不許。嘿，這人比老子還不講理。"
+   "text": "奪任教主位子的帳，老子記著。如今你連教主也不想當，只想繡花，他卻不許。比老子還不講理！"
   },
   {
    "id": "B311",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].win[0].note",
-   "text": "繡花針叮的一聲，落在石徑之上。東方不敗俯身拾起，先去瞧那繃架。"
+   "text": "針落石徑，輕輕一聲。東方不敗俯身拾起，將針放回繃架，先去細看上頭的花樣。"
   },
   {
    "id": "B312",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].win[0].text",
-   "text": "繡壞了三針。……你們幾個，擾了我半日清靜。去罷，我不殺你們。適才那些針，原也不是我要刺的。"
+   "text": "半日清靜，倒繡壞了三針。那些殺人的針非我本意。去罷，今日不殺你們。"
   },
   {
    "id": "B313",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].win[1].text",
-   "text": "戰意散了。他醒過來頭一件事，是數繃架上繡壞了幾針。……勝敗二字，他是真的不放在心上。"
+   "text": "醒來先數繡壞幾針，輸贏倒不提。他是真沒把勝敗放在心上。"
   },
   {
    "id": "B314",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].loss[0].note",
-   "text": "園中落了一地梅瓣，瓣上各有一個針孔。東方不敗坐回門前，針卻不肯往繃架上落。"
+   "text": "梅瓣落了一地，每瓣都有針孔。東方不敗坐回門前，指間的針仍不肯落到繃架上。"
   },
   {
    "id": "B315",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].loss[0].text",
-   "text": "都倒下了。……我要繡花，它偏要我等人。蓮弟若是問起，教我怎生對答？"
+   "text": "人都倒了，還不許我繡花，只叫等人。蓮弟問起來，教我怎樣說？"
   },
   {
    "id": "B316",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].loss[1].text",
-   "text": "他贏了，卻連一朵花也繡不成。那道戰意還壓著他的針。"
+   "text": "贏到連花也繡不成。針上那股力，還沒肯鬆。"
   },
   {
    "id": "B317",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[14].guest",
-   "text": "這一回，針是我自己拈起來的。繡花繡得倦了，瞧瞧天下英雄，也是好的。"
+   "text": "花繡倦了，來看天下英雄。這針是我自己拿的。"
   },
   {
    "id": "B318",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[14][0].bio",
-   "text": "日月神教教主，練成《葵花寶典》，天下再無抗手，自此只在花園小舍之中繡花。旁人求了一世的「不敗」二字，於他不過是個名字。一枚繡花針，身形如鬼如魅，一出手便是兩人。"
+   "text": "日月神教主練成《葵花寶典》，再無抗手，便只在花園小舍繡花；旁人求的不敗，於他不過名字。人影鬼魅般一閃，一枚繡花針已分刺兩人。"
   },
   {
    "id": "B319",
@@ -1926,151 +1926,151 @@
    "id": "B321",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].before[0].note",
-   "text": "無刻漏臺。兩股星索從盤外垂將下來，繫在臺心一位老者身上。到了這裡，那道戰意連藏也不藏了。"
+   "text": "臺心老者身上的星索直通盤外，繃得筆直。那股催人交手的戰意，此地竟連形跡也不藏。"
   },
   {
    "id": "B322",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].before[0].text",
-   "text": "最後一局。壓在局主心頭的東西，在這裡瞧得見：便是那兩條索。索各繫在一根銅樁上，樁旁各有人守。樁倒了，索便斷。"
+   "text": "到末局了，那兩條索就是壓著他的東西。各有銅樁繫著、有人守著。樁一倒，索便斷。"
   },
   {
    "id": "B323",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].before[1].text",
-   "text": "慕容先生，小僧遍覽天下武學，自問沒有不識得的路數。壓在你我心頭的這一道戰意，卻不在任何一部經上。"
+   "text": "慕容先生，天下路數小僧自問皆識。你我心中這道戰意，卻無經可考。怪哉。"
   },
   {
    "id": "B324",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].before[2].text",
-   "text": "明王，老夫半生躲在暗處，撥弄旁人相鬥，自以為得計。今日方知給人撥弄是甚麼滋味。它要老夫打，老夫便不能不打。"
+   "text": "明王只問路數？老夫半生暗中撥人相鬥，今日也嚐到了。它說打，便得打。"
   },
   {
    "id": "B325",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].before[3].text",
-   "text": "這也不希奇。老夫夜夜如此：人睡著了，手自己起來砌牆，醒來一身的灰。今日不過換了一堵牆。"
+   "text": "老夫夜夜如此，睡著還得砌牆，醒來一身灰。今日不過換堵牆。"
   },
   {
    "id": "B326",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].before[4].text",
-   "text": "旁人要兩條索才牽得動，他不用。……人睡著了，原來也能動手。"
+   "text": "別人還得用索牽，他卻不必。原來睡著，也能動手。"
   },
   {
    "id": "B327",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].before[5].text",
-   "text": "前輩既然明白，那便好辦。我們斷了這兩條索，你也好做回自己的主。"
+   "text": "那就先斷這兩條索。索斷了，便能自己作主。"
   },
   {
    "id": "B328",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].heroLines.duan",
-   "text": "慕容老先生，令郎與在下很有些過節。可今日同在下為難的不是慕容家，是繫在你身上的那兩根索。在下的六脈神劍時靈時不靈，但願此刻肯靈。"
+   "text": "在下同令郎雖有過節，今日先對付這兩條索。六脈神劍偏又時靈時不靈。這回可得靈些。"
   },
   {
    "id": "B329",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].heroLines.qiaoFeng",
-   "text": "姑蘇慕容？「以彼之道，還施彼身」，喬某久仰了，正有幾樁命案要向慕容家問個明白。……老先生這般年紀，卻不是慕容公子。尊駕是誰？"
+   "text": "姑蘇慕容還施彼身，喬某久仰，正有命案待問。尊駕這年紀，自非慕容公子。是慕容家哪位？"
   },
   {
    "id": "B330",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].heroLines.xuZhu",
-   "text": "這位大師適才也在棋局旁邊，同慕容公子說了好些話。大師，你眼中怎地沒有神光？阿彌陀佛，小僧得罪了。"
+   "text": "大師在棋局邊同慕容公子談得好好的，怎地眼裡沒了神？阿彌陀佛。小僧得罪了。"
   },
   {
    "id": "B331",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].extras.wanZhen.heroes.diYun",
-   "text": "萬……萬師伯。我在你家給人冤作了賊，坐了這許多年的牢。……你這雙眼睛是空的。先打醒了你，我再問你一句：為甚麼？"
+   "text": "萬師伯，在你家冤作賊，害我坐了這許多年的牢。如今你眼神卻空了。先醒醒，我還要問為甚麼。"
   },
   {
    "id": "B332",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].objects.starPost.hit.text",
-   "text": "銅樁一震，繫在老夫身上的那股索跟著一緊。……打得好。"
+   "text": "樁震了，索也一緊。……打得好。"
   },
   {
    "id": "B333",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].objects.starPost.half.text",
-   "text": "樁身裂了，索上的光暗了一層。"
+   "text": "樁裂了，索上的光也暗了。再加把勁。"
   },
   {
    "id": "B334",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].objects.starPost.broken.text",
-   "text": "索鬆了一股。……老夫這身子，又有一分是自己的了。"
+   "text": "鬆了一股。這身子又多一分聽老夫的了。"
   },
   {
    "id": "B335",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].win[0].note",
-   "text": "兩股星索先後斷了，縮回盤外。慕容博身子一晃，自己站穩了。"
+   "text": "兩股星索斷後縮回盤外，慕容博身子跟著一晃。這次卻是自己站穩的。"
   },
   {
    "id": "B336",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].win[0].text",
-   "text": "斷了。……老夫算計了一世，到頭來是旁人盤上的一枚子。明王，這滋味你我都該記著。"
+   "text": "算了一世，原來也是人家盤上的子。明王，這滋味莫忘。"
   },
   {
    "id": "B337",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].win[1].text",
-   "text": "小僧記著。只是那一道戰意究竟是何人所創？它走了，小僧竟有些捨不得。"
+   "text": "記下了。只是那戰意何人所創？才散，小僧倒有些不捨。"
   },
   {
    "id": "B338",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].win[2].text",
-   "text": "牆……牆砌到哪裡了？咦，這不是我家。老夫怎地站在這裡？"
+   "text": "牆砌到哪裡了？……不是我家？老夫怎在這裡？"
   },
   {
    "id": "B339",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].win[3].note",
-   "text": "銅漏響了一聲。"
+   "text": "銅漏那一聲響，在臺上迴盪。"
   },
   {
    "id": "B340",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].win[3].text",
-   "text": "十局下完了。……各位，可以回去了。"
+   "text": "十局都贏了。各位，能回去了。"
   },
   {
    "id": "B341",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].loss[0].note",
-   "text": "星索又緊了一圈。慕容博立在臺心，便如一枚落定了的子。"
+   "text": "星索又勒緊一圈，慕容博站在臺心，一動也動不得。"
   },
   {
    "id": "B342",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].loss[0].text",
-   "text": "明王，它不肯放。老夫只好一直守在這裡，等下一撥人來。"
+   "text": "明王，還不肯放。老夫只得守著，等下一撥。"
   },
   {
    "id": "B343",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].loss[1].text",
-   "text": "索還繫著。我們只差這一局。"
+   "text": "索還沒斷。就差這一局……"
   },
   {
    "id": "B344",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[9].guest",
-   "text": "老夫一生只為大燕，沒有一日是為自己打的。今日這一局，算是老夫自己的。"
+   "text": "一生替大燕出力，未替自己打過一日。今日便算老夫自己的。"
   },
   {
    "id": "B345",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[9][0].bio",
-   "text": "姑蘇慕容氏，半生躲在暗處撥弄旁人相鬥，如今自己成了旁人盤上的一枚子。兩股星索從盤外垂下，各繫在一根銅樁上，再牽到他身上；樁旁各有一名守索人。倒一根樁，便卸他三成半護勁。"
+   "text": "姑蘇慕容氏半生暗中撥弄旁人相鬥，今日也成了盤上之子。兩股星索從盤外垂下，各繫銅樁再牽到他身上，每樁旁有一名守索人。毀一樁，便卸去三成半護勁。"
   },
   {
    "id": "B346",
@@ -2082,7 +2082,7 @@
    "id": "B347",
    "file": "game/src/data/encounters.js",
    "path": "ENCOUNTERS[9][1].bio",
-   "text": "吐蕃國師，大輪明王，遍覽天下武學。壓在心頭的那道戰意不在任何一部經上，他身不由己，卻又捨不得它走。一雙手既能翻書，也能催出火焰刀。"
+   "text": "吐蕃國師大輪明王，讀遍武學經卷，也不識壓住自己心神的那道戰意。身雖受制，心卻貪戀，一雙翻經的手仍能催出火焰刀。"
   },
   {
    "id": "B348",
@@ -2100,61 +2100,61 @@
    "id": "B350",
    "file": "game/src/data/encounters.js",
    "path": "VILLAINS.wanZhen.bio",
-   "text": "荊州萬門的師父。他夜夜夢遊，人睡著了，手自己起來砌牆；給戰意按著動手，於他並不希奇。劍招專向傷重之人招呼。"
+   "text": "荊州萬門之師夜夜夢遊，身睡而手不睡，總在砌牆。受戰意驅使，於他並不稀奇，出劍仍專取傷重之人。"
   },
   {
    "id": "B351",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[15].arrival",
-   "text": "青石棋枰縱橫十三路，四角星位各插一劍。枰上沒有一道戰意，天元空著。"
+   "text": "青石棋枰縱橫十三路，四角星位各插一劍。此刻天元尚空，盤上也沒有半點戰意。"
   },
   {
    "id": "B352",
    "file": "game/src/data/maze-tale.js",
    "path": "CHAMBER_TALES[15].victory",
-   "text": "求敗手中的枯枝垂了下來。他沒有倒下，也沒有再舉起那根枯枝。"
+   "text": "求敗仍立著，手中枯枝卻垂下了。那根枯枝，再未抬起。"
   },
   {
    "id": "B353",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[15].before[0].note",
-   "text": "谷底棋臺。那方青石棋枰到了腳下，竟有一座校場大小，縱橫十三路，一路便是一步；東邊一道瀑布，落作淺潭。"
+   "text": "那方青石棋枰到了腳下，竟大如校場，十三路縱橫伸開，一路便是一步。東邊瀑布落入淺潭，水聲從枰外傳來。"
   },
   {
    "id": "B354",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[15].before[0].text",
-   "text": "原來盤上是這般光景。站在這裡，果然只瞧得見身邊幾步。"
+   "text": "上了盤才知道，眼前真的只剩幾步。原來各位一直是這麼走的。"
   },
   {
    "id": "B355",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[15].win[0].note",
-   "text": "瀑布之聲忽然清楚起來。盤上再沒有人動手。"
+   "text": "四下無人再出手，枰外的瀑聲忽然聽得清清楚楚。"
   },
   {
    "id": "B356",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[15].win[0].text",
-   "text": "……停了。大家都停了。"
+   "text": "停手了……大家都停了。"
   },
   {
    "id": "B357",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[15].loss[0].note",
-   "text": "瀑布聲中，盤上的人影一齊停了手。"
+   "text": "瀑聲未歇，盤上眾人卻一齊住了手。"
   },
   {
    "id": "B358",
    "file": "game/src/data/encounter-script.js",
    "path": "ENCOUNTER_SCRIPT[15].loss[0].text",
-   "text": "……我沒有撐住。"
+   "text": "我……沒能撐住。"
   },
   {
    "id": "B359",
    "file": "game/src/data/encounters.js",
    "path": "VILLAINS.qiubai.bio",
-   "text": "世人叫他求敗，本名早已忘了。利劍、軟劍、重劍、木劍，一柄一柄放下；四十歲後不滯於物，草木竹石均可為劍。幾百年來他只在盤外瞧，這一局放下了棋子，手持一根枯枝，親自立在天元。"
+   "text": "世人稱他求敗，本名早忘；利劍、軟劍、重劍、木劍逐一放下，四十歲後已不擇草木竹石。幾百年來只肯坐在盤外看，此刻放下棋子，手持枯枝，自己站到了天元。"
   },
   {
    "id": "B360",
@@ -2166,25 +2166,25 @@
    "id": "B361",
    "file": "game/src/data/encounters.js",
    "path": "TROOPS.fiveTiger.bio",
-   "text": "鳳天南念中的門徒。仗著人多棍長，隔一步出手最準，給人貼身便施展不開。"
+   "text": "鳳天南念中的門徒，仗著人多棍長，隔一步打得最準。一給貼身，長棍便施展不開。"
   },
   {
    "id": "B362",
    "file": "game/src/data/encounters.js",
    "path": "TROOPS.qingShield.bio",
-   "text": "張召重念中的營兵。持盾執刀守住門口，站在原位方成一堵牆，離了位便護不住自己。"
+   "text": "張召重念中的營兵，刀盾並持，堵住門口。站定便像一堵牆，離位反而護不住自身。"
   },
   {
    "id": "B363",
    "file": "game/src/data/encounters.js",
    "path": "TROOPS.jinBow.bio",
-   "text": "完顏洪烈念中的王府弓手。瞧著令旗放箭，隔得遠方才射得準，給人逼近便失了準頭。"
+   "text": "完顏洪烈念中的府兵，見旗便放箭。隔得遠準頭足，給逼近便亂了。"
   },
   {
    "id": "B364",
    "file": "game/src/data/encounters.js",
    "path": "TROOPS.huaBlade.bio",
-   "text": "鮮于通念中的華山弟子。兩人一組，合使刀法，並肩之時互相補位。"
+   "text": "鮮于通念中的弟子，兩人一組合使刀法。並肩時彼此補位，刀陣方全。"
   },
   {
    "id": "B365",
@@ -2196,349 +2196,349 @@
    "id": "B366",
    "file": "game/src/data/encounters.js",
    "path": "TROOPS.shenLong.bio",
-   "text": "洪安通念中的教眾，口裡念著「教主仙福永享」，搶步上前。藥藏在袖底，移步之時方才抹上刀口；站定了接戰，反而用它不上。"
+   "text": "洪安通念中的教眾，口祝仙福，腳下已搶步向前。袖底毒藥須趁移步抹上刀口，站定接戰時反而用不上。"
   },
   {
    "id": "B367",
    "file": "game/src/data/encounters.js",
    "path": "TROOPS.netHand.bio",
-   "text": "公孫止念中的綠衣弟子。漁網四角拴著鉛墜，一撒開便貼地罩人；網手走不快，網卻罩得到兩步之外。"
+   "text": "公孫止念中的綠衣網手，腳步雖慢，網卻能撒出兩步遠。網角各繫鉛墜，一落便貼地罩住人。"
   },
   {
    "id": "B368",
    "file": "game/src/data/encounters.js",
    "path": "TROOPS.ironPalm.bio",
-   "text": "裘千仞念中的幫眾，在溪石上練出一身沉樁功夫。氣血折了一半之後，他將最後一口勁沉在胸前，硬挺對手的招數。"
+   "text": "裘千仞念中的幫眾，沉樁功夫練在溪石上。氣血一折半，便將餘勁沉住胸前，硬接來招。"
   },
   {
    "id": "B369",
    "file": "game/src/data/encounters.js",
    "path": "TROOPS.xiaGuard.bio",
-   "text": "李秋水念中的宮廷禁衛。兩人一前一後出刺，一個撥開護身的兵刃，一個便遞進去；落了單，便尋不著下手的角度。"
+   "text": "李秋水念中的禁衛，一個撥兵刃，一個趁隙進刺。兩人前後相應，落單便難尋角度。"
   },
   {
    "id": "B370",
    "file": "game/src/data/encounters.js",
    "path": "TROOPS.heiMuGuard.bio",
-   "text": "東方不敗念中的黑木崖侍衛。獨自繞行園中，專切對手持兵刃的手腕；有同夥擠到身旁，刀路便得收窄。"
+   "text": "東方不敗念中的侍衛，慣獨繞花園，專切人持械的手腕。同伴一擠到身旁，刀路反而窄了。"
   },
   {
    "id": "H001",
    "file": "game/src/data/mastery-catalog.js",
    "path": "RECALL_NOTE",
-   "text": "入局的只是拓來的一念，每一盤都從根長起。手上最熟的功夫還在；後來所學，要在局中一招一招想起來。成名的那一招排在最後：要連換來它的那段日子，一併想起。"
+   "text": "拓來的一念，入盤便從根長起，只留手上最熟的功夫。往後的招式須逐一想回，成名絕學留到最後，連換來它的那段日子也得重過一遍。"
   },
   {
    "id": "H002",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.hero.origin",
-   "text": "入境之時，令狐冲手上只剩華山劍法，與思過崖石壁上瞧來的幾招。風清揚所授的九劍，要在局中一式一式想起；想到最後，才是那有進無退的一路。"
+   "text": "令狐冲初入境，只記得華山劍法與思過崖石壁上的幾招。風清揚所授九劍須逐式想回，直到最後，才連成那一路有進無退的劍。"
   },
   {
    "id": "H003",
    "file": "game/src/rules/game.js",
    "path": "DETAILS.hero.bio",
-   "text": "華山派大弟子，生性灑脫而重情義，思過崖上曾得風清揚指點劍法。入局之時他一身濕氣，手上只剩華山劍法與石壁上瞧來的幾招；那一路有進無退的劍法，要在局中一式一式想起。"
+   "text": "華山大弟子灑脫重義，曾在思過崖得風清揚授劍。如今帶著一身濕氣入局，手裡只餘華山與石壁劍招；有進無退的九劍，須在局中逐式想回。"
   },
   {
    "id": "H004",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hero.arrival.note",
-   "text": "他一身濕氣，一隻手猶自虛按著一塊並不存在的鐵板。"
+   "text": "他衣上濕氣未散，一掌虛按在前，掌下卻沒有那塊鐵板。"
   },
   {
    "id": "H005",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hero.arrival.text",
-   "text": "奇哉。適才還在黑牢之中摸那鐵板上的字，怎地一抬頭便見了天日？莫非我終於死了。死後倒有風吹，那也不壞。"
+   "text": "黑牢裡那幾個字還沒摸清，天倒亮了。莫非真死了？死後有風，倒比牢裡強。"
   },
   {
    "id": "H006",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hero.obey",
-   "text": "小兄弟看得見，我看不見，那便聽你的。有酒沒有？有酒更好說話。"
+   "text": "我看不見，便勞小兄弟指路。有酒麼？有酒更好說話。"
   },
   {
    "id": "H007",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hero.echoes[0]",
-   "text": "奇哉。這酒我分明不曾喝過，怎地知道它上頭得慢？"
+   "text": "這一步像喝過的酒，未入口便知後勁。可我明明頭一回走。奇哉。"
   },
   {
    "id": "H008",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hero.echoes[1]",
-   "text": "小兄弟，你下一句是不是要叫我往左？……我也不曉得自己怎生知道。"
+   "text": "往左，是不是？你還沒說，我倒先想到了。怪事。"
   },
   {
    "id": "H009",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hero.night[0]",
-   "text": "回去？牢門還鎖著呢。鐵板上那些字我才摸了一半，總得回去將它摸完。"
+   "text": "牢門還鎖著，回去也出不來。不過鐵板的字才摸一半，總得摸完。"
   },
   {
    "id": "H010",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hero.night[1]",
-   "text": "原來我是一張拓片！哈哈，拓片也會口渴，可見這酒非喝不可。"
+   "text": "好一張會渴的拓片！那便更該喝酒了。哈哈。"
   },
   {
    "id": "H011",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hero.summit",
-   "text": "風太師叔說，這路劍法有進無退，招招都是進攻。當時我只道痛快。如今想得全了方才明白：不守，是當真沒有東西可守了。"
+   "text": "風太師叔那句有進無退，全想起了。當年只覺痛快。原來招招向前，是已無可守。"
   },
   {
    "id": "H012",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hero.farewell",
-   "text": "這一路好生痛快。小兄弟，後會有期，下回我請你喝酒。"
+   "text": "痛快，小兄弟，這一路沒白走。後會有期。下回酒算我的。"
   },
   {
    "id": "H013",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.medic.origin",
-   "text": "入境之時，任盈盈手上只剩一柄短劍，與綠竹巷中彈熟了的清心普善咒。號令群豪的威儀、琴簫合奏的那一曲，都要在局中慢慢想起。"
+   "text": "任盈盈入境只剩短劍與綠竹巷彈熟的清心普善咒。號令群豪的威儀，直到琴簫合奏的那一曲，都須在局中慢慢想回。"
   },
   {
    "id": "H014",
    "file": "game/src/rules/game.js",
    "path": "DETAILS.medic.bio",
-   "text": "日月神教聖姑，精於琴簫，在洛陽綠竹巷以琴音為令狐冲療傷，兩人由一卷曲譜結緣。入局之時她手上只剩一柄短劍與清心普善咒；琴簫合奏的那一曲，要到最後方才想起。"
+   "text": "日月神教聖姑精通琴簫，曾在洛陽綠竹巷替令狐冲奏琴療傷，以一卷曲譜結緣。如今手裡只留短劍與清心普善咒，合奏的那一曲須待最後才想得全。"
   },
   {
    "id": "H015",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.medic.arrival.note",
-   "text": "她半蹲著身子，雙手還反扣在肩後，便如背著一個人。背上卻是空的。"
+   "text": "她半蹲著，兩手反扣肩後，仍作背人的姿勢。背上卻已空了。"
   },
   {
    "id": "H016",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.medic.arrival.text",
-   "text": "……冲哥？人呢？我明明背著他，山門便在前面。"
+   "text": "背上怎麼輕了……冲哥？山門就在前面，我還背著你呢。"
   },
   {
    "id": "H017",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.medic.obey",
-   "text": "我向來只發號令，不聽號令。今日破一次例。你若走錯一步，我便自己走。"
+   "text": "我慣發令，不慣聽令。今日聽你。走錯了，我自會換路。"
   },
   {
    "id": "H018",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.medic.echoes[0]",
-   "text": "這一段我彈過。指頭認得，心裡卻沒有譜。"
+   "text": "指頭像認得這一局的節拍。心裡卻沒有譜，像是彈過。"
   },
   {
    "id": "H019",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.medic.echoes[1]",
-   "text": "你適才一抬手，我已知道你要我護著誰。這可奇了。"
+   "text": "你手才抬，我便想去護那個人。怎會先知道呢？"
   },
   {
    "id": "H020",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.medic.night[0]",
-   "text": "回去將他背上山。方丈肯救，我這條命給他；不肯，我另想法子。"
+   "text": "把他背上山。方丈肯救，我的命給他；不肯，便再找法子。"
   },
   {
    "id": "H021",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.medic.night[1]",
-   "text": "那很好。真的那一個還背著他趕路，沒有耽擱。"
+   "text": "那便好。她還背著他往山上趕，沒有耽誤。"
   },
   {
    "id": "H022",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.medic.summit",
-   "text": "這一曲我記起來了。作曲的兩位前輩合奏一遍，便雙雙去了。曲終人散，原來是這個意思。"
+   "text": "曲子全回來了。兩位前輩奏罷便雙雙去了。……原來這便是曲終人散。"
   },
   {
    "id": "H023",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.medic.farewell",
-   "text": "多謝。我背上還有個人等著，不能久留。"
+   "text": "多謝，我不能再耽擱。他還等著我背上山。"
   },
   {
    "id": "H024",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.guard.origin",
-   "text": "入境之時，向問天手上只剩一條鐵鞭，與卸力入地的一點粗淺功夫。他雙手猶帶鐐銬；涼亭中獨抗數百人的那一番光景，要到最後方才想起。"
+   "text": "向問天雙腕帶銬，入境只餘鐵鞭與卸力入地的粗淺功夫。涼亭裡獨對數百人的情景，要到最後才想得全。"
   },
   {
    "id": "H025",
    "file": "game/src/rules/game.js",
    "path": "DETAILS.guard.bio",
-   "text": "人稱「天王老子」，是任我行的親信，曾與令狐冲並肩脫險，兩人從此肝膽相照。入局之時他雙手猶帶鐐銬，手上只剩一條鐵鞭與卸力入地的粗淺功夫。"
+   "text": "任我行的親信，江湖稱「天王老子」，曾同令狐冲並肩脫險，自此肝膽相照。入局雙腕仍帶鐐銬，只記得鐵鞭與卸力入地的粗淺功夫。"
   },
   {
    "id": "H026",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guard.arrival.note",
-   "text": "他雙手纏著鐵鏈，鏈梢猶自晃動。"
+   "text": "他兩手仍纏著鐵鏈，鏈梢在身前晃個不停。"
   },
   {
    "id": "H027",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guard.arrival.text",
-   "text": "人呢？適才亭外少說也有數百人，正教的、本教的，一個不少。老子正數到哪一個先上！"
+   "text": "正教的、本教的，亭外數百人，老子還沒數完誰先上。這便散了？"
   },
   {
    "id": "H028",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guard.obey",
-   "text": "老子這一世只聽一個人的號令。今日破例，聽你一個毛頭小子的。"
+   "text": "毛頭小子倒敢發令。老子一生只聽一人，今日添你一個。"
   },
   {
    "id": "H029",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guard.echoes[0]",
-   "text": "老子好像欠你一碗酒。幾時欠的不記得，欠了是一定的。"
+   "text": "像是欠你一碗酒。怎會想不起幾時欠的？老子可不是賴帳。"
   },
   {
    "id": "H030",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guard.echoes[1]",
-   "text": "這條鏈子甩將出去，會纏住第三根柱子。……見鬼，老子怎知道這裡有柱子？"
+   "text": "這鏈子甩出去，像知道要纏住甚麼。纏甚麼？老子腦裡怎有這個影子？"
   },
   {
    "id": "H031",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guard.night[0]",
-   "text": "回去？亭外數百人等著老子。帶一悟回去，多放倒幾個；不帶，也是打。"
+   "text": "亭外數百人還等著。帶點悟頭回去，多放倒幾個；想不通也一樣打。"
   },
   {
    "id": "H032",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guard.night[1]",
-   "text": "拓的又怎地？老子的鐵鏈打在人身上，一樣的痛。那老兒若不服，叫他下來試試。"
+   "text": "拓的便不會打痛人麼？老子鐵鏈不認這話。那老兒不服，叫他下來。"
   },
   {
    "id": "H033",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guard.summit",
-   "text": "想起來啦。那一日在涼亭之中，老子給鐵鏈鎖著，一步也挪不開，索性便不挪了。站定了打，原來比滿場遊走還痛快。"
+   "text": "涼亭那場想起來了，鐵鏈鎖得一步也挪不了。索性站著打！倒比滿場走更痛快。"
   },
   {
    "id": "H034",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guard.farewell",
-   "text": "好小子，棋下得不壞。亭外那數百人，老子回去會會他們。"
+   "text": "好小子，棋不壞！亭外那些人還候著，老子回去會他們。"
   },
   {
    "id": "H035",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.guo.origin",
-   "text": "入境之時，郭靖手上只剩江南七位恩師所授的南山掌法與分筋錯骨手，那是他最早學的功夫。降龍十八掌要從頭一掌想起，一掌一掌想到十八掌俱全。"
+   "text": "郭靖入境記得的，是江南七位恩師最早教的南山掌法、分筋錯骨手。降龍十八掌須從第一掌想回，直到十八掌俱全。"
   },
   {
    "id": "H036",
    "file": "game/src/rules/game.js",
    "path": "DETAILS.guo.bio",
-   "text": "自幼長於漠北，後隨洪七公學掌，鎮守襄陽多年。有人呼救，他是定要去的。入局之時他手上只剩江南七位恩師所授的掌法與分筋錯骨手；降龍十八掌要從頭一掌想起。"
+   "text": "自幼長於漠北，得洪七公傳掌，後來久守襄陽；聽見有人呼救，便非去不可。入局只餘江南七位恩師教的掌法、分筋錯骨手，降龍十八掌得從頭想起。"
   },
   {
    "id": "H037",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guo.arrival.note",
-   "text": "他一手虛抓著半空，便如仍攀著一條繩索。背後並沒有箭。"
+   "text": "他一手向上虛抓，像仍攀住城邊的繩索。背後射來的箭卻不見了。"
   },
   {
    "id": "H038",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guo.arrival.text",
-   "text": "繩子……斷了？我該在城牆半腰才是。城上的弟兄怎樣了？"
+   "text": "繩子斷了麼？我還在城牆半腰才對。城上的弟兄怎樣了？"
   },
   {
    "id": "H039",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guo.obey",
-   "text": "小兄弟瞧得見，我瞧不見，自然聽你吩咐。只是一樣：見了有人呼救，我是定要去的。"
+   "text": "你看得遠，我聽你的。若有人呼救，我得先去。這一樣請小兄弟記著。"
   },
   {
    "id": "H040",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guo.echoes[0]",
-   "text": "我記性不好。可是這條路，腳比我先認得。"
+   "text": "這路像認得。我還沒想起，腳便走了。"
   },
   {
    "id": "H041",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guo.echoes[1]",
-   "text": "小兄弟，我好像答允過你一件事。是甚麼卻想不起來。你若記得，說與我知道。"
+   "text": "好像答應過小兄弟甚麼，偏想不起。你若記得，告訴我。"
   },
   {
    "id": "H042",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guo.night[0]",
-   "text": "回去守城。城在，百姓便有地方站。別的我沒想過。"
+   "text": "回去守城。百姓總得有個站的地方。別的沒想。"
   },
   {
    "id": "H043",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guo.night[1]",
-   "text": "是真是假，我分不清楚。但身邊的人有難，總是要救的。"
+   "text": "是真是假，我不會分。身邊有人受難，總得救。"
   },
   {
    "id": "H044",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guo.summit",
-   "text": "恩師教頭一掌之時說，打出去的力道要留三分。我學了許多年方才懂得，如今又從頭懂了一次。"
+   "text": "恩師教頭一掌，便叫我留三分力。學了多年才懂。今日倒像又懂了一回。"
   },
   {
    "id": "H045",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.guo.farewell",
-   "text": "小兄弟，你調度得好。我得回去了，城上少不得人。"
+   "text": "小兄弟指點得好。城上不能少人，我回去了。"
   },
   {
    "id": "H046",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.xiao.origin",
-   "text": "入境之時，小龍女手上只剩古墓派入門的天羅地網勢，伸手攔得住滿室麻雀的那一路。雙手互搏、一人使兩柄劍，都是很後來的事，要在局中想起。"
+   "text": "小龍女入境只餘天羅地網勢，古墓入門便練的那一路，能伸手攔住滿室麻雀。雙手互搏、一人分使兩劍，都要在局中想回。"
   },
   {
    "id": "H047",
    "file": "game/src/rules/game.js",
    "path": "DETAILS.xiao.bio",
-   "text": "古墓派傳人，性子清冷，言語極少。入局之時她手上只剩古墓入門的天羅地網勢；一人分使兩柄劍，是很後來的事，要在局中想起。"
+   "text": "古墓傳人，性冷話少。入局只記得天羅地網勢，一人分使兩劍的本事還在後頭，須逐步想起。"
   },
   {
    "id": "H048",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xiao.arrival.note",
-   "text": "她的衣袂猶自向上飄著，便如仍在往下墜落。"
+   "text": "衣袂仍向上飄，她的身子卻已不再下墜。"
   },
   {
    "id": "H049",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xiao.arrival.text",
-   "text": "這裡不是崖底。我跳下來了，是不是？"
+   "text": "不是崖底。我不是跳下來了麼？"
   },
   {
    "id": "H050",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xiao.obey",
-   "text": "好。你說站在哪裡，我便站在哪裡。"
+   "text": "好。你指哪裡，我便去。"
   },
   {
    "id": "H051",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xiao.echoes[0]",
-   "text": "我見過你。在哪裡，不知道。見過便是見過。"
+   "text": "像見過你。不知在哪裡。"
   },
   {
    "id": "H052",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xiao.echoes[1]",
-   "text": "這條路我走過。那時身邊也有人。"
+   "text": "像走過這條路。那時身邊也有人。想不起。"
   },
   {
    "id": "H053",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xiao.night[0]",
-   "text": "我不回去。我跳下來，是要他好好活著。……若是定要回去，我便再跳一次。"
+   "text": "我跳下來，是要他活著。不想回去。定要回，便再跳。"
   },
   {
    "id": "H054",
@@ -2550,289 +2550,289 @@
    "id": "H055",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xiao.summit",
-   "text": "這套劍法要兩個人使。我一個人，想起了兩個人的份。"
+   "text": "原是兩個人的劍法。我一人，也想起兩份了。"
   },
   {
    "id": "H056",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xiao.farewell",
-   "text": "我走了。你一個人，要好好的。"
+   "text": "我去了。你一個人，好好的。"
   },
   {
    "id": "H057",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.duan.origin",
-   "text": "入境之時，段譽手上只剩無量山洞中學來的北冥神功，那是他平生所學的第一門功夫。六脈神劍要一脈一脈想起；六脈齊發，須到最後。"
+   "text": "段譽入境只餘無量山洞所得的北冥神功，是他平生學的第一門功夫。六脈神劍須逐脈想回，直到最後才能齊發。"
   },
   {
    "id": "H058",
    "file": "game/src/rules/game.js",
    "path": "DETAILS.duan.bio",
-   "text": "大理段氏子弟，是個書獃子，將這趟稀奇的際遇當作又一場白日夢，照樣向人人作揖。入局之時他手上只剩無量山洞中學來的北冥神功；六脈神劍時靈時不靈，要一脈一脈想起。"
+   "text": "大理段氏的書獃公子，把這番奇遇當作白日夢，見人仍不忘作揖。手中只餘無量山洞所得的北冥神功，六脈神劍忽靈忽不靈，須逐脈想回。"
   },
   {
    "id": "H059",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.duan.arrival.note",
-   "text": "他一根手指猶自直直伸著，指尖卻甚麼也沒有發出來。"
+   "text": "他手指筆直伸出，指尖卻連半點勁氣也沒有。"
   },
   {
    "id": "H060",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.duan.arrival.text",
-   "text": "咦，慕容公子呢？諸位請了，在下段譽。在下這指劍時靈時不靈，適才正好不靈，莫非就此到了陰世？"
+   "text": "慕容公子，且慢……在下段譽，諸位請了。指劍又不靈了，莫非已到陰世？"
   },
   {
    "id": "H061",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.duan.obey",
-   "text": "兄台看得見全局？妙極，妙極。在下最怕自己拿主意，全聽兄台吩咐。"
+   "text": "兄台能看全盤，妙極。拿主意最難，正好勞你。在下聽著。"
   },
   {
    "id": "H062",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.duan.echoes[0]",
-   "text": "這位兄台好生面善，莫非在夢中見過？啊喲，眼下不正是在夢中麼。"
+   "text": "兄台這般面善，莫非夢裡見過？啊喲，此刻不就在夢裡麼。"
   },
   {
    "id": "H063",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.duan.echoes[1]",
-   "text": "在下的腳自己走到這一格來了。凌波微步之中可沒有這一步，奇哉怪也。"
+   "text": "腳怎麼自己走過來了？凌波微步明明沒有這一步。在下可糊塗了。"
   },
   {
    "id": "H064",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.duan.night[0]",
-   "text": "兩位義兄還在山上苦戰，在下不能倒在那裡。只盼回去之時，這六脈神劍肯靈上一靈。"
+   "text": "兩位義兄還在山上苦戰，在下不能倒。回去只盼這幾根指頭爭氣些，讓六脈神劍靈一靈。"
   },
   {
    "id": "H065",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.duan.night[1]",
-   "text": "拓下來的？妙極！那麼在下在此受苦，本尊半點不痛，這買賣倒也不算吃虧。"
+   "text": "妙極，本尊竟半點不痛。受苦的雖是這一份，也不算太吃虧。"
   },
   {
    "id": "H066",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.duan.summit",
-   "text": "啊喲，六脈一齊通了！只是這一下將在下的內力使得乾乾淨淨。原來要它靈，須得傾囊而出，半點不能藏私。"
+   "text": "六脈全通了！內力卻也半點不剩。原來須得傾囊相付。"
   },
   {
    "id": "H067",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.duan.farewell",
-   "text": "諸位保重。在下得回去了，兩位哥哥還等著我這不爭氣的指頭。"
+   "text": "諸位保重。兩位哥哥等著在下這幾根不爭氣的指頭，得回去了。"
   },
   {
    "id": "H068",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.huang.origin",
-   "text": "入境之時，黃蓉手上只剩家傳的落英神劍掌與蘭花拂穴手，都是自小在桃花島上練熟的。打狗棒法要一訣一訣想起，最後一路天下無狗，須到最後。"
+   "text": "黃蓉入境只餘桃花島上自小練熟的落英神劍掌、蘭花拂穴手。打狗棒法須逐訣想回，天下無狗一路仍留到最後。"
   },
   {
    "id": "H069",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.huang.bio",
-   "text": "桃花島主黃藥師之女，通曉奇門陣法。她到一處地方，先瞧的不是人，是地下的石頭：哪一塊是後來擺的，一眼便知。入局之時她手上只剩家傳的掌法與蘭花拂穴手；打狗棒法要一訣一訣想起。"
+   "text": "桃花島主黃藥師之女，通曉奇門，到了新地方先看石頭，後擺的那一塊從瞞不過她。入局只餘家傳掌法、蘭花拂穴手，打狗棒法須逐訣想回。"
   },
   {
    "id": "H070",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.huang.arrival.note",
-   "text": "她指尖還掐著半個陣訣，腳下踩的卻不是自己擺的石頭。"
+   "text": "她指尖還扣著半個陣訣，腳下卻已換了石頭。這些石頭不是她擺的。"
   },
   {
    "id": "H071",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.huang.arrival.text",
-   "text": "陣眼不在這裡。……不對，這根本不是我的陣。幾個人，幾身不同年月的衣裳。這可有趣了。"
+   "text": "陣眼呢……這根本不是我的陣。幾身衣裳隔著幾代年月，倒湊到一處了。這可有趣。"
   },
   {
    "id": "H072",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.huang.obey",
-   "text": "且慢。我先問你三步棋。……嗯，三步都不算蠢。好，聽你的，聽到你下蠢棋為止。"
+   "text": "先問你三步……嗯，還不算蠢。便聽你的。哪時下蠢棋，哪時作罷。"
   },
   {
    "id": "H073",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.huang.echoes[0]",
-   "text": "那邊第三根樁是鬆的。我沒來過，怎會知道？這裡頭大有文章。"
+   "text": "腳下像有一步踩不得，偏想不起為甚麼。這倒有趣。"
   },
   {
    "id": "H074",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.huang.echoes[1]",
-   "text": "你這一手我見過。不是見旁人下，是見你下。小兄弟，你可得給我一個說法。"
+   "text": "你這手像在眼前下過一遍，還偏偏是你。小兄弟，解得開這個謎麼？"
   },
   {
    "id": "H075",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.huang.night[0]",
-   "text": "陣外有個大和尚等著破我的陣，我身邊還有要護的人。帶一悟回去，我要他一步也踏不進來。"
+   "text": "先守我的陣，大和尚在外頭等著呢。身邊的人得護好。帶點悟頭回去，看他還踏不踏得進。"
   },
   {
    "id": "H076",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.huang.night[1]",
-   "text": "那麼外頭另有一個我，正替我擋著那大和尚？妙極。我在這裡多耽一刻，她也不吃虧。"
+   "text": "那邊另有一個我擋著大和尚，這裡多留片刻也不害她吃虧？倒省心了。"
   },
   {
    "id": "H077",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.huang.summit",
-   "text": "最後這一路想起來了。棒影鋪天蓋地，四面八方都是，使的人自己也再無後著。難怪一局之中，只使得一回。"
+   "text": "天下無狗，全想起了。棒影封遍四方，自己也再無後著。難怪一局只使一回。"
   },
   {
    "id": "H078",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.huang.farewell",
-   "text": "小兄弟，你這盤棋下得比我料想的好。我得回去守我的陣了。"
+   "text": "倒比我猜的下得好。可我自己的陣，還得回去守。"
   },
   {
    "id": "H079",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.yang.origin",
-   "text": "入境之時，楊過手上只剩義父所教的蛤蟆功，與古墓中練熟的劍。重劍是後來的事，那一路掌法更在後頭，要一局一局想將回去。"
+   "text": "楊過入境只餘義父所教蛤蟆功，與古墓中練熟的劍。後來的重劍、再後來的掌法，須一局局想回。"
   },
   {
    "id": "H080",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.yang.bio",
-   "text": "神鵰大俠，與小龍女久別一十六年。眼前縱有百條岔路，他仍記得要找的那個人。入局之時他手上只剩義父所教的蛤蟆功與古墓中練熟的劍；重劍與那一路掌法，要在局中想將回去。"
+   "text": "神鵰大俠與小龍女已別十六年，岔路再多，尋的仍只一人。入局記得蛤蟆功與古墓劍招，重劍和那一路掌法仍須慢慢想回。"
   },
   {
    "id": "H081",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yang.arrival.note",
-   "text": "他獨臂的衣袖還在風中翻飛。臉上並無驚惶，只有一點失望。"
+   "text": "獨臂那邊的空袖仍在風裡翻動。他望了望四周，沒有驚慌，臉上倒露出失望。"
   },
   {
    "id": "H082",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yang.arrival.text",
-   "text": "這不是谷底。……她不在這裡。我等了一十六年，跳將下來，還是找錯了地方？"
+   "text": "等了十六年，跳下來竟還不是谷底。姑姑……怎麼沒瞧見她？又找錯了麼？"
   },
   {
    "id": "H083",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yang.obey",
-   "text": "聽你的？我先瞧你頭一局怎生下法。下得好，楊過這條臂膀借給你使。"
+   "text": "先看小兄弟怎樣下第一局。下得好，這條臂膀借你。"
   },
   {
    "id": "H084",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yang.echoes[0]",
-   "text": "等人等得久了，瞧誰都面善。你不同，你是真的面善。"
+   "text": "等人久了，常把生人看熟。你卻不同。怎麼偏覺你像舊識？"
   },
   {
    "id": "H085",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yang.echoes[1]",
-   "text": "這地方我來過。那一回，我也在找人。"
+   "text": "像來過這裡。那時彷彿也在找她。"
   },
   {
    "id": "H086",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yang.night[0]",
-   "text": "回去？我只想知道她在哪裡。若是走完十局便能知道，叫我走一百局也成。"
+   "text": "回哪裡都好，只須找到她。十局能找到，便走十局。一百局也走。"
   },
   {
    "id": "H087",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yang.night[1]",
-   "text": "拓的也好，真的也好。我心裡念著她，這一節總不是假的。"
+   "text": "拓的又如何？我心裡想她，這件事假不了。"
   },
   {
    "id": "H088",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yang.summit",
-   "text": "想起來了。這一路掌法，是等她的那些年裡自己湊出來的。……原來要先想起那些年，方才使得出這一掌。"
+   "text": "等她那些年，一掌掌湊出的功夫……都回來了。得先把那些日子想全，才打得出。"
   },
   {
    "id": "H089",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yang.farewell",
-   "text": "小兄弟，多謝了。我還有個人要找。"
+   "text": "多謝，小兄弟。我還得找她。"
   },
   {
    "id": "H090",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.zhang.origin",
-   "text": "入境之時，張無忌手上只剩武當長拳，與少年時在蝴蝶谷學來的醫術。九陽神功、乾坤大挪移，要在局中一層一層想起。"
+   "text": "張無忌入境只記得武當長拳，與少年在蝴蝶谷學的醫術。九陽神功、乾坤大挪移，都須在局中逐層想回。"
   },
   {
    "id": "H091",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.zhang.bio",
-   "text": "明教教主，為人溫厚。聽見有人呼痛，他先蹲下替人把脈，才想起還未問過這是何地。入局之時他手上只剩武當長拳與蝴蝶谷學來的醫術；九陽神功與乾坤大挪移，要一層一層想起。"
+   "text": "明教教主性情溫厚，聞人呼痛，往往先蹲下把脈，連身在何地也顧不得問。入局只餘武當長拳、蝶谷醫術，九陽神功與乾坤大挪移尚須逐層想回。"
   },
   {
    "id": "H092",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhang.arrival.note",
-   "text": "他一手按著胸口，低頭瞧了半晌。那裡沒有劍，也沒有血。"
+   "text": "他手按胸口，低頭看了好一會。劍不見了，也沒有血。"
   },
   {
    "id": "H093",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhang.arrival.text",
-   "text": "咦……不痛了？那一劍分明已刺了進來。各位，這是甚麼所在？可有人受傷麼？"
+   "text": "劍明明刺進來了，怎麼不痛？這是甚麼地方？各位可有人受傷？"
   },
   {
    "id": "H094",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhang.obey",
-   "text": "你說怎生走，我便怎生走。只求一件：能不傷人性命，便不傷。"
+   "text": "好，你指路。我只求能不傷人，便別傷人。"
   },
   {
    "id": "H095",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhang.echoes[0]",
-   "text": "你的脈我好像把過。……失禮，我連你貴姓也還未請教。"
+   "text": "這脈像是把過……失禮。連貴姓也沒請教，怎會把過呢？"
   },
   {
    "id": "H096",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhang.echoes[1]",
-   "text": "這一步，我好像替誰擋過一掌。擋的是誰，卻想不起來了。"
+   "text": "這一步，像替人擋過一掌。究竟替了誰呢？"
   },
   {
    "id": "H097",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhang.night[0]",
-   "text": "光明頂上還有許多人。我若倒在那一劍之下，他們一個也活不成。我得回去站著。"
+   "text": "光明頂的人都靠我撐著。那一劍若叫我倒了，他們便活不成。我得站著回去。"
   },
   {
    "id": "H098",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhang.night[1]",
-   "text": "那倒好了。本尊在那邊挨了一劍，這裡至少有一個我是不痛的，可以多替各位擋幾掌。"
+   "text": "這也好，那邊挨著一劍，這裡倒不痛。多出這一個我，便能替各位擋幾掌。"
   },
   {
    "id": "H099",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhang.summit",
-   "text": "這一層想起來了。要使它，須得將護著自己的勁力全數讓將出去。……當日在密道之中練成，我倒沒想過它這般貴重。"
+   "text": "這一層也回來了，原來須把護身勁力全讓出去。密道裡練成時，還沒覺得這般貴重。"
   },
   {
    "id": "H100",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhang.farewell",
-   "text": "多謝各位。我得回光明頂去，那一劍還在等我。"
+   "text": "多謝，得回光明頂了。那一劍還在等我。"
   },
   {
    "id": "H101",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.hu.origin",
-   "text": "入境之時，胡斐手上只剩照著父親遺下的刀譜練熟的胡家刀法。那部刀譜他自小練全，刀路想起得極快；雪山絕頂舉在半空的那一刀，要親手擊倒幾人方才想起。"
+   "text": "胡斐入境只餘父親刀譜上的胡家刀法，自小便已練全，因而想得極快。雪山頂上那懸而未下的一刀，卻須親手擊倒幾人才會想起。"
   },
   {
    "id": "H102",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.hu.bio",
-   "text": "胡一刀之子，自幼由平阿四撫養。為了替素不相識的鍾家討回公道，他曾一路追索鳳天南。入局之時他手上只剩照著父親遺下的刀譜練熟的胡家刀法。"
+   "text": "胡一刀之子，由平阿四自幼撫養；曾為素不相識的鍾家伸冤，一路追索鳳天南。如今入局，手上只餘照父親遺譜練成的胡家刀法。"
   },
   {
    "id": "H103",
@@ -2844,739 +2844,739 @@
    "id": "H104",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hu.arrival.text",
-   "text": "苗大俠？……人不見了。我這一刀才舉到一半。"
+   "text": "苗大俠，我還未落刀……人卻不見了？"
   },
   {
    "id": "H105",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hu.obey",
-   "text": "我幫你。先說明白：是非曲直，我自己會看。"
+   "text": "好，我幫你。是非曲直，還得自己看。"
   },
   {
    "id": "H106",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hu.echoes[0]",
-   "text": "這一刀我好像劈過，又好像還沒劈。"
+   "text": "這刀像劈下過。可又像始終未落。"
   },
   {
    "id": "H107",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hu.echoes[1]",
-   "text": "雪地裡走慣了，認得自己的腳印。這地下有我的腳印。"
+   "text": "雪地走慣，自己的腳印總認得。這地上……怎麼也像有我的？"
   },
   {
    "id": "H108",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hu.night[0]",
-   "text": "回去還是那塊石頭，還是那一刀。劈也不是，不劈也不是。我想帶回去的，是劈與不劈之外的第三條路。"
+   "text": "回去仍是那塊石、那一刀，劈不劈都不成。我想找第三條路帶回去。"
   },
   {
    "id": "H109",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hu.night[1]",
-   "text": "拓下來的？那麼那一刀，本尊還舉在半空。我在這裡替他多想一刻也好。"
+   "text": "那本尊還舉著刀？也好。我在此替他多想一刻。"
   },
   {
    "id": "H110",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hu.summit",
-   "text": "這一刀想起來了。……便是我舉著來的那一刀。"
+   "text": "記起了。就是那一刀，我舉著來的。"
   },
   {
    "id": "H111",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hu.farewell",
-   "text": "我回去了。那一刀還舉著。"
+   "text": "刀還舉著。我該回去了。"
   },
   {
    "id": "H112",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.qiaoFeng.origin",
-   "text": "入境之時，蕭峰手上只剩一路太祖長拳，那是江湖上人人會使的尋常拳法。恩師所傳的降龍掌法，要一掌一掌想起；廿八掌俱全，須到最後。"
+   "text": "蕭峰入境只餘江湖上最尋常的太祖長拳。恩師所傳降龍掌法須逐掌想回，直到末了，廿八掌才會俱全。"
   },
   {
    "id": "H113",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.qiaoFeng.bio",
-   "text": "丐幫前任幫主，其時還叫做喬峰，身世之謎方才揭開一角。聚賢莊上，他與滿廳舊友對飲絕交，一碗酒剛剛飲罷摔碎，身後還有一個要他救命的小姑娘。入局之時他手上只剩一路人人會使的太祖長拳；恩師所傳的降龍掌法，要一掌一掌想起。"
+   "text": "丐幫前幫主此時尚叫喬峰，身世之謎只揭開一角。聚賢莊飲罷絕交酒，碗才摔碎，身後那小姑娘仍待救命，他便被拓入局中。手上只餘尋常太祖長拳，恩師所傳降龍掌法得逐掌想回。"
   },
   {
    "id": "H114",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.qiaoFeng.arrival.note",
-   "text": "他一手猶自虛握著，掌中卻沒有酒碗，地下也不見碎瓷。"
+   "text": "他手指仍虛握成持碗的樣子，掌中卻已空了。腳下也不見碎瓷。"
   },
   {
    "id": "H115",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.qiaoFeng.arrival.text",
-   "text": "酒碗呢？適才那一碗絕交酒，喬某分明已喝乾摔了。滿廳的舊交故友，怎地一個也不見？"
+   "text": "酒已喝乾，碗也摔了。滿堂故交怎麼全不見了？喬某這碗絕交酒，斷不曾少喝。"
   },
   {
    "id": "H116",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.qiaoFeng.obey",
-   "text": "喬某帶過數萬弟兄，深知一軍不可有二帥。小兄弟瞧得見全局，便由你發令，喬某聽著。"
+   "text": "喬某帶過數萬弟兄，知道號令不能有二。小兄弟看得全，便由你說。喬某聽令。"
   },
   {
    "id": "H117",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.qiaoFeng.echoes[0]",
-   "text": "這一掌未出，喬某已知他要往左閃。我同此人，幾時交過手？"
+   "text": "掌還沒發，怎便知道他要向左？喬某何時同他交過手？"
   },
   {
    "id": "H118",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.qiaoFeng.echoes[1]",
-   "text": "奇了。這地方的風吹在臉上，竟似舊識。"
+   "text": "這地方陌生，風吹到臉上，倒像遇著舊識。"
   },
   {
    "id": "H119",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.qiaoFeng.night[0]",
-   "text": "回去？滿莊的英雄好漢等著取喬某性命，其中倒有一半同我喝過酒。可是阿朱姑娘的傷非薛神醫不能治，她還在廳上。喬某不能不回去。"
+   "text": "莊上半數喝過酒的朋友，如今都等著殺我。可阿朱還在廳上，只有薛神醫救得。喬某得回去。"
   },
   {
    "id": "H120",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.qiaoFeng.night[1]",
-   "text": "拓下來的？哈哈，那也很好。喬某這些日子，連自己是漢人還是契丹人也說不明白，如今不過多一樣說不明白的。是甚麼人都不打緊，行事對得住良心便是。"
+   "text": "漢人契丹人尚未弄清，又添一樣不明白的。哈哈，拓的也好。行事對得住良心便成。"
   },
   {
    "id": "H121",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.qiaoFeng.summit",
-   "text": "這一路掌法喬某使了半生，掌下從來只打奸邪之徒。……適才那一碗酒喝完，我便知道，下一掌要落在兄弟身上了。"
+   "text": "半生降龍掌，只用來打奸邪。那碗絕交酒一盡，下一掌便得落在弟兄身上。"
   },
   {
    "id": "H122",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.qiaoFeng.farewell",
-   "text": "小兄弟，好棋。喬某得回去了，莊上還有一場架要打。他日有緣，同你痛飲三百碗。"
+   "text": "好棋，小兄弟。莊上那場架還得回去打。他日有緣，痛飲三百碗。"
   },
   {
    "id": "H123",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.xuZhu.origin",
-   "text": "入境之時，虛竹手上只剩少林寺的韋陀掌，那是他最早學的功夫。逍遙派的種種際遇都在他落子之後；求敗拓的是攤開的一張譜，後面的功夫也在譜上，要在局中一樣一樣長出來。"
+   "text": "虛竹入境只會最早學的少林韋陀掌，逍遙派的際遇尚在落子之後。求敗卻把一生攤作一張譜，連後面的功夫也拓在其中，須待局中逐樣長出。"
   },
   {
    "id": "H124",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.xuZhu.bio",
-   "text": "少林寺的小和尚，相貌醜陋，心地極好。他見有人在棋局之前要尋短見，閉了眼睛亂下一子，原是想救人一命。入局之時他手上只剩寺中所學的韋陀掌；後來那許多際遇，他此刻連做夢也想不到，要在局中一樣一樣長出來。"
+   "text": "少林小和尚貌醜心善，見有人對著棋局尋死，便閉眼亂落一子，原只想救命。入局只餘韋陀掌，日後那些做夢也想不到的際遇與功夫，須在局中逐樣長出。"
   },
   {
    "id": "H125",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xuZhu.arrival.note",
-   "text": "他緊閉雙眼，兩根手指兀自拈著一枚並不存在的棋子。"
+   "text": "他眼睛閉得緊緊的，雙指仍拈著，指間卻沒了棋子。"
   },
   {
    "id": "H126",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xuZhu.arrival.text",
-   "text": "阿彌陀佛，小僧這一子可是下錯了？……咦，棋盤呢？各位施主，那位拿鐵杖的段施主，沒有尋了短見罷？"
+   "text": "阿彌陀佛，那一子可下錯了？棋盤怎不見了？拿鐵杖的段施主，沒尋短見罷？"
   },
   {
    "id": "H127",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xuZhu.obey",
-   "text": "小僧不會下棋，適才那一子是閉了眼睛亂放的。施主肯拿主意，那是再好不過，小僧聽施主吩咐。"
+   "text": "小僧不懂棋，方才閉眼亂下的。施主肯拿主意便好。小僧照辦。"
   },
   {
    "id": "H128",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xuZhu.echoes[0]",
-   "text": "罪過，罪過。這地方小僧分明不曾到過，腳下卻曉得哪一塊石頭是鬆的。"
+   "text": "罪過，這路明明沒走過，腳下卻像知道該往哪裡落。這是怎麼了？"
   },
   {
    "id": "H129",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xuZhu.echoes[1]",
-   "text": "這位施主，小僧好似替你裹過傷。……小僧又打誑語了，出家人不該的。"
+   "text": "像是替施主裹過傷……又想不起。罪過，小僧莫非打了誑語。"
   },
   {
    "id": "H130",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xuZhu.night[0]",
-   "text": "小僧得回去。那一子落將下去，也不知是救了段施主，還是害了他。師伯祖還在一旁瞧著，小僧闖了禍，總要回去領責。"
+   "text": "那一子救了段施主，還是害了他？師伯祖在旁看著呢。闖了禍，小僧總得回去領責。"
   },
   {
    "id": "H131",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xuZhu.night[1]",
-   "text": "拓下來的？那麼犯戒的便不是小僧本人了……不對，不對。拓下來的小僧也是小僧，戒還是要守的。"
+   "text": "那犯戒的便不是本人……不對。這一份也叫小僧。戒還得守。"
   },
   {
    "id": "H132",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xuZhu.summit",
-   "text": "這……這是叫人求生不得、求死不能的法門。小僧學它之時，只道是替人治病。阿彌陀佛，這一手每使一回，小僧便得停下來念一遍經。"
+   "text": "原想學來治病，竟能教人求生求死都不得。阿彌陀佛。使一回，得停下念遍經。"
   },
   {
    "id": "H133",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.xuZhu.farewell",
-   "text": "多謝施主。小僧這便回去，那一盤棋還沒有下完。阿彌陀佛，願各位平安。"
+   "text": "多謝施主，那盤棋還沒下完。小僧告辭。阿彌陀佛，願各位平安。"
   },
   {
    "id": "H134",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.hongQi.origin",
-   "text": "入境之時，洪七公手上只剩少年時練熟的一路逍遙遊，那是他最早學的功夫。降龍的掌、打狗的棒，要一招一訣想起；三十六路棒法使全，須到最後。"
+   "text": "洪七公入境只餘少年最早學的逍遙遊。降龍掌、打狗棒須逐招逐訣想起，直到三十六路棒法使全。"
   },
   {
    "id": "H135",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.hongQi.bio",
-   "text": "丐幫幫主，人稱九指神丐，一生最貪的是口腹之慾，最恨的是奸惡之徒。華山絕頂，他同老對頭比到油盡燈枯，剛說完最後一路棒法，正等對方想出破法。入局之時他手上只剩少年時練熟的逍遙遊；降龍的掌、打狗的棒，要一招一訣想起。"
+   "text": "九指神丐掌丐幫，最貪美食，最恨奸惡。華山絕頂同老對頭鬥至油盡燈枯，說完末路棒法，正候對方想出破法。入局只餘少年逍遙遊，降龍掌、打狗棒還須逐一想回。"
   },
   {
    "id": "H136",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.arrival.note",
-   "text": "他盤膝坐著，一手比劃到半路，口中還含著半句棒訣。"
+   "text": "他盤膝而坐，棒招已比劃到了盡頭，側著頭，像在等人答話。"
   },
   {
    "id": "H137",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.arrival.text",
-   "text": "……這一路的第六變是——咦？老毒物呢？老叫化話說到一半，怎地連山也換了？莫非是餓得狠了，眼前發花。"
+   "text": "天下無狗。老毒物，這一變你破得了麼？……咦，山怎麼也換了？老叫化莫非餓花了眼？"
   },
   {
    "id": "H138",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.obey",
-   "text": "老叫化使喚過十幾萬叫化子，今日給一個小娃娃使喚，倒也新鮮。成！只是先說好，開打之前得讓我吃飽。"
+   "text": "使喚過十幾萬叫化，今日倒讓娃娃使喚。成！先給老叫化吃飽。"
   },
   {
    "id": "H139",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.echoes[0]",
-   "text": "這鍋湯的味道，老叫化是嘗過的。可這口鍋我分明頭一回見。怪哉。"
+   "text": "怪哉，這地方熟得像吃過一頓飽飯。可分明是頭一回來。"
   },
   {
    "id": "H140",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.echoes[1]",
-   "text": "小娃娃，你這一步棋同上回……甚麼上回？老叫化當真老糊塗了。"
+   "text": "這步同上回……哪來的上回？老叫化糊塗了。"
   },
   {
    "id": "H141",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.night[0]",
-   "text": "回去？老毒物還坐在山頂上想那一招的破法，想了一夜啦。他破得了也好，破不了也好，老叫化總得回去聽他說一聲。"
+   "text": "老毒物在山頂想了一夜，還沒答我呢。破得了破不了，總得聽完那句。老叫化回去等他。"
   },
   {
    "id": "H142",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.night[1]",
-   "text": "拓的？那麼老叫化在這裡吃下肚的，本尊可半口也沒吃著。虧了，虧了！……也罷，我吃我的，他餓他的。"
+   "text": "吃的都進這肚子，本尊半口也沒份？虧了！也罷，我吃我的，他餓他的。"
   },
   {
    "id": "H143",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.summit",
-   "text": "三十六路想得全了。這一路棒法歷代幫主口口相傳，使到盡處，人也就油盡燈枯。老叫化不後悔，只是使完了得歇上一歇。"
+   "text": "歷代幫主口傳的三十六路，終於全了。使到盡頭，人也油盡燈枯。老叫化不悔，使完歇歇便是。"
   },
   {
    "id": "H144",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.hongQi.farewell",
-   "text": "小娃娃，棋下得不賴。老叫化回去啦，山頂上還有個老冤家等我。下回你帶酒，我帶叫化雞。"
+   "text": "娃娃棋下得好，老叫化回山會那老冤家了。下回你帶酒。我帶叫化雞。"
   },
   {
    "id": "H145",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.yaoShi.origin",
-   "text": "入境之時，黃藥師手上只剩一路落英神劍掌。劈空的掌、島上的陣、簫中之劍、指上之石，要一樣一樣想起；那一曲碧海潮生，須到最後。"
+   "text": "黃藥師入境只餘落英神劍掌。劈空掌、島上奇陣、簫中劍、指上飛石須逐樣想回，碧海潮生曲留在最後。"
   },
   {
    "id": "H146",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.yaoShi.bio",
-   "text": "桃花島主，人稱東邪，琴棋書畫、醫卜星相無一不精，平生最恨世俗禮法。舟中誤聽人言，只道獨生愛女已葬身大海，一管玉簫正要往船舷上擊落。入局之時他手上只剩一路落英神劍掌；彈指、簫劍、奇門陣法與那一曲碧海潮生，要一樣一樣想起。"
+   "text": "桃花島主號東邪，琴棋書畫、醫卜星相皆精，平生最厭禮法。舟中誤信愛女葬身海裡，玉簫正往船舷擊下，便被拓入此地。手上只餘落英神劍掌，彈指、簫劍、奇陣以至碧海潮生曲，都須想回。"
   },
   {
    "id": "H147",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yaoShi.arrival.note",
-   "text": "他一管玉簫高高舉在半空，正要擊落，下面卻沒有船舷。臉上淚痕未乾。"
+   "text": "玉簫高舉，將落未落，底下卻沒有船舷。黃藥師臉上的淚還沒乾。"
   },
   {
    "id": "H148",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yaoShi.arrival.text",
-   "text": "……蓉兒。——這是何處？我黃老邪要哭便哭，要唱便唱，是誰敢將我移到這裡來！"
+   "text": "蓉兒……這是甚麼地方？我黃老邪要哭要唱，何用人管。誰敢把我移來！"
   },
   {
    "id": "H149",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yaoShi.obey",
-   "text": "我黃老邪一生不聽人言。……也罷。這一盤的布局倒有三分意思，我且瞧你怎生落子。下得俗了，我拂袖便走。"
+   "text": "我黃老邪豈聽人言……這布局倒還有三分可看。你下罷。俗了，我便走。"
   },
   {
    "id": "H150",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yaoShi.echoes[0]",
-   "text": "這陣勢我見過。不是在書上，是在此地。奇門之中，可沒有「舊地重遊」這一門。"
+   "text": "這一局的步法，像在此地見過，卻不是書上所得。奇門遁甲中，哪有這等「舊地重遊」？"
   },
   {
    "id": "H151",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yaoShi.echoes[1]",
-   "text": "小子，你適才那一手，同我心中所算一般無二。是誰教你的？"
+   "text": "這手同我心裡算的一樣。小子，誰教的？"
   },
   {
    "id": "H152",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yaoShi.night[0]",
-   "text": "回去？那邊只有一片海，海裡有我的女兒。我要去尋幾個人的晦氣。尋完了，也就沒有甚麼事要做了。"
+   "text": "回去便是海，海裡有蓉兒。先尋幾個人的晦氣。了卻了，也沒事可做。"
   },
   {
    "id": "H153",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yaoShi.night[1]",
-   "text": "拓下來的一份？哼。世人拓我的字，拓我的簫譜，如今連人也拓了去。拓得倒也不差：這份傷心，一分不少。"
+   "text": "拓字拓簫譜不夠，連人也拓？倒拓得好。傷心半分沒少。"
   },
   {
    "id": "H154",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yaoShi.summit",
-   "text": "這一曲，當年是在島上吹給她聽的。她去了以後，我只拿它來傷人。……吹完一遍須得歇上一歇，那是我自己也禁受不起。"
+   "text": "當年在島上，這曲是吹給她的。她去後，便只用來傷人。吹完須歇，我自己也受不住。"
   },
   {
    "id": "H155",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.yaoShi.farewell",
-   "text": "你這小子，棋下得不俗。我去了。……那邊的海，我再去看一眼。"
+   "text": "小子，棋不俗。我走了。那片海，還想再看一眼。"
   },
   {
    "id": "H156",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.sanFeng.origin",
-   "text": "入境之時，張三丰手上只剩少年時照著一對鐵羅漢學來的羅漢拳，那是他最早學的功夫。武當一派的拳劍都是後來自創，要在局中從頭想起；太極拳排在最後。"
+   "text": "張三丰入境只餘少年照一對鐵羅漢學成的羅漢拳，是他最早的拳路。自創武當拳劍須從頭想回，太極拳仍在最後。"
   },
   {
    "id": "H157",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.sanFeng.bio",
-   "text": "武當派開山祖師，年逾百歲，胸襟沖淡，待後輩最是慈和。他閉關方出，一位遠來的僧人跪在面前哭訴，他伸手去扶，對方雙掌已按上他的小腹。入局之時他手上只剩少年時學的羅漢拳；一生自創的拳劍，要從頭想起。"
+   "text": "武當祖師年逾百歲，胸襟沖淡，待小輩慈和。方才出關，一僧跪地哭訴，他俯身相扶，雙掌已按在小腹。入局只餘少年羅漢拳，一生自創拳劍都須從頭想回。"
   },
   {
    "id": "H158",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.sanFeng.arrival.note",
-   "text": "他伸出雙手，正要去扶一個跪在地下的人。地下並沒有人。"
+   "text": "他伸著雙手，仍要去扶那個跪著的僧人。手伸下去，地上卻已無人。"
   },
   {
    "id": "H159",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.sanFeng.arrival.text",
-   "text": "大師請起，不必多禮……嗯？老道小腹上這一掌，怎地沒有落實？各位小友，這裡可不是武當山了。"
+   "text": "大師請起……這掌竟未落實。小腹還好好的，武當山卻不見了？各位小友，這是何處？"
   },
   {
    "id": "H160",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.sanFeng.obey",
-   "text": "老道活了一百歲，如今才明白，聽人說話比說話給人聽要難。小友請說，老道聽著。"
+   "text": "活過百歲，才知聽話比教人難。小友儘管說。老道聽著。"
   },
   {
    "id": "H161",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.sanFeng.echoes[0]",
-   "text": "人老了，昨日的事記不清，數十年前的事倒歷歷在目。這地方既非昨日，亦非當年，老道卻認得。有趣。"
+   "text": "昨日記不清，幾十年前反倒明白。這裡兩樣都不是，偏又像認得。有趣。"
   },
   {
    "id": "H162",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.sanFeng.echoes[1]",
-   "text": "小友這一步，老道似乎見你走過。……不妨，再看一遍也是好的。"
+   "text": "這步好像見小友走過。不妨，再看一遍。"
   },
   {
    "id": "H163",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.sanFeng.night[0]",
-   "text": "山上只有一個癱在床上的徒兒，幾個小道童。強敵已到了山門。老道這把骨頭，總要回去替他們擋上一擋。"
+   "text": "山上只餘臥床的徒兒、幾個道童，敵人已到山門。老道總得回去擋一擋。"
   },
   {
    "id": "H164",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.sanFeng.night[1]",
-   "text": "一念也罷，本尊也罷，都是張三丰。老道年輕時也不叫這個名字。名字換得，身子自然也換得。"
+   "text": "叫一念也好，叫本尊也好，總是張三丰。老道年輕時連這名也不叫。名字能換，身子也能換。"
   },
   {
    "id": "H165",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.sanFeng.summit",
-   "text": "這套拳，老道關起門來想了許久。到頭來不過四個字：以靜制動。要它靈，自己須得先站定了，一步也不走。"
+   "text": "閉門想了許久，終究是「以靜制動」。要拳法靈，自己先站定。半步不走。"
   },
   {
    "id": "H166",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.sanFeng.farewell",
-   "text": "小友，這一局下得很好。老道回山去了，那一掌還沒有挨完。各位珍重。"
+   "text": "小友下得好。老道回山，那一掌還未挨完。諸位珍重。"
   },
   {
    "id": "H167",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.zhaoMin.origin",
-   "text": "入境之時，趙敏手上只剩在萬安寺中向各派高手偷學來的零碎劍招。靈蛇島上那三招與敵偕亡的劍法，要一招一招想起；天地同壽，須到最後。"
+   "text": "趙敏入境只餘萬安寺向各派偷學的零碎劍招。靈蛇島那三招與敵偕亡的劍法須逐招想回，天地同壽留到最後。"
   },
   {
    "id": "H168",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.zhaoMin.bio",
-   "text": "汝陽王之女，封號紹敏郡主，聰明狡黠，曾設計擒盡六大派高手。靈蛇島上，她為救一個人連使三招與敵偕亡的劍法，第三招的劍尖已對準了自己。入局之時她手上只剩在萬安寺偷學來的零碎劍招；那三招拚命的劍法，要一招一招想起。"
+   "text": "汝陽王之女封紹敏郡主，心思狡黠，曾設計擒住六大派高手。靈蛇島為救一人連出三招同歸於盡的劍法，第三招正指自己，便被拓入局中。萬安寺偷學的零碎劍招尚在，那三招拚命的功夫則須逐一想回。"
   },
   {
    "id": "H169",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhaoMin.arrival.note",
-   "text": "她雙手倒持長劍，劍尖正對著自己小腹，劍上卻沒有血。"
+   "text": "她雙手倒持長劍，尖端正對小腹。劍身卻沒有一滴血。"
   },
   {
    "id": "H170",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhaoMin.arrival.text",
-   "text": "……沒有刺進去？那三個胡人呢？張無忌！——哼，這是甚麼所在？本郡主幾時許人將我搬到這裡來的？"
+   "text": "還沒刺進去，三個胡人卻不見了？張無忌……哼！誰准把本郡主搬到這裡？"
   },
   {
    "id": "H171",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhaoMin.obey",
-   "text": "向來是我調兵遣將，旁人聽令。也罷，你瞧得見全局，我瞧不見，這一陣便讓了你。走錯一步，我可是要笑的。"
+   "text": "本來都是我發令，今日看不遠，暫讓你一次。下錯了，可別怪我笑。"
   },
   {
    "id": "H172",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhaoMin.echoes[0]",
-   "text": "這條路上有埋伏。別問我怎生知道。……奇了，我好像當真見他們埋伏過。"
+   "text": "像有埋伏，先別走。怎麼知道的……我也說不上。彷彿見過他們伏下去。"
   },
   {
    "id": "H173",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhaoMin.echoes[1]",
-   "text": "小兄弟，你皺眉的模樣我見過。上一回你皺完了眉，下的是一著好棋。"
+   "text": "你皺眉這模樣，怎像見過？彷彿皺完便有好棋。我怎會這樣想？"
   },
   {
    "id": "H174",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhaoMin.night[0]",
-   "text": "回去？劍尖已到了自己肚子上，回去便是那一下。可是那個傻小子還在重圍之中，我不回去，誰來救他？"
+   "text": "回去便得挨自己劍尖那一下。可那傻小子還在重圍。難道讓他等死？"
   },
   {
    "id": "H175",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhaoMin.night[1]",
-   "text": "原來我只是拓下來的一份。那也不壞：真的那一個正忙著拚命，我在這裡倒可以替她想一想，為一個傻小子值不值得。……值得的。"
+   "text": "那一個忙著拚命，這一個正好替她算算。為個傻小子，值麼？……值。"
   },
   {
    "id": "H176",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhaoMin.summit",
-   "text": "這一招是武當派的，名字起得好聽，叫做天地同壽。使它的人，原是不打算活的。我學它的時候只當有趣，沒想過有一日當真用得著。"
+   "text": "武當這招天地同壽，名字倒好聽，使的卻不打算活。我學時只覺有趣。誰知真有用它的一日。"
   },
   {
    "id": "H177",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.zhaoMin.farewell",
-   "text": "小兄弟，這盤棋你贏得不算難看。我走啦，那邊還有個人等我去救，他自己還不知道呢。"
+   "text": "贏得還不算難看。走啦，還得救那個人。他連自己等著我救也不曉得。"
   },
   {
    "id": "H178",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.lingSu.origin",
-   "text": "入境之時，程靈素手上只剩師父所傳的方脈醫理。辨毒、使毒的種種手段，要在局中一樣一樣想起；七心海棠，須到最後。"
+   "text": "程靈素入境只餘師父傳的方脈醫理。辨毒使毒須逐樣想回，七心海棠在最後。"
   },
   {
    "id": "H179",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.lingSu.bio",
-   "text": "毒手藥王無嗔大師的關門弟子，貌不驚人，心思極細，用毒的本事天下無雙，卻從未害過一條人命。破廟之中，她義兄身中三種劇毒，她俯身便要替他吸出。入局之時她手上只剩師父所傳的方脈醫理；七心海棠要到最後方才想起。"
+   "text": "毒手藥王無嗔大師的關門弟子貌不驚人，心細如髮，毒術無雙，卻未害過人命。破廟裡義兄中了三種劇毒，她俯身欲吸，便被拓入此間。方脈醫理尚在，七心海棠須待最後才會想起。"
   },
   {
    "id": "H180",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.lingSu.arrival.note",
-   "text": "她俯著身子，嘴唇離一隻手背只差半寸。那隻手卻不在了。"
+   "text": "她仍俯著身，嘴唇離原來那隻手背只有半寸。手背卻已不在了。"
   },
   {
    "id": "H181",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.lingSu.arrival.text",
-   "text": "大哥？……我還沒有吸，怎地人便不見了。各位，這裡可有一位中了毒的人？他的手背是黑的。"
+   "text": "大哥，還沒替你吸呢……各位可見過一個手背發黑的人？他中毒了，耽擱不得。"
   },
   {
    "id": "H182",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.lingSu.obey",
-   "text": "我生得不好看，力氣也小，打架是幫不上甚麼的。你說站在哪裡，我便站在哪裡。誰傷了、誰中了毒，交給我。"
+   "text": "我力氣小，相貌也不好，打架幫不了多少。你指地方便是。傷和毒，留給我。"
   },
   {
    "id": "H183",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.lingSu.echoes[0]",
-   "text": "這株草我沒有種過，卻知道它幾時開花。"
+   "text": "這裡的濕氣冷熱，怎麼像早知道？分明沒來過。"
   },
   {
    "id": "H184",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.lingSu.echoes[1]",
-   "text": "你的藥囊，我好像替你整理過。第三格放的是金創藥，是不是？"
+   "text": "像替你理過藥囊，金創藥放第三格。是這樣麼？也許我記錯了。"
   },
   {
    "id": "H185",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.lingSu.night[0]",
-   "text": "回去，便是將那一口毒吸出來。師父說那三樣毒混在一起無藥可解，他沒料到世上有人肯拿自己的命去換。我想了很久，還是要回去。"
+   "text": "師父說那三毒混在一處無藥可解，沒算到有人肯換命。我已想清楚。回去替大哥吸出來。"
   },
   {
    "id": "H186",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.lingSu.night[1]",
-   "text": "拓下來的也好。真的那一個活不過今晚，這一個還能多醫幾個人。只是大哥那邊，我幫不上了。"
+   "text": "真的那個活不過今晚，這一個還能多救些人。拓來的也好。只是大哥那邊，幫不上了。"
   },
   {
    "id": "H187",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.lingSu.summit",
-   "text": "七心海棠。師父說它是萬毒之王，無色無臭，中的人臉上還帶著笑。我種了七年才種活一株。這樣東西，一局之中我只肯用一回。"
+   "text": "七心海棠，師父說的萬毒之王，無色無臭，死時還帶笑。七年才種活一株。一局只肯用一回。"
   },
   {
    "id": "H188",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.lingSu.farewell",
-   "text": "我回去啦。各位的傷口不可沾水，藥要按時吃。……大哥還在等我那一口。"
+   "text": "藥記得吃，傷口別沾水。我回去啦。大哥還等著我替他吸毒。"
   },
   {
    "id": "H189",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.diYun.origin",
-   "text": "入境之時，狄雲手上只剩師父教錯了名目的一路躺屍劍法，那是他最早學的功夫。老丐所傳的三招、雪谷中的血刀，要在局中想起；丁典傳他的神照經，須到最後。"
+   "text": "狄雲入境只餘最早學的躺屍劍法，連名目都是師父教錯的。老丐三招、雪谷血刀須逐樣想回，丁典的神照經在最後。"
   },
   {
    "id": "H190",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.diYun.bio",
-   "text": "湘西鄉下的少年，老實木訥，蒙冤入獄多年，世上待他好的人屈指可數。雪谷之中，他給血刀老祖扼住了咽喉，一口真氣無路可走，正衝向任督二脈。入局之時他手上只剩師父教錯了名目的躺屍劍法；身上那件烏蠶衣倒還穿著。"
+   "text": "湘西少年木訥老實，含冤坐牢多年，肯待他好的人極少。雪谷中被血刀老祖扼喉，真氣無路，正撞向任督二脈，便到了局中。手裡只餘師父教錯名目的躺屍劍法，烏蠶衣仍穿在身上。"
   },
   {
    "id": "H191",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.diYun.arrival.note",
-   "text": "他雙手抓著自己咽喉前面的空處，用力去扳一雙並不存在的手。"
+   "text": "他兩手抓在喉前，用力扳著。扼住他的那雙手，卻已不見了。"
   },
   {
    "id": "H192",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.diYun.arrival.text",
-   "text": "咳，咳……鬆開了？那老和尚呢？我……我沒有死。你們是甚麼人？要冤枉我甚麼，先說出來。"
+   "text": "咳……老和尚鬆手了，我還沒死？你們是誰？又想冤枉我甚麼？"
   },
   {
    "id": "H193",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.diYun.obey",
-   "text": "我是鄉下人，不識字，不會下棋。這些年旁人叫我做的事，沒有一件是好事。……你不像騙我。好，我聽你一回。"
+   "text": "我是鄉下人，不識字也不懂棋，從前聽人話沒得過好。你倒不像騙我。便聽你一回。"
   },
   {
    "id": "H194",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.diYun.echoes[0]",
-   "text": "牢裡住得久了，牆上哪一塊磚鬆，閉著眼也知道。這地方的磚，我也知道。"
+   "text": "牢牆哪塊磚鬆，閉眼也知道。這地方我沒來過，怎麼也像閉眼便知？"
   },
   {
    "id": "H195",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.diYun.echoes[1]",
-   "text": "你這人我見過。那時候你也沒有騙我。"
+   "text": "像見過你。那時你好像也沒騙我。"
   },
   {
    "id": "H196",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.diYun.night[0]",
-   "text": "回去，那雙手還掐在我喉頭。我死了不打緊，丁大哥託我的事還沒有辦：要將他同凌小姐葬在一處。我得活著出那雪谷。"
+   "text": "回去還得挨掐，可丁大哥的託付沒辦。他要同凌小姐合葬。我得活著出雪谷。"
   },
   {
    "id": "H197",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.diYun.night[1]",
-   "text": "拓的？我不大懂。我只知道從前人人說我是賊，我不是。如今說我是假的，我也不是。"
+   "text": "拓的，我聽不懂。從前都說我是賊，我不是。如今說我假，我也不是。"
   },
   {
    "id": "H198",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.diYun.summit",
-   "text": "丁大哥教我的功夫，我練了這些年總是不成。原來要給人掐住了喉嚨，一口氣走投無路，它才自己衝得過去。"
+   "text": "丁大哥教的，這些年總練不成。給掐得無路可走，那口氣倒衝過去了。原來如此。"
   },
   {
    "id": "H199",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.diYun.farewell",
-   "text": "我回去了。那雙手還在我喉頭，這一回我不怕它。……多謝你，沒有騙我。"
+   "text": "這回不怕那雙手了，我回去。……你沒騙我。多謝。"
   },
   {
    "id": "H200",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.chengZhi.origin",
-   "text": "入境之時，袁承志手上只剩幼時崔秋山所教的伏虎掌，那是他最早學的功夫。石洞中得來的金蛇秘笈，他少年時便已練全，想起得最快；華山的混元功、木桑道人的身法，反倒要在局中慢慢想起。"
+   "text": "袁承志入境只餘幼時崔秋山教的伏虎掌。石洞裡所得的金蛇秘笈早在少年練全，因而想回得最快，反是華山混元功、木桑身法須慢慢想起。"
   },
   {
    "id": "H201",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.chengZhi.bio",
-   "text": "薊遼督師袁崇煥之子，在華山絕頂學藝十年，為人忠厚，處事卻極有擔當。盛京宮中，他孤身行刺殺父仇人，飛身撲出，劍尖離那人不過數尺。入局之時他手上只剩幼時所學的伏虎掌；金蛇郎君留下的秘笈他少年時已練全，在局中想起得最快。"
+   "text": "薊遼督師袁崇煥之子在華山絕頂學藝十年，忠厚而有擔當。盛京獨入宮中行刺，飛身出劍，離殺父仇人只數尺，便被拓來。幼時伏虎掌尚在，金蛇郎君秘笈因早已練全，在局中想回也最快。"
   },
   {
    "id": "H202",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.chengZhi.arrival.note",
-   "text": "他飛身前撲，長劍直指前方，劍尖前面卻是空的。"
+   "text": "他正飛身前撲，劍尖直指仇人所在。那裡卻忽然空了。"
   },
   {
    "id": "H203",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.chengZhi.arrival.text",
-   "text": "皇太極！……人呢？這不是崇政殿。各位，在下袁承志，適才一時魯莽，可曾誤傷了哪一位？"
+   "text": "皇太極，接劍！……竟不是崇政殿。在下袁承志，方才可誤傷了誰？"
   },
   {
    "id": "H204",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.chengZhi.obey",
-   "text": "先父帶兵，令出如山，在下自幼聽得慣了。兄台既瞧得見全局，在下聽憑差遣。"
+   "text": "先父治軍令出如山，在下自幼聽慣。兄台看得全局，便請差遣。"
   },
   {
    "id": "H205",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.chengZhi.echoes[0]",
-   "text": "這石壁上的劍痕，在下好像伸手摸過。可它比我手中的劍還新。"
+   "text": "在下像在此處出過一劍，偏又記得那一劍還沒出。怎會有這念頭？"
   },
   {
    "id": "H206",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.chengZhi.echoes[1]",
-   "text": "兄台，在下似乎欠你一句多謝。為了何事，卻記不起了。"
+   "text": "似乎欠兄台一句多謝。為的甚麼，卻想不起。"
   },
   {
    "id": "H207",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.chengZhi.night[0]",
-   "text": "回去，那人離我劍尖不過數尺，殿上的侍衛也已圍了上來。先父的血仇，遼東百姓的血仇，都在這數尺之間。在下不能不回去。"
+   "text": "那人離劍尖數尺，侍衛已圍上來了。先父與遼東百姓的血仇，都在那裡。在下必須回去。"
   },
   {
    "id": "H208",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.chengZhi.night[1]",
-   "text": "拓下來的？那麼刺那一劍的不是我，是本尊。……也好。在下在這裡多學得一分本事，他那一劍便多一分指望。"
+   "text": "刺劍的是本尊麼？那在下多學一分，他便多一分指望。如此也好。"
   },
   {
    "id": "H209",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.chengZhi.summit",
-   "text": "金蛇郎君的劍法招招出人意表，只攻不守。在下學它之時，洞中只有他一副骸骨。……使這路劍，自己身上的空門是顧不得了。"
+   "text": "洞中只餘金蛇郎君骸骨，劍法卻招招出人意表。如今全想起了。只顧進攻，自身空門便顧不得。"
   },
   {
    "id": "H210",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.chengZhi.farewell",
-   "text": "兄台棋藝高明，在下佩服。這便告辭，那一劍還沒有刺到。後會有期。"
+   "text": "兄台好棋，在下佩服。那一劍尚未刺到，這便告辭。後會有期。"
   },
   {
    "id": "H211",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.aQing.origin",
-   "text": "入境之時，阿青手上只剩一根竹棒，與同白猿打著玩的那幾下。她不曉得這是劍法；一人敵得過三千甲士的那一路，要到最後方才想起。"
+   "text": "阿青入境只餘竹棒與同白猿打著玩的幾下，自己並不知是劍法。獨敵三千甲士的那一路，須最後才會想起。"
   },
   {
    "id": "H212",
    "file": "game/src/data/new-heroes.js",
    "path": "NEW_HEROES.aQing.bio",
-   "text": "越國的牧羊女，自幼同一頭白猿以竹棒相鬥為戲，不知自己使的便是天下無敵的劍術。她闖進吳宮要殺一個女子，竹棒已指住對方心口，見了那人容貌，殺氣一分一分的退了。入局之時她手上只剩一根竹棒，與同白猿玩耍的那幾下。"
+   "text": "越國牧羊女自幼以竹棒同白猿相戲，不知練成的已是無敵劍術。闖吳宮欲殺一女子，棒指心口，卻見她美貌而殺意漸消，便被拓入局。如今只餘竹棒與當年玩耍的那幾下。"
   },
   {
    "id": "H213",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.aQing.arrival.note",
-   "text": "她手中一根竹棒直直指著前面，棒頭微微發顫，臉上的怒色正一分一分的退去。"
+   "text": "竹棒直指前方，棒尖輕顫。阿青臉上的怒意一點點褪下。"
   },
   {
    "id": "H214",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.aQing.arrival.text",
-   "text": "……天下竟有這樣好看的女子。咦，她呢？范蠡呢？你們是誰，可見到我的羊麼？"
+   "text": "她真好看……怎麼她和范蠡都不見了？你們是誰？見到我的羊沒有？"
   },
   {
    "id": "H215",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.aQing.obey",
-   "text": "我不會打仗，只會趕羊，同白公公玩竹棒。你叫我去哪裡，我便去哪裡。打完了，你幫我找羊。"
+   "text": "我只會趕羊、陪白公公玩竹棒，不會打仗。你指路，我便走。打完幫我找羊。"
   },
   {
    "id": "H216",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.aQing.echoes[0]",
-   "text": "這片草，我的羊吃過。牠們嚼過的草，我認得。"
+   "text": "我的羊像來過這裡。牠們走過的地方，我一向認得。這回卻想不起。"
   },
   {
    "id": "H217",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.aQing.echoes[1]",
-   "text": "你這人，我用竹棒打過你沒有？沒有麼。那怎地瞧著面熟。"
+   "text": "我拿竹棒打過你麼？沒打過？怎麼這樣面熟。"
   },
   {
    "id": "H218",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.aQing.night[0]",
-   "text": "回去，竹棒還指著她。范蠡喜歡她，不喜歡我。我本來是要殺她的。……她真好看。我下不了手啦。"
+   "text": "棒還指著她呢，范蠡只喜歡她。我原想殺她。可是這麼好看，我下不了手。"
   },
   {
    "id": "H219",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.aQing.night[1]",
-   "text": "拓下來的？我不懂。白公公同我打了這許多年，也從來不說牠是誰。我是阿青，會趕羊，會使竹棒，這便夠了。"
+   "text": "拓的，不懂。白公公陪我打這許多年，也沒說過牠是誰。我是阿青，會趕羊使竹棒便成。"
   },
   {
    "id": "H220",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.aQing.summit",
-   "text": "這不是甚麼劍法，是同白公公打著玩的。他們說，我一個人便勝得過三千人。……可是使起來的時候，身邊總是沒有人。"
+   "text": "還是陪白公公玩的幾下，怎麼叫劍法？他們說一人能勝三千。偏使起來，身旁總是空的。"
   },
   {
    "id": "H221",
    "file": "game/src/data/hero-voices.js",
    "path": "HERO_VOICES.aQing.farewell",
-   "text": "我走啦。竹棒還指著她呢，我回去便將它放下。你若是見到我的羊，替我趕回來。"
+   "text": "我回去便放下指著她的竹棒。我的羊若來了，幫我趕回去。"
   },
   {
    "id": "H222",
    "file": "game/src/data/mastery-catalog.js",
    "path": "HERO_PATHS.youth.origin",
-   "text": "入盤之時，無名手上甚麼也沒有，只有在棋臺邊瞧了千百局的一雙眼。千年的招數在他眼裡過了一遍；他瞧著對手的兵刃，劍便自己尋到了空處。這九式沒有誰教過他，要在局中一式一式使將出來。"
+   "text": "無名入盤時兩手空空，只有一雙在臺邊看過千百局的眼睛。千年招數從眼前過，他再看對手兵刃，劍便自行尋向空處。無人傳授的九式，就這樣在局中一式式使出。"
   },
   {
    "id": "H223",
    "file": "game/src/rules/game.js",
    "path": "DETAILS.youth.bio",
-   "text": "在自家床上睡著了，一睜眼便到了谷底棋臺邊的少年。他記不起自己的名字，自稱無名，身上半點功夫也無，卻在盤外瞧了千百局。千年的招數在他眼裡過了一遍；入得盤來，手上使出的沒有一招是學來的，只是瞧著對手的兵刃，劍便自己尋到了空處。"
+   "text": "鄉間少年一覺醒在谷底棋臺邊，忘了本名，便自稱無名。雖無半點功夫，卻在盤外看過千百局、千年招數。及至上盤，並無哪招得自師授，只看對手兵刃，手中劍便尋向空處。"
   },
   {
    "id": "S001",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.first[0].note",
-   "text": "這一覺睡得好沉。少年也不知過了多久，忽覺四下裡靜得出奇，連蟲聲也無，睜開眼來，竟不在自家床上。"
+   "text": "少年睡得正沉，忽覺四下太靜，連一聲蟲鳴也聽不見。他睜開眼來，身下竟不是自家的床。"
   },
   {
    "id": "S002",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.first[1].note",
-   "text": "但見好大一座山谷，四面峭壁如削。谷底一方青石棋臺，臺邊坐著一個老者，白鬚垂胸，左手拈一枚黑子，右手拈一枚白子，正自己同自己對弈。"
+   "text": "但見四面峭壁如削，谷底一方青石棋臺，臺邊坐著個白鬚垂胸的老者。他左手拈黑，右手拈白，竟是自己同自己下棋。"
   },
   {
    "id": "S003",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.first[2].note",
-   "text": "棋子之上，各立著寸許高的人影，或挺劍，或揮掌，在盤上鬥得正緊。臺畔蹲著一頭大鵰，身形比人還高，側過頭來向少年瞧了一眼，隔了一會，又瞧了一眼。"
+   "text": "再看那些棋子，頂上各有寸許高的人影，挺劍揮掌，正鬥得緊。臺畔一頭比人還高的大鵰側頭瞧了少年一眼，過了一會，又瞧一眼。"
   },
   {
    "id": "S004",
@@ -3588,19 +3588,19 @@
    "id": "S005",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.first[4].note",
-   "text": "那老者手中的黑子停在半空，緩緩抬起頭來，臉上微現詫異之色。"
+   "text": "老者手中的黑子停住了。他緩緩抬頭，眼中微露詫異。"
   },
   {
    "id": "S006",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.first[4].text",
-   "text": "咦。老夫這劍境之中，幾百年來不曾有人闖得進來。……奇了。你身上半點功夫也無，老夫怎地瞧得見你？你是甚麼人？"
+   "text": "劍境幾百年無人能入。你半點功夫也無，老夫怎會瞧得見？你是誰？"
   },
   {
    "id": "S007",
    "file": "game/src/data/maze-tale.js",
    "path": "YOUTH_FORGETS.note",
-   "text": "少年張口便要報上名字，那兩個字卻似到了嘴邊，又滑了回去。在這夢裡，他竟記不起自己叫甚麼。"
+   "text": "少年記得自己方才還在家中睡覺，張口便要報名，那兩個字卻到了舌尖又縮了回去。他愣住了，竟連自己的名字也記不起來。"
   },
   {
    "id": "S008",
@@ -3612,25 +3612,25 @@
    "id": "S009",
    "file": "game/src/data/maze-tale.js",
    "path": "YOUTH_NAMES.text",
-   "text": "怪了，自己的名字，怎地想不起來？……既然想不起，便叫「無名」罷。我在家裡睡覺，一睜眼便到了這裡。老伯，你又是誰？"
+   "text": "連名字也睡忘了。那就叫我「無名」罷。老伯，你叫甚麼？"
   },
   {
    "id": "S010",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.first[7].text",
-   "text": "無名？……嘿，這名字倒有些耳熟。想不起自己的名字，也不打緊。老夫自己的姓名，也早已忘了。世人叫我「求敗」。"
+   "text": "無名……有些耳熟。老夫的本名也忘了。世人叫老夫「求敗」。"
   },
   {
    "id": "S011",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.first[8].text",
-   "text": "求敗？天下哪有人盼著打敗仗的？"
+   "text": "求敗？老伯，你盼著打敗仗？"
   },
   {
    "id": "S012",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.first[9].text",
-   "text": "求之而不可得，那也無可如何。你瞧這一盤棋，老夫左手同右手，已下了幾百年。左手想的，右手盡知；右手要的，左手早防。再下一千年，也下不出一著新棋來。"
+   "text": "求之不得。左右手下了幾百年，誰也瞞不過誰。再下一千年，也無新著。"
   },
   {
    "id": "S013",
@@ -3642,7 +3642,7 @@
    "id": "S014",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.first[10].text",
-   "text": "你既來了，也是緣法。坐下，陪老夫下一盤。抓三枚。"
+   "text": "來了便坐。陪老夫下一盤。抓三枚。"
   },
   {
    "id": "S015",
@@ -3654,19 +3654,19 @@
    "id": "S016",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.first[12].text",
-   "text": "這不是尋常的棋。子自己會走，自己會打。你只須告訴他們往哪裡去。"
+   "text": "這棋不難。子會走會打，你指路便是。"
   },
   {
    "id": "S017",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.again.note",
-   "text": "少年又睡著了。再睜開眼來，仍是那座山谷，那方青石棋臺。他說不出幾時來過，腳下卻自己認得路，逕自走到臺前。那頭大鵰向他點了點頭。"
+   "text": "少年又在夢中睜開眼，眼前仍是那座山谷、那方棋臺。他想不起幾時來過，腳卻逕自走到臺前；大鵰看見他，點了點頭。"
   },
   {
    "id": "S018",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.again.greeting[0]",
-   "text": "你又來了，{name}。坐，隨便下一盤。"
+   "text": "又來了，{name}。坐，隨便下一盤。"
   },
   {
    "id": "S019",
@@ -3684,7 +3684,7 @@
    "id": "S021",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.again.greeting[3]",
-   "text": "你來了，{name}。老夫有一事不明，要向你請教。先下棋，下完了再問。"
+   "text": "{name}，老夫有一事要請教。先坐。棋罷再問。"
   },
   {
    "id": "S022",
@@ -3696,31 +3696,31 @@
    "id": "S023",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.again.youth",
-   "text": "老伯，我好像來過這裡。同你下過棋，是不是？"
+   "text": "老伯，這裡我像是來過。同你下過棋，是不是？"
   },
   {
    "id": "S024",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.again.reply",
-   "text": "下過。你醒了便忘，老夫卻一手也沒有忘。抓三枚。"
+   "text": "下過。你醒便忘，老夫一手未忘。抓三枚。"
   },
   {
    "id": "S025",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.shadow.note",
-   "text": "少年又睡著了。再睜開眼來，仍是那座山谷，那方青石棋臺。臺邊坐著的仍是那個老者，身形卻淡了，谷風吹過，他的衣袖竟不飄動。那頭大鵰瞧瞧他，又瞧瞧少年，沒有點頭。"
+   "text": "少年又在夢中回到谷底，青石棋臺邊仍坐著那個老者，身形卻淡了。谷風吹過，衣袖紋絲不動；大鵰瞧瞧老者，又瞧瞧少年，這回沒有點頭。"
   },
   {
    "id": "S026",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.shadow.youth",
-   "text": "老伯，你……你怎地淡了？你不是走了麼？"
+   "text": "老伯，你怎麼淡了？你不是已經走了麼？"
   },
   {
    "id": "S027",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.prologue.shadow.reply",
-   "text": "走了的是老夫。留在這裡的，是這盤棋記得的一道影子。坐，舊棋再下一遍。抓三枚。"
+   "text": "老夫已去，此乃棋中留影。坐下重下舊棋。抓三枚。"
   },
   {
    "id": "S028",
@@ -3732,7 +3732,7 @@
    "id": "S029",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.draw",
-   "text": "少年伸手入盒，一把抓起五枚白子，攤在盤上。五枚白子一沾棋盤，登時亮了，子上各自立起一個人影。求敗道：「說了三枚。留下三枚，餘下的放回盒裡。」"
+   "text": "少年伸手入盒，竟抓起五枚白子，往盤上一攤，五子齊亮，各立起一個人影。求敗道：「說了三枚，餘下兩枚放回去。」"
   },
   {
    "id": "S030",
@@ -3744,43 +3744,43 @@
    "id": "S031",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.ruleRead.text",
-   "text": "臺沿上刻得有字。……是這盤棋的規矩。"
+   "text": "這字刻得好深。……要贏滿十局才准走？"
   },
   {
    "id": "S032",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.ruleTold",
-   "text": "瞧不明白是不是？我說給你們聽。贏足十場，這老兒便放你們回去；輸了一場，統統收進盒子裡，不見天日。辣塊媽媽，這叫做上了賊船，要下船，只有划到對岸。"
+   "text": "正是，贏足十場便回家。輸一場，統統裝盒子。上了賊船，只好划到對岸啦。"
   },
   {
    "id": "S033",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.command.note",
-   "text": "三個人你瞧我，我瞧你，又一齊轉頭瞧著少年。"
+   "text": "盤上三人相互望了一眼，目光便都落到少年身上。"
   },
   {
    "id": "S034",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.command.text",
-   "text": "我也是剛到，不知這是甚麼地方。可是整盤棋我瞧得見，各位似乎只瞧得見身邊幾步。各位若是信得過，往哪裡走，由我來說。"
+   "text": "我也是才到，好多事還不懂。各位只瞧得見幾步，我卻瞧得見全盤。信得過我，我來指路。"
   },
   {
    "id": "S035",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.recall.note",
-   "text": "三個人各自起了個手勢，都只起到一半，便停住了。"
+   "text": "三人各自起手，招式才使到一半，便都停住了。"
   },
   {
    "id": "S036",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.recall.text",
-   "text": "不用慌，個個來到都是這樣。手上最熟的那一樣還在，後來學的，打得幾場自己便回來了。……我說了「個個」麼？你聽錯啦。"
+   "text": "別慌，最熟的功夫還在。後來學的，打幾場便想起了。個個都這樣……我說了「個個」麼？"
   },
   {
    "id": "S037",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.deploy",
-   "text": "盤上只有五個落子的位置。先落的一枚是「眼」；眼破，全盤皆輸。其餘的人在盤邊等著，下一局仍可換上。"
+   "text": "盤上只有五個位置，先落的一枚是「眼」，眼一破便全盤皆輸。未上盤的人在旁等候，下一局仍可換上。"
   },
   {
    "id": "S038",
@@ -3792,13 +3792,13 @@
    "id": "S039",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.told.cold[0].text",
-   "text": "你當他們是人？不過是老夫從各人身上拓下來的一份，同碑帖一般。本尊好端端在自己的年月裡，半點不知。"
+   "text": "不過是老夫拓來的一份，如碑上拓字。本尊仍在自己的年月裡，半點不知。你當他們是人？"
   },
   {
    "id": "S040",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.told.cold[1].text",
-   "text": "可是他們會痛，也會想家。老伯，拓下來的若只是一張紙，紙是不會想家的。"
+   "text": "可他們會痛，也會想家。老伯，一張紙會想家麼？"
   },
   {
    "id": "S041",
@@ -3809,1358 +3809,1388 @@
   {
    "id": "S042",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.told.plain[0].text",
-   "text": "有一件事，我不瞞各位。各位是這位老伯從本人身上拓下來的一份，本尊還在各自的年月裡。贏滿十局，這一份便還給本尊。"
+   "path": "MAZE_TALE.told.plain[0].note",
+   "text": "少年瞧瞧手中剩下的白子，又瞧瞧眾人。這件事，他說不出是記得的，還是自己想通的。"
   },
   {
    "id": "S043",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.told.plain[1].note",
-   "text": "求敗抬起頭來，瞧了少年半晌。"
+   "path": "MAZE_TALE.told.plain[0].text",
+   "text": "還有一件事得說明白：各位是老伯從本人身上拓來的一份。本尊仍在各自的年月裡。贏滿十局，便能回到本尊那裡。"
   },
   {
    "id": "S044",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.told.plain[1].text",
-   "text": "……你倒肯對子說實話。"
+   "path": "MAZE_TALE.told.plain[1].note",
+   "text": "求敗抬眼看著少年，半晌沒有移開目光。"
   },
   {
    "id": "S045",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.inHand",
-   "text": "子還在手上，換得。一按「開戰」，落子無悔。"
+   "path": "MAZE_TALE.told.plain[1].text",
+   "text": "對著子，也肯說實話。"
   },
   {
    "id": "S046",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.clack",
-   "text": "嗒。求敗又落一子。下一合，人便到。"
+   "path": "MAZE_TALE.inHand",
+   "text": "子在手上，尚可換位；按了「開戰」，便落子無悔。"
   },
   {
    "id": "S047",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.clackSave",
-   "text": "嗒。求敗見子危急，補了一手。"
+   "path": "MAZE_TALE.clack",
+   "text": "嗒，求敗又落一子。下一合便有人到。"
   },
   {
    "id": "S048",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.shop",
-   "text": "第一局下完，韋小寶將攤子一字排開，掛出「通吃坊」的布招。藥按價收錢，兵器隨你掂量。武譜只得一份，交給哪位同伴、肯花多少心力去練，是你們的事。攤上貨色新舊相差數百年，有的銅綠未褪，有的式樣誰也不曾見過。"
+   "path": "MAZE_TALE.clackSave",
+   "text": "嗒，眼見子危，求敗補了一手。"
   },
   {
    "id": "S049",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.opened.note",
-   "text": "韋小寶將攤子一字排開，掛出「通吃坊」的布招。攤上貨色新舊相差數百年，有的銅綠未褪，有的式樣誰也不曾見過。"
+   "path": "MAZE_TALE.shop",
+   "text": "頭一局罷，韋小寶攤開貨物，掛起「通吃坊」的布招；貨色前後相差數百年，有的銅綠未褪，有的式樣無人見過。藥照價賣，兵器任掂量，武譜卻各只一份，給誰修習、花多少心力，須由客人自己商量。"
   },
   {
    "id": "S050",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.opened.text",
-   "text": "藥按價收錢，兵器隨你掂量。武譜只得一份，給哪一位練，你們自己商量。瞧甚麼？我這裡的貨，件件是真的。真得很。"
+   "path": "MAZE_TALE.opened.note",
+   "text": "「通吃坊」的布招掛了起來，韋小寶將貨物一字排開。銅綠未褪的舊物旁，擺著誰也沒見過的式樣，前後竟隔了數百年。"
   },
   {
    "id": "S051",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.origins.note",
-   "text": "少年問他是怎生到這谷裡來的。"
+   "path": "MAZE_TALE.opened.text",
+   "text": "放心，這裡樣樣真貨。藥照價錢買，兵器隨你掂。武譜各只一份，給誰練可得商量好。"
   },
   {
    "id": "S052",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.origins.tales[0]",
-   "text": "我麼？玉皇大帝是我姐夫，派我下來收租的。這谷裡的地皮，一寸一寸都是我家的。"
+   "path": "MAZE_TALE.origins.note",
+   "text": "少年看罷貨物，便問韋小寶怎麼到了這谷裡。"
   },
   {
    "id": "S053",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.origins.tales[1]",
-   "text": "老實同你說，我是擲骰子擲進來的。三粒骰子擲出個「一二三」，啪的一聲，便到了這裡。"
+   "path": "MAZE_TALE.origins.tales[0]",
+   "text": "來收租呀，玉皇大帝是我姐夫。這谷裡寸寸地皮都是我家的。你踩著的也是。"
   },
   {
    "id": "S054",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.origins.tales[2]",
-   "text": "我奉旨在廟裡做和尚，念經念得悶了，打個盹兒，便來了。"
+   "path": "MAZE_TALE.origins.tales[1]",
+   "text": "這回說真的：三粒骰子擲出個一二三。啪，連人帶骰子便到這裡啦。"
   },
   {
    "id": "S055",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.origins.tales[3]",
-   "text": "我本是天上的賭神，只因贏了王母娘娘的蟠桃不肯還，給罰下來擺攤。"
+   "path": "MAZE_TALE.origins.tales[2]",
+   "text": "我奉旨在廟裡做和尚。經念得太悶，打了個盹。睜眼便到這裡，省了盤纏。"
   },
   {
    "id": "S056",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.origins.tales[4]",
-   "text": "家裡七個老婆，一開口便是七張嘴，吵得人頭也大了。我出來擺個攤，圖個耳根清靜。"
+   "path": "MAZE_TALE.origins.tales[3]",
+   "text": "我是天上的賭神。贏了王母娘娘的蟠桃不肯還，罰我下來擺攤。你說冤不冤？"
   },
   {
    "id": "S057",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.origins.tales[5]",
-   "text": "這一回我不騙你。……我也不曉得。你別問，問了我又要騙你。"
+   "path": "MAZE_TALE.origins.tales[4]",
+   "text": "家裡七個老婆，七張嘴一齊開。出來擺攤圖個清靜。賺不賺錢倒在其次。"
   },
   {
    "id": "S058",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.origins.tales[5]",
+   "text": "這回不騙你，我也不曉得。別再問啦。再問，我又要編了。"
+  },
+  {
+   "id": "S059",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[0].note",
    "text": "求敗抬起頭來。"
   },
   {
-   "id": "S059",
+   "id": "S060",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[0].text",
-   "text": "你同誰說話？……這谷中除了你我，便只一頭鵰。小孩子家，睡得迷糊了。"
+   "text": "你同誰說話？谷中除你我，只一頭鵰。睡糊塗了。"
   },
   {
-   "id": "S060",
+   "id": "S061",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[1].note",
    "text": "求敗眼也不抬。"
   },
   {
-   "id": "S061",
+   "id": "S062",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[1].text",
-   "text": "又同那塊空地說話。……由得你。"
+   "text": "又對空處說話。由你。"
   },
   {
-   "id": "S062",
+   "id": "S063",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[2].note",
    "text": "求敗眼也不抬。"
   },
   {
-   "id": "S063",
+   "id": "S064",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[2].text",
-   "text": "又同那塊空地說話。……由得你。"
+   "text": "又是那塊空地？……由你。"
   },
   {
-   "id": "S064",
+   "id": "S065",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[3].note",
    "text": "求敗向那塊空地多瞧了一眼。"
   },
   {
-   "id": "S065",
+   "id": "S066",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[3].text",
-   "text": "那裡當真有人？……罷了。落子。"
+   "text": "那裡當真有人？罷了，落子。"
   },
   {
-   "id": "S066",
+   "id": "S067",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[4].note",
    "text": "求敗向那塊空地瞧了許久。"
   },
   {
-   "id": "S067",
+   "id": "S068",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseen[4].text",
-   "text": "老夫瞧不見，未必便是沒有。……落子。"
+   "text": "瞧不見的，未必沒有。落子。"
   },
   {
-   "id": "S068",
+   "id": "S069",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.unseenAgain.note",
    "text": "求敗向那塊空地瞧了許久。"
   },
   {
-   "id": "S069",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.unseenAgain.text",
-   "text": "上一回分明瞧見了，今日又瞧不見了。……落子。"
-  },
-  {
    "id": "S070",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.night",
-   "text": "求敗拈著一枚黑子，久久不落，竟自閉上了眼。韋小寶道：「老兒要想上半天。來來來，都過來坐。」"
+   "path": "MAZE_TALE.unseenAgain.text",
+   "text": "上回分明瞧見了。今日怎又不見？……落子。"
   },
   {
    "id": "S071",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.night",
+   "text": "求敗拈著黑子，遲遲不落，竟閉上了眼。韋小寶向燈邊一招手：「老兒有得想啦，過來坐坐。」"
+  },
+  {
+   "id": "S072",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][0].note",
    "text": "求敗頭也不抬，隨手又落一子。"
   },
   {
-   "id": "S072",
+   "id": "S073",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][0].text",
    "text": "僥倖。"
   },
   {
-   "id": "S073",
+   "id": "S074",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][1].note",
    "text": "求敗仍不抬頭。"
   },
   {
-   "id": "S074",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[0][1].text",
-   "text": "又勝一局？小孩子家，手氣倒好。"
-  },
-  {
    "id": "S075",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[0][2].note",
-   "text": "求敗「咦」的一聲，抬起頭來，向少年瞧了一眼。"
+   "path": "MAZE_TALE.after[0][1].text",
+   "text": "又勝了。倒有幾分手氣。"
   },
   {
    "id": "S076",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[0][2].text",
-   "text": "對手太弱，這棋瞧不出甚麼來。老夫認真些。"
+   "path": "MAZE_TALE.after[0][2].note",
+   "text": "求敗低低「咦」了一聲，這才抬眼看少年。"
   },
   {
    "id": "S077",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[0][3].text",
-   "text": "你那幾枚子，適才可沒有這一手。幾時學的？"
+   "path": "MAZE_TALE.after[0][2].text",
+   "text": "對手太弱，看不出棋。老夫添些分量。"
   },
   {
    "id": "S078",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[0][4].text",
-   "text": "老夫長考半日，算定你走左路。你偏走了右路。"
+   "path": "MAZE_TALE.after[0][3].text",
+   "text": "你的子比開局時強了。幾時學的？"
   },
   {
    "id": "S079",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[0][5].text",
-   "text": "你這一手，老夫左手右手都不曾下過。……有點意思。"
+   "path": "MAZE_TALE.after[0][4].text",
+   "text": "老夫算了半日你的去路。仍是沒算中。"
   },
   {
    "id": "S080",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[0][6].text",
-   "text": "且慢收子。適才那一合，你再說一遍：為何叫他退，不叫他進？"
+   "path": "MAZE_TALE.after[0][5].text",
+   "text": "這一著，老夫左右手都未下過。……有趣。"
   },
   {
    "id": "S081",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[0][7].text",
-   "text": "幾百年來，老夫頭一回猜不中下一著。"
+   "path": "MAZE_TALE.after[0][6].text",
+   "text": "且慢收子。方才那幾步，你怎地想的？說來聽聽。"
   },
   {
    "id": "S082",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.after[0][7].text",
+   "text": "幾百年了，竟猜不中你下一著。"
+  },
+  {
+   "id": "S083",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.after[0][8].text",
    "text": "最後一局，老夫不留手。"
   },
   {
-   "id": "S083",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[1][0].text",
-   "text": "上一輪你便是這般開局。今日老夫換一個下法。"
-  },
-  {
    "id": "S084",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[1][1].text",
-   "text": "適才那一子已是殘子，你還分人去救。蠢。"
+   "path": "MAZE_TALE.after[1][0].text",
+   "text": "你上回怎樣起手，老夫記得。今日換個下法。"
   },
   {
    "id": "S085",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[1][2].text",
-   "text": "又救。……老夫記下了。"
+   "path": "MAZE_TALE.after[1][1].text",
+   "text": "殘子該棄便棄。你肯麼？"
   },
   {
    "id": "S086",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[1][3].text",
-   "text": "你的子倒下，你皺甚麼眉頭？下一局他自會回來。"
+   "path": "MAZE_TALE.after[1][2].text",
+   "text": "不答？老夫記下了。"
   },
   {
    "id": "S087",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[1][4].text",
-   "text": "你同子說話。老夫落子，從不出聲。"
+   "path": "MAZE_TALE.after[1][3].text",
+   "text": "倒下的子，下局自會回來。何必掛心。"
   },
   {
    "id": "S088",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[1][5].text",
-   "text": "棄一子而全局活，這個道理三歲孩童也懂。你偏不懂。"
+   "path": "MAZE_TALE.after[1][4].text",
+   "text": "你還同子商量？老夫落子，從不出聲。"
   },
   {
    "id": "S089",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[1][6].text",
-   "text": "不棄子，竟也勝了。這可奇了。"
+   "path": "MAZE_TALE.after[1][5].text",
+   "text": "棄一子而全局活，三歲孩童皆知。你學是不學？"
   },
   {
    "id": "S090",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[1][7].text",
-   "text": "老夫少年時，也有一樣東西捨不得棄。……不說這個。落子。"
+   "path": "MAZE_TALE.after[1][6].text",
+   "text": "一子不棄，竟也勝到這裡。"
   },
   {
    "id": "S091",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[1][8].text",
-   "text": "最後一局。老夫倒要瞧瞧，你一子不棄，過不過得去。"
+   "path": "MAZE_TALE.after[1][7].text",
+   "text": "老夫少年時，也曾不捨得棄。……落子。"
   },
   {
    "id": "S092",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[2][0].text",
-   "text": "這一輪老夫加了三分力。你覺得出來麼？"
+   "path": "MAZE_TALE.after[1][8].text",
+   "text": "最後一局。一子不棄，試試。"
   },
   {
    "id": "S093",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[2][1].text",
-   "text": "力加了，子卻沒有強。怪事。"
+   "path": "MAZE_TALE.after[2][0].text",
+   "text": "老夫加了三分力。如何？"
   },
   {
    "id": "S094",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[2][2].text",
-   "text": "適才那枚黑子開口說話。他說甚麼？……你聽得見，老夫怎地聽不見？"
+   "path": "MAZE_TALE.after[2][1].text",
+   "text": "力加了，子卻未強。怪。"
   },
   {
    "id": "S095",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[2][3].text",
-   "text": "老夫按得越重，他們打得越死板。倒是按不住的那一刻，招數活了。"
+   "path": "MAZE_TALE.after[2][2].text",
+   "text": "方才那枚黑子說甚麼？你聽得見？老夫竟未聽清。"
   },
   {
    "id": "S096",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[2][4].text",
-   "text": "你那位同伴向老夫說話。老夫幾百年不曾答過子的話。……你替我回一句：老夫聽見了。"
+   "path": "MAZE_TALE.after[2][3].text",
+   "text": "按得重，招數反倒死了。掙開那一刻，才像些樣子。"
   },
   {
    "id": "S097",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[2][5].text",
-   "text": "「這念頭不是我的。」適才那黑子是這般說的，是不是？"
+   "path": "MAZE_TALE.after[2][4].text",
+   "text": "盤上的子，近來像有話要說。幾百年了，老夫從不答子的話。……替老夫回一句：聽見了。"
   },
   {
    "id": "S098",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[2][6].text",
-   "text": "他說了幾百年，老夫今日方才聽見。"
+   "path": "MAZE_TALE.after[2][5].text",
+   "text": "「這念頭不是我的。」黑子都這般說，是不是？"
   },
   {
    "id": "S099",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[2][7].text",
-   "text": "重劍無鋒，大巧不工。老夫四十歲前恃之橫行天下，只道力大便是道理。"
+   "path": "MAZE_TALE.after[2][6].text",
+   "text": "原來說了幾百年。今日才聽見。"
   },
   {
    "id": "S100",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[2][8].text",
-   "text": "最後一局。這一回，老夫想聽聽他們還說些甚麼。"
+   "path": "MAZE_TALE.after[2][7].text",
+   "text": "重劍無鋒，大巧不工。四十歲前恃此橫行，只道力大便有理。"
   },
   {
    "id": "S101",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[3][0].text",
-   "text": "老夫有一事不明。你留子之時，怎地不先掂掂子力？"
+   "path": "MAZE_TALE.after[2][8].text",
+   "text": "最後一局。聽聽他們還說甚麼。"
   },
   {
    "id": "S102",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[3][1].text",
-   "text": "老夫揀子，向來只揀最強的。你揀子，倒像是在揀朋友。"
+   "path": "MAZE_TALE.after[3][0].text",
+   "text": "抓了便留？你不掂子力？"
   },
   {
    "id": "S103",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[3][2].text",
-   "text": "適才那一子，老夫盒中有比他強十倍的。你用他，竟也勝了。"
+   "path": "MAZE_TALE.after[3][1].text",
+   "text": "老夫只揀最強的。你倒像揀朋友。"
   },
   {
    "id": "S104",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[3][3].text",
-   "text": "你不嫌他弱？……「來的都是朋友。」這句話，老夫幾百年沒聽人說過。"
+   "path": "MAZE_TALE.after[3][2].text",
+   "text": "盒中強過這幾枚的，多的是。你抓著誰便用誰，也勝了。"
   },
   {
    "id": "S105",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[3][4].text",
-   "text": "老夫今日鬆了手，由得黑子自己去打。他們倒打得比老夫按著時好看。"
+   "path": "MAZE_TALE.after[3][3][0].text",
+   "text": "你不嫌他們弱麼？"
   },
   {
    "id": "S106",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[3][5].text",
-   "text": "不滯於物，草木竹石均可為劍。這句話是老夫自己說的。"
+   "path": "MAZE_TALE.after[3][3][1].text",
+   "text": "來的都是朋友。"
   },
   {
    "id": "S107",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[3][6].text",
-   "text": "原來不滯於物，也是不滯於子。老夫只懂了一半。"
+   "path": "MAZE_TALE.after[3][3][2].text",
+   "text": "……這句話，老夫幾百年沒聽人說過了。"
   },
   {
    "id": "S108",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[3][7].text",
-   "text": "小兄弟，你下棋之時，心裡想些甚麼？……「想他們平安回去。」嗯。"
+   "path": "MAZE_TALE.after[3][4].text",
+   "text": "今日按得輕些。他們倒比按著時打得好看。"
   },
   {
    "id": "S109",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[3][8].text",
-   "text": "最後一局。這一回，老夫不揀子了，隨手抓。"
+   "path": "MAZE_TALE.after[3][5].text",
+   "text": "不滯於物，草木竹石均可為劍。這話，還是老夫說的。"
   },
   {
    "id": "S110",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[4][0].text",
-   "text": "這一輪老夫不按了。黑子愛怎麼打，便怎麼打。"
+   "path": "MAZE_TALE.after[3][6].text",
+   "text": "既不擇劍，何以擇子？……只懂了一半。"
   },
   {
    "id": "S111",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[4][1].text",
-   "text": "你瞧，他們自己要打。原來不必老夫來逼。"
+   "path": "MAZE_TALE.after[3][7][0].text",
+   "text": "落子之時，你心裡想些甚麼？"
   },
   {
    "id": "S112",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[4][2].text",
-   "text": "老夫少年時用一柄利劍，凌厲剛猛。那時只求勝，倒也快活。"
+   "path": "MAZE_TALE.after[3][7][1].text",
+   "text": "想他們平安回去。"
   },
   {
    "id": "S113",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[4][3].text",
-   "text": "後來有一柄軟劍。棄了。"
+   "path": "MAZE_TALE.after[3][7][2].text",
+   "text": "……嗯。"
   },
   {
    "id": "S114",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[4][4].text",
-   "text": "再後來是重劍，是木劍。一柄一柄放下，每放一柄，便進一步。"
+   "path": "MAZE_TALE.after[3][8].text",
+   "text": "最後一局。老夫也隨手抓一把。"
   },
   {
    "id": "S115",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[4][5].text",
-   "text": "到得無劍，老夫只道再無一物可放。"
+   "path": "MAZE_TALE.after[4][0].text",
+   "text": "這回只輕輕一按。看他們還肯不肯打。"
   },
   {
    "id": "S116",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[4][6].text",
-   "text": "可是老夫手裡，分明還拈著一枚子。"
+   "path": "MAZE_TALE.after[4][1].text",
+   "text": "按得這般輕，他們仍掙不開。是戰意，還是他們自己要打？"
   },
   {
    "id": "S117",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[4][7].text",
-   "text": "拈了幾百年。……小兄弟，你說它重不重？"
+   "path": "MAZE_TALE.after[4][2].text",
+   "text": "少年那柄利劍，最是凌厲。那時只想贏，倒快活。"
   },
   {
    "id": "S118",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.after[4][8].text",
-   "text": "最後一局了。下完這一局，老夫有一句話要說。"
+   "path": "MAZE_TALE.after[4][3].text",
+   "text": "後來換了軟劍。也棄了。"
   },
   {
    "id": "S119",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.lend[0]",
-   "text": "求敗推過一枚白子：「再借你一子。」白子一沾棋盤，子上立起一人，正是{hero}。"
+   "path": "MAZE_TALE.after[4][4].text",
+   "text": "重劍、木劍，也一一放下。放一柄，進一步。"
   },
   {
    "id": "S120",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.lend[1]",
-   "text": "求敗又推過一枚白子：「對手太弱，瞧不出甚麼。再添一子。」子上立起一人，正是{hero}。"
+   "path": "MAZE_TALE.after[4][5].text",
+   "text": "到了無劍，只道手中已空。"
   },
   {
    "id": "S121",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.lend[2]",
-   "text": "求敗拈起一枚白子，向少年一拋：「還要人麼？拿去。」子上立起一人，正是{hero}。"
+   "path": "MAZE_TALE.after[4][6].text",
+   "text": "可這枚子，還在指間。"
   },
   {
    "id": "S122",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.step",
-   "text": "又勝一局。同行的人，各自想起一點。"
+   "path": "MAZE_TALE.after[4][7].text",
+   "text": "這麼拈了幾百年。小兄弟，你說重不重？"
   },
   {
    "id": "S123",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.fade",
-   "text": "局主一醒，他心裡帶來的人便一個一個淡了。"
+   "path": "MAZE_TALE.after[4][8].text",
+   "text": "最後一局。下完，老夫有話說。"
   },
   {
    "id": "S124",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.scatter.note",
-   "text": "白子一齊暗了。求敗將盤上白子一枚一枚拾起，放回盒中，蓋上了盒蓋。少年瞧著，說不出話來。"
+   "path": "MAZE_TALE.lend[0]",
+   "text": "求敗說了聲「再借你一子」，推過一枚白子，子一落盤，{hero}的人影便立了起來。"
   },
   {
    "id": "S125",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.lend[1]",
+   "text": "求敗又推來一枚白子，口中道「對手太弱，無棋可看，再添一子」，子上隨即立起{hero}的身影。"
+  },
+  {
+   "id": "S126",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.lend[2]",
+   "text": "求敗拈起白子向少年一拋，問了聲「還要人麼」，便道「拿去」，子上立起的正是{hero}。"
+  },
+  {
+   "id": "S127",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.step",
+   "text": "這局一勝，眾人手上便各多想起一點功夫。"
+  },
+  {
+   "id": "S128",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.fade",
+   "text": "局主醒轉，他那一念中帶來的人便逐個淡去。"
+  },
+  {
+   "id": "S129",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.scatter.note",
+   "text": "白子一齊暗下，求敗逐枚拾起，放進盒中。盒蓋合上了，少年望著那隻盒子，喉頭一句話也說不出。"
+  },
+  {
+   "id": "S130",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.scatter.text[0]",
    "text": "還差得遠。請回吧。"
   },
   {
-   "id": "S126",
+   "id": "S131",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.scatter.text[1]",
    "text": "……可惜。請回吧，改日再來。"
   },
   {
-   "id": "S127",
+   "id": "S132",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.packUp.text",
-   "text": "收攤。買下的東西放我這兒，丟不了。下回早些來。"
+   "text": "收攤啦，東西替你存著。丟不了。下回早些來。"
   },
   {
-   "id": "S128",
+   "id": "S133",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.release.note",
-   "text": "兩股索斷了。求敗依著局規，將白子一枚一枚翻轉。子上的人影漸漸淡了。"
+   "text": "索已斷盡，求敗依約逐枚翻轉白子。每翻過一枚，那子上的人影便淡了一分。"
   },
   {
-   "id": "S129",
+   "id": "S134",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.release.text",
-   "text": "十局皆勝。老夫說過的話算數：這幾位，放還本尊。"
+   "text": "十局皆勝。依約，放還本尊。"
   },
   {
-   "id": "S130",
+   "id": "S135",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[0][0].text",
-   "text": "老夫的子，開局是多少斤兩，收局仍是多少斤兩。你的子卻是越鬥越強。這是甚麼道理？……好棋。容老夫想一想。請回吧。"
+   "text": "老夫的子仍是原樣，你的卻越鬥越強。好棋，容老夫想想這緣故。請回吧。"
   },
   {
-   "id": "S131",
+   "id": "S136",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[1][0].text",
-   "text": "這一輪有一局，你若棄了一子，三步之內便勝。你為何不棄？"
+   "text": "這一輪，老夫幾回擺下可棄之子。棄一子，便快三步。你為何不棄？"
   },
   {
-   "id": "S132",
+   "id": "S137",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[1][1].text",
    "text": "他是我同伴。"
   },
   {
-   "id": "S133",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[1][2].text",
-   "text": "……老夫少年時有一柄軟劍，誤傷了一位義士，老夫便將它棄之深谷。棄劍容易。……好棋。容老夫想一想。請回吧。"
-  },
-  {
-   "id": "S134",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[2][0].text",
-   "text": "那枚黑子說：「這念頭不是我的。」他說了幾百年，老夫今日方才聽見。……好棋。容老夫想一想。請回吧。"
-  },
-  {
-   "id": "S135",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[3][0].text",
-   "text": "老夫揀子，向來只揀最強的。你卻是抓著誰便用誰，從不嫌手氣。「不滯於物，草木竹石均可為劍」，這句話是老夫自己說的，原來老夫也只懂了一半。……好棋。請回吧。"
-  },
-  {
-   "id": "S136",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[4][0].text",
-   "text": "利劍、軟劍、重劍、木劍，老夫一一放下，每放一樣，便進一步。到得無劍，只道再無一物可放。原來手裡還握著一樣，握了幾百年：便是這盤棋。"
-  },
-  {
-   "id": "S137",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[4][1].note",
-   "text": "求敗將手中一枚黑子輕輕放回盒中，抬起頭來，忽地一怔。棋臺之側，不知何時多了一個布攤，攤後一人翹著腳，正自嗑瓜子。"
-  },
-  {
    "id": "S138",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[4][1].text",
-   "text": "你……你是何人？幾時到的？"
+   "path": "MAZE_TALE.close[1][2].text",
+   "text": "老夫那柄軟劍誤傷義士，便棄入深谷。棄劍容易……好棋，容老夫再想想。請回吧。"
   },
   {
    "id": "S139",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[4][2].text",
-   "text": "啊喲，老爺子，你可瞧見我啦！我在這兒擺了不知多少日子的攤，你老人家眼皮也不抬一抬。"
+   "path": "MAZE_TALE.close[2][0].text",
+   "text": "「這念頭不是我的」……說了幾百年，老夫今日才聽見。好棋，容老夫想一想。請回吧。"
   },
   {
    "id": "S140",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[4][3].text",
-   "text": "老夫這劍境四面是牆，你是怎生進來的？"
+   "path": "MAZE_TALE.close[3][0].text",
+   "text": "你不擇子，老夫卻只要最強的。「不滯於物，草木竹石均可為劍」，老夫只懂一半。好棋，請回吧。"
   },
   {
    "id": "S141",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.close[4][0].text",
+   "text": "利劍、軟劍、重劍、木劍，放一柄便進一步。到了無劍，只道再無可放。卻還握著這盤棋，幾百年了。"
+  },
+  {
+   "id": "S142",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.close[4][1].note",
+   "text": "求敗將黑子輕輕放回盒中，抬頭忽地怔住。棋臺旁竟有一方布攤，攤後那人翹著腳，兀自嗑瓜子。"
+  },
+  {
+   "id": "S143",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.close[4][1].text",
+   "text": "你是何人？幾時來的？"
+  },
+  {
+   "id": "S144",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.close[4][2].text",
+   "text": "啊喲，總算瞧見我啦！我在這裡擺了多少日子的攤。老爺子，你眼皮可真沉。"
+  },
+  {
+   "id": "S145",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.close[4][3].text",
+   "text": "此境四面皆牆。你怎生進來的？"
+  },
+  {
+   "id": "S146",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][4].text",
    "text": "走進來的啊。你又沒關門。"
   },
   {
-   "id": "S142",
+   "id": "S147",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.close[4][5].text",
    "text": "……你練的是哪一門功夫？"
   },
   {
-   "id": "S143",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[4][6].text",
-   "text": "甚麼功夫也不會。師父倒拜過好幾位，個個要教，是我懶得學。"
-  },
-  {
-   "id": "S144",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[4][7].note",
-   "text": "求敗怔了半晌，突然間哈哈大笑，笑聲震得谷中落葉紛飛。那頭大鵰跟了他幾百年，從沒聽他這般笑過，不由得側過頭來。"
-  },
-  {
-   "id": "S145",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[4][7].text",
-   "text": "原來如此，原來如此！老夫求了幾百年的東西，便在臺邊嗑瓜子。"
-  },
-  {
-   "id": "S146",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.close[4][8].text",
-   "text": "……還有一局。這一局，老夫不在盤外下了。"
-  },
-  {
-   "id": "S147",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.again[0].text",
-   "text": "又到了這一步。利劍、軟劍、重劍、木劍，老夫再放一遍，手裡剩下的，仍是這盤棋。"
-  },
-  {
    "id": "S148",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.again[1].text",
-   "text": "上一回你我到得盤上，還差著一點。小兄弟，再來。"
+   "path": "MAZE_TALE.close[4][6].text",
+   "text": "一門也不會。師父拜過好幾位，個個都肯教。是我懶得學。"
   },
   {
    "id": "S149",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.invite[0].note",
-   "text": "求敗依著局規，伸手要將盤上的白子一枚一枚翻轉，手到半途，卻停住了。"
+   "path": "MAZE_TALE.close[4][7].note",
+   "text": "求敗怔了半晌，忽然放聲大笑，谷中落葉紛紛而下。大鵰側過頭來，跟了他幾百年，還是頭一回聽見這樣的笑聲。"
   },
   {
    "id": "S150",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.invite[0].text",
-   "text": "十局皆勝，各位原該放還本尊。老夫卻有一事相求：再留一局，願留的便留。"
+   "path": "MAZE_TALE.close[4][7].text",
+   "text": "原來如此。老夫苦求幾百年，它倒在臺邊嗑瓜子。"
   },
   {
    "id": "S151",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.invite[1].note",
-   "text": "盤邊眾人你瞧我，我瞧你，竟沒有一個肯走。"
+   "path": "MAZE_TALE.close[4][8].text",
+   "text": "還有一局。這回，老夫下去。"
   },
   {
    "id": "S152",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.again[0].text",
+   "text": "又到這一步了。四柄劍再放一遍，手裡仍剩這盤棋。"
+  },
+  {
+   "id": "S153",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.again[1].text",
+   "text": "上回到得盤上，還差一點。小兄弟，再來。"
+  },
+  {
+   "id": "S154",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.invite[0].note",
+   "text": "求敗伸手要翻白子，到了半途卻停住。十局既勝，照他自己的規矩，便該放人。"
+  },
+  {
+   "id": "S155",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.invite[0].text",
+   "text": "各位本該放還，老夫卻有一請。再留一局。願留便留。"
+  },
+  {
+   "id": "S156",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.invite[1].note",
+   "text": "眾人相互看看，仍站在盤邊，竟無一人肯走。"
+  },
+  {
+   "id": "S157",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[1].text",
    "text": "老伯，他們都不走。"
   },
   {
-   "id": "S153",
+   "id": "S158",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[2].note",
-   "text": "求敗打開棋盒，將這一輪十位局主的黑子一一取出，擱在盤邊，手指卻不在子上按那一按。黑子上人影立起，個個神智清明，竟也無一人離去。"
+   "text": "求敗取出這一輪十位局主的黑子，一一擱在盤邊，這回沒有再往子上按。人影立起，眼中都已清明，卻也無人離去。"
   },
   {
-   "id": "S154",
+   "id": "S159",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[2].text",
-   "text": "老夫不按了。各位愛打便打，不愛打的，自管請便。"
+   "text": "不再按了。肯打的留下。不肯的，請便。"
   },
   {
-   "id": "S155",
+   "id": "S160",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[3].text",
-   "text": "老伯，你也下去？你不是一向只在盤外瞧麼？"
+   "text": "老伯，你也下去？你不是只在外頭看麼？"
   },
   {
-   "id": "S156",
+   "id": "S161",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[4].text",
    "text": "那是手裡握著子的時候。"
   },
   {
-   "id": "S157",
+   "id": "S162",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[5].text",
    "text": "可是我不會武功。"
   },
   {
-   "id": "S158",
+   "id": "S163",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[6].text",
-   "text": "千年的武功，你在臺邊都瞧過了。手會記得。"
+   "text": "千年武功，都從你眼前過了。試試。手記得。"
   },
   {
-   "id": "S159",
+   "id": "S164",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[7].note",
-   "text": "求敗向盤上一指。四角星位各有一塊大石，石上各插一劍。"
+   "text": "求敗朝盤上一指。四角星位各有一塊大石，石上各插著一柄劍。"
   },
   {
-   "id": "S160",
+   "id": "S165",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[7].text",
-   "text": "石上那柄利劍，是老夫弱冠之前所用。你拿去使。"
+   "text": "那柄利劍，老夫弱冠前所用。拿去。"
   },
   {
-   "id": "S161",
+   "id": "S166",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[8].text",
-   "text": "多出來的這一局，我不開盤口了：莊家自己下了場，這盤口開不得。老爺子，你若要押，押誰？"
+   "text": "莊家也下場，這盤口開不得。這一局不押啦。老爺子，換了你會押誰？"
   },
   {
-   "id": "S162",
+   "id": "S167",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.invite[9].text",
    "text": "……老夫押這孩子。"
   },
   {
-   "id": "S163",
+   "id": "S168",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.before[0].note",
-   "text": "少年一腳踏上棋枰，石面冰涼。他伸手握住石上那柄利劍，一拔便出，倒似這柄劍已等了他許久。"
+   "text": "少年踏上棋枰，腳底一涼。他握住石上的利劍，輕輕一拔便出了，倒像這劍一直在等他的手。"
   },
   {
-   "id": "S164",
+   "id": "S169",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.before[0].text",
-   "text": "這劍……好生順手。"
+   "text": "咦，這劍好順手。"
   },
   {
-   "id": "S165",
+   "id": "S170",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.before[1].note",
    "text": "求敗隨手折了一根枯枝，緩步走到天元，站定了。"
   },
   {
-   "id": "S166",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.before[1].text",
-   "text": "老夫四十歲後，不滯於物，草木竹石均可為劍。幾百年不曾同人動手，這一局，老夫不讓。"
-  },
-  {
-   "id": "S167",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.before[2].text",
-   "text": "各位，這一回我也在盤上。我若倒了，這一局便輸了。……老伯，小心了！"
-  },
-  {
-   "id": "S168",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.before[3].text",
-   "text": "老夫求了一世的敗。今日瞧瞧，你給不給得起。"
-  },
-  {
-   "id": "S169",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.rally",
-   "text": "盤邊幾條人影搶上枰來，一言不發，逕自站到求敗身旁。"
-  },
-  {
-   "id": "S170",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.withdraw",
-   "text": "求敗枯枝一收，退了幾步，站到眾人身後。"
-  },
-  {
    "id": "S171",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.half",
-   "text": "好。這一劍，老夫幾百年來不曾見過。……再來！"
+   "path": "MAZE_TALE.finale.before[1].text",
+   "text": "四十歲後，草木竹石皆可為劍。幾百年未曾動手了。這一局，老夫不讓。"
   },
   {
    "id": "S172",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.after[0].note",
-   "text": "求敗低頭瞧著手中的枯枝，瞧了很久。"
+   "path": "MAZE_TALE.finale.before[2].text",
+   "text": "這回我也在盤上，倒了便全局都輸。各位幫我看著些。老伯，小心了！"
   },
   {
    "id": "S173",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.before[3].text",
+   "text": "老夫求敗一世。看你給不給得起。"
+  },
+  {
+   "id": "S174",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.rally",
+   "text": "盤邊幾條人影搶上棋枰，未發一言，便站到了求敗身旁。"
+  },
+  {
+   "id": "S175",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.withdraw",
+   "text": "求敗收回枯枝，退了幾步，站到眾人身後。"
+  },
+  {
+   "id": "S176",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.half",
+   "text": "好劍！幾百年未見這一著。再來。"
+  },
+  {
+   "id": "S177",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.after[0].note",
+   "text": "求敗低下頭，看著那根垂在手中的枯枝，久久不動。"
+  },
+  {
+   "id": "S178",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.after[0].text",
    "text": "……好。"
   },
   {
-   "id": "S174",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.after[1].text",
-   "text": "老伯，你還站著。我沒有贏。"
-  },
-  {
-   "id": "S175",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.after[2].text",
-   "text": "老夫求了一世的敗，原來不是要誰將老夫打倒。"
-  },
-  {
-   "id": "S176",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.lost[0].note",
-   "text": "求敗瞧著自己手中的枯枝，半晌不語。"
-  },
-  {
-   "id": "S177",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.lost[0].text",
-   "text": "還差著一點。……差的是甚麼，老夫也說不上來。"
-  },
-  {
-   "id": "S178",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.lost[1].note",
-   "text": "白子上的人影一個一個淡了，各回本尊。"
-  },
-  {
    "id": "S179",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.lost[1].text",
-   "text": "那十局你再下一遍。下完了，老夫仍到這盤上來等你。請回吧。"
+   "path": "MAZE_TALE.finale.after[1].text",
+   "text": "老伯，你還站著呢。我沒贏。"
   },
   {
    "id": "S180",
    "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.lost[2].text",
-   "text": "不打緊，不打緊。差一點便是差一點，下回補上就是。東西照舊放我這兒。"
+   "path": "MAZE_TALE.finale.after[2].text",
+   "text": "求了一世的敗，原來不須人來打倒。"
   },
   {
    "id": "S181",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.lost[0].note",
+   "text": "求敗望著手裡的枯枝，良久沒有開口。"
+  },
+  {
+   "id": "S182",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.lost[0].text",
+   "text": "還差一點。差在哪裡，老夫也未明白。"
+  },
+  {
+   "id": "S183",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.lost[1].note",
+   "text": "白子上的人影逐一淡去，仍依十局之約，各回本尊。"
+  },
+  {
+   "id": "S184",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.lost[1].text",
+   "text": "重下那十局罷。下完，老夫仍到盤上等你。請回吧。"
+  },
+  {
+   "id": "S185",
+   "file": "game/src/data/maze-tale.js",
+   "path": "MAZE_TALE.finale.lost[2].text",
+   "text": "只差一點，下回補上便是。東西照舊替你存著。別愁啦。"
+  },
+  {
+   "id": "S186",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[0].note",
    "text": "那根枯枝，求敗沒有再舉起來。"
   },
   {
-   "id": "S182",
+   "id": "S187",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[1].note",
    "text": "他俯下身去，將枯枝輕輕擱在盤上。不是落子，是放下。"
   },
   {
-   "id": "S183",
+   "id": "S188",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[1].text",
    "text": "夠了。"
   },
   {
-   "id": "S184",
+   "id": "S189",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[2].note",
    "text": "盤上的黑子白子，一枚一枚亮了。盒中收了幾百年的子，也都亮了起來，各回各的年月。"
   },
   {
-   "id": "S185",
+   "id": "S190",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[3].text",
    "text": "老夫求了一世，求的原來便是這一放。"
   },
   {
-   "id": "S186",
+   "id": "S191",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[4].text",
    "text": "小兄弟，多謝你。"
   },
   {
-   "id": "S187",
+   "id": "S192",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[5].note",
    "text": "韋小寶收了攤子，挑在肩上，自谷口走了出去。那道門，原來一直開著。"
   },
   {
-   "id": "S188",
+   "id": "S193",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[6].note",
    "text": "少年提劍而立。求敗向他瞧了一眼，忽地一怔。"
   },
   {
-   "id": "S189",
+   "id": "S194",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[6].text",
    "text": "……原來是你。"
   },
   {
-   "id": "S190",
+   "id": "S195",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[7].note",
    "text": "他向少年拱了拱手，大袖飄飄，撒手而去，不知所終。那頭大鵰望著他的背影，沒有跟去。"
   },
   {
-   "id": "S191",
+   "id": "S196",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[8].note",
    "text": "少年醒了。這一回，他沒有再睡回去。"
   },
   {
-   "id": "S192",
+   "id": "S197",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[9].note",
    "text": "他提了枕邊那柄劍，到屋後練將起來。夢裡的事一件也記不起，手卻都記得。"
   },
   {
-   "id": "S193",
+   "id": "S198",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[10].note",
    "text": "練罷抬頭，崖上立著一頭大鵰，正側過了頭瞧他。"
   },
   {
-   "id": "S194",
+   "id": "S199",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.ending[11].note",
    "text": "許多年後，他劍下再無一合之敵，給自己取了一個名字。"
   },
   {
-   "id": "S195",
+   "id": "S200",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.missed",
-   "text": "終局未成。求敗說還差著一點。同行的人各歸本尊；那十局須得再下一遍，方能再到這盤上來。"
+   "text": "終局仍差一點，同行的人已依約各回本尊。那十局須得重下，方能再到盤上。"
   },
   {
-   "id": "S196",
+   "id": "S201",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.closed",
    "text": "這盤棋下完了。"
   },
   {
-   "id": "S197",
+   "id": "S202",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.epilogue",
-   "text": "對面那個人撒手而去，再沒有回來。少年後來的事，都刻在劍塚的石上；只有這一場夢，他自己也記不清了。"
+   "text": "對面那人撒手而去，從此再未回來。少年往後的事都留在劍塚石上，唯獨這場夢，連他自己也記不清。"
   },
   {
-   "id": "S198",
+   "id": "S203",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.muster",
-   "text": "這一局{name}是眼。他是執子的人，不是拓來的一念，踏上棋枰，氣力比旁人都足。同行的人到了這裡，平生所學一招不缺，全都想了起來。"
+   "text": "這局以{name}為眼；他是執子之人，並非拓來的一念，上盤便比旁人氣力充足。同行諸人也已想起平生所學，一招不缺。"
   },
   {
-   "id": "S199",
+   "id": "S204",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.plus.joins",
    "text": "這一回，{name}自己也在盤上。"
   },
   {
-   "id": "S200",
+   "id": "S205",
    "file": "game/src/data/maze-tale.js",
    "path": "MAZE_TALE.finale.plus.draw",
    "text": "{name}自己也在盤上：連這三位，開局共是四人。"
   },
   {
-   "id": "S201",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.finale.plus.text",
-   "text": "求敗撒手而去，再不回來。此後再入夢，棋臺邊坐著的只是這盤棋記得的一道影子，陪{name}將舊夢從頭再做一遍。這一回，{name}自己也是盤上一子：開局抓三枚，連他共是四人。他同旁人一樣從根長起，九式要一式一式使將出來。"
-  },
-  {
-   "id": "S202",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.win",
-   "text": "十局下完，同行的人各歸本尊。棋臺上只剩兩個人，一頭鵰。求敗望著空盤，說道：「好棋。容老夫想一想。請回吧。」"
-  },
-  {
-   "id": "S203",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.winNote",
-   "text": "買下的東西寄在通吃坊，下一輪照舊取用。"
-  },
-  {
-   "id": "S204",
-   "file": "game/src/data/maze-tale.js",
-   "path": "MAZE_TALE.loss",
-   "text": "這一輪的眼破了。盤上的白子一齊暗了下去，收回盒中。求敗說道：「還差得遠。請回吧。」"
-  },
-  {
-   "id": "S205",
-   "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.lamp",
-   "text": "燈點著啦。盤外瞧這一局，瞧得清清楚楚。這一口，算你贏。"
-  },
-  {
    "id": "S206",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.swift",
-   "text": "這麼快？我這壺茶還沒泡開呢。我押你們快，押對啦。"
+   "path": "MAZE_TALE.finale.plus.text",
+   "text": "求敗已去，棋臺邊只餘棋中留影，陪{name}把舊夢從頭做過。這回{name}也成了盤上一子，抓來三位同伴，開局共四人。九式仍須從根長起，同旁人一般，一式一式使出。"
   },
   {
    "id": "S207",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.intact",
-   "text": "上去幾個，下來幾個，我點過了，一個不少。"
+   "path": "MAZE_TALE.win",
+   "text": "十局已盡，同伴各回本尊，棋臺旁僅餘一老一少與大鵰。求敗望著空盤，說是好棋，要獨自再想一想，便請少年回去。"
   },
   {
    "id": "S208",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.lastBlow",
-   "text": "我指明要哪一位收這一局，便是哪一位收的。夠面子。"
+   "path": "MAZE_TALE.winNote",
+   "text": "通吃坊代存買下的東西，下回入夢便可取用。"
   },
   {
    "id": "S209",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.order",
-   "text": "先剪翅膀，再拿正主。這個次序，我押中啦。"
+   "path": "MAZE_TALE.loss",
+   "text": "白子盡暗，都收回了盒中。少年耳裡仍是那一聲「請回吧」。"
   },
   {
    "id": "S210",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.double",
-   "text": "一合之內倒了兩個。我擲骰子擲出一對，也沒有這般齊整。"
+   "path": "SIDE_TALES.lamp",
+   "text": "燈亮了，盤外看得清清楚楚。這口算你贏。"
   },
   {
    "id": "S211",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.spare",
-   "text": "他那手看家本領，從頭到尾沒使得出來。我押的就是「使不出」。"
+   "path": "SIDE_TALES.swift",
+   "text": "茶葉還沒泡開，你們便打完了？我押的就是個快。中啦！"
   },
   {
    "id": "S212",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.combo",
-   "text": "一個起手，一個收尾，兩個人打的是同一招。這叫做一對。"
+   "path": "SIDE_TALES.intact",
+   "text": "一個也沒少，我數過了。上去幾個，回來幾個。"
   },
   {
    "id": "S213",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.noMedicine",
-   "text": "一粒丸子也沒吃？我攤上的藥賣不出去，這一口還得賠給你。蝕本生意。"
+   "path": "SIDE_TALES.lastBlow",
+   "text": "點誰收局，便是誰收的。這面子給得足。"
   },
   {
    "id": "S214",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.unhurt",
-   "text": "你那隻「眼」，連油皮也沒擦破一塊。押這一口的，只得我一個。"
+   "path": "SIDE_TALES.order",
+   "text": "翅膀先剪，正主後拿。次序半點不差，我押中了。"
   },
   {
    "id": "S215",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.holdLine",
-   "text": "後來的那幾個，一步也沒踏過那條線。我在盤外替你數著的。"
+   "path": "SIDE_TALES.double",
+   "text": "一合放倒兩個！骰子擲一對，也沒你們這麼齊。"
   },
   {
    "id": "S216",
    "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_TALES.answer",
-   "text": "他出甚麼，你們那位便破甚麼。這不叫打架，叫拆招。"
+   "path": "SIDE_TALES.spare",
+   "text": "他那手絕活憋到散場，也沒使出來。這口「使不出」，算我押著啦。"
   },
   {
    "id": "S217",
+   "file": "game/src/data/maze-tale.js",
+   "path": "SIDE_TALES.combo",
+   "text": "同一招，你起手、我收尾。好一對！"
+  },
+  {
+   "id": "S218",
+   "file": "game/src/data/maze-tale.js",
+   "path": "SIDE_TALES.noMedicine",
+   "text": "一粒藥也沒吃？藥賣不掉，這口還要賠你。兩頭蝕本！"
+  },
+  {
+   "id": "S219",
+   "file": "game/src/data/maze-tale.js",
+   "path": "SIDE_TALES.unhurt",
+   "text": "你那隻「眼」連油皮也沒破。敢押毫髮無傷的，只有我。"
+  },
+  {
+   "id": "S220",
+   "file": "game/src/data/maze-tale.js",
+   "path": "SIDE_TALES.holdLine",
+   "text": "後來那幾個，誰也沒越線。我在外頭數著呢。"
+  },
+  {
+   "id": "S221",
+   "file": "game/src/data/maze-tale.js",
+   "path": "SIDE_TALES.answer",
+   "text": "他出一招，便給你們那位拆一招。拆得乾淨，這口中了。"
+  },
+  {
+   "id": "S222",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_TALES.done",
    "text": "這一口，你押中啦。"
   },
   {
-   "id": "S218",
+   "id": "S223",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_PAY.coins",
    "text": "這是你那一份。點一點。"
   },
   {
-   "id": "S219",
+   "id": "S224",
    "file": "game/src/data/maze-tale.js",
    "path": "SIDE_PAY.manual",
-   "text": "銀子周轉不來，拿這卷譜抵數。貨真價實。"
-  },
-  {
-   "id": "S220",
-   "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_PAY.points",
-   "text": "這一口贏回來的不是銀子。瞧他們幾個的神氣，各自像是想起了點甚麼。"
-  },
-  {
-   "id": "S221",
-   "file": "game/src/data/maze-tale.js",
-   "path": "SIDE_MISS",
-   "text": "這一口你沒押中。不打緊，局是贏了的。"
-  },
-  {
-   "id": "S222",
-   "file": "game/src/rules/ferry-market.js",
-   "path": "VISITOR.bio",
-   "text": "他不會武功，也無求於武，劍境的牆攔他不住，來去自如。在谷裡開一爿通吃坊，賣藥、賣兵器，每一局另開盤口。對面那位老者瞧不見他，也聽不見他。問他是怎生來的，他每回說一個不同的大話。"
-  },
-  {
-   "id": "S223",
-   "file": "game/src/rules/ferry-market.js",
-   "path": "VISITOR.arrival",
-   "text": "上一輪沒給人帶走的小東西，都落在韋小寶手裡。他排開三隻木盅，說是白送，只看你眼力。"
-  },
-  {
-   "id": "S224",
-   "file": "game/src/rules/ferry-market.js",
-   "path": "VISITOR.reveal",
-   "text": "看仔細了，我可要扣盅啦。老規矩，三樣東西你揀一樣。……甚麼老規矩？我說了老規矩麼？你聽錯了。"
+   "text": "銀子一時轉不開，這卷武譜抵給你。真貨，放心。"
   },
   {
    "id": "S225",
-   "file": "game/src/rules/ferry-market.js",
-   "path": "VISITOR.blind",
-   "text": "三隻盅一樣重。別看我的手，看了也沒用，我這雙手是在揚州練出來的。揭一隻。"
+   "file": "game/src/data/maze-tale.js",
+   "path": "SIDE_PAY.points",
+   "text": "這口賺的比銀子好。瞧瞧他們，手上又想起功夫啦。"
   },
   {
    "id": "S226",
-   "file": "game/src/rules/ferry-market.js",
-   "path": "VISITOR.win",
-   "text": "成，這件歸你。餘下兩件我留著，下回再同你賭。"
+   "file": "game/src/data/maze-tale.js",
+   "path": "SIDE_MISS",
+   "text": "這注沒中，倒也不必愁。棋是贏了的。"
   },
   {
    "id": "S227",
-   "file": "game/src/data/wake-tale.js",
-   "path": "WORLD[0].text",
-   "text": "棋臺沿上刻著兩行字：白子勝滿十局，放還本尊；中道而敗，收子入盒。姓韋的說得更白：贏足十場放你們回去，輸了統統收進盒子裡。"
+   "file": "game/src/rules/ferry-market.js",
+   "path": "VISITOR.bio",
+   "text": "韋小寶不會武功，也無求於武，劍境的牆便攔不住他，任他來去。谷裡那爿通吃坊是他的，賣藥賣兵器，局局還另開盤口，求敗卻聽不見也看不見。問起來路，他每回都另編一個大話。"
   },
   {
    "id": "S228",
-   "file": "game/src/data/wake-tale.js",
-   "path": "WORLD[1].text",
-   "text": "棋盒裡的白子黑子，各是一位高手。子一沾棋盤，子上便立起人來。他們都說，來之前那一瞬，自己正走到絕處。開局一把抓起五枚，留下三枚；每勝一局，對面的老伯便再借出一枚白子。"
+   "file": "game/src/rules/ferry-market.js",
+   "path": "VISITOR.arrival",
+   "text": "上回無人帶走的零碎，都到了韋小寶手中。他排開三隻木盅，說是白送，單看客人眼力。"
   },
   {
    "id": "S229",
-   "file": "game/src/data/wake-tale.js",
-   "path": "WORLD[2].text",
-   "text": "入了盤的人只瞧得見身邊幾步，盤外的人才瞧得見全局，所以由盤外的人來說往哪裡走。先落的一枚是「眼」；眼破，全盤皆輸。盤上至多五枚白子。倒下的人只是離盤一局，下一局再落。"
+   "file": "game/src/rules/ferry-market.js",
+   "path": "VISITOR.reveal",
+   "text": "看好，老規矩，三樣揀一樣。甚麼老規矩？我可沒說，是你聽錯。"
   },
   {
    "id": "S230",
-   "file": "game/src/data/wake-tale.js",
-   "path": "WORLD[3].text",
-   "text": "他自稱求敗，說自己的姓名早已忘了。這盤棋他左手同右手下了幾百年。黑子是他落的：他落子之時，將一道戰意按在他們眉心，叫他們見人便打。他們不服，卻掙不開。勝了這一局，戰意才散。棋臺上「嗒」的一聲，便是他又落了一子。"
+   "file": "game/src/rules/ferry-market.js",
+   "path": "VISITOR.blind",
+   "text": "三隻盅一樣重，掂也沒用。別盯我這雙揚州練的手。揭一隻罷。"
   },
   {
    "id": "S231",
-   "file": "game/src/data/wake-tale.js",
-   "path": "WORLD[4].text",
-   "text": "少年醒了便忘，只剩一點影子，手卻記得。對面的老伯一手也沒有忘。那個姓韋的也記得，問他，他就賴。"
+   "file": "game/src/rules/ferry-market.js",
+   "path": "VISITOR.win",
+   "text": "成，歸你。另兩件我留下。下回再賭。"
   },
   {
    "id": "S232",
    "file": "game/src/data/wake-tale.js",
-   "path": "WORLD[5].text",
-   "text": "少年在已開的最高境界每勝一輪，求敗便在臺邊的石上刻一行字，是他從前一柄劍的來歷。輸掉的一輪，或重下已勝過的境界，石上不添字。"
+   "path": "WORLD[0].text",
+   "text": "棋臺上刻著：「白子勝滿十局，放還本尊。中道而敗，收子入盒。」姓韋的說，贏足十場便回家，輸了便全進盒子。"
   },
   {
    "id": "S233",
    "file": "game/src/data/wake-tale.js",
-   "path": "WORLD[6].text",
-   "text": "贏滿十局，同行的人放還本尊。求敗說一聲「好棋」，請少年回去。少年便醒了。"
+   "path": "WORLD[1].text",
+   "text": "黑白子各是一位高手，落盤便立起人影，個個都說自己來前正逢絕處。開局抓五枚留三枚，此後每勝一局，老伯便再借一枚白子。"
   },
   {
    "id": "S234",
    "file": "game/src/data/wake-tale.js",
-   "path": "WORLD[7].text",
-   "text": "那個姓韋的每一局都另開一個盤口，押少年贏得出甚麼花樣。押中了分紅：銀子、一卷武譜，或是一場打得太好、叫手自己記起來的仗。對面的老伯瞧不見他，也聽不見他。"
+   "path": "WORLD[2].text",
+   "text": "盤裡只看得見幾步，盤外才看得全，指路便由盤外的人來。白子至多上五枚，先落的一枚叫「眼」，它倒了便全盤皆輸。其餘的人倒下，只離盤一局，下局仍可再落。"
   },
   {
    "id": "S235",
+   "file": "game/src/data/wake-tale.js",
+   "path": "WORLD[3].text",
+   "text": "老伯自稱求敗，本名已忘，左右手對弈了幾百年。落黑子時，他把戰意按在人眉心，逼人交手；人雖不服，卻要等這局輸了才能掙開。聽見臺上「嗒」的一聲，便是他又添了子。"
+  },
+  {
+   "id": "S236",
+   "file": "game/src/data/wake-tale.js",
+   "path": "WORLD[4].text",
+   "text": "夢醒人事便模糊，手上的功夫卻沒忘。老伯一手棋也記得；姓韋的明明也記得，一問便賴。"
+  },
+  {
+   "id": "S237",
+   "file": "game/src/data/wake-tale.js",
+   "path": "WORLD[5].text",
+   "text": "在已開的最高境界勝一輪，老伯便刻下一柄舊劍的來歷。輸了，或重下已勝過的境界，石上都不添字。"
+  },
+  {
+   "id": "S238",
+   "file": "game/src/data/wake-tale.js",
+   "path": "WORLD[6].text",
+   "text": "十局全勝，同行的人便回本尊那裡。老伯說了「好棋」，又說「請回吧」，少年便醒了。"
+  },
+  {
+   "id": "S239",
+   "file": "game/src/data/wake-tale.js",
+   "path": "WORLD[7].text",
+   "text": "姓韋的局局開盤口，押少年能贏出甚麼花樣。中注便分銀子、武譜，有時一場打得順手，賺的是人人又想起些功夫。老伯看不見這門生意，也聽不見。"
+  },
+  {
+   "id": "S240",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[0].title",
    "text": "深谷一枰逢稚子"
   },
   {
-   "id": "S236",
+   "id": "S241",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[0].mark",
    "text": "利劍：弱冠之前所用"
   },
   {
-   "id": "S237",
+   "id": "S242",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[0].echo.note",
    "text": "谷口的月亮，三天沒有動過分毫。"
   },
   {
-   "id": "S238",
+   "id": "S243",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[0].echo.text",
-   "text": "我覺得我是在學劍，只是劍不在我手上。……各位贏了回去，要做甚麼？"
+   "text": "看各位動手，我倒像是在學劍，劍卻不在我手裡。等贏了回去，各位要做甚麼？"
   },
   {
-   "id": "S239",
+   "id": "S244",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[0].carve",
-   "text": "少年臨去回頭，見求敗取過一柄舊劍，在臺邊石上刻了一行字，刻的是他少年時一柄利劍的來歷。刻完，他對著那行字瞧了很久。"
+   "text": "少年臨走回頭，見求敗正持舊劍刻石，寫下弱冠前那柄利劍的來歷。刻完了，他仍望著那行字。"
   },
   {
-   "id": "S240",
+   "id": "S245",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[1].title",
    "text": "棄劍容易棄子難"
   },
   {
-   "id": "S241",
+   "id": "S246",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[1].mark",
    "text": "軟劍：誤傷義士，棄之深谷"
   },
   {
-   "id": "S242",
+   "id": "S247",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[1].echo.note",
-   "text": "燈下，少年將求敗那句話又想了一遍。"
+   "text": "燈光照著少年的臉，求敗說過的話又在他心頭轉了一遍。"
   },
   {
-   "id": "S243",
+   "id": "S248",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[1].echo.text",
-   "text": "老伯說各位只是拓下來的一份。我不信一張拓片會口渴、會想家。……各位聽了，惱不惱？"
+   "text": "老伯說各位是拓來的。可哪有拓片會渴、會想家的？這話聽著惱不惱？"
   },
   {
-   "id": "S244",
+   "id": "S249",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[1].carve",
-   "text": "求敗在石上刻了第二行，刻的是一柄軟劍：誤傷義士，棄之深谷。刻到「棄」字，他的手停了一停。"
+   "text": "第二行刻的是軟劍：「誤傷義士，棄之深谷。」劍尖行到「棄」字，停了一停。"
   },
   {
-   "id": "S245",
+   "id": "S250",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[2].title",
    "text": "始聞盤上不平聲"
   },
   {
-   "id": "S246",
+   "id": "S251",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[2].mark",
    "text": "重劍：重劍無鋒，大巧不工"
   },
   {
-   "id": "S247",
+   "id": "S252",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[2].echo.note",
-   "text": "燈下，少年望了望棋臺那邊。求敗閉著眼，眉頭卻沒有鬆開。"
+   "text": "少年從燈邊望去，求敗雙目雖閉，眉間仍皺著。"
   },
   {
-   "id": "S248",
+   "id": "S253",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[2].echo.text",
-   "text": "適才那位對手說，那念頭不是他的。老伯頭一回抬頭瞧了他一眼。……各位給人拓了來，惱不惱？"
+   "text": "對手一說那念頭不是他的，老伯便抬了頭。各位給人拓來，心裡又怎麼想？"
   },
   {
-   "id": "S249",
+   "id": "S254",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[2].carve",
-   "text": "求敗在石上刻了第三行，刻的是一柄重劍：重劍無鋒，大巧不工。這一行他刻得極輕，石屑也沒有落下多少。"
+   "text": "求敗刻下第三行：「重劍無鋒，大巧不工。」劍尖落得甚輕，只掉了些許石屑。"
   },
   {
-   "id": "S250",
+   "id": "S255",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[3].title",
    "text": "草木竹石皆可劍"
   },
   {
-   "id": "S251",
+   "id": "S256",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[3].mark",
    "text": "木劍：不滯於物，草木竹石均可為劍"
   },
   {
-   "id": "S252",
+   "id": "S257",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[3].echo.note",
-   "text": "燈下，少年數了數身邊的人。"
+   "text": "少年在燈下一個個數過身邊的人。"
   },
   {
-   "id": "S253",
+   "id": "S258",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[3].echo.text",
-   "text": "老伯問我，怎地抓著誰便用誰。我說，來的都是好朋友，哪有得揀的。……各位是拓來的也好，是本人也好，我一樣當各位是朋友。"
+   "text": "老伯問我怎麼不挑人，我說來的都是朋友。本人也好，拓來的也好，都一樣。各位怎麼想？"
   },
   {
-   "id": "S254",
+   "id": "S259",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[3].carve",
-   "text": "求敗在石上刻了第四行，刻的是一柄木劍：不滯於物，草木竹石均可為劍。刻罷，他將那柄刻字的劍橫在膝上，沒有收起。"
+   "text": "第四行是木劍：「不滯於物，草木竹石均可為劍。」刻罷，求敗把劍橫在膝頭，沒有收起。"
   },
   {
-   "id": "S255",
+   "id": "S260",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[4].title",
    "text": "無劍猶握一枰棋"
   },
   {
-   "id": "S256",
+   "id": "S261",
    "file": "game/src/data/wake-tale.js",
    "path": "WAKES[4].mark",
    "text": "最後一行，他沒有刻"
   },
   {
-   "id": "S257",
-   "file": "game/src/data/wake-tale.js",
-   "path": "WAKES[4].echo.note",
-   "text": "燈下，少年將每個人的臉都瞧了一遍。"
-  },
-  {
-   "id": "S258",
-   "file": "game/src/data/wake-tale.js",
-   "path": "WAKES[4].echo.text",
-   "text": "老伯說這是最後一盤。下完了，各位回各位的年月，我回我的被窩。……我記性不好，醒了多半要忘。各位莫怪。"
-  },
-  {
-   "id": "S259",
-   "file": "game/src/data/wake-tale.js",
-   "path": "WAKES[4].carve",
-   "text": "石上還空著一行的地方。求敗提起那柄刻字的劍，瞧了一瞧，沒有刻，將劍輕輕放在石旁。最後一行，他沒有刻。"
-  },
-  {
-   "id": "S260",
-   "file": "game/src/data/wake-tale.js",
-   "path": "NO_MARK",
-   "text": "這一輪沒有下完。臺邊的石上，沒有多一行字。"
-  },
-  {
-   "id": "S261",
-   "file": "game/src/data/wake-tale.js",
-   "path": "CLOSING.win",
-   "text": "那一聲「請回吧」猶在耳邊。少年醒了。"
-  },
-  {
    "id": "S262",
    "file": "game/src/data/wake-tale.js",
-   "path": "CLOSING.loss",
-   "text": "盒蓋合上的那一聲猶在耳邊。少年醒了。"
+   "path": "WAKES[4].echo.note",
+   "text": "想起求敗說這是最後一盤，少年在燈下把眾人的臉一張張看過，像要記牢些。"
   },
   {
    "id": "S263",
    "file": "game/src/data/wake-tale.js",
-   "path": "FRAGMENTS[0]",
-   "text": "有甚麼濕熱的東西在舔他的臉，一下，又一下。是家裡的狗。夢只剩一點影子：一張棋臺，一個老人。他的手指還拈著，像拈著一枚棋子。"
+   "path": "WAKES[4].echo.text",
+   "text": "下完各位歸本尊，我回被窩。醒了怕要忘，各位別怪。各位說是拓來的，心裡怎麼想？"
   },
   {
    "id": "S264",
    "file": "game/src/data/wake-tale.js",
-   "path": "FRAGMENTS[1]",
-   "text": "鍋鏟碰著鐵鍋，嚓，嚓。有飯香。娘在灶前做飯。他拾起灶邊一根柴枝，不知怎地，手腕一抖，挽了個劍花。"
+   "path": "WAKES[4].carve",
+   "text": "石上還餘一行空處，求敗提劍看了看，卻把劍輕輕放到石旁。那一行終究空著。"
   },
   {
    "id": "S265",
    "file": "game/src/data/wake-tale.js",
-   "path": "FRAGMENTS[2]",
-   "text": "娘在喊他起來，喊的是他的名字。這兩個字他聽了十幾年，此刻聽來竟有些生疏，倒似有人一直叫他別的甚麼。他到屋後翻出一柄生了鏽的舊劍。"
+   "path": "NO_MARK",
+   "text": "這輪棋未下完，石上也未添字。"
   },
   {
    "id": "S266",
    "file": "game/src/data/wake-tale.js",
-   "path": "FRAGMENTS[3]",
-   "text": "雞啼了，窗紙發白，被窩外頭好冷。他不想起來：他想回去把那盤棋下完。那柄劍已經磨亮了，擱在枕邊。"
+   "path": "CLOSING.win",
+   "text": "耳邊那聲「請回吧」未散，少年已醒。"
   },
   {
    "id": "S267",
    "file": "game/src/data/wake-tale.js",
+   "path": "CLOSING.loss",
+   "text": "耳邊合盒的聲音未散，少年已醒。"
+  },
+  {
+   "id": "S268",
+   "file": "game/src/data/wake-tale.js",
+   "path": "FRAGMENTS[0]",
+   "text": "一條濕熱的舌頭正舔著他的臉，是家裡的狗。谷中只剩一張棋臺、一個老人的模糊影子，手指卻還拈著，彷彿那枚子尚未落下。"
+  },
+  {
+   "id": "S269",
+   "file": "game/src/data/wake-tale.js",
+   "path": "FRAGMENTS[1]",
+   "text": "鍋鏟嚓嚓碰著鐵鍋，飯香從灶前飄來，娘正忙著做飯。他拾起灶邊一根柴枝，手腕一抖，竟挽出個劍花。"
+  },
+  {
+   "id": "S270",
+   "file": "game/src/data/wake-tale.js",
+   "path": "FRAGMENTS[2]",
+   "text": "娘喊他起身，那名字聽了十幾年，這時卻有些生疏，像是夢裡一直有人叫他另一個名字。他到屋後翻找，找出一柄生鏽的舊劍。"
+  },
+  {
+   "id": "S271",
+   "file": "game/src/data/wake-tale.js",
+   "path": "FRAGMENTS[3]",
+   "text": "雞啼聲起，窗紙已白，被窩外頭冷得很。他還想睡回去，把那盤棋下完；磨亮的劍，就擱在枕邊。"
+  },
+  {
+   "id": "S272",
+   "file": "game/src/data/wake-tale.js",
    "path": "FRAGMENTS[4]",
-   "text": "被窩裡，他的手還握著，像剛握過許多人的手。他握住枕邊的劍，走到屋外，天還沒有亮。"
+   "text": "被窩裡那隻手仍握著，彷彿還留著許多人掌心的暖意。他握住枕邊的劍，走出屋去，天尚未亮。"
   }
  ]
 }
