@@ -17,8 +17,9 @@
 //   hold     on a 'keep' board, the last round the objects must stand through
 //   legacyKind  the kind a save from before the board had objects finishes under
 //   pieces   starting pieces beyond the fixed four, in the order they act
-//   waves    reinforcements: { id, when: { round } | { halved: [refs] }, place, pieces }; a
-//            wave's first piece leads it, and each piece's `at` is its entry tile
+//   waves    reinforcements: { id, when: { round } | { halved: [refs] } | { stage }, place,
+//            pieces }; a wave's first piece leads it, and each piece's `at` is its entry tile
+//            (`stage`: the last board's, when its master comes to that stage of his 五劍)
 //   sides    the secondary pool (journey.js SIDE_KINDS), one drawn per run
 //
 // A piece ref is a slot of the fixed four ('master', 'lieutenant', 'bow', 'scout') or an extra
@@ -464,10 +465,10 @@ const BATTLES = [
   },
   // 15 谷底棋臺: the last board (world view §8.4). 求敗 stands at 天元 and is never felled: bring
   // him to 1 氣血. The ten masters of the run stand with him of their own accord, no 戰意 on them:
-  // the first five met from the start; two more step to his side the moment he is at half, and the
-  // last three when a quarter is left (`when.below`, game.js rally). From half on a master beside
-  // him takes the heroes' blows for him, and at a quarter he falls back among them (encounters.js
-  // `withdraw`). 無名 is the 眼. There is no secondary here (the producer, 2026-11-22).
+  // the first five met from the start; two more step to his side the moment he takes up 木劍, the
+  // fourth of his five swords, and the last three when he comes to 無劍 (`when.stage`, game.js
+  // rally; the producer, 2026-11-25). From 木劍 on a master beside him takes the heroes' blows for
+  // him (encounters.js `guarded`). 無名 is the 眼. There is no secondary here (2026-11-22).
   {
     last: true,
     kind: 'yield',
@@ -486,7 +487,7 @@ const BATTLES = [
     waves: [
       {
         id: 'guard',
-        when: { below: 0.5 },
+        when: { stage: 3 },
         place: '求敗身旁',
         pieces: [
           { guest: 5, at: [5, 6] },
@@ -495,7 +496,7 @@ const BATTLES = [
       },
       {
         id: 'ring',
-        when: { below: 0.25 },
+        when: { stage: 4 },
         place: '求敗身旁',
         pieces: [
           { guest: 7, at: [6, 7] },

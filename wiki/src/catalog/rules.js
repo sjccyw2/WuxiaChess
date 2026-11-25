@@ -209,7 +209,7 @@ function guide() {
     sources: cites(cite(title, FILE))
   }));
   // 「<kbd>1</kbd>–<kbd>4</kbd> 招式 <kbd>G</kbd> 棋格」: runs of keys, each followed by what they do.
-  const keys = [...(G.flowHotkeys + G.extraHotkeys()).matchAll(/((?:<kbd>[^<]*<\/kbd>[–\s]*)+)([^<]+)/g)].map(
+  const keys = [...(G.flowHotkeys + G.extraHotkeys() + ' ' + G.pageHotkeys).matchAll(/((?:<kbd>[^<]*<\/kbd>[–\s]*)+)([^<]+)/g)].map(
     ([, run, label]) => [label.trim(), run.replace(/<\/?kbd>/g, '').trim()]
   );
   return [

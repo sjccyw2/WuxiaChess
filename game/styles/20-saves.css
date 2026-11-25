@@ -1,0 +1,205 @@
+/* 存檔・讀檔: the page of the four saves, the question before 另開新局, the 存檔 button in the head
+   of the pages between boards, and the notice of a tab another tab has taken the game from. */
+
+/* 存檔・讀檔 on the title, beside 另開新局. On a narrow phone the row keeps its right-hand margin, so
+   the button goes down to the next line with 群俠列傳 instead of touching the screen's edge. */
+@media (max-width: 500px) {
+  .opening-menu:has(#title-saves:not([hidden])) {
+    max-width: calc(100vw - 2 * var(--outer));
+  }
+}
+
+/* 存檔 in a page's head, beside its ×: the page's title stays on the left. */
+#modal .modal-head .head-saves {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 11px;
+  border: 1px solid #6f7d66;
+  border-radius: 3px;
+  color: #ead39f;
+  font: 600 13px var(--serif);
+  letter-spacing: 0.08em;
+  background: #1d302b;
+}
+#modal .modal-head .head-saves:hover {
+  color: #ffe3a3;
+  border-color: #b49a66;
+}
+#modal .modal-head > small + .head-saves {
+  margin-left: 12px;
+}
+#modal .modal-head:has(> small + .head-saves) > small {
+  margin-left: auto;
+}
+
+.slot-list {
+  display: grid;
+  gap: 9px;
+}
+.slot-row {
+  display: grid;
+  grid-template-columns: 5.2em minmax(0, 1fr) auto;
+  grid-template-areas: 'name card acts';
+  align-items: center;
+  gap: 8px 14px;
+  padding: 12px 14px;
+  border: 1px solid #40544b;
+  border-radius: 4px;
+  background: #172825;
+}
+.slot-auto {
+  border-style: dashed;
+  background: #14221f;
+}
+.slot-row h3 {
+  grid-area: name;
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  font: 700 15px/1.3 var(--serif);
+  letter-spacing: 0.06em;
+  color: #e7d6ae;
+}
+.slot-row h3 small {
+  font: 500 11px var(--sans);
+  letter-spacing: 0.04em;
+  color: var(--jade);
+}
+.slot-row > .slot-card,
+.slot-row > .slot-empty {
+  grid-area: card;
+}
+.slot-acts {
+  grid-area: acts;
+  display: flex;
+  gap: 8px;
+}
+.slot-acts button {
+  min-height: 40px;
+  padding: 0 16px;
+}
+.slot-card {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.slot-card strong {
+  font: 600 15px/1.4 var(--serif);
+  color: #eee7d1;
+}
+.slot-card span {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #aebbb0;
+}
+.slot-card time {
+  font-size: 12px;
+  color: #c3a874;
+}
+.slot-empty {
+  margin: 0;
+  font-size: 14px;
+  color: #8d9a90;
+}
+/* A question: what would be lost (or loaded) in a framed card, then the two answers. */
+.slot-ask {
+  display: grid;
+  gap: 10px;
+}
+.slot-ask h3 {
+  margin: 0;
+  font: 700 18px var(--serif);
+  letter-spacing: 0.06em;
+  color: #eee7d1;
+}
+.slot-ask p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.75;
+  color: #c4cec3;
+}
+.slot-ask .slot-card {
+  padding: 11px 13px;
+  border: 1px solid #5b6a58;
+  border-radius: 4px;
+  background: #172825;
+}
+@media (max-width: 620px) {
+  .slot-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'name acts'
+      'card card';
+    padding: 10px 12px;
+  }
+  .slot-acts button {
+    padding: 0 13px;
+  }
+  #modal .modal-head .head-saves {
+    padding: 0 9px;
+  }
+}
+
+/* Another tab has the game. */
+dialog.tab-lock {
+  width: min(430px, calc(100% - 32px));
+  padding: 24px 24px 22px;
+  border: 1px solid #8c7b55;
+  border-radius: 5px;
+  background: linear-gradient(145deg, #1a2c2a, #132221 65%, #152522);
+  color: #dde4d7;
+  box-shadow:
+    0 25px 85px #020a0be6,
+    0 0 0 3px #172622;
+}
+dialog.tab-lock::backdrop {
+  background: #050c0be6;
+  backdrop-filter: blur(4px);
+}
+.tab-lock-body {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.tab-lock-body svg {
+  color: #d6bc83;
+}
+.tab-lock-body h2 {
+  margin: 0 0 2px;
+  font: 700 20px var(--serif);
+  letter-spacing: 0.08em;
+  color: #eee7d1;
+}
+.tab-lock-body p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #c4cec3;
+  text-align: left;
+}
+.tab-lock-body .gold-btn {
+  margin-top: 8px;
+  min-height: 44px;
+  padding: 0 24px;
+}
+dialog.tab-lock .gold-btn {
+  color: var(--seal-text);
+  border: 1px solid #d5a37c;
+  background:
+    linear-gradient(180deg, #ffffff24, #ffffff00 48%),
+    linear-gradient(112deg, #a54f40, #7b382f);
+  box-shadow:
+    inset 0 0 0 2px #81382e,
+    inset 0 0 0 3px #e0ad8566,
+    0 2px 0 #3d1915;
+  text-shadow: 0 1px 2px #3a1410;
+}
+dialog.tab-lock .gold-btn:hover {
+  color: #fff8e3;
+  border-color: #ffdfad;
+}

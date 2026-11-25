@@ -47,6 +47,14 @@ function syncDangerButton(button, on) {
   button.setAttribute('aria-pressed', String(Boolean(on)));
 }
 
+// keyHints: the key that presses a button, in a small mark on it. Drawn only where there is a fine
+// pointer (styles/13-panels.css), the same test that hides the guide's keys on touch screens:
+// a phone with no keyboard is shown no keys. `aria-keyshortcuts` on the button says it to a
+// screen reader instead, so the mark itself is hidden from one.
+function keyHint(key) {
+  return POLISH.keyHints ? '<kbd class="key-hint" aria-hidden="true">' + key + '</kbd>' : '';
+}
+
 // The keys line of the help page, for the keys these additions bring.
 function extraHotkeys() {
   return (
@@ -55,4 +63,4 @@ function extraHotkeys() {
   );
 }
 
-export { dockForecast, nextHero, tabIsFree, syncDangerButton, extraHotkeys };
+export { dockForecast, nextHero, tabIsFree, syncDangerButton, keyHint, extraHotkeys };

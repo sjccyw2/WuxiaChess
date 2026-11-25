@@ -46,6 +46,7 @@ export const TEXT_FILES = [
   'src/data/realms.js',
   'src/ui/realm-views.js',
   'src/ui/dev-mode.js',
+  'src/ui/save-views.js',
   'src/fx/technique-strokes.js',
   'src/data/terrain.js',
   'src/actors/tokens.js',

@@ -345,9 +345,9 @@ function devPanel({ battle, side = true, fight = false, retry = false }) {
 }
 
 // Puts the browser back to what it holds for someone who has never opened the game: every key
-// of the game's goes, from both storages (the save, the settings, the draw being set up, the
-// tutorial's record, and whatever is added later under the same prefix), except developer
-// mode's own (that it is on, the last 試局 pick, the window's place).
+// of the game's goes, from both storages (the autosave, the three slots and the record, the
+// settings, the draw being set up, the tutorial's record, and whatever is added later under the
+// same prefix), except developer mode's own (that it is on, the last 試局 pick, the window's place).
 function clearRecord() {
   for (const name of ['localStorage', 'sessionStorage'])
     try {
