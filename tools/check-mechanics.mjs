@@ -4977,6 +4977,91 @@ section('saves');
   check('a pre-edition camp save keeps its settled board', !!kept && same(kept.run.last, camp.run.last) && kept.run.status === 'camp');
 }
 
+section('save slots and the lasting record');
+{
+  // rules/saves.js against a stand-in for localStorage. A run is taken through its first board
+  // by the game's own steps, to the second board's fight.
+  const Saves = await load('rules/saves.js');
+  const store = () => {
+    const m = new Map();
+    return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), map: m };
+  };
+  const firstBoardWon = (seed) => {
+    const s = R.startRun(R.drawLots(seed), R.LEGACY);
+    R.devFinish(s, true);
+    R.settle(s);
+    while (s.run.scene === 'after') R.turnPage(s, true);
+    R.advance(s);
+    while (s.run.scene !== 'prep') R.turnPage(s, true);
+    R.deployLineup(s);
+    R.beginBattle(s);
+    return s;
+  };
+  const s = firstBoardWon(11);
+  check('the run used here is on its second board, in the fight', s.run.stage === 1 && s.run.scene === 'fight' && s.run.chronicle.best === 1, s.run.scene);
+  check('every save key is the game’s, and none is developer mode’s (清空紀錄 clears them all)', Saves.SAVE_KEYS.every((k) => k.startsWith('jianying.') && !k.startsWith('jianying.dev-')) && new Set(Saves.SAVE_KEYS).size === 5);
+
+  // Saving into a slot and loading it back gives the same game.
+  const db = store();
+  Saves.writeGame(db, s);
+  check('an empty slot reads as empty', Saves.readSlot(db, 1) === null && Saves.readSlots(db).every((slot) => slot === null));
+  Saves.writeSlot(db, 2, s, 1700000000000);
+  const slot = Saves.readSlot(db, 2);
+  check('a slot keeps the game and when it was saved', !!slot?.state && !slot.broken && slot.at === 1700000000000);
+  const loaded = Saves.loadSlot(db, 2, s.run.chronicle);
+  check('loading a slot gives the same game back', !!loaded && same(loaded, R.restoreRun(copy(s))));
+  check('…which is a run still under way', Saves.inProgress(loaded) && !Saves.inProgress({ run: { status: 'ended' } }));
+  check('…and plays on: its board can be won and settled', R.devFinish(loaded, true) && R.settle(loaded) && loaded.run.chronicle.best === 2);
+  db.setItem(Saves.SLOT_KEYS[2], JSON.stringify({ at: 5, save: { run: {} } }));
+  check('a slot that no longer loads reads as broken, not empty', Saves.readSlot(db, 3)?.broken === true && Saves.loadSlot(db, 3, s.run.chronicle) === null);
+
+  // Loading an older slot never lowers the record.
+  const later = copy(loaded);
+  const p = later.run.chronicle;
+  Object.assign(p, { realms: 3, cleared: [1, 2], wins: 2, returns: 3, ended: 1, finale: 1, missed: 1, embers: 9 });
+  p.seen = [...new Set([...p.seen, 0, 1, 4])].sort((a, b) => a - b);
+  p.walked = { ...p.walked, hero: 5 };
+  p.parcel = { stock: { remedy: 2 }, manuals: [] };
+  Saves.writeGame(db, later);
+  const record = Saves.openRecord(db);
+  check('the record is kept under its own key', same(record, p));
+  const old = Saves.loadSlot(db, 2, record);
+  const r = old.run.chronicle;
+  const counts = ['best', 'wins', 'embers', 'returns', 'realms', 'finale', 'ended', 'missed'];
+  check('an older slot loaded: no count of the record goes down', counts.every((k) => r[k] >= p[k]), counts.filter((k) => r[k] < p[k]).join());
+  check('…no 境界 won, board seen or hero walked is forgotten', ['cleared', 'seen'].every((k) => p[k].every((v) => r[k].includes(v))) && Object.entries(p.walked).every(([id, n]) => r.walked[id] >= n));
+  check('…the parcel is the record’s, not the slot’s', same(r.parcel, p.parcel));
+  check('…and the game is still the slot’s (its board, its silver)', old.run.stage === s.run.stage && old.run.coins === s.run.coins && old.round === s.round);
+  check('…and still loads as a save', !!R.restoreRun(copy(old)));
+  // A slot made in a run's last shop holds a parcel the next run has since taken: not handed out twice.
+  const shopSlot = copy(s);
+  shopSlot.run.chronicle.parcel = { stock: { elixir: 1 }, manuals: [] };
+  const taken = { ...copy(p), parcel: { stock: {}, manuals: [] } };
+  check('a parcel already taken is not given back by an older slot', same(Saves.withRecord(shopSlot, taken).run.chronicle.parcel, taken.parcel));
+  check('a record merged with an older one is unchanged', same(Saves.mergeRecord(p, copy(s.run.chronicle)), p));
+
+  // An old single save migrates with nothing lost.
+  const before = store();
+  const legacy = copy(later);
+  before.setItem(Saves.AUTO_KEY, JSON.stringify(legacy));
+  const opened = Saves.openGame(before);
+  check('a save from before the slots opens as the same game', !!opened.state && same(opened.state, R.restoreRun(copy(legacy))));
+  check('…its record is written under the record’s key, whole', opened.migrated && same(JSON.parse(before.getItem(Saves.RECORD_KEY)), legacy.run.chronicle));
+  check('…and the save itself is left as it was', before.getItem(Saves.AUTO_KEY) === JSON.stringify(legacy) && before.map.size === 2);
+  const again = Saves.openGame(before);
+  check('…once: the next load finds the record and moves nothing', !again.migrated && same(again.state, opened.state));
+  // An autosave whose own record is behind the record (a second tab, a write that failed): the record wins.
+  const behind = store();
+  Saves.writeGame(behind, s);
+  behind.setItem(Saves.RECORD_KEY, JSON.stringify(p));
+  check('an autosave behind the record loads with the record', same(Saves.openGame(behind).state.run.chronicle, p));
+  // No autosave, only a record (the game finished and nothing saved since): it still stands.
+  const bare = store();
+  bare.setItem(Saves.RECORD_KEY, JSON.stringify(p));
+  const none = Saves.openGame(bare);
+  check('a record with no game in the autosave is still read', none.state === null && same(none.record, p));
+}
+
 section('the ten boards, as stage one builds them');
 // (The last board is built by a run that has won ten; it has its own section below.)
 for (const [map, b] of BATTLES.entries())

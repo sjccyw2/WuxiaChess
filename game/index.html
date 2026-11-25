@@ -111,6 +111,7 @@
     <link rel="stylesheet" href="styles/17-preparation.css" />
     <link rel="stylesheet" href="styles/18-tutorial.css" />
     <link rel="stylesheet" href="styles/19-art-detail.css" />
+    <link rel="stylesheet" href="styles/20-saves.css" />
     <!--
       The three modules most of the import graph hangs off. With them already here the
       browser finds the rest in fewer round trips. A stale entry costs only that saving.
@@ -168,6 +169,7 @@
           <button class="embark-new" id="title-new" data-do="title-new" hidden>
             <span data-icon="people"></span>另開新局
           </button>
+          <button class="codex-link" id="title-saves" data-do="saves" hidden><span data-icon="chest"></span>存檔・讀檔</button>
           <button class="codex-link" data-do="codex"><span data-icon="book"></span>群俠列傳</button>
         </div>
       </div>
@@ -192,7 +194,7 @@
         <section id="menu-panel" class="hud-flyout menu-flyout" aria-labelledby="menu-title" hidden>
           <div class="flyout-head"><h2 id="menu-title">選單</h2><button class="flyout-close" data-do="hud-close" aria-label="關閉選單"><span data-icon="close"></span></button></div>
           <nav id="nav" class="field-menu" aria-label="戰場選單"></nav>
-          <div class="menu-foot"><small id="save-state">進度已自動保存</small><button data-do="home">主畫面</button></div>
+          <div class="menu-foot"><small id="save-state">進度已自動保存</small><button data-do="saves">存檔・讀檔</button><button data-do="home">主畫面</button></div>
         </section>
         <div id="field-dock" class="field-dock">
           <div class="unit-dock">

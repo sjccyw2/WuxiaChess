@@ -34,10 +34,12 @@ import { installTutorial } from './ui/tutorial.js';
 import { installArtDetail } from './ui/art-detail.js';
 import { MAX_ZOOM } from './scene/camera.js';
 import * as S from './audio/index.js';
+// The saves: 自動存檔, three slots and the lasting record (rules/saves.js), and their pages.
+import * as Saves from './rules/saves.js';
+import { savesPage, newRunAsk, lockPage, savesButton, savedNotice, loadedNotice, SAVE_FAILED, LOAD_FAILED } from './ui/save-views.js';
 
 const $ = (id) => document.getElementById(id);
-const saveKey = 'jianying.qingzhudu.chapter1.v1',
-  prefKey = 'jianying.qingzhudu.preferences.v1';
+const prefKey = 'jianying.qingzhudu.preferences.v1';
 function read(key, fallback) {
   try {
     return JSON.parse(localStorage.getItem(key)) ?? fallback;
@@ -46,10 +48,25 @@ function read(key, fallback) {
   }
 }
 const drawKey = 'jianying.tenfold.pending-lots.v1';
-const saved = R.restoreRun(read(saveKey, null));
+// The autosave, with the lasting record (a save from before the slots is moved over to them here).
+const opened = (() => {
+  try {
+    return Saves.openGame(localStorage);
+  } catch {
+    return { state: null, record: null };
+  }
+})();
+const saved = opened.state;
 let hasSave = !!saved,
   screen = 'title';
 let state = saved || R.startRun(R.drawLots(0));
+// With no game in the autosave the record still stands: the next run starts from it.
+if (!saved && opened.record) state.run.chronicle = opened.record;
+// Set when another tab has written the saves: this one writes nothing more (see lockOut).
+let lockedOut = false;
+// The page of the saves: a question it is asking, whether it saves before 另開新局, and the page
+// it was opened from (it goes back there).
+let savesUI = { ask: null, thenNew: false, from: null };
 let draft = null,
   codexId = 'hero';
 // The prologue shown before the draw: which page it is on, whether the
@@ -118,9 +135,10 @@ document.querySelectorAll('[data-icon]').forEach((el) => {
   el.innerHTML = icon(el.dataset.icon);
 });
 function save() {
+  if (lockedOut) return;
   hasSave = true;
   try {
-    localStorage.setItem(saveKey, JSON.stringify(state));
+    Saves.writeGame(localStorage, state);
     $('save-state').textContent = '進度已自動保存';
   } catch {
     $('save-state').textContent = '本次進度僅保留於此頁';
@@ -841,6 +859,10 @@ function pageHtml() {
       return P.enemyPage(state, subjectId);
     case 'attack-preview':
       return P.attackPage(state, strikeData.source, strikeData.target, strikeData.skill);
+    case 'saves':
+      return savesPage(slotsModel());
+    case 'new-ask':
+      return newRunAsk(state);
     default:
       return '';
   }
@@ -852,6 +874,7 @@ function drawModal(keepScroll = false) {
   const active = dialog.contains(document.activeElement) ? document.activeElement.dataset : null;
   $('modal-content').innerHTML = pageHtml();
   const body = frameDialog($('modal-content'));
+  addSavesButton();
   if (keepPlan) dialog.querySelector('.fo-map-plan')?.setAttribute('open', '');
   if (active?.do) {
     const equivalent = [...dialog.querySelectorAll('[data-do]')].find(
@@ -921,7 +944,8 @@ function openPage(name, heroId) {
     returnControl = hud.panel ? hud.button(hud.panel)?.id : document.activeElement?.id;
     hud.closePanel();
   }
-  if (name === 'team' && dialogState !== 'team' && !personalPages.includes(dialogState)) {
+  // (Back from the saves' page, 整備 is as it was left.)
+  if (name === 'team' && dialogState !== 'team' && dialogState !== 'saves' && !personalPages.includes(dialogState)) {
     viewId = state.selected;
     // (作戰目標 stays as it was left, folded or open, the next time the page opens.)
     teamUI = { tab: 'line', slot: 0, skill: 'school', node: null, missionShut: teamUI.missionShut };
@@ -947,6 +971,8 @@ function openPage(name, heroId) {
       dialog.querySelector('button')
     )?.focus({ preventScroll: true });
   }
+  // A page opened behind the notice that another tab has the game stays behind it.
+  if (lockedOut) raiseLock();
   refreshDev();
 }
 function closePage() {
@@ -977,6 +1003,14 @@ function dismissOutside(tap) {
   else if (tap && dialogState === 'prologue') command('prologue-next');
 }
 function dismissLayer() {
+  // The saves' page goes back to the page it was opened from, or closes.
+  if (dialogState === 'saves') {
+    const from = savesUI.from;
+    savesUI = { ask: null, thenNew: false, from: null };
+    if (from) openPage(from);
+    else closePage();
+    return;
+  }
   if (dialogState === 'brief' && briefFrom) {
     briefFrom = null;
     openPage('team', viewId);
@@ -1005,6 +1039,12 @@ function dismissLayer() {
     openTitle();
     return;
   }
+  // 返回 on 選境界, the prologue or the draw always lands on the title, even when the page was
+  // opened over a battle (再入夢 on the run's last page).
+  if (RUN_STEPS.includes(dialogState) && screen !== 'title') {
+    openTitle();
+    return;
+  }
   closePage();
 }
 function showScene() {
@@ -1029,6 +1069,9 @@ function showScene() {
     shop: 'camp',
     ended: 'result'
   }[state.run.scene];
+  // The run's last page (眼破, or 好棋 for a run won at its tenth board) opens over the title, so
+  // that what follows it (再入夢, 返回) starts from there and never from the board that ended it.
+  if (page === 'result' && screen !== 'title') openTitle();
   if (page) openPage(page);
   return !!page;
 }
@@ -1049,6 +1092,9 @@ dialog.addEventListener('close', () => {
   // showed a step of the run: put the step back, so the player is never left on a bare screen.
   const lost = !own && stepOfRun() ? dialogState : null;
   if (lost) setTimeout(() => !dialog.open && (RUN_STEPS.includes(lost) ? openPage(lost) : showScene()));
+  // The same for the saves' page opened from one: back to that page.
+  const from = !own && dialogState === 'saves' ? savesUI.from : null;
+  if (from) setTimeout(() => !dialog.open && openPage(from));
   dialogState = null;
   if (board?.layers) board.layers.aim = null;
   board.uncover();
@@ -1470,6 +1516,107 @@ function devFinish(won, side = false) {
   update();
   result();
 }
+// ── Saves: the slots' page, saving into a slot and loading one, and a second tab ──
+function slotsModel() {
+  let slots = Saves.SLOT_KEYS.map(() => null);
+  try {
+    slots = Saves.readSlots(localStorage);
+  } catch {}
+  return {
+    auto: hasSave ? state : null,
+    autoLive: hasSave && Saves.inProgress(state),
+    slots,
+    canSave: hasSave && !lockedOut,
+    ask: savesUI.ask,
+    thenNew: savesUI.thenNew
+  };
+}
+// The page opened from the title, the battle's 選單, a page between boards or 設定 (`thenNew`: from
+// 另開新局's question, to save before the new run).
+function openSaves(thenNew) {
+  savesUI = { ask: null, thenNew, from: dialog.open ? dialogState : null };
+  openPage('saves');
+}
+function saveSlot(n) {
+  if (lockedOut || !hasSave) return;
+  try {
+    Saves.writeSlot(localStorage, n, state);
+  } catch {
+    notice(SAVE_FAILED, 4200);
+    return;
+  }
+  audio('chime');
+  notice(savedNotice(n));
+  if (savesUI.thenNew) {
+    savesUI = { ask: null, thenNew: false, from: null };
+    beginNewRun();
+    return;
+  }
+  drawModal(true);
+}
+// A slot loaded becomes the autosave, with the record, and play continues from it as 繼續 would.
+function loadSlot(n) {
+  let next = null;
+  try {
+    next = Saves.loadSlot(localStorage, n, state.run.chronicle);
+  } catch {}
+  if (!next || lockedOut) return notice(LOAD_FAILED, 4200);
+  ++aiRun;
+  state = next;
+  savesUI = { ask: null, thenNew: false, from: null };
+  strikeData = null;
+  logFilter = 'all';
+  mapTip(null);
+  save();
+  enterBattle(false);
+  audio('chime');
+  notice(loadedNotice(n));
+}
+// The pages between boards (the stories, 軍情, 整備, the shop) carry 存檔 in their head.
+function addSavesButton() {
+  const between =
+    ['encounter', 'brief', 'team', 'camp'].includes(dialogState) &&
+    state.run.scene !== 'fight' &&
+    !(dialogState === 'brief' && briefFrom);
+  const head = dialog.querySelector('.modal-head');
+  if (!between || !hasSave || lockedOut || !head) return;
+  const box = document.createElement('template');
+  box.innerHTML = savesButton();
+  head.insertBefore(box.content, head.querySelector('[data-do="close"]'));
+}
+// Two tabs: when another tab writes the saves, this one stops writing and says so, with a button
+// that loads the page again from storage (the other tab then stops in its turn when this one saves).
+const lockDialog = document.createElement('dialog');
+lockDialog.className = 'tab-lock';
+lockDialog.setAttribute('aria-labelledby', 'tab-lock-title');
+lockDialog.innerHTML = lockPage();
+lockDialog.addEventListener('cancel', (e) => e.preventDefault());
+lockDialog.addEventListener('keydown', (e) => e.key === 'Escape' && e.preventDefault());
+// Closed some other way (a back gesture): shown again. Closed to be raised above a page: not.
+let relocking = false;
+lockDialog.addEventListener('close', () => {
+  if (relocking) relocking = false;
+  else if (lockedOut) setTimeout(() => !lockDialog.open && raiseLock());
+});
+document.body.append(lockDialog);
+function raiseLock() {
+  if (lockDialog.open) {
+    relocking = true;
+    lockDialog.close();
+  }
+  lockDialog.showModal();
+  lockDialog.querySelector('button')?.focus({ preventScroll: true });
+}
+function lockOut() {
+  lockedOut = true;
+  ++aiRun; // the enemy's turn, if one is playing, stops here
+  hud.closePanel();
+  raiseLock();
+}
+addEventListener('storage', (e) => {
+  if (lockedOut || (e.key !== null && !Saves.SAVE_KEYS.includes(e.key))) return;
+  lockOut();
+});
 function openTitle() {
   ++aiRun;
   closePage();
@@ -1495,6 +1642,8 @@ function openTitle() {
             : '繼續' + R.stageTitle(state.run.stage, '')
     : '入夢';
   $('title-new').hidden = !hasSave;
+  // 存檔・讀檔 once there is a game to save or a slot to load.
+  $('title-saves').hidden = !hasSave && !Saves.SLOT_KEYS.some((key) => read(key, null));
   refreshDev();
   window.scrollTo({ top: 0, behavior: 'instant' });
   paint();
@@ -1725,11 +1874,68 @@ function command(action, id, data = {}, keyboard = false) {
       openTitle();
       break;
     case 'start-primary':
-      if (hasSave) enterBattle(false);
-      else beginNewRun();
+      if (!hasSave) beginNewRun();
+      // A run that has ended: its last page, over the title (the ending film first if a reload
+      // cut it short).
+      else if (state.run.scene === 'ended' && !(state.run.last?.ended && !state.run.last.shown)) openPage('result');
+      else enterBattle(false);
       break;
     case 'title-new':
+      // A run still under way is not replaced without a question (new-ask), asked on the title.
+      if (hasSave && Saves.inProgress(state)) {
+        if (screen !== 'title') openTitle();
+        openPage('new-ask');
+        break;
+      }
       beginNewRun();
+      break;
+    case 'new-go':
+      if (dialogState === 'new-ask') beginNewRun();
+      break;
+    case 'new-save':
+      if (dialogState === 'new-ask') openSaves(true);
+      break;
+    case 'saves':
+      if (lockedOut || dialogState === 'saves') break;
+      openSaves(false);
+      audio('page');
+      break;
+    case 'slot-save': {
+      const n = Number(id);
+      if (dialogState !== 'saves' || savesUI.ask || !hasSave || !(n >= 1 && n <= Saves.SLOT_COUNT)) break;
+      if (slotsModel().slots[n - 1]) {
+        savesUI.ask = { kind: 'save', n };
+        drawModal();
+        audio('page');
+      } else saveSlot(n);
+      break;
+    }
+    case 'slot-load': {
+      const n = Number(id);
+      if (dialogState !== 'saves' || savesUI.ask || !slotsModel().slots[n - 1]?.state) break;
+      if (hasSave && Saves.inProgress(state)) {
+        savesUI.ask = { kind: 'load', n };
+        drawModal();
+        audio('page');
+      } else loadSlot(n);
+      break;
+    }
+    case 'slot-yes': {
+      const ask = savesUI.ask;
+      if (dialogState !== 'saves' || !ask) break;
+      savesUI.ask = null;
+      if (ask.kind === 'save') saveSlot(ask.n);
+      else loadSlot(ask.n);
+      break;
+    }
+    case 'slot-no':
+      if (dialogState !== 'saves' || !savesUI.ask) break;
+      savesUI.ask = null;
+      drawModal();
+      break;
+    case 'tab-take':
+      // Back from storage: the page loads again with the newest saves, and writes from then on.
+      if (lockedOut) location.reload();
       break;
     case 'realm-pick': {
       const n = Number(id);
@@ -1767,7 +1973,7 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-retry': {
       // Back to this board's 起陣, everything as it was then (the run, the heroes, the purse).
       if (!dev || !canRetry()) break;
-      const next = R.restoreRun(JSON.parse(retryPoint.save));
+      const next = Saves.withRecord(R.restoreRun(JSON.parse(retryPoint.save)), state.run.chronicle);
       if (!next) return notice('此刻不能這樣做。');
       ++aiRun;
       state = next;
@@ -2127,7 +2333,7 @@ function command(action, id, data = {}, keyboard = false) {
       strikeData = null;
       if (state.run.status === 'ended') {
         update();
-        openPage('result');
+        showScene(); // the run's last page, over the title
       } else enterBattle(true);
       break;
     case 'skill-tab':
@@ -2297,8 +2503,9 @@ function command(action, id, data = {}, keyboard = false) {
       audio('tap');
       break;
     case 'reset-ask':
+      // 另起一輪 (設定, in a battle): to the title, and on as 另開新局 goes, question included.
       openTitle();
-      openFormation();
+      command('title-new');
       break;
   }
 }

@@ -159,6 +159,38 @@ Its numbers are its own (`LAST_ROWS` in `game/src/rules/game.js`), measured with
 `node tools/sim-battles.mjs --last`. The design is in `wiki/content/世界觀設定.md` §8.4 and
 `wiki/content/單輪劇本.md` §9.5.
 
+## Saves
+
+The game keeps four saves in the browser's `localStorage`, and the player's lasting record apart
+from them (`game/src/rules/saves.js`; the pages are in `game/src/ui/save-views.js`):
+
+| Key | What it holds |
+| --- | --- |
+| `jianying.qingzhudu.chapter1.v1` | 自動存檔: the game being played, written after nearly every action. The title's 繼續 continues it. |
+| `jianying.qingzhudu.slot1.v1` to `slot3.v1` | 存檔一 to 存檔三: `{ at, save }`, a game the player saved by hand and when. |
+| `jianying.qingzhudu.record.v1` | The lasting record: the run's `chronicle` (境界 opened and won, runs finished, the ending seen, 悟, the boards seen, the parcel the shop keeps for the next run). |
+
+存檔・讀檔 opens the page of the four saves: from the title, from the battle's 選單 (beside 主畫面),
+from 設定, and as 存檔 in the head of the pages between boards (the stories, 軍情, 整備, the shop).
+Each save shows the board and round (or the page between boards), the 境界, the heroes and when it
+was saved; an empty one says 空. Saving into a filled slot asks first; loading asks first when
+the autosave holds a run still under way. A slot loaded is copied into the autosave and played
+on from there.
+
+Every save still carries its own copy of the chronicle, so it loads alone (`restoreRun` checks
+it) and an older build can read it. Whatever is loaded takes the record in place of that copy,
+merged so that nothing goes back (`mergeRecord`): every count is the higher, every list the union.
+The parcel is the exception, since a new run takes it: it is always the record's, so an older
+slot can neither empty it nor hand it out twice. A save from before the slots (the autosave
+alone) gives its chronicle to the record the first time it loads, and is otherwise left as it was.
+
+另開新局 asks before replacing a run under way, naming its board, and offers to save it into a
+slot first (先存檔). With the game open in two tabs, a tab that sees another write the saves (the
+`storage` event on these keys) stops saving at once and says so, with 在此頁接手 to load the
+page again from storage. The draw being set up (`jianying.tenfold.pending-lots.v1`) and the
+tutorial's record stay per browser: the draw is kept for the run it follows (its `source` is that
+run's seed), so a loaded slot simply draws afresh.
+
 ## Developer mode
 
 `game/?dev` turns on a small floating window (folded to a bar that reads 開發); the browser
@@ -218,7 +250,8 @@ film, the empty record, the first board's tutorial):
 
 - 清空紀錄 puts this browser back to the state of someone who has never opened the game and loads
   the page again at the title. Every key the game keeps in the browser goes (all begin with
-  `jianying.`: the save, the settings, the draw being set up, the tutorial's record), except
+  `jianying.`: the autosave, the three slots, the record, the settings, the draw being set up,
+  the tutorial's record), except
   developer mode's own, which begin with `jianying.dev-` (that it is on, the last 試局 pick, the
   window's place).
 - 清空・首局 does the same and then opens on the first board's 起陣 in an ordinary first run: a
@@ -371,7 +404,7 @@ Builds the catalog and the text listing from the game sources and fails if a pag
 node tools/check-mechanics.mjs
 ```
 
-Builds small battles with the real rules and checks each mechanic of the skill and villain redesign against its specification: conditions from application to expiry, conditional bonuses on and off, use restrictions and their reasons, villain traits, the last board (問劍, 不敗, 無招, the forms that answer a weapon, 無名 joining and leading, new game plus), and old saves loading. One line per check; exits 1 on any failure. Each mechanic is its own block in the file, so a new mechanic adds a block.
+Builds small battles with the real rules and checks each mechanic of the skill and villain redesign against its specification: conditions from application to expiry, conditional bonuses on and off, use restrictions and their reasons, villain traits, the last board (問劍, 不敗, 無招, the forms that answer a weapon, 無名 joining and leading, new game plus), old saves loading, and the save slots (a slot saved and loaded gives the same game, an older slot never lowers the record, a save from before the slots moves over with nothing lost). One line per check; exits 1 on any failure. Each mechanic is its own block in the file, so a new mechanic adds a block.
 
 ### Skill trees
 

@@ -50,6 +50,8 @@ const paths = {
     '<path d="M9 2h6v4l-1 1.2V10c3.8 1.4 5.7 3 5.7 6.2 0 3.5-2.8 5-7.7 5s-7.7-1.5-7.7-5c0-3.2 1.9-4.8 5.7-6.2V7.2L9 6V2Zm-.3 4h6.6"/><path d="M10 15.5h4m-2-2v4"/>',
   tree: '<path d="m12 2 7 9h-3l5 6h-8v5h-2v-5H3l5-6H5l7-9Z"/>',
   stone: '<path d="m3 10 9-5 9 5-9 5-9-5Zm0 5 9 5 9-5"/>',
+  // 存檔: a lidded box with its clasp.
+  chest: '<path d="M3.5 10h17v9.5h-17V10Zm1.6-5h13.8l1.6 5h-17l1.6-5Z"/><path d="M10 10v3.2h4V10"/>',
   star: '<path d="m12 2.5 2.6 6.1 6.6.6-5 4.5 1.5 6.5-5.7-3.5-5.7 3.5 1.5-6.5-5-4.5 6.6-.6L12 2.5Z"/>',
   target:
     '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.7"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/>',
