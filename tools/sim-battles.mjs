@@ -67,6 +67,11 @@ const W = {
   fortify: 0.9,
   holdLater: 0.5,
   equipHold: 0.5, // choosing arts: a turn a foe is held, in basic attacks (W.hold weights the kinds)
+  // 挑釁 and 代受: the enemy blows a guard draws onto himself from softer companions. In play the
+  // gain is read from the threats (guardShift); choosing arts, a taunt is worth this many basic
+  // attacks per tile of its radius, and a cover this many (it guards only those beside him).
+  equipTaunt: 0.45,
+  equipCover: 0.6,
   medicineAt: 0.4, // drink medicine below this fraction of health (leader: + 0.15)
   // 守: the object the heroes keep
   keepThreat: 1.7, // a point of damage on a foe that could strike the kept object next turn
@@ -256,6 +261,7 @@ function placeScore(s, u, ctx, hpAfter, gone, after = null) {
   let score = -d.expected * W.danger * (leader ? leaderCare(ctx) : 1);
   if (d.total >= hpAfter) score -= leader ? W.leaderLethal : W.lethal * (ctx.sidePolicy.lethal || 1) + u.maxHp / 2;
   else if (leader && d.total >= hpAfter * 0.75) score -= W.leaderLethal / 20;
+  if (after?.guard?.taunt || after?.guard?.cover) score += guardShift(s, u, ctx, after.held ? new Set([...gone, ...after.held]) : gone, after.guard, hpAfter, d);
   score += (tileInfo(u.x, u.y, s.mapIndex)?.defense || 0) * W.cover;
   const heal = tileInfo(u.x, u.y, s.mapIndex)?.heal || 0;
   if (heal) score += Math.min(heal, u.maxHp - hpAfter) * 0.8;
@@ -295,11 +301,68 @@ function guardedDanger(s, u, threats, gone, guard) {
   }
 }
 // The guard an art leaves on its own caster (rules/battle-mastery.js selfEffectsOf: 金剛 and
-// 固守 on a strike guard the striker).
+// 固守 on a strike guard the striker; 挑釁 and 代受 stand on the caster whatever the art aims at).
 function selfGuard(art) {
-  if (!art || G.isSupport(art)) return null;
-  if (!art.immune && !art.fortify) return null;
-  return { immune: !!art.immune, fortify: art.fortify?.power || 0 };
+  if (!art) return null;
+  const strike = !G.isSupport(art);
+  const guard = {
+    immune: strike && !!art.immune,
+    fortify: strike ? art.fortify?.power || 0 : 0,
+    taunt: art.taunt || 0,
+    cover: !!art.cover
+  };
+  return guard.immune || guard.fortify || guard.taunt || guard.cover ? guard : null;
+}
+// 挑釁 and 代受: what the guard u leaves for the coming enemy phase is worth, as blows moved.
+// A taunt binds every foe within its radius that can strike him where he ends (G.taunters); a
+// cover takes every direct blow aimed at a companion beside him. Worth the danger lifted off the
+// companions (more for the leader, less for one who may still walk away), less what he takes on:
+// every bound foe strikes him for certain, and a covered companion's foes may turn on him. `d` is
+// his own danger before the guard, with his other guards counted (placeScore).
+function guardShift(s, u, ctx, gone, guard, hpAfter, d) {
+  const here = key(u.x, u.y),
+    leader = u.id === s.leader;
+  const drawn = guard.taunt
+    ? ctx.threats.filter((th) => !gone.has(th.e) && G.distance(th.e, u) <= guard.taunt && th.hits.has(here)).map((th) => th.e)
+    : [];
+  const without = new Set([...gone, ...drawn]);
+  let relief = 0;
+  const turned = new Set(); // foes that would strike a covered companion
+  for (const v of G.party(s)) {
+    if (v === u || !G.living(v)) continue;
+    const before = dangerAt(s, v, ctx.threats, gone);
+    if (!before.total) continue;
+    const covered = guard.cover && G.distance(u, v) === 1;
+    const after = covered ? { total: 0, expected: 0 } : dangerAt(s, v, ctx.threats, without);
+    const free = G.canAct(s, v); // he may still walk out of reach this turn
+    relief += (before.expected - after.expected) * W.danger * (v.id === s.leader ? leaderCare(ctx) : 1) * (free ? 0.5 : 1);
+    if (!free && before.total >= v.hp && after.total < v.hp) relief += v.id === s.leader ? W.leaderLethal / 20 : W.lethal;
+    if (covered) for (const th of ctx.threats) if (!without.has(th.e) && th.hits.has(key(v.x, v.y)) && !th.hits.has(here)) turned.add(th.e);
+  }
+  if (guard.immune) return relief; // 金剛: nothing the guard draws lands on him
+  // What lands on him: each bound foe's whole blow, the rest of his danger as before, and a
+  // covered companion's foes as if they came for him.
+  const blow = (th) => Math.round(G.damage(th.e, u, false, s.mapIndex, s) * th.factor);
+  const fort = guard.fortify ? { fortify: guard.fortify } : null;
+  const bound = withGuard(s, u, fort, () => ctx.threats.filter((th) => drawn.includes(th.e)).reduce((n, th) => n + blow(th), 0));
+  const rest = withGuard(s, u, fort, () => dangerAt(s, u, ctx.threats.filter((th) => !drawn.includes(th.e)), gone));
+  const extra = withGuard(s, u, fort, () => dangerAt(s, u, ctx.threats.filter((th) => turned.has(th.e)).map((th) => ({ ...th, hits: new Set([here]) })), gone));
+  const expected = bound + rest.expected + extra.expected,
+    total = d.total + extra.total;
+  let score = relief - Math.max(0, expected - d.expected) * W.danger * (leader ? leaderCare(ctx) : 1);
+  if (total >= hpAfter && d.total < hpAfter) score -= leader ? W.leaderLethal : W.lethal * (ctx.sidePolicy.lethal || 1) + u.maxHp / 2;
+  return score;
+}
+// Runs fn with 固守's 防禦 laid on u for the count, as guardedDanger does.
+function withGuard(s, u, guard, fn) {
+  if (!guard?.fortify) return fn();
+  const had = u.conditions;
+  u.conditions = { ...(had || {}), fortify: { power: Math.max(guard.fortify, had?.fortify?.power || 0), through: s.round + 1 } };
+  try {
+    return fn();
+  } finally {
+    u.conditions = had;
+  }
 }
 // The blow foe t would strike next enemy phase: on the hero it would hurt most among those it can
 // reach (`except` left out), or, with none in reach, a share of its blow on the softest hero.
@@ -585,6 +648,7 @@ function bestOption(s, u, ctx) {
           continue;
         }
         r = f.support ? supportScore(s, u, t, f, ctx, mp) : strikeScore(s, u, t, f, ctx, mp, art);
+        r.after ??= { guard: selfGuard(art) }; // a support art's 挑釁 or 代受 stands on its caster
         consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone, r.after), P, act: 'art', id, t });
       }
     }
@@ -859,7 +923,9 @@ function worth(heroId, id, level) {
   const art = id === 'basic' ? null : id === 'signature' ? G.artFor(G.startingHero(heroId), 'signature') : TECHNIQUES[id];
   let held = 0;
   for (const k of ['freeze', 'mute', 'charm']) if (art?.[k]) held += (art[k].turns || 1) * W.hold[k] * (k === 'charm' ? 1 + W.turncoat : 1);
-  return { job: p.job, value: (amount / base) * scale + held * W.equipHold };
+  // 挑釁 and 代受: the blows drawn off softer companions, which the damage measure leaves out.
+  const drawn = (art?.taunt || 0) * W.equipTaunt + (art?.cover ? W.equipCover : 0);
+  return { job: p.job, value: (amount / base) * scale + held * W.equipHold + drawn };
 }
 function equipArts(s, u) {
   const known = ['signature', ...u.learned.filter((id) => TECHNIQUES[id] && TECHNIQUES[id].kind !== 'basic')];
