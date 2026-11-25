@@ -15,6 +15,7 @@ const GATE_LABELS = {
   casts: '親自施展絕技',
   heals: '累計療復氣血（含領隊療效）',
   protects: '護持人次（自身護盾亦計）',
+  struck: '親身承受敵人攻擊',
   steps: '實際行走格數',
   side: '在場生還並完成支線'
 };
@@ -711,15 +712,15 @@ const MASTERY_ARTS = {
     tier: 1,
     needs: ['signature'],
     points: 1,
-    mp: 8,
+    mp: 6,
     range: 0,
     icon: 'shield',
     visual: 'guard',
     target: 'self',
-    taunt: 2,
+    taunt: 3,
     fortify: { power: 4, turns: 2 },
     aura: 1,
-    desc: '抖響鐵索挑釁四周，自身與相鄰同伴防禦增加 4 點，持續兩回合。至下回合，兩格內能攻到他的敵人只能攻擊他。',
+    desc: '抖響鐵索挑釁四周，自身與相鄰同伴防禦增加 4 點，持續兩回合。至下回合，三格內能攻到他的敵人只能攻擊他。',
     source: '向問天與令狐冲在涼亭並肩，獨引群敵。此招為本作所擬。'
   },
   sweepingWhip: {
@@ -801,7 +802,7 @@ const MASTERY_ARTS = {
     avenge: 0.4,
     fortify: { power: 10, turns: 1 },
     rooted: true,
-    gate: { metric: 'protects', atLeast: 4 },
+    gate: { metric: 'struck', atLeast: 12 },
     desc: '鐵鏈橫掃相鄰一敵，四鄰敵人承受三成半餘勁，敵人無法還擊；上一敵方回合曾受傷時威力更強。至下回合自身防禦增加 10 點，下一回合不能移動。',
     source: '涼亭中向問天身縛鐵鏈，獨抗正邪數百人。此招為本作所擬。'
   },

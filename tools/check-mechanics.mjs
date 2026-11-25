@@ -1335,6 +1335,79 @@ section('taunt');
   check('a coverer beside the taunter takes the blow', !covered.guard && !covered.weak && unit(covered.e, 'medic').hp < 300);
 }
 
+// ── 向問天, a taunt tank (0.45, Q-N150) ───────────────────────────────────
+// 鐵索並肩 binds within three tiles, measured where he stands as each enemy acts; 內力 60 pays for it
+// every round; his summit asks for enemy blows taken ('struck'), not 'protects'.
+section('taunt tank');
+{
+  const art = TECHNIQUES.chainShelter;
+  check('鐵索並肩: 挑釁 three tiles, a first-tier node for one point, 6 內力', art.taunt === 3 && art.tier === 1 && art.points === 1 && art.mp === 6 && same(art.needs, ['signature']));
+  const fresh = G.startingHero('guard');
+  check('向問天 starts with 60 內力', fresh.maxMp === 60 && fresh.mp === 60, fresh.maxMp);
+  check('…and 鐵索並肩 costs no more than the 6 內力 a round brings back, so he can taunt every round', art.mp <= 6);
+  const at12 = G.startingHero('guard');
+  G.raiseLevel(at12, 11);
+  check('at level 12 his 內力 is the common growth on top (60 + 66)', at12.maxMp === 126, at12.maxMp);
+  // The preview says three tiles, and the outline is three tiles round him.
+  const s = board(['guard', 'hero', 'medic']);
+  const guard = put(s, 'guard', 4, 7);
+  teach(guard, 'chainShelter');
+  const f = G.forecast(guard, guard, true, s);
+  check('the preview says three tiles', f.notes.includes('挑釁 · 至下回合，三格內可攻到他的敵人只能攻擊他'), f.notes);
+  G.resolve(s, guard, guard, true);
+  check('the cast leaves 挑釁 3 until his next turn', guard.conditions?.taunt?.power === 3 && guard.conditions.taunt.through === s.round);
+  // Three tiles off, able to reach him: bound. Four off: free. Moved in the enemy phase, the
+  // radius goes with him.
+  const scene = (foeAt, guardAt, moveTo) =>
+    loose(() => {
+      const e = board(['guard', 'hero', 'medic']);
+      const foe = put(e, 'blade', ...foeAt);
+      const g = put(e, 'guard', ...guardAt);
+      const weak = Object.assign(put(e, 'hero', foeAt[0], foeAt[1] + 1), { hp: 20 });
+      BM.applyCondition(e, g, { kind: 'taunt', power: 3, turns: 1 }, g);
+      G.startEnemy(e);
+      if (moveTo) Object.assign(g, { x: moveTo[0], y: moveTo[1] });
+      const bound = G.taunters(e, foe).map((v) => v.id);
+      const hp = [g.hp, weak.hp, g.mastery.struck];
+      G.enemyAct(e, foe);
+      return { bound, guard: g.hp < hp[0], weak: weak.hp < hp[1], struck: g.mastery.struck - hp[2] };
+    });
+  const three = scene([7, 7], [4, 7]);
+  check('three tiles off and able to reach him, it is bound and strikes him', same(three.bound, ['guard']) && three.guard && !three.weak, JSON.stringify(three));
+  check('the blow counts as one taken', three.struck === 1);
+  const four = scene([8, 7], [4, 7]);
+  check('four tiles off, it is not bound', !four.bound.length && four.weak && !four.guard, JSON.stringify(four));
+  const moved = scene([8, 7], [3, 7], [5, 7]);
+  check('cast five tiles off, then carried within three in the enemy phase: bound from where he stands', same(moved.bound, ['guard']) && moved.guard, JSON.stringify(moved));
+  // 'struck': a record saved before it reads as none, and the gate counts it.
+  const gated = board(['guard', 'hero', 'medic']);
+  const g = unit(gated, 'guard');
+  delete g.mastery.struck;
+  const back = R.restoreRun(copy(gated));
+  check('a record saved before \'struck\' still loads', !!back && unit(back, 'guard'));
+  check('涼亭鐵鏈 is gated on blows taken', TECHNIQUES.earthThroughChain.gate?.metric === 'struck' && TECHNIQUES.earthThroughChain.gate.atLeast === 12);
+  const u = unit(back, 'guard');
+  u.learned.push('bloodAtPass', 'chainShelter', 'sweepingWhip', 'reverseForce', 'ironChainForm');
+  u.sp = 9;
+  const closed = R.studyState(back, u, 'earthThroughChain');
+  check('…closed with none taken, and the page counts them', closed?.status === '待完成歷練' && JSON.stringify(closed).includes('親身承受敵人攻擊 0／12'), JSON.stringify(closed));
+  u.mastery.struck = 12;
+  check('…open at twelve', R.studyState(back, u, 'earthThroughChain')?.canLearn === true);
+  // A blow 閃身 makes miss is not one taken.
+  const dodge = loose(() => {
+    const e = board(['guard', 'hero', 'medic']);
+    const foe = put(e, 'blade', 5, 7);
+    const t = put(e, 'guard', 4, 7);
+    put(e, 'hero', 1, 1);
+    BM.applyCondition(e, t, { kind: 'evade', power: 1, turns: 1 }, t);
+    G.startEnemy(e);
+    const was = t.mastery.struck;
+    G.enemyAct(e, foe);
+    return t.mastery.struck - was;
+  });
+  check('a blow 閃身 makes miss is not counted', dodge === 0, dodge);
+}
+
 // ── 回身 glide (§2, §9.4) ────────────────────────────────────────────────
 section('glide');
 {

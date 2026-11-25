@@ -699,6 +699,8 @@ function restoreRun(raw) {
     ['heals', 'steps', 'protects', 'casts', 'kills'].every(
       (k) => Number.isInteger(u.mastery[k]) && u.mastery[k] >= 0
     ) &&
+    // 'struck' came in 0.45: a record saved before has none and counts from 0.
+    (u.mastery.struck == null || (Number.isInteger(u.mastery.struck) && u.mastery.struck >= 0)) &&
     uniqueMembers(u.mastery.sides, [...r.route, LAST_MAP]);
   for (const u of s.units) if (!G.living(u)) delete u.conditions;
   const validConditions = (u) =>
@@ -1969,7 +1971,7 @@ function milestone(u, gate) {
       (met ? '已完成' : '須出戰生還') +
       '）';
   } else {
-    const n = gate.metric === 'level' ? u.level : u.mastery[gate.metric];
+    const n = gate.metric === 'level' ? u.level : u.mastery[gate.metric] || 0;
     met = n >= gate.atLeast;
     label =
       (GATE_LABELS[gate.metric] || '等級') + ' ' + Math.min(n, gate.atLeast) + '／' + gate.atLeast;

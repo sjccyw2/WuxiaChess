@@ -1447,7 +1447,7 @@ const HERO_STATS = {
   hu: [104, 36, 17, 9, 5, 1, 'foxSaber'],
   hero: [148, 74, 25, 11, 4, 1, 'pine'],
   medic: [64, 46, 15, 7, 3, 2, 'staff'],
-  guard: [166, 34, 19, 16, 3, 1, 'pole'],
+  guard: [166, 60, 19, 16, 3, 1, 'pole'], // 內力 34 → 60 (0.45): enough to taunt every round
   guo: [180, 76, 24, 19, 3, 1, 'wraps'],
   xiao: [102, 66, 21, 9, 4, 1, 'twins'],
   duan: [76, 70, 17, 7, 4, 2, 'fan'],
@@ -2801,7 +2801,7 @@ function guardNotes(art) {
   }
   if (art?.taunt)
     notes.push(
-      '挑釁 · 至下回合，' + (art.taunt === 2 ? '兩' : art.taunt) + '格內可攻到他的敵人只能攻擊他'
+      '挑釁 · 至下回合，' + (COUNTS[art.taunt] || art.taunt) + '格內可攻到他的敵人只能攻擊他'
     );
   return notes;
 }
@@ -3719,6 +3719,8 @@ function startEnemy(s) {
 }
 // 挑釁: the taunting heroes enemy u is bound to strike this turn — each one whose radius u starts
 // its action within and whom it can strike from a tile it can stand on (`cells`, with `range`).
+// The radius is measured from where the taunter stands as u begins to act, not where he cast it:
+// a taunter pulled or pushed in the enemy phase binds from his new tile.
 function taunters(s, u, cells = null, range = strikeReach(s, u)) {
   if (holdsFire(u)) return []; // 定身, 閉穴: it strikes no one; 受制: none of the heroes
   cells ??= [u, ...Array.from(reachable(s, u).keys(), (k) => fromKey(k))];
@@ -3896,6 +3898,9 @@ function enemyAction(s, u) {
   const raw = damage(u, t, false, s.mapIndex, s);
   const strikePower = art ? Math.round(raw * art.factor) : raw;
   const blow = received(s, t, [strikePower]);
+  // An enemy blow that reaches a hero (not one 閃身 makes miss) counts toward 'struck', the
+  // record 向問天's summit is gated on (0.45).
+  if (ally(t) && !blow.evaded) progress(t, 'struck', 1);
   const n = wound(s, t, blow.hits[0], u);
   // 還報 counts only 氣血 an enemy's own action took, never what a shield caught.
   if (n) t.hurtRound = s.round;

@@ -294,11 +294,13 @@ function applyCondition(s, target, effect, caster) {
     source: owner
   };
 }
+// `struck` (enemy blows taken, 0.45) is newer than the rest: a record saved before it has none,
+// and counts from 0.
 function blankRecord() {
-  return { kills: 0, casts: 0, heals: 0, protects: 0, steps: 0, sides: [] };
+  return { kills: 0, casts: 0, heals: 0, protects: 0, steps: 0, struck: 0, sides: [] };
 }
 function progress(unit, metric, delta) {
-  if (unit?.mastery && delta > 0) unit.mastery[metric] += delta;
+  if (unit?.mastery && delta > 0) unit.mastery[metric] = (unit.mastery[metric] || 0) + delta;
 }
 
 export { COMMANDS, HELD_KINDS, LINGER_KINDS, commandDescription, commandBonus, commandAura, leaderBoon, prepPost, CONDITION_NAMES, effectsOf, selfEffectsOf, effectDescription, activeEffects, applyCondition, blankRecord, progress };
