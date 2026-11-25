@@ -401,11 +401,12 @@ function conditionChips(s, u) {
 function sheetPage(s, id) {
   return titleHead('people', '俠客錄') + allyPick(s, id) + profileContents(s, id);
 }
-function profileContents(s, id) {
+// `preview`: read only, a hero not yet in the run (抓子's 俠客詳情): no buttons to other pages.
+function profileContents(s, id, preview = false) {
   const u = find(s, id);
   // The tile the hero stands on and what it does: only on the board, in a battle.
   const location =
-    s.units.includes(u) && s.run?.status !== 'camp' && s.run?.scene !== 'prep'
+    !preview && s.units.includes(u) && s.run?.status !== 'camp' && s.run?.scene !== 'prep'
       ? tileInfo(u.x, u.y, s.mapIndex)
       : null;
   return (
@@ -437,7 +438,7 @@ function profileContents(s, id) {
     '</div><div><h4>隨身裝備</h4>' +
     equippedCard(u, u.weapon, '兵器') +
     equippedCard(u, u.gear, '護具／佩飾') +
-    btn('inventory', '整理行囊 ' + arrow, 'text-btn inline') +
+    (preview ? '' : btn('inventory', '整理行囊 ' + arrow, 'text-btn inline')) +
     '</div></div>' +
     '<div class="skill-feature">' +
     icon(basicFor(u).icon || 'sword', 23) +
@@ -448,7 +449,7 @@ function profileContents(s, id) {
       .map((id) => artFor(u, id).name)
       .join('、') || '尚未配置') +
     '</p></div>' +
-    btn('skills', '修習 ' + arrow, 'text-btn') +
+    (preview ? '' : btn('skills', '修習 ' + arrow, 'text-btn')) +
     '</div>'
   );
 }

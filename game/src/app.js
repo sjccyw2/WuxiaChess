@@ -20,7 +20,7 @@ import { FieldHud } from './ui/field-hud.js';
 import { icon } from './ui/icons.js';
 import { codexPage } from './ui/gates.js';
 import * as R from './rules/journey.js';
-import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
+import { rollView, lotDetail, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
 import { playFilm } from './ui/intro-film.js';
 import { realmView } from './ui/realm-views.js';
 import { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick } from './ui/dev-mode.js';
@@ -52,6 +52,10 @@ let hasSave = !!saved,
 let state = saved || R.startRun(R.drawLots(0));
 let draft = null,
   codexId = 'hero';
+// 抓子's 俠客詳情: the hero shown, its tab and the node picked on its tree; and the five drawn as
+// they would enter the run (R.lotPreview), made once per draw and 境界.
+let lotUI = { id: null, tab: 'sheet', node: null },
+  lotState = null;
 // The prologue shown before the draw: which page it is on, whether the
 // opening film told its first pages, and the 境界 picked for the run.
 let prologue = { step: 0, film: false, realm: 1 };
@@ -796,6 +800,14 @@ function pageHtml() {
         draft.leaderId,
         draft.picks
       );
+    case 'lot-detail':
+      if (lotState?.draw !== draft || lotState.realm !== prologue.realm)
+        lotState = {
+          draw: draft,
+          realm: prologue.realm,
+          s: R.lotPreview({ seed: draft.seed, realm: prologue.realm }, state.run.chronicle)
+        };
+      return lotDetail(lotState.s, draft.ids, draft.picks, draft.leaderId, lotUI);
     case 'encounter':
       return encounterPage(state, state.run.scene, state.run.beat);
     case 'team':
@@ -873,17 +885,19 @@ function drawModal(keepScroll = false) {
   const close = dialog.querySelector('.modal-head [data-do="close"]');
   if (close) {
     const label =
-      personalPages.includes(dialogState) && heroParent === 'team'
-        ? state.run.scene === 'prep'
-          ? '返回整備'
-          : '返回隊伍'
-        : dialogState === 'team' && state.run.scene === 'shop'
-          ? '返回通吃坊'
-          : (dialogState === 'team' && state.run.scene === 'prep') ||
-              dialogState === 'camp' ||
-              dialogState === 'result'
-            ? '返回主畫面'
-            : '關閉視窗';
+      dialogState === 'lot-detail'
+        ? '返回抓子'
+        : personalPages.includes(dialogState) && heroParent === 'team'
+          ? state.run.scene === 'prep'
+            ? '返回整備'
+            : '返回隊伍'
+          : dialogState === 'team' && state.run.scene === 'shop'
+            ? '返回通吃坊'
+            : (dialogState === 'team' && state.run.scene === 'prep') ||
+                dialogState === 'camp' ||
+                dialogState === 'result'
+              ? '返回主畫面'
+              : '關閉視窗';
     close.title = label;
     close.setAttribute('aria-label', label);
   }
@@ -975,6 +989,10 @@ function dismissOutside(tap) {
   else if (tap && dialogState === 'prologue') command('prologue-next');
 }
 function dismissLayer() {
+  if (dialogState === 'lot-detail') {
+    openPage('formation');
+    return;
+  }
   if (dialogState === 'brief' && briefFrom) {
     briefFrom = null;
     openPage('team', viewId);
@@ -1888,8 +1906,32 @@ function command(action, id, data = {}, keyboard = false) {
     case 'sound-toggle':
       toggleSound();
       break;
+    // 俠客詳情 for one of the five drawn: its numbers and tree, read before keeping three.
+    case 'lot-detail':
+      if (dialogState === 'formation' && draft?.ids.includes(id)) {
+        lotUI = { id, tab: 'sheet', node: null };
+        draft.settled = true; // back on 抓子, the cards are not dealt again
+        openPage('lot-detail');
+        audio('tap');
+      }
+      break;
+    case 'lot-view':
+      if (dialogState === 'lot-detail' && draft?.ids.includes(id) && id !== lotUI.id) {
+        lotUI.id = id;
+        lotUI.node = null;
+        drawModal(false);
+        audio('tap');
+      }
+      break;
+    case 'lot-tab':
+      if (dialogState === 'lot-detail' && ['sheet', 'skills'].includes(id)) {
+        lotUI.tab = id;
+        lotUI.node = null;
+        drawModal();
+      }
+      break;
     case 'lead-lot':
-      if (dialogState === 'formation' && draft?.picks.includes(id)) {
+      if (['formation', 'lot-detail'].includes(dialogState) && draft?.picks.includes(id)) {
         draft.leaderId = id;
         draft.settled = true; // the cards have been dealt: no second deal on redrawing
         rememberDraw();
@@ -1899,7 +1941,7 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     // Keep a drawn stone or put it back: three are kept. The leader is one of the three.
     case 'keep-lot':
-      if (dialogState === 'formation' && draft?.ids.includes(id)) {
+      if (['formation', 'lot-detail'].includes(dialogState) && draft?.ids.includes(id)) {
         if (draft.picks.includes(id)) draft.picks = draft.picks.filter((p) => p !== id);
         else if (draft.picks.length < R.KEPT) draft.picks = draft.ids.filter((p) => p === id || draft.picks.includes(p));
         else {
@@ -1918,7 +1960,7 @@ function command(action, id, data = {}, keyboard = false) {
       ++aiRun;
       state = R.startRun({ ...draft, realm: prologue.realm }, state.run.chronicle);
       prologue = { step: 0, film: false, realm: 1 };
-      draft = null;
+      draft = lotState = null;
       try {
         localStorage.removeItem(drawKey);
       } catch {}
@@ -2144,7 +2186,10 @@ function command(action, id, data = {}, keyboard = false) {
       }
       break;
     case 'skill-node':
-      if (dialogState === 'skills') {
+      if (dialogState === 'lot-detail') {
+        lotUI.node = id;
+        drawModal(true);
+      } else if (dialogState === 'skills') {
         studyUI.node = id;
         drawModal(true);
       } else if (dialogState === 'team' && teamUI.tab === 'arts') {
