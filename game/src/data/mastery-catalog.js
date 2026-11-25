@@ -1857,14 +1857,14 @@ const MASTERY_ARTS = {
     tier: 3,
     needs: ['xzSixYang'],
     points: 2,
-    mp: 13,
+    mp: 11,
     range: 3,
     icon: 'leaf',
     visual: 'medic',
     target: 'ally',
-    heal: 44,
+    heal: 50,
     purge: 8,
-    desc: '以陽和掌力化去體內寒毒，為三格內一人療傷，基礎回復 44 點氣血並解除不良狀態；每化去一種，多回復 8 點氣血。可對自己施術。',
+    desc: '以陽和掌力化去體內寒毒，為三格內一人療傷，基礎回復 50 點氣血並解除不良狀態；每化去一種，多回復 8 點氣血。可對自己施術。',
     source: '生死符須以天山六陽掌方能化解，虛竹在靈鷲宮替群豪逐一拔除。'
   },
   xzLifeDeath: {
