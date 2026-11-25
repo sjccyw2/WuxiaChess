@@ -2295,8 +2295,9 @@ function command(action, id, data = {}, keyboard = false) {
       audio('tap');
       break;
     case 'reset-ask':
+      // As 新的一輪 on the title: the 境界 is picked first once more than one is open.
       openTitle();
-      openFormation();
+      beginNewRun();
       break;
   }
 }

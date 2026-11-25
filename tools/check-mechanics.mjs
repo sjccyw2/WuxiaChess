@@ -3891,7 +3891,8 @@ section('board 7 寒玉石室: the venom that stops the healing');
   check('she picks the healer over a more hurt hero', medic.conditions?.poison?.power === 10 && medic.conditions?.wound?.power === 5, JSON.stringify(medic.conditions));
   closeRound(s);
   const f = G.forecast(medic, medic, true, s);
-  check('wounded, the healer’s own heal is halved', f.notes.includes('內傷 · 療效減半'));
+  // 清心普善咒 carries 解厄: it lifts the 內傷 first, so its heal is not halved (2026-11-25).
+  check('wounded, the healer’s own 解厄 heal lifts the 內傷 and is not halved', !f.notes.includes('內傷 · 療效減半') && f.notes.some((n) => n.includes('解去') && n.includes('內傷')), JSON.stringify(f.notes));
   // 洪凌波 stays at the neck.
   soloTurn(s, hong);
   check('洪凌波 stays within one of the neck', G.distance(hong, { x: 5, y: 3 }) <= 1);
@@ -4196,7 +4197,7 @@ section('items');
 // The battles table on the real maps, the kinds of win, two masters, reinforcements, the four
 // troop traits, the deployment step, the facts a secondary reads, the secondaries, rewards and
 // recruitment, and saves. Each block builds its boards with the real rules.
-const { BATTLES, SIDE_REWARDS } = await load('data/battles.js');
+const { BATTLES, SIDE_REWARDS, LAST_MAP } = await load('data/battles.js');
 const { VILLAINS, TROOPS, GISTS } = await load('data/encounters.js');
 const piecesOf = (s) => G.enemies(s);
 const at2 = (p) => ({ x: p[0], y: p[1] });
@@ -6079,6 +6080,158 @@ section('the draw: five drawn, three kept');
   check('the two put back go into the box: they may be lent later', [ids[0], ids[2]].every((id) => s.run.pool.includes(id)) && !s.run.pool.some((id) => team.includes(id)));
   const odd = R.startRun({ seed, picks, leaderId: ids[0] }, R.LEGACY);
   check('a leader who was put back is not the leader: the first kept leads', odd.leader === ids[1] && !G.party(odd).some((u) => u.id === ids[0]), odd.leader);
+}
+
+section('the review of 2026-11-25: rulings and fixes');
+{
+  // 無刻漏臺 runs to fifteen rounds; every other board to twelve.
+  const t = realBoard(9, 9);
+  check('無刻漏臺 has fifteen rounds, the others twelve', G.roundLimit(t) === 15 && G.roundLimit(board()) === G.LIMIT);
+  t.round = G.LIMIT + 1;
+  G.check(t);
+  check('…round 13 there is not a loss', t.result === null);
+  t.round = 16;
+  G.check(t);
+  check('…round 16 is, and says 十五合', t.result === 'loss' && t.round === 15 && t.reason.startsWith('十五合'), t.reason);
+  check('…and its briefing says 第十五回合', R.boardBrief(9, 9).win.includes('第十五回合') && R.boardBrief(9, 9).loss.includes('第十五回合'));
+  check('…while board 0’s says 第十二回合', R.boardBrief(0, 0).loss.includes('第十二回合'));
+}
+{
+  // 吸勁 on a signature charged since an earlier round puts it back one round from now.
+  const s = board();
+  const chief = unit(s, 'chief'),
+    hero = unit(s, 'hero');
+  teach(hero, defineArt({ factor: 0.3, forms: ['siphon'] }));
+  s.round = 5; // his signature first came due in round 3; no one was in reach since
+  put(s, 'hero', 4, 7);
+  put(s, 'chief', 5, 7);
+  hero.mp = 20;
+  check('吸勁 setup: the master’s signature is overdue', G.signatureDue(s, chief) && chief.hp > 0);
+  G.resolve(s, hero, chief, true);
+  check('…the blow puts it back: due next round, not now', G.living(chief) && !G.signatureDue(s, chief) && G.roundsToSignature(s, chief) === 1, chief.signaturePush);
+}
+{
+  // 連環 + 回身: the second action's walk leaves no 回身 steps it already spent.
+  const s = board(['aQing', 'medic', 'guard']);
+  const a = unit(s, 'aQing');
+  put(s, 'aQing', 4, 3);
+  put(s, 'scout', 5, 3).hp = 1;
+  teach(a, 'aqChain');
+  a.mp = a.maxMp = 99;
+  const r = G.resolve(s, a, unit(s, 'scout'), true);
+  const far = [...G.reachable(s, a).entries()].sort((x, y) => y[1] - x[1])[0];
+  const [x, y] = far[0].split(',').map(Number);
+  check('連環 setup: the kill gives a second action and a full walk', r.again && G.canMove(s, a) && far[1] === G.stat(a, 'step', s));
+  G.move(s, a, x, y);
+  G.waitUnit(s, a);
+  check('…after walking all of it, 回身 has nothing left', !G.canGlide(s, a) && !a.glideLeft, a.glideLeft);
+}
+{
+  // 解厄 lifts 內傷 before it heals: the heal is not halved.
+  const s = board();
+  const medic = unit(s, 'medic'),
+    hero = unit(s, 'hero');
+  put(s, 'medic', 4, 3);
+  put(s, 'hero', 5, 3);
+  hero.hp = 10;
+  BM.applyCondition(s, hero, { kind: 'wound', power: 5, turns: 3 }, unit(s, 'chief'));
+  const art = G.artFor(medic);
+  const full = Math.min(hero.maxHp - hero.hp, G.healingPower(medic, s, art));
+  const f = G.forecast(medic, hero, true, s);
+  check('解厄 setup: her art lifts ailments and heals', G.formsFor(medic, art).includes('cleanse') && full > 1);
+  check('…the preview heals in full, with no 療效減半', f.recipients[0].amount === full && !f.notes.includes('內傷 · 療效減半'), f.recipients[0].amount + ' of ' + full);
+  G.resolve(s, medic, hero, true);
+  check('…and so does the art', hero.hp === 10 + full && !hero.conditions?.wound, hero.hp);
+}
+{
+  // The board ends the moment it is won: a splash that fells the last master draws no counter.
+  const splash = defineArt({ factor: 0.5, splash: 0.45 });
+  const s = board(['qiaoFeng', 'medic', 'guard']);
+  const L = unit(s, 'qiaoFeng');
+  teach(L, splash);
+  L.mp = L.maxMp = 99;
+  put(s, 'qiaoFeng', 4, 3);
+  put(s, 'blade', 5, 3);
+  put(s, 'chief', 6, 3);
+  for (const e of G.enemies(s)) if (!['blade', 'chief'].includes(e.id)) e.hp = 0;
+  unit(s, 'chief').hp = 1;
+  L.hp = 3;
+  const f = G.forecast(L, unit(s, 'blade'), true, s);
+  check('一擊定局: the preview shows the splash fells him and no counter', f.splash.some((h) => h.id === 'chief' && h.amount >= 1) && f.counterRaw === 0 && f.notes.some((n) => n.startsWith('一擊定局')), f.notes);
+  G.resolve(s, L, unit(s, 'blade'), true);
+  check('…the board is won, and the leader is untouched', s.result === 'win' && L.hp === 3, s.result + ' ' + L.hp);
+}
+{
+  // A 纏械 the blow puts on him weakens his counter to it, as 攻勢受挫 does.
+  const plain = defineArt({ factor: 0.5 }),
+    binding = defineArt({ factor: 0.5, disarm: { power: 8, turns: 2 } });
+  const counterOf = (id) => {
+    const s = board(['diYun', 'medic', 'guard']);
+    const u = unit(s, 'diYun'),
+      bow = unit(s, 'bow');
+    put(s, 'diYun', 4, 3);
+    put(s, 'bow', 5, 3);
+    Object.assign(bow, { hp: 500, maxHp: 500, atk: 60 });
+    teach(u, id);
+    u.mp = u.maxMp = 99;
+    return G.forecast(u, bow, true, s);
+  };
+  const a = counterOf(plain),
+    b = counterOf(binding);
+  check('纏械 on the blow takes its −攻擊 off the counter', b.counterRaw > 0 && b.counterRaw < a.counterRaw && b.notes.includes('纏械 · 還擊攻擊 −8'), a.counterRaw + ' → ' + b.counterRaw);
+}
+{
+  // Gear and manuals change only in 整備; in battle only medicine is used.
+  const s = board();
+  const hero = unit(s, 'hero');
+  s.stock.dragonSaber = 1;
+  check('in battle a hero cannot put on gear', !G.canOutfit(s, hero) && !G.equip(s, hero, 'dragonSaber') && hero.weapon !== 'dragonSaber');
+  const manual = Object.keys(MANUAL_PRICES)[0];
+  s.run.manuals.push(manual);
+  check('…nor be given a manual', !R.acceptsGuide(s, hero, manual));
+  s.stock.remedy = 1;
+  hero.hp -= 20;
+  check('…but can still take medicine', G.canUseMedicine(s, hero) && G.consume(s, hero, 'remedy'));
+  s.run.scene = 'prep';
+  check('in 整備 he can', G.canOutfit(s, hero) && G.equip(s, hero, 'dragonSaber') && hero.weapon === 'dragonSaber' && R.acceptsGuide(s, hero, manual));
+}
+{
+  // 護駕: one blow past both shares calls both waves, and the story line once.
+  const s = R.devTestRun({ map: LAST_MAP, realm: 5, heroes: ['hero', 'medic', 'guard', 'guo'], seed: 5 });
+  R.turnPage(s, true);
+  R.turnPage(s, true);
+  R.deployLineup(s);
+  R.beginBattle(s);
+  const m = G.find(s, G.commanderId(s));
+  m.hp = Math.floor(m.maxHp * 0.2);
+  G.check(s);
+  const came = s.logs.filter((l) => l.who === '敵援').length;
+  check('護駕: both waves come, the story line said once', came === 2 && s.logs.filter((l) => l.text === MAZE_TALE.finale.rally).length === 1, came);
+}
+{
+  // A manual won on the board that ends the run is said to wait for the next run.
+  const side = { kind: 'intact', reward: 'manual' },
+    manual = Object.keys(MANUAL_PRICES)[0];
+  check('a manual on the run’s last board waits in 通吃坊', R.rewardText(side, R.TENTH, manual).includes('寄在通吃坊') && R.rewardText(side, 2, manual).includes('已入公庫'));
+}
+{
+  // Developer mode: 速勝 misses the secondary, whatever its kind; 速勝・支線 meets it.
+  let keep = 0,
+    paid = 0,
+    met = 0;
+  for (let seed = 1; seed <= 40; seed++) {
+    for (const side of [false, true]) {
+      const s = R.startRun(R.drawLots(seed));
+      while (s.run.scene !== 'prep') R.turnPage(s, true);
+      if (R.SIDE_KINDS[s.run.side.kind].sort === 'keep') keep += !side;
+      R.devFinish(s, true, side);
+      R.settle(s);
+      if (side) met += s.run.last.optional ? 1 : 0;
+      else paid += s.run.last.optional ? 1 : 0;
+    }
+  }
+  check('速勝 pays no secondary, even one kept to the end', keep > 0 && paid === 0, keep + ' keep, ' + paid + ' paid');
+  check('速勝・支線 meets every one', met === 40, met);
 }
 
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');

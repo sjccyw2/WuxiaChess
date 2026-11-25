@@ -637,7 +637,7 @@ function useMedicine(s, u) {
   const cheapest = Math.min(...G.equippedArts(u).map((id) => G.cost(u, s, id)));
   if (Number.isFinite(cheapest) && u.mp < cheapest) {
     const mpItem = Object.entries(G.ITEMS).find(([id, it]) => it.kind === 'use' && it.mp && s.stock[id] > 0);
-    if (mpItem && s.round <= G.LIMIT - 2) G.consume(s, u, mpItem[0]);
+    if (mpItem && s.round <= G.roundLimit(s) - 2) G.consume(s, u, mpItem[0]);
   }
 }
 function allyPhase(s, rec) {

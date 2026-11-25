@@ -61,7 +61,11 @@ const EXTRA = {
       ['支線獎勵', NOTES.sideReward(G.REWARDS)],
       ['通關獎勵', NOTES.clearReward(G.REWARDS)]
     ]),
-  loss: () => rows('限時', [['回合上限', '第' + G.NUMERALS[G.LIMIT - 1] + '回合']]),
+  loss: () =>
+    rows('限時', [
+      ['回合上限', '第' + G.NUMERALS[G.LIMIT - 1] + '回合'],
+      ...G.BATTLES.flatMap((b, map) => (b.rounds ? [[G.mapLayout(map).name, '第' + G.NUMERALS[b.rounds - 1] + '回合']] : []))
+    ]),
   // 守 and 破: each board's objects and, on 守, how long they must stand.
   // 破招: what each kind of weapon is, and who fights with it. Five of 無名's forms answer by
   // weapon; 破劍式, which is 令狐冲's art too, answers whoever fights at reach 1, so 劍 is listed

@@ -24,6 +24,7 @@ import {
   standingLines,
   ITEMS,
   LIMIT,
+  roundLimit,
   PARTY,
   BOOKS,
   chapterScenes,
@@ -33,7 +34,7 @@ import {
   canAct,
   canGlide,
   targetOK,
-  canPrepare,
+  canOutfit,
   canUseMedicine,
   medicineFor,
   artFor,
@@ -496,7 +497,7 @@ function inventoryPage(s, id, filter) {
       continue;
     const match = !item.owner || item.owner === id,
       usable =
-        (item.kind === 'use' ? canUseMedicine(s, u) : canPrepare(s, u)) &&
+        (item.kind === 'use' ? canUseMedicine(s, u) : canOutfit(s, u)) &&
         match &&
         (item.kind !== 'use' || medicineFor(u, item).helps);
     const label = !match
@@ -1015,7 +1016,7 @@ function objectPage(s, u) {
     left = holdLeft(s),
     masters = masterIds(s).map((id) => DETAILS[id.split('#')[0]]?.name || unitDetails(find(s, id))?.name).filter(Boolean);
   const rule = keep
-    ? '守住它：撐過第' + NUMERALS[(boardOf(s).hold || LIMIT) - 1] + '回合，或擊敗' + masters.join('與') + '。它一毀，這一局便輸了。' + (left ? '尚須守 ' + left + ' 回合。' : '')
+    ? '守住它：撐過第' + NUMERALS[(boardOf(s).hold || roundLimit(s)) - 1] + '回合，或擊敗' + masters.join('與') + '。它一毀，這一局便輸了。' + (left ? '尚須守 ' + left + ' 回合。' : '')
     : '毀了它。盤上的' + i.name + '盡數倒下，這一局便勝了。它不還手，也不閃避。';
   const ward = i.traits?.ward ? '星索護陣 · 未被擊毀時，' + (unitDetails(find(s, commanderId(s)))?.name || '局主') + '所受傷害減 ' + i.traits.ward + '%。' : '';
   return (

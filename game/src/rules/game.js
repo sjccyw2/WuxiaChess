@@ -45,9 +45,12 @@ import { CHAMBER_TALES, MAZE_TALE, QIUBAI, YOUTH, acrossTable, shade } from '../
 import { ENCOUNTER_SCRIPT } from '../data/encounter-script.js';
 const SIZE = FIELD_SIZE;
 const FIELD_EDITION = 1;
+// Rounds a board runs to, unless its entry in battles.js sets `rounds` (無刻漏臺: 15).
 const LIMIT = 12;
-// Round and board numbers as the text says them; rounds run to LIMIT.
-const NUMERALS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+const MAX_ROUNDS = Math.max(LIMIT, ...BATTLES.map((b) => b.rounds || 0));
+const roundLimit = (s) => BATTLES[s?.mapIndex]?.rounds || LIMIT;
+// Round and board numbers as the text says them; rounds run to MAX_ROUNDS.
+const NUMERALS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五'];
 const ORIGINAL_PARTY = ['hero', 'medic', 'guard'];
 const PARTY = [...ORIGINAL_PARTY, 'guo', 'xiao', 'duan', ...Object.keys(NEW_HEROES)];
 // The youth as a piece: 無名 takes the field himself on the last board, and from the first board of
@@ -123,6 +126,9 @@ const canPrepare = (s, u) =>
   canAct(s, u) || (!!u && managesCompany(s) && ally(u) && company(s).includes(u));
 const managesCompany = (s) =>
   s.run?.scene === 'prep' || (s.run?.scene === 'shop' && !s.run.last?.terminal);
+// Gear is put on, taken off and handed over, and manuals given, only in 整備 (and the shop's team
+// page), never in battle; in battle only medicine is used (the producer, 2026-11-25).
+const canOutfit = (s, u) => (s.run ? managesCompany(s) && !!u && company(s).includes(u) : canPrepare(s, u));
 const valid = validTile;
 const terrainInfo = tileInfo;
 const terrain = (x, y, map = 0) => tileInfo(x, y, map)?.name;
@@ -702,13 +708,24 @@ function enemyTechnique(u, s) {
   };
 }
 // `signaturePush` counts the rounds a hero's 吸勁 has put the signature back since it last fired.
-function roundsToSignature(s, u) {
+// The round a signature next comes due, before any 吸勁 push; null for a piece with none.
+function signatureNext(s, u) {
   const art = enemyTechnique(u, s);
   if (!art) return null;
   // Counted from the round the piece came onto the board: round 1, or a reinforcement's entry.
   const first = (u.enteredRound ?? 1) + (art.offset > 0 || s.run?.stage >= 5 ? 1 : 2);
-  const next = Number.isInteger(u.signatureRound) ? u.signatureRound + art.cadence : first;
-  return Math.max(0, next + (u.signaturePush || 0) - s.round);
+  return Number.isInteger(u.signatureRound) ? u.signatureRound + art.cadence : first;
+}
+function roundsToSignature(s, u) {
+  const next = signatureNext(s, u);
+  return next === null ? null : Math.max(0, next + (u.signaturePush || 0) - s.round);
+}
+// The push 吸勁 leaves on a signature: due one round after the round it would come due, or, for a
+// charge that has waited past its round (no hero in reach, or held), one round after this one.
+function siphonPush(s, u) {
+  const push = u.signaturePush || 0,
+    next = signatureNext(s, u);
+  return next === null ? push + 1 : Math.max(push + 1, s.round + 1 - next);
 }
 // 封穴, 定身, 閉穴 and 受制 keep a charged signature from firing (and from guarding); it stays charged.
 const signatureDue = (s, u) =>
@@ -729,14 +746,13 @@ function siphonPlan(s, u, t, f) {
   return { mp, delay: true, note: gain + '，' + unitDetails(t).name + '絕技延後一回合' };
 }
 // The target as it stands once 吸勁 has put its signature back: a charged reaction is spent.
-const afterSiphon = (t, plan) =>
-  plan?.delay ? { ...t, signaturePush: (t.signaturePush || 0) + 1 } : t;
+const afterSiphon = (s, t, plan) => (plan?.delay ? { ...t, signaturePush: siphonPush(s, t) } : t);
 function applySiphon(s, u, t, plan) {
   if (!plan) return;
   u.mp = Math.min(u.maxMp, u.mp + plan.mp);
   if (plan.mp) log(s, 'combat', '吸勁回復 ' + plan.mp + ' 點內力。', unitDetails(u).name);
   if (!plan.delay || !living(t)) return;
-  t.signaturePush = (t.signaturePush || 0) + 1;
+  t.signaturePush = siphonPush(s, t);
   t.lastSiphonRound = s.round;
   log(s, 'combat', '勁力被吸，絕技延後一回合。', unitDetails(t).name);
 }
@@ -1586,7 +1602,7 @@ function restoreGame(s) {
     ![1, 2, 3].includes(s.version) ||
     !Number.isInteger(s.round) ||
     s.round < 1 ||
-    s.round > LIMIT ||
+    s.round > roundLimit(s) ||
     !['ally', 'enemy', 'done'].includes(s.phase) ||
     !Array.isArray(s.units) ||
     s.units.length !== 7 ||
@@ -2030,6 +2046,8 @@ function move(s, u, x, y) {
   followRoute(u, path);
   u.moved = true;
   u.walked = field.costs.get(key(x, y)); // 回身 walks on with the steps this left
+  // A 回身 earned before this walk (連環 gave a second action) keeps only the steps still left.
+  if (u.glideLeft) u.glideLeft = glideSteps(s, u);
   log(
     s,
     'move',
@@ -2126,7 +2144,7 @@ function targetOK(s, u, t, skill) {
   if (forms.includes('riposte')) return true;
   const power = art.heal ? healingPower(u, s, art) : 0;
   return affectedFriends(s, u, t, art).some((v) => {
-    const entry = supportEntry(forms, u, v, healAmount(v, power));
+    const entry = supportEntry(forms, u, v, supportHeal(forms, v, power));
     return entry.amount || entry.mp || entry.clean.length || entry.overflow;
   });
 }
@@ -2287,6 +2305,9 @@ function woundSelfLoss(s, u, effects) {
   log(s, 'combat', '內傷發作，損失 ' + n + ' 點氣血。', unitDetails(u).name);
 }
 // The heal preview's amounts are already halved; it says so for whoever is wounded.
+// An art's heal on one friend: 解厄 lifts a 內傷 first, so the heal that follows is not halved
+// (as with a dose, medicineFor).
+const supportHeal = (forms, v, n) => (forms.includes('cleanse') ? n : healAmount(v, n));
 function woundedHealNotes(t, friends, result) {
   const hurt = friends.filter((v) => v.conditions?.wound);
   if (!hurt.length) return;
@@ -2454,8 +2475,8 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   if (support) {
     const friends = s ? affectedFriends(s, u, t, art) : [t];
     const power = heal ? healingPower(u, s, art) : 0;
-    result.recipients = friends.map((v) => supportEntry(result.forms, u, v, healAmount(v, power)));
-    if (heal) woundedHealNotes(t, friends, result);
+    result.recipients = friends.map((v) => supportEntry(result.forms, u, v, supportHeal(result.forms, v, power)));
+    if (heal && !result.forms.includes('cleanse')) woundedHealNotes(t, friends, result);
     if (result.forms.includes('riposte'))
       result.effects.push({ kind: 'riposte', power: 9, turns: 1 });
     for (const entry of result.recipients) {
@@ -2559,7 +2580,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   // 吸勁: decided as the blow lands, before the counter it may un-charge.
   result.siphon = siphonPlan(s, u, t, result);
   if (result.siphon) result.notes.push(result.siphon.note);
-  const share = counterRatio(s, afterSiphon(t, result.siphon));
+  const share = counterRatio(s, afterSiphon(s, t, result.siphon));
   // 定身, 閉穴 and 受制 land with the blow: a piece this strike holds does not answer it. (A master
   // who resists is not held, and answers as usual.)
   const held = result.effects.find((e) => ['freeze', 'mute', 'charm'].includes(e.kind));
@@ -2579,16 +2600,25 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.opening = true;
     result.notes.push(leaderBoon(s).name + ' · 本回合頭一次，敵人不能還擊');
   } else if (answered) {
+    // A 攻勢受挫 or 纏械 the blow puts on him weakens his answer to it (纏械: the producer,
+    // 2026-11-25; its −攻擊 only, the reach he answers from is his as the blow came).
+    const disarm = !immuneTo(t) && result.effects.find((e) => e.kind === 'disarm');
     const reply =
-      art?.debuff?.stat === 'atk'
+      art?.debuff?.stat === 'atk' || disarm
         ? {
             ...t,
             conditions: {
               ...t.conditions,
-              weak: { power: Math.max(t.conditions?.weak?.power || 0, art.debuff.power) }
+              ...(art?.debuff?.stat === 'atk' && {
+                weak: { power: Math.max(t.conditions?.weak?.power || 0, art.debuff.power) }
+              }),
+              ...(disarm && {
+                disarm: { power: Math.max(t.conditions?.disarm?.power || 0, disarm.power) }
+              })
             }
           }
         : t;
+    if (disarm) result.notes.push('纏械 · 還擊攻擊 −' + reply.conditions.disarm.power);
     // The counter comes once the striker has paid his action's 氣血.
     const after = u.hp - result.hpCost;
     result.counterRaw = afterCut(
@@ -2637,6 +2667,17 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       if (amount >= v.hp) guards.delete(v);
       result.splash.push({ id: v.id, raw, amount });
     }
+  }
+  // The board ends the moment it is won (the producer, 2026-11-25): when the blow's splash fells
+  // the last of what must fall, the one it struck has no time to answer.
+  if (
+    s &&
+    result.counterRaw > 0 &&
+    ally(u) &&
+    winsIfFalls(s, result.splash.filter((hit) => hit.amount >= find(s, hit.id).hp).map((hit) => hit.id))
+  ) {
+    result.counterRaw = result.counter = 0;
+    result.notes.push('一擊定局 · 局已勝，不及還擊');
   }
   if (
     u.conditions?.riposte &&
@@ -3119,7 +3160,9 @@ function resolve(s, u, t, skill) {
       log(s, 'combat', '受到氣勁波及，損失 ' + dealt + ' 點氣血。', unitDetails(v).name);
       if (!ally(v)) wakePost(s, v, true);
     }
-    if (f.counterRaw) {
+    // The board ends the moment it is won: nothing that comes after the blow can lose it.
+    if (!s.result && KIND_RULES[boardKind(s)].won(s)) check(s);
+    if (f.counterRaw && !s.result) {
       const dealt = wound(s, u, f.counterRaw, t);
       effects.push([u.id, '−' + dealt, 'counter']);
       log(s, 'combat', '還擊' + who + '，造成 ' + dealt + ' 點傷害。', unitDetails(t).name);
@@ -3132,7 +3175,7 @@ function resolve(s, u, t, skill) {
   if (art?.cooldown) (u.cooldowns ??= {})[id] = s.round + art.cooldown + 1;
   if (art && living(u)) {
     const own = selfEffectsOf(art).map((e) =>
-      e.kind === 'backlash' ? { ...e, turns: LIMIT - s.round + 1 } : e
+      e.kind === 'backlash' ? { ...e, turns: roundLimit(s) - s.round + 1 } : e
     );
     putEffects(s, u, u, backlashBurst(s, u, own, effects), effects); // 反噬: the third layer bursts
   }
@@ -3226,7 +3269,7 @@ function consume(s, u, id) {
 }
 function equip(s, u, id) {
   const item = ITEMS[id];
-  if (!canPrepare(s, u) || !item || item.kind === 'use' || (item.owner && item.owner !== u.id))
+  if (!canOutfit(s, u) || !item || item.kind === 'use' || (item.owner && item.owner !== u.id))
     return false;
   const slot = item.kind === 'weapon' ? 'weapon' : 'gear',
     old = u[slot];
@@ -3342,10 +3385,11 @@ function check(s) {
       if (boardKind(s) === 'keep' && !masterIds(s).every((id) => fallen(s, id)))
         for (const u of props(s)) sayObject(s, u, 'held');
       s.reason = s.run ? CHAMBER_TALES[s.mapIndex].victory : '余滄海收劍退開，渡口的船燈再度亮起。';
-    } else if (s.round > LIMIT) {
+    } else if (s.round > roundLimit(s)) {
+      const n = NUMERALS[roundLimit(s) - 1];
       s.result = 'loss';
-      s.reason = s.run ? '十二合已過。拓來的一念撐不住，散了。' : '十二回合已過，霧中的末班渡船已經離岸。';
-      s.round = LIMIT;
+      s.reason = s.run ? n + '合已過。拓來的一念撐不住，散了。' : n + '回合已過，霧中的末班渡船已經離岸。';
+      s.round = roundLimit(s);
     }
   }
   if (s.result) {
@@ -3538,6 +3582,7 @@ function besideTile(s, m) {
 function rally(s) {
   const m = find(s, commanderId(s));
   if (s.result || !m || !living(m) || (boardKind(s) === 'yield' && spent(s, m.id))) return;
+  let told = false; // one blow past both shares calls both waves, with the story line said once
   for (const w of boardOf(s).waves) {
     if (!w.when.below || m.hp > w.when.below * m.maxHp) continue;
     const came = [];
@@ -3551,7 +3596,8 @@ function rally(s) {
       noteStanding(s, u);
     }
     if (!came.length) continue;
-    if (s.run && boardOf(s).last) log(s, 'story', MAZE_TALE.finale.rally, YOUTH.role);
+    if (s.run && boardOf(s).last && !told) log(s, 'story', MAZE_TALE.finale.rally, YOUTH.role);
+    told = true;
     log(s, 'system', waveList(came) + '趕到' + unitDetails(m).name + '身旁。', '敵援');
     for (const piece of came) strangerSteps(s, piece.id);
   }
@@ -3582,7 +3628,7 @@ function arrive(s) {
     }
     if (came.length) log(s, 'system', waveList(came) + '自' + w.place + '入場。', '敵援');
     for (const piece of came) strangerSteps(s, piece.id);
-    if (held && s.round < LIMIT) s.arrivals[w.id] = s.round + 1;
+    if (held && s.round < roundLimit(s)) s.arrivals[w.id] = s.round + 1;
     else delete s.arrivals[w.id];
   }
 }
@@ -3633,7 +3679,7 @@ function fireHalved(s, id) {
     const ids = triggerIds(s, w);
     if (!ids.includes(id) || waveDue(s, w) != null) continue;
     if (ids.some((other) => other !== id && s.units.find((v) => v.id === other)?.halved)) continue;
-    if (s.round + 2 > LIMIT || !s.arrivals) continue;
+    if (s.round + 2 > roundLimit(s) || !s.arrivals) continue;
     s.arrivals[w.id] = s.round + 2;
     const name = unitDetails(find(s, id)).name;
     // 求敗 answers a stone in danger.
@@ -4287,4 +4333,4 @@ function nextRound(s) {
 }
 
 export { traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
-export { charmed, sideOf, immuneTo, holdsFire, drainOf, controlPlan, isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, LEVEL_GAINS, GROWTH_PACES, GROWTH_PROFILES, growthOf, levelGain, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor, seatOf, seatRow, seatNumbers, twinForm };
+export { charmed, sideOf, immuneTo, holdsFire, drainOf, controlPlan, isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, MAX_ROUNDS, roundLimit, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, canOutfit, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, LEVEL_GAINS, GROWTH_PACES, GROWTH_PROFILES, growthOf, levelGain, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor, seatOf, seatRow, seatNumbers, twinForm };

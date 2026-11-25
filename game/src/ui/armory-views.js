@@ -224,7 +224,7 @@ function canPlaceEquipment(s, u, id, owner, dest) {
     !u ||
     !item ||
     item.kind === 'use' ||
-    !G.canPrepare(s, u) ||
+    !G.canOutfit(s, u) ||
     (item.owner && item.owner !== u.id)
   )
     return false;
@@ -281,7 +281,7 @@ function armory(s, u, ui, more = '') {
     v.owner === 'stock' ? '公庫' : v.owner === u.id ? '穿戴中' : who(G.find(s, v.owner));
   function tile(v) {
     const picked = chosen === v;
-    const movable = v.item.kind !== 'use' && (G.canPrepare(s, u) || G.managesCompany(s));
+    const movable = v.item.kind !== 'use' && G.canOutfit(s, u);
     const attrs = movable
       ? dragAttrs('equipment', v.id, v.owner)
       : 'data-id="' + v.id + '" data-owner="' + v.owner + '"';
@@ -305,7 +305,9 @@ function armory(s, u, ui, more = '') {
         '<p class="fo-instruction">' +
         (filter === 'use'
           ? '選擇丹藥，讓' + who(u) + '服用。'
-          : '拖曳兵器或護具至俠客立像，也可點選器物裝備。') +
+          : G.canOutfit(s, u)
+            ? '拖曳兵器或護具至俠客立像，也可點選器物裝備。'
+            : '交戰中不能更換兵器與護具，只能服藥；請在整備時更換。') +
         '</p>'
       );
     const attr = 'data-id="' + v.id + '" data-owner="' + v.owner + '"';
@@ -325,10 +327,10 @@ function armory(s, u, ui, more = '') {
         !canUse
       );
     } else {
-      const can = v.owner === 'stock' || worn ? G.canPrepare(s, u) : G.managesCompany(s);
+      const can = G.canOutfit(s, u);
       actions = small(
         'arm-place',
-        worn ? '卸回公庫' : v.owner === 'stock' ? '裝備' : '移交並裝備',
+        !can ? '整備時更換' : worn ? '卸回公庫' : v.owner === 'stock' ? '裝備' : '移交並裝備',
         attr + ' data-dest="' + (worn ? 'stock' : v.item.kind) + '"',
         !can || (!worn && u[v.item.kind] === v.id)
       );

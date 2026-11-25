@@ -15,6 +15,7 @@
 //   objects  the board objects (board-objects.js), { id, at }; an id is the object's key, or the
 //            key numbered on its board ('starPost#1') when there are two
 //   hold     on a 'keep' board, the last round the objects must stand through
+//   rounds   the round the board is lost at the end of, when not the usual twelve (game.js LIMIT)
 //   legacyKind  the kind a save from before the board had objects finishes under
 //   pieces   starting pieces beyond the fixed four, in the order they act
 //   waves    reinforcements: { id, when: { round } | { halved: [refs] }, place, pieces }; a
@@ -313,6 +314,8 @@ const BATTLES = [
   {
     kind: 'break',
     legacyKind: 'slay',
+    // Fifteen rounds, not twelve (the producer, 2026-11-25): most losses here were the clock.
+    rounds: 15,
     masters: ['master'],
     objects: [
       { id: 'starPost#1', at: [11, 4] },
