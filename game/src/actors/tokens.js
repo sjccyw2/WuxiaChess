@@ -191,6 +191,26 @@ function paintBase(layer, u, pos, now, look) {
   }
 }
 
+// 五劍: 求敗's own ring on the ground, outside the barbs every enemy base carries, in the colour
+// of the bar he is on, so he stands out among the masters around him (G.stageOf).
+function paintStageRing(layer, pos, stage) {
+  const c = layer.ctx;
+  c.save();
+  onGround(layer, c, pos.x, pos.y, 0.099);
+  c.beginPath();
+  c.arc(0, 0, 0.5, 0, TAU);
+  c.restore();
+  // Stroked after the ground map is dropped, so the line keeps one width all the way round.
+  c.save();
+  c.lineWidth = 4;
+  c.strokeStyle = 'rgba(10,6,16,.72)';
+  c.stroke();
+  c.lineWidth = 2;
+  c.strokeStyle = stage.colour;
+  c.stroke();
+  c.restore();
+}
+
 // ---------------------------------------------------------------------------------------
 // The gauge: health with a draining ghost of the last wound, command marks and conditions.
 
@@ -279,9 +299,14 @@ function paintGauge(layer, u, g) {
     tall = snap(g.scale >= 36 ? 5 : 4),
     left = snap(g.x - len / 2),
     top = snap(g.y - tall / 2),
-    share = clamp(g.shown / u.maxHp, 0, 1),
-    ghost = clamp(ghostHealth(layer, u, g.shown, g.now) / u.maxHp, 0, 1),
-    low = share <= 0.34 && !g.spent;
+    // 五劍: a piece with stages shows only the bar it is on, full as it begins and empty at its
+    // end, in that stage's colour (never the amber of a low bar: the stage says how far it is).
+    stage = g.stage,
+    floor = stage ? stage.floor : 0,
+    span = stage ? stage.top - stage.floor : u.maxHp,
+    share = clamp((g.shown - floor) / span, 0, 1),
+    ghost = clamp((ghostHealth(layer, u, g.shown, g.now) - floor) / span, 0, 1),
+    low = !stage && share <= 0.34 && !g.spent;
   // Frame: a dark plate, a hairline in the team colour, then the trough.
   if (g.scale >= 30) {
     // The soft outer plate is dropped on small pieces (phones), where it only adds bulk.
@@ -297,16 +322,49 @@ function paintGauge(layer, u, g) {
     c.fillStyle = '#fff3d6';
     c.fillRect(left + fill, top, Math.max(one, snap(len * ghost) - fill), tall);
   }
-  c.fillStyle = low ? LOW.bar : tone.bar;
+  c.fillStyle = stage ? stage.colour : low ? LOW.bar : tone.bar;
   c.fillRect(left, top, fill, tall);
-  c.fillStyle = low ? LOW.barTop : tone.barTop;
+  c.fillStyle = stage ? 'rgba(255,255,255,.55)' : low ? LOW.barTop : tone.barTop;
   c.fillRect(left, top, fill, one);
   c.fillStyle = 'rgba(0,0,0,.22)';
   c.fillRect(left, top + tall - one, fill, one);
   const mid = top + tall / 2;
 
+  if (stage) {
+    // The bars still to come, his own included, as ticks under the bar in their colours: the
+    // count reads without the colours.
+    const tick = snap(clamp(len / 9, 2, 4)),
+      gap = snap(tick * 0.6),
+      ty = snap(top + tall + one * 2);
+    for (let i = stage.index; i < stage.count; i++) {
+      const tx = snap(left + (i - stage.index) * (tick + gap));
+      c.fillStyle = INK;
+      c.fillRect(tx - one, ty - one, tick + one * 2, tick * 0.75 + one * 2);
+      c.fillStyle = g.stages[i].colour;
+      c.fillRect(tx, ty, tick, tick * 0.75);
+    }
+  }
   const rank = g.rank;
-  if (rank) {
+  if (stage) {
+    // His own seal in place of the 主 every master carries: a round 求 in the colour of his bar.
+    const size = snap(g.scale >= 36 ? 15 : 13),
+      cx = snap(left + len + one * 2 + 2 + size / 2),
+      r = size / 2;
+    c.beginPath();
+    c.arc(cx, mid, r + one, 0, TAU);
+    c.fillStyle = INK;
+    c.fill();
+    c.beginPath();
+    c.arc(cx, mid, r, 0, TAU);
+    c.fillStyle = stage.colour;
+    c.fill();
+    c.fillStyle = INK;
+    c.font = 'bold ' + (size - 4) + 'px serif';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText(g.seal, cx, mid + 0.5);
+    c.textBaseline = 'alphabetic';
+  } else if (rank) {
     const boss = rank === 'boss',
       size = snap(g.scale >= 36 ? 14 : 12),
       bx = snap(left + len + one * 2 + 2),
@@ -406,4 +464,4 @@ const STATUS_LOOKS = {
   fortify: '固守加身時，腳下升起一圈六角石紋'
 };
 
-export { paintBase, paintGauge, STATUS_SIGNS, STATUS_LOOKS };
+export { paintBase, paintGauge, paintStageRing, STATUS_SIGNS, STATUS_LOOKS };

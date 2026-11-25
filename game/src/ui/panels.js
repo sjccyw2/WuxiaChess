@@ -10,8 +10,10 @@ import { fieldSize, fieldCells, terrainTypes, mapLayout, tileInfo } from '../dat
 import { NUMERALS, guideInventory, acceptsGuide, briefing, boardBrief, sideForecast, mapAt, stagesOf, stageTitle, TENTH } from '../rules/journey.js';
 import { seatsFor } from '../rules/formation.js';
 import { POSTS, boardPlan, planGrid, planKey } from './board-plan.js';
+import { stageRow, stageTicks, stageWords } from './boss-gauge.js';
 import {
   DETAILS,
+  stageOf,
   unitDetails,
   enemyTechnique,
   enemyTraitLines,
@@ -789,7 +791,8 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     '</div><div class="brief-text">' +
     // (On the last board, what 無名 gains stands on a line of its own under the progress.)
     sect('brief-win', '勝利', p(model.win) + progress + p(model.boon, 'brief-small')) +
-    sect('brief-loss', '敗退', p(model.loss)) +
+    // (On the last board, whom they all go for, under 敗退: read before 進入整備.)
+    sect('brief-loss', '敗退', p(model.loss) + p(model.hunt, 'brief-hunt')) +
     (model.noSide ? '' : sect('brief-side', '支線', side)) +
     (model.recruit ? sect('brief-recruit', '入局', p(model.recruit)) : '') +
     '</div></div>' +
@@ -1096,7 +1099,8 @@ function enemyPage(s, id) {
         signatureLines(s, u).map(esc).join('') +
         '</p></div>'
       : '') +
-    bar('氣血', u.hp, u.maxHp, 'hp', 'heart') +
+    // 五劍: 求敗's 氣血 as the bar he is on.
+    (stageOf(u) ? stageRow(u, icon('heart', 13) + '氣血') : bar('氣血', u.hp, u.maxHp, 'hp', 'heart')) +
     conditionChips(s, u) +
     '<div class="detail-list"><span>攻擊 <b>' +
     stat(u, 'atk', s) +
@@ -1214,6 +1218,11 @@ function attackPage(s, source, target, skill) {
       v === u ? f.selfHeal - f.hpCost - f.counter - (f.selfLoss || 0) - (f.rebound || 0) : 0;
     const taken = friendly || blink ? healed : v === t ? -f.amount : 0;
     const after = Math.max(0, Math.min(v.maxHp, v.hp + own + taken));
+    // 五劍: a piece with stages shows the bar it is on; a blow that empties it takes the rest of
+    // that bar, and the figures say which bar comes next.
+    const stage = stageOf(v),
+      next = stage && stageOf(v, after);
+    if (stage) return stagedBar(v, after, stage, next);
     const share = (n) => Math.max(0, Math.min(100, (100 * n) / v.maxHp));
     const from = share(Math.min(v.hp, after)),
       to = share(Math.max(v.hp, after));
@@ -1240,6 +1249,44 @@ function attackPage(s, source, target, skill) {
       '<small>／' +
       v.maxHp +
       '</small></span></span>'
+    );
+  };
+  const stagedBar = (v, after, stage, next) => {
+    const span = stage.top - stage.floor,
+      share = (n) => Math.max(0, Math.min(100, (100 * (n - stage.floor)) / span));
+    const from = share(Math.min(v.hp, after)),
+      to = share(Math.max(v.hp, after));
+    const kind = after < v.hp ? ' loss' : after > v.hp ? ' gain' : '';
+    return (
+      '<span class="fc-bar staged' +
+      kind +
+      '" style="--stage:' +
+      stage.colour +
+      '" role="img" aria-label="氣血 ' +
+      v.hp +
+      (kind ? ' → ' + after : '') +
+      '／' +
+      v.maxHp +
+      '，' +
+      stageWords(stage) +
+      (next.index !== stage.index ? ' → ' + next.name : '') +
+      '"><span class="fc-track"><i class="fc-now" style="width:' +
+      from +
+      '%"></i>' +
+      (kind ? '<i class="fc-delta" style="left:' + from + '%;width:' + (to - from) + '%"></i>' : '') +
+      '</span><span class="fc-figures"><b>' +
+      v.hp +
+      '</b>' +
+      (kind ? '<i>→</i><b class="fc-after">' + after + '</b>' : '') +
+      '<small>／' +
+      v.maxHp +
+      '</small></span><span class="fc-stage">' +
+      stageTicks(v, stage) +
+      '<b>' +
+      stage.name +
+      '</b>' +
+      (next.index !== stage.index ? '<i>→</i><b style="color:' + next.colour + '">' + next.name + '</b>' : '') +
+      '</span></span>'
     );
   };
   const lines = [];
@@ -1275,6 +1322,12 @@ function attackPage(s, source, target, skill) {
           t.hp + ' → ' + (f.heal ? Math.min(t.maxHp, t.hp + f.amount) : Math.max(0, t.hp - f.amount))
         )
       );
+    // 五劍, with no bars to show it: the bar he is on, and the next if this blow empties it.
+    const stage = !POLISH.forecastBars && !f.heal && stageOf(t);
+    if (stage) {
+      const next = stageOf(t, t.hp - f.amount);
+      lines.push(line('五劍', stageWords(stage) + (next.index !== stage.index ? ' → ' + next.name : '')));
+    }
   }
   if (!blink && !friendly)
     lines.push(line('敵方還擊', f.counterRaw ? '−' + f.counter + ' 氣血' : '無'));

@@ -1218,6 +1218,12 @@ function enemyTraitLines(s, u) {
   if (t.snare)
     say('墜網', '普攻令目標絆足，移動減 ' + t.snare.power + '，持續至下回合；還擊不帶網。');
   if (t.prefers) say('偏好', PREFERS[t.prefers] + '。');
+  if (t.stages)
+    say(
+      '五劍',
+      '氣血分作' + t.stages.map((v) => v.name).join('、') + '五段，各佔五分之一，一段削盡便換下一段。' +
+        (s.units && u.maxHp ? '現為' + stageOf(u).name + '。' : '')
+    );
   const phase = u.guest ? null : info.traits?.phase;
   if (phase)
     say(
@@ -3298,6 +3304,20 @@ const KIND_RULES = {
   // stands, the board is over.
   yield: { won: (s) => masterIds(s).every((id) => spent(s, id)) }
 };
+// 五劍: the bar a piece with `stages` (求敗) is on at `hp` 氣血, or null for any other piece. Each
+// stage is an equal share of his greatest 氣血, and a bar that empties hands over at once: at 80%
+// the second is full. `share` is how full the current bar is; `floor` and `top` are the 氣血 it
+// runs between. The gauges read it now, and what each stage does will hang on `index`.
+function stageOf(u, hp = u?.hp) {
+  const stages = unitDetails(u)?.traits?.stages;
+  if (!stages?.length || !(u.maxHp > 0)) return null;
+  const n = stages.length,
+    left = Math.max(0, Math.min(u.maxHp, hp)),
+    index = Math.min(n - 1, Math.floor(((u.maxHp - left) * n) / u.maxHp)),
+    span = u.maxHp / n,
+    floor = u.maxHp - span * (index + 1);
+  return { index, count: n, name: stages[index].name, colour: stages[index].colour, share: (left - floor) / span, floor, top: floor + span };
+}
 // A master who can be brought no lower: on the board, at 1 氣血 or less.
 const spent = (s, id) => {
   const u = s.units.find((v) => v.id === id);
@@ -4286,5 +4306,5 @@ function nextRound(s) {
   return true;
 }
 
-export { traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
+export { stageOf, PREFERS, traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
 export { charmed, sideOf, immuneTo, holdsFire, drainOf, controlPlan, isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, LEVEL_GAINS, GROWTH_PACES, GROWTH_PROFILES, growthOf, levelGain, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor, seatOf, seatRow, seatNumbers, twinForm };

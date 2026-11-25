@@ -1425,6 +1425,8 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     win,
     // The last board: what 無名 gains as he steps onto it, a line of its own under 勝利.
     boon: kind === 'yield' ? boonLine() : '',
+    // and under 敗退, whom they all go for.
+    hunt: kind === 'yield' ? huntLine(board) : '',
     loss: kind === 'keep' ? leader + '倒下，或' + things.join('、') + '被毀。' : leader + '倒下，或第十二回合結束仍未取勝。',
     // The board's objects for the plan and the page: each with its picture and what it is.
     objects: (board.objects || []).map((o) => {
@@ -1457,8 +1459,16 @@ function boardModel(map, stage, s = null, live = false, route = null) {
       masters: G.masterIds(s).map((id) => {
         const u = G.find(s, id),
           name = G.unitDetails(u)?.name || '';
-        const hp = Math.max(0, u?.hp || 0);
-        return { id, name, hp, maxHp: u?.maxHp || 0, fallen: !left.masters.includes(id), line: name + ' 氣血 ' + hp + '／' + (u?.maxHp || 0) };
+        const hp = Math.max(0, u?.hp || 0),
+          stage = G.stageOf(u); // 五劍: 求敗's line names the bar he is on
+        return {
+          id,
+          name,
+          hp,
+          maxHp: u?.maxHp || 0,
+          fallen: !left.masters.includes(id),
+          line: name + ' 氣血 ' + hp + '／' + (u?.maxHp || 0) + (stage ? ' · ' + stage.name : '')
+        };
       }),
       remaining: kind === 'rout' ? '尚餘敵人 ' + left.foes + ' 名' : '',
       waiting: kind === 'rout' && left.waiting ? '援軍未到 ' + left.waiting + ' 名' : '',
@@ -1479,6 +1489,34 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     }
   }
   return model;
+}
+// 專挑, on the last board (the producer, 2026-11-25: say plainly in 軍情 that they all go for the
+// leader). What is true, read from each piece's own 偏好 as it plays there (a guest keeps his
+// preference, not his 變招's): 求敗 looks for the leader; most masters look for no one in
+// particular; and from the seventh board on every enemy looks first for a leader standing with no
+// hero beside him and no cover underfoot (game.js aimCost, `exposedLeader`).
+function huntLine(board) {
+  const eye = heroName(G.YOUTH_ID),
+    keys = [...new Set([...board.pieces, ...board.waves.flatMap((w) => w.pieces)].map((p) => p.id.split('#')[0]))];
+  const by = new Map();
+  for (const key of keys) {
+    const prefers = G.traitsOf({ id: key, guest: key !== board.commander }).prefers;
+    if (!prefers) continue;
+    if (!by.has(prefers)) by.set(prefers, []);
+    by.get(prefers).push(G.DETAILS[key].name);
+  }
+  const hunters = by.get('leader') || [];
+  by.delete('leader');
+  const others = [...by].map(([prefers, names]) => names.join('、') + G.PREFERS[prefers]);
+  const rest = keys.length - hunters.length - [...by.values()].flat().length;
+  return (
+    (hunters.length ? hunters.join('、') + '專挑領隊' + eye + '。' : '') +
+    (others.length ? others.join('；') + '。' : '') +
+    (rest ? (hunters.length || others.length ? '其餘的局主' : '局主們') + '不專挑誰，' : '') +
+    '但' +
+    eye +
+    '身旁沒有同伴、腳下也沒有掩體時，每個敵人都格外盯著他。他一倒下，這一局便輸。'
+  );
 }
 // The briefing of the board a run is on, with its drawn secondary; `live` during the fight.
 function briefing(s, { live = false } = {}) {

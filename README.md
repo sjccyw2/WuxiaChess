@@ -134,6 +134,25 @@ fifteen boards a run draws from; the entry marked `last` in `game/src/data/battl
   him (`coverer`), and the masters keep to his side. With a quarter left he falls back
   (`withdraw` in his traits): to the tile in his walk farthest from the heroes with most of his
   own beside it, striking from there only if someone is in reach.
+- **His five bars (五劍, the producer, 2026-11-25).** 求敗's 氣血 is shown as five bars named after
+  the swords of his tomb, 利劍, 軟劍, 重劍, 木劍 and 無劍, each a fifth of it (`stages` in his
+  traits; `stageOf` in `game.js` gives the bar for any 氣血): a bar is empty at 80%, 60%, 40% and
+  20%, and the next appears full in its own colour. The colours heat as the danger rises, from cold
+  steel through violet to a hot rose, clear of the heroes' jade, the enemies' vermilion, the amber
+  of a low bar and the blue of 內力, and every bar names its sword as well. Wherever his 氣血 is
+  shown it is the bar he is on with his real figures: the board's gauge, a gauge pinned at the top
+  of the battlefield (`ui/boss-gauge.js`; under the plaque on a desktop, across the top under the
+  top row on an upright phone, beside the plaque on a sideways phone; a press brings the view to
+  him), 敵情查探, 交鋒預覽 and the goals page. On the board he carries a round 求 seal and a ring in
+  the bar's colour instead of the 主 every master has, painted over the figures around him; in
+  軍情's plan he is a round 求 with his name in the key. When a bar empties the tip line says
+  求敗換劍 · 第二劍 · 軟劍 and the log keeps 利劍已盡，換作軟劍。 (`noteStage` in `app.js`). The
+  stages change no rule yet: what each does is still to be designed and will hang on its index.
+- **Whom they go for.** Under 敗退, 軍情 and the goals page say it, read from each piece's 偏好
+  (`huntLine` in `journey.js`): 求敗 looks for the leader; of the masters, 李莫愁 looks for a healer
+  and 李秋水 for a hero behind cover or covered, when they are in the run, and the rest for no one in
+  particular; and from the seventh board on every enemy looks first for a leader with no hero beside
+  him and no cover under him (`aimCost` in `game.js`).
 - **No secondary.** 韋小寶 opens no book on the last board (`sides: []`, `run.side` is null),
   and its pages show no 支線.
 - **How it is won (問劍, kind `yield`).** 求敗 is 不敗 and never falls: bring him to 1 氣血. No 破招
@@ -223,6 +242,7 @@ In a battle, from its story, briefing or 整備 as well:
 - 速敗 loses it;
 - 局主半血, once the fight is on, takes half of what 氣血 the board's master has, as a blow would
   (`devPress`): his 變招 follows, and on the last board two presses bring all ten masters on.
+  From full, the presses take 求敗 to 重劍, 木劍 and 無劍; 軟劍 needs a blow.
 - 重試此局 puts the run back to the board's 起陣, everything as it was then: the heroes, the purse
   and the record (`retryPoint` in `app.js`). The run is copied the first time a board reaches
   起陣 and kept for the tab in `sessionStorage` (`jianying.dev-retry.v1`). The button stays while
