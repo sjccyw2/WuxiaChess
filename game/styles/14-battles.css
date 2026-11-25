@@ -416,6 +416,42 @@
 .stage-name b {
   color: var(--stage);
 }
+/* All five and what each does, the one he is in marked, the ones gone dimmed. */
+.stage-list {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 10px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.stage-list li {
+  display: grid;
+  grid-template-columns: 4.2em minmax(0, 1fr);
+  gap: 8px;
+  padding: 3px 8px;
+  border-left: 3px solid var(--c);
+  border-radius: 2px;
+  color: #d9d2c2;
+}
+.stage-list li b {
+  color: var(--c);
+  white-space: nowrap;
+}
+.stage-list li small {
+  display: block;
+  color: #b9c0c2;
+  font-size: 11px;
+  font-weight: 500;
+}
+.stage-list li.now {
+  background: #ffffff12;
+  color: #f6efdc;
+}
+.stage-list li.past {
+  opacity: 0.55;
+}
 
 /* The gauge pinned at the top of the battlefield, inside the plaque's header. A press brings
    the view to him. */

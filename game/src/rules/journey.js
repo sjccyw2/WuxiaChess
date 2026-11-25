@@ -1309,11 +1309,10 @@ function waveLine(map, wave) {
   const list = G.waveList(wave.pieces);
   if (wave.when.round)
     return '第' + NUMERALS[wave.when.round - 1] + '回合，' + list + '自' + wave.place + '入場。';
-  // The last board: they come to the master's side the moment his 氣血 is down to a share.
-  if (wave.when.below) {
-    const share = { 0.5: '一半', 0.25: '四分之一' }[wave.when.below] || Math.round(wave.when.below * 100) + '%';
-    const liege = G.DETAILS[BATTLES[map].commander]?.name || pieceName(map, BATTLES[map].commander);
-    return liege + '氣血只剩' + share + '時，' + list + '趕到他身旁。';
+  // The last board: they come to the master's side the moment he takes up a sword of his 五劍.
+  if (wave.when.stage != null) {
+    const liege = G.DETAILS[BATTLES[map].commander];
+    return liege.name + '換作' + liege.traits.stages[wave.when.stage].name + '時，' + list + '趕到他身旁。';
   }
   const masters = wave.when.halved.map((ref) => pieceName(map, ref)).join('或');
   return masters + '氣血首次過半，兩回合後，' + list + '自' + wave.place + '入場。';
@@ -1515,7 +1514,20 @@ function huntLine(board) {
     (rest ? (hunters.length || others.length ? '其餘的局主' : '局主們') + '不專挑誰，' : '') +
     '但' +
     eye +
-    '身旁沒有同伴、腳下也沒有掩體時，每個敵人都格外盯著他。他一倒下，這一局便輸。'
+    '身旁沒有同伴、腳下也沒有掩體時，每個敵人都格外盯著他。他一倒下，這一局便輸。' +
+    guardLine(board)
+  );
+}
+// From the stage the masters guard 求敗 in (五劍 `guarded`), and how the last stage is a duel.
+function guardLine(board) {
+  const m = G.DETAILS[board.commander],
+    stages = m?.traits?.stages || [];
+  const from = stages.find((v) => v.guarded),
+    solo = stages.find((v) => v.solo);
+  if (!from) return '';
+  return (
+    m.name + '換作' + from.name + '起，與他相鄰的局主替他受招' +
+    (solo ? '；到了' + solo.name + '，唯' + heroName(solo.solo) + '傷得了他，也無人替他擋' + heroName(solo.solo) + '的招。' : '。')
   );
 }
 // The briefing of the board a run is on, with its drawn secondary; `live` during the fight.

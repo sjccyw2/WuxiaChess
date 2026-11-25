@@ -155,18 +155,28 @@ function threatMap(s) {
   const ghosts = G.arrivalGhosts(s, s.round + 1);
   const seen = ghosts.length ? { ...s, units: [...s.units, ...ghosts] } : s;
   // A piece held by 失神, 定身, 閉穴 or 受制 strikes no hero next enemy phase (G.holdsFire).
-  return [...G.enemies(s).filter((e) => G.living(e) && !G.holdsFire(e)), ...ghosts]
-    .map((e) => {
-      // Where the rules say it may end its action (a posted or charged piece stays put).
-      const stand = G.standCells(seen, e);
+  return [...G.enemies(s).filter((e) => G.living(e) && !G.holdsFire(e)), ...ghosts].flatMap((e) => {
+    // Where the rules say it may end its action (a posted or charged piece stays put).
+    const stand = G.standCells(seen, e);
+    // 五劍 (求敗's stages), which the danger zone does not draw: in 無劍 he is beside 無名 before he
+    // acts, so he threatens round 無名 wherever he stands; in 利劍 each of his blows lands twice;
+    // in 木劍 he acts twice, the second time after another walk, so that blow reaches farther.
+    const st = G.stageOf(e),
+      mark = st?.blink && G.find(s, st.solo);
+    if (mark && G.living(mark)) stand.push({ x: mark.x, y: mark.y });
+    const art = G.signatureDue(s, e) ? G.enemyTechnique(e, s) : null,
+      factor = (art ? art.factor : 1) * (1 + (st?.twice || 0));
+    const reach = G.strikeReach(seen, e) + (mark ? 1 : 0),
+      walk = st?.step ?? G.stat(e, 'step', s);
+    return Array.from({ length: st?.turns || 1 }, (_, turn) => {
       const hits = new Set(),
-        range = G.strikeReach(seen, e);
+        range = reach + turn * walk;
       for (const p of stand)
         for (let dx = -range; dx <= range; dx++)
           for (let dy = -range + Math.abs(dx); dy <= range - Math.abs(dx); dy++) hits.add(key(p.x + dx, p.y + dy));
-      const art = G.signatureDue(s, e) ? G.enemyTechnique(e, s) : null;
-      return { e, hits, factor: art ? art.factor : 1 };
+      return { e, hits, factor };
     });
+  });
 }
 // Expected damage to u if it ends the turn at its current (hypothetical) position.
 function dangerAt(s, u, threats, gone = new Set()) {

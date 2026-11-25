@@ -396,14 +396,14 @@ function lastStage() {
       speech('戰前', beats(script.before, i), f.before.map((b) => spine(b))),
       speech(
         '十位局主各自的話',
-        '開局便在盤上的五位在戰前說；其餘五位在求敗氣血只剩一半（兩位）、四分之一（三位）時搶上枰來，站到他身旁，踏上棋枰時說。每一句都寫在那位局主自己的局裡。',
+        '開局便在盤上的五位在戰前說；其餘五位在求敗換作木劍（兩位）、無劍（三位）時搶上枰來，站到他身旁，踏上棋枰時說。每一句都寫在那位局主自己的局裡。',
         guests.map((id) => said(G.DETAILS[id].name, G.guestLine(id)))
       ),
       speech(
         '局中',
         said(G.QIUBAI.name, f.half, '求敗氣血過半。'),
-        said('', f.rally, '求敗氣血只剩一半，又只剩四分之一時：其餘的局主搶上枰來，站到他身旁。這一局求敗自己在盤上，沒有「嗒」的一聲。'),
-        said('', f.withdraw, '求敗氣血只剩四分之一，頭一回退到眾人身後。')
+        said('', f.rally, '求敗換作木劍，又換作無劍時：其餘的局主搶上枰來，站到他身旁。這一局求敗自己在盤上，沒有「嗒」的一聲。'),
+        said('', f.blink, '求敗換作無劍，頭一回身形一晃，到了無名身旁。')
       ),
       speech('戰後 · 勝', beats(script.win, i), f.after.map((b) => spine(b))),
       speech('戰後 · 敗', beats(script.loss, i), f.lost.map((b) => spine(b)), f.missed),
@@ -441,8 +441,9 @@ function finale() {
       rows('終局的規矩', [
         ['何時', '在無劍境界勝了第十局之後，同一輪接著下，是這一輪的第十一局。'],
         ['白子', name + '與四位俠客。' + name + '是眼，不能換下，也不能改任領隊；他親自入盤，比拓來的人都強（氣血 ＋' + G.LAST_BOON.hp + '、內力 ＋' + G.LAST_BOON.mp + '、攻擊 ＋' + G.LAST_BOON.atk + '、防禦 ＋' + G.LAST_BOON.def + '、移動 ＋' + G.LAST_BOON.step + '）。同行俠客到了這裡，各自的武學全都想起，不論歷練。'],
-        ['黑子', G.QIUBAI.name + '立在天元，與這一輪十局的十位局主：先遇上的五位開局便在；' + G.QIUBAI.name + '氣血只剩一半時，兩位搶到他身旁，只剩四分之一時，再來三位。'],
-        ['護駕與退守', G.QIUBAI.name + '氣血過半之後，與他相鄰的局主替他承受俠客的直接攻擊，眾局主也守在他身旁；只剩四分之一時，他退到離俠客較遠、身旁有局主之處，攻擊範圍內有人才出手。'],
+        ['黑子', G.QIUBAI.name + '立在天元，與這一輪十局的十位局主：先遇上的五位開局便在；' + G.QIUBAI.name + '換作木劍時，兩位搶到他身旁，換作無劍時，再來三位。'],
+        ['五劍', G.QIUBAI.name + '分五段應戰，各佔氣血五分之一，一段比一段難纏：' + G.DETAILS.qiubai.traits.stages.map((v) => v.name + '，' + G.stageNote(v)).join('。') + '。'],
+        ['護駕', G.QIUBAI.name + '換作木劍之後，與他相鄰的局主替他承受俠客的直接攻擊，眾局主也守在他身旁；到了無劍，' + name + '的招無人替他擋。'],
         ['支線', '沒有。這一局韋小寶不開盤口。'],
         ['勝', '把' + G.QIUBAI.name + '的氣血削至 1 點。他不敗，不會倒下。'],
         ['敗', name + '倒下，或十二回合已過。' + f.missed],

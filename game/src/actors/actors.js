@@ -455,7 +455,8 @@ class ActorLayer {
       // statusLooks: a status word starts its look as it pops; a blow 金剛 voided says 無功, not
       // −0; a 吸元 draws its health over from the piece struck.
       statusWord(this, id, value, start);
-      const voided = POLISH.statusLooks && value === '−0' && G.immuneTo(struck);
+      // (無劍: on 求敗, whom only 無名 can hurt there, a −0 is a blow that touched nothing.)
+      const voided = POLISH.statusLooks && value === '−0' && (G.immuneTo(struck) || !!G.stageOf(struck)?.solo);
       if (voided) voidBlow(this, id, start);
       if (
         POLISH.statusLooks &&
