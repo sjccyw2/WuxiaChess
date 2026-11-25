@@ -675,7 +675,7 @@ const tauntCache = new WeakMap();
 function paintTauntAim(layer, list, now) {
   paintAimOutline(layer, list, now, tauntCache, AIM_STYLES.taunt);
 }
-// 廣及: while an art whose splash reaches 2 or 3 tiles is aimed at a piece, every tile its splash
+// 濺射 with reach: while an art whose splash reaches 2 or 3 tiles is aimed at a piece, every tile its splash
 // would catch (inSplash, as the forecast counts it). A rule the player needs, drawn whatever the
 // polish switches say, like the taunt outline above.
 const splashCache = new WeakMap();

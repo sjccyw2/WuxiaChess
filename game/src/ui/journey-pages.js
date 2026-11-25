@@ -172,7 +172,7 @@ function markAnswers(list, s, u, t) {
   for (const b of list.querySelectorAll('.field-art[data-id]')) {
     const art = b.dataset.id !== 'basic' && G.artFor(u, b.dataset.id);
     const on =
-      !!foe && !!art?.answer && G.strikeFactor(s, u, art, foe).notes.some((n) => n.startsWith('破招'));
+      !!foe && !!art?.answer && G.strikeFactor(s, u, art, foe).notes.some((n) => n.startsWith('破招 · '));
     b.classList.toggle('answers', on);
   }
 }

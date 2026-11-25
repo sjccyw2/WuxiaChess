@@ -13,7 +13,7 @@
 //            of its own type with less 氣血)
 //   crowded  { within, atk }: 近身失準, its blows and counters on a hero that close are weaker
 //   execute  { atk }: 斬殘, its blows and counters on a hero at or below half are stronger
-//   ward     the share (percent) a living piece takes off its master's blows (星索護陣; today only
+//   ward     the share (percent) a living piece takes off its master's blows (星索; today only
 //            the board objects carry it, board-objects.js)
 //   flurry   { share }: 分刺, after its blow a second on another hero in reach, at that share
 //   bend     true: 轉折, its blows pass terrain defence and no 代受 can take them
@@ -237,7 +237,9 @@ const ENCOUNTERS = [
       '白駝山',
       '射鵰英雄傳',
       '靈蛇杖法',
-      '蛤蟆功',
+      // His own, decades in the making, a tier above the beginner's form 楊過 learned from him
+      // (the producer, 2026-11-25): named apart, drawn larger, the strongest villain blow.
+      '蛤蟆功（大成）',
       'sweep',
       'guo',
       '西毒贏到了天下第一，卻忘了自己是誰，所以分不出哪個念頭是自己的。他伏在陣心蓄勢；石陣能分開蛇群，緊挨的同伴卻容易被掌風一併震傷。',
@@ -399,7 +401,7 @@ const ENCOUNTERS = [
       '斗轉星移',
       'mirror',
       'duan',
-      '姑蘇慕容氏半生暗中撥弄旁人相鬥，今日也成了盤上之子。兩股星索從盤外垂下，各繫銅樁再牽到他身上，每樁旁有一名守索人。毀一樁，便卸去三成半護勁。',
+      '姑蘇慕容氏半生暗中撥弄旁人相鬥，今日也成了盤上之子。兩股星索從盤外垂下，各繫銅樁再牽到他身上，每樁旁有一名守索人。毀一樁，他身上的遮護便卸去三成半。',
       'murong',
       '',
     {
@@ -719,7 +721,7 @@ const RANKS = [
   {
     bow: {
       name: '守索人',
-      role: '護陣',
+      role: '守索',
       school: '姑蘇慕容',
       mini: 'archer',
       basic: '星索',
@@ -728,7 +730,7 @@ const RANKS = [
     },
     scout: {
       name: '守索人',
-      role: '護陣',
+      role: '守索',
       school: '姑蘇慕容',
       mini: 'bandit',
       basic: '星索',
@@ -792,7 +794,7 @@ const SIGNATURE_RULES = {
     '蓄勢時替三格內氣血不足七成的同夥回復 ' +
     heal +
     ' 點氣血，此回合不出手；無人受傷時改以普攻出手，蓄勢保留。',
-  mirror: () => '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。'
+  mirror: () => '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（截勁時無效）。'
 };
 
 // Damage is measured against the same foe's normal strike after the target's defenses.
@@ -807,7 +809,7 @@ const VILLAIN_FORMS = {
   血刀連斬: [1.18, 'foxTwinChange'],
   寒冰真氣: [1.15, 'lesserMarsh'],
   大嵩陽神掌: [1.22, 'vacantFist'],
-  蛤蟆功: [1.4, 'toadLunge'],
+  '蛤蟆功（大成）': [1.4, 'toadLunge'],
   靈蛇拳法: [1.12, 'beggarBind'],
   龍象般若功: [1.3, 'flyingDragon'],
   狂風迅雷功: [1.14, 'foxFeint'],
@@ -903,7 +905,7 @@ const VILLAINS = {
             colour: '#e040c8',
             turns: 2,
             step: 0,
-            unheld: ['freeze', 'mute', 'daze', 'seal', 'disarm', 'charm'],
+            unheld: ['freeze', 'mute', 'seal', 'disarm', 'charm'], // 失神 is 定身 since 0.46
             cut: 20,
             guarded: true
           },

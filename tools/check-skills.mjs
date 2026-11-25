@@ -38,7 +38,7 @@ const T = {
   // R4: a later strike that out-reaches the starting art by at least this many tiles is only
   // warned about, not failed, when the starting art out-damages it.
   R4_REACH_EXCUSE: 2,
-  // R4: a later strike bought for a capability (CAPABILITIES in skill-measure.mjs: 吸勁, 失神,
+  // R4: a later strike bought for a capability (CAPABILITIES in skill-measure.mjs: 吸勁, 定身,
   // 纏械, 代受 …) is not held to the starting art's damage, unless it falls below it by more than
   // this fraction (then a warning).
   UTILITY_FLOOR: 0.25,
@@ -70,15 +70,15 @@ const T = {
     hpCost: 0.25, auraPeople: 2,
     // What the newer mechanics add to a strike, in factor, as the designers priced them
     // (design-*.md): 吸勁 0.20 at its merged 8 內力 (段譽's designer; 令狐冲's said 0.25 at 10),
-    // 卸勁 0.20, 纏械 0.30, 失神 0.50 when it lands, 內傷 0.15, 回身 0.20; 布陣 as a strike's rider
+    // 卸勁 0.20, 纏械 0.30, 失神 0.50 when it lands (now 定身 for one turn), 內傷 0.15, 回身 0.20; 布陣 as a strike's rider
     // 0.20, the area pin it replaced on 天下無狗. 代受 had no factor price: it is priced as 卸勁,
     // the other guard a strike leaves until the hero's next turn. 連環 has none and is listed.
-    riders: { siphon: 0.2, stance: 0.2, disarm: 0.3, daze: 0.5, wound: 0.15, glide: 0.2, zone: 0.2, cover: 0.2 },
+    riders: { siphon: 0.2, stance: 0.2, disarm: 0.3, wound: 0.15, glide: 0.2, zone: 0.2, cover: 0.2 },
     // Riders that last, as [first turn, each further turn] (this tool's pricing, after 失神 0.50
     // and 纏械 0.30). 定身 1 turn = 失神's 0.50 (the foe loses its turn and, besides, its counter);
     // later turns at half, since a master takes one turn only and the rest land on its men. 閉穴
-    // leaves the foe its feet: 0.35, between 纏械 and 失神, then 0.20. 受制 turns the piece's
-    // blows on its own side as well (a master takes 失神 instead): 0.60, then 0.30. 金剛 on a
+    // leaves the foe its feet: 0.35, between 纏械 and 定身, then 0.20. 受制 turns the piece's
+    // blows on its own side as well (a master takes one turn of 定身 instead): 0.60, then 0.30. 金剛 on a
     // strike: 架勢 (stance, 0.20) cuts each blow on the caster by a share, 金剛 voids every blow and
     // what it would lay, so twice that per enemy phase.
     turnRiders: { freeze: [0.5, 0.25], mute: [0.35, 0.2], charm: [0.6, 0.3], immune: [0.4, 0.4] },
@@ -209,7 +209,7 @@ function checkHero(heroId) {
     }
     if (!(a.needs || []).length && a.kind !== 'basic')
       fail('structure', id + ' has no prerequisite: every node should hang from the starting art or the basic upgrade');
-    if (a.gate && !['kills', 'casts', 'heals', 'protects', 'steps', 'side', 'level'].includes(a.gate.metric))
+    if (a.gate && !['kills', 'casts', 'heals', 'protects', 'steps', 'struck', 'side', 'level'].includes(a.gate.metric))
       warn('structure', id + ' has a gate on an unknown measure "' + a.gate.metric + '"');
   }
   const known = new Set(['signature', ...Object.keys(G.TALENTS)]);
@@ -453,7 +453,7 @@ console.log(
       return r.label + ' = board ' + (r.stage + 1) + ', hero level ' + r.level + ', soft ' + b.soft.id + ' def ' + b.soft.def + ', hard ' + b.boss.id + ' def ' + b.boss.def;
     }).join('; ')
 );
-console.log('Columns: early/mid/late = damage to the hard foe (support: heal+shield+buff on the cluster); area = avg damage incl. splash on two neighbours (a 廣及 splash: and one foe in each further ring); ctr = counter taken at full reach (mid); main = the job\'s main measure; PSE = plain strike equivalent (support: heal, shield and guards, in 氣血, x people) beside its R9 band.');
+console.log('Columns: early/mid/late = damage to the hard foe (support: heal+shield+buff on the cluster); area = avg damage incl. splash on two neighbours (a splash with reach: and one foe in each further ring); ctr = counter taken at full reach (mid); main = the job\'s main measure; PSE = plain strike equivalent (support: heal, shield and guards, in 氣血, x people) beside its R9 band.');
 const results = heroes.map(checkHero);
 if (!only.length) checkManuals(results);
 console.log('\nSummary');

@@ -468,7 +468,7 @@ class ActorLayer {
         G.drainOf(G.artFor(struck))
       )
         drainFlow(this, exchange.target, id, start - (full ? 260 : 60));
-      // statusLooks: two states laid by one blow (封穴 and 閉穴) share one word, not one spot.
+      // statusLooks: two states laid by one blow (截勁 and 閉穴) share one word, not one spot.
       const word = POLISH.statusLooks && full && reason === 'status' && words.get(id);
       if (word) {
         word.value += '・' + value;
@@ -795,7 +795,7 @@ class ActorLayer {
     const spot = G.targetType(art) === 'ground' ? { x: aim.x, y: aim.y } : G.at(s, aim.x, aim.y);
     return spot && G.targetOK(s, u, spot, true) ? G.zoneTiles(s, spot) : null;
   }
-  // 廣及: the tiles a splash reaching 2 or 3 tiles would catch, round the piece aimed at (the
+  // 濺射 with reach: the tiles a splash reaching 2 or 3 tiles would catch, round the piece aimed at (the
   // preview open, else the one under the pointer), from where the forecast puts the impact.
   splashAim(s, u, art, hover) {
     if (!art?.splash || !(art.radius > 1)) return null;
@@ -1152,7 +1152,6 @@ class ActorLayer {
         haste: '#8ee3cb',
         weak: '#ec91ae',
         exposed: '#e8a781',
-        stance: '#e0c48a',
         cover: '#9fc6e8',
         redirect: '#b9a6e6',
         evade: '#c9ecf5',
@@ -1171,7 +1170,6 @@ class ActorLayer {
         haste: '疾',
         weak: '弱',
         exposed: '破',
-        stance: '卸',
         cover: '代',
         redirect: '挪',
         evade: '閃',

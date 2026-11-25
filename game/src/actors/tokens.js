@@ -225,7 +225,6 @@ const STATUS_COLOURS = {
   haste: '#8ee3cb',
   weak: '#ec91ae',
   exposed: '#e8a781',
-  stance: '#e0c48a',
   cover: '#9fc6e8',
   redirect: '#b9a6e6',
   evade: '#c9ecf5',
@@ -238,18 +237,20 @@ const STATUS_COLOURS = {
   fortify: '#d8c7a0',
   formation: '#ffd98c'
 };
+// Every condition has a sign of its own, taken from its name; a stat that only went up or down
+// (升降) shows the stat (攻, 防, 移) with an arrow in the badge's corner (STATUS_MARKS), a price
+// (代價) what it holds back with a lock, which 解厄 cannot lift, and 亂氣 its layers.
 const STATUS_SIGNS = {
-  mark: '隙',
-  pin: '縛',
-  seal: '穴',
-  riposte: '返',
+  mark: '綻',
+  pin: '移',
+  seal: '截',
+  riposte: '反',
   poison: '毒',
   shield: '護',
-  rally: '振',
-  haste: '疾',
-  weak: '弱',
-  exposed: '破',
-  stance: '卸',
+  rally: '攻',
+  haste: '移',
+  weak: '攻',
+  exposed: '防',
   cover: '代',
   redirect: '挪',
   evade: '閃',
@@ -257,11 +258,35 @@ const STATUS_SIGNS = {
   wound: '傷',
   freeze: '定',
   mute: '閉',
-  charm: '倒',
+  charm: '制',
   immune: '金',
-  fortify: '固',
+  fortify: '防',
+  recoil: '防',
+  unguarded: '還',
+  rooted: '移',
+  spent: '招',
+  backlash: '亂',
+  disarm: '纏',
   formation: '陣' // derived: the piece has a 布陣 on the board
 };
+// The corners of a badge: 'up' or 'down' for a stat that went up or down, 'lock' for a price.
+const STATUS_MARKS = {
+  rally: ['up'],
+  haste: ['up'],
+  fortify: ['up'],
+  weak: ['down'],
+  exposed: ['down'],
+  pin: ['down'],
+  recoil: ['down', 'lock'],
+  unguarded: ['lock'],
+  rooted: ['lock'],
+  spent: ['lock']
+};
+// A badge as words, for the wiki's list of signs: 「攻（升）」, 「防（降、鎖）」.
+const MARK_WORDS = { up: '升', down: '降', lock: '鎖' };
+const signLabel = (kind) =>
+  STATUS_SIGNS[kind] +
+  (STATUS_MARKS[kind] ? '（' + STATUS_MARKS[kind].map((m) => MARK_WORDS[m]).join('、') + '）' : '');
 
 // Per layer: what each bar last showed, so a wound can linger as a pale segment and drain.
 const memories = new WeakMap();
@@ -286,6 +311,60 @@ function ghostHealth(layer, u, shown, now) {
   g.shown = shown;
   g.seen = now;
   return g.value;
+}
+
+// The marks in a badge's corners: an arrow top right, a small triangle light on a dark rim; a
+// lock top left.
+function paintMark(c, marks = [], sx, sy, size, one) {
+  if (marks.includes('lock')) paintLock(c, sx, sy, size, one);
+  const mark = marks.find((m) => m === 'up' || m === 'down');
+  if (!mark) return;
+  const w = Math.max(4, size * 0.4),
+    h = w * 0.75,
+    right = sx + size,
+    top = sy,
+    up = mark === 'up';
+  const tri = (grow) => {
+    c.beginPath();
+    if (up) {
+      c.moveTo(right - w / 2, top - grow);
+      c.lineTo(right + grow, top + h + grow * 0.6);
+      c.lineTo(right - w - grow, top + h + grow * 0.6);
+    } else {
+      c.moveTo(right - w / 2, top + h + grow);
+      c.lineTo(right + grow, top - grow * 0.6);
+      c.lineTo(right - w - grow, top - grow * 0.6);
+    }
+    c.closePath();
+  };
+  tri(one * 1.4);
+  c.fillStyle = INK;
+  c.fill();
+  tri(0);
+  c.fillStyle = up ? '#9ff0a8' : '#ff9a86';
+  c.fill();
+}
+
+function paintLock(c, sx, sy, size, one) {
+  const w = Math.max(3.5, size * 0.32),
+    h = w * 0.72,
+    x = sx,
+    y = sy - h * 0.15;
+  // The shackle, then the body, each on a dark rim.
+  c.lineWidth = Math.max(one * 1.2, w * 0.18);
+  c.strokeStyle = INK;
+  c.beginPath();
+  c.arc(x + w / 2, y, w * 0.3, Math.PI, 0);
+  c.stroke();
+  c.fillStyle = INK;
+  c.fillRect(x - one, y - one, w + one * 2, h + one * 2);
+  c.lineWidth = Math.max(one * 0.8, w * 0.12);
+  c.strokeStyle = '#e8d29a';
+  c.beginPath();
+  c.arc(x + w / 2, y, w * 0.3, Math.PI, 0);
+  c.stroke();
+  c.fillStyle = '#e8d29a';
+  c.fillRect(x, y, w, h);
 }
 
 function paintGauge(layer, u, g) {
@@ -418,15 +497,37 @@ function paintGauge(layer, u, g) {
       c.fillRect(sx, sy, size, size);
       c.fillStyle = STATUS_COLOURS[kind] || '#e9dcc0';
       c.fillRect(sx, sy + size - one, size, one);
-      c.font = 'bold ' + (size - 2) + 'px serif';
+      // A badge with a corner mark draws its character a little smaller, off the corner.
+      const marks = STATUS_MARKS[kind] || [],
+        right = kind === 'backlash' || marks.some((m) => m !== 'lock'),
+        left = marks.includes('lock'),
+        marked = right || left,
+        shift = size * 0.12 * ((left ? 1 : 0) - (right ? 1 : 0)),
+        drop = marked ? size * 0.12 : 0;
+      c.font = 'bold ' + (size - (marked ? 3 : 2)) + 'px serif';
       c.textAlign = 'center';
       c.textBaseline = 'middle';
       // A condition with no sign of its own shows the first character of its name.
       c.fillText(
         STATUS_SIGNS[kind] || CONDITION_NAMES[kind]?.[0] || '',
-        sx + size / 2,
-        sy + size / 2
+        sx + size / 2 + shift,
+        sy + size / 2 + drop
       );
+      paintMark(c, marks, sx, sy, size, one);
+      // 亂氣: the layers it has laid, small in the lower corner.
+      if (kind === 'backlash' && u.conditions.backlash?.power) {
+        const n = String(u.conditions.backlash.power),
+          k = Math.max(6, Math.round(size * 0.5));
+        c.font = 'bold ' + k + 'px sans-serif';
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillStyle = INK;
+        c.fillRect(sx + size - k * 0.75, sy - one, k * 0.75 + one, k * 0.9 + one);
+        c.fillStyle = '#ffe3a0';
+        c.fillText(n, sx + size - k * 0.375 + one / 2, sy + k * 0.45);
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+      }
     }
     c.textBaseline = 'alphabetic';
     roof = sy - one;
@@ -458,10 +559,10 @@ function paintGauge(layer, u, g) {
 // How the states that hold a piece look on the board (statusLooks, actors/status-looks.js).
 const STATUS_LOOKS = {
   freeze: '身形凝在中途，通體霜白，腳下結冰；解凍時冰屑四散',
-  mute: '手邊懸一道封穴符，人照走，卻不出手；解穴時符紙飛散',
+  mute: '手邊懸一道點穴符，人照走，卻不出手；解穴時符紙飛散',
   charm: '底座、輪廓與氣血條轉為青金，腳下青金弧光繞行；受制一解，便轉回赤色',
   immune: '腳下金環，身上金光流轉；受擊不傷，跳出「無功」並響起金色波紋',
   fortify: '固守加身時，腳下升起一圈六角石紋'
 };
 
-export { paintBase, paintGauge, paintStageRing, STATUS_SIGNS, STATUS_LOOKS };
+export { paintBase, paintGauge, paintStageRing, STATUS_SIGNS, STATUS_MARKS, STATUS_LOOKS, signLabel };

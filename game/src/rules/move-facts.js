@@ -1,4 +1,4 @@
-import { FORM_RULES, splashRadius } from './form-rules.js';
+import { FORM_RULES, formRule, splashRadius } from './form-rules.js';
 import { STROKE_NOTES } from '../fx/technique-strokes.js';
 import * as G from './game.js';
 import { TECHNIQUES } from '../data/martial-arts.js';
@@ -8,6 +8,9 @@ const percent = (fraction) => Math.round(fraction * 100) + '%';
 const roots = { force: '攻擊 ＋3', guard: '防禦 ＋2', breath: '絕技威力 ＋5、內力消耗 −2' };
 
 const plus = (n) => '＋' + n.toFixed(2);
+// 0.8 → 八成, 0.65 → 65%.
+const shareText = (n) =>
+  Number.isInteger(n * 10) ? '一二三四五六七八九'[n * 10 - 1] + '成' : percent(n);
 const ANSWERED = {
   close: '近身（射程 1）',
   ranged: '遠攻（射程 2 以上）',
@@ -19,22 +22,22 @@ const ANSWERED = {
 function bonusLines(u, art) {
   const lines = [];
   if (art.answer) lines.push('破招 · 目標為' + ANSWERED[art.answer] + '時倍率 ＋0.30');
-  if (art.lone) lines.push('孤行 · 四鄰沒有同伴時倍率 ' + plus(art.lone));
+  // 孤行, 黯然, 還報 and 斬殘 are plain conditions, not words to learn (Q-N161, P5).
+  if (art.lone) lines.push('四鄰沒有同伴時倍率 ' + plus(art.lone));
   if (art.paired) {
     const partner = G.DETAILS[G.PARTNERS[u.id]]?.name;
     lines.push(
-      '合璧 · 有同伴相鄰 ' +
-        plus(art.paired.any) +
-        (partner ? '，' + partner + '相鄰 ' + plus(art.paired.partner) : '')
+      art.paired.any
+        ? '合璧 · 有同伴相鄰 ' + plus(art.paired.any) + (partner ? '，' + partner + '相鄰 ' + plus(art.paired.partner) : '')
+        : '合璧 · ' + partner + '相鄰時倍率 ' + plus(art.paired.partner)
     );
   }
-  if (art.pairsSelf) lines.push('左右互搏 · 習得後，合璧之招孤身出手也算有同伴相鄰');
-  if (art.dire) lines.push('黯然 · 自身氣血越少倍率越高，剩四分之一以下時 ' + plus(art.dire));
-  if (art.avenge) lines.push('還報 · 上一個敵方回合曾受敵人攻擊而損血時倍率 ' + plus(art.avenge));
-  if (art.execute) lines.push('斬殘 · 目標氣血不過半時倍率 ' + plus(art.execute));
+  if (art.dire) lines.push('自身氣血不過四分之三時倍率 ' + plus(art.dire));
+  if (art.avenge) lines.push('上一個敵方回合曾受敵人攻擊而損血時倍率 ' + plus(art.avenge));
+  if (art.execute) lines.push('目標氣血不過半時倍率 ' + plus(art.execute));
   if (art.surge)
     lines.push(
-      '傾力 · 耗盡內力，每點倍率 ＋' + art.surge.rate + '，最高 ' + art.surge.cap.toFixed(2)
+      '耗盡內力，每點內力倍率 ＋' + art.surge.rate + '，最高 ' + art.surge.cap.toFixed(2)
     );
   return lines;
 }
@@ -42,19 +45,19 @@ function bonusLines(u, art) {
 // When the art may be used and what it costs beyond 內力 and 氣血.
 function useLines(art) {
   const lines = [];
-  if (art.poised) lines.push('留力 · 上回合未出手方可施展');
-  if (art.consume === 'shield') lines.push('轉護 · 須自身帶有護盾，施展時護盾轉給受術者');
+  if (art.poised) lines.push('上一回合未曾出手方可施展');
+  if (art.consume === 'shield') lines.push('須自身帶有護盾；施展時護盾移給受術者，各至多 24 點');
   return [...lines, ...G.guardNotes(art), ...G.priceNotes(art)];
 }
 
-// What the conditions stage's fields do, as rules: 反噬, a conditional 失神, 布陣.
+// What the conditions stage's fields do, as rules: 亂氣, a conditional 定身, 布陣.
 function conditionLines(art) {
   const lines = [];
-  if (art.backlash) lines.push('反噬 · 每次施展積一層亂氣，第三層時自損兩成最大氣血並清空');
-  if (art.daze === 'setup') lines.push('失神 · 目標兵刃遭纏或站在陣中時，失去下一次行動');
-  if (art.daze) lines.push('局主失神後，下一回合可抵抗');
+  if (art.backlash) lines.push('亂氣 · 每次施展積一層，滿三層自損兩成最大氣血並清空');
+  if (art.freeze?.setup) lines.push('目標兵刃遭纏或站在陣中時方能定身');
   if (art.freeze || art.mute) lines.push('局主只受一回合，下一回合可抵抗');
-  if (art.charm) lines.push('局主與副手不受制，改為失神');
+  if (art.charm) lines.push('局主與副手不受制，改為定身一回合');
+  if (art.purge) lines.push('每解去一種不良狀態，多回復 ' + art.purge + ' 氣血');
   if (art.zone)
     lines.push(
       '布陣 · 以' +
@@ -126,14 +129,16 @@ function moveFacts(s, u, id = 'basic', target = null) {
     if (pierce) lines.push('穿透 ' + percent(pierce) + ' 防禦');
     if (art?.splash)
       lines.push(
-        (splashRadius(art) > 1 ? splashRadius(art) + ' 格內濺射 ' : '四鄰濺射 ') + percent(art.splash)
+        '濺射 ' + (splashRadius(art) > 1 ? '兩三四五'[splashRadius(art) - 2] + '格 ' : '四鄰 ') + percent(art.splash)
       );
     const drain = G.drainOf(art);
     if (drain)
-      lines.push('吸元 · 回復主目標損血的 ' + percent(drain.share) + '，最多 ' + drain.cap + ' 氣血');
-    if (art?.push) lines.push('擊退 1 格，須有空位');
-    if (art?.safe) lines.push('敵人無法反擊');
+      lines.push('回復主目標損血的 ' + percent(drain.share) + '，最多 ' + drain.cap + ' 氣血');
+    if (art?.push) lines.push('擊退 1 格；去路受阻則推不動，首段 ＋7');
+    if (art?.safe) lines.push('免受還擊');
     if (art?.recover) lines.push('命中回復 ' + art.recover + ' 內力');
+    // A basic attack whose counter is stronger than 五成半 (it was 後發).
+    if (basic && definition.retort) lines.push('還擊按' + shareText(definition.retort) + '計');
     // (The leader's boons, 領隊陣法, are the whole team's and not the art's: they are said once, on
     // the leader, and not on every art. The producer, 2026-11-24.)
     if (basic && definition.basicBonus) lines.push('普攻威力 ＋' + definition.basicBonus);
@@ -141,7 +146,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
   } else if (art.heal) {
     powerLabel = forecast ? '預估回復' : '療傷威力';
     powerText = (forecast ? forecast.amount : G.healingPower(u, s, art)) + ' 氣血';
-    lines.push(art.aura ? '範圍療傷' : '單體療傷');
+    lines.push(art.aura ? '群體療傷' : '單體療傷');
   } else if (kind === 'ground' && art.zone) {
     powerLabel = '布陣距離';
     powerText = range + ' 格';
@@ -151,9 +156,9 @@ function moveFacts(s, u, id = 'basic', target = null) {
     powerText = range + ' 格';
     lines.push('越障移至可站立的空格，結束行動');
   } else if (art.order) {
-    powerLabel = '號令';
+    powerLabel = '同伴';
     powerText = '再行動一次';
-    lines.push('號令 · 令一位本回合已行動的同伴重新移動並出手一次');
+    lines.push('令一位本回合已行動的同伴再移動並出手一次');
   } else {
     const effect = effectsOf(art)[0];
     const entry = {
@@ -174,7 +179,8 @@ function moveFacts(s, u, id = 'basic', target = null) {
   if (art?.aura) lines.push('目標及周圍 ' + art.aura + ' 格友軍');
   if (hpCost) lines.push('自耗 ' + hpCost + ' 氣血');
   const forms = G.formsFor(u, art, basic ? definition : undefined);
-  if (forms.length) lines.push(forms.map((id) => FORM_RULES[id][0]).join('・'));
+  // 破綻 is the name of both its sides (leaving one, and striking through one): said once.
+  if (forms.length) lines.push([...new Set(forms.map((id) => FORM_RULES[id][0]))].join('・'));
   const shortEffect = lines.join(' · ');
   return {
     name: definition.name,
@@ -183,7 +189,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
     powerText,
     shortEffect,
     factor: art?.factor,
-    formRules: forms.map((id) => FORM_RULES[id].join(' · ')),
+    formRules: forms.map(formRule),
     animation: STROKE_NOTES[id === 'signature' ? 'signature:' + u.id : id],
     effectLines: lines,
     range,

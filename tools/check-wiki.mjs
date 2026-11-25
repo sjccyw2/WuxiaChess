@@ -47,7 +47,9 @@ const G = await import(new URL('wiki/src/game-data.js', root));
 const { foePage } = await import(new URL('wiki/src/catalog/foes.js', root));
 const has = (group, id) => ids[group]?.has(String(id));
 const terms = Object.values(G.RULE_TERMS);
-const named = (key, kind) => terms.some((t) => t[kind] === key) || G.PLAIN_FIELDS[kind].includes(key);
+// A term's art, form or condition is one key or a list of them.
+const covers = (field, key) => [].concat(field ?? []).includes(key);
+const named = (key, kind) => terms.some((t) => covers(t[kind], key)) || G.PLAIN_FIELDS[kind].includes(key);
 
 for (const [id, art] of Object.entries(G.TECHNIQUES)) {
   if (!has('skills', id)) problems.push('no skills page for the art ' + id);
@@ -89,7 +91,7 @@ for (const form of Object.keys(G.FORM_RULES)) if (!has('skills', 'form-' + form)
 const STATE_OF = { unguarded: 'openGuard' }; // a state named differently from the field that causes it
 for (const kind of [...Object.keys(G.CONDITION_NAMES), ...Object.keys(G.STATUS_SIGNS).filter((k) => k !== 'formation')]) {
   const key = STATE_OF[kind] || kind;
-  if (!terms.some((t) => t.condition === key || t.art === key) && !G.FORM_RULES[key]) problems.push('the state "' + kind + '" (' + G.CONDITION_NAMES[kind] + ') has no rule term');
+  if (!terms.some((t) => covers(t.condition, key) || covers(t.art, key)) && !G.FORM_RULES[key]) problems.push('the state "' + kind + '" (' + G.CONDITION_NAMES[kind] + ') has no rule term');
 }
 if (catalog.groups.rules.filter((e) => e.tag === '操作指南').length < G.guideEntries().length) problems.push('the in-game guide has paragraphs the wiki does not show');
 // Nothing a page shows may be a value that failed to resolve.

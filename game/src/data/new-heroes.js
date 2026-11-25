@@ -30,7 +30,7 @@ const NEW_HEROES = {
     skillIcon: 'hand',
     skillRange: 1,
     cost: 10,
-    skillDesc: '伏身蓄勁，向相鄰敵人猛推一掌。本回合未移動時威力更強。',
+    skillDesc: '義父所傳的入門蛤蟆功：伏身蓄勁，向相鄰敵人猛推一掌。',
     voice: '我等過十六年，再等十局也等得起。走罷。'
   },
   zhang: {
@@ -65,7 +65,7 @@ const NEW_HEROES = {
     skillIcon: 'sword',
     skillRange: 1,
     cost: 9,
-    skillDesc: '貼身一刀，留下破綻兩回合，供自己或同伴收隙。',
+    skillDesc: '貼身一刀，留下破綻兩回合，供自己或同伴乘破綻出手。',
     voice: '那人把腳印掃乾淨了，倒忘了松枝上還掛著他袖口的雪。'
   },
   // The ten from the roster pack (asset-gen/jianying-roster-art), by the pack's ids. Each is
@@ -90,7 +90,7 @@ const NEW_HEROES = {
   },
   xuZhu: {
     name: '虛竹',
-    role: '封穴療傷',
+    role: '截勁療傷',
     school: '少林・逍遙派',
     mini: 'xuZhu',
     portrait: 'xuZhu',
@@ -102,7 +102,7 @@ const NEW_HEROES = {
     skillIcon: 'hand',
     skillRange: 1,
     cost: 9,
-    skillDesc: '以少林韋陀掌擊中相鄰敵人。本回合未移動時威力更強。',
+    skillDesc: '以少林韋陀掌擊中相鄰敵人。',
     voice: '阿彌陀佛。小僧不願傷人，可也不能眼看著旁人受傷。'
   },
   hongQi: {
@@ -153,7 +153,7 @@ const NEW_HEROES = {
     skillIcon: 'hand',
     skillRange: 1,
     cost: 9,
-    skillDesc: '一招一式穩穩打出，擊中相鄰敵人。至下回合受擊減兩成，還擊全力。',
+    skillDesc: '一招一式穩穩打出，擊中相鄰敵人。至下回合自身防禦增加 7 點。',
     voice: '不必著急。他快由他快，我們慢慢的來。'
   },
   zhaoMin: {

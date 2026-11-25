@@ -15,14 +15,17 @@ const GATE_LABELS = {
   casts: '親自施展絕技',
   heals: '累計療復氣血（含領隊療效）',
   protects: '護持人次（自身護盾亦計）',
+  struck: '親身承受敵人攻擊',
   steps: '實際行走格數',
   side: '在場生還並完成支線'
 };
 // 左右互搏術 is one art, the same for every hero who learns it (郭靖 and 小龍女).
-const PAIRED_HANDS_DESC = '左右手各使一路，在兩格內連擊兩次。習得後，合璧之招即使身旁無人也有同伴相鄰之效。';
+const PAIRED_HANDS_DESC = '左右手各使一路，在兩格內連擊兩次。';
 // Naming (the producer's rule, 2026-11-22): 「本招・式名」 with 「・」 marks an upgrade, and only the
 // basic attack is upgraded (kind 'basic'). Every other node is a new art in its own slot and has a
 // name of its own; `family` names the art it belongs to (降龍十八掌 for 亢龍有悔), shown beneath it.
+// `boon` names the hero's leader boon, as COMMANDS in rules/battle-mastery.js has it (0.49;
+// check-mechanics holds the two together).
 const HERO_PATHS = {
   hero: {
     title: '思過崖劍訣',
@@ -167,7 +170,7 @@ const HERO_PATHS = {
   qiaoFeng: {
     title: '聚賢莊斷義錄',
     book: '天龍八部',
-    boon: '一呼百應',
+    boon: '聚賢豪氣',
     signature: '太祖長拳',
     origin:
       '蕭峰入境只餘江湖上最尋常的太祖長拳。恩師所傳降龍掌法須逐掌想回，直到末了，廿八掌才會俱全。',
@@ -195,7 +198,7 @@ const HERO_PATHS = {
   hongQi: {
     title: '華山絕頂棒掌錄',
     book: '射鵰英雄傳、神鵰俠侶',
-    boon: '九指點撥',
+    boon: '打狗陣法',
     signature: '逍遙遊',
     origin:
       '洪七公入境只餘少年最早學的逍遙遊。降龍掌、打狗棒須逐招逐訣想起，直到三十六路棒法使全。',
@@ -209,7 +212,7 @@ const HERO_PATHS = {
   yaoShi: {
     title: '桃花島簫劍錄',
     book: '射鵰英雄傳、神鵰俠侶',
-    boon: '東邪奇學',
+    boon: '桃花迷陣',
     signature: '落英神劍掌',
     origin:
       '黃藥師入境只餘落英神劍掌。劈空掌、島上奇陣、簫中劍、指上飛石須逐樣想回，碧海潮生曲留在最後。',
@@ -223,7 +226,7 @@ const HERO_PATHS = {
   sanFeng: {
     title: '武當山太極初演錄',
     book: '倚天屠龍記',
-    boon: '真武鎮山',
+    boon: '太極圓轉',
     signature: '羅漢拳',
     origin:
       '張三丰入境只餘少年照一對鐵羅漢學成的羅漢拳，是他最早的拳路。自創武當拳劍須從頭想回，太極拳仍在最後。',
@@ -237,7 +240,7 @@ const HERO_PATHS = {
   zhaoMin: {
     title: '靈蛇島三劍錄',
     book: '倚天屠龍記',
-    boon: '郡主妙算',
+    boon: '軟筋餘香',
     signature: '萬安寺劍招',
     origin:
       '趙敏入境只餘萬安寺向各派偷學的零碎劍招。靈蛇島那三招與敵偕亡的劍法須逐招想回，天地同壽留到最後。',
@@ -251,7 +254,7 @@ const HERO_PATHS = {
   lingSu: {
     title: '藥王谷七心錄',
     book: '飛狐外傳',
-    boon: '藥王調息',
+    boon: '碧蠶毒蠱',
     signature: '藥王方脈',
     origin:
       '程靈素入境只餘師父傳的方脈醫理。辨毒使毒須逐樣想回，七心海棠在最後。',
@@ -265,7 +268,7 @@ const HERO_PATHS = {
   diYun: {
     title: '雪谷神照錄',
     book: '連城訣',
-    boon: '血刀破甲',
+    boon: '雪谷回生',
     signature: '躺屍劍法',
     origin:
       '狄雲入境只餘最早學的躺屍劍法，連名目都是師父教錯的。老丐三招、雪谷血刀須逐樣想回，丁典的神照經在最後。',
@@ -279,7 +282,7 @@ const HERO_PATHS = {
   chengZhi: {
     title: '華山金蛇錄',
     book: '碧血劍',
-    boon: '金蛇追影',
+    boon: '金蛇轉鋒',
     signature: '伏虎掌',
     origin:
       '袁承志入境只餘幼時崔秋山教的伏虎掌。石洞裡所得的金蛇秘笈早在少年練全，因而想回得最快，反是華山混元功、木桑身法須慢慢想起。',
@@ -293,7 +296,7 @@ const HERO_PATHS = {
   aQing: {
     title: '苧蘿竹枝譜',
     book: '越女劍',
-    boon: '越女輕步',
+    boon: '越女試劍',
     signature: '白猿竹枝',
     origin:
       '阿青入境只餘竹棒與同白猿打著玩的幾下，自己並不知是劍法。獨敵三千甲士的那一路，須最後才會想起。',
@@ -475,7 +478,7 @@ const MASTERY_ARTS = {
     visual: 'hero',
     target: 'enemy',
     factor: 1.5,
-    desc: '依總訣臨敵出劍，可攻擊兩格內的一名敵人；目標帶有破綻時收隙。',
+    desc: '依總訣臨敵出劍，可攻擊兩格內的一名敵人；目標帶有破綻時乘之出手。',
     source: '風清揚先令令狐冲背熟獨孤九劍總訣，再傳諸式。本作由此式進入九劍。'
   },
   breakSword: {
@@ -536,7 +539,7 @@ const MASTERY_ARTS = {
     factor: 1.7,
     drain: { share: 0.5, cap: 40 },
     backlash: true,
-    desc: '貼身吸取敵人真元，依其此擊所失氣血回復自身一半，至多 40 點。每次施展積一層亂氣，滿三層時反噬自身。',
+    desc: '貼身吸取敵人真元，依其此擊所失氣血回復自身一半，至多 40 點。每次施展積一層亂氣，滿三層時自損氣血。',
     source: '令狐冲在梅莊湖底鐵板上習得吸星大法，異種真氣幾乎要了他的命。'
   },
   breakQi: {
@@ -556,7 +559,7 @@ const MASTERY_ARTS = {
     factor: 1.6,
     pierce: 0.5,
     answer: 'master',
-    desc: '截斷對手運勁，兩格內強擊一敵並穿透一半防禦，本回合封穴。對局主與副手威力更強。',
+    desc: '截斷對手運勁，兩格內強擊一敵並穿透一半防禦，本回合截勁。對局主與副手威力更強。',
     source: '風清揚說破氣式專破內功深厚之人，須有內力方能施展。本作以吸星大法為其前置。'
   },
   ninefoldIntent: {
@@ -647,7 +650,7 @@ const MASTERY_ARTS = {
     target: 'ally',
     rally: { power: 5, turns: 3 },
     aura: 1,
-    desc: '以琴引眾聲，目標及相鄰友軍的攻擊增加 5 點，持續三回合；本回合首次受擊時借勁還手。',
+    desc: '以琴引眾聲，目標及相鄰友軍的攻擊增加 5 點，持續三回合；本回合首次受擊時反震。',
     source: '笑傲江湖曲為琴簫合奏，任盈盈曾教令狐冲撫琴。琴簫引之名為本作所擬。'
   },
   saintessOrder: {
@@ -711,15 +714,15 @@ const MASTERY_ARTS = {
     tier: 1,
     needs: ['signature'],
     points: 1,
-    mp: 8,
+    mp: 6,
     range: 0,
     icon: 'shield',
     visual: 'guard',
     target: 'self',
-    taunt: 2,
+    taunt: 3,
     fortify: { power: 4, turns: 2 },
     aura: 1,
-    desc: '抖響鐵索挑釁四周，自身與相鄰同伴防禦增加 4 點，持續兩回合。至下回合，兩格內能攻到他的敵人只能攻擊他。',
+    desc: '抖響鐵索挑釁四周，自身與相鄰同伴防禦增加 4 點，持續兩回合。至下回合，三格內能攻到他的敵人只能攻擊他。',
     source: '向問天與令狐冲在涼亭並肩，獨引群敵。此招為本作所擬。'
   },
   sweepingWhip: {
@@ -757,9 +760,9 @@ const MASTERY_ARTS = {
     factor: 1.3,
     safe: true,
     avenge: 0.4,
-    stance: 30,
+    fortify: { power: 10, turns: 1 },
     recover: 6,
-    desc: '把卸入地底的勁力送還相鄰敵人，敵人無法還擊，命中回收 6 點內力；上一敵方回合曾受傷時威力更強。至下回合受擊減三成，還擊全力。',
+    desc: '把卸入地底的勁力送還相鄰敵人，敵人無法還擊，命中回收 6 點內力；上一敵方回合曾受傷時威力更強。至下回合自身防禦增加 10 點。',
     source: '向問天的吸功入地小法能將勁力卸入地下，送還與回氣是本作的演繹。'
   },
   bloodAtPass: {
@@ -799,10 +802,10 @@ const MASTERY_ARTS = {
     splash: 0.35,
     safe: true,
     avenge: 0.4,
-    stance: 30,
+    fortify: { power: 10, turns: 1 },
     rooted: true,
-    gate: { metric: 'protects', atLeast: 4 },
-    desc: '鐵鏈橫掃相鄰一敵，四鄰敵人承受三成半餘勁，敵人無法還擊；上一敵方回合曾受傷時威力更強。至下回合受擊減三成，下一回合不能移動。',
+    gate: { metric: 'struck', atLeast: 12 },
+    desc: '鐵鏈橫掃相鄰一敵，四鄰敵人承受三成半餘勁，敵人無法還擊；上一敵方回合曾受傷時威力更強。至下回合自身防禦增加 10 點，下一回合不能移動。',
     source: '涼亭中向問天身縛鐵鏈，獨抗正邪數百人。此招為本作所擬。'
   },
   southernStance: {
@@ -815,8 +818,8 @@ const MASTERY_ARTS = {
     points: 1,
     icon: 'hand',
     visual: 'guo',
-    basicBonus: 6,
-    desc: '掌發於足，普攻命中時傷害增加 6 點；本回合未移動時再增。',
+    basicBonus: 8,
+    desc: '掌發於足，普攻命中時傷害增加 8 點。',
     source: '以江南七怪中南希仁一脈的南山掌法為本。「穩」取馬鈺在懸崖上傳他的全真呼吸，為本作的讀法。'
   },
   kanglongRegret: {
@@ -854,7 +857,6 @@ const MASTERY_ARTS = {
     target: 'enemy',
     factor: 1.25,
     hits: [0.75, 0.75],
-    pairsSelf: true,
     desc: PAIRED_HANDS_DESC,
     source: '周伯通在桃花島傳郭靖左右互搏：左手畫方，右手畫圓，一人可使兩路。'
   },
@@ -949,7 +951,7 @@ const MASTERY_ARTS = {
     icon: 'sword',
     visual: 'xiao',
     basicBonus: 5,
-    desc: '劍鋒貼腕而發，普攻命中時傷害增加 5 點；目標帶有破綻時收隙。',
+    desc: '劍鋒貼腕而發，普攻命中時傷害增加 5 點；目標帶有破綻時乘之出手。',
     source: '以古墓派玉女劍法為本，收鋒是本作所擬的修習名目。'
   },
   jadeNeedle: {
@@ -1002,9 +1004,10 @@ const MASTERY_ARTS = {
     icon: 'sword',
     visual: 'xiao',
     target: 'enemy',
-    factor: 1.35,
-    paired: { any: 0.2, partner: 0.4 },
-    desc: '依玉女心經出劍擊中相鄰敵人；有同伴相鄰時威力增加，相鄰的是楊過時增加更多。出招後仍可走完本回合未用的步數。',
+    // 左右互搏 is no rule now (Q-N132): the any-companion bonus is in the base, 楊過 adds the rest.
+    factor: 1.55,
+    paired: { partner: 0.2 },
+    desc: '依玉女心經出劍擊中相鄰敵人；相鄰的是楊過時威力增加。出招後仍可走完本回合未用的步數。',
     source: '玉女心經須兩人同練，小龍女與楊過在古墓中相助修習。'
   },
   pairedHands: {
@@ -1022,7 +1025,6 @@ const MASTERY_ARTS = {
     target: 'enemy',
     factor: 1.25,
     hits: [0.75, 0.75],
-    pairsSelf: true,
     desc: PAIRED_HANDS_DESC,
     source: '周伯通在絕情谷授小龍女左右互搏，自此一人可使兩人之劍。'
   },
@@ -1039,12 +1041,13 @@ const MASTERY_ARTS = {
     icon: 'swords',
     visual: 'xiao',
     target: 'enemy',
-    factor: 1.25,
+    // It needs 左右互搏術, whose clause always gave it the any-companion bonus: now in the base.
+    factor: 1.45,
     hits: [0.8, 0.8],
-    paired: { any: 0.2, partner: 0.45 },
+    paired: { partner: 0.25 },
     cooldown: 2,
     gate: { metric: 'side', map: 7, atLeast: 1, or: { metric: 'steps', atLeast: 10 } },
-    desc: '兩劍相合連擊相鄰敵人；有同伴相鄰時更強，若是楊過再增。施展後須調息兩回合。',
+    desc: '兩劍相合連擊相鄰敵人；楊過相鄰時更強。施展後須調息兩回合。',
     source: '玉女素心劍法本為一對情侶合使，全真、玉女兩路互補。'
   },
   fingerPrimer: {
@@ -1075,9 +1078,9 @@ const MASTERY_ARTS = {
     icon: 'target',
     visual: 'duan',
     target: 'enemy',
-    factor: 1.15,
+    factor: 1.2,
     pierce: 0.5,
-    desc: '食指凝成一線劍氣，射程四格，穿透一半防禦；本回合未移動時威力再增。',
+    desc: '食指凝成一線劍氣，射程四格，穿透一半防禦。',
     source: '商陽劍是六脈神劍的食指劍路，巧妙活潑。各脈先後為本作的讀法。'
   },
   ripplingSteps: {
@@ -1243,9 +1246,9 @@ const MASTERY_ARTS = {
     visual: 'huang',
     target: 'enemy',
     factor: 1.1,
-    daze: 'setup',
-    desc: '棒影絆住兩格內敵人的腳步，絆足兩回合；目標兵刃遭纏或站在陣中時，失去下一次行動。',
-    source: '絆是打狗棒法的棒訣之一。失神的條件為本作演繹。'
+    freeze: { turns: 1, setup: true },
+    desc: '棒影絆住兩格內敵人的腳步，絆足兩回合；目標兵刃遭纏或站在陣中時，定身一回合。',
+    source: '絆是打狗棒法的棒訣之一。定身的條件為本作演繹。'
   },
   peachGate: {
     name: '開生門',
@@ -1399,10 +1402,10 @@ const MASTERY_ARTS = {
     hpCost: 14,
     factor: 1.9,
     pierce: 0.5,
-    dire: 0.6,
+    dire: 0.45,
     lone: 0.25,
     gate: { metric: 'kills', atLeast: 4 },
-    desc: '自耗 14 點氣血重擊相鄰一敵，穿透一半防禦；自身氣血越少、四鄰越無同伴，掌力越重。出掌後須留至少 1 點氣血。',
+    desc: '自耗 14 點氣血重擊相鄰一敵，穿透一半防禦；自身氣血不過四分之三時掌力加重，四鄰無同伴時再重。出掌後須留至少 1 點氣血。',
     source: '楊過久候小龍女十六年，自創黯然銷魂掌十七式。'
   },
   nineYangMantle: {
@@ -1491,9 +1494,9 @@ const MASTERY_ARTS = {
     points: 2,
     icon: 'hand',
     visual: 'zhang',
-    basicBonus: 8,
+    basicBonus: 10,
     retort: 0.8,
-    desc: '以靜制動，普攻命中時傷害增加 8 點，本回合未移動時再增；還擊改按普攻八成計算。',
+    desc: '以靜制動，普攻命中時傷害增加 10 點；還擊改按普攻八成計算。',
     source: '張三丰在武當山為張無忌演太極拳，以靜制動，後發制人。'
   },
   qiankunSeventh: {
@@ -1528,7 +1531,7 @@ const MASTERY_ARTS = {
     icon: 'sword',
     visual: 'hu',
     basicBonus: 6,
-    desc: '藏起起手刀勢，普攻命中時傷害增加 6 點；目標帶有破綻時收隙。',
+    desc: '藏起起手刀勢，普攻命中時傷害增加 6 點；目標帶有破綻時乘之出手。',
     source: '以胡家刀譜的精細刀路為本，藏鋒是本作所擬的修習名。'
   },
   snowPursuit: {
@@ -1620,7 +1623,7 @@ const MASTERY_ARTS = {
     target: 'enemy',
     factor: 1.3,
     execute: 0.5,
-    desc: '貼身追斬；目標氣血不過半時威力大增，帶有破綻時收隙。此刀擊倒目標時，本回合可再出手一次。',
+    desc: '貼身追斬；目標氣血不過半時威力大增，帶有破綻時乘之出手。此刀擊倒目標時，本回合可再出手一次。',
     source: '纏身摘心刀取作胡家刀法的一式名，是本作的讀法。'
   },
   cliffCut: {
@@ -1822,10 +1825,9 @@ const MASTERY_ARTS = {
     icon: 'hand',
     visual: 'guo',
     target: 'enemy',
-    factor: 1.2,
+    factor: 1.25,
     safe: true,
-    disarm: { power: 5, turns: 2 },
-    desc: '三路掌法、三路擒拿，拿住相鄰敵人的兵刃，此擊免受還擊。敵人攻擊降低 5 點，且只能攻擊相鄰一格，持續兩回合。',
+    desc: '三路掌法、三路擒拿，拿住相鄰敵人的經脈，此擊免受還擊。截勁：本回合敵人不能還擊，也不能施展絕技；局主受過後，下一回合可抵抗。',
     source: '天山童姥傳虛竹天山折梅手，說它包含了逍遙派武學的精義，天下兵刃招數皆可化入其中。'
   },
   xzSixYang: {
@@ -1837,13 +1839,13 @@ const MASTERY_ARTS = {
     needs: ['xzNorthQi'],
     points: 2,
     mp: 12,
-    range: 1,
+    range: 3,
     icon: 'hand',
     visual: 'guo',
     target: 'enemy',
-    factor: 1.4,
+    factor: 1.35,
     paired: { any: 0.15, partner: 0.4 },
-    desc: '以天山六陽掌擊中相鄰敵人；有同伴相鄰時威力增加，相鄰的是蕭峰時增加更多。',
+    desc: '六陽掌力隔空吐出，擊中三格內一敵；有同伴相鄰時威力增加，相鄰的是蕭峰時增加更多。',
     source: '虛竹在少室山上以天山六陽掌力鬥丁春秋，其時兩位義兄俱在身旁。'
   },
   xzHeal: {
@@ -1855,13 +1857,14 @@ const MASTERY_ARTS = {
     tier: 3,
     needs: ['xzSixYang'],
     points: 2,
-    mp: 13,
+    mp: 11,
     range: 3,
     icon: 'leaf',
     visual: 'medic',
     target: 'ally',
-    heal: 44,
-    desc: '以陽和掌力化去體內寒毒，為三格內一人療傷，基礎回復 44 點氣血並解除不良狀態，溢出的療量化為護盾。可對自己施術。',
+    heal: 50,
+    purge: 8,
+    desc: '以陽和掌力化去體內寒毒，為三格內一人療傷，基礎回復 50 點氣血並解除不良狀態；每化去一種，多回復 8 點氣血。可對自己施術。',
     source: '生死符須以天山六陽掌方能化解，虛竹在靈鷲宮替群豪逐一拔除。'
   },
   xzLifeDeath: {
@@ -1882,7 +1885,7 @@ const MASTERY_ARTS = {
     wound: { power: 6, turns: 2 },
     cooldown: 2,
     gate: { metric: 'heals', atLeast: 60 },
-    desc: '掌心凝酒成冰，打入三格內敵人體內。尋常敵人受制倒戈兩回合，轉而攻擊同夥；局主與副手不受制，改為失去下一次行動。中者另受內傷兩回合：療傷減半，每次出手後自損 6 點氣血。施展後須調息兩回合。',
+    desc: '掌心凝酒成冰，打入三格內敵人體內。尋常敵人受制倒戈兩回合，轉而攻擊同夥；局主與副手不受制，改為定身一回合。中者另受內傷兩回合：療傷減半，每次出手後自損 6 點氣血。施展後須調息兩回合。',
     source: '生死符是天山童姥控制群豪的暗器，中者求生不得，求死不能，只得俯首聽命。調息是本作所定的代價。'
   },
   hqTap: {
@@ -1936,7 +1939,7 @@ const MASTERY_ARTS = {
     safe: true,
     mute: { turns: 1 },
     desc: '棒影封住兩格內敵人的來路，此擊免受還擊，對方下一回合不能出手或還擊，仍可移動，局主受過後下一回合可抵抗。',
-    source: '封是打狗棒法八字訣之一。封穴之效為本作演繹。'
+    source: '封是打狗棒法八字訣之一。截勁之效為本作演繹。'
   },
   hqShock: {
     name: '震驚百里',
@@ -1973,8 +1976,8 @@ const MASTERY_ARTS = {
     visual: 'huang',
     target: 'enemy',
     factor: 1.4,
-    daze: true,
-    desc: '棒頭繞著兩格內敵人後心連點，逼他團團轉動，腳下一亂，失去下一次行動，並絆足兩回合；局主受過後下一回合可抵抗。',
+    freeze: { turns: 1 },
+    desc: '棒頭繞著兩格內敵人後心連點，逼他團團轉動，腳下一亂，定身一回合，並絆足兩回合；局主受過後下一回合可抵抗。',
     source: '轉是打狗棒法八字訣之一，專打敵人後心各處大穴。'
   },
   hqThirtySix: {
@@ -2084,9 +2087,9 @@ const MASTERY_ARTS = {
     visual: 'duan',
     target: 'enemy',
     factor: 1.0,
-    daze: true,
+    freeze: { turns: 1 },
     cooldown: 2,
-    desc: '屈指彈出石子打中四格內敵人穴道，使其失去下一次行動；局主受過後下一回合可抵抗。施展後須調息兩回合。',
+    desc: '屈指彈出石子打中四格內敵人穴道，使其定身一回合；局主受過後下一回合可抵抗。施展後須調息兩回合。',
     source: '彈指神通是黃藥師的成名指法，小小石子在他指上勁力非凡。'
   },
   ysWhirl: {
@@ -2256,7 +2259,7 @@ const MASTERY_ARTS = {
     icon: 'sword',
     visual: 'hero',
     basicBonus: 5,
-    desc: '劍招一劍快似一劍，普攻命中時傷害增加 5 點；目標帶有破綻時收隙。',
+    desc: '劍招一劍快似一劍，普攻命中時傷害增加 5 點；目標帶有破綻時乘之出手。',
     source: '趙敏自幼由王府武師教劍。王府快劍與連環是本作所擬的名目。'
   },
   zmPowder: {
@@ -2425,7 +2428,7 @@ const MASTERY_ARTS = {
     target: 'enemy',
     factor: 1.3,
     paired: { any: 0.2, partner: 0.4 },
-    desc: '金針刺向兩格內敵人的穴道，本回合封穴；有同伴相鄰時威力增加，相鄰的是胡斐時增加更多。',
+    desc: '金針刺向兩格內敵人的穴道，本回合截勁；有同伴相鄰時威力增加，相鄰的是胡斐時增加更多。',
     source: '程靈素隨胡斐同闖掌門人大會，一路相伴。金針刺穴之名為本作所擬。'
   },
   lsBlue: {
@@ -2518,7 +2521,7 @@ const MASTERY_ARTS = {
     target: 'enemy',
     factor: 1.3,
     safe: true,
-    desc: '劍光一晃，反手一記耳光打在相鄰敵人臉上，此擊免受還擊，本回合封穴。',
+    desc: '劍光一晃，反手一記耳光打在相鄰敵人臉上，此擊免受還擊，本回合截勁。',
     source: '耳光式是老丐所教三招的第二招，狄雲以此在壽宴上連打萬家八名弟子。'
   },
   dyBlade: {
@@ -2609,8 +2612,8 @@ const MASTERY_ARTS = {
     points: 2,
     icon: 'hand',
     visual: 'guo',
-    basicBonus: 6,
-    desc: '掌上帶著混元功的內勁，普攻命中時傷害增加 6 點；本回合未移動時再增。',
+    basicBonus: 8,
+    desc: '掌上帶著混元功的內勁，普攻命中時傷害增加 8 點。',
     source: '混元掌與混元功是華山派穆人清一脈的根基，袁承志在華山絕頂練了十年。'
   },
   czSteps: {
@@ -2683,7 +2686,7 @@ const MASTERY_ARTS = {
     target: 'enemy',
     factor: 1.45,
     pierce: 0.5,
-    desc: '劍隨身走，刺向兩格內敵人並穿透一半防禦；目標帶有破綻時收隙。出招後仍可走完本回合未用的步數。',
+    desc: '劍隨身走，刺向兩格內敵人並穿透一半防禦；目標帶有破綻時乘之出手。出招後仍可走完本回合未用的步數。',
     source: '金蛇劍法招招出人意表。游身之名為本作所擬，取其與游身拳相通之意。'
   },
   czSerpent: {
@@ -2704,7 +2707,7 @@ const MASTERY_ARTS = {
     disarm: { power: 6, turns: 2 },
     recoil: 8,
     gate: { metric: 'kills', atLeast: 4 },
-    desc: '劍尖分叉如蛇信，重擊兩格內一敵並穿透一半防禦，倒鉤鎖住其兵刃：攻擊降低 6 點，且只能攻擊相鄰一格，持續兩回合；目標帶有破綻時收隙。出劍後至下回合，自身防禦降低 8 點。',
+    desc: '劍尖分叉如蛇信，重擊兩格內一敵並穿透一半防禦，倒鉤鎖住其兵刃：攻擊降低 6 點，且只能攻擊相鄰一格，持續兩回合；目標帶有破綻時乘之出手。出劍後至下回合，自身防禦降低 8 點。',
     source: '金蛇劍法為金蛇郎君夏雪宜所創，劍尖有鉤，專鎖對手兵刃，只攻不守。袁承志得自華山石洞。'
   },
   aqPoint: {
@@ -2845,9 +2848,9 @@ const TRADE_MANUALS = {
     icon: 'target',
     visual: 'duan',
     target: 'enemy',
-    daze: true,
+    freeze: { turns: 1 },
     cooldown: 2,
-    desc: '屈指彈出石子打中四格內敵人穴道，使其失去下一次行動；局主受過後下一回合可抵抗。施展後須調息兩回合。',
+    desc: '屈指彈出石子打中四格內敵人穴道，使其定身一回合；局主受過後下一回合可抵抗。施展後須調息兩回合。',
     source: '黃藥師的彈指神通見《射鵰英雄傳》《神鵰俠侶》。通吃坊的抄本出自本作。'
   },
   softPalm: {
@@ -2925,7 +2928,7 @@ const TRADE_MANUALS = {
     icon: 'feather',
     visual: 'xiao',
     target: 'enemy',
-    factor: 1,
+    factor: 1.05,
     poison: { power: 5, turns: 2 },
     freeze: { turns: 2 },
     cooldown: 2,
@@ -2972,7 +2975,7 @@ const TRADE_MANUALS = {
     pierce: 0.5,
     wound: { power: 5, turns: 2 },
     backlash: true,
-    desc: '重擊相鄰敵人，穿透一半防禦，令其受內傷兩回合：療傷減半，每次出手後自損 5 點氣血。每次施展積一層亂氣，滿三層時反噬自身。',
+    desc: '重擊相鄰敵人，穿透一半防禦，令其受內傷兩回合：療傷減半，每次出手後自損 5 點氣血。每次施展積一層亂氣，滿三層時自損氣血。',
     source: '七傷拳為《倚天屠龍記》崆峒派武學，內力不足者先傷己身。'
   },
   waterSkim: {

@@ -58,18 +58,19 @@ const COMMANDS = {
     text: '每有一名敵人相鄰，攻擊增加 3，至多增加 6。',
     icon: 'flag'
   },
+  // 靈鷲宮: the master who drew the 生死符 out of every man in the hall (0.50).
   xuZhu: {
-    name: '北冥真氣',
-    stat: 'absorb',
-    power: 3,
-    text: '出手擊中敵人時，回復 3 點內力。',
-    icon: 'drop'
+    name: '靈鷲慈心',
+    stat: 'mercy',
+    power: 8,
+    text: '施展療傷時多回復 8 點氣血。',
+    icon: 'leaf'
   },
   hongQi: {
     name: '打狗陣法',
     stat: 'held',
     power: 8,
-    text: '擊中絆足、封穴、纏械、失神、定身或閉穴的敵人時，傷害增加 8。',
+    text: '擊中絆足、截勁、纏械、定身或閉穴的敵人時，傷害增加 8。',
     icon: 'target'
   },
   yaoShi: {
@@ -100,7 +101,7 @@ const COMMANDS = {
     name: '雪谷回生',
     stat: 'spare',
     power: 1,
-    text: '將要倒下時留住 1 點氣血；每局只有一次。',
+    text: '將要倒下時留住 1 點氣血，毒發也算；每局只救頭一個。',
     icon: 'shield'
   },
   chengZhi: {
@@ -114,14 +115,14 @@ const COMMANDS = {
     name: '越女試劍',
     stat: 'opening',
     power: 1,
-    text: '每回合頭一次會招來還擊的出手，敵人不能還擊。',
+    text: '每回合頭一次會招來還擊的出手，敵人不能還擊；本來就不受還擊的出手不算。',
     icon: 'feather'
   },
   // 無名: he does not give up a stone.
   youth: { name: '不棄一子', stat: 'def', power: 4, text: '防禦增加 4。', icon: 'shield' }
 };
 // What 打狗陣法 counts as a held foe, and what 桃花迷陣 keeps on a foe longer (by its power).
-const HELD_KINDS = ['pin', 'seal', 'disarm', 'daze', 'freeze', 'mute'];
+const HELD_KINDS = ['pin', 'seal', 'disarm', 'freeze', 'mute'];
 const LINGER_KINDS = ['poison', 'weak', 'exposed', 'pin', 'mark', 'wound', 'disarm'];
 function commandDescription(id) {
   return (COMMANDS[id].foes ? '距離領隊兩格內的敵人' : '領隊與距離兩格內的友軍') + COMMANDS[id].text;
@@ -167,25 +168,24 @@ const CONDITION_NAMES = {
   poison: '中毒',
   weak: '攻勢受挫',
   exposed: '破防',
-  shield: '護勁',
+  shield: '護盾',
   rally: '振奮',
   haste: '輕身',
   mark: '破綻',
   pin: '絆足',
-  seal: '封穴',
-  riposte: '借勁',
-  stance: '卸勁',
+  seal: '截勁',
+  riposte: '反震',
   cover: '代受',
   taunt: '挑釁',
   evade: '閃身',
   redirect: '挪移',
-  recoil: '露空',
-  unguarded: '無守',
-  rooted: '立樁',
-  spent: '曲終',
+  // The four prices of a summit go by one word, 代價; the state says which (Q-N161, P4).
+  recoil: '代價',
+  unguarded: '代價',
+  rooted: '代價',
+  spent: '代價',
   backlash: '亂氣',
   wound: '內傷',
-  daze: '失神',
   disarm: '纏械',
   fortify: '固守',
   immune: '金剛',
@@ -207,12 +207,10 @@ function effectsOf(art) {
   }
   if (art.debuff)
     effects.push({ kind: art.debuff.stat === 'def' ? 'exposed' : 'weak', ...art.debuff });
-  // `daze: 'setup'` depends on the target at the moment of the strike, so it is decided there.
-  if (art.daze === true) effects.push({ kind: 'daze', power: 1, turns: 1 });
   if (art.redirect) effects.push({ kind: 'redirect', power: art.redirect.cap, turns: 1 });
   if (supportArt(art)) for (const kind of GUARDS) if (art[kind]) effects.push(guardEffect(art, kind));
-  // 定身, 閉穴 and 受制 as the art's page states them; the strike decides what a master takes
-  // (rules/game.js controlPlan).
+  // 定身, 閉穴 and 受制 as the art's page states them; the strike decides what a master takes, and
+  // whether a 定身 with a setup lands (rules/game.js controlPlan).
   for (const kind of ['freeze', 'mute', 'charm'])
     if (art[kind]) effects.push({ kind, power: 1, turns: art[kind].turns || 1 });
   return effects;
@@ -230,7 +228,6 @@ function selfEffectsOf(art) {
   if (!art) return [];
   const effects = [],
     put = (kind, power = 1, turns = 1) => effects.push({ kind, power, turns });
-  if (art.stance) put('stance', art.stance);
   if (art.cover) put('cover');
   if (art.taunt) put('taunt', art.taunt);
   if (art.evade) put('evade');
@@ -251,11 +248,10 @@ function effectDescription(kind, power, turns) {
     shield: '可吸收 ' + power + ' 傷害',
     rally: '攻擊 ＋' + power,
     haste: '移動 ＋' + power,
-    mark: '可用收隙接招',
+    mark: '可乘破綻接招',
     pin: '移動 −' + power,
     seal: '停用還擊及敵方絕技',
     riposte: '下次受傷震回最多 ' + power,
-    stance: '受敵傷害減 ' + power + '%，還擊全力',
     cover: '代相鄰同伴承受直接攻擊',
     taunt: power + ' 格內可攻到自己的敵人只能攻擊自己',
     evade: '下一次直接攻擊落空',
@@ -266,7 +262,6 @@ function effectDescription(kind, power, turns) {
     spent: '不能施展絕技',
     backlash: power + '／3 層',
     wound: '療傷減半，出手後自損 ' + power,
-    daze: '失去下一次行動',
     disarm: '攻擊 −' + power + '，只能攻擊相鄰',
     fortify: '防禦 ＋' + power,
     immune: '直接攻擊無功，不受其附帶之效',
@@ -300,11 +295,13 @@ function applyCondition(s, target, effect, caster) {
     source: owner
   };
 }
+// `struck` (enemy blows taken, 0.50) is newer than the rest: a record saved before it has none,
+// and counts from 0.
 function blankRecord() {
-  return { kills: 0, casts: 0, heals: 0, protects: 0, steps: 0, sides: [] };
+  return { kills: 0, casts: 0, heals: 0, protects: 0, steps: 0, struck: 0, sides: [] };
 }
 function progress(unit, metric, delta) {
-  if (unit?.mastery && delta > 0) unit.mastery[metric] += delta;
+  if (unit?.mastery && delta > 0) unit.mastery[metric] = (unit.mastery[metric] || 0) + delta;
 }
 
 export { COMMANDS, HELD_KINDS, LINGER_KINDS, commandDescription, commandBonus, commandAura, leaderBoon, prepPost, CONDITION_NAMES, effectsOf, selfEffectsOf, effectDescription, activeEffects, applyCondition, blankRecord, progress };

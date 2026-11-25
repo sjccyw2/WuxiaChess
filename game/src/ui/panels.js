@@ -26,6 +26,7 @@ import {
   standingLines,
   ITEMS,
   LIMIT,
+  roundLimit,
   PARTY,
   BOOKS,
   chapterScenes,
@@ -35,7 +36,7 @@ import {
   canAct,
   canGlide,
   targetOK,
-  canPrepare,
+  canOutfit,
   canUseMedicine,
   medicineFor,
   artFor,
@@ -67,6 +68,7 @@ import { icon } from './icons.js';
 import { itemPicture } from './item-art.js';
 import { POLISH } from '../polish.js';
 import { guideEntries } from '../data/rule-terms.js';
+import { carriedWords } from '../rules/rule-words.js';
 import { extraHotkeys, keyHint } from './field-extras.js';
 import { ON as actionFlow, anyIdle, flowHotkeys } from './action-flow.js';
 const portraits = {
@@ -179,18 +181,19 @@ function renderParty(s) {
     .join('');
 }
 // What the hero's own last turns have readied, shown while he can still act (SPEC-mechanics §4):
-// 留力, he did not strike last turn, so an equipped art that needs it may be used; 還報, an enemy
-// hurt him in the last enemy phase, so an equipped art that pays it back is stronger.
+// he did not strike last turn, so an equipped art that needs it (`poised`) may be used; an enemy
+// hurt him in the last enemy phase, so an equipped art that pays it back (`avenge`) is stronger.
+// Plain facts, not rule words (Q-N132, Q-N161).
 function turnPips(s, u) {
   if (s.phase !== 'ally' || !canAct(s, u)) return '';
   const arts = equippedArts(u).map((id) => artFor(u, id));
   const pip = (name, rule) => `<small class="unit-pip" title="${rule}">${name}</small>`;
   return (
     (arts.some((a) => a.poised) && u.struckRound !== s.round - 1
-      ? pip('留力', '上一回合未曾出手，留力之招可以施展')
+      ? pip('未出手', '上一回合未曾出手：須如此方可施展的招式，此刻可用')
       : '') +
     (arts.some((a) => a.avenge) && u.hurtRound === s.round - 1
-      ? pip('還報', '上一個敵方回合曾受敵人攻擊而損血，還報之招威力增加')
+      ? pip('受創', '上一個敵方回合曾受敵人攻擊而損血：受創後威力增加的招式，此刻更強')
       : '')
   );
 }
@@ -463,7 +466,7 @@ function itemBonus(item) {
     ['def', '防禦'],
     ['power', '絕技威力'],
     ['step', '移動'],
-    ['barbs', '反刺'],
+    ['barbs', '反震'],
     ['hp', '氣血'],
     ['mp', '內力']
   ]
@@ -499,7 +502,7 @@ function inventoryPage(s, id, filter) {
       continue;
     const match = !item.owner || item.owner === id,
       usable =
-        (item.kind === 'use' ? canUseMedicine(s, u) : canPrepare(s, u)) &&
+        (item.kind === 'use' ? canUseMedicine(s, u) : canOutfit(s, u)) &&
         match &&
         (item.kind !== 'use' || medicineFor(u, item).helps);
     const label = !match
@@ -721,11 +724,11 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
       if (!u || !(wardEscorts(s).length || s.units.some((v) => unitDetails(v)?.traits?.ward))) return '';
       const posts = s.units.some((v) => isProp(v) && unitDetails(v)?.traits?.ward);
       return (
-        '　星索護陣・' +
+        '　星索・' +
         wardEscorts(s).length +
         ' / ' +
         s.units.filter((v) => unitDetails(v)?.traits?.ward).length +
-        (posts ? ' 根星索樁，減傷 ' : ' 名護陣者，減傷 ') +
+        (posts ? ' 根星索樁，減傷 ' : ' 名守索者，減傷 ') +
         wardShare(s, u) +
         '%'
       );
@@ -926,9 +929,30 @@ function terrainPage(s) {
 // The keys of the pages between boards and the films, under either flow.
 const pageHotkeys = '<kbd>Enter</kbd> <kbd>Space</kbd> <kbd>→</kbd> 下一句 <kbd>←</kbd> 上一句 <kbd>Space</kbd> 影片暫停';
 // `extra` is put above the paragraphs: in a battle, the control that replays the tutorial.
-function helpPage(extra = '') {
+// `s`, in a battle, is the board being fought: the guide then names, beyond the first tier, only
+// the rule words something on it carries (Q-N161), and keeps the rest under 其餘規則.
+function helpPage(extra = '', s = null) {
   // The paragraphs are worded in data/rule-terms.js, which the wiki reads too.
-  const rules = guideEntries({ actionFlow });
+  const rules = guideEntries({ actionFlow, carried: s?.units?.length ? carriedWords(s) : null });
+  // A list of words, one by one; 點穴's steps under it. Among 其餘規則 each group has its heading.
+  const term = (w) =>
+    '<dt>' + w.name + '</dt><dd>' + w.text + '。' +
+    (w.steps ? '<ol>' + w.steps.map((step) => '<li><b>' + step.name + '</b>' + step.text + '。</li>').join('') + '</ol>' : '') +
+    '</dd>';
+  const wordList = ({ lead, words, grouped }) => {
+    const groups = [];
+    for (const w of words) {
+      const heading = grouped ? w.group : '';
+      if (!groups.length || groups.at(-1).heading !== heading) groups.push({ heading, words: [] });
+      groups.at(-1).words.push(w);
+    }
+    return (
+      (lead ? '<p>' + lead + '</p>' : '') +
+      groups
+        .map((g) => (g.heading ? '<h5>' + g.heading + '</h5>' : '') + '<dl class="rule-words">' + g.words.map(term).join('') + '</dl>')
+        .join('')
+    );
+  };
   const keys =
     (actionFlow
       ? flowHotkeys
@@ -951,8 +975,10 @@ function helpPage(extra = '') {
     '</ul></section><div class="field-help">' +
     rules
       .map(
-        ([ic, title, body]) =>
-          `<details class="hud-disclosure"><summary>${icon(ic, 17)} ${title}</summary><p>${body}</p></details>`
+        ([ic, title, body, list], i) =>
+          `<details class="hud-disclosure"${i === 0 ? ' open' : ''}><summary>${icon(ic, 17)} ${title}</summary>` +
+          (list ? wordList(list) : `<p>${body}</p>`) +
+          '</details>'
       )
       .join('') +
     '</div>'
@@ -1032,9 +1058,9 @@ function objectPage(s, u) {
     left = holdLeft(s),
     masters = masterIds(s).map((id) => DETAILS[id.split('#')[0]]?.name || unitDetails(find(s, id))?.name).filter(Boolean);
   const rule = keep
-    ? '守住它：撐過第' + NUMERALS[(boardOf(s).hold || LIMIT) - 1] + '回合，或擊敗' + masters.join('與') + '。它一毀，這一局便輸了。' + (left ? '尚須守 ' + left + ' 回合。' : '')
+    ? '守住它：撐過第' + NUMERALS[(boardOf(s).hold || roundLimit(s)) - 1] + '回合，或擊敗' + masters.join('與') + '。它一毀，這一局便輸了。' + (left ? '尚須守 ' + left + ' 回合。' : '')
     : '毀了它。盤上的' + i.name + '盡數倒下，這一局便勝了。它不還手，也不閃避。';
-  const ward = i.traits?.ward ? '星索護陣 · 未被擊毀時，' + (unitDetails(find(s, commanderId(s)))?.name || '局主') + '所受傷害減 ' + i.traits.ward + '%。' : '';
+  const ward = i.traits?.ward ? '星索 · 未被擊毀時，' + (unitDetails(find(s, commanderId(s)))?.name || '局主') + '所受傷害減 ' + i.traits.ward + '%。' : '';
   return (
     titleHead('target', keep ? '守物' : '破物') +
     '<div class="enemy-summary"><img class="enemy-face object-face" src="' +
@@ -1099,13 +1125,11 @@ function enemyPage(s, id) {
         '</strong><span>' +
         (heldLine(s, u) ||
           (u.conditions?.seal
-          ? '本回合封穴，無法施展絕技'
-          : u.conditions?.daze
-            ? '本回合失神，不會出手'
-            : turns === 0
-              ? CHARGED[special.style] ||
-                (traitsOf(u).stance ? CHARGED.stance : '本回合蓄勢，正是破綻')
-              : '距蓄勢 ' + turns + ' 回合')) +
+          ? '本回合截勁，無法施展絕技'
+          : turns === 0
+            ? CHARGED[special.style] ||
+              (traitsOf(u).stance ? CHARGED.stance : '本回合蓄勢，正是破綻')
+            : '距蓄勢 ' + turns + ' 回合')) +
         '</span><p>' +
         // A mend or a mirror is no blow, so it has no strength against the normal strike.
         (special.strikes ? '普攻傷害 × ' + special.factor + '。' : '') +
@@ -1345,7 +1369,7 @@ function attackPage(s, source, target, skill) {
   if (!blink && !friendly)
     lines.push(line('敵方還擊', f.counterRaw ? '−' + f.counter + ' 氣血' : '無'));
   if (f.hits.length > 1) lines.push(line('連擊', f.hits.join(' ＋ ')));
-  if (f.shielded) lines.push(line('護勁吸收', f.shielded));
+  if (f.shielded) lines.push(line('護盾吸收', f.shielded));
   if (f.splash.length)
     lines.push(
       line(
@@ -1363,14 +1387,14 @@ function attackPage(s, source, target, skill) {
   for (const e of f.effects)
     lines.push(line('附加效果', effectDescription(e.kind, e.power, e.turns)));
   if (f.push) lines.push(line(a.push ? '擊退' : '牽引', '一格'));
-  // 代受 and 號令 change who the action is for: each gets its own row.
+  // 代受 and 再動 (an order to a companion) change who the action is for: each gets its own row.
   for (const note of f.notes)
     lines.push(
-      /^(代受|號令|化功|不敗|無招|問劍) · /.test(note)
+      /^(代受|再動|化功|不敗|無招|問劍) · /.test(note)
         ? line(note.slice(0, 2), esc(note.slice(5)))
         : line('招式連攜', esc(note))
     );
-  if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
+  if (f.ward) lines.push(line('星索', '已減傷 ' + f.ward + '%'));
   // The secondary: this blow would fell its target and so meet or fail it.
   const sideLine = s.run && !friendly && !blink ? sideForecast(s, u, aimed, f) : '';
   if (sideLine)

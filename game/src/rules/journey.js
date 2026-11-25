@@ -359,7 +359,7 @@ const ROUND_MARKS = [
   ...BOARD_MARKS.slice(0, 6),
   'signaturePush',
   'lastSiphonRound',
-  'lastDazeRound',
+  'lastFreezeRound',
   'fleeThrough',
   'enteredRound'
 ];
@@ -439,7 +439,7 @@ function tidyBoard(s) {
   for (const w of r.status === 'battle' ? board.waves : []) {
     const due = arrivals[w.id];
     const waiting = w.pieces.some((p) => !s.units.some((u) => u.id === p.id));
-    if (Number.isInteger(due) && due >= s.round && due <= G.LIMIT && waiting) s.arrivals[w.id] = due;
+    if (Number.isInteger(due) && due >= s.round && due <= G.roundLimit(s) && waiting) s.arrivals[w.id] = due;
   }
   if (!validTally(s.tally)) s.tally = G.blankTally();
   if (r.status === 'battle' && !validSide(s, r.side)) r.side = drawSide(s);
@@ -460,8 +460,42 @@ function validTally(t) {
     typeof t.crossed === 'boolean'
   );
 }
+// 失神 became 定身 for one round (Q-N132). A save made mid-fight may hold one: it is read as the
+// 定身 it now is, lasting as long, so the piece still loses its turn; a master's last 失神 counts
+// toward 定身's resistance, which the two now share.
+// 卸勁 became 固守 (0.50): a hero's 卸勁 from a save is read as the 固守 his art now gives (the
+// three 30% ones 防禦 ＋10, 羅漢拳's 20% ＋7), lasting as long.
+function migrateHolds(s) {
+  for (const u of Array.isArray(s?.units) ? s.units : []) {
+    const stance = u?.conditions?.stance;
+    if (stance) {
+      const had = u.conditions.fortify,
+        power = stance.power >= 30 ? 10 : 7;
+      u.conditions.fortify =
+        had && had.power >= power
+          ? { ...had, through: Math.max(had.through, stance.through) }
+          : { power, through: Math.max(stance.through, had?.through ?? stance.through), source: stance.source };
+      delete u.conditions.stance;
+    }
+    const daze = u?.conditions?.daze;
+    if (daze) {
+      const held = u.conditions.freeze;
+      u.conditions.freeze = {
+        power: 1,
+        through: Math.max(daze.through, held?.through ?? daze.through),
+        source: held?.source ?? daze.source
+      };
+      delete u.conditions.daze;
+    }
+    if (u && u.lastDazeRound != null) {
+      if (!(u.lastFreezeRound >= u.lastDazeRound)) u.lastFreezeRound = u.lastDazeRound;
+      delete u.lastDazeRound;
+    }
+  }
+}
 function restoreRun(raw) {
   if (!raw) return null;
+  migrateHolds(raw);
   if ([4, 5].includes(raw.version)) migrateSave(raw);
   if (![4, 5].includes(raw.version)) {
     const s = G.restoreGame(raw);
@@ -524,7 +558,7 @@ function restoreRun(raw) {
     r.manuals.some((id) => !Object.hasOwn(MANUAL_PRICES, id)) ||
     !Number.isInteger(s.round) ||
     s.round < 1 ||
-    s.round > G.LIMIT ||
+    s.round > G.roundLimit(s) ||
     !['ally', 'enemy', 'done'].includes(s.phase) ||
     ![null, 'win', 'loss'].includes(s.result) ||
     !s.units.every(
@@ -686,6 +720,8 @@ function restoreRun(raw) {
     ['heals', 'steps', 'protects', 'casts', 'kills'].every(
       (k) => Number.isInteger(u.mastery[k]) && u.mastery[k] >= 0
     ) &&
+    // 'struck' came in 0.50: a record saved before has none and counts from 0.
+    (u.mastery.struck == null || (Number.isInteger(u.mastery.struck) && u.mastery.struck >= 0)) &&
     uniqueMembers(u.mastery.sides, [...r.route, LAST_MAP]);
   for (const u of s.units) if (!G.living(u)) delete u.conditions;
   const validConditions = (u) =>
@@ -973,7 +1009,8 @@ function devFinish(s, won, side = false) {
   s.reason = won ? CHAMBER_TALES[s.mapIndex].victory : '（開發者模式）這一局作負。';
   // 問劍 is won with 求敗 at his last point of 氣血.
   if (won && G.boardKind(s) === 'yield') for (const id of G.masterIds(s)) G.find(s, id).hp = 1;
-  if (won && side) r.devSide = true;
+  // 速勝・支線 meets the secondary whatever its kind; 速勝 misses it (README, Developer mode).
+  if (won) r.devSide = !!side;
   s.phase = 'done';
   G.log(s, 'story', s.reason, won ? '破關' : '敗退');
   return true;
@@ -1067,8 +1104,8 @@ const fallIndex = (s, id) => s.tally?.falls.findIndex((f) => f.id === id) ?? -1;
 const masterNames = (map, board) => board.masters.map((ref) => pieceName(map, ref)).join('與');
 // The heroes a secondary may name: the lineup as the board is built.
 const lineup = (s) => s.run.next.map((id) => G.find(s, id)).filter(Boolean);
-// Whether a hero can make a 合招: a form that spends a mark or poison, or strikes with a partner.
-const COMBO_FORMS = ['exploit', 'distill', 'flank'];
+// Whether a hero can make a 合招: a form that spends a mark or poison another laid.
+const COMBO_FORMS = ['exploit', 'distill'];
 function hasCombo(u) {
   const arts = ['signature', ...(u.learned || []).filter((id) => TECHNIQUES[id]?.kind !== 'basic')];
   const forms = [
@@ -1188,7 +1225,7 @@ const SIDE_KINDS = {
     name: () => '合招制敵',
     sort: 'reach',
     eligible: (s) => lineup(s).some(hasCombo),
-    detail: () => '以合招擊倒一名敵人：催毒、乘破綻或夾擊的一擊。',
+    detail: () => '以合招擊倒一名敵人：引爆餘毒或乘破綻的一擊。',
     state: (s) => (s.tally?.falls.some((f) => f.combo) ? 'met' : 'open'),
     progress: () => '',
     lost: () => ''
@@ -1265,8 +1302,9 @@ function sideBenched(s, side = s.run.side) {
 // 'open', 'met' or 'failed', now; a keep kind still open when the board is won is met.
 function sideState(s, side = s.run.side) {
   if (!side) return 'open';
-  // Developer mode's 速勝・支線 (devFinish) meets it whatever its kind.
-  if (s.run.devSide && s.result === 'win' && side === s.run.side) return 'met';
+  // Developer mode's 速勝・支線 (devFinish) meets it whatever its kind, and 速勝 misses it.
+  if (typeof s.run.devSide === 'boolean' && s.result === 'win' && side === s.run.side)
+    return s.run.devSide ? 'met' : 'failed';
   if (s.run.status !== 'battle') return s.run.last?.optional ? 'met' : 'failed';
   if (sideBenched(s, side)) return 'failed';
   const kind = SIDE_KINDS[side.kind],
@@ -1277,6 +1315,7 @@ const sideDone = (s) => s.result === 'win' && sideState(s) === 'met';
 // Why the secondary failed, as the tip and log say it.
 function sideLost(s, side = s.run.side) {
   if (!side) return '';
+  if (s.run.devSide === false && s.result === 'win' && side === s.run.side) return '（開發者模式）速勝不計支線';
   if (sideBenched(s, side)) return heroName(side.hero) + '未在出陣名單中';
   return SIDE_KINDS[side.kind].lost(s, side);
 }
@@ -1291,7 +1330,7 @@ function sideForecast(s, u, t, f) {
     id: target.id,
     by: u.id,
     how: art ? 'art' : 'basic',
-    combo: !!(f.plan?.spentMark || f.plan?.spentPoison || f.plan?.partner),
+    combo: !!(f.plan?.spentMark || f.plan?.spentPoison),
     answered: !!art?.answer && G.strikeFactor(s, u, art, target).notes.some((n) => n.startsWith('破招')),
     round: s.round,
     phase: s.phase
@@ -1364,7 +1403,8 @@ function boardModel(map, stage, s = null, live = false, route = null) {
   // How the board is won, in one plain line (the producer's ruling of 2026-11-23: this page
   // states rules, once): the kind's name, the board's own condition, then what need not be done.
   const hold = board.hold ? '第' + NUMERALS[board.hold - 1] + '回合' : '';
-  const within = '在第十二回合結束前';
+  const rounds = '第' + NUMERALS[(board.rounds || G.LIMIT) - 1] + '回合',
+    within = '在' + rounds + '結束前';
   const win =
     KIND_NAMES[kind] +
     ' · ' +
@@ -1451,7 +1491,7 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     win,
     // The last board: what 無名 gains as he steps onto it, a line of its own under 勝利.
     boon: kind === 'yield' ? boonLine() : '',
-    loss: kind === 'keep' ? leader + '倒下，或' + things.join('、') + '被毀。' : leader + '倒下，或第十二回合結束仍未取勝。',
+    loss: kind === 'keep' ? leader + '倒下，或' + things.join('、') + '被毀。' : leader + '倒下，或' + rounds + '結束仍未取勝。',
     // The board's objects for the plan and the page: each with its picture and what it is.
     objects: (board.objects || []).map((o) => {
       const key = o.id.split('#')[0],
@@ -1479,7 +1519,7 @@ function boardModel(map, stage, s = null, live = false, route = null) {
   if (live && s) {
     const left = G.objectiveLeft(s);
     model.live = {
-      line: '第 ' + s.round + '／' + G.LIMIT + ' 回合　領隊 ' + heroName(s.leader) + '　銀 ' + r.coins + ' 兩',
+      line: '第 ' + s.round + '／' + G.roundLimit(s) + ' 回合　領隊 ' + heroName(s.leader) + '　銀 ' + r.coins + ' 兩',
       masters: G.masterIds(s).map((id) => {
         const u = G.find(s, id),
           name = G.unitDetails(u)?.name || '';
@@ -1707,9 +1747,12 @@ const payKind = (reward, ends) => (reward === 'points' && ends ? 'coins' : rewar
 const endsRun = (stage, r = null) => (r ? stage === finalStage(r) : stage >= TENTH);
 // A reward as the text says it; a manual by name once it has been paid.
 function rewardText(side, stage, manual = null, r = null) {
-  const kind = payKind(side?.reward, endsRun(stage, r));
+  const ends = endsRun(stage, r),
+    kind = payKind(side?.reward, ends);
   if (kind === 'coins') return '賞銀 ' + (REWARDS.side + REWARDS.sidePerStage * stage) + ' 兩';
   if (kind === 'points') return '出陣生還的俠客各 1 武學點';
+  // On the board that ends the run the manual goes to the parcel for the next run (paySide).
+  if (ends) return manual ? '《' + TECHNIQUES[manual].name + '》一卷，寄在通吃坊，下一輪取用' : '武譜一卷（寄在通吃坊，下一輪取用）';
   return manual ? '《' + TECHNIQUES[manual].name + '》一卷，已入公庫' : '武譜一卷（入公庫）';
 }
 function buy(s, id) {
@@ -1919,7 +1962,7 @@ function acceptsGuide(s, u, id) {
     TECHNIQUES[id]?.manual &&
     s.run.manuals.includes(id) &&
     !u.guides.includes(id) &&
-    G.canPrepare(s, u) &&
+    G.canOutfit(s, u) &&
     !s.run.last?.terminal
   );
 }
@@ -1962,7 +2005,7 @@ function milestone(u, gate) {
       (met ? '已完成' : '須出戰生還') +
       '）';
   } else {
-    const n = gate.metric === 'level' ? u.level : u.mastery[gate.metric];
+    const n = gate.metric === 'level' ? u.level : u.mastery[gate.metric] || 0;
     met = n >= gate.atLeast;
     label =
       (GATE_LABELS[gate.metric] || '等級') + ' ' + Math.min(n, gate.atLeast) + '／' + gate.atLeast;

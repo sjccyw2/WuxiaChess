@@ -14,12 +14,12 @@ export const LEVELS = Array.from({ length: 12 }, (_, i) => i + 1);
 const TOP = LEVELS.at(-1);
 
 const AXES = [
-  { key: 'melee', name: '近身攻擊', hint: '貼身出手的傷害：最強兩招（普攻也算）加還擊；破招、斬殘等條件加成與連環也算；射程兩格以上的招式貼身使用只算一半。' },
+  { key: 'melee', name: '近身攻擊', hint: '貼身出手的傷害：最強兩招（普攻也算）加還擊；破招、合璧等條件加成與連環也算；射程兩格以上的招式貼身使用只算一半。' },
   { key: 'ranged', name: '遠程攻擊', hint: '兩格以外出手的傷害，射程越遠越高；條件加成、連環與濺射波及兩格以外的餘勁也算。' },
-  { key: 'vitality', name: '氣血防禦', hint: '倒下前挨得住幾擊，再加護盾、固守、卸勁、金剛、閃身、免受還擊、自療、吸血與代受。' },
-  { key: 'inner', name: '內力回氣', hint: '八回合內，內力上限加每回合回氣，夠施展幾次本門最耗內力的三招（以學全後為準）；凝氣、回氣與領隊減耗都算。' },
+  { key: 'vitality', name: '氣血防禦', hint: '倒下前挨得住幾擊，再加護盾、固守、金剛、閃身、免受還擊、自療、吸血與代受。' },
+  { key: 'inner', name: '內力回氣', hint: '八回合內，內力上限加每回合回氣，夠施展幾次本門最耗內力的三招（以學全後為準）；凝氣、命中回復內力與領隊減耗都算。' },
   { key: 'speed', name: '身法速度', hint: '移動步數，加輕身、越障身法與出招後回身。' },
-  { key: 'support', name: '輔助同伴', hint: '替同伴療傷、護盾、振奮、輕身、固守、代受、號令，與壓制敵人；領隊陣法按三分之一計。' }
+  { key: 'support', name: '輔助同伴', hint: '替同伴療傷、護盾、振奮、輕身、固守、代受、令同伴再動，與壓制敵人；領隊陣法按三分之一計。' }
 ];
 const KEYS = AXES.map((a) => a.key);
 
@@ -282,10 +282,10 @@ function measure(id, level, learned, talents, lead, unit, kit = learned) {
     if (art.taunt) v += 0.8;
     if (forms.includes('landing')) v += 0.3;
     // Holding foes back: fewer and weaker blows at his companions.
-    if (art.freeze) hold += art.freeze.turns || 1;
+    // A 定身 with a setup to meet (絆字訣) at half.
+    if (art.freeze) hold += art.freeze.setup ? 0.5 : art.freeze.turns || 1;
     if (art.mute) hold += 0.9 * (art.mute.turns || 1);
     if (art.charm) hold += 1.5 * (art.charm.turns || 1);
-    if (art.daze) hold += art.daze === true ? 1 : 0.5;
     if (art.debuff?.stat === 'atk') hold += (art.debuff.power * art.debuff.turns) / BLOW;
     if (art.debuff?.stat === 'def') hold += (weaker({ exposed: { power: art.debuff.power } }) * TAKEN * art.debuff.turns) / BLOW;
     if (art.wound) hold += (art.wound.power * art.wound.turns) / BLOW;
@@ -341,7 +341,8 @@ const BOON_SHARE = {
   ground: 0.25, // 金蛇轉鋒: the foe struck stands on ground that guards him
   covered: 0.05, // ...or behind someone who would take the blow for him
   opening: 0.3, // 越女試劍: once a round for the side; this companion's share of it
-  spare: 1 / ROUNDS // 雪谷回生: a fall turned aside once a board, about a blow a board
+  spare: 1 / ROUNDS, // 雪谷回生: a fall turned aside once a board, about a blow a board
+  mercy: 0.5 // 靈鷲慈心: a round in which this companion heals rather than strikes
 };
 // 越女試劍 and 雪谷回生 keep count in a board's facts, which the scene has not: they are read off
 // the boon itself, on the counter his basic draws and the blow he takes.
@@ -354,8 +355,9 @@ function boonBlows(plain, lead, unit) {
   const swing = 1.5; // the best blow and half a basic, as the scene weighs them above
   const f = G.forecast(u, foe, false, s);
   let n = 0;
-  // 北冥真氣: 內力 back for the round's blow.
-  n += ((f.absorb || 0) * unit.mpWorth) / BLOW;
+  // 靈鷲慈心: a heal of his restores more, about once in each healer's round.
+  if (has('mercy') && G.equippedArts(u).some((id) => G.artFor(u, id).heal))
+    n += (BOON_SHARE.mercy * G.commandBonus(s, u, 'mercy')) / BLOW;
   // 打狗陣法: the same blow at a foe under 絆足.
   if (has('held')) {
     const held = { ...foe, conditions: { pin: { power: 2, through: s.round + 1 } } };
@@ -535,7 +537,7 @@ const NOTES = [
   '成長曲線：每升一級約得兩點武學點（升級一點，支線賞點約一點，與模擬相符），照模擬的買法（先買通往成名絕技最便宜的一招，買不到時修習根基）逐級學起，歷練門檻當作已過。',
   '每一項以等級 12 時全體俠客中最高者為 100；成長曲線用同一把尺，所以前期分數較低。綜合分是六項的平均。',
   '傷害、承傷、療傷與內力消耗都照遊戲本身的算式，對手取第十局四名守將的平均（氣血 ' + FOE.maxHp + '、攻擊 ' + FOE.atk + '、防禦 ' + FOE.def + '），站在無地形加成的平地上。',
-  '破招、孤行、合璧、黯然、還報、斬殘這些條件加成，按成立的機會折算，再加上全部成立時多出部分的一半，連環另加三成；依招式射程計入近身或遠程。',
+  '破招、合璧，以及四鄰無同伴、自身氣血已損、上回合受創、目標氣血不過半這些條件加成，按成立的機會折算，再加上全部成立時多出部分的一半，連環另加三成；依招式射程計入近身或遠程。',
   '遊戲目前沒有暴擊與閃避，一招打多少是定數，故不列此項；閃身、金剛與免受還擊之效計入「氣血防禦」，越障身法計入「身法速度」。',
   '領隊陣法只有一人能用，按三分之一計入本人各項，並計入「輔助同伴」。',
   '不計兵器、裝備與丹藥：每位俠客空手入局，只看等級、根基與武學。',

@@ -21,7 +21,7 @@ export const BOOKKEEPING = new Set([
 ]);
 // Mechanics whose whole worth already shows in the measured numbers (damage, healing, people
 // reached), so they are compared by measurement rather than counted as "adds an effect".
-// 廣及 (`radius`) is one of them: the scene puts foes beyond the target's four neighbours
+// A 濺射 with reach (`radius`) is one of them: the scene puts foes beyond the target's four neighbours
 // (SPLASH_SCENE below), so how much farther a splash reaches shows in the area measure.
 export const MEASURED = new Set(['factor', 'pierce', 'hits', 'basicBonus', 'aura', 'heal', 'radius']);
 // Prices the art pays rather than effects it adds. A node that adds one of these does not
@@ -72,11 +72,11 @@ export const conditionalKeys = (art) => Object.keys(CONDITIONAL).filter((k) => a
 // a foe's turn, to the hero's own tempo, or to who gets hit. A later strike that carries one is
 // bought for it, so R4 does not hold it to the starting art's damage. Form tags among them are
 // counted as mechanics, not as the small riders other form tags are.
-// 定身, 閉穴 and 受制 take a foe's turns as 失神 and 纏械 do; 金剛 and 固守 on a strike guard its
+// 定身, 閉穴 and 受制 take a foe's turns as 纏械 does; 金剛 and 固守 on a strike guard its
 // caster as 架勢 does; 吸元 feeds the caster from the blow as 吸勁 does.
 export const CAPABILITIES = new Set([
   'siphon', 'again', 'glide', 'order', 'taunt', 'cover', 'stance', 'evade', 'redirect', 'zone',
-  'disarm', 'daze', 'wound', 'freeze', 'mute', 'charm', 'immune', 'fortify', 'drain'
+  'disarm', 'wound', 'freeze', 'mute', 'charm', 'immune', 'fortify', 'drain', 'seal'
 ].flatMap((k) => [k, 'form:' + k]));
 
 // What an art does besides its measured numbers: every mechanic field and every form tag.
@@ -132,7 +132,7 @@ export function boardFoes() {
 // Attacker A on the same row as target T at distance d, B directly behind T (for splash and
 // anything that runs through), S beside T, and H beside A (for "a companion near the hero").
 // Beyond the neighbours, one more foe in each further ring around T (R2 two steps away, R3
-// three, both off A's row and off B's line), which only a 廣及 splash reaches: of the four
+// three, both off A's row and off B's line), which only a splash with reach reaches: of the four
 // neighbours the scene fills two, and of the eight and twelve tiles in the next rings one each,
 // a thinner crowd farther out. All on open ground with no terrain defence.
 export const SPLASH_SCENE = { neighbours: 2, perRing: 1, rings: 3 };
@@ -510,7 +510,7 @@ export function artOf(heroId, artId) {
 // The factor a conditional mechanic adds when it holds (破招 is always +0.30; 合璧 counted at its
 // lesser, any-companion value; 傾力 at its minimum spend, see CONDITIONAL).
 const conditionalBonus = (k, art) =>
-  k === 'answer' ? 0.3 : k === 'paired' ? art.paired.any : k === 'surge' ? 0 : art[k];
+  k === 'answer' ? 0.3 : k === 'paired' ? art.paired.any || 0 : k === 'surge' ? 0 : art[k];
 
 // Plain strike equivalent, priced with the framework's R9 table and the prices in `prices`
 // (check-skills.mjs keeps them, with their sources). Mechanics with no price are listed.
@@ -549,7 +549,7 @@ export function strikeEquivalent(art, prices) {
   if (art.safe) v += prices.safe;
   if (art.pierce) v += (prices.pierceHalf * art.pierce) / 0.5;
   if ((art.range ?? 1) > 2) v += prices.reachTile * ((art.range ?? 1) - 2);
-  // 廣及: the splash price assumes the two neighbours the scene fills; a wider one is priced by
+  // 濺射 with reach: the splash price assumes the two neighbours the scene fills; a wider one is priced by
   // how many more foes the scene puts in its further rings (SPLASH_SCENE).
   if (art.splash) v += ((prices.splash * art.splash) / 0.5) * (splashFoes(art) / SPLASH_SCENE.neighbours);
   if (art.push) v += prices.push;
