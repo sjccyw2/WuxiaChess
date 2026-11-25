@@ -341,7 +341,7 @@ const DETAILS = {
     basic: '鐵鞭橫江',
     skill: '吸功入地小法',
     skillIcon: 'spark',
-    skillDesc: '卸去相鄰敵人的來勁並還擊，此擊免受還擊；至下回合受到的傷害減三成，還擊改以全力計算。',
+    skillDesc: '卸去相鄰敵人的來勁並還擊，此擊免受還擊；至下回合自身防禦增加 10 點。',
     skillRange: 1,
     cost: 9
   },
@@ -772,21 +772,22 @@ function strikeReach(s, u) {
   const sig = signatureDue(s, u) ? enemyTechnique(u, s) : null;
   return u.conditions?.disarm ? 1 : Math.max(reach(s, u), sig?.reach || 0);
 }
-// The share of a full basic strike a counter carries: none while 無守; full under 卸勁, or for a
-// villain whose 蓄勢反擊 is charged; a learned 後發 sets its own; otherwise 0.55.
+// The share of a full basic strike a counter carries: none while 無守; full for a villain whose
+// 蓄勢反擊 is charged; a learned 後發 sets its own; otherwise 0.55. (A hero's 卸勁, which also gave
+// a full counter, became 固守 in 0.45.)
 // 太極圓轉 (the leader's boon) adds its share, up to a full counter.
 function counterRatio(s, defender) {
   const c = defender.conditions || {};
   if (c.unguarded || c.freeze || c.mute) return 0; // 無守; 定身 and 閉穴 do not counter
-  if (c.stance || (unitDetails(defender)?.traits?.stance && signatureDue(s, defender))) return 1;
+  if (unitDetails(defender)?.traits?.stance && signatureDue(s, defender)) return 1;
   const share = basicFor(defender).retort || 0.55,
     more = commandBonus(s, defender, 'retort') / 100;
   return more ? Math.min(1, Math.round((share + more) * 100) / 100) : share;
 }
-// 卸勁's cut, in percent, on the damage a unit takes from its foes' blows and counters: a hero's
-// stance condition; a villain's 蓄勢反擊 cuts by its own `cut` while charged.
+// The cut, in percent, on the damage an enemy piece takes from the heroes' blows and counters: a
+// villain's 蓄勢反擊 or 盾牆 by its own `cut` while it holds, 沉樁 below its share of 氣血. (Heroes
+// have no cut since 卸勁 became 固守, a flat 防禦, in 0.45.)
 function stanceCut(s, v) {
-  if (v.conditions?.stance) return v.conditions.stance.power;
   const traits = unitDetails(v)?.traits,
     stance = traits?.stance;
   const held = stance && stanceHolds(s, v) ? stance.cut || 0 : 0;
@@ -1839,7 +1840,7 @@ function stat(u, k, s) {
 const SIGNATURE_RULES_BY_HERO = {
   hero: { factor: 1.35 },
   medic: { heal: 30 },
-  guard: { factor: 1.15, safe: true, stance: 30 },
+  guard: { factor: 1.15, safe: true, fortify: { power: 10, turns: 1 } }, // 卸勁 became 固守 (0.45)
   guo: { factor: 1.28, debuff: { stat: 'atk', power: 4, turns: 2 } },
   xiao: { factor: 1.25 },
   duan: { factor: 1.1, safe: true },
@@ -1851,7 +1852,7 @@ const SIGNATURE_RULES_BY_HERO = {
   xuZhu: { factor: 1.4, visual: 'guo' },
   hongQi: { factor: 1.2, safe: true, visual: 'guo' },
   yaoShi: { factor: 1.25, visual: 'guo' },
-  sanFeng: { factor: 1.2, stance: 20, visual: 'guo' },
+  sanFeng: { factor: 1.2, fortify: { power: 7, turns: 1 }, visual: 'guo' }, // 卸勁 became 固守 (0.45)
   zhaoMin: { factor: 1.2, pierce: 0.5, visual: 'hero' },
   lingSu: { visual: 'medic', heal: 22, target: 'ally' },
   diYun: { factor: 1.3, visual: 'hero' },
@@ -2606,7 +2607,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       stanceCut(s, u)
     );
     result.counter = Math.max(0, result.counterRaw - (u.conditions?.shield?.power || 0));
-    if (share === 1 && !t.conditions?.stance) result.notes.push('蓄勢反擊 · 還擊全力');
+    if (share === 1) result.notes.push('蓄勢反擊 · 還擊全力');
     const traits = traitsOf(t);
     if (traits.crowded && distance(t, u) <= traits.crowded.within)
       result.notes.push('近身失準 · 還擊攻擊 −' + traits.crowded.atk);
@@ -2789,7 +2790,6 @@ const tenths = (n) => (n % 10 ? n + '%' : '一二三四五六七八九'[n / 10 -
 // The guard an art leaves on its caster until his next turn, as the preview states it.
 function guardNotes(art) {
   const notes = [];
-  if (art?.stance) notes.push('卸勁 · 至下回合受擊減' + tenths(art.stance) + '，還擊全力');
   if (art?.cover) notes.push('代受 · 至下回合，敵人對相鄰同伴的直接攻擊改由自己承受');
   if (art?.evade) notes.push('閃身 · 下一次直接攻擊落空');
   // 固守 and 金剛 on an art that is not aimed at a companion or himself guard its caster.
@@ -3730,8 +3730,8 @@ function taunters(s, u, cells = null, range = strikeReach(s, u)) {
       cells.some((c) => distance(c, t) <= range)
   );
 }
-// How little an enemy wants to strike hero t: lower is the better target. A hero under 卸勁 counts
-// his 氣血 as the cut makes it last. A covered hero is scored as the one who would take the blow.
+// How little an enemy wants to strike hero t: lower is the better target. A piece that cuts the
+// blows it takes counts its 氣血 as the cut makes it last. A covered hero is scored as the one who would take the blow.
 function aimCost(s, u, t, friends, walk) {
   const lean = preference(s, u, t, friends, walk); // 偏好: whom this villain looks for
   t = (!traitsOf(u).bend && coverer(s, t)) || t; // 轉折: no one takes its blow for another
@@ -4155,7 +4155,7 @@ function lineVictim(s, from, t) {
   return null;
 }
 // The second hero takes half the blow: a pass-through, so no 代受, 閃身 or 挪移 meets it, but his
-// 卸勁 and shield do.
+// shield does.
 function lineThrough(s, u, t, strikePower, effects) {
   const v = lineVictim(s, u, t);
   if (!v) return;
@@ -4189,7 +4189,7 @@ function basicRiders(s, u, t, effects) {
 // 分刺 (`flurry`): after its blow, plain or signature, the villain strikes one more hero within its
 // reach of where it stands — the one it would rather strike, never the one just struck — for its
 // share of the first blow. Like a blow that passes through, no 代受, 閃身 or 挪移 meets it and it
-// draws no counter; the hero's 卸勁 and shield do meet it.
+// draws no counter; the hero's shield does meet it.
 function secondNeedle(s, u, first, strikePower, friends, effects) {
   const flurry = traitsOf(u).flurry;
   if (!flurry || !living(u)) return;

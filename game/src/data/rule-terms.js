@@ -128,7 +128,6 @@ const RULE_GROUPS = [
         guide: true,
         text: '以落點為中心布下五格陣勢，至下一敵方回合結束；敵人踏入即須停步，回合開始時站在陣中移動減 2，我方站在陣中防禦 ＋4'
       },
-      { id: 'stance', name: '卸勁', art: 'stance', text: '至下回合受到的傷害減少，還擊改以全力' },
       { id: 'evade', name: '閃身', art: 'evade', text: '下一次受到的直接攻擊落空' },
       { id: 'redirect', name: '挪移', art: 'redirect', text: '下一次受擊傷害減半，並把一部分反震給出手者' },
       { id: 'shield', name: '護盾', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護盾取較強者' },

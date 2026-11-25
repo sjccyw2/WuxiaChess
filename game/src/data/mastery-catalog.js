@@ -757,9 +757,9 @@ const MASTERY_ARTS = {
     factor: 1.3,
     safe: true,
     avenge: 0.4,
-    stance: 30,
+    fortify: { power: 10, turns: 1 },
     recover: 6,
-    desc: '把卸入地底的勁力送還相鄰敵人，敵人無法還擊，命中回收 6 點內力；上一敵方回合曾受傷時威力更強。至下回合受擊減三成，還擊全力。',
+    desc: '把卸入地底的勁力送還相鄰敵人，敵人無法還擊，命中回收 6 點內力；上一敵方回合曾受傷時威力更強。至下回合自身防禦增加 10 點。',
     source: '向問天的吸功入地小法能將勁力卸入地下，送還與回氣是本作的演繹。'
   },
   bloodAtPass: {
@@ -799,10 +799,10 @@ const MASTERY_ARTS = {
     splash: 0.35,
     safe: true,
     avenge: 0.4,
-    stance: 30,
+    fortify: { power: 10, turns: 1 },
     rooted: true,
     gate: { metric: 'protects', atLeast: 4 },
-    desc: '鐵鏈橫掃相鄰一敵，四鄰敵人承受三成半餘勁，敵人無法還擊；上一敵方回合曾受傷時威力更強。至下回合受擊減三成，下一回合不能移動。',
+    desc: '鐵鏈橫掃相鄰一敵，四鄰敵人承受三成半餘勁，敵人無法還擊；上一敵方回合曾受傷時威力更強。至下回合自身防禦增加 10 點，下一回合不能移動。',
     source: '涼亭中向問天身縛鐵鏈，獨抗正邪數百人。此招為本作所擬。'
   },
   southernStance: {

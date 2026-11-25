@@ -174,7 +174,6 @@ const CONDITION_NAMES = {
   pin: '絆足',
   seal: '截勁',
   riposte: '反震',
-  stance: '卸勁',
   cover: '代受',
   taunt: '挑釁',
   evade: '閃身',
@@ -228,7 +227,6 @@ function selfEffectsOf(art) {
   if (!art) return [];
   const effects = [],
     put = (kind, power = 1, turns = 1) => effects.push({ kind, power, turns });
-  if (art.stance) put('stance', art.stance);
   if (art.cover) put('cover');
   if (art.taunt) put('taunt', art.taunt);
   if (art.evade) put('evade');
@@ -253,7 +251,6 @@ function effectDescription(kind, power, turns) {
     pin: '移動 −' + power,
     seal: '停用還擊及敵方絕技',
     riposte: '下次受傷震回最多 ' + power,
-    stance: '受敵傷害減 ' + power + '%，還擊全力',
     cover: '代相鄰同伴承受直接攻擊',
     taunt: power + ' 格內可攻到自己的敵人只能攻擊自己',
     evade: '下一次直接攻擊落空',

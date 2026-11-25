@@ -442,8 +442,20 @@ function validTally(t) {
 // 失神 became 定身 for one round (Q-N132). A save made mid-fight may hold one: it is read as the
 // 定身 it now is, lasting as long, so the piece still loses its turn; a master's last 失神 counts
 // toward 定身's resistance, which the two now share.
+// 卸勁 became 固守 (0.45): a hero's 卸勁 from a save is read as the 固守 his art now gives (the
+// three 30% ones 防禦 ＋10, 羅漢拳's 20% ＋7), lasting as long.
 function migrateHolds(s) {
   for (const u of Array.isArray(s?.units) ? s.units : []) {
+    const stance = u?.conditions?.stance;
+    if (stance) {
+      const had = u.conditions.fortify,
+        power = stance.power >= 30 ? 10 : 7;
+      u.conditions.fortify =
+        had && had.power >= power
+          ? { ...had, through: Math.max(had.through, stance.through) }
+          : { power, through: Math.max(stance.through, had?.through ?? stance.through), source: stance.source };
+      delete u.conditions.stance;
+    }
     const daze = u?.conditions?.daze;
     if (daze) {
       const held = u.conditions.freeze;
