@@ -29,6 +29,7 @@ import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
 import { mapLayout } from './data/terrain.js';
 import { showPhase, phaseLead } from './ui/phase-banner.js';
+import { syncBossGauge, stagedPiece, stageWords } from './ui/boss-gauge.js';
 // The first board's tutorial: coach marks, the first time someone plays.
 import { installTutorial } from './ui/tutorial.js';
 import { installArtDetail } from './ui/art-detail.js';
@@ -380,6 +381,7 @@ function paint() {
     $('round-badge').innerHTML = phase;
     $('round-badge').dataset.phase = phase;
   }
+  syncBossGauge($('boss-gauge'), state, screen === 'battle');
   const u = selected();
   $('active-hero').innerHTML = P.activeHero(state);
   $('active-hero').setAttribute(
@@ -461,7 +463,22 @@ function showArrivals() {
 const seenLogs = new WeakSet();
 let notedBoard = null,
   notedRun = null,
-  notedSide = null;
+  notedSide = null,
+  notedStage = null;
+// 五劍: when 求敗's bar empties and the next one appears, the plaque line says so and the log
+// keeps a line (written here, before the save, so a reload neither loses nor repeats it).
+function noteStage() {
+  const u = stagedPiece(state),
+    now = G.stageOf(u),
+    was = notedStage;
+  notedStage = now;
+  if (!now || !was || now.index <= was.index) return;
+  const stages = G.unitDetails(u).traits.stages,
+    gone = stages.slice(was.index, now.index).map((v) => v.name).join('、');
+  G.log(state, 'combat', gone + '已盡，換作' + now.name + '。', uName(u));
+  seenLogs.add(state.logs[state.logs.length - 1]);
+  if (screen === 'battle' && !state.result) heldTip(uName(u) + '換劍 · ' + stageWords(now), 3600);
+}
 function waveTip(text) {
   const line = text.replace(/。$/, '');
   if (line.startsWith('下一回合，')) return ['下回合敵援 · ' + line.slice(5), 3200];
@@ -478,8 +495,10 @@ function noteBoard() {
     notedUnits = new Set(state.units.map((u) => u.id));
     for (const l of state.logs) seenLogs.add(l);
     notedSide = R.sideState(state);
+    notedStage = G.stageOf(stagedPiece(state));
     return;
   }
+  noteStage();
   const came = state.units.filter((u) => !notedUnits.has(u.id));
   for (const u of came) notedUnits.add(u.id);
   if (came.length) arrivals = came.filter((u) => !G.ally(u) && G.living(u));
@@ -2472,6 +2491,11 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'goals':
       openPage('goals');
+      break;
+    case 'boss-focus':
+      // 求敗's pinned gauge: the view goes to him.
+      board.focusPiece(stagedPiece(state));
+      audio('tap');
       break;
     case 'battle':
       closePage();

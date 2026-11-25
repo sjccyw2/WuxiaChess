@@ -28,6 +28,8 @@
 //   unfelled 不敗: no blow, counter or poison brings its 氣血 below 1 (求敗, on the last board)
 //   withdraw { below }: 退守, at or below that share of its 氣血 it falls back among its own
 //   formless 無招: no 破招 answers it, whatever it holds
+//   stages   [{ name, colour }]: 五劍, its 氣血 shown as that many bars, each an equal share of
+//            the whole, one after another (求敗; game.js stageOf reads them)
 // A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
 // without traits plays exactly as before the redesign. `phase.say` is a line the piece speaks as it
 // changes, logged after `phase.log`.
@@ -879,6 +881,18 @@ const VILLAINS = {
         sig: { reach: 2, sweep: 0.5, cadence: 3 },
         unfelled: true,
         formless: true,
+        // 五劍 (the producer, 2026-11-25): his 氣血 in five bars named after the swords of his
+        // tomb, each a fifth of it. Only the gauge shows them so far; how each fights is still
+        // to be designed, and will hang on these. The colours heat as the danger rises, from cold
+        // steel through violet to a hot rose, and keep clear of the heroes' jade, the enemies'
+        // vermilion, the amber of a low bar and the blue of 內力; each bar names its sword too.
+        stages: [
+          { name: '利劍', colour: '#c4d0de' },
+          { name: '軟劍', colour: '#8c9dff' },
+          { name: '重劍', colour: '#9b4dff' },
+          { name: '木劍', colour: '#e040c8' },
+          { name: '無劍', colour: '#ff3a7c' }
+        ],
         withdraw: { below: 0.25 },
         prefers: 'leader',
         post: { tile: 'spawn', tether: 0, wake: true, note: '立在天元{tile}；有俠客踏入攻擊範圍或受到攻擊後，才離位。' },

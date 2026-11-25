@@ -19,7 +19,14 @@ function boardPlan(map, s = null, route = null) {
     board = s ? G.boardOf(s) : G.castBoard(map, route || undefined),
     keys = G.encounterKeys(map);
   const piece = (key, x, y) => {
-    const rank = G.DETAILS[key]?.rank;
+    const rank = G.DETAILS[key]?.rank,
+      stages = G.DETAILS[key]?.traits?.stages;
+    // 求敗 (五劍) is his own mark, not one more 局主: in the colour of the bar he is on in the fight,
+    // of his first before it.
+    if (stages) {
+      const u = s && G.find(s, key);
+      return { x, y, name: G.DETAILS[key].name, rank: 'staged', colour: (u && G.stageOf(u)?.colour) || stages[0].colour };
+    }
     return { x, y, name: G.DETAILS[key]?.name || '', rank: rank === 'boss' ? 'boss' : rank ? 'mini' : 'troop' };
   };
   const foes = [
@@ -54,7 +61,11 @@ function planGrid(plan, posts) {
     )
     .join('');
   const foes = plan.foes
-    .map((f) => '<b class="plan-foe ' + f.rank + '" title="' + f.name + '" style="' + place(f.x, f.y) + '"></b>')
+    .map((f) =>
+      f.rank === 'staged'
+        ? '<b class="plan-foe staged" title="' + f.name + '" style="' + place(f.x, f.y) + ';--stage:' + f.colour + '">' + f.name[0] + '</b>'
+        : '<b class="plan-foe ' + f.rank + '" title="' + f.name + '" style="' + place(f.x, f.y) + '"></b>'
+    )
     .join('');
   const objects = (plan.objects || [])
     .map(
@@ -83,8 +94,10 @@ function planGrid(plan, posts) {
 // The key under a plan: only what this plan shows.
 function planKey(plan) {
   const has = (rank) => plan.foes.some((f) => f.rank === rank);
+  const staged = plan.foes.find((f) => f.rank === 'staged');
   return (
     '<p class="plan-key"><span><i class="plan-post-key"></i>起陣格</span>' +
+    (staged ? '<span><b class="plan-foe staged" style="--stage:' + staged.colour + '"></b>' + staged.name + '</span>' : '') +
     (has('boss') ? '<span><b class="plan-foe boss"></b>局主</span>' : '') +
     (has('mini') ? '<span><b class="plan-foe mini"></b>副手</span>' : '') +
     (has('troop') ? '<span><b class="plan-foe troop"></b>敵方</span>' : '') +

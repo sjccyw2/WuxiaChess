@@ -217,7 +217,10 @@ class BattleBoard {
     this.onCamera?.();
   }
   focusSelected() {
-    const u = this.s && G.find(this.s, this.s.selected);
+    this.focusPiece(this.s && G.find(this.s, this.s.selected));
+  }
+  // The view brought to one piece, near enough to read it (定位俠客; 求敗's pinned gauge).
+  focusPiece(u) {
     if (!u || this.title) return;
     this.view.focusTile(u.x, u.y, Math.max(1.45, this.zoom));
     this.changed();
