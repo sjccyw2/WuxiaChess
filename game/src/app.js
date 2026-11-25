@@ -826,7 +826,8 @@ function pageHtml() {
           })
         : P.briefPage(state);
     case 'help':
-      return P.helpPage(coach.helpRow());
+      // In a battle the guide names only the rule words this board carries beyond the first tier.
+      return P.helpPage(coach.helpRow(), screen === 'battle' && state.run?.scene === 'fight' ? state : null);
     case 'terrain':
       return P.terrainPage(state);
     case 'settings':

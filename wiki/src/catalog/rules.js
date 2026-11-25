@@ -224,9 +224,15 @@ function outcomes() {
 
 // Rule words a guide paragraph is about, by the paragraph's title.
 const GUIDE_TERMS = { 軍情: ['outcome'], 敵援: ['waves'], 支線: ['side'], 回合與養成: ['brace', 'medicine'] };
-// The in-game guide, paragraph by paragraph, and its line of keys.
+// A word the guide lists: a term's page, or a 戰鬥效果's in 武學總譜; 點穴, its three steps.
+const wordLinks = (w) =>
+  w.steps
+    ? w.steps.flatMap(wordLinks)
+    : [G.RULE_TERMS[w.id] ? link('rules', w.id, w.name) : link('skills', 'form-' + w.forms[0], w.name)];
+// The in-game guide, paragraph by paragraph, and its line of keys. Outside a battle it lists the
+// first tier (基本規則) and every other word (其餘規則); in one, 本局所見 comes between them.
 function guide() {
-  const pages = G.guideEntries().map(([, title, body], i) => ({
+  const pages = G.guideEntries().map(([, title, body, list], i) => ({
     id: 'guide-' + (i + 1),
     name: title,
     tag: '操作指南',
@@ -237,6 +243,7 @@ function guide() {
       links('相關條目', [
         ...G.RULE_GROUPS.filter((g) => g.title === title).map(groupPage),
         ...(GUIDE_TERMS[title] || []).map((id) => link('rules', id, G.RULE_TERMS[id].name)),
+        ...(list ? list.words.flatMap(wordLinks) : []),
         link('rules', 'keys', '按鍵')
       ])
     ],

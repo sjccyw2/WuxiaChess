@@ -21,8 +21,11 @@
 //   item       a field of an item (ITEMS)
 //   trait      a field of an enemy's traits, or a test of the traits
 //   style      an enemy signature's style
-//   guide      true when the in-game guide's paragraph names it
 // `text` has no closing 。; the guide and the wiki add it.
+//
+// The in-game guide teaches the words in tiers (Q-N152): FIRST_TIER below first, as the basics;
+// then, in a battle, only the other words something on the board carries (rules/rule-words.js);
+// the rest one tap away, under 其餘規則.
 import { FORM_RULES, PLAIN_FORMS } from '../rules/form-rules.js';
 
 const form = (id) => FORM_RULES[id][1].replace(/。$/, '');
@@ -60,8 +63,8 @@ const RULE_GROUPS = [
     title: '出手節奏',
     icon: 'spark',
     terms: [
-      { id: 'again', name: '連環', form: 'again', guide: true, text: form('again') },
-      { id: 'glide', name: '回身', form: 'glide', guide: true, text: form('glide') }
+      { id: 'again', name: '連環', form: 'again', text: form('again') },
+      { id: 'glide', name: '回身', form: 'glide', text: form('glide') }
     ]
   },
   {
@@ -73,7 +76,6 @@ const RULE_GROUPS = [
         id: 'cost',
         name: '代價',
         art: ['recoil', 'openGuard', 'rooted', 'spent'],
-        guide: true,
         text: '有些絕技要出招者自己付出代價，至多延續到他的下一回合：防禦降低、不能還擊、不能移動，或不能施展絕技（仍可普攻），招式上寫明是哪一種。棋子上這個記號帶一把鎖：這不是傷病，解厄解不掉'
       },
       {
@@ -111,21 +113,18 @@ const RULE_GROUPS = [
         id: 'cover',
         name: '代受',
         art: 'cover',
-        guide: true,
         text: '至下回合，敵人對相鄰同伴的直接攻擊改由自己承受'
       },
       {
         id: 'taunt',
         name: '挑釁',
         art: 'taunt',
-        guide: true,
         text: '至下回合，兩格內能攻到自己的敵人只能攻擊自己，兩格從出招後所站之處算起，預覽時棋盤會框出範圍'
       },
       {
         id: 'zone',
         name: '布陣',
         art: 'zone',
-        guide: true,
         text: '以落點為中心布下五格陣勢，至下一敵方回合結束；敵人踏入即須停步，回合開始時站在陣中移動減 2，我方站在陣中防禦 ＋4'
       },
       { id: 'stance', name: '卸勁', art: 'stance', text: '至下回合受到的傷害減少，還擊改以全力' },
@@ -146,16 +145,15 @@ const RULE_GROUPS = [
     title: '附加狀態',
     icon: 'pin',
     terms: [
-      { id: 'wound', name: '內傷', art: 'wound', condition: 'wound', guide: true, text: '療傷減半，每次出手攻擊後自損氣血' },
-      { id: 'disarm', name: '纏械', art: 'disarm', condition: 'disarm', guide: true, text: '攻擊降低，普攻與絕技只能攻擊相鄰一格' },
-      { id: 'freeze', name: '定身', art: 'freeze', condition: 'freeze', guide: true, text: '數回合不能移動、出手、施展絕技或還擊；局主只受一回合，下一回合可抵抗' },
-      { id: 'mute', name: '閉穴', art: 'mute', condition: 'mute', guide: true, text: '數回合不能出手、施展絕技或還擊，仍可移動；局主只受一回合，下一回合可抵抗' },
+      { id: 'wound', name: '內傷', art: 'wound', condition: 'wound', text: '療傷減半，每次出手攻擊後自損氣血' },
+      { id: 'disarm', name: '纏械', art: 'disarm', condition: 'disarm', text: '攻擊降低，普攻與絕技只能攻擊相鄰一格' },
+      { id: 'freeze', name: '定身', art: 'freeze', condition: 'freeze', text: '數回合不能移動、出手、施展絕技或還擊；局主只受一回合，下一回合可抵抗' },
+      { id: 'mute', name: '閉穴', art: 'mute', condition: 'mute', text: '數回合不能出手、施展絕技或還擊，仍可移動；局主只受一回合，下一回合可抵抗' },
       {
         id: 'charm',
         name: '受制',
         art: 'charm',
         condition: 'charm',
-        guide: true,
         text: '尋常敵人倒戈數個敵方回合，走向最近的同夥以普攻出手；我方不攻擊他，他仍算敵人。局主與副手不受制，改為定身一回合'
       },
       { id: 'poison', name: '中毒', art: 'poison', condition: 'poison', text: '每回合失去氣血，到期自解' },
@@ -165,7 +163,6 @@ const RULE_GROUPS = [
         art: ['rally', 'haste', 'fortify'],
         condition: ['weak', 'exposed', 'rally', 'haste', 'fortify'],
         form: 'pin',
-        guide: true,
         text: '有些招式讓攻擊、防禦或移動升降數回合，到期恢復；同一種取較強者。振奮、固守、輕身是升，攻勢受挫、破防、絆足是降。棋子上的記號寫攻、防、移，角上三角朝上是升，朝下是降；降的可用解厄解去'
       },
       { id: 'cleanse', name: '解厄', form: 'cleanse', item: 'cleanse', text: form('cleanse') }
@@ -295,23 +292,68 @@ const RULE_TERMS = Object.fromEntries(
   RULE_GROUPS.flatMap((group) => group.terms.map((term) => [term.id, { ...term, group: group.id }]))
 );
 
-// A group's paragraph as the in-game guide prints it: only the terms marked for the guide.
-function guideParagraph(id) {
-  const group = RULE_GROUPS.find((g) => g.id === id);
-  return group.terms
-    .filter((t) => t.guide)
-    .map((t) => t.name + '：' + t.text + '。')
-    .join('');
+// The 戰鬥效果 that are rule words (破綻, 截勁, 牽引): the forms of FORM_RULES that are neither plain
+// (PLAIN_FORMS) nor a term's own. One word per name, worded by its forms' rules.
+const termForms = new Set(RULE_GROUPS.flatMap((g) => g.terms.flatMap((t) => [].concat(t.form ?? []))));
+const FORM_WORDS = [];
+for (const [key, [name, rule]] of Object.entries(FORM_RULES)) {
+  if (PLAIN_FORMS.has(key) || termForms.has(key)) continue;
+  const word = FORM_WORDS.find((w) => w.name === name);
+  if (word) word.forms.push(key);
+  else FORM_WORDS.push({ id: key, name, forms: [key], text: '' });
+  (word || FORM_WORDS.at(-1)).text += rule;
 }
+for (const word of FORM_WORDS) word.text = word.text.replace(/。$/, '');
 
-// The in-game guide: [icon, title, text]. `actionFlow` is the presentation switch of that name:
-// off, the four-button bar is back and a hero waits by a button.
-function guideEntries({ actionFlow = true } = {}) {
-  const paragraph = (id) => {
-    const group = RULE_GROUPS.find((g) => g.id === id);
-    return [group.icon, group.title, guideParagraph(id)];
-  };
+// Every word the in-game guide can name, by id: the terms, then the 戰鬥效果 that are words.
+// `group` is the title it is listed under among 其餘規則.
+const GUIDE_WORDS = [
+  ...RULE_GROUPS.flatMap((g) => g.terms.map((t) => ({ id: t.id, name: t.name, text: t.text, group: g.title }))),
+  ...FORM_WORDS.map((w) => ({ id: w.id, name: w.name, text: w.text, group: '戰鬥效果', forms: w.forms }))
+];
+const WORD = Object.fromEntries(GUIDE_WORDS.map((w) => [w.id, w]));
+
+// The first tier (Q-N152, T1): the words of the first boards, shown first in the guide as the
+// basics and named by the first board's tutorial where it reaches them (data/tutorial-text.js).
+// 點穴 is one idea in three steps, each heavier than the last: 截勁 (a 戰鬥效果), 閉穴, 定身.
+const FIRST_TIER = [
+  'counter',
+  'safe',
+  'splash',
+  'push',
+  'heal',
+  'brace',
+  'again',
+  { id: 'acupoint', name: '點穴', text: '截勁、閉穴、定身是點穴的三步，一步重過一步', steps: ['seal', 'mute', 'freeze'] },
+  'poison',
+  'shield',
+  'command',
+  'outcome'
+].map((entry) => (typeof entry === 'string' ? WORD[entry] : { ...entry, steps: entry.steps.map((id) => WORD[id]) }));
+// The ids of the words in the first tier, the steps of 點穴 included.
+const FIRST_TIER_IDS = new Set(FIRST_TIER.flatMap((w) => (w.steps ? w.steps.map((step) => step.id) : [w.id])));
+
+// Words as one paragraph: 「名：句。」, a ladder's steps after it.
+const wordsText = (words) =>
+  words.map((w) => w.name + '：' + w.text + '。' + (w.steps ? wordsText(w.steps) : '')).join('');
+
+// The in-game guide: [icon, title, text, words?]. `actionFlow` is the presentation switch of that
+// name: off, the four-button bar is back and a hero waits by a button.
+//
+// The rule words come first (Q-N152): 基本規則, the first tier; in a battle, 本局所見, the other
+// words something on the board carries (`carried`, a set of word ids from rules/rule-words.js);
+// and 其餘規則, the rest, under the titles of their groups. An entry of words has a fourth part,
+// { lead, words, grouped }, for a page that lists them one by one; its text is the lead and the
+// same words as one paragraph.
+function guideEntries({ actionFlow = true, carried = null } = {}) {
+  const others = GUIDE_WORDS.filter((w) => !FIRST_TIER_IDS.has(w.id)),
+    shown = carried ? others.filter((w) => carried.has(w.id)) : [],
+    rest = others.filter((w) => !shown.includes(w));
+  const words = (ic, title, list, lead = '', grouped = false) => [ic, title, lead + wordsText(list), { lead, words: list, grouped }];
   return [
+    words('book', '基本規則', FIRST_TIER, '頭幾局就會遇上的規則。'),
+    ...(shown.length ? [words('eye', '本局所見', shown, '這一局盤上的招式、器物、敵人或狀態帶著的規則。')] : []),
+    words('scroll', '其餘規則', rest, carried ? '這一局盤上沒有人帶著的規則，留著備查。' : '', true),
     [
       'grid',
       '棋格與面板',
@@ -357,10 +399,6 @@ function guideEntries({ actionFlow = true } = {}) {
       '想起武學',
       '俠客入局時只帶著手上最熟的一招，放在武學樹的根基一行。其餘的招式要花武學點一招一招修習，越往上越近他的成名絕學。成名的那一招排在最後，並帶著代價。'
     ],
-    paragraph('tempo'),
-    paragraph('price'),
-    paragraph('guard'),
-    paragraph('condition'),
     [
       'scroll',
       '軍情',
@@ -392,4 +430,4 @@ function guideEntries({ actionFlow = true } = {}) {
   ];
 }
 
-export { RULE_GROUPS, RULE_TERMS, OUTCOMES, PLAIN_FIELDS, guideParagraph, guideEntries };
+export { RULE_GROUPS, RULE_TERMS, OUTCOMES, PLAIN_FIELDS, FORM_WORDS, GUIDE_WORDS, FIRST_TIER, FIRST_TIER_IDS, guideEntries };

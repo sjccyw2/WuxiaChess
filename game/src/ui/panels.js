@@ -66,6 +66,7 @@ import { icon } from './icons.js';
 import { itemPicture } from './item-art.js';
 import { POLISH } from '../polish.js';
 import { guideEntries } from '../data/rule-terms.js';
+import { carriedWords } from '../rules/rule-words.js';
 import { extraHotkeys } from './field-extras.js';
 import { ON as actionFlow, anyIdle, flowHotkeys } from './action-flow.js';
 const portraits = {
@@ -923,17 +924,40 @@ function terrainPage(s) {
   );
 }
 // `extra` is put above the paragraphs: in a battle, the control that replays the tutorial.
-function helpPage(extra = '') {
+// `s`, in a battle, is the board being fought: the guide then names, beyond the first tier, only
+// the rule words something on it carries (Q-N152), and keeps the rest under 其餘規則.
+function helpPage(extra = '', s = null) {
   // The paragraphs are worded in data/rule-terms.js, which the wiki reads too.
-  const rules = guideEntries({ actionFlow });
+  const rules = guideEntries({ actionFlow, carried: s?.units?.length ? carriedWords(s) : null });
+  // A list of words, one by one; 點穴's steps under it. Among 其餘規則 each group has its heading.
+  const term = (w) =>
+    '<dt>' + w.name + '</dt><dd>' + w.text + '。' +
+    (w.steps ? '<ol>' + w.steps.map((step) => '<li><b>' + step.name + '</b>' + step.text + '。</li>').join('') + '</ol>' : '') +
+    '</dd>';
+  const wordList = ({ lead, words, grouped }) => {
+    const groups = [];
+    for (const w of words) {
+      const heading = grouped ? w.group : '';
+      if (!groups.length || groups.at(-1).heading !== heading) groups.push({ heading, words: [] });
+      groups.at(-1).words.push(w);
+    }
+    return (
+      (lead ? '<p>' + lead + '</p>' : '') +
+      groups
+        .map((g) => (g.heading ? '<h5>' + g.heading + '</h5>' : '') + '<dl class="rule-words">' + g.words.map(term).join('') + '</dl>')
+        .join('')
+    );
+  };
   return (
     titleHead('help', '操作指南') +
     extra +
     '<div class="field-help">' +
     rules
       .map(
-        ([ic, title, body]) =>
-          `<details class="hud-disclosure"><summary>${icon(ic, 17)} ${title}</summary><p>${body}</p></details>`
+        ([ic, title, body, list], i) =>
+          `<details class="hud-disclosure"${i === 0 ? ' open' : ''}><summary>${icon(ic, 17)} ${title}</summary>` +
+          (list ? wordList(list) : `<p>${body}</p>`) +
+          '</details>'
       )
       .join('') +
     '</div><div class="hotkeys">' +

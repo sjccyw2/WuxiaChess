@@ -621,6 +621,36 @@ body.in-battle {
   line-height: 1.55;
   padding-block-end: 7px;
 }
+/* The guide's rule words, one by one (ui/panels.js helpPage): the name, then its sentence. */
+.hud-disclosure .rule-words {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 7px 12px;
+  margin: 0 0 9px;
+  line-height: 1.55;
+}
+.hud-disclosure .rule-words dt {
+  color: #e2c89b;
+  font-weight: 600;
+}
+.hud-disclosure .rule-words dd {
+  margin: 0;
+}
+.hud-disclosure .rule-words ol {
+  margin: 5px 0 0;
+  padding-inline-start: 1.5em;
+}
+.hud-disclosure .rule-words li b {
+  color: #e2c89b;
+  margin-inline-end: 0.4em;
+}
+.hud-disclosure h5 {
+  margin: 10px 0 5px;
+  color: #b8a988;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
 .shop-item-detail summary {
   font: 650 16px/1.4 var(--serif);
   padding: 5px 0;

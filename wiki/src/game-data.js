@@ -22,6 +22,7 @@ export * from '../../game/src/rules/battle-mastery.js';
 export * from '../../game/src/rules/form-rules.js';
 export * from '../../game/src/rules/game.js';
 export * from '../../game/src/rules/move-facts.js';
+export * from '../../game/src/rules/rule-words.js';
 export * from '../../game/src/rules/ferry-market.js';
 export * from '../../game/src/rules/journey.js';
 export * from '../../game/src/fx/technique-strokes.js';

@@ -2,6 +2,9 @@
 //
 // This is interface text, in the in-game guide's register and with its words (data/rule-terms.js):
 // 俠客, 領隊, 氣血, 招式, 射程, 撤步, 走位, 起陣, 交鋒預覽. It is not story text and nobody speaks it.
+// Where a step shows one of the first tier's rule words on the screen (FIRST_TIER in rule-terms.js:
+// 還擊 in 交鋒預覽, 待命 at the end of the turn, 勝負 and 領隊陣法 with the leader), its card names it,
+// and the last card sends the player to the guide's 基本規則 (Q-N152, T1).
 //
 // A card has room for two short sentences. On a phone held sideways it is a strip of two lines
 // between the unit tools and 結束回合: a step fits in two lines there up to about 40 characters,
@@ -52,8 +55,8 @@ const TUTORIAL_TEXT = {
     danger: '按右上角的 {danger}，會標出敵方下一回合打得到的地格，走位前先看一眼。',
     viewTouch: '雙指開合可縮放，單指拖曳可旋轉戰場。「視角」裡可切換俯視、重設視角。',
     viewMouse: '滾輪可縮放，拖曳可旋轉戰場。「視角」裡可切換俯視、重設視角。',
-    goal: '點左上角的地名牌，可看這一局的勝敗條件。領隊{name}倒下，這一輪便結束。',
-    guide: '其餘規則都在「選單」的「指南」裡，也可從那裡重看這份指引。'
+    goal: '點地名牌看本局勝負。領隊{name}倒下，這一輪便結束；他的領隊陣法及於兩格內的友軍。',
+    guide: '基本規則和本局用得上的規則都在「選單」的「指南」裡，也可在那裡重看指引。'
   }
 };
 

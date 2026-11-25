@@ -6340,5 +6340,102 @@ section('rule words, step 3');
   }
 }
 
+// ── Rule words, step 4 (0.46): the teaching tiers (Q-N152, T1 and T2) ─────────
+// The guide shows the first tier first; in a battle, of the other words, only those something on
+// the board carries (rules/rule-words.js carriedWords); the rest under 其餘規則, one tap away.
+section('rule words, step 4: the teaching tiers');
+{
+  const T = await load('data/rule-terms.js');
+  const W = await load('rules/rule-words.js');
+  const { TUTORIAL_TEXT } = await load('data/tutorial-text.js');
+  const names = (list) => list.map((w) => w.name);
+  const wordsOf = (list) => list.flatMap((w) => (w.steps ? w.steps : [w]));
+  const ids = (list) => wordsOf(list).map((w) => w.id);
+  const entry = (rules, title) => rules.find(([, t]) => t === title)?.[3];
+  check(
+    'the first tier: twelve, 點穴 one idea in three steps',
+    same(names(T.FIRST_TIER), ['還擊', '免受還擊', '濺射', '擊退', '療傷', '待命', '連環', '點穴', '中毒', '護盾', '領隊陣法', '勝負']) &&
+      same(names(T.FIRST_TIER.find((w) => w.name === '點穴').steps), ['截勁', '閉穴', '定身']),
+    names(T.FIRST_TIER)
+  );
+  check(
+    'the guide can name every term and the 戰鬥效果 that are words (破綻, 截勁, 牽引), each once',
+    same(names(T.FORM_WORDS), ['破綻', '截勁', '牽引']) &&
+      T.GUIDE_WORDS.length === Object.keys(T.RULE_TERMS).length + 3 &&
+      new Set(T.GUIDE_WORDS.map((w) => w.id)).size === T.GUIDE_WORDS.length
+  );
+  // Each word once across the tiers, whatever the board.
+  const partition = (rules) => {
+    const all = [...ids(entry(rules, '基本規則').words), ...ids(entry(rules, '本局所見')?.words || []), ...ids(entry(rules, '其餘規則').words)];
+    return all.length === T.GUIDE_WORDS.length && same([...all].sort(), T.GUIDE_WORDS.map((w) => w.id).sort());
+  };
+  {
+    const rules = T.guideEntries();
+    check('outside a battle: 基本規則 first, no 本局所見, every other word under 其餘規則', rules[0][1] === '基本規則' && !entry(rules, '本局所見') && partition(rules));
+  }
+  const s = board(['hero', 'medic', 'guard']);
+  const shown = () => names(entry(T.guideEntries({ carried: W.carriedWords(s) }), '本局所見')?.words || []);
+  const rest = () => names(entry(T.guideEntries({ carried: W.carriedWords(s) }), '其餘規則').words);
+  {
+    const rules = T.guideEntries({ carried: W.carriedWords(s) });
+    check('board 0 with the starting three: 基本規則, 本局所見, 其餘規則, in that order', same(rules.slice(0, 3).map(([, t]) => t), ['基本規則', '本局所見', '其餘規則']));
+    // 令狐冲's starting art and his 華山長劍 (破綻), 任盈盈's (療傷, 解厄), 向問天's (免受還擊, 卸勁:
+    // 0.45 reworks his kit and puts 卸勁 into 固守) and his 精鋼軟鞭 (絆足, 升降); the medicine in the
+    // stores (服藥); the master and lieutenant on the bridge (坐鎮, 蓄勢; 攻勢受挫 is 升降, 中毒 the
+    // first tier); the secondary. Board 0's reinforcements are kept away by this battle (援軍).
+    const expected = ['卸勁', '升降', '解厄', '服藥', '蓄勢', '坐鎮', '支線', '破綻'].filter((name) => name !== '卸勁' || T.RULE_TERMS.stance);
+    check('…本局所見 is exactly the words its pieces, items and secondary carry', same(shown(), expected), shown());
+    check('…and each word is in one tier only', partition(rules));
+  }
+  check('a word carried by nobody here (合璧, 亂氣, 挑釁) is not shown, but is under 其餘規則', ['合璧', '亂氣', '挑釁'].every((n) => !shown().includes(n) && rest().includes(n)));
+  {
+    const hero = unit(s, 'hero');
+    teach(hero, defineArt({ taunt: 2, target: 'self', range: 0 }));
+    check('a fielded hero learns an art with 挑釁: it is shown', shown().includes('挑釁'));
+    hero.learned.pop();
+    hero.slots[1] = null;
+    const barbs = Object.keys(G.ITEMS).find((id) => G.ITEMS[id].barbs);
+    s.stock[barbs] = 1;
+    check('an item with 反震 in the stores: shown', shown().includes('反震'));
+    s.stock[barbs] = 0;
+    check('…none left: not shown', !shown().includes('反震'));
+    const foe = unit(s, 'scout');
+    BM.applyCondition(s, foe, { kind: 'wound', power: 3, turns: 2 }, hero);
+    check('a state on a piece (內傷 on an enemy): shown while it lasts', shown().includes('內傷'));
+    delete foe.conditions.wound;
+    check('…gone with it', !shown().includes('內傷'));
+    BM.applyCondition(s, foe, { kind: 'unguarded', power: 1, turns: 1 }, foe);
+    check('a price on a piece is 代價', shown().includes('代價'));
+    delete foe.conditions.unguarded;
+  }
+  {
+    // Reinforcements come as a surprise: 援軍 only once they are announced or on the board.
+    const r = board(['hero', 'medic', 'guard']);
+    G.scheduleWaves(r);
+    const due = Math.min(...Object.values(r.arrivals));
+    r.round = due - 2;
+    const early = W.carriedWords(r).has('waves');
+    r.round = due - 1;
+    check('援軍: not before the wave is announced, shown once it is', due >= 3 && !early && W.carriedWords(r).has('waves'), due);
+  }
+  {
+    const page = P.helpPage('', s),
+      off = P.helpPage('');
+    check(
+      'the guide in battle opens on 基本規則, then 本局所見; 其餘規則 is one tap away',
+      /^[^]*?<details class="hud-disclosure" open><summary>[^<]*<svg[^]*?基本規則/.test(page) &&
+        page.indexOf('本局所見') > page.indexOf('基本規則') &&
+        page.indexOf('其餘規則') > page.indexOf('本局所見') &&
+        (page.match(/ open>/g) || []).length === 1
+    );
+    check('outside a battle the guide has no 本局所見', !off.includes('本局所見') && off.includes('其餘規則'));
+  }
+  const steps = TUTORIAL_TEXT.steps;
+  check(
+    'the tutorial names the first tier where it shows: 還擊, 待命, 勝負 and 領隊陣法, and sends the player to 基本規則',
+    steps.preview.includes('還擊') && steps.turn.includes('待命') && steps.goal.includes('勝負') && steps.goal.includes('領隊陣法') && steps.guide.includes('基本規則')
+  );
+}
+
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
 process.exit(failures ? 1 : 0);
