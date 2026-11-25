@@ -30,7 +30,7 @@ const NEW_HEROES = {
     skillIcon: 'hand',
     skillRange: 1,
     cost: 10,
-    skillDesc: '伏身蓄勁，向相鄰敵人猛推一掌。',
+    skillDesc: '義父所傳的入門蛤蟆功：伏身蓄勁，向相鄰敵人猛推一掌。',
     voice: '我等過十六年，再等十局也等得起。走罷。'
   },
   zhang: {

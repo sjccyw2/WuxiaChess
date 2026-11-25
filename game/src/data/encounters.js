@@ -227,7 +227,9 @@ const ENCOUNTERS = [
       '白駝山',
       '射鵰英雄傳',
       '靈蛇杖法',
-      '蛤蟆功',
+      // His own, decades in the making, a tier above the beginner's form 楊過 learned from him
+      // (the producer, 2026-11-25): named apart, drawn larger, the strongest villain blow.
+      '蛤蟆功（大成）',
       'sweep',
       'guo',
       '西毒贏到了天下第一，卻忘了自己是誰，所以分不出哪個念頭是自己的。他伏在陣心蓄勢；石陣能分開蛇群，緊挨的同伴卻容易被掌風一併震傷。',
@@ -797,7 +799,7 @@ const VILLAIN_FORMS = {
   血刀連斬: [1.18, 'foxTwinChange'],
   寒冰真氣: [1.15, 'lesserMarsh'],
   大嵩陽神掌: [1.22, 'vacantFist'],
-  蛤蟆功: [1.4, 'toadLunge'],
+  '蛤蟆功（大成）': [1.4, 'toadLunge'],
   靈蛇拳法: [1.12, 'beggarBind'],
   龍象般若功: [1.3, 'flyingDragon'],
   狂風迅雷功: [1.14, 'foxFeint'],

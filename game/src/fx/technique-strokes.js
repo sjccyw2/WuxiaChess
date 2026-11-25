@@ -172,7 +172,7 @@ const RECIPES = {
   // No hero art uses the strokes below any more; villain signatures still borrow them (VILLAIN_FORMS).
   breakPalm: ['破掌式','bronze','thrust','brokenPalm','snap','薄刃從掌影的指縫穿過。'],
   vacantFist: ['空明拳','jade','coil','vacantFist','glide','虛圈留出拳眼，輕拳從圈內探出。'],
-  toadLunge: ['蛤蟆功','bronze','leap','toadLeap','heavy','伏地蟾影伸展雙腿，貼著低弧彈起。'],
+  toadLunge: ['蛤蟆功（大成）','bronze','leap','toadLeap','heavy','數十年蟾勁一鼓而發，伏地躍起，掌風貼地捲出。'],
   northernSea: ['北冥神功','sea','return','seaFunnel','return','墨藍水渦逐層內收，一束內息流回掌心。'],
   universeCanopy: ['乾坤大挪移・借力回護','jade','lattice','heavenCanopy','echo','飛簷形的護氣展作華蓋，垂穗護住蓋下眾人。'],
   foxTwinChange: ['胡家刀法・一刀兩變','frost','draw','foxMask','echo','兩次反向刀彎交出雪狐的耳尖與雙眼。']

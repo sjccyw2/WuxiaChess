@@ -16,7 +16,7 @@ const FR = await load('rules/form-rules.js');
 const FM = await load('rules/ferry-market.js');
 const { TECHNIQUES, MANUAL_PRICES } = await load('data/martial-arts.js');
 const { HERO_PATHS } = await load('data/mastery-catalog.js');
-const { ENCOUNTERS, RANKS, STATUS_POWER, GUEST_GISTS } = await load('data/encounters.js');
+const { ENCOUNTERS, RANKS, STATUS_POWER, GUEST_GISTS, VILLAIN_FORMS } = await load('data/encounters.js');
 const { mapLayout } = await load('data/terrain.js');
 const { MAZE_TALE } = await load('data/maze-tale.js');
 const { dangerTiles } = await load('actors/danger.js');
@@ -6508,6 +6508,16 @@ section('rule words, step 4: the teaching tiers');
     'the tutorial names the first tier where it shows: 還擊, 待命, 勝負 and 領隊陣法, and sends the player to 基本規則',
     steps.preview.includes('還擊') && steps.turn.includes('待命') && steps.goal.includes('勝負') && steps.goal.includes('領隊陣法') && steps.guide.includes('基本規則')
   );
+}
+
+section('蛤蟆功: 歐陽鋒’s a tier above 楊過’s');
+{
+  // The producer, 2026-11-25: he studied it for decades; 楊過 learned the beginner's form from him.
+  const ou = Object.values(G.DETAILS).find((d) => d.name === '歐陽鋒');
+  const s = board(['yang', 'medic', 'guard']);
+  const yang = G.artFor(unit(s, 'yang'), 'signature');
+  check('歐陽鋒’s is named 蛤蟆功（大成）, 楊過’s is the beginner’s', ou.skill === '蛤蟆功（大成）' && G.DETAILS.yang.skill === '蛤蟆功' && G.DETAILS.yang.skillDesc.startsWith('義父所傳的入門'));
+  check('…and his hits harder: the strongest villain blow, above 楊過’s', VILLAIN_FORMS['蛤蟆功（大成）'][0] > yang.factor && Object.values(VILLAIN_FORMS).every(([f]) => f <= VILLAIN_FORMS['蛤蟆功（大成）'][0]));
 }
 
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');
