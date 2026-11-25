@@ -26,10 +26,18 @@
 //   lastStand  { below, cut }: 沉樁, at or below that share of its 氣血 it takes less from blows
 //   snare    { power, turns }: 墜網, its plain blow leaves the hero 絆足
 //   unfelled 不敗: no blow, counter or poison brings its 氣血 below 1 (求敗, on the last board)
-//   withdraw { below }: 退守, at or below that share of its 氣血 it falls back among its own
 //   formless 無招: no 破招 answers it, whatever it holds
-//   stages   [{ name, colour }]: 五劍, its 氣血 shown as that many bars, each an equal share of
-//            the whole, one after another (求敗; game.js stageOf reads them)
+//   stages   [{ name, colour, ... }]: 五劍, its 氣血 in that many bars, each an equal share of
+//            the whole, fought one after another (求敗; game.js stageOf). What a stage does:
+//              twice  his strikes (and counters) land twice, the second at that share
+//              reach  his reach; pull: each blow drags the hero to a free tile beside him (true)
+//                     or that many tiles nearer him (a number)
+//              step   his step, set; round: every blow strikes each hero beside him at that
+//                     share, and shove pushes them a tile back; pierce: no 代受, no 固守
+//              turns  actions a round; unheld: conditions that do nothing to him; cut: the
+//                     percent taken off every blow on him
+//              blink  before he acts, to 無名's side; solo: only that hero's blows hurt him
+//              guarded  the masters with him guard him (代受) and keep to his side
 // A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
 // without traits plays exactly as before the redesign. `phase.say` is a line the piece speaks as it
 // changes, logged after `phase.log`.
@@ -881,27 +889,34 @@ const VILLAINS = {
         sig: { reach: 2, sweep: 0.5, cadence: 3 },
         unfelled: true,
         formless: true,
-        // 五劍 (the producer, 2026-11-25): his 氣血 in five bars named after the swords of his
-        // tomb, each a fifth of it. Only the gauge shows them so far; how each fights is still
-        // to be designed, and will hang on these. The colours heat as the danger rises, from cold
+        // 五劍 (the producer, 2026-11-25): he fights in five stages named after the swords of his
+        // tomb, each a fifth of his 氣血 and harder than the last (game.js stageOf; what each
+        // field does is in the header above). The colours heat as the danger rises, from cold
         // steel through violet to a hot rose, and keep clear of the heroes' jade, the enemies'
         // vermilion, the amber of a low bar and the blue of 內力; each bar names its sword too.
         stages: [
-          { name: '利劍', colour: '#c4d0de' },
-          { name: '軟劍', colour: '#8c9dff' },
-          { name: '重劍', colour: '#9b4dff' },
-          { name: '木劍', colour: '#e040c8' },
-          { name: '無劍', colour: '#ff3a7c' }
+          { name: '利劍', colour: '#c4d0de', twice: 0.3 },
+          { name: '軟劍', colour: '#8c9dff', reach: 3, pull: true },
+          { name: '重劍', colour: '#9b4dff', step: 1, round: 0.3, shove: true, pierce: true },
+          {
+            name: '木劍',
+            colour: '#e040c8',
+            turns: 2,
+            step: 0,
+            unheld: ['freeze', 'mute', 'daze', 'seal', 'disarm', 'charm'],
+            cut: 20,
+            guarded: true
+          },
+          { name: '無劍', colour: '#ff3a7c', blink: true, solo: 'youth', guarded: true }
         ],
-        withdraw: { below: 0.25 },
         prefers: 'leader',
         post: { tile: 'spawn', tether: 0, wake: true, note: '立在天元{tile}；有俠客踏入攻擊範圍或受到攻擊後，才離位。' },
+        // (His step is the stage's from 重劍 on, so his 變招 at half, in 重劍, adds to his blow alone.)
         phase: {
           atk: 4,
-          step: 1,
-          log: '求敗枯枝一振，劍勢陡盛：攻擊增加 4，移動增加 1。',
+          log: '求敗枯枝一振，劍勢陡盛：攻擊增加 4。',
           say: MAZE_TALE.finale.half,
-          note: '攻擊 ＋4、移動 ＋1。'
+          note: '攻擊 ＋4。'
         }
       })
   }
@@ -1068,7 +1083,7 @@ const GISTS = {
   ironPalm: '氣血不過半時，受到的傷害減半。',
   xiaGuard: '目標身旁另有黑子時，出手更重。',
   heiMuGuard: '身旁沒有同夥時，出手更重。',
-  qiubai: '立在天元，有人近身或打他才離位；專挑領隊；氣血不會低於 1，任何破招對他都不成。氣血過半，兩位局主趕到他身旁，此後身旁的局主替他受招；只剩四分之一，再來三位，他退到眾人身後。'
+  qiubai: '立在天元，有人近身或打他才離位；專挑領隊；氣血不會低於 1，任何破招對他都不成。五段五劍，一段比一段難纏；換作木劍，兩位局主趕到他身旁，此後身旁的局主替他受招；換作無劍，再來三位，唯無名傷得了他。'
 };
 // The same for a board's master as a guest on the last board, where he keeps no post, has no men
 // of his own and does not change at half: only what he still does there. A master with no entry

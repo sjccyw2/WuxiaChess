@@ -791,8 +791,7 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     '</div><div class="brief-text">' +
     // (On the last board, what 無名 gains stands on a line of its own under the progress.)
     sect('brief-win', '勝利', p(model.win) + progress + p(model.boon, 'brief-small')) +
-    // (On the last board, whom they all go for, under 敗退: read before 進入整備.)
-    sect('brief-loss', '敗退', p(model.loss) + p(model.hunt, 'brief-hunt')) +
+    sect('brief-loss', '敗退', p(model.loss)) +
     (model.noSide ? '' : sect('brief-side', '支線', side)) +
     (model.recruit ? sect('brief-recruit', '入局', p(model.recruit)) : '') +
     '</div></div>' +

@@ -19,6 +19,7 @@ const { HERO_PATHS } = await load('data/mastery-catalog.js');
 const { ENCOUNTERS, RANKS, STATUS_POWER, GUEST_GISTS } = await load('data/encounters.js');
 const { mapLayout } = await load('data/terrain.js');
 const { MAZE_TALE } = await load('data/maze-tale.js');
+const { RULE_TERMS } = await load('data/rule-terms.js');
 const { dangerTiles } = await load('actors/danger.js');
 const P = await load('ui/panels.js');
 const { seatsFor } = await load('rules/formation.js');
@@ -4278,7 +4279,7 @@ section('battle data');
     check('map ' + map + ': every piece’s tile is walkable, reachable, and no post, spawn or lamp', allPieces(b).every((p) => tileOk(p.at)), JSON.stringify(allPieces(b).filter((p) => !tileOk(p.at)).map((p) => p.id)));
     check('map ' + map + ': starting pieces have tiles of their own; entry tiles miss them', new Set(starts).size === starts.length && b.waves.every((w) => w.pieces.every((p) => !starts.includes(k(p.at)))));
     check('map ' + map + ': entry tiles are distinct in their wave, with two walkable tiles within two', b.waves.every((w) => new Set(w.pieces.map((p) => k(p.at))).size === w.pieces.length && w.pieces.every((p) => layout.cells.filter((c) => G.walkable(c.x, c.y, map) && G.distance(c, at2(p.at)) >= 1 && G.distance(c, at2(p.at)) <= 2).length >= 2)));
-    check('map ' + map + ': round waves come in rounds 2 to 11; half-health waves name masters; the last board’s wait on a share of its master’s 氣血', b.waves.every((w) => (w.when.round ? w.when.round >= 2 && w.when.round <= G.LIMIT - 1 : w.when.below ? !!b.last && w.when.below > 0 && w.when.below < 1 : w.when.halved.every((ref) => b.masters.includes(ref)))));
+    check('map ' + map + ': round waves come in rounds 2 to 11; half-health waves name masters; the last board’s wait on a stage of its master’s 五劍', b.waves.every((w) => (w.when.round ? w.when.round >= 2 && w.when.round <= G.LIMIT - 1 : w.when.stage != null ? !!b.last && w.when.stage > 0 && w.when.stage < G.DETAILS[b.commander].traits.stages.length : w.when.halved.every((ref) => b.masters.includes(ref)))));
     check('map ' + map + ': ids are unique and none is a hero’s or a fixed piece’s', new Set([...ids, ...b.waves.map((w) => 'wave:' + w.id)]).size === ids.length + b.waves.length && ids.every((id) => !G.PARTY.includes(id) && !fixedIds.includes(id)));
     check('map ' + map + ': every piece is described, with a stage row, and a gist if it has traits', ids.every((id) => {
       const d = G.DETAILS[id.split('#')[0]];
@@ -5587,7 +5588,7 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   check('a test of it has the heroes at the level a run brings them to it', G.party(s).every((u) => u.level === R.DEV_TEST.lastLevel));
   check('it is played in 無劍境界 as the eleventh board, 無名 leading from the middle tile', s.run.realm === 5 && s.run.stage === R.LAST_STAGE && s.mapIndex === G.LAST_MAP && s.leader === 'youth' && youth.x === 6 && youth.y === 11);
   check('求敗 at 天元 and the first five masters of the run, on the guest row', qiu.x === 6 && qiu.y === 6 && same(G.enemies(s).map((u) => u.id), ['qiubai', ...s.run.route.slice(0, 5).map((m) => G.refId(m, 'master'))]) && G.enemies(s).slice(1).every((u) => u.guest));
-  check('the other five wait on 求敗’s 氣血: two at half, three at a quarter, in the order the run met them', same(G.boardOf(s).waves.flatMap((w) => w.pieces.map((p) => p.id)), s.run.route.slice(5).map((m) => G.refId(m, 'master'))) && same(G.boardOf(s).waves.map((w) => [w.when.below, w.pieces.length]), [[0.5, 2], [0.25, 3]]));
+  check('the other five wait on 求敗’s swords: two at 木劍, three at 無劍, in the order the run met them', same(G.boardOf(s).waves.flatMap((w) => w.pieces.map((p) => p.id)), s.run.route.slice(5).map((m) => G.refId(m, 'master'))) && same(G.boardOf(s).waves.map((w) => [G.DETAILS.qiubai.traits.stages[w.when.stage].name, w.pieces.length]), [['木劍', 2], ['無劍', 3]]));
   check('the last board has no secondary, in the run or on its pages', s.run.side === null && R.briefing(s).noSide && R.briefing(s).side === null && !R.sideDone(s));
   check('a different run casts different guests', !same(G.castBoard(G.LAST_MAP, [0, 2, 1, 4, 3, 6, 5, 7, 8, 9]).pieces.map((p) => p.id), G.castBoard(G.LAST_MAP).pieces.map((p) => p.id)));
   check('its numbers are its own, whatever the 境界', same(G.stageRows(G.LAST_MAP, 10, 1), G.stageRows(G.LAST_MAP, 10, 5)) && qiu.maxHp === G.stageRows(G.LAST_MAP, 10).master[0]);
@@ -5601,8 +5602,11 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   check('each of the ten masters has a line for the briefing as a guest', s.run.route.every((m) => !!GUEST_GISTS[G.refId(m, 'master')]) && R.briefing(s).foes.slice(1).every((f) => f.gist === GUEST_GISTS[f.key] && !/橋|琴臺|弟子|索樁|半血/.test(f.gist)));
   check('a guest keeps his mods and loses his post', !G.traitsOf(chief).post && !!G.unitDetails(chief).traits.post === !!G.DETAILS[chief.id].traits.post && chief.maxHp === Math.round(G.stageRows(G.LAST_MAP, 10).guest[0] * (G.DETAILS[chief.id].traits.mods?.hp ?? 1)));
   check('the briefing: 問劍, its win and its loss', R.briefing(s).kindName === '問劍' && R.briefing(s).win.startsWith('問劍 · ') && R.briefing(s).win.includes('削至 1 點') && R.briefing(s).loss.startsWith('無名倒下') && R.briefing(s).heading.startsWith('終局'));
+  // The producer, 2026-11-25: the winning condition in simple terms, and the one thing more a player
+  // must know to win; nothing else under 勝利 and 敗退 (no line on whom they go for).
+  check('the briefing says how it is won and lost, plainly', R.briefing(s).win === '問劍 · 在第十二回合結束前將求敗的氣血削至 1 點；最後一段只有無名傷得了他。' && R.briefing(s).loss === '無名倒下，或第十二回合結束仍未取勝。' && !('hunt' in R.briefing(s)), R.briefing(s).win + ' / ' + R.briefing(s).loss);
   check('ten masters and 求敗 in the briefing, the later five marked as coming', R.briefing(s).foes.length === 11 && R.briefing(s).foes[0].rank === '對弈' && R.briefing(s).foes.filter((f) => f.note).length === 5);
-  check('a wave of masters is named man by man, and by the share of 求敗’s 氣血 it waits on', /^求敗氣血只剩一半時，.+、.+趕到他身旁。$/.test(R.briefing(s).waves[0].line) && /^求敗氣血只剩四分之一時，.+、.+、.+趕到他身旁。$/.test(R.briefing(s).waves[1].line) && !R.briefing(s).waves[0].line.includes('率'));
+  check('a wave of masters is named man by man, and by the sword of 求敗’s it waits on', /^求敗換作木劍時，.+、.+趕到他身旁。$/.test(R.briefing(s).waves[0].line) && /^求敗換作無劍時，.+、.+、.+趕到他身旁。$/.test(R.briefing(s).waves[1].line) && !R.briefing(s).waves[0].line.includes('率'));
 
   // 不敗
   put(s, 'youth', 6, 8);
@@ -5692,51 +5696,147 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   hq.hp = Math.floor(hq.maxHp / 2);
   G.check(h);
   check('求敗 at half: his 變招, and what he says', hq.phased && hq.atk === atk + 4 && logged(h, MAZE_TALE.finale.half, '求敗'));
-  // 護駕: those who come to his side as his 氣血 falls, who guards him, and where he falls back to
+  // 五劍: his five stages, each a fifth of his 氣血, and what each does (the producer, 2026-11-25).
+  // `at(q, i)` is the 氣血 at the top of stage i, where its bar is full.
+  const at = (q, i) => q.maxHp - (q.maxHp * i) / 5;
+  {
+    const e = last(),
+      q = unit(e, 'qiubai');
+    check('五劍: five stages, a fifth each; a bar is empty at 80%, 60%, 40% and 20%', [0, 1, 2, 3, 4].every((i) => G.stageOf(q, at(q, i)).index === i && G.stageOf(q, at(q, i) + 1).index === Math.max(0, i - 1)) && G.stageOf(q, 1).index === 4 && !G.stageOf(unit(e, 'youth')));
+    check('五劍: the guide’s words for every stage are the rule’s own', [0, 1, 2, 3, 4].every((i) => RULE_TERMS.stages.text.includes(G.stageOf(q, at(q, i)).name + '：' + G.stageNote(G.stageOf(q, at(q, i))))));
+    check('退守 is gone: in no stage does he fall back', !G.traitsOf(q).withdraw && [1, 2, 3, 4].every((i) => {
+      q.hp = at(q, i);
+      q.woke = true;
+      return G.standCells(e, q).length === G.walkCells(e, q).length; // every tile he can walk to
+    }));
+  }
+  {
+    // 利劍: his blow lands twice, the second at the stage's share; so does his counter.
+    const e = last(),
+      q = unit(e, 'qiubai'),
+      y = put(e, 'youth', 6, 7);
+    q.woke = true;
+    const f = G.forecast(y, q, false, e);
+    check('利劍: the forecast shows his counter twice', f.counterHits?.length === 2 && f.counterRaw === f.counterHits[0] + f.counterHits[1] && f.notes.some((n) => n.startsWith('利劍 · 還擊連出兩下')), JSON.stringify(f.counterHits));
+    e.phase = 'enemy';
+    const was = y.hp,
+      fx = G.enemyAct(e, q);
+    const mine = fx.filter(([id]) => id === 'youth');
+    check('利劍: his blow on 無名 lands twice', mine.length >= 2 && was - y.hp === mine.slice(0, 2).reduce((n, [, v]) => n + Number(v.slice(1)), 0) && e.logs.some((l) => l.who === '求敗' && l.text.includes('利劍連出兩下')), JSON.stringify(fx));
+  }
+  {
+    // 軟劍: reach three, and the hero struck is pulled to his side.
+    const e = last(),
+      q = unit(e, 'qiubai'),
+      y = put(e, 'youth', 6, 10);
+    q.hp = at(q, 1);
+    q.woke = true;
+    q.conditions = { pin: { power: 2, turns: 1, through: e.round } }; // one step only
+    check('軟劍: his reach is three', G.reach(e, q) === 3 && G.strikeReach(e, q) >= 3);
+    e.phase = 'enemy';
+    G.enemyAct(e, q);
+    check('軟劍: struck from three tiles off, 無名 is pulled to the free tile beside him', q.x === 6 && q.y === 7 && y.x === 6 && y.y === 8 && e.logs.some((l) => l.who === '無名' && l.text === '軟劍一捲，給扯到求敗身前。'), [q.x, q.y, y.x, y.y].join());
+  }
+  {
+    // 重劍: one step; every blow strikes each hero beside him and throws them back; no 代受, no 固守.
+    const e = last(),
+      q = unit(e, 'qiubai');
+    q.hp = at(q, 2);
+    q.woke = true;
+    const y = put(e, 'youth', 6, 7),
+      h = put(e, 'hero', 5, 6),
+      g = put(e, 'guo', 5, 7);
+    g.conditions = { cover: { power: 1, turns: 1, through: e.round } }; // 郭靖 covers 無名 beside him
+    y.conditions = {};
+    const bare = G.damage(q, y, false, e.mapIndex, e);
+    y.conditions = { fortify: { power: 30, turns: 1, through: e.round } };
+    check('重劍: one step, and 固守 does not count against his blow', G.stat(q, 'step', e) === 1 && G.damage(q, y, false, e.mapIndex, e) === bare);
+    const hp = { y: y.hp, h: h.hp, g: g.hp };
+    e.phase = 'enemy';
+    G.enemyAct(e, q);
+    check('重劍: the blow lands on 無名 through 郭靖’s 代受', y.hp < hp.y && g.hp === hp.g, [y.hp, hp.y, g.hp, hp.g].join());
+    check('重劍: 令狐冲 beside him is swept too', h.hp < hp.h && e.logs.some((l) => l.who === '令狐冲' && l.text.startsWith('被重劍的劍勢掃中')));
+    check('重劍: and both are thrown a tile back from him', y.x === 6 && y.y === 8 && h.x === 4 && h.y === 6, [q.x, q.y, y.x, y.y, h.x, h.y].join());
+  }
+  {
+    // 木劍: two actions a round; nothing holds him; every blow on him is cut.
+    const e = last(),
+      q = unit(e, 'qiubai'),
+      y = put(e, 'youth', 6, 8);
+    q.woke = true;
+    q.hp = at(q, 3) + 1; // 重劍, for the blow to compare
+    const plain = G.forecast(y, q, false, e).amount;
+    q.hp = at(q, 3);
+    const cut = G.forecast(y, q, false, e);
+    check('木劍: every blow on him is cut by the stage’s share', cut.amount === Math.round((plain * (100 - G.stageOf(q).cut)) / 100) && cut.notes.some((n) => n.startsWith('木劍 · 所受傷害')), [plain, cut.amount].join());
+    const freeze = defineArt({ freeze: { turns: 1 }, mute: { turns: 1 }, mp: 2, factor: 0.2 });
+    const held = G.forecast(y, q, true, e, TECHNIQUES[freeze]);
+    check('木劍: 定身 and 閉穴 do nothing to him, and the forecast says so', !held.effects.some((x) => ['freeze', 'mute', 'daze'].includes(x.kind)) && held.notes.some((n) => n.startsWith('木劍 · ') && n.endsWith('皆不受')) && !held.notes.some((n) => n.startsWith('定身 · ') || n.startsWith('閉穴 · ')), JSON.stringify(held.notes));
+    q.conditions = { freeze: { power: 1, turns: 1, through: e.round + 1 }, daze: { power: 1, turns: 1, through: e.round + 1 }, weak: { power: 2, turns: 1, through: e.round + 1 } };
+    G.check(e);
+    check('木劍: whatever held him comes off as he takes it up (what is no hold stays)', !q.conditions.freeze && !q.conditions.daze && !!q.conditions.weak);
+    e.phase = 'enemy';
+    G.enemyAct(e, q);
+    check('木劍: he stands his ground', G.stat(q, 'step', e) === G.stageOf(q).step);
+    check('木劍: after his first action he acts again', !q.acted && q.againRound === e.round && e.logs.some((l) => l.who === '求敗' && l.text === '木劍在手，再走一手。'));
+    G.enemyAct(e, q);
+    check('木劍: and then he is done for the round', q.acted && G.enemyAct(e, q).length === 0);
+  }
+  {
+    // 無劍: at 無名's side before he acts; only 無名's blows touch him; no one takes them for him.
+    const e = last(),
+      q = unit(e, 'qiubai'),
+      y = put(e, 'youth', 6, 10),
+      h = put(e, 'hero', 6, 7);
+    q.woke = true;
+    q.hp = at(q, 4);
+    const other = G.forecast(h, q, false, e);
+    check('無劍: another hero’s blow is forecast to take nothing, and says why', other.amount === 0 && other.solo && other.notes.some((n) => n.startsWith('無劍 · 唯無名傷得了他')));
+    check('無劍: and takes nothing, by splash, counter or poison alike', G.wound(e, q, 100, h) === 0 && q.hp === at(q, 4));
+    e.phase = 'enemy';
+    G.enemyAct(e, q);
+    check('無劍: before he acts he is beside 無名, and the page says so once', G.distance(q, y) === 1 && q.blinkRound === e.round && logged(e, MAZE_TALE.finale.blink) && e.logs.some((l) => l.who === '求敗' && l.text === '身形一晃，已到了無名身旁。'), [q.x, q.y].join());
+    e.phase = 'ally';
+    // (the last three masters have come to his side with 無劍, as the board checked his blow)
+    const guest = G.coverer(e, q);
+    const duel = G.forecast(y, q, false, e);
+    check('無劍: a master beside him guards him from the others, never from 無名 (a duel)', !!guest?.guest && !duel.coveredBy && duel.amount > 0 && G.forecast(h, q, false, e).coveredBy === guest.id);
+    const before = q.hp;
+    G.wound(e, q, 50, y);
+    check('無劍: 無名’s blow brings the last bar down', q.hp === before - 50);
+  }
+  // 護駕: those who come to his side as he takes up 木劍 and 無劍, and who guards him
   const w = last();
   const wq = unit(w, 'qiubai'),
     later = G.boardOf(w).waves.map((wave) => wave.pieces.map((p) => p.id)),
     beside = (state, ids, m) => ids.every((id) => unit(state, id) && G.distance(unit(state, id), m) <= 2);
   check('no round brings the rest: nothing is announced, nothing scheduled', !Object.keys(w.arrivals || {}).length && !G.announcedWaves(w).length && !logged(w, MAZE_TALE.clack));
-  check('above half no master takes a blow for him', !G.coverer(w, wq));
-  wq.hp = Math.floor(wq.maxHp / 2) + 1;
+  check('before 木劍 no master takes a blow for him', !G.coverer(w, wq));
+  wq.hp = at(wq, 3) + 1;
   G.check(w);
-  check('above half no one comes', later.flat().every((id) => !unit(w, id)));
-  wq.hp = Math.floor(wq.maxHp / 2);
+  check('in 重劍 no one comes, even below half', later.flat().every((id) => !unit(w, id)) && wq.hp < wq.maxHp / 2);
+  wq.hp = at(wq, 3);
   G.check(w);
-  check('at half two masters step to his side at once, unacted, and say their own board’s line', later[0].every((id) => unit(w, id) && !unit(w, id).acted && unit(w, id).hp === unit(w, id).maxHp && logged(w, G.guestLine(id), G.DETAILS[id].name)) && beside(w, later[0], wq) && later[1].every((id) => !unit(w, id)) && logged(w, MAZE_TALE.finale.rally), later[0].join());
-  check('from half on a master beside him takes the heroes’ blows for him', !!G.coverer(w, wq)?.guest && G.distance(G.coverer(w, wq), wq) === 1);
+  check('at 木劍 two masters step to his side at once, unacted, and say their own board’s line', later[0].every((id) => unit(w, id) && !unit(w, id).acted && unit(w, id).hp === unit(w, id).maxHp && logged(w, G.guestLine(id), G.DETAILS[id].name)) && beside(w, later[0], wq) && later[1].every((id) => !unit(w, id)) && logged(w, MAZE_TALE.finale.rally), later[0].join());
+  check('from 木劍 on a master beside him takes the heroes’ blows for him', !!G.coverer(w, wq)?.guest && G.distance(G.coverer(w, wq), wq) === 1);
   G.check(w);
   check('they come once', G.enemies(w).filter((u) => later[0].includes(u.id)).length === 2 && G.enemies(w).length === 8);
-  wq.woke = true; // he has been struck: his post at 天元 no longer holds him
-  check('he does not fall back yet', G.standCells(w, wq).length > 1);
-  wq.hp = Math.floor(wq.maxHp / 4);
+  wq.hp = at(wq, 4);
   G.check(w);
-  check('at a quarter the last three come: all ten masters are on the board', later[1].every((id) => unit(w, id) && logged(w, G.guestLine(id), G.DETAILS[id].name)) && beside(w, later[1], wq) && G.enemies(w).filter((u) => u.guest).length === 10);
+  check('at 無劍 the last three come: all ten masters are on the board', later[1].every((id) => unit(w, id) && logged(w, G.guestLine(id), G.DETAILS[id].name)) && beside(w, later[1], wq) && G.enemies(w).filter((u) => u.guest).length === 10);
   {
-    // 退守: his one tile is the reachable one farthest from the heroes with most of his own beside it.
-    const cells = G.standCells(w, wq),
-      heroes = G.party(w).filter(G.living),
-      own = G.enemies(w).filter((u) => u !== wq && G.living(u)),
-      worth = (c) => Math.min(4, ...heroes.map((h) => G.distance(c, h))) + 2 * Math.min(2, own.filter((v) => G.distance(c, v) === 1).length);
-    check('at a quarter he falls back: one tile, none better within his walk', cells.length === 1 && G.walkCells(w, wq).every((c) => worth(c) <= worth(cells[0])));
-    w.phase = 'enemy';
-    G.enemyAct(w, wq);
-    check('and the page says so, once', logged(w, MAZE_TALE.finale.withdraw) && wq.withdrew && wq.x === cells[0].x && wq.y === cells[0].y);
-  }
-  {
-    // A blow from above half to his last point ends the board: no one comes.
+    // A blow from 利劍 to his last point ends the board: no one comes.
     const e = last(),
       eq = unit(e, 'qiubai');
     eq.hp = 1;
     G.check(e);
     check('brought straight to 1 氣血, the board is over and no one comes', e.result === 'win' && G.enemies(e).length === 6);
-    // Both shares crossed by one blow: all five come together.
+    // Both stages crossed by one blow: all five come together.
     const b = last(),
       bq = unit(b, 'qiubai');
     bq.hp = Math.floor(bq.maxHp / 5);
     G.check(b);
-    check('both shares crossed at once: all five come together', G.enemies(b).filter((u) => u.guest).length === 10);
+    check('both stages crossed at once: all five come together', G.enemies(b).filter((u) => u.guest).length === 10);
     check('a save made with them on the board loads', !!R.restoreRun(copy(b)));
   }
   {

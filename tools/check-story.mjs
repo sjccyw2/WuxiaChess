@@ -69,7 +69,7 @@ for (const part of ['again', 'invite', 'before', 'after', 'lost']) {
     if (!line.text || ![undefined, 'qiu', 'youth', 'wei'].includes(line.who)) fail('the last board, ' + part + ': a line has no speaker or no text');
 }
 if (!finaleTale.lost.some((line) => !line.who && line.text.includes('請回吧'))) fail('a lost last board does not end with 請回吧');
-for (const key of ['rally', 'withdraw', 'half', 'muster', 'missed', 'epilogue', 'name']) if (!finaleTale[key]) fail('the last board has no ' + key);
+for (const key of ['rally', 'blink', 'half', 'muster', 'missed', 'epilogue', 'name']) if (!finaleTale[key]) fail('the last board has no ' + key);
 for (const key of ['title', 'text', 'joins', 'draw']) if (!finaleTale.plus?.[key]) fail('new game plus has no ' + key);
 if (!finaleTale.ending?.length || finaleTale.ending.some((line) => !line.note && !line.text)) fail('the ending has a line with no words');
 // What the producer fixed for the ending: 求敗 thanks the youth, knows him in one line, and leaves.

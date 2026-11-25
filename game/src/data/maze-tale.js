@@ -329,8 +329,8 @@ const MAZE_TALE = {
   //   invite   after the close: he keeps every stone one board longer, sets the run's ten masters
   //            down with no 戰意 on them, and sends the youth onto the board with a sword
   //   before   on the board, before the first move
-  //   rally    more of the ten masters step to 求敗's side (at half his 氣血, and at a quarter)
-  //   withdraw 求敗 falls back among them (a quarter of his 氣血 left)
+  //   rally    more of the ten masters step to 求敗's side (as he takes up 木劍, and 無劍)
+  //   blink    the first time, in 無劍, that 求敗 is at the youth's side before he acts
   //   half     求敗 at half his 氣血 (his 變招)
   //   after    the board won, before the film
   //   lost     the youth fell, or the twelve rounds ran out
@@ -381,7 +381,7 @@ const MAZE_TALE = {
     // Later black stones walk on by themselves: no stone is set down, so there is no 「嗒」. They
     // come the moment 求敗 is hard pressed, and stand beside him.
     rally: '盤邊幾條人影搶上棋枰，未發一言，便站到了求敗身旁。',
-    withdraw: '求敗收回枯枝，退了幾步，站到眾人身後。',
+    blink: '求敗身形一晃，盤上便不見了他；枯枝已到了少年身前。',
     half: '好劍！幾百年未見這一著。再來。',
     after: [
       { note: '求敗低下頭，看著那根垂在手中的枯枝，久久不動。', text: '……好。' },

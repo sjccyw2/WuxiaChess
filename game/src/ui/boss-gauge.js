@@ -40,7 +40,8 @@ const stageMeter = (stage, cls = '') =>
   '<span class="stage-meter ' + cls + '"><i style="width:' + (100 * stage.share).toFixed(1) + '%"></i></span>';
 
 // The enemy page's 氣血 row for a piece with stages: the stage's bar in its colour, his real
-// 氣血, and the stage by name. `label` is the row's label as the page writes it.
+// 氣血, and the stage by name; then all five and what each does, the one he is in marked, so the
+// player sees what is coming. `label` is the row's label as the page writes it.
 function stageRow(u, label) {
   const stage = G.stageOf(u);
   return (
@@ -58,7 +59,24 @@ function stageRow(u, label) {
     stageTicks(u, stage) +
     '<b>' +
     stageWords(stage) +
-    '</b></span></div>'
+    '</b></span></div>' +
+    '<ol class="stage-list" aria-label="五劍">' +
+    G.unitDetails(u)
+      .traits.stages.map(
+        (v, i) =>
+          '<li class="' +
+          (i < stage.index ? 'past' : i === stage.index ? 'now' : '') +
+          '" style="--c:' +
+          v.colour +
+          '"><b>' +
+          v.name +
+          (i === stage.index ? '<small>眼下</small>' : i < stage.index ? '<small>已過</small>' : '') +
+          '</b><span>' +
+          G.stageNote(v) +
+          '。</span></li>'
+      )
+      .join('') +
+    '</ol>'
   );
 }
 

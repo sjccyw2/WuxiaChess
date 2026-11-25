@@ -1309,14 +1309,19 @@ function waveLine(map, wave) {
   const list = G.waveList(wave.pieces);
   if (wave.when.round)
     return '第' + NUMERALS[wave.when.round - 1] + '回合，' + list + '自' + wave.place + '入場。';
-  // The last board: they come to the master's side the moment his 氣血 is down to a share.
-  if (wave.when.below) {
-    const share = { 0.5: '一半', 0.25: '四分之一' }[wave.when.below] || Math.round(wave.when.below * 100) + '%';
-    const liege = G.DETAILS[BATTLES[map].commander]?.name || pieceName(map, BATTLES[map].commander);
-    return liege + '氣血只剩' + share + '時，' + list + '趕到他身旁。';
+  // The last board: they come to the master's side the moment he takes up a sword of his 五劍.
+  if (wave.when.stage != null) {
+    const liege = G.DETAILS[BATTLES[map].commander];
+    return liege.name + '換作' + liege.traits.stages[wave.when.stage].name + '時，' + list + '趕到他身旁。';
   }
   const masters = wave.when.halved.map((ref) => pieceName(map, ref)).join('或');
   return masters + '氣血首次過半，兩回合後，' + list + '自' + wave.place + '入場。';
+}
+// 問劍 (the producer, 2026-11-25: lay out the winning condition in simple terms): the one thing
+// beyond 1 氣血 a player must know to win, that only one hero can bring the last stage down.
+function soloWords(board) {
+  const solo = G.DETAILS[board.commander]?.traits?.stages?.find((v) => v.solo)?.solo;
+  return solo ? '；最後一段只有' + heroName(solo) + '傷得了他' : '；他不會倒下，其餘的人不必擊敗';
 }
 const KIND_NAMES = { slay: '斬將', rout: '殲滅', keep: '守', break: '破', yield: '問劍' };
 const SIDE_MARKS = { open: '◇', met: '✓', failed: '✕' };
@@ -1349,7 +1354,7 @@ function boardModel(map, stage, s = null, live = false, route = null) {
         : kind === 'break'
           ? within + '擊毀' + things.join('、') + '；局主不必擊敗。'
           : kind === 'yield'
-            ? within + '將' + masters.join('與') + '的氣血削至 1 點；他不會倒下，其餘的人不必擊敗。'
+            ? within + '將' + masters.join('與') + '的氣血削至 1 點' + soloWords(board) + '。'
             : within + '擊敗' + masters.join('與') + (masters.length > 1 ? '，' + COUNT_WORDS[masters.length] + '人都要擊敗' : '') + '；其餘敵人不必打完。');
   const leader = s ? heroName(r.scene === 'fight' ? s.leader : r.next[0]) : '領隊';
   // 敵情: each 局主, then each 副手; the board's own first, then the leaders of its waves.
@@ -1425,8 +1430,6 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     win,
     // The last board: what 無名 gains as he steps onto it, a line of its own under 勝利.
     boon: kind === 'yield' ? boonLine() : '',
-    // and under 敗退, whom they all go for.
-    hunt: kind === 'yield' ? huntLine(board) : '',
     loss: kind === 'keep' ? leader + '倒下，或' + things.join('、') + '被毀。' : leader + '倒下，或第十二回合結束仍未取勝。',
     // The board's objects for the plan and the page: each with its picture and what it is.
     objects: (board.objects || []).map((o) => {
@@ -1489,34 +1492,6 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     }
   }
   return model;
-}
-// 專挑, on the last board (the producer, 2026-11-25: say plainly in 軍情 that they all go for the
-// leader). What is true, read from each piece's own 偏好 as it plays there (a guest keeps his
-// preference, not his 變招's): 求敗 looks for the leader; most masters look for no one in
-// particular; and from the seventh board on every enemy looks first for a leader standing with no
-// hero beside him and no cover underfoot (game.js aimCost, `exposedLeader`).
-function huntLine(board) {
-  const eye = heroName(G.YOUTH_ID),
-    keys = [...new Set([...board.pieces, ...board.waves.flatMap((w) => w.pieces)].map((p) => p.id.split('#')[0]))];
-  const by = new Map();
-  for (const key of keys) {
-    const prefers = G.traitsOf({ id: key, guest: key !== board.commander }).prefers;
-    if (!prefers) continue;
-    if (!by.has(prefers)) by.set(prefers, []);
-    by.get(prefers).push(G.DETAILS[key].name);
-  }
-  const hunters = by.get('leader') || [];
-  by.delete('leader');
-  const others = [...by].map(([prefers, names]) => names.join('、') + G.PREFERS[prefers]);
-  const rest = keys.length - hunters.length - [...by.values()].flat().length;
-  return (
-    (hunters.length ? hunters.join('、') + '專挑領隊' + eye + '。' : '') +
-    (others.length ? others.join('；') + '。' : '') +
-    (rest ? (hunters.length || others.length ? '其餘的局主' : '局主們') + '不專挑誰，' : '') +
-    '但' +
-    eye +
-    '身旁沒有同伴、腳下也沒有掩體時，每個敵人都格外盯著他。他一倒下，這一局便輸。'
-  );
 }
 // The briefing of the board a run is on, with its drawn secondary; `live` during the fight.
 function briefing(s, { live = false } = {}) {

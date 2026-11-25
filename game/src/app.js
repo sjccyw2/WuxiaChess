@@ -29,7 +29,7 @@ import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
 import { mapLayout } from './data/terrain.js';
 import { showPhase, phaseLead } from './ui/phase-banner.js';
-import { syncBossGauge, stagedPiece, stageWords } from './ui/boss-gauge.js';
+import { syncBossGauge, stagedPiece } from './ui/boss-gauge.js';
 // The first board's tutorial: coach marks, the first time someone plays.
 import { installTutorial } from './ui/tutorial.js';
 import { installArtDetail } from './ui/art-detail.js';
@@ -247,8 +247,10 @@ const board = new BattleBoard({
         skill = mode === 'skill';
       if (target && G.targetOK(state, u, target, skill)) {
         const facts = moveFacts(state, u, skill ? u.activeArt || 'signature' : 'basic', target);
-        // 代受: the figure is for the coverer, so the tip names him.
-        const guard = !G.ally(target) && G.coverer(state, target);
+        // 代受: the figure is for the coverer, so the tip names him (the forecast says who it is:
+        // no one, for 無名's blow at 求敗 in 無劍).
+        const covered = !G.ally(target) && G.forecast(u, target, skill, state).coveredBy,
+          guard = covered && G.find(state, covered);
         t.textContent =
           uName(target) +
           (guard ? '（' + uName(guard) + '代受）' : '') +
@@ -477,7 +479,8 @@ function noteStage() {
     gone = stages.slice(was.index, now.index).map((v) => v.name).join('、');
   G.log(state, 'combat', gone + '已盡，換作' + now.name + '。', uName(u));
   seenLogs.add(state.logs[state.logs.length - 1]);
-  if (screen === 'battle' && !state.result) heldTip(uName(u) + '換劍 · ' + stageWords(now), 3600);
+  // The tip names the new stage's way of fighting, in its own plain line (G.stageNote).
+  if (screen === 'battle' && !state.result) heldTip(uName(u) + '換劍 · ' + now.name + ' · ' + G.stageNote(now), 5200);
 }
 function waveTip(text) {
   const line = text.replace(/。$/, '');
@@ -1384,6 +1387,9 @@ function strikeTip(u, effects, skill) {
   }
   const voided = voidedBy(effects);
   if (voided) lines.push(voided + ' 金剛護體，還擊無功');
+  // 無劍: a blow by anyone but 無名 lands nothing on 求敗.
+  const solo = effects.map(([id, value]) => value === '−0' && G.find(state, id)).find((t) => G.stageOf(t)?.solo && t.id !== u.id);
+  if (solo) lines.push(uName(solo) + ' ' + G.stageOf(solo).name + '在手，唯' + uName(G.find(state, G.stageOf(solo).solo)) + '傷得了他，這一擊無功');
   const art = skill ? G.artFor(u) : null,
     mend = art && G.drainOf(art) && effects.find(([id, value]) => id === u.id && value.startsWith('+'));
   if (mend) lines.push(uName(u) + ' 吸元，回復 ' + mend[1].slice(1) + ' 氣血');
@@ -1426,8 +1432,10 @@ async function runEnemy() {
     // 受制 turns it on its own side; 閉穴 lets it walk but not strike.
     const turned = !dazed && !!e.conditions?.charm,
       muted = !dazed && !turned && !!e.conditions?.mute;
-    const pulls = state.tally?.fired?.pull || 0;
+    const pulls = state.tally?.fired?.pull || 0,
+      blinks = e.blinkSerial || 0; // 無劍: 求敗 at 無名's side before he acts
     const effects = G.enemyAct(state, e);
+    if ((e.blinkSerial || 0) > blinks) mapTip(uName(e) + ' · ' + G.stageOf(e).name + '，身形一晃，已到' + uName(G.find(state, G.stageOf(e).solo)) + '身旁', 3200);
     audio(effects.length && !dazed ? 'ready' : 'move'); // footfalls and blows follow as board cues
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
@@ -1459,7 +1467,7 @@ async function runEnemy() {
     board.showEffects(effects);
     if (result(true)) return;
     await board.finished();
-    if (dragged) mapTip(uName(e) + ' · 擒拿，將' + uName(dragged) + '扯到身前', 3200);
+    if (dragged) mapTip(uName(e) + (G.stageOf(e)?.pull ? ' · ' + G.stageOf(e).name + '一捲，將' + uName(dragged) + '扯到身前' : ' · 擒拿，將' + uName(dragged) + '扯到身前'), 3200);
     await sleep(prefs.motion ? 150 : 45);
   }
 }
