@@ -419,8 +419,8 @@ class BattleBoard {
         : null;
     return pick;
   }
-  // The next tap on the same spot takes the same enemy again, not the next one: the game
-  // asked for that tap (an enemy out of reach: once more to read his page).
+  // The next tap on the same spot takes the same enemy again, not the next one: the first tap
+  // was spent on him (an enemy out of reach: once more reads his page).
   holdCycle() {
     if (this.cycle) this.cycle.hold = true;
   }

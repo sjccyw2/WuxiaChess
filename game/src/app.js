@@ -751,10 +751,11 @@ function unitClick(id) {
     return;
   }
   // A blow is ready (an art picked, or after a walk the basic strike, its reach not drawn) and
-  // this enemy is outside its reach. Opening his page at once hid the reason and read as a blow
-  // that did nothing, so the first tap says why on the board and shows the tiles the blow does
-  // reach (a hidden reach only for a moment: board.pulseReach); the same enemy tapped again is a
-  // wish to read his page. Before a walk (mode 'move') nothing is aimed: his page opens at once.
+  // this enemy is outside its reach. Opening his page at once read as a blow that did nothing, so
+  // the first tap only shows the tiles the blow does reach (a hidden reach only for a moment:
+  // board.pulseReach). It puts up no message (the producer's ruling, 2026-11-25): a tap that
+  // changes nothing tells the player to try another. The same enemy tapped again is a wish to
+  // read his page. Before a walk (mode 'move') nothing is aimed: his page opens at once.
   if (
     !again &&
     G.canAct(state, u) &&
@@ -763,27 +764,12 @@ function unitClick(id) {
   ) {
     missedId = id;
     audio('deny');
-    notice(missText(u, t, skill), 4200);
     board.pulseReach();
     board.holdCycle(); // the tap that reads his page must land on him, not the one behind
     return;
   }
-  // The second tap: the message that asked for it has been answered.
-  if (again) $('toast').classList.remove('visible');
   subjectId = id;
   openPage('enemy-info');
-}
-// Why the aimed art cannot be used on an enemy out of its reach. Reach is counted along rows and
-// columns, and on the turned board a diagonal neighbour looks adjacent: that case is said plainly.
-function missText(u, t, skill) {
-  const art = '「' + (skill ? G.artFor(u) : G.basicFor(u)).name + '」',
-    diagonal =
-      G.rangeFor(u, skill) === 1 && Math.abs(u.x - t.x) === 1 && Math.abs(u.y - t.y) === 1;
-  return (
-    uName(t) +
-    (diagonal ? '站在斜角，斜角不算相鄰，' + art + '打不到。' : '不在' + art + '的射程內。') +
-    '再點一次可查探敵情。'
-  );
 }
 const groundArt = (u) => G.targetType(G.artFor(u)) === 'ground';
 function targetHint(art) {
