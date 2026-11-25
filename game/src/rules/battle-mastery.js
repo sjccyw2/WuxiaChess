@@ -100,7 +100,7 @@ const COMMANDS = {
     name: '雪谷回生',
     stat: 'spare',
     power: 1,
-    text: '將要倒下時留住 1 點氣血；每局只有一次。',
+    text: '將要倒下時留住 1 點氣血，毒發也算；每局只救頭一個。',
     icon: 'shield'
   },
   chengZhi: {
@@ -114,7 +114,7 @@ const COMMANDS = {
     name: '越女試劍',
     stat: 'opening',
     power: 1,
-    text: '每回合頭一次會招來還擊的出手，敵人不能還擊。',
+    text: '每回合頭一次會招來還擊的出手，敵人不能還擊；本來就不受還擊的出手不算。',
     icon: 'feather'
   },
   // 無名: he does not give up a stone.
@@ -179,10 +179,11 @@ const CONDITION_NAMES = {
   taunt: '挑釁',
   evade: '閃身',
   redirect: '挪移',
-  recoil: '露空',
-  unguarded: '無守',
-  rooted: '立樁',
-  spent: '曲終',
+  // The four prices of a summit go by one word, 代價; the state says which (Q-N152, P4).
+  recoil: '代價',
+  unguarded: '代價',
+  rooted: '代價',
+  spent: '代價',
   backlash: '亂氣',
   wound: '內傷',
   daze: '失神',

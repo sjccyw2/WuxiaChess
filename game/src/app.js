@@ -669,7 +669,7 @@ function cellClick(x, y) {
     } else
       mapTip(
         u.conditions?.rooted
-          ? '立樁 · 本回合不能移動'
+          ? '代價 · 本回合不能移動'
           : u.moved
             ? '本回合已移動，可在出招前撤步'
             : G.terrain(x, y, state.mapIndex) + ' · 本回合無法抵達。'
@@ -1119,7 +1119,7 @@ function advanceAfterStrike(id, hit = {}) {
     if (ordered && G.canAct(state, ordered)) {
       // 號令: the companion ordered is chosen, ready to move.
       choose(ordered.id, true);
-      mapTip('號令 · ' + uName(ordered) + '可再移動並出手一次', 3200);
+      mapTip(uName(ordered) + '可再移動並出手一次', 3200);
     } else if (hit.again && G.canAct(state, selected())) {
       // 連環: the same hero again, his arts list open for the second action.
       choose(id, true);
@@ -1259,7 +1259,7 @@ function strikeTip(u, effects, skill) {
   if (voided) lines.push(voided + ' 金剛護體，還擊無功');
   const art = skill ? G.artFor(u) : null,
     mend = art && G.drainOf(art) && effects.find(([id, value]) => id === u.id && value.startsWith('+'));
-  if (mend) lines.push(uName(u) + ' 吸元，回復 ' + mend[1].slice(1) + ' 氣血');
+  if (mend) lines.push(uName(u) + ' 吸回 ' + mend[1].slice(1) + ' 氣血');
   if (lines.length) mapTip(lines.join('；'), 3200);
 }
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

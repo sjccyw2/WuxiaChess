@@ -738,7 +738,7 @@ const signatureDue = (s, u) =>
 function siphonPlan(s, u, t, f) {
   if (!f.forms.includes('siphon') || !f.rawHits.some((n) => n > 0)) return null;
   const mp = Math.min(8, Math.max(0, u.maxMp - (u.mp - f.mpCost))),
-    gain = '吸勁 · 內力 ＋' + mp;
+    gain = '內力 ＋' + mp;
   if (!s || !enemyTechnique(t, s) || f.amount >= t.hp) return { mp, delay: false, note: gain };
   if (t.lastSiphonRound === s.round) return { mp, delay: false, note: gain + '（本回合已延後過）' };
   if (unitDetails(t).rank === 'boss' && t.lastSiphonRound === s.round - 1)
@@ -750,7 +750,7 @@ const afterSiphon = (s, t, plan) => (plan?.delay ? { ...t, signaturePush: siphon
 function applySiphon(s, u, t, plan) {
   if (!plan) return;
   u.mp = Math.min(u.maxMp, u.mp + plan.mp);
-  if (plan.mp) log(s, 'combat', '吸勁回復 ' + plan.mp + ' 點內力。', unitDetails(u).name);
+  if (plan.mp) log(s, 'combat', '吸回 ' + plan.mp + ' 點內力。', unitDetails(u).name);
   if (!plan.delay || !living(t)) return;
   t.signaturePush = siphonPush(s, t);
   t.lastSiphonRound = s.round;
@@ -1088,11 +1088,11 @@ function enemyTraitLines(s, u) {
       '門人代受',
       '相鄰的' +
         named(guards) +
-        '替他承受俠客的直接攻擊（氣血較多者先上）；波及、穿行、走勁與毒傷仍會落在他身上。'
+        '替他承受俠客的直接攻擊（氣血較多者先上）；濺射、餘勁與毒傷仍會落在他身上。'
     );
   if (t.post?.tile === 'master' || t.cover === 'master')
     say(
-      '護駕',
+      '代受',
       [
         t.post?.tile === 'master' ? '每回合先回到' + master + '身旁' : '',
         t.cover === 'master' ? (t.post?.tile === 'master' ? '與他' : '與' + master) + '相鄰時替他受招' : ''
@@ -1126,11 +1126,11 @@ function enemyTraitLines(s, u) {
   if (t.unfelled) say('不敗', '氣血不會低於 1 點，他不會倒下；削至 1 點，這一局便完了。');
   // The last board: who comes to 求敗's side, who guards him, and where he falls back to.
   if (boardOf(s)?.last && u.id === commanderId(s))
-    say('護駕', '氣血過半，兩位局主趕到他身旁；只剩四分之一，再來三位。此後與他相鄰的局主替他承受俠客的直接攻擊（氣血較多者先上）；波及、穿行、走勁與毒傷仍會落在他身上。');
+    say('代受', '氣血過半，兩位局主趕到他身旁；只剩四分之一，再來三位。此後與他相鄰的局主替他承受俠客的直接攻擊（氣血較多者先上）；濺射、餘勁與毒傷仍會落在他身上。');
   if (t.withdraw)
     say('退守', '氣血只剩' + (t.withdraw.below === 0.25 ? '四分之一' : Math.round(t.withdraw.below * 100) + '%') + '時，退到離俠客較遠、身旁有局主之處；退定之後，攻擊範圍內有人才出手。');
   if (boardOf(s)?.last && u.guest && master)
-    say('護駕', master + '氣血過半之後，守在他身旁，相鄰時替他受招。');
+    say('代受', master + '氣血過半之後，守在他身旁，相鄰時替他受招。');
   if (t.formless) say('無招', '手中只是一根枯枝，沒有招式可破：任何一式的破招對他都不成。');
   // What he fights with, for the forms that answer a kind of weapon: said once 無名 is on the board.
   if (armOf(u, s) && party(s).some((v) => v.id === YOUTH_ID)) say('兵刃', ARM_NAMES[armOf(u, s)] + '。');
@@ -1155,7 +1155,7 @@ function enemyTraitLines(s, u) {
   const wards = [...others, ...props(s).filter(living)].filter((v) => unitDetails(v)?.traits?.ward);
   if (u.id === commanderId(s) && wards.length)
     say(
-      '星索護陣',
+      '星索',
       (wards.every(isProp) ? '每根立著的' : '每名存活的') +
         named(wards) +
         '替他抵擋 ' +
@@ -1163,7 +1163,7 @@ function enemyTraitLines(s, u) {
         '% 傷害。'
     );
   if (t.ward && master && u.id !== commanderId(s))
-    say('護陣', '存活時替' + master + '抵擋 ' + t.ward + '% 傷害。');
+    say('星索', '存活時替' + master + '抵擋 ' + t.ward + '% 傷害。');
   if (t.glide) say('游擊', '出手後退開至多 ' + t.glide + ' 步，離俠客越遠越好。');
   if (t.basicPoison)
     say(
@@ -1181,7 +1181,7 @@ function enemyTraitLines(s, u) {
         '出手或還擊時，攻擊 −' + t.crowded.atk + '。'
     );
   if (t.execute) say('斬殘', '對氣血不過半的俠客出手或還擊時，攻擊 ＋' + executeBonus(s, t) + '。');
-  if (t.cover === 'kin') say('刀陣', '相鄰的另一名' + info.name + '氣血較多時，替他承受俠客的直接攻擊。');
+  if (t.cover === 'kin') say('代受', '相鄰的另一名' + info.name + '氣血較多時，替他承受俠客的直接攻擊。');
   if (t.flurry)
     say(
       '分刺',
@@ -1204,11 +1204,11 @@ function enemyTraitLines(s, u) {
   }
   if (t.lone)
     say(
-      '獨行',
+      '孤行',
       '身旁沒有其他敵人時，出手或還擊攻擊 ＋' +
         (t.lone.atk + halfStage(s)) +
         '。' +
-        (s.logs ? (alone(s, u) ? '此刻獨行。' : '此刻有同夥在旁。') : '')
+        (s.logs ? (alone(s, u) ? '此刻孤身。' : '此刻有同夥在旁。') : '')
     );
   if (t.pincer)
     say('夾衛', '目標身旁另有敵人時，出手或還擊攻擊 ＋' + (t.pincer.atk + halfStage(s)) + '。');
@@ -1925,13 +1925,14 @@ function artReady(s, u, id = u.activeArt || 'signature') {
     c = u.conditions || {},
     ready = u.cooldowns?.[id] || 0;
   const no = (reason) => ({ ok: false, reason });
-  if (c.spent) return no('曲終 · 本回合不能施展絕技');
-  if (c.rooted && targetType(art) === 'ground' && !art.zone) return no('立樁 · 本回合不能移動');
-  if (art.once && u.usedOnce?.includes(id)) return no('壓箱 · 本局已用');
-  if (s.round < ready) return no('調息 · 還須 ' + (ready - s.round) + ' 回合');
-  // A strike earlier this same round (after 連環 or 號令) does not count against 留力.
-  if (art.poised && u.struckRound === s.round - 1) return no('留力 · 上回合已出手');
-  if (art.consume === 'shield' && !c.shield) return no('轉護 · 自身須有護盾');
+  if (c.spent) return no('代價 · 本回合不能施展絕技');
+  if (c.rooted && targetType(art) === 'ground' && !art.zone) return no('代價 · 本回合不能移動');
+  if (art.once && u.usedOnce?.includes(id)) return no('每局一次 · 本局已用');
+  if (s.round < ready) return no('還須 ' + (ready - s.round) + ' 回合才能再用');
+  // A strike earlier this same round (after 連環 or a companion's order) does not count against
+  // `poised` (it was 留力).
+  if (art.poised && u.struckRound === s.round - 1) return no('上一回合已出手，本回合不能施展');
+  if (art.consume === 'shield' && !c.shield) return no('自身須有護盾才能施展');
   return { ok: true, reason: '' };
 }
 function canPay(s, u, id = u.activeArt || 'signature') {
@@ -2191,18 +2192,19 @@ function strikeFactor(s, u, art, t = null) {
   };
   if (art.surge) {
     factor = Math.min(art.surge.cap, factor + art.surge.rate * u.mp);
-    notes.push('傾力 · 耗內力 ' + u.mp + '，倍率 ' + factor.toFixed(2));
+    notes.push('耗內力 ' + u.mp + ' · 倍率 ' + factor.toFixed(2));
   }
   if (art.answer && t) {
     if (answers(s, art.answer, t)) add(0.3, '破招 · ' + ANSWERS[art.answer] + ' ＋0.30');
     else if (traitsOf(t).formless) notes.push('無招 · 破招不成');
+    else notes.push('破招未成 · 目標不是' + ANSWERS[art.answer]);
   }
   const beside = (s?.units || []).filter(
     (v) => v !== u && living(v) && v.side === u.side && distance(v, u) === 1
   );
   if (art.lone) {
-    if (!beside.length) add(art.lone, '孤行 ' + plus(art.lone));
-    else notes.push('孤行未成 · ' + beside.map((v) => unitDetails(v).name).join('、') + '在旁');
+    if (!beside.length) add(art.lone, '四鄰無同伴 ' + plus(art.lone));
+    else notes.push(beside.map((v) => unitDetails(v).name).join('、') + '在旁，倍率不加');
   }
   if (art.paired) {
     const partner = beside.find((v) => v.id === PARTNERS[u.id]);
@@ -2212,14 +2214,22 @@ function strikeFactor(s, u, art, t = null) {
     if (partner) add(most, '合璧 · ' + unitDetails(partner).name + '在旁 ' + plus(most));
     else if (beside.length) add(any, '合璧 ' + plus(any));
     else if (self) add(any, '合璧 · 左右互搏 ' + plus(any));
+    else notes.push('合璧未成 · 四鄰沒有同伴');
   }
   if (art.dire) {
     const h = u.hp - (art.hpCost || 0);
     const n = Math.round(art.dire * Math.min(1, (1 - h / u.maxHp) / 0.75) * 100) / 100;
-    if (n > 0) add(n, '黯然 ' + plus(n) + '（氣血 ' + h + '／' + u.maxHp + '）');
+    if (n > 0) add(n, '氣血已損 ' + plus(n) + '（氣血 ' + h + '／' + u.maxHp + '）');
+    else notes.push('氣血未損，倍率不加');
   }
-  if (art.avenge && s && u.hurtRound === s.round - 1) add(art.avenge, '還報 ' + plus(art.avenge));
-  if (art.execute && t && t.hp <= t.maxHp / 2) add(art.execute, '斬殘 ' + plus(art.execute));
+  if (art.avenge && s) {
+    if (u.hurtRound === s.round - 1) add(art.avenge, '上回合受創 ' + plus(art.avenge));
+    else notes.push('上一個敵方回合未曾受創，倍率不加');
+  }
+  if (art.execute && t) {
+    if (t.hp <= t.maxHp / 2) add(art.execute, '目標氣血不過半 ' + plus(art.execute));
+    else notes.push('目標氣血過半，倍率不加');
+  }
   if (extra) factor = Math.round((factor + extra) * 1e6) / 1e6;
   return { factor, notes };
 }
@@ -2366,7 +2376,7 @@ function formsFor(u, art, basic = basicFor(u)) {
 function pushCell(s, u, t, art = artFor(u)) {
   return forcedStep(s, u, t, art, formsFor(u, art), walkable);
 }
-// 星索護陣: the living pieces whose `ward` trait shields their board's master.
+// 星索 (the ward): the living pieces whose `ward` trait shields their board's master.
 function wardEscorts(s) {
   if (!s?.units) return [];
   return s.units.filter((u) => !ally(u) && living(u) && !charmed(u) && unitDetails(u)?.traits?.ward);
@@ -2462,9 +2472,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
         .filter((v) => living(v) && (v === u || distance(t, v) <= 1))
         .map((v) => v.id);
       result.notes.push(
-        '落步成陣 · ' +
-          result.landing.map((id) => unitDetails(find(s, id)).name).join('、') +
-          ' 得 8 護盾'
+        result.landing.map((id) => unitDetails(find(s, id)).name).join('、') + '落地各得 8 護盾'
       );
     }
     zoneNote(s, u, art, t, result); // 布陣 on a ground art: its tiles and its line
@@ -2484,18 +2492,18 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       if (entry.clean.length)
         result.notes.push(name + '解去' + entry.clean.map((k) => CONDITION_NAMES[k]).join('、'));
       if (entry.mp) result.notes.push(name + '內力 ＋' + entry.mp);
-      if (entry.overflow) result.notes.push(name + '餘氣護盾 ' + entry.overflow);
+      if (entry.overflow) result.notes.push(name + '溢出的療傷化為護盾 ' + entry.overflow);
     }
     result.amount = result.recipients.find((entry) => entry.id === t.id)?.amount || 0;
     // 轉護: the caster's own shield, up to 24, passes to every recipient.
     if (art.consume === 'shield' && u.conditions?.shield) {
       result.passed = Math.min(24, u.conditions.shield.power);
       result.notes.push(
-        '轉護 · 移出自身護盾 ' + u.conditions.shield.power + '，各人得 ' + result.passed + ' 護盾'
+        '移出自身護盾 ' + u.conditions.shield.power + '，各人得 ' + result.passed + ' 護盾'
       );
     }
     if (art.order)
-      result.notes.push('號令 · ' + unitDetails(t).name + '可再移動並出手一次（本局僅一次）');
+      result.notes.push('再動 · ' + unitDetails(t).name + '可再移動並出手一次（本局僅一次）');
     selfLoss(s, u, art, result, false);
     result.notes.push(...guardNotes(art), ...priceNotes(art));
     return result;
@@ -2554,13 +2562,13 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   if (blow.ward || blow.void) answerBlow(s, u, t, blow, result);
   if (result.plan.partnerMp)
     result.notes.push(unitDetails(find(s, plan.partner)).name + '內力 ＋' + plan.partnerMp);
-  if (result.plan.clearPoison) result.notes.push('以毒解毒 · 解除自身中毒');
+  if (result.plan.clearPoison) result.notes.push('擊中中毒者，解除自身中毒');
   if (result.forms.includes('leech')) {
     result.selfHeal = Math.min(
       healAmount(u, Math.min(9, Math.floor(Math.min(t.hp, result.amount) / 4))),
       u.maxHp - u.hp + result.hpCost
     );
-    if (result.selfHeal) result.notes.push('回生 · 自身氣血 ＋' + result.selfHeal);
+    if (result.selfHeal) result.notes.push('自身氣血 ＋' + result.selfHeal);
   }
   // 吸元: a share of what the main target loses to this blow, up to its cap, through 內傷 like any
   // heal and never past the caster's greatest 氣血. Splash gives nothing.
@@ -2571,7 +2579,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     const n = Math.min(healAmount(u, want), u.maxHp - u.hp + result.hpCost - result.selfHeal);
     if (n > 0) {
       result.selfHeal += n;
-      result.notes.push('吸元 · 回復 ' + n + ' 氣血');
+      result.notes.push('吸回 ' + n + ' 氣血');
     }
   }
   // 化功: what touching the receiver costs the striker in 內力.
@@ -2632,7 +2640,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       result.notes.push('近身失準 · 還擊攻擊 −' + traits.crowded.atk);
     if (traits.execute && after <= u.maxHp / 2)
       result.notes.push('斬殘 · 還擊攻擊 ＋' + executeBonus(s, traits));
-    if (traits.lone && alone(s, t)) result.notes.push('獨行 · 還擊攻擊 ＋' + (traits.lone.atk + halfStage(s)));
+    if (traits.lone && alone(s, t)) result.notes.push('孤行 · 還擊攻擊 ＋' + (traits.lone.atk + halfStage(s)));
     if (traits.pincer && flanked(s, t, u))
       result.notes.push('夾衛 · 還擊攻擊 ＋' + (traits.pincer.atk + halfStage(s)));
     if (traits.twin && twinForm(s, t) === 'sabre')
@@ -2794,13 +2802,14 @@ function answerBlow(s, u, t, blow, result) {
 // What using the art costs its caster beyond 內力 and 氣血, as the preview states it.
 function priceNotes(art) {
   const notes = [];
-  if (art?.recoil && art.openGuard) notes.push('有攻無守 · 至下回合不還擊，防禦 −' + art.recoil);
-  else if (art?.recoil) notes.push('露空 · 出招後防禦 −' + art.recoil + ' 至下回合');
-  else if (art?.openGuard) notes.push('無守 · 出招後至下回合不還擊');
-  if (art?.rooted) notes.push('立樁 · 下回合不能移動');
-  if (art?.spent) notes.push('曲終 · 下回合不能施展絕技');
-  if (art?.once) notes.push('壓箱 · 每局一次');
-  if (art?.cooldown) notes.push('調息 · 施展後隔 ' + art.cooldown + ' 回合');
+  // 代價: the price the caster pays until his next turn, one word for all four (Q-N152, P4).
+  if (art?.recoil && art.openGuard) notes.push('代價 · 至下回合不能還擊，防禦 −' + art.recoil);
+  else if (art?.recoil) notes.push('代價 · 至下回合防禦 −' + art.recoil);
+  else if (art?.openGuard) notes.push('代價 · 至下回合不能還擊');
+  if (art?.rooted) notes.push('代價 · 下回合不能移動');
+  if (art?.spent) notes.push('代價 · 下回合不能施展絕技');
+  if (art?.once) notes.push('每局一次');
+  if (art?.cooldown) notes.push('施展後隔 ' + art.cooldown + ' 回合');
   return notes;
 }
 // 35 → 三成半: a share as the ward lines say it.
@@ -2913,8 +2922,8 @@ function wound(s, u, n, source) {
       'combat',
       left
         ? '一條星索斷了。' + name + '的遮護降至' + shareWords(left) + '。'
-        : '星索皆斷，' + name + '的護陣已破。',
-      '星索護陣'
+        : '星索皆斷，' + name + '再無遮護。',
+      '星索'
     );
   }
   return d;

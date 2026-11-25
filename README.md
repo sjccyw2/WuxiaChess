@@ -348,9 +348,11 @@ When the wiki needs something new from the game, export it from the game module 
 
 ### Rule words
 
-`game/src/data/rule-terms.js` holds the game's rule words (連環, 露空, 坐鎮, 援軍 …), one sentence each, and the paragraphs of the in-game guide. The guide (`ui/panels.js`, `helpPage`) and the wiki's 戰鬥規則 section both read it, so a rule is worded once.
+`game/src/data/rule-terms.js` holds the game's rule words (連環, 代價, 升降, 坐鎮, 勝負 …), one sentence each, and the paragraphs of the in-game guide. The guide (`ui/panels.js`, `helpPage`) and the wiki's 戰鬥規則 section both read it, so a rule is worded once.
 
-- **Adding a mechanic:** add its term there, with the field that carries it (`art`, `item`, `trait`, `condition` or `form`). The wiki then gives it a page and lists every art, item and enemy that has it, and those pages link back.
+- **Few words, on purpose.** A rule is a word only if it leaves a state on a piece the player must track, or many cards share it, and the player meets it often (the producer, Q-N132 and Q-N152; 0.46). Everything else is said in a plain sentence on its own card (`rules/move-facts.js`), item or enemy page (`enemyTraitLines` in `rules/game.js`), and its field is listed in `PLAIN_FIELDS`; a 戰鬥效果 of that kind is in `PLAIN_FORMS` (`rules/form-rules.js`), whose name is a short phrase rather than a word. The six stat ups and downs share one word, 升降, and the four prices of a summit one word, 代價; the 勝負 entry has a line for each way a board is won (`OUTCOMES`), and the wiki a page for each.
+- **Adding a mechanic:** add its term there, with the field that carries it (`art`, `item`, `trait`, `condition` or `form`; a term may name a list of them), or list the field in `PLAIN_FIELDS` and have the card say it. The wiki gives a term a page and lists every art, item and enemy that has it, and those pages link back.
+- **The marks on a piece** (`STATUS_SIGNS` in `game/src/actors/tokens.js`): one character from each condition's name; a stat that went up or down shows 攻, 防 or 移 with an arrow in the badge's corner, a price what it holds back with a lock (解厄 cannot lift it), and 亂氣 its layers (`STATUS_MARKS`). The wiki's 棋子上的記號 lists them as 「攻（升）」, 「防（降、鎖）」.
 - **What stops the wiki falling behind:** `node tools/check-wiki.mjs` fails when an art, item or enemy carries a field no term accounts for, when an enemy, board piece, kind of battle or kind of secondary has no page, or when a page shows a value that failed to resolve.
 
 

@@ -5,21 +5,25 @@
 // enemy's numbers (rules/move-facts.js; enemyTraitLines in rules/game.js); a term here states the
 // rule without them.
 //
-// When you add a mechanic, add its term here. `node tools/check-wiki.mjs` fails if an art carries
-// a field, or an enemy a trait, that no term and no entry of PLAIN_FIELDS accounts for.
+// When you add a mechanic, add its term here, or, if one art, item or enemy carries it and it
+// leaves no state of its own to track, list its field in PLAIN_FIELDS and have the card say the
+// rule in a plain sentence: a word is kept only if the player meets it often (the producer,
+// Q-N132 and Q-N152). `node tools/check-wiki.mjs` fails if an art carries a field, or an enemy a
+// trait, that no term and no entry of PLAIN_FIELDS accounts for.
 //
 // A term: { id, name, text, ... } with one or more of these, which say who carries the rule
 // (the wiki uses them to list the arts, items and enemies on the term's page):
-//   art        a field of a technique (TECHNIQUES), or a test of the technique
-//   form       a key of FORM_RULES; its sentence is taken from there. The other entries of
-//              FORM_RULES (破綻, 絆足, 截勁 …) are rule words too and are worded there
-//   condition  a condition an art can put on someone (effectsOf / selfEffectsOf kinds)
+//   art        a field of a technique (TECHNIQUES), a list of fields, or a test of the technique
+//   form       a key of FORM_RULES (or a list); its sentence may be taken from there. The other
+//              entries of FORM_RULES (破綻, 截勁, 牽引 …) are rule words too and are worded there,
+//              except PLAIN_FORMS, whose card prints a plain sentence
+//   condition  a condition an art can put on someone (effectsOf / selfEffectsOf kinds), or a list
 //   item       a field of an item (ITEMS)
 //   trait      a field of an enemy's traits, or a test of the traits
 //   style      an enemy signature's style
 //   guide      true when the in-game guide's paragraph names it
 // `text` has no closing 。; the guide and the wiki add it.
-import { FORM_RULES } from '../rules/form-rules.js';
+import { FORM_RULES, PLAIN_FORMS } from '../rules/form-rules.js';
 
 const form = (id) => FORM_RULES[id][1].replace(/。$/, '');
 
@@ -39,21 +43,11 @@ const RULE_GROUPS = [
         id: 'splash',
         name: '濺射',
         art: 'splash',
-        text: '主目標四鄰的其他敵人也受到一部分傷害；寫明兩格、三格的，主目標該距離之內的其他敵人都受波及'
+        form: 'line',
+        text: '主目標四鄰的其他敵人也受到一部分傷害；寫明兩格、三格的，主目標該距離之內的其他敵人都受波及；寫明身後的，沿出招的橫直穿過主目標，及於其後兩格內第一名敵人'
       },
-      { id: 'hits', name: '連擊', art: 'hits', text: '一招分成數段，各段分別計算傷害' },
       { id: 'push', name: '擊退', art: 'push', text: '把存活的目標推開一格，背後須有空位' },
-      { id: 'blink', name: '身法', art: 'blink', text: '越過障礙移至射程內可站立的空格，隨即結束行動' },
       { id: 'heal', name: '療傷', art: 'heal', text: '替友軍或自身回復氣血；內傷者所受療傷減半' },
-      { id: 'aura', name: '範圍', art: 'aura', text: '效果及於目標及其周圍數格內的友軍' },
-      { id: 'recover', name: '回氣', art: 'recover', text: '命中後回復自身內力' },
-      {
-        id: 'drain',
-        name: '吸元',
-        art: 'drain',
-        text: '依主目標此擊實際損失的氣血，回復自身一部分氣血，有上限；內傷者減半，波及與器物不算'
-      },
-      { id: 'hpCost', name: '自耗氣血', art: 'hpCost', text: '施展時先扣自身氣血；氣血不足以支付時不能施展' },
       {
         id: 'brace',
         name: '待命',
@@ -67,38 +61,27 @@ const RULE_GROUPS = [
     icon: 'spark',
     terms: [
       { id: 'again', name: '連環', form: 'again', guide: true, text: form('again') },
-      { id: 'glide', name: '回身', form: 'glide', guide: true, text: form('glide') },
-      {
-        id: 'order',
-        name: '號令',
-        art: 'order',
-        guide: true,
-        text: '令一位本回合已行動的同伴重新移動並出手一次'
-      },
-      { id: 'poised', name: '留力', art: 'poised', guide: true, text: '上一回合未曾普攻或攻擊敵人，方可施展' },
-      { id: 'once', name: '壓箱', art: 'once', guide: true, text: '每局只能施展一次' },
-      { id: 'cooldown', name: '調息', art: 'cooldown', guide: true, text: '施展後須隔數回合才能再用' }
+      { id: 'glide', name: '回身', form: 'glide', guide: true, text: form('glide') }
     ]
   },
   {
     id: 'price',
     title: '絕技的代價',
     icon: 'danger',
-    lead: '有些絕技要出招者自己付代價，至多延續到他的下一回合：',
-    tail: '這是代價，不是傷病，解厄解不掉。',
-    list: true, // the guide writes these as one sentence: 「露空，…；無守，…。」
     terms: [
-      { id: 'recoil', name: '露空', art: 'recoil', guide: true, text: '至下回合防禦降低' },
-      { id: 'openGuard', name: '無守', art: 'openGuard', guide: true, text: '至下回合不能還擊' },
-      { id: 'rooted', name: '立樁', art: 'rooted', guide: true, text: '下一回合不能移動' },
-      { id: 'spent', name: '曲終', art: 'spent', guide: true, text: '下一回合不能施展絕技，仍可普攻' },
+      {
+        id: 'cost',
+        name: '代價',
+        art: ['recoil', 'openGuard', 'rooted', 'spent'],
+        guide: true,
+        text: '有些絕技要出招者自己付出代價，至多延續到他的下一回合：防禦降低、不能還擊、不能移動，或不能施展絕技（仍可普攻），招式上寫明是哪一種。棋子上這個記號帶一把鎖：這不是傷病，解厄解不掉'
+      },
       {
         id: 'backlash',
         name: '亂氣',
         art: 'backlash',
         text: '每次施展積一層，第三層時自損兩成最大氣血並清空；亂氣留到發作或本局結束'
-      },
-      { id: 'consume', name: '轉護', art: 'consume', text: '須自身帶有護盾方可施展，施展時護盾轉給受術者' }
+      }
     ]
   },
   {
@@ -111,7 +94,6 @@ const RULE_GROUPS = [
         art: 'answer',
         text: '每一式專破一路：近身、遠攻、局主與副手，或一類兵刃（刀、長兵、短兵、軟兵、拳掌）。目標合於所破的一路時，倍率 ＋0.30'
       },
-      { id: 'lone', name: '孤行', art: 'lone', text: '出手時四鄰沒有同伴，倍率提高' },
       {
         id: 'paired',
         name: '合璧',
@@ -123,11 +105,7 @@ const RULE_GROUPS = [
         name: '左右互搏',
         art: 'pairsSelf',
         text: '習得後，合璧之招孤身出手也算有同伴相鄰'
-      },
-      { id: 'dire', name: '黯然', art: 'dire', text: '自身氣血越少倍率越高，剩四分之一以下時最高' },
-      { id: 'avenge', name: '還報', art: 'avenge', text: '上一個敵方回合曾受敵人攻擊而損血，倍率提高' },
-      { id: 'execute', name: '斬殘', art: 'execute', text: '目標氣血不過半時，倍率提高' },
-      { id: 'surge', name: '傾力', art: 'surge', text: '耗盡剩餘內力，耗去越多倍率越高，有上限' }
+      }
     ]
   },
   {
@@ -159,9 +137,7 @@ const RULE_GROUPS = [
       { id: 'stance', name: '卸勁', art: 'stance', text: '至下回合受到的傷害減少，還擊改以全力' },
       { id: 'evade', name: '閃身', art: 'evade', text: '下一次受到的直接攻擊落空' },
       { id: 'redirect', name: '挪移', art: 'redirect', text: '下一次受擊傷害減半，並把一部分反震給出手者' },
-      { id: 'retort', name: '後發', art: 'retort', text: '還擊不按五成半，改按此招所定的比例計算' },
       { id: 'shield', name: '護盾', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護盾取較強者' },
-      { id: 'fortify', name: '固守', art: 'fortify', condition: 'fortify', text: '受術者防禦提高，到期恢復；多重固守取較強者' },
       {
         id: 'immune',
         name: '金剛',
@@ -176,7 +152,6 @@ const RULE_GROUPS = [
     title: '附加狀態',
     icon: 'pin',
     terms: [
-      { id: 'siphon', name: '吸勁', form: 'siphon', guide: true, text: form('siphon') },
       { id: 'wound', name: '內傷', art: 'wound', condition: 'wound', guide: true, text: '療傷減半，每次出手攻擊後自損氣血' },
       { id: 'daze', name: '失神', art: 'daze', condition: 'daze', guide: true, text: '失去下一次行動；局主受過後，下一回合可抵抗' },
       { id: 'disarm', name: '纏械', art: 'disarm', condition: 'disarm', guide: true, text: '攻擊降低，普攻與絕技只能攻擊相鄰一格' },
@@ -191,10 +166,15 @@ const RULE_GROUPS = [
         text: '尋常敵人倒戈數個敵方回合，走向最近的同夥以普攻出手；我方不攻擊他，他仍算敵人。局主與副手不受制，改為失神'
       },
       { id: 'poison', name: '中毒', art: 'poison', condition: 'poison', text: '每回合失去氣血，到期自解' },
-      { id: 'weak', name: '攻勢受挫', condition: 'weak', text: '攻擊降低，到期恢復' },
-      { id: 'exposed', name: '破防', condition: 'exposed', text: '防禦降低，到期恢復' },
-      { id: 'rally', name: '振奮', art: 'rally', condition: 'rally', text: '攻擊提高，到期恢復' },
-      { id: 'haste', name: '輕身', art: 'haste', condition: 'haste', text: '移動提高，到期恢復' },
+      {
+        id: 'shift',
+        name: '升降',
+        art: ['rally', 'haste', 'fortify'],
+        condition: ['weak', 'exposed', 'rally', 'haste', 'fortify'],
+        form: 'pin',
+        guide: true,
+        text: '有些招式讓攻擊、防禦或移動升降數回合，到期恢復；同一種取較強者。振奮、固守、輕身是升，攻勢受挫、破防、絆足是降。棋子上的記號寫攻、防、移，角上三角朝上是升，朝下是降；降的可用解厄解去'
+      },
       { id: 'cleanse', name: '解厄', form: 'cleanse', item: 'cleanse', text: form('cleanse') }
     ]
   },
@@ -209,13 +189,12 @@ const RULE_GROUPS = [
         form: 'riposte',
         text: '打中自己的敵人反受其傷：軟蝟甲扎傷以攻擊或還擊打中佩者的相鄰敵人，不計防禦；有的護持招式讓受術者把本回合首次所受的直接傷害震回出手者，有上限'
       },
-      { id: 'medicine', name: '服藥', text: '藥箱全隊共用。每次扣一份，不耗移動或行動，一回合內可連用。交戰中只能服藥：兵器、護具與武譜只在整備時更換' },
-      { id: 'weaponForm', name: '兵器效果', text: '有些兵器替普攻或護持招式添上一種戰鬥效果，寫在各兵器的條目' }
+      { id: 'medicine', name: '服藥', text: '藥箱全隊共用。每次扣一份，不耗移動或行動，一回合內可連用。交戰中只能服藥：兵器、護具與武譜只在整備時更換' }
     ]
   },
   {
-    // The leader boons (rules/battle-mastery.js COMMANDS). Each hero's own is on his page; these
-    // are the rules a boon's one line leaves out.
+    // The leader boons (rules/battle-mastery.js COMMANDS). Each hero's own is on his page, in a line
+    // that carries its whole rule; this is the rule all of them share.
     id: 'lead',
     title: '領隊陣法',
     icon: 'flag',
@@ -224,27 +203,19 @@ const RULE_GROUPS = [
         id: 'command',
         name: '領隊陣法',
         text: '每位俠客領隊時各有一種陣法，作用於自身與兩格內的友軍；軟筋餘香反過來削弱領隊兩格內的敵人。領隊倒下，陣法即失效；整備時按各人的起陣格計算'
-      },
-      {
-        id: 'opening',
-        name: '越女試劍',
-        text: '每回合頭一次會招來還擊的出手，敵人不能還擊；本來就不受還擊的出手不算，下一回合又有一次'
-      },
-      {
-        id: 'spare',
-        name: '雪谷回生',
-        text: '陣法所及的俠客將要倒下時，留住 1 點氣血，毒發也算；一局只救頭一個，下一局重新算起'
       }
     ]
   },
   {
+    // What many enemies share. Everything else an enemy does is a sentence on its own page
+    // (enemyTraitLines in rules/game.js), not a word to learn (Q-N152, P1).
     id: 'enemy',
     title: '敵方行事',
     terms: [
       {
         id: 'signature',
         name: '蓄勢',
-        text: '局主與副手的絕技須先蓄勢數回合；蓄滿後保持，能出擊才施展，施展後須隔數回合再蓄。截勁時無法施展；有的招式可使它延後'
+        text: '局主與副手的絕技須先蓄勢數回合；蓄滿後保持，能出擊才施展，施展後須隔數回合再蓄。截勁時無法施展；有的招式可使它延後一回合'
       },
       {
         id: 'post',
@@ -253,119 +224,10 @@ const RULE_GROUPS = [
         text: '守著一格或一小片地方，不主動追擊。有的在俠客踏入攻擊範圍或受到攻擊後才離位，有的始終不離位'
       },
       {
-        id: 'escort',
-        name: '護駕',
-        trait: (t) => t.cover === 'master' || t.post?.tile === 'master',
-        text: '每回合先回到局主身旁；與局主相鄰時，俠客對局主的直接攻擊改由他承受，氣血較多者先上。波及、穿行、走勁與毒傷仍會落在局主身上'
-      },
-      {
         id: 'phase',
         name: '變招',
         trait: 'phase',
         text: '氣血首次降到一半時改變打法，絕技的間隔也可能改變；各人怎麼變，寫在他的條目'
-      },
-      {
-        id: 'flee',
-        name: '遁走',
-        trait: (t) => !!t.phase?.flee,
-        text: '變招後退往藥草地回復氣血，至限定的回合，或氣血回到一定程度為止'
-      },
-      {
-        id: 'prefers',
-        name: '偏好',
-        trait: (t) => !!(t.prefers || t.phase?.prefers),
-        text: '選擇目標時另有所好：傷重者、落單者、領隊、療傷者、內力深厚者、離得最近的人，或倚仗掩體、有人代受的人'
-      },
-      { id: 'contact', name: '化功', trait: 'contact', text: '貼身打中他的俠客損失內力；截勁時無效' },
-      { id: 'banner', name: '盟令', trait: 'banner', text: '存活時其餘敵人攻擊提高，倒下後即失效' },
-      {
-        id: 'mend',
-        name: '續命',
-        style: 'mend',
-        text: '絕技不傷人：三格內有同夥氣血不足七成時替他療傷，否則以普攻出手'
-      },
-      {
-        id: 'charged',
-        name: '蓄勢反擊',
-        trait: (t) => !!t.stance && t.stance.while !== 'posted',
-        text: '絕技蓄滿時，在他攻擊範圍內打他必遭全力還擊；免受還擊之招與截勁除外'
-      },
-      {
-        id: 'mirror',
-        name: '借力',
-        trait: 'redirect',
-        style: 'mirror',
-        text: '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者；截勁時無效'
-      },
-      {
-        id: 'ward',
-        name: '護陣',
-        trait: 'ward',
-        text: '存活（或立著）時各替局主抵擋一部分傷害；倒下一個，局主的護陣便弱一分'
-      },
-      { id: 'skirmish', name: '游擊', trait: 'glide', text: '出手後退開數步，離俠客越遠越好' },
-      { id: 'venom', name: '毒手', trait: 'basicPoison', text: '普攻令目標中毒' },
-      { id: 'crowded', name: '近身失準', trait: 'crowded', text: '對貼近的俠客出手或還擊時，攻擊降低' },
-      { id: 'cull', name: '斬殘（敵）', trait: 'execute', text: '對氣血不過半的俠客出手或還擊時，攻擊提高' },
-      {
-        id: 'wall',
-        name: '盾牆',
-        trait: (t) => t.stance?.while === 'posted',
-        text: '站在原位時受到的傷害減少；被推離原位便失去盾牆，走回後恢復'
-      },
-      {
-        id: 'kin',
-        name: '刀陣',
-        trait: (t) => t.cover === 'kin',
-        text: '相鄰的同袍氣血較多時，替他承受俠客的直接攻擊'
-      },
-      {
-        id: 'flurry',
-        name: '分刺',
-        trait: 'flurry',
-        text: '每次出手之後，再刺射程內另一名俠客，威力較前一擊為輕；這一刺無人可代受，閃身與挪移也攔不住，且不受還擊'
-      },
-      {
-        id: 'bend',
-        name: '轉折',
-        trait: 'bend',
-        text: '出手不走直路：無視目標所在地形的防禦加成，旁人也無法替目標代受'
-      },
-      {
-        id: 'pull',
-        name: '擒拿',
-        trait: 'pull',
-        text: '絕技命中後，將目標扯到自己身旁的空格；目標已在身旁，或身旁沒有空格，便扯不動'
-      },
-      { id: 'fleet', name: '水上飄', trait: 'fleet', text: '每一格只消耗 1 步，淺水與林叢都拖不慢他' },
-      {
-        id: 'twin',
-        name: '陰陽倒亂',
-        trait: 'twin',
-        text: '兩件兵刃輪著使：單數回合攻擊提高，雙數回合射程多一格'
-      },
-      { id: 'prowl', name: '獨行', trait: 'lone', text: '身旁沒有其他敵人時，出手或還擊攻擊提高' },
-      { id: 'pincer', name: '夾衛', trait: 'pincer', text: '目標身旁另有敵人時，出手或還擊攻擊提高' },
-      {
-        id: 'stepPoison',
-        name: '步裡藏毒',
-        trait: 'stepPoison',
-        text: '走動之後的普攻令目標中毒；原地出手與還擊不帶毒'
-      },
-      { id: 'lastStand', name: '沉樁', trait: 'lastStand', text: '氣血降到一定程度以下時，受到的傷害減少' },
-      { id: 'snare', name: '墜網', trait: 'snare', text: '普攻令目標絆足，移動減少；還擊不帶網' },
-      {
-        id: 'unfelled',
-        name: '不敗',
-        trait: 'unfelled',
-        text: '無論攻擊、還擊或毒傷，氣血都不會低於 1 點；他不會倒下'
-      },
-      { id: 'formless', name: '無招', trait: 'formless', text: '沒有招式可破：任何一式的破招對他都不成' },
-      {
-        id: 'withdraw',
-        name: '退守',
-        trait: 'withdraw',
-        text: '氣血降到一定程度以下時，退到離俠客較遠、身旁有同伴之處；退定之後，攻擊範圍內有人才出手'
       }
     ]
   },
@@ -374,62 +236,66 @@ const RULE_GROUPS = [
     title: '戰局',
     terms: [
       {
-        id: 'slay',
-        name: '斬將',
-        kind: 'slay',
-        text: '擊敗局主即勝，其餘敵人不必全滅；有兩名局主的局，兩人都倒下才算取勝'
+        id: 'outcome',
+        name: '勝負',
+        text: '每局的勝法寫在軍情裡：斬將，擊敗局主；殲滅，擊敗全部敵人，援軍也算；守，守住守物；破，擊毀全部破物；問劍，把終局對面那人的氣血削至 1 點。領隊倒下，或回合用盡仍未取勝，便是敗退'
       },
-      { id: 'rout', name: '殲滅', kind: 'rout', text: '場上敵人須全數擊敗，尚未入場的援軍也算在內' },
-      {
-        id: 'keep',
-        name: '守',
-        kind: 'keep',
-        text: '盤上有一件我方的東西（守物），黑子要毀它。守到該局指定的回合結束，或擊敗局主，便勝；守物一毀，這一局便輸。守物不行動、不還擊，推不動，也不受招式附帶之效'
-      },
-      {
-        id: 'break',
-        name: '破',
-        kind: 'break',
-        text: '戰意釘在盤上的東西（破物）上。把破物盡數擊毀便勝，局主倒不倒都一樣。破物不還擊、不閃避，招式的附帶之效與波及都不及其身'
-      },
-      {
-        id: 'yield',
-        name: '問劍',
-        kind: 'yield',
-        text: '終局的打法。對面的人不敗，不會倒下；把他的氣血削至 1 點便勝，其餘的人不必擊敗。無名是這一局的眼，他倒下便輸'
-      },
-      { id: 'loss', name: '敗退', text: '領隊倒下，或第十二回合結束仍未取勝，這一輪便結束；無刻漏臺寬限到第十五回合' },
       {
         id: 'waves',
         name: '援軍',
         text: '援軍事先不會寫在軍情裡。入場前一整回合才有通報，並標出入場格。有的按回合入場，有的在局主氣血首次過半後兩回合入場。入場格被佔時改落在兩格內最近的空格，都沒有空位便延後一回合。入場當回合，援軍排在敵方最後行動'
       },
-      { id: 'brief', name: '軍情', text: '每局整備之前先看軍情：戰盤的佈置、主要目標、敗退條件、抽定的支線與獎勵，以及取勝後求敗借出哪一位俠客。敵人怎麼打、援軍何時到，要在盤上自己看出來' },
-      {
-        id: 'deploy',
-        name: '起陣',
-        text: '開戰前可在戰盤上互換兩位俠客的起陣格，或把俠客移到空著的起陣格；按「開戰」（或 E、Enter）後才開始第一回合'
-      },
       {
         id: 'side',
         name: '支線',
         text: '每局從該局的支線池抽出一道，是韋小寶另開的盤口。達成並取勝可得獎勵：賞銀、出陣生還者各 1 武學點，或武譜一卷。支線不影響勝負，也不影響俠客入局'
-      },
-      { id: 'recruit', name: '入局', text: '不是最後一局時，每勝一局，求敗便再借出一位尚未入局的俠客，支線成敗不論。新來的人等級與上陣諸人相近，並帶著相應的武學點' },
-      { id: 'danger', name: '敵方範圍', text: '按盤面右上角的警示鈕或 D 鍵，棋盤會標出敵方下一回合可能攻到的所有地格' }
+      }
     ]
   }
 ];
 
+// 勝負, line by line: each kind of board (`kind` in data/battles.js) and the loss. The wiki gives
+// each its own page under 勝負; the briefing states the board's own.
+const OUTCOMES = [
+  { kind: 'slay', name: '斬將', text: '擊敗局主即勝，其餘敵人不必全滅；有兩名局主的局，兩人都倒下才算取勝' },
+  { kind: 'rout', name: '殲滅', text: '場上敵人須全數擊敗，尚未入場的援軍也算在內' },
+  {
+    kind: 'keep',
+    name: '守',
+    text: '盤上有一件我方的東西（守物），黑子要毀它。守到該局指定的回合結束，或擊敗局主，便勝；守物一毀，這一局便輸。守物不行動、不還擊，推不動，也不受招式附帶之效'
+  },
+  {
+    kind: 'break',
+    name: '破',
+    text: '戰意釘在盤上的東西（破物）上。把破物盡數擊毀便勝，局主倒不倒都一樣。破物不還擊、不閃避，招式的附帶之效與波及都不及其身'
+  },
+  {
+    kind: 'yield',
+    name: '問劍',
+    text: '終局的打法。對面的人不敗，不會倒下；把他的氣血削至 1 點便勝，其餘的人不必擊敗。無名是這一局的眼，他倒下便輸'
+  },
+  { kind: 'loss', name: '敗退', text: '領隊倒下，或第十二回合結束仍未取勝，這一輪便結束；無刻漏臺寬限到第十五回合' }
+];
+
 // Fields of a technique, an item or an enemy's traits that are plain data, not rules: a name, a
-// number every art has, or something its own page already shows as a figure.
+// number every art has, or something its own page already shows as a figure; and the mechanics
+// folded out of the glossary (Q-N132, Q-N152), which the card, the item or the enemy's page states
+// in a plain sentence of its own (rules/move-facts.js, enemyTraitLines in rules/game.js).
 const PLAIN_FIELDS = {
-  // debuff and shield are carried by the terms 攻勢受挫, 破防 and 護盾 through the state they leave;
+  // debuff and shield are carried by the terms 升降 and 護盾 through the state they leave;
   // radius is the reach of a 濺射, which that term's sentence covers.
-  art: ['name', 'family', 'owner', 'root', 'kind', 'tier', 'needs', 'points', 'icon', 'visual', 'basicBonus', 'desc', 'source', 'forms', 'mp', 'range', 'target', 'factor', 'gate', 'debuff', 'shield', 'price', 'stock', 'manual', 'radius'],
+  art: [
+    ...['name', 'family', 'owner', 'root', 'kind', 'tier', 'needs', 'points', 'icon', 'visual', 'basicBonus', 'desc', 'source', 'forms', 'mp', 'range', 'target', 'factor', 'gate', 'debuff', 'shield', 'price', 'stock', 'manual', 'radius'],
+    // Folded: 連擊, 身法, 範圍, 回氣, 吸元, 自耗氣血, 號令, 留力, 壓箱, 調息, 轉護, 傾力, 後發,
+    // 孤行, 黯然, 還報, 斬殘.
+    ...['hits', 'blink', 'aura', 'recover', 'drain', 'hpCost', 'order', 'poised', 'once', 'cooldown', 'consume', 'surge', 'retort', 'lone', 'dire', 'avenge', 'execute']
+  ],
   item: ['name', 'kind', 'owner', 'atk', 'icon', 'desc', 'forms', 'power', 'def', 'step', 'hp', 'mp'],
-  // mods and sig are numbers; the rest are read by a term's own test above (護駕, 刀陣, 盾牆 …).
-  trait: ['mods', 'sig', 'cover', 'stance', 'post', 'prefers']
+  // mods and sig are numbers; post is read by 坐鎮's test. The rest are one enemy's way each,
+  // told on its own page.
+  trait: ['mods', 'sig', 'cover', 'stance', 'post', 'prefers', 'contact', 'banner', 'redirect', 'ward', 'glide', 'basicPoison', 'crowded', 'execute', 'flurry', 'bend', 'pull', 'fleet', 'twin', 'lone', 'pincer', 'stepPoison', 'lastStand', 'snare', 'unfelled', 'formless', 'withdraw'],
+  // 戰鬥效果 whose name is a plain phrase (rules/form-rules.js PLAIN_FORMS).
+  form: [...PLAIN_FORMS]
 };
 
 const RULE_TERMS = Object.fromEntries(
@@ -438,12 +304,11 @@ const RULE_TERMS = Object.fromEntries(
 
 // A group's paragraph as the in-game guide prints it: only the terms marked for the guide.
 function guideParagraph(id) {
-  const group = RULE_GROUPS.find((g) => g.id === id),
-    terms = group.terms.filter((t) => t.guide);
-  const body = group.list
-    ? terms.map((t) => t.name + '，' + t.text).join('；') + '。'
-    : terms.map((t) => t.name + '：' + t.text + '。').join('');
-  return (group.lead || '') + body + (group.tail || '');
+  const group = RULE_GROUPS.find((g) => g.id === id);
+  return group.terms
+    .filter((t) => t.guide)
+    .map((t) => t.name + '：' + t.text + '。')
+    .join('');
 }
 
 // The in-game guide: [icon, title, text]. `actionFlow` is the presentation switch of that name:
@@ -504,6 +369,11 @@ function guideEntries({ actionFlow = true } = {}) {
     paragraph('guard'),
     paragraph('condition'),
     [
+      'scroll',
+      '軍情',
+      '每局整備之前先看軍情：戰盤的佈置、這一局的勝法與敗退條件、抽定的支線與獎勵，以及取勝後求敗借出哪一位俠客。敵人怎麼打、援軍何時到，要在盤上自己看出來。'
+    ],
+    [
       'people',
       '起陣',
       '開戰前可在戰盤上調換起陣格：點選一位俠客，再點另一位俠客互換位置，或點亮起的空格移過去。調好後按「開戰」，或按 E、Enter，開始第一回合。整備的陣位順序跟著改，下一局照此起陣。'
@@ -511,12 +381,12 @@ function guideEntries({ actionFlow = true } = {}) {
     [
       'flag',
       '敵援',
-      '求敗在局中也落子：棋臺上「嗒」的一聲，下一回合援軍便到。援軍入場前一整個回合，入場處標出「援」字，戰場紀錄與地名牌也會提醒。敵方範圍開著時，金黃虛線框出援軍入場後第一手打得到的地格；這是照眼下各人的站位推算的，人一走動便會變。入場處有人佔著，援軍便從近旁入場。'
+      '求敗在局中也落子：棋臺上「嗒」的一聲，下一回合援軍便到。援軍入場前一整個回合，入場處標出「援」字，戰場紀錄與地名牌也會提醒。入場處有人佔著，援軍便從近旁入場。按盤面右上角的警示鈕或 D 鍵，棋盤標出敵方下一回合可能攻到的所有地格（敵方範圍）；開著時，金黃虛線另框出援軍入場後第一手打得到的地格。這是照眼下各人的站位推算的，人一走動便會變。'
     ],
     [
       'diamond',
       '支線',
-      '每局的支線在入局時抽定，是韋小寶另開的盤口，「軍情」與「目標」都看得到。點了名的支線，那位俠客須出陣。達成支線並取勝，另得賞銀、武學點或武譜；支線成也好、不成也好，只要取勝，求敗便再借出一位俠客。'
+      '每局的支線在入局時抽定，是韋小寶另開的盤口，「軍情」與「目標」都看得到。點了名的支線，那位俠客須出陣。達成支線並取勝，另得賞銀、武學點或武譜；支線成也好、不成也好，只要取勝，求敗便再借出一位尚未入局的俠客，等級與上陣諸人相近，並帶著相應的武學點；最後一局之後不再借。'
     ],
     [
       'end',
@@ -529,4 +399,4 @@ function guideEntries({ actionFlow = true } = {}) {
   ];
 }
 
-export { RULE_GROUPS, RULE_TERMS, PLAIN_FIELDS, guideParagraph, guideEntries };
+export { RULE_GROUPS, RULE_TERMS, OUTCOMES, PLAIN_FIELDS, guideParagraph, guideEntries };

@@ -178,18 +178,19 @@ function renderParty(s) {
     .join('');
 }
 // What the hero's own last turns have readied, shown while he can still act (SPEC-mechanics §4):
-// 留力, he did not strike last turn, so an equipped art that needs it may be used; 還報, an enemy
-// hurt him in the last enemy phase, so an equipped art that pays it back is stronger.
+// he did not strike last turn, so an equipped art that needs it (`poised`) may be used; an enemy
+// hurt him in the last enemy phase, so an equipped art that pays it back (`avenge`) is stronger.
+// Plain facts, not rule words (Q-N132, Q-N152).
 function turnPips(s, u) {
   if (s.phase !== 'ally' || !canAct(s, u)) return '';
   const arts = equippedArts(u).map((id) => artFor(u, id));
   const pip = (name, rule) => `<small class="unit-pip" title="${rule}">${name}</small>`;
   return (
     (arts.some((a) => a.poised) && u.struckRound !== s.round - 1
-      ? pip('留力', '上一回合未曾出手，留力之招可以施展')
+      ? pip('未出手', '上一回合未曾出手：須如此方可施展的招式，此刻可用')
       : '') +
     (arts.some((a) => a.avenge) && u.hurtRound === s.round - 1
-      ? pip('還報', '上一個敵方回合曾受敵人攻擊而損血，還報之招威力增加')
+      ? pip('受創', '上一個敵方回合曾受敵人攻擊而損血：受創後威力增加的招式，此刻更強')
       : '')
   );
 }
@@ -719,11 +720,11 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
       if (!u || !(wardEscorts(s).length || s.units.some((v) => unitDetails(v)?.traits?.ward))) return '';
       const posts = s.units.some((v) => isProp(v) && unitDetails(v)?.traits?.ward);
       return (
-        '　星索護陣・' +
+        '　星索・' +
         wardEscorts(s).length +
         ' / ' +
         s.units.filter((v) => unitDetails(v)?.traits?.ward).length +
-        (posts ? ' 根星索樁，減傷 ' : ' 名護陣者，減傷 ') +
+        (posts ? ' 根星索樁，減傷 ' : ' 名守索者，減傷 ') +
         wardShare(s, u) +
         '%'
       );
@@ -1018,7 +1019,7 @@ function objectPage(s, u) {
   const rule = keep
     ? '守住它：撐過第' + NUMERALS[(boardOf(s).hold || roundLimit(s)) - 1] + '回合，或擊敗' + masters.join('與') + '。它一毀，這一局便輸了。' + (left ? '尚須守 ' + left + ' 回合。' : '')
     : '毀了它。盤上的' + i.name + '盡數倒下，這一局便勝了。它不還手，也不閃避。';
-  const ward = i.traits?.ward ? '星索護陣 · 未被擊毀時，' + (unitDetails(find(s, commanderId(s)))?.name || '局主') + '所受傷害減 ' + i.traits.ward + '%。' : '';
+  const ward = i.traits?.ward ? '星索 · 未被擊毀時，' + (unitDetails(find(s, commanderId(s)))?.name || '局主') + '所受傷害減 ' + i.traits.ward + '%。' : '';
   return (
     titleHead('target', keep ? '守物' : '破物') +
     '<div class="enemy-summary"><img class="enemy-face object-face" src="' +
@@ -1297,14 +1298,14 @@ function attackPage(s, source, target, skill) {
   for (const e of f.effects)
     lines.push(line('附加效果', effectDescription(e.kind, e.power, e.turns)));
   if (f.push) lines.push(line(a.push ? '擊退' : '牽引', '一格'));
-  // 代受 and 號令 change who the action is for: each gets its own row.
+  // 代受 and 再動 (an order to a companion) change who the action is for: each gets its own row.
   for (const note of f.notes)
     lines.push(
-      /^(代受|號令|化功|不敗|無招|問劍) · /.test(note)
+      /^(代受|再動|化功|不敗|無招|問劍) · /.test(note)
         ? line(note.slice(0, 2), esc(note.slice(5)))
         : line('招式連攜', esc(note))
     );
-  if (f.ward) lines.push(line('星索護陣', '已減傷 ' + f.ward + '%'));
+  if (f.ward) lines.push(line('星索', '已減傷 ' + f.ward + '%'));
   // The secondary: this blow would fell its target and so meet or fail it.
   const sideLine = s.run && !friendly && !blink ? sideForecast(s, u, aimed, f) : '';
   if (sideLine)

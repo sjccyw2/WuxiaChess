@@ -13,7 +13,7 @@
 //            of its own type with less 氣血)
 //   crowded  { within, atk }: 近身失準, its blows and counters on a hero that close are weaker
 //   execute  { atk }: 斬殘, its blows and counters on a hero at or below half are stronger
-//   ward     the share (percent) a living piece takes off its master's blows (星索護陣; today only
+//   ward     the share (percent) a living piece takes off its master's blows (星索; today only
 //            the board objects carry it, board-objects.js)
 //   flurry   { share }: 分刺, after its blow a second on another hero in reach, at that share
 //   bend     true: 轉折, its blows pass terrain defence and no 代受 can take them
@@ -709,7 +709,7 @@ const RANKS = [
   {
     bow: {
       name: '守索人',
-      role: '護陣',
+      role: '守索',
       school: '姑蘇慕容',
       mini: 'archer',
       basic: '星索',
@@ -718,7 +718,7 @@ const RANKS = [
     },
     scout: {
       name: '守索人',
-      role: '護陣',
+      role: '守索',
       school: '姑蘇慕容',
       mini: 'bandit',
       basic: '星索',

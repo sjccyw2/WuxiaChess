@@ -4,9 +4,16 @@ import * as G from '../game-data.js';
 import { links, link } from './parts.js';
 
 const TERMS = Object.values(G.RULE_TERMS);
-// A term names its carrier by a field ('recoil') or by a test of the whole definition.
+// A term names its carrier by a field ('recoil'), a list of fields, or a test of the whole
+// definition.
 const carries = (test, subject) =>
-  typeof test === 'function' ? !!test(subject) : subject?.[test] != null && subject[test] !== false;
+  Array.isArray(test)
+    ? test.some((one) => carries(one, subject))
+    : typeof test === 'function'
+      ? !!test(subject)
+      : subject?.[test] != null && subject[test] !== false;
+// A term's `form` or `condition`: one key or a list of them.
+const keysOf = (field) => [].concat(field ?? []);
 
 // `art` is a technique's definition; `forms` its FORM_RULES keys (ART_FORMS).
 export function artTerms(art, forms = []) {
@@ -15,8 +22,8 @@ export function artTerms(art, forms = []) {
   return TERMS.filter(
     (t) =>
       (t.art && carries(t.art, art)) ||
-      (t.form && forms.includes(t.form)) ||
-      (t.condition && conditions.has(t.condition))
+      keysOf(t.form).some((f) => forms.includes(f)) ||
+      keysOf(t.condition).some((c) => conditions.has(c))
   );
 }
 export function itemTerms(id) {
@@ -25,8 +32,7 @@ export function itemTerms(id) {
   return TERMS.filter(
     (t) =>
       (t.item && carries(t.item, it)) ||
-      (t.form && forms.includes(t.form)) ||
-      (t.id === 'weaponForm' && forms.length) ||
+      keysOf(t.form).some((f) => forms.includes(f)) ||
       (t.id === 'medicine' && it.kind === 'use')
   );
 }

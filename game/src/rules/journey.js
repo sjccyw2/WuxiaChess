@@ -1168,7 +1168,7 @@ const SIDE_KINDS = {
     name: () => '合招制敵',
     sort: 'reach',
     eligible: (s) => lineup(s).some(hasCombo),
-    detail: () => '以合招擊倒一名敵人：催毒、乘破綻或夾擊的一擊。',
+    detail: () => '以合招擊倒一名敵人：引爆餘毒、乘破綻或夾擊的一擊。',
     state: (s) => (s.tally?.falls.some((f) => f.combo) ? 'met' : 'open'),
     progress: () => '',
     lost: () => ''

@@ -1,33 +1,42 @@
 // Flat bonuses are applied once per action, before wards and shields.
+//
+// [name, rule]. Most names are rule words (破綻, 截勁, 牽引 …). The ones in PLAIN_FORMS are not:
+// their name is a short plain phrase, and a card prints their rule as a sentence, not as a word
+// to learn (the producer, Q-N132 and Q-N152).
 const FORM_RULES = {
   mark: ['破綻', '命中後在目標身上留下兩回合破綻。同一擊若已乘破綻，便不重留。'],
   exploit: ['破綻', '乘目標已有的破綻出手，首段威力加 9，該敵無法還擊，破綻隨之收去。'],
   pin: ['絆足', '本回合與下一回合，目標移動減 2，最低仍可走 1 步。'],
   seal: ['截勁', '本回合敵人不能還擊，也不能施展絕技。局主受過後，下一回合可抵抗。'],
   cleanse: ['解厄', '先替受術者解除中毒、攻勢受挫、破防、絆足、破綻、截勁、亂氣、內傷、失神與纏械。'],
-  channel: ['渡氣', '每位受術同伴各回復 6 內力，施術者自身除外。'],
-  overflow: ['餘氣護身', '溢出的療傷量轉成一回合護盾，上限 12。護盾取較強者。'],
+  channel: ['同伴各回復 6 內力', '每位受術同伴各回復 6 內力，施術者自身除外。'],
+  overflow: ['溢出的療傷化為護盾', '溢出的療傷量化為一回合護盾，至多 12 點；護盾取較強者。'],
   riposte: ['反震', '受術者本回合首次承受敵方直接傷害並存活時，震回所失氣血，最多 9 點。'],
   pull: ['牽引', '將存活目標沿主軸向施術者牽近一格，落腳處須空置可行。'],
   line: [
-    '穿行',
-    '在同一橫列或直行出招時，餘勢穿過主目標，再擊其後兩格內首名敵人，威力 45%。阻地或友軍截斷餘勢。'
+    '濺射 身後兩格 45%',
+    '在同一橫列或直行出招時濺射身後：餘勢穿過主目標，再擊其後兩格內首名敵人，威力 45%。阻地或友軍截斷餘勢。'
   ],
-  arc: ['走勁', '餘勁躍向主目標兩格內最近的另一敵人，威力 32%。等距時取靠北、再靠西者。'],
-  distill: ['催毒', '引爆目標已有的餘毒，一次加上尚餘毒量，最多 16 威力，舊毒消散。'],
+  arc: ['餘勁躍向兩格內另一敵人', '餘勁躍向主目標兩格內最近的另一敵人，威力 32%。等距時取靠北、再靠西者。'],
+  distill: ['引爆目標的餘毒', '引爆目標已有的餘毒，一次加上尚餘毒量，最多 16 威力，舊毒消散。'],
   flank: ['夾擊', '與同伴隔敵同軸，且同伴緊貼敵人背面時，首段威力加 7，同伴回復 4 內力。'],
-  leech: ['回生', '依主目標實際損血回復四分之一氣血，捨去小數，每次最多 9 點。'],
-  landing: ['落步成陣', '落地時自己與相鄰同伴得 8 點護盾，持續至本回合結束。'],
+  leech: ['吸回損血的四分之一', '依主目標實際損血回復四分之一氣血，捨去小數，每次最多 9 點。'],
+  landing: ['落地護住身旁同伴', '落地時自己與相鄰同伴各得 8 點護盾，持續至本回合結束。'],
   still: ['定勢', '本回合未移動，首段威力加 5。'],
   collision: ['撞關', '牽引或擊退的去路受阻時，首段威力加 7。'],
-  antidote: ['以毒解毒', '擊中已有中毒的敵人時，解去施術者自身中毒。'],
+  antidote: ['擊中中毒者解自身毒', '擊中已有中毒的敵人時，解去施術者自身中毒。'],
   again: ['連環', '此招擊倒主目標時，本回合可再出手一次；每回合限一次。'],
   glide: ['回身', '出招後仍可走完本回合未用的步數，走後不能撤步。'],
   siphon: [
-    '吸勁',
+    '回復 8 內力，延後目標絕技',
     '命中後回復 8 點內力，並使目標的絕技延後一回合；同一敵人每回合只延一次，局主不能連續兩回合被延。'
   ]
 };
+// Forms whose name is a plain phrase, not a rule word: the card and the weapon's text print
+// their rule as it stands. (濺射 身後兩格 is the 濺射 term's, worded with its shape.)
+const PLAIN_FORMS = new Set(['channel', 'overflow', 'line', 'arc', 'distill', 'leech', 'landing', 'antidote', 'siphon']);
+// A form as a card's detail prints it: 「破綻 · rule」, or a plain form's rule alone.
+const formRule = (id) => (PLAIN_FORMS.has(id) ? FORM_RULES[id][1] : FORM_RULES[id].join(' · '));
 // What 解厄 lifts. The prices of a summit (露空, 無守, 立樁, 曲終) are left out on purpose, so a
 // companion cannot erase them.
 const AILMENTS = [
@@ -48,9 +57,7 @@ function weaponFormText(forms) {
     .map(
       (id) =>
         (supportForms.has(id) ? '護持招式' : '普攻') +
-        '【' +
-        FORM_RULES[id][0] +
-        '】' +
+        (PLAIN_FORMS.has(id) ? '：' : '【' + FORM_RULES[id][0] + '】') +
         FORM_RULES[id][1]
     )
     .join(' ');
@@ -89,7 +96,7 @@ function contactPlan(s, u, t, art, forms, step, boss) {
   if (spentPoison) {
     const n = Math.min(16, Math.max(0, c.poison.through - (s?.round ?? 1) + 1) * c.poison.power);
     extra += n;
-    notes.push('催毒 · 餘毒轉成 ' + n + ' 威力');
+    notes.push('餘毒轉成 ' + n + ' 威力');
   }
   if (has('still') && !u.moved) {
     extra += 5;
@@ -179,4 +186,4 @@ function supportEntry(forms, u, v, power) {
   };
 }
 
-export { FORM_RULES, AILMENTS, splashRadius, inSplash, weaponFormText, actionForms, forcedStep, contactPlan, secondaryTargets, supportEntry };
+export { FORM_RULES, PLAIN_FORMS, formRule, AILMENTS, splashRadius, inSplash, weaponFormText, actionForms, forcedStep, contactPlan, secondaryTargets, supportEntry };

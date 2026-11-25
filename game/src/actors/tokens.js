@@ -219,7 +219,8 @@ const STATUS_COLOURS = {
   formation: '#ffd98c'
 };
 // Every condition has a sign of its own, taken from its name; a stat that only went up or down
-// shows the stat (攻, 防, 移) with an arrow in the badge's corner (STATUS_MARKS), and 亂氣 its layers.
+// (升降) shows the stat (攻, 防, 移) with an arrow in the badge's corner (STATUS_MARKS), a price
+// (代價) what it holds back with a lock, which 解厄 cannot lift, and 亂氣 its layers.
 const STATUS_SIGNS = {
   mark: '綻',
   pin: '移',
@@ -242,28 +243,33 @@ const STATUS_SIGNS = {
   charm: '制',
   immune: '金',
   fortify: '防',
-  recoil: '露',
-  unguarded: '無',
-  rooted: '立',
-  spent: '曲',
+  recoil: '防',
+  unguarded: '還',
+  rooted: '移',
+  spent: '招',
   backlash: '亂',
   disarm: '纏',
   daze: '失',
   formation: '陣' // derived: the piece has a 布陣 on the board
 };
-// The corner of a badge: 'up' or 'down' for a stat that went up or down.
+// The corners of a badge: 'up' or 'down' for a stat that went up or down, 'lock' for a price.
 const STATUS_MARKS = {
-  rally: 'up',
-  haste: 'up',
-  fortify: 'up',
-  weak: 'down',
-  exposed: 'down',
-  pin: 'down'
+  rally: ['up'],
+  haste: ['up'],
+  fortify: ['up'],
+  weak: ['down'],
+  exposed: ['down'],
+  pin: ['down'],
+  recoil: ['down', 'lock'],
+  unguarded: ['lock'],
+  rooted: ['lock'],
+  spent: ['lock']
 };
-// A badge as words, for the wiki's list of signs: 「攻（升）」.
-const MARK_WORDS = { up: '升', down: '降' };
+// A badge as words, for the wiki's list of signs: 「攻（升）」, 「防（降、鎖）」.
+const MARK_WORDS = { up: '升', down: '降', lock: '鎖' };
 const signLabel = (kind) =>
-  STATUS_SIGNS[kind] + (STATUS_MARKS[kind] ? '（' + MARK_WORDS[STATUS_MARKS[kind]] + '）' : '');
+  STATUS_SIGNS[kind] +
+  (STATUS_MARKS[kind] ? '（' + STATUS_MARKS[kind].map((m) => MARK_WORDS[m]).join('、') + '）' : '');
 
 // Per layer: what each bar last showed, so a wound can linger as a pale segment and drain.
 const memories = new WeakMap();
@@ -290,9 +296,12 @@ function ghostHealth(layer, u, shown, now) {
   return g.value;
 }
 
-// The arrow in a badge's top-right corner: a small triangle, light on a dark rim.
-function paintMark(c, mark, sx, sy, size, one) {
-  if (mark !== 'up' && mark !== 'down') return;
+// The marks in a badge's corners: an arrow top right, a small triangle light on a dark rim; a
+// lock top left.
+function paintMark(c, marks = [], sx, sy, size, one) {
+  if (marks.includes('lock')) paintLock(c, sx, sy, size, one);
+  const mark = marks.find((m) => m === 'up' || m === 'down');
+  if (!mark) return;
   const w = Math.max(4, size * 0.4),
     h = w * 0.75,
     right = sx + size,
@@ -317,6 +326,28 @@ function paintMark(c, mark, sx, sy, size, one) {
   tri(0);
   c.fillStyle = up ? '#9ff0a8' : '#ff9a86';
   c.fill();
+}
+
+function paintLock(c, sx, sy, size, one) {
+  const w = Math.max(3.5, size * 0.32),
+    h = w * 0.72,
+    x = sx,
+    y = sy - h * 0.15;
+  // The shackle, then the body, each on a dark rim.
+  c.lineWidth = Math.max(one * 1.2, w * 0.18);
+  c.strokeStyle = INK;
+  c.beginPath();
+  c.arc(x + w / 2, y, w * 0.3, Math.PI, 0);
+  c.stroke();
+  c.fillStyle = INK;
+  c.fillRect(x - one, y - one, w + one * 2, h + one * 2);
+  c.lineWidth = Math.max(one * 0.8, w * 0.12);
+  c.strokeStyle = '#e8d29a';
+  c.beginPath();
+  c.arc(x + w / 2, y, w * 0.3, Math.PI, 0);
+  c.stroke();
+  c.fillStyle = '#e8d29a';
+  c.fillRect(x, y, w, h);
 }
 
 function paintGauge(layer, u, g) {
@@ -412,18 +443,22 @@ function paintGauge(layer, u, g) {
       c.fillStyle = STATUS_COLOURS[kind] || '#e9dcc0';
       c.fillRect(sx, sy + size - one, size, one);
       // A badge with a corner mark draws its character a little smaller, off the corner.
-      const marked = !!STATUS_MARKS[kind] || kind === 'backlash',
-        nudge = marked ? size * 0.1 : 0;
+      const marks = STATUS_MARKS[kind] || [],
+        right = kind === 'backlash' || marks.some((m) => m !== 'lock'),
+        left = marks.includes('lock'),
+        marked = right || left,
+        shift = size * 0.12 * ((left ? 1 : 0) - (right ? 1 : 0)),
+        drop = marked ? size * 0.12 : 0;
       c.font = 'bold ' + (size - (marked ? 3 : 2)) + 'px serif';
       c.textAlign = 'center';
       c.textBaseline = 'middle';
       // A condition with no sign of its own shows the first character of its name.
       c.fillText(
         STATUS_SIGNS[kind] || CONDITION_NAMES[kind]?.[0] || '',
-        sx + size / 2 - nudge,
-        sy + size / 2 + nudge
+        sx + size / 2 + shift,
+        sy + size / 2 + drop
       );
-      paintMark(c, STATUS_MARKS[kind], sx, sy, size, one);
+      paintMark(c, marks, sx, sy, size, one);
       // 亂氣: the layers it has laid, small in the lower corner.
       if (kind === 'backlash' && u.conditions.backlash?.power) {
         const n = String(u.conditions.backlash.power),

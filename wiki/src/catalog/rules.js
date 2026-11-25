@@ -53,7 +53,7 @@ const EXTRA = {
       ['局主', NOTES.bossSignature],
       ['副手', NOTES.secondSignature],
       ['續命', NOTES.mendSignature],
-      ['借力', NOTES.mirrorSignature],
+      ['挪移', NOTES.mirrorSignature],
       ['援軍', NOTES.waveSignature]
     ]),
   side: () =>
@@ -61,8 +61,10 @@ const EXTRA = {
       ['支線獎勵', NOTES.sideReward(G.REWARDS)],
       ['通關獎勵', NOTES.clearReward(G.REWARDS)]
     ]),
-  loss: () =>
-    rows('限時', [
+  // 勝負: a line for each way a board is won, and for the loss, then the round limits.
+  outcome: () =>
+    rows('勝負', [
+      ...G.OUTCOMES.map((o) => [o.name, sentence(o.text)]),
       ['回合上限', '第' + G.NUMERALS[G.LIMIT - 1] + '回合'],
       ...G.BATTLES.flatMap((b, map) => (b.rounds ? [[G.mapLayout(map).name, '第' + G.NUMERALS[b.rounds - 1] + '回合']] : []))
     ]),
@@ -83,9 +85,14 @@ const EXTRA = {
     ),
   keep: () => rows('各局守物', objectRows('keep')),
   break: () => rows('各局破物', objectRows('break')),
-  counter: () => rows('例外', [['無守', sentence(G.RULE_TERMS.openGuard.text)], ['卸勁', sentence(G.RULE_TERMS.stance.text)], ['後發', sentence(G.RULE_TERMS.retort.text)]])
+  counter: () =>
+    rows('例外', [
+      ['代價', '付了「至下回合不能還擊」這一代價的人，至下回合不還擊；定身、閉穴的人也不還擊。'],
+      ['卸勁', sentence(G.RULE_TERMS.stance.text)],
+      ['還擊加重', '有的普攻修習後，還擊不按五成半，改按招式所寫的比例計算。']
+    ])
 };
-// Boards a battle word applies to.
+// Boards a battle word, or a way of winning, applies to.
 const BOARDS = {
   slay: () => STAGES.filter((map) => G.BATTLES[map].kind === 'slay'),
   rout: () => STAGES.filter((map) => G.BATTLES[map].kind === 'rout'),
@@ -116,8 +123,9 @@ function termPage(term, group, carriers) {
       boards.length && links('相關戰局', boardLinks(boards)),
       links('相關條目', [
         groupPage(group),
-        term.form && link('skills', 'form-' + term.form, G.FORM_RULES[term.form][0] + '（戰鬥效果）'),
-        term.id === 'side' && link('rules', 'group-sides', '支線種類')
+        ...[].concat(term.form ?? []).map((form) => link('skills', 'form-' + form, G.FORM_RULES[form][0] + '（戰鬥效果）')),
+        term.id === 'side' && link('rules', 'group-sides', '支線種類'),
+        ...(term.id === 'outcome' ? G.OUTCOMES.map((o) => link('rules', o.kind, o.name)) : [])
       ])
     ].filter(Boolean),
     sources: cites(cite(term.name, FILE))
@@ -140,17 +148,21 @@ function groupEntry(group) {
 }
 
 // 戰鬥效果 are rule words too; each has its page in 武學總譜, listed here so they can be found.
+// The plain ones (PLAIN_FIELDS.form) are not words to learn: the card says what they do.
 function formsEntry() {
-  const list = Object.entries(G.FORM_RULES);
+  const all = Object.entries(G.FORM_RULES),
+    plain = all.filter(([id]) => G.PLAIN_FIELDS.form.includes(id)),
+    list = all.filter(([id]) => !G.PLAIN_FIELDS.form.includes(id));
   return {
     id: 'group-forms',
     name: '戰鬥效果',
     tag: '規則總覽',
-    summary: list.map(([, [name]]) => name).join('、') + '。',
+    summary: [...new Set(list.map(([, [name]]) => name))].join('、') + '。',
     image: null,
     sections: [
       rows('戰鬥效果', list.map(([, [name, rule]]) => [name, rule])),
-      links('各條', list.map(([id, [name]]) => link('skills', 'form-' + id, name)))
+      rows('寫在招式上的效果', plain.map(([, [name, rule]]) => [name, rule])),
+      links('各條', all.map(([id, [name]]) => link('skills', 'form-' + id, name)))
     ],
     sources: cites(cite(list[0][1][0], 'src/rules/form-rules.js'))
   };
@@ -192,8 +204,26 @@ function sides() {
   return [index, ...pages];
 }
 
+// One page for each way a board is won and for the loss: the lines of 勝負.
+function outcomes() {
+  const term = G.RULE_TERMS.outcome;
+  return G.OUTCOMES.map((o) => ({
+    id: o.kind,
+    name: o.name,
+    tag: term.name,
+    summary: sentence(o.text),
+    image: null,
+    sections: [
+      EXTRA[o.kind]?.(),
+      BOARDS[o.kind] && links('相關戰局', boardLinks(BOARDS[o.kind]())),
+      links('相關條目', [link('rules', term.id, term.name), groupPage(G.RULE_GROUPS.find((g) => g.id === 'battle'))])
+    ].filter(Boolean),
+    sources: cites(cite(o.name, FILE))
+  }));
+}
+
 // Rule words a guide paragraph is about, by the paragraph's title.
-const GUIDE_TERMS = { 起陣: ['deploy'], 敵援: ['waves', 'danger'], 支線: ['side', 'recruit'], 回合與養成: ['brace', 'medicine'] };
+const GUIDE_TERMS = { 軍情: ['outcome'], 敵援: ['waves'], 支線: ['side'], 回合與養成: ['brace', 'medicine'] };
 // The in-game guide, paragraph by paragraph, and its line of keys.
 function guide() {
   const pages = G.guideEntries().map(([, title, body], i) => ({
@@ -224,7 +254,7 @@ function guide() {
       tag: '操作指南',
       summary: keys.map(([label, key]) => key + ' ' + label).join('、') + '。',
       image: null,
-      sections: [rows('鍵盤', keys), links('相關條目', [link('rules', 'danger', G.RULE_TERMS.danger.name)])],
+      sections: [rows('鍵盤', keys), links('相關條目', pages.filter((p) => p.name === '敵援').map((p) => link('rules', p.id, '敵方範圍')))],
       sources: cites(cite('<kbd>E</kbd> 結束回合', 'src/ui/action-flow.js'))
     },
     // The one-character marks beside a piece on the board, and the state each stands for; a mark
@@ -258,6 +288,7 @@ export function rules() {
     ...G.RULE_GROUPS.map(groupEntry),
     formsEntry(),
     ...G.RULE_GROUPS.flatMap((group) => group.terms.map((term) => termPage(term, group, carriers))),
+    ...outcomes(),
     ...sides(),
     development(),
     ...guide()
