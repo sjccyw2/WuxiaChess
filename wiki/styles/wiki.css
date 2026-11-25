@@ -1791,6 +1791,94 @@ a.cmp-pick:hover {
     width: max-content;
   }
 }
+/* 黑子對照 (view/foe-compare.js): the 境界 tabs, the readouts beside the radar, the board sums. */
+.foe-realms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 0;
+}
+.foe-realms a,
+.foe-realms span {
+  padding: 5px 12px;
+  border: 1px solid var(--stroke);
+  border-radius: 3px;
+  background: var(--sheet);
+  font-size: 14px;
+}
+.foe-realms a:hover,
+.foe-realms a:focus-visible {
+  border-color: var(--red);
+  color: var(--red);
+}
+.foe-realms .is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--sheet);
+  font-weight: 700;
+}
+.foe-compare .cmp-side.cmp-readout {
+  margin-top: 0;
+  border: 1px solid var(--stroke);
+  border-radius: 5px;
+  background: var(--sheet);
+}
+.foe-readout + .foe-readout {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e4dfd0;
+}
+.foe-readout h3 .cmp-x {
+  margin-left: auto;
+  color: var(--faint);
+  padding: 0 6px;
+}
+.foe-readout li {
+  grid-template-columns: 2.2em 4.5em minmax(0, 1fr) !important;
+}
+.foe-readout .cmp-why {
+  grid-column: auto;
+}
+.foe-rank small,
+.foe-board-table small {
+  display: block;
+  font-size: 11px;
+  color: var(--faint);
+}
+.foe-rank,
+.foe-where {
+  text-align: left !important;
+}
+.foe-board-table tbody th {
+  color: var(--ink);
+  font: 700 15px var(--serif);
+}
+.foe-board-table thead th {
+  white-space: nowrap;
+}
+.foe-board-table thead th a {
+  display: block;
+  color: inherit;
+}
+.foe-board-table .is-sorted {
+  color: var(--red);
+}
+.foe-board-table td.is-sorted {
+  color: inherit;
+  font-weight: 800;
+}
+.foe-board-table .cmp-rank-total {
+  position: relative;
+  min-width: 6.5em;
+  text-align: left;
+  padding-left: 13px;
+}
+.foe-board-table .cmp-rank-total b {
+  position: relative;
+}
+.foe-none {
+  color: var(--faint);
+}
 /* 群俠列傳: each hero card shows its 綜合 score. */
 .card-score {
   margin-left: auto;

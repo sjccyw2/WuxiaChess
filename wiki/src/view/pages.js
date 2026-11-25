@@ -7,6 +7,7 @@ import { gameArt, wikiArt } from '../catalog/parts.js';
 import { BASELINE_ATTACK } from '../catalog/skills.js';
 import { loreShelf, featured } from './lore.js';
 import { compareData } from '../catalog/compare.js';
+import { foeCompareData } from '../catalog/foe-compare.js';
 
 // 群俠列傳 shows each hero's 綜合 score from 俠客對照 (level 12, every art learned) and its place.
 function heroScores() {
@@ -62,6 +63,20 @@ const compareShelf = () =>
       ' 人並列 · 評分與成長</small></span><i aria-hidden="true">›</i>',
     'shelf'
   );
+// 黑子對照 sits beside 群敵錄 the same way.
+const foeCompareShelf = () =>
+  anchor(
+    '#foecompare',
+    image(gameArt('captain-5.webp')) +
+      '<span><strong>黑子對照</strong><small>' +
+      foeCompareData().pieces.length +
+      ' 種黑子 · 評分與各局合計</small></span><i aria-hidden="true">›</i>',
+    'shelf'
+  );
+// A foe's scores on 黑子對照, one for each board (or wave) it stands on, in the first 境界.
+function foeScores(id) {
+  return foeCompareData().pieces.filter((p) => p.page === id);
+}
 export function home() {
   const shelf = (g, file) => {
     const c = categories[g];
@@ -128,7 +143,7 @@ export function home() {
       ['missions', 'run-meridians.webp'],
       ['rules', 'wake-gauge.webp']
     ]
-      .map(([g, f]) => shelf(g, f) + (g === 'heroes' ? compareShelf() : ''))
+      .map(([g, f]) => shelf(g, f) + (g === 'heroes' ? compareShelf() : g === 'foes' ? foeCompareShelf() : ''))
       .join('') +
     '</div>' +
     '<div class="home-title"><h2>棋局輿圖</h2>' +
@@ -215,6 +230,9 @@ export function listPage(g, p) {
         anchor('#compare', '到俠客對照看六項評分與全員排名 →', 'more') +
         '</p>'
       : '') +
+    (g === 'foes'
+      ? '<p class="list-note">' + anchor('#foecompare', '到黑子對照看每一子的五項評分與各局合計 →', 'more') + '</p>'
+      : '') +
     (textGroup ? '<p class="revision">〔　〕標示遊戲執行時代入的姓名、數值或選項。</p>' : '') +
     (page.portion.length
       ? '<div class="' +
@@ -230,7 +248,8 @@ export function entry(g, id) {
   const r = store.tables[g].get(id);
   if (!r) return lost();
   const audit = href('text', '', { q: r.name });
-  const score = g === 'heroes' && heroScores().get(r.id);
+  const score = g === 'heroes' && heroScores().get(r.id),
+    foe = g === 'foes' ? foeScores(r.id) : [];
   return (
     '<article class="entry">' +
     crumb(g, r.name) +
@@ -239,6 +258,19 @@ export function entry(g, id) {
       ? '<p class="entry-tools">' +
         (score ? '<span>綜合評分 <b>' + score.score + '</b>（全員第 ' + score.rank + ' 名，共 ' + store.entries.heroes.length + ' 人）</span> ' : '') +
         anchor('#compare?h=' + encodeURIComponent(r.id), '與他人對照 →', 'more') +
+        '</p>'
+      : '') +
+    (foe.length
+      ? '<p class="entry-tools">' +
+        foe
+          .map((p) =>
+            anchor(
+              '#foecompare?f=' + encodeURIComponent(p.id),
+              '黑子對照 綜合 <b>' + p.realms[1].composite + '</b>（' + esc(p.board + (p.wave ? '，' + p.wave : '')) + '）',
+              'more'
+            )
+          )
+          .join(' ') +
         '</p>'
       : '') +
     (g === 'skills' && r.sections[0]?.title === '招式數值'

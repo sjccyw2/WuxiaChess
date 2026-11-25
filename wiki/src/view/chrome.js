@@ -27,8 +27,8 @@ export function nav(g) {
       .map(
         ([k, v]) =>
           entry(k, v[0], v[1], k === 'text' ? store.corpus.entries.length : store.entries[k].length) +
-          // 俠客對照 is a tool over 群俠列傳, not a catalog group of its own.
-          (k === 'heroes' ? entry('compare', '俠客對照', '較') : '')
+          // 俠客對照 and 黑子對照 are tools over 群俠列傳 and 群敵錄, not catalog groups of their own.
+          (k === 'heroes' ? entry('compare', '俠客對照', '較') : k === 'foes' ? entry('foecompare', '黑子對照', '量') : '')
       )
       .join('');
 }
