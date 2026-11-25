@@ -969,8 +969,9 @@ function settingsPage(p, inBattle = true) {
           '</div>'
       )
       .join('') +
-    '</div><div class="save-panel"><h4>章回存檔</h4><p>行動後自動存檔於此瀏覽器。</p>' +
+    '</div><div class="save-panel"><h4>章回存檔</h4><p>行動後自動存檔於此瀏覽器。另有三格存檔，可隨時存檔、讀檔。</p>' +
     '<div class="save-options">' +
+    btn('saves', icon('chest', 15) + '存檔・讀檔', 'outline-btn') +
     (inBattle
       ? btn('home', icon('undo', 15) + '返回主畫面', 'outline-btn') +
         btn('reset-ask', icon('restart', 15) + '另起一輪', 'outline-btn')
