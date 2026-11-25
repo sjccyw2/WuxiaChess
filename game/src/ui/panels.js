@@ -65,7 +65,7 @@ import { icon } from './icons.js';
 import { itemPicture } from './item-art.js';
 import { POLISH } from '../polish.js';
 import { guideEntries } from '../data/rule-terms.js';
-import { extraHotkeys } from './field-extras.js';
+import { extraHotkeys, keyHint } from './field-extras.js';
 import { ON as actionFlow, anyIdle, flowHotkeys } from './action-flow.js';
 const portraits = {
   huang: 'huang',
@@ -264,9 +264,9 @@ function commander(s, mode, { picked = false } = {}) {
         : '') +
       btn(
         'end',
-        icon('end', 18) + '<span>結束回合</span>',
+        icon('end', 18) + '<span>結束回合</span>' + keyHint('E'),
         'field-action turn-action' + (s.phase === 'ally' && !anyIdle(s) ? ' ready' : ''),
-        'title="結束回合" ' + (s.phase !== 'ally' ? 'disabled' : '')
+        'title="結束回合" aria-keyshortcuts="E" ' + (s.phase !== 'ally' ? 'disabled' : '')
       )
     );
   }
@@ -920,25 +920,38 @@ function terrainPage(s) {
     '</ul></div>'
   );
 }
+// The keys of the pages between boards and the films, under either flow.
+const pageHotkeys = '<kbd>Enter</kbd> <kbd>Space</kbd> <kbd>→</kbd> 下一句 <kbd>←</kbd> 上一句 <kbd>Space</kbd> 影片暫停';
 // `extra` is put above the paragraphs: in a battle, the control that replays the tutorial.
 function helpPage(extra = '') {
   // The paragraphs are worded in data/rule-terms.js, which the wiki reads too.
   const rules = guideEntries({ actionFlow });
+  const keys =
+    (actionFlow
+      ? flowHotkeys
+      : '<kbd>1</kbd> 移動 <kbd>2</kbd> 招式 <kbd>3</kbd> 待命 <kbd>Enter</kbd> 確認 <kbd>E</kbd> 結束回合 <kbd>Backspace</kbd> 撤步 <kbd>Esc</kbd> 返回・選單 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>?</kbd> 指南') +
+    extraHotkeys() +
+    ' ' +
+    pageHotkeys;
+  // 按鍵 comes first, as a section of its own (R-62); a touch screen hides it (styles/01-base.css).
+  // Each run of keys with what it does stays together when the line wraps.
+  const pairs = [...keys.matchAll(/((?:<kbd>[^<]*<\/kbd>[–\s]*)+)([^<]+)/g)]
+    .map(([, run, label]) => '<li><span>' + run.trim() + '</span>' + label.trim() + '</li>')
+    .join('');
   return (
     titleHead('help', '操作指南') +
     extra +
-    '<div class="field-help">' +
+    '<section class="hotkeys" aria-labelledby="hotkeys-title"><h3 id="hotkeys-title">' +
+    icon('keyboard', 17) +
+    ' 按鍵</h3><ul>' +
+    pairs +
+    '</ul></section><div class="field-help">' +
     rules
       .map(
         ([ic, title, body]) =>
           `<details class="hud-disclosure"><summary>${icon(ic, 17)} ${title}</summary><p>${body}</p></details>`
       )
       .join('') +
-    '</div><div class="hotkeys">' +
-    (actionFlow
-      ? flowHotkeys
-      : '<kbd>1</kbd> 移動 <kbd>2</kbd> 招式 <kbd>3</kbd> 待命 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 返回 <kbd>?</kbd> 指南') +
-    extraHotkeys() +
     '</div>'
   );
 }
@@ -1369,4 +1382,4 @@ function resultPage(s) {
   );
 }
 
-export { itemBonus, medicineIdle, portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, briefPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };
+export { pageHotkeys, itemBonus, medicineIdle, portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, briefPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };

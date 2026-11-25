@@ -13,6 +13,7 @@
 import { POLISH } from '../polish.js';
 import * as G from '../rules/game.js';
 import { icon } from './icons.js';
+import { keyHint } from './field-extras.js';
 
 const ON = POLISH.actionFlow;
 
@@ -21,9 +22,11 @@ const ON = POLISH.actionFlow;
 function undoRow(s, u) {
   if (!ON || !u?.moved || !u.origin || !G.canAct(s, u)) return '';
   return (
-    '<button class="field-loadout field-undo" data-do="move" title="撤步">' +
+    '<button class="field-loadout field-undo" data-do="move" title="撤步" aria-keyshortcuts="Backspace">' +
     icon('undo', 15) +
-    '撤步</button>'
+    '撤步' +
+    keyHint('Backspace') +
+    '</button>'
   );
 }
 
@@ -145,8 +148,9 @@ function followHero(panel, layer, who) {
   step();
 }
 
-// The keys line of the help page under this flow.
+// The keys line of the help page under this flow. Esc only closes or lets go; Backspace is 撤步
+// (R-61, the producer's ruling of 2026-11-25).
 const flowHotkeys =
-  '<kbd>1</kbd>–<kbd>4</kbd> 招式 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 撤步・返回 <kbd>?</kbd> 指南';
+  '<kbd>1</kbd>–<kbd>4</kbd> 招式 <kbd>Enter</kbd> 確認 <kbd>E</kbd> 結束回合 <kbd>Backspace</kbd> 撤步 <kbd>Esc</kbd> 返回・選單 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>?</kbd> 指南';
 
 export { ON, markReady, undoRow, walkRow, glideRows, nextToAct, anyIdle, shouldConfirmEnd, braceTheRest, followHero, flowHotkeys };

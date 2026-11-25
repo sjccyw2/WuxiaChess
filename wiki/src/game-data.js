@@ -25,7 +25,7 @@ export * from '../../game/src/rules/move-facts.js';
 export * from '../../game/src/rules/ferry-market.js';
 export * from '../../game/src/rules/journey.js';
 export * from '../../game/src/fx/technique-strokes.js';
-export { portraits } from '../../game/src/ui/panels.js';
+export { portraits, pageHotkeys } from '../../game/src/ui/panels.js';
 export { flowHotkeys } from '../../game/src/ui/action-flow.js';
 export { extraHotkeys } from '../../game/src/ui/field-extras.js';
 export { STATUS_SIGNS, STATUS_LOOKS } from '../../game/src/actors/tokens.js';
