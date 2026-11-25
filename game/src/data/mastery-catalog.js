@@ -24,6 +24,8 @@ const PAIRED_HANDS_DESC = '左右手各使一路，在兩格內連擊兩次。';
 // Naming (the producer's rule, 2026-11-22): 「本招・式名」 with 「・」 marks an upgrade, and only the
 // basic attack is upgraded (kind 'basic'). Every other node is a new art in its own slot and has a
 // name of its own; `family` names the art it belongs to (降龍十八掌 for 亢龍有悔), shown beneath it.
+// `boon` names the hero's leader boon, as COMMANDS in rules/battle-mastery.js has it (0.44;
+// check-mechanics holds the two together).
 const HERO_PATHS = {
   hero: {
     title: '思過崖劍訣',
@@ -168,7 +170,7 @@ const HERO_PATHS = {
   qiaoFeng: {
     title: '聚賢莊斷義錄',
     book: '天龍八部',
-    boon: '一呼百應',
+    boon: '聚賢豪氣',
     signature: '太祖長拳',
     origin:
       '蕭峰入境只餘江湖上最尋常的太祖長拳。恩師所傳降龍掌法須逐掌想回，直到末了，廿八掌才會俱全。',
@@ -196,7 +198,7 @@ const HERO_PATHS = {
   hongQi: {
     title: '華山絕頂棒掌錄',
     book: '射鵰英雄傳、神鵰俠侶',
-    boon: '九指點撥',
+    boon: '打狗陣法',
     signature: '逍遙遊',
     origin:
       '洪七公入境只餘少年最早學的逍遙遊。降龍掌、打狗棒須逐招逐訣想起，直到三十六路棒法使全。',
@@ -210,7 +212,7 @@ const HERO_PATHS = {
   yaoShi: {
     title: '桃花島簫劍錄',
     book: '射鵰英雄傳、神鵰俠侶',
-    boon: '東邪奇學',
+    boon: '桃花迷陣',
     signature: '落英神劍掌',
     origin:
       '黃藥師入境只餘落英神劍掌。劈空掌、島上奇陣、簫中劍、指上飛石須逐樣想回，碧海潮生曲留在最後。',
@@ -224,7 +226,7 @@ const HERO_PATHS = {
   sanFeng: {
     title: '武當山太極初演錄',
     book: '倚天屠龍記',
-    boon: '真武鎮山',
+    boon: '太極圓轉',
     signature: '羅漢拳',
     origin:
       '張三丰入境只餘少年照一對鐵羅漢學成的羅漢拳，是他最早的拳路。自創武當拳劍須從頭想回，太極拳仍在最後。',
@@ -238,7 +240,7 @@ const HERO_PATHS = {
   zhaoMin: {
     title: '靈蛇島三劍錄',
     book: '倚天屠龍記',
-    boon: '郡主妙算',
+    boon: '軟筋餘香',
     signature: '萬安寺劍招',
     origin:
       '趙敏入境只餘萬安寺向各派偷學的零碎劍招。靈蛇島那三招與敵偕亡的劍法須逐招想回，天地同壽留到最後。',
@@ -252,7 +254,7 @@ const HERO_PATHS = {
   lingSu: {
     title: '藥王谷七心錄',
     book: '飛狐外傳',
-    boon: '藥王調息',
+    boon: '碧蠶毒蠱',
     signature: '藥王方脈',
     origin:
       '程靈素入境只餘師父傳的方脈醫理。辨毒使毒須逐樣想回，七心海棠在最後。',
@@ -266,7 +268,7 @@ const HERO_PATHS = {
   diYun: {
     title: '雪谷神照錄',
     book: '連城訣',
-    boon: '血刀破甲',
+    boon: '雪谷回生',
     signature: '躺屍劍法',
     origin:
       '狄雲入境只餘最早學的躺屍劍法，連名目都是師父教錯的。老丐三招、雪谷血刀須逐樣想回，丁典的神照經在最後。',
@@ -280,7 +282,7 @@ const HERO_PATHS = {
   chengZhi: {
     title: '華山金蛇錄',
     book: '碧血劍',
-    boon: '金蛇追影',
+    boon: '金蛇轉鋒',
     signature: '伏虎掌',
     origin:
       '袁承志入境只餘幼時崔秋山教的伏虎掌。石洞裡所得的金蛇秘笈早在少年練全，因而想回得最快，反是華山混元功、木桑身法須慢慢想起。',
@@ -294,7 +296,7 @@ const HERO_PATHS = {
   aQing: {
     title: '苧蘿竹枝譜',
     book: '越女劍',
-    boon: '越女輕步',
+    boon: '越女試劍',
     signature: '白猿竹枝',
     origin:
       '阿青入境只餘竹棒與同白猿打著玩的幾下，自己並不知是劍法。獨敵三千甲士的那一路，須最後才會想起。',

@@ -5877,6 +5877,12 @@ section('leader boons of the later ten');
     lead.hp = 0;
     check('with the leader fallen, nothing', G.stat(mate, 'atk', s) === mates);
   }
+  // 0.44: each tree names its hero's boon as the game has it.
+  {
+    const { HERO_PATHS } = await load('data/mastery-catalog.js');
+    const drift = Object.entries(HERO_PATHS).filter(([id, p]) => p.boon !== BM.COMMANDS[id]?.name).map(([id]) => id);
+    check('every tree names the boon its hero leads with', !drift.length, drift);
+  }
   // 虛竹 靈鷲慈心 (0.45): a heal by the leader or a hero within two tiles restores 8 more.
   {
     const { s, lead, near, far, foe } = led('xuZhu');
