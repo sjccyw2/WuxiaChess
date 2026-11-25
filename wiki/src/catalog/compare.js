@@ -19,7 +19,7 @@ const AXES = [
   { key: 'vitality', name: '氣血防禦', hint: '倒下前挨得住幾擊，再加護盾、固守、金剛、閃身、免受還擊、自療、吸血與代受。' },
   { key: 'inner', name: '內力回氣', hint: '八回合內，內力上限加每回合回氣，夠施展幾次本門最耗內力的三招（以學全後為準）；凝氣、命中回復內力與領隊減耗都算。' },
   { key: 'speed', name: '身法速度', hint: '移動步數，加輕身、越障身法與出招後回身。' },
-  { key: 'support', name: '輔助同伴', hint: '替同伴療傷、護盾、振奮、輕身、固守、代受、令同伴再動，與壓制敵人；領隊陣法按三分之一計。' }
+  { key: 'support', name: '輔助同伴', hint: '替同伴療傷、護盾、振奮、輕身、固守、代受、挑釁、令同伴再動，與壓制敵人；挑釁按所及格數計；領隊陣法按三分之一計。' }
 ];
 const KEYS = AXES.map((a) => a.key);
 
@@ -37,6 +37,12 @@ const CONTROL = 0.8; // holding a foe helps companions less surely than mending 
 const AURA = 0.75; // companions an aura finds, per tile of it
 const STEP_WORTH = 0.15; // one step for one companion, in blows
 const AGAIN = 0.3; // 連環: the kill that buys another action
+// 挑釁 (2026-11-25): blows drawn off companions grow with the ground it covers; 0.4 a tile keeps
+// the old two-tile 鐵索並肩 at 0.8 and gives the three-tile one 1.2 (the simulator's player weighs
+// a taunt at 0.45 basic attacks a tile when it equips, sim-battles.mjs `equipTaunt`).
+const TAUNT_PER_TILE = 0.4;
+// 化符's `purge`: more 氣血 for each ailment its 解厄 lifts; a recipient carries about half of one.
+const AILING = 0.5;
 // 武學點 a hero has gained by each level: one per level from the game, and about as many again
 // from secondaries that pay a point (tools/sim-battles.mjs: some 20 spent by level 10).
 const POINTS_PER_LEVEL = 2;
@@ -265,7 +271,7 @@ function measure(id, level, learned, talents, lead, unit, kit = learned) {
     let v = 0,
       hold = 0;
     if (n) {
-      if (art.heal) v += (0.8 * G.healingPower(u, s, art) * n) / BLOW;
+      if (art.heal) v += (0.8 * (G.healingPower(u, s, art) + (art.purge || 0) * AILING) * n) / BLOW;
       if (art.shield) v += (art.shield.power * n) / BLOW;
       if (art.rally) v += (art.rally.power * Math.min(3, art.rally.turns) * n * 1.3) / BLOW;
       if (art.haste) v += ((art.haste.power * Math.min(3, art.haste.turns)) / 3) * n * STEP_WORTH * 3;
@@ -279,7 +285,7 @@ function measure(id, level, learned, talents, lead, unit, kit = learned) {
       if (forms.includes('overflow')) v += 0.15;
     }
     if (art.cover) v += 1;
-    if (art.taunt) v += 0.8;
+    if (art.taunt) v += TAUNT_PER_TILE * art.taunt;
     if (forms.includes('landing')) v += 0.3;
     // Holding foes back: fewer and weaker blows at his companions.
     // A 定身 with a setup to meet (絆字訣) at half.
