@@ -606,9 +606,11 @@ function hpSnapshot(s) {
   return new Map(s.units.map((v) => [v, v.hp]));
 }
 function credit(rec, before, s, actor) {
-  // Health lost by foes goes to the actor, health lost by heroes is what they took.
+  // Health lost by foes goes to the actor, health lost by heroes is what they took; health a hero
+  // regains in the actor's own action is what the actor healed (himself included).
   for (const [v, hp] of before) {
     const lost = hp - v.hp;
+    if (lost < 0 && v.side === 'ally' && actor && rec.heroes[actor] && G.living(v)) rec.heroes[actor].healed -= lost;
     if (lost <= 0) continue;
     if (v.side === 'ally') rec.heroes[v.id].taken += lost;
     else if (actor && rec.heroes[actor]) {
@@ -699,9 +701,26 @@ function enemyPhase(s, rec) {
     const e = G.enemies(s).find((v) => G.living(v) && !v.acted);
     if (!e) break;
     const before = hpSnapshot(s);
+    // 受制: what a turned foe does to its own side is the doing of the hero who turned it.
+    const turner = G.charmed(e) ? rec.heroes[e.conditions.charm.source] : null;
+    // 挑釁: the heroes this foe is bound to strike as it begins (the rules' own taunters).
+    const bound = turner ? [] : G.taunters(s, e).map((v) => v.id);
+    rec.coverLine = null;
     const effects = G.enemyAct(s, e);
     const target = effects[0] && G.find(s, effects[0][0]);
+    if (turner) {
+      for (const [v, hp] of before) if (v.side === 'enemy' && hp > v.hp) turner.turned += hp - v.hp;
+      continue;
+    }
     credit(rec, before, s, target?.side === 'ally' ? target.id : null);
+    // A blow that landed on a hero: counted, and counted as drawn when a 挑釁 bound the foe to him
+    // or he stepped in for a companion (代受's line in the log, by the coverer's name).
+    if (target?.side === 'ally' && rec.heroes[target.id]) {
+      const h = rec.heroes[target.id];
+      h.struck++;
+      if (bound.includes(target.id)) h.taunted++;
+      else if (rec.coverLine === G.unitDetails(target).name) h.covered++;
+    }
   }
   if (s.result) return;
   const before = hpSnapshot(s);
@@ -721,7 +740,7 @@ function fight(s) {
   const rec = { stage: s.run.stage, map: s.mapIndex, usage: { basic: 0, start: 0, tier1: 0, tier2: 0, tier3: 0, tier4: 0, manual: 0, wait: 0 }, heroes: {}, misfires: 0 };
   rec.arts = {};
   for (const u of G.party(s)) {
-    rec.heroes[u.id] = { dealt: 0, taken: 0, kills: 0, level: u.level, sp: u.sp, spent: spentPoints(u) };
+    rec.heroes[u.id] = { dealt: 0, taken: 0, kills: 0, healed: 0, turned: 0, struck: 0, taunted: 0, covered: 0, level: u.level, sp: u.sp, spent: spentPoints(u) };
     for (const id of G.equippedArts(u)) (rec.arts[u.id + '/' + id] ??= { equipped: 0, used: 0 }).equipped = 1;
   }
   // The battle log keeps only its last lines; a traced board keeps its own copy.
@@ -735,6 +754,7 @@ function fight(s) {
   let sideNow = R.sideState(s);
   s.logs.push = function (entry) {
     for (const [name, test] of EVENTS) if (test(entry, phaseLines)) rec.events[name] = (rec.events[name] || 0) + 1;
+    if (entry.phase === 'enemy' && /^挺身代.+受招。$/.test(entry.text)) rec.coverLine = entry.who;
     const n = Array.prototype.push.call(this, entry);
     lines?.push(entry);
     const state = s.result ? sideNow : R.sideState(s);
@@ -758,6 +778,7 @@ function fight(s) {
   rec.downed = team.filter((u) => !G.living(u)).length;
   rec.side = R.sideDone(s);
   rec.leaderFell = !G.living(G.find(s, s.leader));
+  rec.leader = s.leader;
   // What kind of board it was, and what came onto it.
   const board = G.boardOf(s);
   rec.kind = G.boardKind(s);
@@ -1101,15 +1122,23 @@ function aggregate(runs) {
         A.used += a.used;
       }
       const totalKills = Object.values(b.heroes).reduce((n, h) => n + h.kills, 0),
-        totalDealt = Object.values(b.heroes).reduce((n, h) => n + h.dealt, 0);
+        totalDealt = Object.values(b.heroes).reduce((n, h) => n + h.dealt, 0),
+        totalStruck = Object.values(b.heroes).reduce((n, h) => n + (h.struck || 0), 0);
       for (const [id, h] of Object.entries(b.heroes)) {
-        const H = (heroes[id] ??= { boards: 0, dealt: 0, taken: 0, kills: 0, teamKills: 0, teamDealt: 0, at: Array.from({ length: STAGES }, () => ({ n: 0, level: 0, sp: 0, spent: 0 })) });
+        const H = (heroes[id] ??= { boards: 0, dealt: 0, taken: 0, kills: 0, teamKills: 0, teamDealt: 0, healed: 0, turned: 0, struck: 0, taunted: 0, covered: 0, teamStruck: 0, led: 0, ledLost: 0, at: Array.from({ length: STAGES }, () => ({ n: 0, level: 0, sp: 0, spent: 0 })) });
         H.boards++;
         H.dealt += h.dealt;
         H.taken += h.taken;
         H.kills += h.kills;
         H.teamKills += totalKills;
         H.teamDealt += totalDealt;
+        for (const k of ['healed', 'turned', 'struck', 'taunted', 'covered']) H[k] += h[k] || 0;
+        H.teamStruck += totalStruck;
+        // Boards he led, and those lost by the leader falling.
+        if (b.leader === id) {
+          H.led++;
+          if (!b.won && b.leaderFell) H.ledLost++;
+        }
         const A = H.at[b.stage];
         A.n++;
         A.level += h.level;
@@ -1168,6 +1197,17 @@ function aggregate(runs) {
           takenPerBoard: r1(H.taken / H.boards),
           killShare: H.teamKills ? r2(H.kills / H.teamKills) : 0,
           damageShare: H.teamDealt ? r2(H.dealt / H.teamDealt) : 0,
+          // What a support's or a guard's worth is: 氣血 restored, damage done by foes he turned
+          // (受制), the enemy blows that landed on him, and of those the ones drawn by 挑釁 or 代受.
+          healedPerBoard: r1(H.healed / H.boards),
+          turnedPerBoard: r1(H.turned / H.boards),
+          struckPerBoard: r2(H.struck / H.boards),
+          struckShare: H.teamStruck ? r2(H.struck / H.teamStruck) : 0,
+          tauntedPerBoard: r2(H.taunted / H.boards),
+          coveredPerBoard: r2(H.covered / H.boards),
+          drawn: H.taunted + H.covered,
+          led: H.led,
+          ledLostLeader: H.ledLost,
           levelAt: H.at.map((A) => (A.n ? r1(A.level / A.n) : null)),
           spentAt: H.at.map((A) => (A.n ? r1(A.spent / A.n) : null)),
           unspentAt: H.at.map((A) => (A.n ? r1(A.sp / A.n) : null))
@@ -1228,6 +1268,12 @@ function print(out) {
     console.log(
       pad(id, 7) + pad(h.name, 5) + lpad(h.boards, 6) + lpad(h.dealtPerBoard, 7) + lpad(h.takenPerBoard, 7) + lpad(pc(h.killShare), 7) + lpad(pc(h.damageShare), 6) + '   ' +
         h.levelAt.map((v) => lpad(v == null ? '-' : Math.round(v), 2)).join(' ') + '  /  ' + h.spentAt.map((v) => lpad(v == null ? '-' : Math.round(v), 2)).join(' ')
+    );
+  console.log('\nPer hero, support and guard (per board fought: healed; turned = damage dealt by foes he turned (受制); struck = enemy blows landed on him, and his share of the team\'s; taunt, cover = of those, drawn by 挑釁 and by 代受; drawn = both, in all; led = boards he led, L:ldr = of those lost by the leader falling)');
+  console.log(pad('hero', 9) + pad('name', 5) + lpad('healed', 7) + lpad('turned', 7) + lpad('struck', 7) + lpad('share', 6) + lpad('taunt', 7) + lpad('cover', 7) + lpad('drawn', 7) + lpad('led', 6) + lpad('L:ldr', 6));
+  for (const [id, h] of Object.entries(out.heroes))
+    console.log(
+      pad(id, 9) + pad(h.name, 5) + lpad(h.healedPerBoard, 7) + lpad(h.turnedPerBoard, 7) + lpad(h.struckPerBoard, 7) + lpad(pc(h.struckShare), 6) + lpad(h.tauntedPerBoard, 7) + lpad(h.coveredPerBoard, 7) + lpad(h.drawn, 7) + lpad(h.led, 6) + lpad(h.ledLostLeader, 6)
     );
   if (ARTS && out.arts) {
     console.log('\nPer art (boards fought with it equipped, uses, uses per such board)');
