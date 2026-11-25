@@ -65,7 +65,7 @@ const NEW_HEROES = {
     skillIcon: 'sword',
     skillRange: 1,
     cost: 9,
-    skillDesc: '貼身一刀，留下破綻兩回合，供自己或同伴收隙。',
+    skillDesc: '貼身一刀，留下破綻兩回合，供自己或同伴乘破綻出手。',
     voice: '那人把腳印掃乾淨了，倒忘了松枝上還掛著他袖口的雪。'
   },
   // The ten from the roster pack (asset-gen/jianying-roster-art), by the pack's ids. Each is
@@ -90,7 +90,7 @@ const NEW_HEROES = {
   },
   xuZhu: {
     name: '虛竹',
-    role: '封穴療傷',
+    role: '截勁療傷',
     school: '少林・逍遙派',
     mini: 'xuZhu',
     portrait: 'xuZhu',

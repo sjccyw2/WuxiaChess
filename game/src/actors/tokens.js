@@ -218,17 +218,19 @@ const STATUS_COLOURS = {
   fortify: '#d8c7a0',
   formation: '#ffd98c'
 };
+// Every condition has a sign of its own, taken from its name; a stat that only went up or down
+// shows the stat (攻, 防, 移) with an arrow in the badge's corner (STATUS_MARKS), and 亂氣 its layers.
 const STATUS_SIGNS = {
-  mark: '隙',
-  pin: '縛',
-  seal: '穴',
-  riposte: '返',
+  mark: '綻',
+  pin: '移',
+  seal: '截',
+  riposte: '反',
   poison: '毒',
   shield: '護',
-  rally: '振',
-  haste: '疾',
-  weak: '弱',
-  exposed: '破',
+  rally: '攻',
+  haste: '移',
+  weak: '攻',
+  exposed: '防',
   stance: '卸',
   cover: '代',
   redirect: '挪',
@@ -237,11 +239,31 @@ const STATUS_SIGNS = {
   wound: '傷',
   freeze: '定',
   mute: '閉',
-  charm: '倒',
+  charm: '制',
   immune: '金',
-  fortify: '固',
+  fortify: '防',
+  recoil: '露',
+  unguarded: '無',
+  rooted: '立',
+  spent: '曲',
+  backlash: '亂',
+  disarm: '纏',
+  daze: '失',
   formation: '陣' // derived: the piece has a 布陣 on the board
 };
+// The corner of a badge: 'up' or 'down' for a stat that went up or down.
+const STATUS_MARKS = {
+  rally: 'up',
+  haste: 'up',
+  fortify: 'up',
+  weak: 'down',
+  exposed: 'down',
+  pin: 'down'
+};
+// A badge as words, for the wiki's list of signs: 「攻（升）」.
+const MARK_WORDS = { up: '升', down: '降' };
+const signLabel = (kind) =>
+  STATUS_SIGNS[kind] + (STATUS_MARKS[kind] ? '（' + MARK_WORDS[STATUS_MARKS[kind]] + '）' : '');
 
 // Per layer: what each bar last showed, so a wound can linger as a pale segment and drain.
 const memories = new WeakMap();
@@ -266,6 +288,35 @@ function ghostHealth(layer, u, shown, now) {
   g.shown = shown;
   g.seen = now;
   return g.value;
+}
+
+// The arrow in a badge's top-right corner: a small triangle, light on a dark rim.
+function paintMark(c, mark, sx, sy, size, one) {
+  if (mark !== 'up' && mark !== 'down') return;
+  const w = Math.max(4, size * 0.4),
+    h = w * 0.75,
+    right = sx + size,
+    top = sy,
+    up = mark === 'up';
+  const tri = (grow) => {
+    c.beginPath();
+    if (up) {
+      c.moveTo(right - w / 2, top - grow);
+      c.lineTo(right + grow, top + h + grow * 0.6);
+      c.lineTo(right - w - grow, top + h + grow * 0.6);
+    } else {
+      c.moveTo(right - w / 2, top + h + grow);
+      c.lineTo(right + grow, top - grow * 0.6);
+      c.lineTo(right - w - grow, top - grow * 0.6);
+    }
+    c.closePath();
+  };
+  tri(one * 1.4);
+  c.fillStyle = INK;
+  c.fill();
+  tri(0);
+  c.fillStyle = up ? '#9ff0a8' : '#ff9a86';
+  c.fill();
 }
 
 function paintGauge(layer, u, g) {
@@ -360,15 +411,33 @@ function paintGauge(layer, u, g) {
       c.fillRect(sx, sy, size, size);
       c.fillStyle = STATUS_COLOURS[kind] || '#e9dcc0';
       c.fillRect(sx, sy + size - one, size, one);
-      c.font = 'bold ' + (size - 2) + 'px serif';
+      // A badge with a corner mark draws its character a little smaller, off the corner.
+      const marked = !!STATUS_MARKS[kind] || kind === 'backlash',
+        nudge = marked ? size * 0.1 : 0;
+      c.font = 'bold ' + (size - (marked ? 3 : 2)) + 'px serif';
       c.textAlign = 'center';
       c.textBaseline = 'middle';
       // A condition with no sign of its own shows the first character of its name.
       c.fillText(
         STATUS_SIGNS[kind] || CONDITION_NAMES[kind]?.[0] || '',
-        sx + size / 2,
-        sy + size / 2
+        sx + size / 2 - nudge,
+        sy + size / 2 + nudge
       );
+      paintMark(c, STATUS_MARKS[kind], sx, sy, size, one);
+      // 亂氣: the layers it has laid, small in the lower corner.
+      if (kind === 'backlash' && u.conditions.backlash?.power) {
+        const n = String(u.conditions.backlash.power),
+          k = Math.max(6, Math.round(size * 0.5));
+        c.font = 'bold ' + k + 'px sans-serif';
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillStyle = INK;
+        c.fillRect(sx + size - k * 0.75, sy - one, k * 0.75 + one, k * 0.9 + one);
+        c.fillStyle = '#ffe3a0';
+        c.fillText(n, sx + size - k * 0.375 + one / 2, sy + k * 0.45);
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+      }
     }
     c.textBaseline = 'alphabetic';
     roof = sy - one;
@@ -400,10 +469,10 @@ function paintGauge(layer, u, g) {
 // How the states that hold a piece look on the board (statusLooks, actors/status-looks.js).
 const STATUS_LOOKS = {
   freeze: '身形凝在中途，通體霜白，腳下結冰；解凍時冰屑四散',
-  mute: '手邊懸一道封穴符，人照走，卻不出手；解穴時符紙飛散',
+  mute: '手邊懸一道點穴符，人照走，卻不出手；解穴時符紙飛散',
   charm: '底座、輪廓與氣血條轉為青金，腳下青金弧光繞行；受制一解，便轉回赤色',
   immune: '腳下金環，身上金光流轉；受擊不傷，跳出「無功」並響起金色波紋',
   fortify: '固守加身時，腳下升起一圈六角石紋'
 };
 
-export { paintBase, paintGauge, STATUS_SIGNS, STATUS_LOOKS };
+export { paintBase, paintGauge, STATUS_SIGNS, STATUS_MARKS, STATUS_LOOKS, signLabel };

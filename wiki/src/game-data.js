@@ -28,7 +28,7 @@ export * from '../../game/src/fx/technique-strokes.js';
 export { portraits } from '../../game/src/ui/panels.js';
 export { flowHotkeys } from '../../game/src/ui/action-flow.js';
 export { extraHotkeys } from '../../game/src/ui/field-extras.js';
-export { STATUS_SIGNS, STATUS_LOOKS } from '../../game/src/actors/tokens.js';
+export { STATUS_SIGNS, STATUS_LOOKS, signLabel } from '../../game/src/actors/tokens.js';
 
 // Game source files whose text the wiki reads (for 來源 line references and 遊戲原文).
 export const GAME_ROOT = new URL('../../game/', import.meta.url);

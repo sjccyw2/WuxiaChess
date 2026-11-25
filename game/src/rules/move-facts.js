@@ -47,10 +47,10 @@ function useLines(art) {
   return [...lines, ...G.guardNotes(art), ...G.priceNotes(art)];
 }
 
-// What the conditions stage's fields do, as rules: 反噬, a conditional 失神, 布陣.
+// What the conditions stage's fields do, as rules: 亂氣, a conditional 失神, 布陣.
 function conditionLines(art) {
   const lines = [];
-  if (art.backlash) lines.push('反噬 · 每次施展積一層亂氣，第三層時自損兩成最大氣血並清空');
+  if (art.backlash) lines.push('亂氣 · 每次施展積一層，滿三層自損兩成最大氣血並清空');
   if (art.daze === 'setup') lines.push('失神 · 目標兵刃遭纏或站在陣中時，失去下一次行動');
   if (art.daze) lines.push('局主失神後，下一回合可抵抗');
   if (art.freeze || art.mute) lines.push('局主只受一回合，下一回合可抵抗');
@@ -126,13 +126,13 @@ function moveFacts(s, u, id = 'basic', target = null) {
     if (pierce) lines.push('穿透 ' + percent(pierce) + ' 防禦');
     if (art?.splash)
       lines.push(
-        (splashRadius(art) > 1 ? splashRadius(art) + ' 格內濺射 ' : '四鄰濺射 ') + percent(art.splash)
+        '濺射 ' + (splashRadius(art) > 1 ? '兩三四五'[splashRadius(art) - 2] + '格 ' : '四鄰 ') + percent(art.splash)
       );
     const drain = G.drainOf(art);
     if (drain)
       lines.push('吸元 · 回復主目標損血的 ' + percent(drain.share) + '，最多 ' + drain.cap + ' 氣血');
     if (art?.push) lines.push('擊退 1 格，須有空位');
-    if (art?.safe) lines.push('敵人無法反擊');
+    if (art?.safe) lines.push('免受還擊');
     if (art?.recover) lines.push('命中回復 ' + art.recover + ' 內力');
     // (The leader's boons, 領隊陣法, are the whole team's and not the art's: they are said once, on
     // the leader, and not on every art. The producer, 2026-11-24.)
@@ -174,7 +174,8 @@ function moveFacts(s, u, id = 'basic', target = null) {
   if (art?.aura) lines.push('目標及周圍 ' + art.aura + ' 格友軍');
   if (hpCost) lines.push('自耗 ' + hpCost + ' 氣血');
   const forms = G.formsFor(u, art, basic ? definition : undefined);
-  if (forms.length) lines.push(forms.map((id) => FORM_RULES[id][0]).join('・'));
+  // 破綻 is the name of both its sides (leaving one, and striking through one): said once.
+  if (forms.length) lines.push([...new Set(forms.map((id) => FORM_RULES[id][0]))].join('・'));
   const shortEffect = lines.join(' · ');
   return {
     name: definition.name,

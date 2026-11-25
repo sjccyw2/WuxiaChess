@@ -12,7 +12,7 @@
 // (the wiki uses them to list the arts, items and enemies on the term's page):
 //   art        a field of a technique (TECHNIQUES), or a test of the technique
 //   form       a key of FORM_RULES; its sentence is taken from there. The other entries of
-//              FORM_RULES (留隙, 收隙, 絆足, 封穴 …) are rule words too and are worded there
+//              FORM_RULES (破綻, 絆足, 截勁 …) are rule words too and are worded there
 //   condition  a condition an art can put on someone (effectsOf / selfEffectsOf kinds)
 //   item       a field of an item (ITEMS)
 //   trait      a field of an enemy's traits, or a test of the traits
@@ -35,8 +35,12 @@ const RULE_GROUPS = [
       },
       { id: 'safe', name: '免受還擊', art: 'safe', text: '此招出手，敵人無法還擊' },
       { id: 'pierce', name: '穿透', art: 'pierce', text: '計算傷害時無視目標一部分防禦' },
-      { id: 'splash', name: '濺射', art: 'splash', text: '主目標四鄰的其他敵人也受到一部分傷害' },
-      { id: 'radius', name: '廣及', art: 'radius', text: '濺射不限四鄰，主目標數格之內的其他敵人都受波及' },
+      {
+        id: 'splash',
+        name: '濺射',
+        art: 'splash',
+        text: '主目標四鄰的其他敵人也受到一部分傷害；寫明兩格、三格的，主目標該距離之內的其他敵人都受波及'
+      },
       { id: 'hits', name: '連擊', art: 'hits', text: '一招分成數段，各段分別計算傷害' },
       { id: 'push', name: '擊退', art: 'push', text: '把存活的目標推開一格，背後須有空位' },
       { id: 'blink', name: '身法', art: 'blink', text: '越過障礙移至射程內可站立的空格，隨即結束行動' },
@@ -90,9 +94,9 @@ const RULE_GROUPS = [
       { id: 'spent', name: '曲終', art: 'spent', guide: true, text: '下一回合不能施展絕技，仍可普攻' },
       {
         id: 'backlash',
-        name: '反噬',
+        name: '亂氣',
         art: 'backlash',
-        text: '每次施展積一層亂氣，第三層時自損兩成最大氣血並清空；亂氣留到發作或本局結束'
+        text: '每次施展積一層，第三層時自損兩成最大氣血並清空；亂氣留到發作或本局結束'
       },
       { id: 'consume', name: '轉護', art: 'consume', text: '須自身帶有護盾方可施展，施展時護盾轉給受術者' }
     ]
@@ -156,7 +160,7 @@ const RULE_GROUPS = [
       { id: 'evade', name: '閃身', art: 'evade', text: '下一次受到的直接攻擊落空' },
       { id: 'redirect', name: '挪移', art: 'redirect', text: '下一次受擊傷害減半，並把一部分反震給出手者' },
       { id: 'retort', name: '後發', art: 'retort', text: '還擊不按五成半，改按此招所定的比例計算' },
-      { id: 'shield', name: '護勁', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護勁取較強者' },
+      { id: 'shield', name: '護盾', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護盾取較強者' },
       { id: 'fortify', name: '固守', art: 'fortify', condition: 'fortify', text: '受術者防禦提高，到期恢復；多重固守取較強者' },
       {
         id: 'immune',
@@ -200,9 +204,10 @@ const RULE_GROUPS = [
     terms: [
       {
         id: 'barbs',
-        name: '反刺',
+        name: '反震',
         item: 'barbs',
-        text: '相鄰的敵人以攻擊或還擊打中佩者時，被倒刺扎傷，不計防禦'
+        form: 'riposte',
+        text: '打中自己的敵人反受其傷：軟蝟甲扎傷以攻擊或還擊打中佩者的相鄰敵人，不計防禦；有的護持招式讓受術者把本回合首次所受的直接傷害震回出手者，有上限'
       },
       { id: 'medicine', name: '服藥', text: '藥箱全隊共用。每次扣一份，不耗移動或行動，一回合內可連用。交戰中只能服藥：兵器、護具與武譜只在整備時更換' },
       { id: 'weaponForm', name: '兵器效果', text: '有些兵器替普攻或護持招式添上一種戰鬥效果，寫在各兵器的條目' }
@@ -239,7 +244,7 @@ const RULE_GROUPS = [
       {
         id: 'signature',
         name: '蓄勢',
-        text: '局主與副手的絕技須先蓄勢數回合；蓄滿後保持，能出擊才施展，施展後須隔數回合再蓄。封穴時無法施展，吸勁可使它延後'
+        text: '局主與副手的絕技須先蓄勢數回合；蓄滿後保持，能出擊才施展，施展後須隔數回合再蓄。截勁時無法施展；有的招式可使它延後'
       },
       {
         id: 'post',
@@ -271,7 +276,7 @@ const RULE_GROUPS = [
         trait: (t) => !!(t.prefers || t.phase?.prefers),
         text: '選擇目標時另有所好：傷重者、落單者、領隊、療傷者、內力深厚者、離得最近的人，或倚仗掩體、有人代受的人'
       },
-      { id: 'contact', name: '化功', trait: 'contact', text: '貼身打中他的俠客損失內力；封穴時無效' },
+      { id: 'contact', name: '化功', trait: 'contact', text: '貼身打中他的俠客損失內力；截勁時無效' },
       { id: 'banner', name: '盟令', trait: 'banner', text: '存活時其餘敵人攻擊提高，倒下後即失效' },
       {
         id: 'mend',
@@ -283,14 +288,14 @@ const RULE_GROUPS = [
         id: 'charged',
         name: '蓄勢反擊',
         trait: (t) => !!t.stance && t.stance.while !== 'posted',
-        text: '絕技蓄滿時，在他攻擊範圍內打他必遭全力還擊；免受還擊之招與封穴除外'
+        text: '絕技蓄滿時，在他攻擊範圍內打他必遭全力還擊；免受還擊之招與截勁除外'
       },
       {
         id: 'mirror',
         name: '借力',
         trait: 'redirect',
         style: 'mirror',
-        text: '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者；封穴時無效'
+        text: '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者；截勁時無效'
       },
       {
         id: 'ward',
@@ -419,8 +424,9 @@ const RULE_GROUPS = [
 // Fields of a technique, an item or an enemy's traits that are plain data, not rules: a name, a
 // number every art has, or something its own page already shows as a figure.
 const PLAIN_FIELDS = {
-  // debuff and shield are carried by the terms 攻勢受挫, 破防 and 護勁 through the state they leave.
-  art: ['name', 'family', 'owner', 'root', 'kind', 'tier', 'needs', 'points', 'icon', 'visual', 'basicBonus', 'desc', 'source', 'forms', 'mp', 'range', 'target', 'factor', 'gate', 'debuff', 'shield', 'price', 'stock', 'manual'],
+  // debuff and shield are carried by the terms 攻勢受挫, 破防 and 護盾 through the state they leave;
+  // radius is the reach of a 濺射, which that term's sentence covers.
+  art: ['name', 'family', 'owner', 'root', 'kind', 'tier', 'needs', 'points', 'icon', 'visual', 'basicBonus', 'desc', 'source', 'forms', 'mp', 'range', 'target', 'factor', 'gate', 'debuff', 'shield', 'price', 'stock', 'manual', 'radius'],
   item: ['name', 'kind', 'owner', 'atk', 'icon', 'desc', 'forms', 'power', 'def', 'step', 'hp', 'mp'],
   // mods and sig are numbers; the rest are read by a term's own test above (護駕, 刀陣, 盾牆 …).
   trait: ['mods', 'sig', 'cover', 'stance', 'post', 'prefers']

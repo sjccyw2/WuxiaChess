@@ -553,7 +553,7 @@ section('villain traits');
   const expected = [
     '【盟令】存活時其餘敵人攻擊 ＋1。',
     '【坐鎮】守在（' + (spawn.x + 1) + '，' + (spawn.y + 1) + '）一格內；有俠客踏入攻擊範圍或受到攻擊後，才離位追擊。',
-    '【化功】貼身打中他的俠客損失 8 點內力（封穴時無效）。',
+    '【化功】貼身打中他的俠客損失 8 點內力（截勁時無效）。',
     '【游擊】出手後退開至多 2 步，離俠客越遠越好。',
     '【毒手】普攻令目標中毒，兩次毒發各損 2 氣血。',
     '【偏好】專挑傷重者。'
@@ -1839,7 +1839,7 @@ section('wound');
   }
 }
 
-// ── 反噬 backlash (§3) ───────────────────────────────────────────────────
+// ── 亂氣 backlash (§3) ───────────────────────────────────────────────────
 section('backlash');
 {
   const s = board(['hero', 'medic', 'guard']);
@@ -1854,9 +1854,9 @@ section('backlash');
     return f;
   };
   const first = cast();
-  check('the first use lays one layer and says so', u.conditions.backlash.power === 1 && first.notes.includes('反噬 · 亂氣 1／3') && !first.selfLoss, first.notes);
+  check('the first use lays one layer and says so', u.conditions.backlash.power === 1 && first.notes.includes('亂氣 · 1／3 層') && !first.selfLoss, first.notes);
   const second = cast();
-  check('the second lays two', u.conditions.backlash.power === 2 && second.notes.includes('反噬 · 亂氣 2／3'));
+  check('the second lays two', u.conditions.backlash.power === 2 && second.notes.includes('亂氣 · 2／3 層'));
   const back = R.restoreRun(copy(s));
   check('the layers survive a save', unit(back, 'hero').conditions.backlash.power === 2);
   BM.applyCondition(s, u, { kind: 'shield', power: 50, turns: 2 }, u);
@@ -1864,7 +1864,7 @@ section('backlash');
   u.mp = u.maxMp;
   const loss = Math.ceil(u.maxHp * 0.2);
   const third = G.forecast(u, t, true, s);
-  check('the preview warns of the burst before the third use', third.notes.includes('反噬 · 亂氣滿三層，自損 ' + loss + ' 氣血') && third.selfLoss === loss, third.notes);
+  check('the preview warns of the burst before the third use', third.notes.includes('亂氣 · 滿三層，自損 ' + loss + ' 氣血') && third.selfLoss === loss, third.notes);
   check('and the caster’s bar in the preview includes it', P.attackPage(s, 'hero', 'chief', true).includes('→ ' + (u.hp - loss) + '／'));
   const hp = u.hp;
   G.resolve(s, u, t, true);
@@ -1877,7 +1877,7 @@ section('backlash');
   u.hp = 5;
   const low = cast();
   check('a burst never takes him below 1', u.hp === 1 && low.selfLoss === 4, u.hp);
-  // A support art with 反噬 counts too: the layer comes whether or not anything was struck.
+  // A support art with 亂氣 counts too: the layer comes whether or not anything was struck.
   const h = board(['medic', 'hero', 'guard']);
   const medic = put(h, 'medic', 4, 7);
   teach(medic, defineArt({ target: 'self', range: 0, shield: { power: 5, turns: 1 }, backlash: true, mp: 2 }));
@@ -1901,7 +1901,7 @@ section('backlash');
   nextBoard(b);
   check('and are gone on the next board', !v.conditions?.backlash);
   const MF = await load('rules/move-facts.js');
-  check('moveFacts states the rule', MF.moveFacts(s, u, u.activeArt).effectLines.includes('反噬 · 每次施展積一層亂氣，第三層時自損兩成最大氣血並清空'), MF.moveFacts(s, u, u.activeArt).effectLines);
+  check('moveFacts states the rule', MF.moveFacts(s, u, u.activeArt).effectLines.includes('亂氣 · 每次施展積一層，滿三層自損兩成最大氣血並清空'), MF.moveFacts(s, u, u.activeArt).effectLines);
 }
 
 // ── 布陣 zone (§6) ───────────────────────────────────────────────────────
@@ -2246,7 +2246,7 @@ section('drain');
   }
 }
 
-// ── 廣及 splash radius ───────────────────────────────────────────────────
+// ── 濺射 with reach (splash radius) ───────────────────────────────────────────────────
 section('radius');
 {
   const MF = await load('rules/move-facts.js');
@@ -2270,7 +2270,7 @@ section('radius');
   check('heroes and objects in range are left alone, as by any splash', !hit(3).includes('guard') && !hit(3).includes('starPost'));
   check('the reach test is one helper', FR.inSplash({ radius: 2 }, t, { x: 7, y: 7 }) && !FR.inSplash({ radius: 2 }, t, { x: 8, y: 7 }) && !FR.inSplash({}, t, t) && FR.splashRadius({ radius: 3 }) === 3 && FR.splashRadius({}) === 1);
   const art = teach(u, defineArt({ splash: 0.5, radius: 2, safe: true, mp: 2 }));
-  check('the art’s page says how far', MF.moveFacts(s, u, art).effectLines.includes('2 格內濺射 50%'), MF.moveFacts(s, u, art).effectLines);
+  check('the art’s page says how far', MF.moveFacts(s, u, art).effectLines.includes('濺射 兩格 50%'), MF.moveFacts(s, u, art).effectLines);
   const f = G.forecast(u, t, true, s);
   const hp = Object.fromEntries(['bow', 'blade', 'chief'].map((id) => [id, unit(s, id).hp]));
   G.resolve(s, u, t, true);
@@ -2784,7 +2784,7 @@ section('interactions');
     check('dazed, it does nothing, and the taunter draws no blow', unit(s, 'guard').hp === life && !scout.conditions?.daze);
   });
 
-  // 挪移 and 閃身 with 吸勁, 內傷 and 反噬: a blow that does not land carries none of its riders,
+  // 挪移 and 閃身 with 吸勁, 內傷 and 亂氣: a blow that does not land carries none of its riders,
   // but the striker still pays what striking costs him.
   withTraits('chief', { redirect: { while: 'charged', keep: 0, back: 0.5 } }, () => {
     const s = board();
@@ -2801,7 +2801,7 @@ section('interactions');
     G.resolve(s, hero, chief, true);
     check('the striker takes the rebound and his 內傷', hp - hero.hp === f.rebound + 5, hp - hero.hp);
     check('no 內力 came back, the signature was spent by the mirror, not put back', hero.mp === 20 - f.mpCost && chief.signatureRound === 3 && !chief.signaturePush && !chief.conditions?.daze);
-    check('反噬 lays its layer all the same', hero.conditions?.backlash?.power === 1);
+    check('亂氣 lays its layer all the same', hero.conditions?.backlash?.power === 1);
   });
   {
     const s = board();
@@ -3269,7 +3269,7 @@ section('contact, banner, riders and wards');
     const mp = hero.mp;
     G.resolve(s, hero, chief, false);
     check('and the strike takes it', hero.mp === mp - 9, hero.mp);
-    check('his page says so', G.enemyTraitLines(s, chief).includes('【化功】貼身打中他的俠客損失 9 點內力（封穴時無效）。'));
+    check('his page says so', G.enemyTraitLines(s, chief).includes('【化功】貼身打中他的俠客損失 9 點內力（截勁時無效）。'));
     const medic = put(s, 'medic', 7, 3);
     check('a blow from two tiles off costs nothing', !G.forecast(medic, chief, false, s).contact);
     chief.conditions = { seal: { power: 1, through: s.round, source: 'hero' } };
@@ -3711,7 +3711,7 @@ for (const stage of [1, 2]) {
   check('stage ' + stage + ': 化功大法 drains 6 + 2 × stage at 1.10', G.enemyTechnique(ding, s).factor === 1.1 && G.enemyTechnique(ding, s).power === 6 + 2 * stage);
   check('stage ' + stage + ': 摘星子’s signature reaches 3', G.enemyTechnique(zhai, s).reach === 3 && pageOf(s, zhai).includes('絕技射程 3 格。'));
   check('stage ' + stage + ': the disciples are on the stage curve less 2 attack', [bow, scout].every((u) => G.unitDetails(u).name === '星宿弟子' && G.unitDetails(u).traits.cover === 'master'));
-  check('stage ' + stage + ': 丁春秋’s page', same(pageOf(s, ding).slice(1), ['【門人代受】相鄰的星宿弟子替他承受俠客的直接攻擊（氣血較多者先上）；波及、穿行、走勁與毒傷仍會落在他身上。', '【化功】貼身打中他的俠客損失 ' + (8 + stage) + ' 點內力（封穴時無效）。']), JSON.stringify(pageOf(s, ding)));
+  check('stage ' + stage + ': 丁春秋’s page', same(pageOf(s, ding).slice(1), ['【門人代受】相鄰的星宿弟子替他承受俠客的直接攻擊（氣血較多者先上）；波及、穿行、走勁與毒傷仍會落在他身上。', '【化功】貼身打中他的俠客損失 ' + (8 + stage) + ' 點內力（截勁時無效）。']), JSON.stringify(pageOf(s, ding)));
   check('stage ' + stage + ': a disciple’s page', same(G.enemyTraitLines(s, bow), ['【護駕】每回合先回到丁春秋身旁；與他相鄰時替他受招。']), JSON.stringify(G.enemyTraitLines(s, bow)));
   // Two enemy turns with the heroes at their spawn: the disciples gather beside him.
   for (let r = 0; r < 2; r++) {
@@ -3805,7 +3805,7 @@ for (const stage of [5, 6]) {
   const want = { 5: [[339, 47, 18, 3, 2], [173, 40, 12, 3, 2]], 6: [[411, 59, 20, 3, 2], [214, 50, 13, 3, 2]] }[stage];
   check('stage ' + stage + ': 歐陽鋒 and 歐陽克 have the spec’s numbers', same(numbersOf(ou), want[0]) && same(numbersOf(ke), want[1]), numbersOf(ou) + ' / ' + numbersOf(ke));
   check('stage ' + stage + ': 蛤蟆功 at 1.40; 靈蛇拳法 pins at 1.12', G.enemyTechnique(ou, s).factor === 1.4 && G.enemyTechnique(ke, s).style === 'pin' && G.enemyTechnique(ke, s).factor === 1.12);
-  check('stage ' + stage + ': 歐陽鋒’s page', same(pageOf(s, ou).slice(1), ['【蓄勢反擊】蓄勢時原地不動，只打兩格內的人；兩格內打他，必遭全力還擊（免受還擊之招與封穴除外）。', '【半血變招 · 逆練】攻擊 ＋6、防禦 −4、移動 ＋1，絕技每兩回合一次，不再原地等待，見人就撲。']), JSON.stringify(pageOf(s, ou)));
+  check('stage ' + stage + ': 歐陽鋒’s page', same(pageOf(s, ou).slice(1), ['【蓄勢反擊】蓄勢時原地不動，只打兩格內的人；兩格內打他，必遭全力還擊（免受還擊之招與截勁除外）。', '【半血變招 · 逆練】攻擊 ＋6、防禦 −4、移動 ＋1，絕技每兩回合一次，不再原地等待，見人就撲。']), JSON.stringify(pageOf(s, ou)));
   const venom = 2 + Math.floor(stage / 2);
   check('stage ' + stage + ': the snake slaves’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【蛇毒】普攻令目標中毒，兩次毒發各損 ' + venom + ' 氣血。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
   // Charged from round 2: he does not move, and the danger zone is his own tile's diamond.
@@ -3925,7 +3925,7 @@ section('board 9 無刻漏臺: the mirror');
   const [mu, jiu, bow, scout] = foesOf(s);
   check('慕容博 and 鳩摩智 have the spec’s numbers', same(numbersOf(mu), [867, 93, 24, 4, 2]) && same(numbersOf(jiu), [337, 86, 16, 3, 2]), numbersOf(mu) + ' / ' + numbersOf(jiu));
   check('斗轉星移 is the mirror, no blow', G.enemyTechnique(mu, s).style === 'mirror' && !G.enemyTechnique(mu, s).strikes);
-  check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。', '【坐鎮】星索樁倒下一根，便退到另一根旁守著，守在一格內。與那根樁相鄰時，替它承受俠客的直接攻擊。不離位。', '【星索護陣】每根立著的星索樁替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
+  check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（截勁時無效）。', '【坐鎮】星索樁倒下一根，便退到另一根旁守著，守在一格內。與那根樁相鄰時，替它承受俠客的直接攻擊。不離位。', '【星索護陣】每根立著的星索樁替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
   check('while both posts stand he keeps no post', G.holdOf(s, mu) === null);
   check('…and takes no blow for either: he hunts the heroes', ['starPost#1', 'starPost#2'].every((id) => G.coverer(s, unit(s, id)) === null));
   check('鳩摩智’s page', same(pageOf(s, jiu), ['另外削去目標 24 點內力。', '絕技射程 4 格。', '【偏好】專挑內力深厚者。']), JSON.stringify(pageOf(s, jiu)));
@@ -3954,7 +3954,7 @@ section('board 9 無刻漏臺: the mirror');
   const hero = put(s, 'hero', reach.x, reach.y);
   hero.acted = hero.moved = false;
   G.resolve(s, hero, post, false);
-  check('one rope down: the ward is 35% and the log says so', G.wardShare(s, mu) === 35 && s.logs.some((l) => l.text === '一條星索斷了。慕容博的護勁降至三成半。'));
+  check('one rope down: the ward is 35% and the log says so', G.wardShare(s, mu) === 35 && s.logs.some((l) => l.text === '一條星索斷了。慕容博的遮護降至三成半。'));
   // He falls back to guard the post still standing (the producer, 2026-11-23). (The guard struck
   // him above, which sent him off his post; this is the board as it is when no one has.)
   mu.woke = false;
@@ -4100,10 +4100,10 @@ const { ENCOUNTER_SCRIPT } = await load('data/encounter-script.js');
   check('both down: the 破 board is won, 慕容博 standing', s.result === 'win' && G.living(unit(s, 'murong')));
 }
 
-// ── The shop's new items: 屠龍刀, 軟蝟甲 (反刺), 九花玉露丸, 玉蜂漿 ──────────
+// ── The shop's new items: 屠龍刀, 軟蝟甲 (反震), 九花玉露丸, 玉蜂漿 ──────────
 section('items');
 {
-  // 反刺: a foe that strikes the wearer from beside her loses the barbs on top of whatever else
+  // 反震 (軟蝟甲): a foe that strikes the wearer from beside her loses the barbs on top of whatever else
   // happens, measured against the same exchange without the vest.
   const exchange = (vest, { reach = 1, evade = false } = {}) => {
     const s = board();
@@ -4127,7 +4127,7 @@ section('items');
   hero.gear = 'hedgehogVest';
   const foe = put(s, 'blade', 5, 7);
   const f = G.forecast(hero, foe, false, s);
-  check('the forecast shows the counter pricked', f.counterRaw > 0 && f.barbs === 7 && f.notes.includes('反刺 · 還擊者被軟蝟甲扎傷 7 氣血'), JSON.stringify(f.notes));
+  check('the forecast shows the counter pricked', f.counterRaw > 0 && f.barbs === 7 && f.notes.includes('反震 · 還擊者被軟蝟甲扎傷 7 氣血'), JSON.stringify(f.notes));
   const before = foe.hp;
   G.resolve(s, hero, foe, false);
   check('the strike deals what the forecast said, barbs included', before - foe.hp === f.amount + 7, before - foe.hp);
@@ -4626,7 +4626,7 @@ section('facts');
   poisoned.conditions = { poison: { power: 5, through: 3, source: 'medic' } };
   quietTurn(p);
   check('a poison fall: how poison, by the hero who laid it', p.tally.falls.some((f) => f.id === 'scout' && f.how === 'poison' && f.by === 'medic'));
-  // A reflection: 借勁 turns a blow back.
+  // A reflection: 反震 turns a blow back.
   const q = board();
   const g = put(q, 'guard', 4, 3);
   const striker = put(q, 'scout', 5, 3);
@@ -4636,7 +4636,7 @@ section('facts');
   for (const e of G.enemies(q)) if (e !== striker) e.acted = true;
   G.enemyAct(q, striker);
   check('a reflected fall: how reflect', q.tally.falls.some((f) => f.id === 'scout' && f.how === 'reflect' && f.by === 'guard'), JSON.stringify(q.tally.falls));
-  // A combination: a mark spent by 收隙.
+  // A combination: a mark spent by 乘破綻.
   const m = board();
   const mh = put(m, 'hero', 4, 3);
   const mf = put(m, 'bow', 5, 3);
@@ -5813,7 +5813,7 @@ section('leader boons of the later ten');
     check('打狗陣法: ＋8 on a foe under 絆足, and the forecast says so', f.amount === free + 8 && f.notes.includes('打狗陣法 · 傷害 ＋8'), [free, f.amount]);
     delete foe.conditions.pin;
     pin(s, foe, 'seal');
-    check('…and under 封穴', G.forecast(near, foe, false, s).amount === free + 8);
+    check('…and under 截勁', G.forecast(near, foe, false, s).amount === free + 8);
     pin(s, other);
     check('not eight tiles off', G.forecast(far, other, false, s).amount === distant);
     lead.hp = 0;

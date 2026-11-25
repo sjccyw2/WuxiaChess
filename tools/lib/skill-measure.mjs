@@ -21,7 +21,7 @@ export const BOOKKEEPING = new Set([
 ]);
 // Mechanics whose whole worth already shows in the measured numbers (damage, healing, people
 // reached), so they are compared by measurement rather than counted as "adds an effect".
-// 廣及 (`radius`) is one of them: the scene puts foes beyond the target's four neighbours
+// A 濺射 with reach (`radius`) is one of them: the scene puts foes beyond the target's four neighbours
 // (SPLASH_SCENE below), so how much farther a splash reaches shows in the area measure.
 export const MEASURED = new Set(['factor', 'pierce', 'hits', 'basicBonus', 'aura', 'heal', 'radius']);
 // Prices the art pays rather than effects it adds. A node that adds one of these does not
@@ -132,7 +132,7 @@ export function boardFoes() {
 // Attacker A on the same row as target T at distance d, B directly behind T (for splash and
 // anything that runs through), S beside T, and H beside A (for "a companion near the hero").
 // Beyond the neighbours, one more foe in each further ring around T (R2 two steps away, R3
-// three, both off A's row and off B's line), which only a 廣及 splash reaches: of the four
+// three, both off A's row and off B's line), which only a splash with reach reaches: of the four
 // neighbours the scene fills two, and of the eight and twelve tiles in the next rings one each,
 // a thinner crowd farther out. All on open ground with no terrain defence.
 export const SPLASH_SCENE = { neighbours: 2, perRing: 1, rings: 3 };
@@ -549,7 +549,7 @@ export function strikeEquivalent(art, prices) {
   if (art.safe) v += prices.safe;
   if (art.pierce) v += (prices.pierceHalf * art.pierce) / 0.5;
   if ((art.range ?? 1) > 2) v += prices.reachTile * ((art.range ?? 1) - 2);
-  // 廣及: the splash price assumes the two neighbours the scene fills; a wider one is priced by
+  // 濺射 with reach: the splash price assumes the two neighbours the scene fills; a wider one is priced by
   // how many more foes the scene puts in its further rings (SPLASH_SCENE).
   if (art.splash) v += ((prices.splash * art.splash) / 0.5) * (splashFoes(art) / SPLASH_SCENE.neighbours);
   if (art.push) v += prices.push;

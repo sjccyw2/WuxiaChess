@@ -461,7 +461,7 @@ function itemBonus(item) {
     ['def', '防禦'],
     ['power', '絕技威力'],
     ['step', '移動'],
-    ['barbs', '反刺'],
+    ['barbs', '反震'],
     ['hp', '氣血'],
     ['mp', '內力']
   ]
@@ -1083,7 +1083,7 @@ function enemyPage(s, id) {
         '</strong><span>' +
         (heldLine(s, u) ||
           (u.conditions?.seal
-          ? '本回合封穴，無法施展絕技'
+          ? '本回合截勁，無法施展絕技'
           : u.conditions?.daze
             ? '本回合失神，不會出手'
             : turns === 0
@@ -1279,7 +1279,7 @@ function attackPage(s, source, target, skill) {
   if (!blink && !friendly)
     lines.push(line('敵方還擊', f.counterRaw ? '−' + f.counter + ' 氣血' : '無'));
   if (f.hits.length > 1) lines.push(line('連擊', f.hits.join(' ＋ ')));
-  if (f.shielded) lines.push(line('護勁吸收', f.shielded));
+  if (f.shielded) lines.push(line('護盾吸收', f.shielded));
   if (f.splash.length)
     lines.push(
       line(

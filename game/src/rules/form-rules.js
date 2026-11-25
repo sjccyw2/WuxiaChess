@@ -1,13 +1,13 @@
 // Flat bonuses are applied once per action, before wards and shields.
 const FORM_RULES = {
-  mark: ['留隙', '命中後留下兩回合破綻。同一擊若已收隙，便不重留。'],
-  exploit: ['收隙', '收去目標已有的破綻，首段威力加 9，該敵無法還擊。'],
+  mark: ['破綻', '命中後在目標身上留下兩回合破綻。同一擊若已乘破綻，便不重留。'],
+  exploit: ['破綻', '乘目標已有的破綻出手，首段威力加 9，該敵無法還擊，破綻隨之收去。'],
   pin: ['絆足', '本回合與下一回合，目標移動減 2，最低仍可走 1 步。'],
-  seal: ['封穴', '本回合阻止還擊與敵方絕技。局主受封後，下一回合可抵抗再封。'],
-  cleanse: ['解厄', '先替受術者解除中毒、攻勢受挫、破防、絆足、破綻、封穴、亂氣、內傷、失神與纏械。'],
+  seal: ['截勁', '本回合敵人不能還擊，也不能施展絕技。局主受過後，下一回合可抵抗。'],
+  cleanse: ['解厄', '先替受術者解除中毒、攻勢受挫、破防、絆足、破綻、截勁、亂氣、內傷、失神與纏械。'],
   channel: ['渡氣', '每位受術同伴各回復 6 內力，施術者自身除外。'],
   overflow: ['餘氣護身', '溢出的療傷量轉成一回合護盾，上限 12。護盾取較強者。'],
-  riposte: ['借勁還手', '受術者本回合首次承受敵方直接傷害並存活時，震回所失氣血，最多 9 點。'],
+  riposte: ['反震', '受術者本回合首次承受敵方直接傷害並存活時，震回所失氣血，最多 9 點。'],
   pull: ['牽引', '將存活目標沿主軸向施術者牽近一格，落腳處須空置可行。'],
   line: [
     '穿行',
@@ -84,7 +84,7 @@ function contactPlan(s, u, t, art, forms, step, boss) {
   let extra = 0;
   if (spentMark) {
     extra += 9;
-    notes.push('收隙 · 首段 ＋9，封住還擊');
+    notes.push('乘破綻 · 首段 ＋9，封住還擊');
   }
   if (spentPoison) {
     const n = Math.min(16, Math.max(0, c.poison.through - (s?.round ?? 1) + 1) * c.poison.power);
@@ -113,7 +113,7 @@ function contactPlan(s, u, t, art, forms, step, boss) {
   if (has('pin')) effects.push({ kind: 'pin', power: 2, turns: 2 });
   const sealed = has('seal') && !(boss && t.lastSealRound === s?.round - 1);
   if (sealed) effects.push({ kind: 'seal', power: 1, turns: 1 });
-  else if (has('seal')) notes.push('局主已換氣，本回合抵抗封穴');
+  else if (has('seal')) notes.push('局主已換氣，本回合抵抗截勁');
   return {
     extra,
     partner: partner?.id,
@@ -126,7 +126,7 @@ function contactPlan(s, u, t, art, forms, step, boss) {
     notes
   };
 }
-// 廣及: how far a splash reaches from the impact — its four neighbours, or every tile within
+// 濺射's reach: how far a splash reaches from the impact — its four neighbours, or every tile within
 // `radius` (counted in steps along the grid).
 const splashRadius = (art) => (art?.radius > 1 ? Math.floor(art.radius) : 1);
 // Whether a piece at p is within the splash of an impact at `center`.

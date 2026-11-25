@@ -100,14 +100,14 @@ const WARES = {
     icon: 'sword',
     desc: '刀身烏沉，重逾百斤，揮動須站穩腳步。攻擊增加 17，移動減少 1 格。'
   },
-  // 反刺 (game.js, barbStrike): whoever strikes the wearer from beside her pays for it.
+  // 反震 (game.js, barbStrike): whoever strikes the wearer from beside her pays for it.
   hedgehogVest: {
     name: '軟蝟甲',
     kind: 'gear',
     def: 4,
     barbs: 7,
     icon: 'shield',
-    desc: '桃花島的鎮島之寶，甲上布滿倒刺。防禦增加 4。【反刺】相鄰的敵人以攻擊或還擊打中佩者時，被倒刺扎傷 7 點氣血，不計防禦。'
+    desc: '桃花島的鎮島之寶，甲上布滿倒刺。防禦增加 4。【反震】相鄰的敵人以攻擊或還擊打中佩者時，被倒刺扎傷 7 點氣血，不計防禦。'
   },
   // `cleanse` lifts every ailment that 解厄 lifts (form-rules.js, AILMENTS) before the healing.
   nineFlowerPill: {
@@ -116,7 +116,7 @@ const WARES = {
     hp: 36,
     cleanse: true,
     icon: 'leaf',
-    desc: '桃花島秘製的丸藥，清香沁人。先為使用者解除中毒、攻勢受挫、破防、絆足、破綻、封穴、亂氣、內傷、失神與纏械，再回復 36 點氣血。每次用去一份。'
+    desc: '桃花島秘製的丸藥，清香沁人。先為使用者解除中毒、攻勢受挫、破防、絆足、破綻、截勁、亂氣、內傷、失神與纏械，再回復 36 點氣血。每次用去一份。'
   },
   beeNectar: {
     name: '玉蜂漿',

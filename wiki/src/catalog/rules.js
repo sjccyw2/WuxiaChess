@@ -227,17 +227,18 @@ function guide() {
       sections: [rows('鍵盤', keys), links('相關條目', [link('rules', 'danger', G.RULE_TERMS.danger.name)])],
       sources: cites(cite('<kbd>E</kbd> 結束回合', 'src/ui/action-flow.js'))
     },
-    // The one-character marks beside a piece on the board, and the state each stands for.
+    // The one-character marks beside a piece on the board, and the state each stands for; a mark
+    // with an arrow in its corner is written 「攻（升）」.
     {
       id: 'signs',
       name: '棋子上的記號',
       tag: '操作指南',
-      summary: Object.values(G.STATUS_SIGNS).join('、') + '。',
+      summary: Object.keys(G.STATUS_SIGNS).map(G.signLabel).join('、') + '。',
       image: null,
       sections: [
         rows(
           '記號',
-          Object.entries(G.STATUS_SIGNS).map(([kind, sign]) => [sign, G.CONDITION_NAMES[kind] || G.RULE_TERMS.zone.name])
+          Object.keys(G.STATUS_SIGNS).map((kind) => [G.signLabel(kind), G.CONDITION_NAMES[kind] || G.RULE_TERMS.zone.name])
         ),
         // The states that hold a piece also change how it looks on the board.
         rows(

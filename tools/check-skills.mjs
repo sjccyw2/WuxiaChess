@@ -453,7 +453,7 @@ console.log(
       return r.label + ' = board ' + (r.stage + 1) + ', hero level ' + r.level + ', soft ' + b.soft.id + ' def ' + b.soft.def + ', hard ' + b.boss.id + ' def ' + b.boss.def;
     }).join('; ')
 );
-console.log('Columns: early/mid/late = damage to the hard foe (support: heal+shield+buff on the cluster); area = avg damage incl. splash on two neighbours (a 廣及 splash: and one foe in each further ring); ctr = counter taken at full reach (mid); main = the job\'s main measure; PSE = plain strike equivalent (support: heal, shield and guards, in 氣血, x people) beside its R9 band.');
+console.log('Columns: early/mid/late = damage to the hard foe (support: heal+shield+buff on the cluster); area = avg damage incl. splash on two neighbours (a splash with reach: and one foe in each further ring); ctr = counter taken at full reach (mid); main = the job\'s main measure; PSE = plain strike equivalent (support: heal, shield and guards, in 氣血, x people) beside its R9 band.');
 const results = heroes.map(checkHero);
 if (!only.length) checkManuals(results);
 console.log('\nSummary');

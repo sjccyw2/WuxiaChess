@@ -727,7 +727,7 @@ function siphonPush(s, u) {
     next = signatureNext(s, u);
   return next === null ? push + 1 : Math.max(push + 1, s.round + 1 - next);
 }
-// 封穴, 定身, 閉穴 and 受制 keep a charged signature from firing (and from guarding); it stays charged.
+// 截勁, 定身, 閉穴 and 受制 keep a charged signature from firing (and from guarding); it stays charged.
 const signatureDue = (s, u) =>
   !!s?.run &&
   !['seal', 'freeze', 'mute', 'charm'].some((k) => u.conditions?.[k]) &&
@@ -1135,7 +1135,7 @@ function enemyTraitLines(s, u) {
   // What he fights with, for the forms that answer a kind of weapon: said once 無名 is on the board.
   if (armOf(u, s) && party(s).some((v) => v.id === YOUTH_ID)) say('兵刃', ARM_NAMES[armOf(u, s)] + '。');
   if (t.contact)
-    say('化功', '貼身打中他的俠客損失 ' + (t.contact.mp + stage) + ' 點內力（封穴時無效）。');
+    say('化功', '貼身打中他的俠客損失 ' + (t.contact.mp + stage) + ' 點內力（截勁時無效）。');
   if (t.stance?.while === 'posted') {
     const tile = t.post && postTile(s, u, t.post);
     say('盾牆', '站在原位' + (tile ? tileName(tile) : '') + '時，受到的傷害減 ' + t.stance.cut + '%；被推離原位便失去盾牆，走回後恢復。');
@@ -1145,12 +1145,12 @@ function enemyTraitLines(s, u) {
       '蓄勢反擊',
       (t.stance.holds ? '蓄勢時原地不動，只打' + r + '格內的人；' : '蓄勢時') +
         r +
-        '格內打他，必遭全力還擊（免受還擊之招與封穴除外）。'
+        '格內打他，必遭全力還擊（免受還擊之招與截勁除外）。'
     );
   }
   // A mirror that is the villain's signature is told in the signature's own lines.
   if (t.redirect && info.style !== 'mirror')
-    say('挪移', '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（封穴時無效）。');
+    say('挪移', '蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（截勁時無效）。');
   // A board object (星索樁) can carry the ward as well as a piece.
   const wards = [...others, ...props(s).filter(living)].filter((v) => unitDetails(v)?.traits?.ward);
   if (u.id === commanderId(s) && wards.length)
@@ -1695,7 +1695,7 @@ function expireZones(s) {
 }
 // 失神 (§5): whether this strike takes the target's next action. `daze: 'setup'` needs the target
 // disarmed or standing in a formation as the blow lands; a master who lost an action last round
-// shakes off a second (the rule 封穴 follows). A strike at a piece already dazed says it will
+// shakes off a second (the rule 截勁 follows). A strike at a piece already dazed says it will
 // not act; whether it counters is the counter line's to say (a dazed piece still does).
 function dazePlan(s, u, t, art, result) {
   const name = unitDetails(t).name;
@@ -2234,7 +2234,7 @@ function attackPower(s, u, art, basic = basicFor(u), target = null, struckHp = t
   const atk = stat(u, 'atk', s) - traitEdge(s, u, target, struckHp);
   return atk * (art ? strikeFactor(s, u, art, target).factor : 1) + base + pursuit + held;
 }
-// 打狗陣法: the leader's boon on a foe already held (絆足, 封穴, 纏械, 失神, 定身, 閉穴).
+// 打狗陣法: the leader's boon on a foe already held (絆足, 截勁, 纏械, 失神, 定身, 閉穴).
 const heldBonus = (s, u, t) =>
   t && HELD_KINDS.some((k) => t.conditions?.[k]) ? commandBonus(s, u, 'held') : 0;
 // What a villain's own traits take off (+) or add to (−) its attack against this hero, blows and
@@ -2315,7 +2315,7 @@ function woundedHealNotes(t, friends, result) {
   else result.notes.push('內傷 · ' + hurt.map((v) => unitDetails(v).name).join('、') + '療效減半');
 }
 // What an action goes on to cost its own caster's 氣血 once it is over (內傷 after an attack,
-// then a 反噬 burst), counted from where the preview leaves him; shown on his bar as `selfLoss`.
+// then a 亂氣 burst), counted from where the preview leaves him; shown on his bar as `selfLoss`.
 function selfLoss(s, u, art, result, attack) {
   let left = u.hp - result.hpCost + result.selfHeal - result.counter - (result.rebound || 0);
   result.selfLoss = 0;
@@ -2328,19 +2328,19 @@ function selfLoss(s, u, art, result, attack) {
   }
   if (art?.backlash) {
     const layers = (u.conditions?.backlash?.power || 0) + 1;
-    if (layers < 3) result.notes.push('反噬 · 亂氣 ' + layers + '／3');
+    if (layers < 3) result.notes.push('亂氣 · ' + layers + '／3 層');
     else {
       const n = left > 1 ? Math.min(backlashLoss(u), left - 1) : 0;
       result.selfLoss += n;
       left -= n;
-      result.notes.push('反噬 · 亂氣滿三層，自損 ' + n + ' 氣血');
+      result.notes.push('亂氣 · 滿三層，自損 ' + n + ' 氣血');
     }
   }
   return left;
 }
-// 反噬 (§3): the burst is a fifth of the caster's greatest 氣血, rounded up.
+// 亂氣 (§3): the burst is a fifth of the caster's greatest 氣血, rounded up.
 const backlashLoss = (u) => Math.ceil(u.maxHp * 0.2);
-// 反噬: each use of a 反噬 art lays a layer of 亂氣; the use that would lay the third bursts
+// 亂氣: each use of a 亂氣 art (`backlash`) lays a layer of 亂氣; the use that would lay the third bursts
 // instead, costing a fifth of the caster's greatest 氣血 (not below 1, not through a shield) and
 // clearing the layers. Answers the caster effects still to put on him.
 function backlashBurst(s, u, own, effects) {
@@ -2351,7 +2351,7 @@ function backlashBurst(s, u, own, effects) {
     u.hp -= n;
     effects.push([u.id, '−' + n, 'sacrifice']);
   }
-  log(s, 'combat', '亂氣滿三層，反噬自身，損失 ' + n + ' 點氣血。', unitDetails(u).name);
+  log(s, 'combat', '亂氣滿三層，自損 ' + n + ' 點氣血。', unitDetails(u).name);
   return own.filter((e) => e.kind !== 'backlash');
 }
 function healingPower(u, s, art) {
@@ -2692,16 +2692,16 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       wardShare(s, t, guards)
     );
     result.reflected = Math.min(t.hp - result.amount, Math.max(0, raw - shield));
-    result.notes.push('借勁 · 還擊後反震 ' + result.reflected + ' 氣血');
+    result.notes.push('反震 · 還擊後震回 ' + result.reflected + ' 氣血');
   }
-  // 反刺: the counter comes from beside the wearer, so it pricks the one who makes it.
+  // 反震 (軟蝟甲): the counter comes from beside the wearer, so it pricks the one who makes it.
   if (result.counterRaw > 0 && barbsOf(u) && distance(u, result.push || t) === 1) {
     const guards = wardEscorts(s).filter(
       (g) => !result.splash.some((hit) => hit.id === g.id && hit.amount >= g.hp)
     );
     result.barbs = afterWard(barbsOf(u), wardShare(s, t, guards));
     result.notes.push(
-      '反刺 · 還擊者被軟蝟甲扎傷 ' +
+      '反震 · 還擊者被軟蝟甲扎傷 ' +
         Math.min(t.hp - result.amount - result.reflected, Math.max(0, result.barbs - shield)) +
         ' 氣血'
     );
@@ -2719,7 +2719,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.notes.push(leaderBoon(s).name + ' · 內力 ＋' + absorb);
   }
   zoneNote(s, u, art, t, result); // 布陣 rider: the tiles round the target's feet
-  selfLoss(s, u, art, result, true); // 內傷 and 反噬: what the strike costs its caster after
+  selfLoss(s, u, art, result, true); // 內傷 and 亂氣: what the strike costs its caster after
   result.notes.push(...guardNotes(art), ...priceNotes(art));
   return result;
 }
@@ -2912,7 +2912,7 @@ function wound(s, u, n, source) {
       s,
       'combat',
       left
-        ? '一條星索斷了。' + name + '的護勁降至' + shareWords(left) + '。'
+        ? '一條星索斷了。' + name + '的遮護降至' + shareWords(left) + '。'
         : '星索皆斷，' + name + '的護陣已破。',
       '星索護陣'
     );
@@ -3005,11 +3005,11 @@ function reflectStrike(s, victim, attacker, dealt, effects) {
   log(
     s,
     'combat',
-    '借勁反震' + unitDetails(attacker).name + '，造成 ' + amount + ' 點傷害。',
+    '反震' + unitDetails(attacker).name + '，造成 ' + amount + ' 點傷害。',
     unitDetails(victim).name
   );
 }
-// 反刺 (軟蝟甲): a piece that strikes the wearer from the tile beside her, with a blow or a counter
+// 反震 (軟蝟甲, `barbs`): a piece that strikes the wearer from the tile beside her, with a blow or a counter
 // that lands, is pricked for the gear's barbs. Defence does not cut it; the striker's own shield
 // takes it first, and a master's escorts share it as they share any blow. A blow 閃身 or 挪移
 // voids never touches her. The wearer's own strike shows the pricking of its counter in the
@@ -3167,7 +3167,7 @@ function resolve(s, u, t, skill) {
       effects.push([u.id, '−' + dealt, 'counter']);
       log(s, 'combat', '還擊' + who + '，造成 ' + dealt + ' 點傷害。', unitDetails(t).name);
       reflectStrike(s, u, t, dealt, effects);
-      barbStrike(s, u, t, f.barbs, effects); // 反刺
+      barbStrike(s, u, t, f.barbs, effects); // 反震 (軟蝟甲)
     }
     woundSelfLoss(s, u, effects); // 內傷: the attacker pays once the exchange is over
   }
@@ -3177,7 +3177,7 @@ function resolve(s, u, t, skill) {
     const own = selfEffectsOf(art).map((e) =>
       e.kind === 'backlash' ? { ...e, turns: roundLimit(s) - s.round + 1 } : e
     );
-    putEffects(s, u, u, backlashBurst(s, u, own, effects), effects); // 反噬: the third layer bursts
+    putEffects(s, u, u, backlashBurst(s, u, own, effects), effects); // 亂氣: the third layer bursts
   }
   finishAction(s, u);
   // 回身: the steps left to walk after the strike.
@@ -3969,7 +3969,7 @@ function enemyAction(s, u) {
   }
   reflectStrike(s, t, u, n, effects);
   if (barbsOf(t) && !blow.void && distance(u, t) === 1)
-    barbStrike(s, t, u, afterWard(barbsOf(t), wardPercent(s, u)), effects); // 反刺
+    barbStrike(s, t, u, afterWard(barbsOf(t), wardPercent(s, u)), effects); // 反震 (軟蝟甲)
   const share = isProp(t) ? 0 : counterRatio(s, t);
   if (!living(t) && !isProp(t)) log(s, 'combat', '負傷退場。', unitDetails(t).name);
   else if (
@@ -3990,7 +3990,7 @@ function enemyAction(s, u) {
   // 分刺: the second needle, once the first blow's exchange is over (and only if it still stands).
   secondNeedle(s, u, t, strikePower, friends, effects);
   woundSelfLoss(s, u, effects); // 內傷: the attacker pays once the exchange is over
-  // 擒拿: the hero is dragged in after his counter and 反刺 were judged from where he was struck.
+  // 擒拿: the hero is dragged in after his counter and 軟蝟甲 were judged from where he was struck.
   if (drag) dragNear(s, u, t);
   // 游擊: having struck, it walks off with what steps it has left.
   if (unitDetails(u)?.traits?.glide) glideAway(s, u, best.c.n, step);
