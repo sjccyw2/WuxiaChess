@@ -6,6 +6,11 @@
 //
 // A long press only reads: the tap that ends it does not pick the art. The card stays until the
 // next touch anywhere, which then does whatever it would have done.
+//
+// A card the mouse opened goes as soon as the pointer is off its entry (2026-11-25, the
+// producer's ruling: on a desktop it stayed beside the list and covered the board), and so does
+// any card when its art is picked or the list closes. The entry just picked opens no card again
+// until the pointer (or the keyboard focus) has left it.
 import * as G from '../rules/game.js';
 import { moveFacts } from '../rules/move-facts.js';
 import { TECHNIQUES } from '../data/martial-arts.js';
@@ -80,7 +85,9 @@ function installArtDetail(list, read) {
   let timer = 0,
     press = null, // the finger resting on an entry: { id, x, y }
     swallow = false, // the click that ends a long press is not a pick
-    shownFor = null;
+    shownFor = null,
+    byMouse = false, // the card was opened by a resting mouse pointer
+    picked = null; // the entry just picked: no card for it until the pointer or focus leaves it
 
   const entryOf = (e) => e.target.closest?.('.field-art[data-id]');
   function place(button) {
@@ -107,6 +114,8 @@ function installArtDetail(list, read) {
     card.style.top = Math.round(y) + 'px';
   }
   function show(button) {
+    // The list may have been redrawn or shut while the pointer rested.
+    if (!button.isConnected || button.closest('[hidden]') || button.dataset.id === picked) return;
     const { state, unit } = read();
     if (!state || !unit) return;
     const html = artDetail(state, unit, button.dataset.id);
@@ -120,6 +129,7 @@ function installArtDetail(list, read) {
     clearTimeout(timer);
     card.hidden = true;
     shownFor = null;
+    byMouse = false;
   }
 
   list.addEventListener('pointerover', (e) => {
@@ -128,7 +138,10 @@ function installArtDetail(list, read) {
     if (!b) return;
     clearTimeout(timer);
     if (shownFor === b.dataset.id && !card.hidden) return;
-    timer = setTimeout(() => show(b), shownFor ? 0 : HOVER_MS);
+    timer = setTimeout(() => {
+      show(b);
+      if (!card.hidden) byMouse = true;
+    }, shownFor ? 0 : HOVER_MS);
   });
   list.addEventListener('pointerout', (e) => {
     if (e.pointerType !== 'mouse') return;
@@ -136,8 +149,29 @@ function installArtDetail(list, read) {
     if (b && b.contains(e.relatedTarget)) return;
     hide();
   });
+  // The pointer is off the entry the card describes. The list is redrawn under a resting pointer
+  // (a pick, a repaint), and an entry taken away sends no pointerout: so every mouse move is
+  // checked against the entry now under it.
+  document.addEventListener(
+    'pointermove',
+    (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const over = entryOf(e)?.dataset.id ?? null;
+      if (picked && over !== picked) picked = null;
+      if (byMouse && !card.hidden && over !== shownFor) hide();
+    },
+    true
+  );
+  // An art picked: the card has served its purpose.
+  list.addEventListener('click', (e) => {
+    const b = entryOf(e);
+    if (!b) return;
+    hide();
+    picked = b.dataset.id;
+  });
   list.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse') return;
+    picked = null; // a finger asks afresh: a long press reads even the art just picked
     const b = entryOf(e);
     if (!b) return;
     press = { id: b.dataset.id, x: e.clientX, y: e.clientY };
@@ -184,8 +218,17 @@ function installArtDetail(list, read) {
     },
     true
   );
+  // The list shut (its panel hidden), whatever shut it.
+  const panel = list.closest('.hud-flyout');
+  if (panel)
+    new MutationObserver(() => {
+      if (!panel.hidden) return;
+      hide();
+      picked = null;
+    }).observe(panel, { attributes: true, attributeFilter: ['hidden'] });
   list.addEventListener('focusin', (e) => {
     const b = entryOf(e);
+    if (picked && b?.dataset.id !== picked) picked = null;
     if (b?.matches(':focus-visible')) show(b);
   });
   list.addEventListener('focusout', (e) => {
@@ -194,6 +237,7 @@ function installArtDetail(list, read) {
   return {
     // After the list is redrawn: keep the card only while its entry is still there and shown.
     sync() {
+      if (list.closest('[hidden]')) picked = null;
       if (card.hidden) return;
       const b = list.querySelector('.field-art[data-id="' + CSS.escape(shownFor || '') + '"]');
       if (!b || b.closest('[hidden]')) hide();

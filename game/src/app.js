@@ -732,13 +732,15 @@ function unitClick(id) {
     mapTip(targetHint(G.artFor(u)));
     return;
   }
-  // An art is aimed and this enemy is outside its reach. Opening his page at once hid the reason
-  // and read as a blow that did nothing, so the first tap says why on the board and shows the
-  // tiles the art does reach; the same enemy tapped again is a wish to read his page.
+  // A blow is ready (an art picked, or after a walk the basic strike, its reach not drawn) and
+  // this enemy is outside its reach. Opening his page at once hid the reason and read as a blow
+  // that did nothing, so the first tap says why on the board and shows the tiles the blow does
+  // reach (a hidden reach only for a moment: board.pulseReach); the same enemy tapped again is a
+  // wish to read his page. Before a walk (mode 'move') nothing is aimed: his page opens at once.
   if (
     !again &&
     G.canAct(state, u) &&
-    (skill || (mode === 'attack' && !aimHidden)) &&
+    (skill || mode === 'attack') &&
     G.distance(u, t) > G.rangeFor(u, skill)
   ) {
     missedId = id;
