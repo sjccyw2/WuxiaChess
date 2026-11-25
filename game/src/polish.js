@@ -43,6 +43,7 @@ const SWITCHES = {
   forecastSide: true, // on wide screens the strike forecast docks to the side, clear of the fighters
   forecastTrim: true, // drop the forecast's target-health row, which the health bar now shows
   tipClear: true, // phone held sideways: the tip line sits in the top row, clear of the buttons
+  keyHints: true, // with a mouse at hand: the key beside 結束回合, the arts list's rows, 撤步 and the menu
   actionFlow: true // no command bar: arts open beside the hero after a move, undo sits there, End turn stands alone
 };
 

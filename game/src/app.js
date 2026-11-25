@@ -21,7 +21,7 @@ import { icon } from './ui/icons.js';
 import { codexPage } from './ui/gates.js';
 import * as R from './rules/journey.js';
 import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
-import { playFilm } from './ui/intro-film.js';
+import { playFilm, playingFilm } from './ui/intro-film.js';
 import { realmView } from './ui/realm-views.js';
 import { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick } from './ui/dev-mode.js';
 import { MAZE_TALE } from './data/maze-tale.js';
@@ -116,6 +116,8 @@ let aiRun = 0,
   transientTip = false;
 const dialog = $('modal');
 let returnControl = '';
+// The page drawn last, to tell a page newly shown from the same page redrawn.
+let shownPage = null;
 const navItems = [
   ['team', 'people', '隊伍'],
   ['sheet', 'person', '當前俠客'],
@@ -402,6 +404,12 @@ function paint() {
     F.glideRows(state, u) ||
     equippedMoves(state, u) + F.undoRow(state, u) + F.walkRow(state, u, mode);
   F.markReady($('field-arts'), state, u, mode);
+  // Polish (keyHints): the list's first four rows are the keys 1 to 4 (the keydown handler).
+  if (F.ON)
+    [...$('field-arts').querySelectorAll('.field-art')].slice(0, 4).forEach((b, i) => {
+      b.setAttribute('aria-keyshortcuts', String(i + 1));
+      b.insertAdjacentHTML('beforeend', X.keyHint(i + 1));
+    });
   markAnswers($('field-arts'), state, u, board.hover && G.at(state, board.hover.x, board.hover.y));
   artCard.sync();
   if (hud.panel === 'arts' && !G.canAct(state, u) && !(F.ON && G.canGlide(state, u)))
@@ -872,6 +880,9 @@ function drawModal(keepScroll = false) {
   const top = dialog.querySelector('.mj-scroll')?.scrollTop || 0;
   const keepPlan = keepScroll && dialog.querySelector('.fo-map-plan')?.hasAttribute('open');
   const active = dialog.contains(document.activeElement) ? document.activeElement.dataset : null;
+  const reading = document.activeElement?.matches?.('#modal .mj-scroll');
+  const fresh = shownPage !== dialogState;
+  shownPage = dialogState;
   $('modal-content').innerHTML = pageHtml();
   const body = frameDialog($('modal-content'));
   addSavesButton();
@@ -887,14 +898,10 @@ function drawModal(keepScroll = false) {
         b.dataset.dest === active.dest &&
         b.dataset.delta === active.delta
     );
-    const next =
-      equivalent && !equivalent.disabled
-        ? equivalent
-        : dialog.querySelector(
-            '[data-do="scene-next"],.fy-tabs [aria-selected="true"],[data-do="close"]'
-          );
-    next?.focus({ preventScroll: true });
-  }
+    if (equivalent && !equivalent.disabled) equivalent.focus({ preventScroll: true });
+    else startFocus(!fresh);
+  } else if (fresh && dialog.open) startFocus();
+  else if (reading) body?.focus({ preventScroll: true });
   const close = dialog.querySelector('.modal-head [data-do="close"]');
   if (close) {
     const label =
@@ -964,16 +971,34 @@ function openPage(name, heroId) {
   drawModal();
   if (!dialog.open) {
     dialog.showModal();
-    (
-      dialog.querySelector('[data-do="scene-next"], [data-do="brief-next"]') ||
-      dialog.querySelector('.mj-tabs [aria-selected="true"]') ||
-      dialog.querySelector('[data-do="close"]') ||
-      dialog.querySelector('button')
-    )?.focus({ preventScroll: true });
+    startFocus();
   }
   // A page opened behind the notice that another tab has the game stays behind it.
   if (lockedOut) raiseLock();
   refreshDev();
+}
+// The page's red button: the gold one in its footer, where every page builder puts its main action
+// (下一句, 進入整備, 出陣, 前往…, 再入夢, 結束回合, 確認出招 …). Buttons of that look in a page's body
+// (a slot's 讀檔) are one choice among several, not the page's.
+function primaryButton() {
+  return [...dialog.querySelectorAll('.mj-fixed-foot .gold-btn, .modal-foot .gold-btn')].find(
+    (b) => !b.disabled && !b.closest('[hidden]')
+  );
+}
+// Where the keyboard starts on a page (R-59): its red button, so Enter does the page's main
+// thing, else the selected tab, else the page's body, never ×. The same page redrawn (`within`,
+// the focused control gone) prefers the tab: a lost focus there must not land on 出陣.
+function startFocus(within = false) {
+  const tab = dialog.querySelector('.mj-tabs [aria-selected="true"]'),
+    primary = primaryButton();
+  const first = [...dialog.querySelectorAll('button:not(:disabled)')].find(
+    (b) => !b.matches('.modal-head [data-do="close"]') && !b.closest('[hidden], .dev-panel')
+  );
+  (
+    (within ? tab || primary : primary || tab) ||
+    dialog.querySelector('.mj-scroll') ||
+    first
+  )?.focus({ preventScroll: true });
 }
 function closePage() {
   if (dialog.open) {
@@ -1096,6 +1121,7 @@ dialog.addEventListener('close', () => {
   const from = !own && dialogState === 'saves' ? savesUI.from : null;
   if (from) setTimeout(() => !dialog.open && openPage(from));
   dialogState = null;
+  shownPage = null;
   if (board?.layers) board.layers.aim = null;
   board.uncover();
   (screen === 'battle' ? $('field') : document.body).append($('toast'));
@@ -1110,6 +1136,54 @@ dialog.addEventListener('click', (e) => {
     const r = dialog.getBoundingClientRect();
     if (e.clientX < r.left || e.clientY < r.top || e.clientX > r.right || e.clientY > r.bottom)
       dismissOutside(true);
+  } else if (
+    // A mouse click on a story's words or picture turns its page too (R-60). A finger's tap
+    // there does what it always did (nothing), and a drag that selected words is reading.
+    STORY_PAGES.includes(dialogState) &&
+    e.detail > 0 &&
+    pointerKind !== 'touch' &&
+    e.target.closest('.fy-story-body, .fy-scene') &&
+    !e.target.closest('button, a, summary') &&
+    getSelection()?.isCollapsed !== false
+  )
+    primaryButton()?.click();
+});
+// The pages whose lines are read one by one: the stories between boards, one reread from the
+// battle's 選單, and the prologue.
+const STORY_PAGES = ['encounter', 'story', 'prologue'];
+let pointerKind = '';
+document.addEventListener('pointerdown', (e) => (pointerKind = e.pointerType), true);
+// A control that Enter or Space presses for itself.
+const onControl = (el) =>
+  el?.closest?.('button, a, input, select, textarea, summary, [role="button"], [role="tab"]') || null;
+// The keys of an open page (R-59, R-60). Enter is its red button wherever the focus is, unless
+// the focus is on another control, which Enter presses as usual; on 結束我方回合 a second E is
+// 結束回合 too. On a story's pages Enter, Space and → turn the line and ← goes back: a key held
+// down turns one line, and no key skips a scene. On the document, not the dialog: a click on the
+// words, or a redraw, can leave the focus outside it.
+document.addEventListener('keydown', (e) => {
+  if (!dialog.open || lockedOut || playingFilm() || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey)
+    return;
+  const primary = primaryButton(),
+    control = onControl(e.target),
+    other = control && control !== primary;
+  if (STORY_PAGES.includes(dialogState)) {
+    const back = e.key === 'ArrowLeft',
+      turn = e.key === 'ArrowRight' || (!other && (e.key === 'Enter' || e.key === ' '));
+    if (!back && !turn) return;
+    e.preventDefault();
+    const b = back ? dialog.querySelector('[data-do="scene-prev"], [data-do="prologue-prev"]') : primary;
+    if (!b || e.repeat) return;
+    b.click();
+    if (!dialog.contains(document.activeElement)) startFocus();
+    return;
+  }
+  if (e.key === 'Enter' && !other && primary) {
+    e.preventDefault();
+    if (!e.repeat) primary.click();
+  } else if (dialogState === 'end' && e.key.toLowerCase() === 'e' && primary) {
+    e.preventDefault();
+    if (!e.repeat) primary.click();
   }
 });
 function result(afterMotion = false) {
@@ -1807,6 +1881,7 @@ function command(action, id, data = {}, keyboard = false) {
       drawModal();
       break;
     case 'hud-panel':
+      menuByEsc = false;
       hud.togglePanel(id, keyboard);
       break;
     // Polish (actionFlow): the chip that names the ready art opens and closes the arts list.
@@ -2512,9 +2587,14 @@ function command(action, id, data = {}, keyboard = false) {
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-do]');
   if (b && !b.disabled) command(b.dataset.do, b.dataset.id, b.dataset, e.detail === 0);
+  // After a mouse press on a story's 上一句, Enter and Space turn the line again, not back.
+  if (b && e.detail > 0 && dialog.open && STORY_PAGES.includes(dialogState)) primaryButton()?.focus({ preventScroll: true });
 });
 const bind = (id, fn) => $(id).addEventListener('click', fn);
 bind('terrain-guide', () => openPage('terrain'));
+// Polish (keyHints): Esc opens the 選單 when nothing else is open.
+$('menu-toggle').setAttribute('aria-keyshortcuts', 'Escape');
+$('menu-toggle').insertAdjacentHTML('beforeend', X.keyHint('Esc'));
 bind('focus-piece', () => {
   board.focusSelected();
   hud.closePanel(true);
@@ -2528,8 +2608,21 @@ bind('camera', () => {
 });
 bind('rotate-left', () => board.rotate(-1));
 bind('rotate-right', () => board.rotate(1));
+// The 選單 opened by Esc closes by Esc to where the keyboard was, not onto its button, where the
+// next Enter would open it again.
+let menuByEsc = false;
+function escMenu() {
+  hud.togglePanel('menu', true);
+  menuByEsc = true;
+}
+function escClose() {
+  const back = !(menuByEsc && hud.panel === 'menu');
+  menuByEsc = false;
+  hud.closePanel(back);
+}
 document.addEventListener('keydown', (e) => {
-  if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.repeat || dialog.open) return;
+  if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.repeat || dialog.open || playingFilm())
+    return;
   const k = e.key.toLowerCase();
   if (k === '[' || k === ']') {
     e.preventDefault();
@@ -2539,14 +2632,20 @@ document.addEventListener('keydown', (e) => {
   if (screen === 'title') {
     if (k === 'escape' && hud.fallback) hud.setFallback(false);
     if (k === '?') openPage('help');
+    // Enter is 入夢 or 繼續 from the first moment, with no Tab first (R-62).
+    if (k === 'enter' && !onControl(e.target) && !lockedOut) {
+      e.preventDefault();
+      $('start-primary').click();
+    }
     return;
   }
   // The deployment step: E or Enter begins, Esc lets go of the pick, Tab picks the next hero, D says the
   // zone stays lit; the number keys do nothing. G, ?, [ and ] work as always.
   if (deploying()) {
     if (k === 'escape') {
-      if (hud.panel) hud.closePanel(true);
+      if (hud.panel) escClose();
       else if (deployPick) pickDeploy(null);
+      else escMenu();
       return;
     }
     // Enter on a focused control (a board tile, a button) presses that control instead.
@@ -2570,21 +2669,27 @@ document.addEventListener('keydown', (e) => {
     }
     if (k !== '?' && k !== 'g') return;
   }
+  // Esc only closes or lets go, one thing a press (R-61): the open panel or list, the focus view,
+  // then the art picked; with nothing left, it opens the 選單. It never takes back a walk.
+  const u = screen === 'battle' && state.phase === 'ally' ? selected() : null;
   if (k === 'escape') {
-    // Polish (actionFlow): Esc takes back the move while the hero has not yet struck.
-    const u = screen === 'battle' && F.ON && state.phase === 'ally' ? selected() : null;
-    // For a hero who readied an art before walking it is the list's 走位: back to the walk tiles.
-    // (Either way one press does one thing: he has no move to take back.)
-    const stepBack =
-      u &&
-      G.canAct(state, u) &&
-      (u.moved ? !!u.origin : G.canMove(state, u) && ['attack', 'skill'].includes(mode));
-    if (stepBack && (!hud.panel || hud.panel === 'arts')) doCommand('move');
-    else if (hud.panel) hud.closePanel(true);
+    const picked = u && G.canAct(state, u) && (mode === 'skill' || (mode === 'attack' && !aimHidden));
+    if (hud.panel) escClose();
     else if (hud.fallback) hud.setFallback(false);
-    else {
-      mode = 'move';
+    else if (picked && G.canMove(state, u)) doCommand('move'); // 走位: the walk tiles again
+    else if (picked) {
+      mode = 'attack';
+      aimHidden = true;
       paint();
+      mapTip(null);
+    } else escMenu();
+    return;
+  }
+  // Backspace takes back the walk, as 撤步 does, while the hero has not struck.
+  if (k === 'backspace') {
+    if (u && G.canAct(state, u) && !G.canGlide(state, u) && u.moved && u.origin) {
+      e.preventDefault();
+      doCommand('move');
     }
     return;
   }

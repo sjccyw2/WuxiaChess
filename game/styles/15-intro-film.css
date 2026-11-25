@@ -67,6 +67,27 @@
   background: #8f3b2b;
   border-color: #e0b170;
 }
+/* Held by Space: a quiet sign in the top middle, clear of the captions in the top corners. */
+.film-paused {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 10px;
+  font: 600 14px/1 var(--serif, serif);
+  letter-spacing: 0.2em;
+  color: #f6eedc;
+  background: #14181ab3;
+  border: 1px solid #d7be8366;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.intro-film:focus {
+  outline: none;
+}
 .intro-film [hidden] {
   display: none;
 }

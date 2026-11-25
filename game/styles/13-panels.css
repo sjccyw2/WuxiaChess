@@ -1473,3 +1473,51 @@ html.polish-action-flow .battlefield .field-action.armed-art[aria-expanded='true
     line-height: 1.35;
   }
 }
+
+/* keyHints: the key that presses a button, small and quiet on it, only where there is a fine
+   pointer (a mouse, and so most likely a keyboard). Never by the screen's width: a phone held
+   sideways is as wide as a small laptop. */
+.key-hint {
+  display: none;
+}
+@media (pointer: fine) {
+  html.polish-key-hints .battlefield .key-hint {
+    display: inline-block;
+    min-width: 15px;
+    padding: 0 3px;
+    font: 600 10px/14px var(--sans);
+    letter-spacing: 0;
+    text-align: center;
+    color: #e8dcbccc;
+    background: #0c131c99;
+    border: 1px solid #d7c39a59;
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  html.polish-key-hints .battlefield .turn-action .key-hint {
+    margin-inline-start: 2px;
+  }
+  /* On an art's sigil, at its lower corner. */
+  html.polish-key-hints .battlefield .field-art {
+    position: relative;
+  }
+  html.polish-key-hints .battlefield .field-art > .key-hint {
+    position: absolute;
+    left: 3px;
+    top: 30px;
+  }
+  html.polish-key-hints .battlefield .field-undo .key-hint {
+    margin-inline-start: auto;
+  }
+  html.polish-key-hints .battlefield #menu-toggle {
+    position: relative;
+  }
+  html.polish-key-hints .battlefield #menu-toggle .key-hint {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    min-width: 0;
+    font-size: 9px;
+    line-height: 12px;
+  }
+}

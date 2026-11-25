@@ -85,8 +85,8 @@ tools/
 
 Every visual upgrade layered on the original look has a switch in `game/src/polish.js`: board
 pieces, combat effects, lighting and water, panel finish, the loading veil, and the added
-controls (danger zone, `Tab` to the next hero, the side-docked strike forecast, and the
-action flow that replaces the four-button command bar), the painted skill effects, and the
+controls (danger zone, `Tab` to the next hero, the side-docked strike forecast, the
+action flow that replaces the four-button command bar, and the key hints on the battle's buttons), the painted skill effects, and the
 marks for reinforcements and the secondary objective on the board. `statusLooks` draws the states that hold a piece on the board: 定身 freezes the figure frost-white, 閉穴 hangs a sealed talisman at its hands, 受制 turns its base, outline and health bar green-gold, 金剛 puts a gold ring and sheen on the hero and shows 無功 for a voided blow, and 固守 raises a stone ward, each with a short flourish as it starts and ends. (The outline of the tiles a two- or three-tile splash will catch is a rule the player needs, so it has no switch.) Set a switch to
 `false` to turn that one feature off; nothing else needs to change.
 
@@ -273,7 +273,7 @@ What the board does for every player, tutorial or not (the playtest of 2026-11-2
 
 - **An enemy out of reach.** With a blow ready, an art picked or (after a walk) the basic strike whose reach is not drawn, the first tap on an enemy it cannot reach says why in the board's message (naming the blow, and the diagonal case: 斜角不算相鄰) and swells the tiles the blow does reach (`pulseReach` in `scene/board.js`; a reach not drawn shows for that moment, `PEEK_MS` in `actors/zones.js`, and goes again); the same enemy tapped again opens 敵情查探 (`unitClick` in `app.js`). Before a walk, or with no blow ready, a tap opens it at once.
 - **The whole figure is the target.** A tap is measured against each figure as it is drawn, the sprite's own shape and not only the tile under it (`actors/figure-pick.js`, `resolveBoardPick` in `scene/board.js`): the figure in front wins, an aimed art prefers a piece it can be used on, and a fingertip may land a little beside a figure. Open ground beside a figure is still the tile.
-- **A way back to walking.** While an art is ready and the hero has not walked, the arts list ends with 走位, which shows the walk tiles again (`walkRow` in `ui/action-flow.js`); a tap on open ground the art has no use for does the same, and so does Esc.
+- **A way back to walking.** While an art is ready and the hero has not walked, the arts list ends with 走位, which shows the walk tiles again (`walkRow` in `ui/action-flow.js`); a tap on open ground the art has no use for does the same, and so does Esc once the list is closed.
 - **Enemies in a crowd** (2026-11-23). A tap again on the same spot within six seconds takes the next enemy behind the one taken last, then the front one again (`tapPick` in `scene/board.js`); heroes are left out, since a second tap on a hero opens his list. The second tap that an out-of-reach message asks for stays on the same enemy (`holdCycle`). The view also zooms to 340% (`MAX_ZOOM` in `scene/camera.js`; it was 240%).
 - **No reach drawn until an art is picked** (2026-11-23). A hero who has walked, or is held in place, has the basic strike ready, but its red tiles appear only once an art (the basic strike included) is picked from the list (`aimHidden` in `app.js`, `hideAim` in the board and the actor layer). A tap on an enemy in the basic strike's reach still opens 交鋒預覽 for it.
 - **An art's full rules.** A long press on an entry of the arts list, a resting mouse pointer or keyboard focus shows a card with everything `moveFacts` knows about the art (濺射, 擊退, 連擊, conditions, 破招 …) and its description (`ui/art-detail.js`, `styles/19-art-detail.css`). The press only reads: the tap that ends it does not pick the art. A card the mouse opened closes as soon as the pointer is off its entry (2026-11-25), and any card closes when its art is picked or the list closes; a tile's label under the board goes when the pointer leaves the board.
@@ -281,6 +281,16 @@ What the board does for every player, tutorial or not (the playtest of 2026-11-2
 - **When it shows.** Once per browser (`jianying.tutorial.v1` in the browser's storage), on the first board of an ordinary run, for a record with no board won and no run finished; not in a 試局, not in a run with 無名 on the board, and not under `game/?classic`. 略過指引 ends it at once, and so does the end of the board.
 - **Seeing it again.** In any battle, 選單 › 指南 › 重看新手指引 plays it from the top on the board being fought.
 - **Where it is.** `game/src/ui/tutorial.js` (the steps and how each ends), `game/src/data/tutorial-text.js` (every word it shows, in one place) and `game/styles/18-tutorial.css` (where the card sits on each screen format). `app.js` only installs it and calls it when the game repaints.
+
+## The keyboard
+
+The producer's rulings of 2026-11-25 (the playtest's R-59 to R-62). Touch is untouched by all of it.
+
+- **Enter is the red button.** Every page's main action is the gold `gold-btn` in its footer (`primaryButton` in `app.js`). A page opens with the focus on it (`startFocus`), and Enter presses it wherever the focus is, unless the focus is on another control, which Enter presses as usual; with no red button the focus goes to the page's body. × is never where the focus starts. On 結束我方回合 a second E is 結束回合 too. On the title, Enter is 入夢 or 繼續 from the first moment.
+- **Stories and the prologue.** Enter, Space and → turn the line, ← goes back where there is 上一句; a key held down turns one line, and no single key skips a scene. A mouse click on the words or the picture turns the line too (a tap there still does nothing on a touch screen; a tap outside the box turns it, as before).
+- **The films.** Space pauses and resumes, with a small 暫停 sign; Esc is 略過. The focus starts on the film, not on 略過, and the game's own keys wait while a film plays.
+- **Esc in battle only closes or lets go**, one thing a press: an open list or panel, then the art picked (back to the walk tiles for a hero who has not walked); with nothing open it opens the 選單, and the next Esc closes it. **Backspace** takes back a walk, as 撤步 does. Esc never does.
+- **Key hints.** 結束回合 (E), the arts list's first four rows (1 to 4), 撤步 (Backspace) and the 選單 (Esc) carry their key in a small mark, only on a device with a fine pointer (`keyHint` in `ui/field-extras.js`, the `keyHints` switch; never by the screen's width). The guide (操作指南) lists every key first, under 按鍵, hidden on touch screens; the list is `flowHotkeys` in `ui/action-flow.js`, `extraHotkeys` in `ui/field-extras.js` and `pageHotkeys` in `ui/panels.js`, which the wiki's 按鍵 page reads too.
 
 ## How the story is put together
 
