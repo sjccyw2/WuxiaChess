@@ -268,7 +268,10 @@ function installTutorial({ dialog, field, scene, board, view, close, notice, end
     if (page === 'enemy-info') {
       const foe = G.find(s, v.subject);
       if (s.run.deploying || !foe || foe.side !== 'enemy' || !G.living(foe)) return null;
-      if (armed) return { id: '', key: 'profileArmed' };
+      // A blow ready, its reach drawn or not (after a walk): an enemy out of its reach took two
+      // taps to reach this page (app.js, unitClick).
+      const ready = armed || (can && v.mode === 'attack');
+      if (ready) return { id: '', key: 'profileArmed' };
       return seen.has('preview') ? null : { id: '', key: 'profile' };
     }
     if (page === 'end')

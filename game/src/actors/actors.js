@@ -21,7 +21,8 @@ import {
   paintFormationAim,
   paintTauntAim,
   paintSplashAim,
-  reachPulse
+  reachPulse,
+  aimHiddenNow
 } from './zones.js';
 import {
   compactImage,
@@ -103,6 +104,7 @@ class ActorLayer {
   warm(ids) {
     this.image('battle-poses');
     for (const id of new Set(ids)) {
+      if (!id) continue; // a piece with no sheet of its own (a board object) asks for none
       this.image('motion-' + id);
       if (compactSheetName(id) !== 'battle-poses') this.image(compactSheetName(id));
     }
@@ -114,7 +116,7 @@ class ActorLayer {
   // drawn with the shared rank-and-file sheet, archer or swordsman, rather than not at all.
   standIn(details) {
     const id = details.mini;
-    const own = ['motion-' + id, compactSheetName(id), 'mini-' + id];
+    const own = id ? ['motion-' + id, compactSheetName(id), 'mini-' + id] : [];
     for (const name of own) this.image(name);
     if (!own.every((name) => this.imageFailures.has(name))) return null;
     return this.sheet(details.row === 'bow' ? 'archer' : 'bandit');
@@ -181,8 +183,10 @@ class ActorLayer {
       const waiting = [...this.tracks].some(([id, track]) => {
         if (!track.clips.some((clip) => clip.end > this.time && clip.start <= this.time + 60))
           return false;
-        const artId = (G.unitDetails(this.state && G.find(this.state, id)) || G.DETAILS[id]).mini;
-        if (this.sheet(artId)) return false;
+        const artId = (G.unitDetails(this.state && G.find(this.state, id)) || G.DETAILS[id])?.mini;
+        // A struck board object (the qin, the drum, the posts) has a track for its shake and
+        // gauge but no sheet: its pictures are 'object-…', loaded by sync().
+        if (!artId || this.sheet(artId)) return false;
         return [compactSheetName(artId), 'motion-' + artId].some((name) => {
           const image = this.image(name);
           return !this.imageFailures.has(name) && !(image.complete && image.naturalWidth > 0);
@@ -642,7 +646,7 @@ class ActorLayer {
       s = this.state,
       u = G.find(s, s.selected);
     const can = G.canAct(s, u),
-      cast = ['attack', 'skill'].includes(this.mode) && can && !this.hideAim;
+      cast = ['attack', 'skill'].includes(this.mode) && can && !aimHiddenNow(this);
     drawDanger(this); // Polish (dangerZone): the enemy's strike zone, under everything else
     const art = cast && this.mode === 'skill' ? G.artFor(u) : null;
     const range = cast ? (art ? art.range : u.range) : 0;
