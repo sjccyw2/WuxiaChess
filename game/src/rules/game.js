@@ -587,8 +587,8 @@ function stageRows(map, depth, realm = 1) {
 // (five, then two and three at 求敗's side), they guard him, he falls back, and 無名 is stronger
 // (journey.js LAST_BOON). At 求敗 1600 / 60 and each master 260 / 56 the same player won 68%.
 // With his five stages (五劍, 2026-11-25; the producer's target: a third to a half) the numbers
-// stayed and the stages were tuned instead (encounters.js): 38% over 200 runs, seed 1, against
-// 44% before them, losing slightly more by the round limit than by 無名 falling.
+// stayed and the stages were tuned instead (encounters.js): 39% over 200 runs, seed 1 (35% and 50%
+// at seeds 2 and 3), against 44% before them.
 const LAST_ROWS = {
   master: [1700, 64, 28, 3, 2],
   guest: [280, 60, 20, 3, 1]
@@ -2547,7 +2547,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   const stage = !ally(t) && stageOf(t);
   if (stage?.cut && !blow.void) result.notes.push(stage.name + ' · 所受傷害' + (stage.cut === 50 ? '減半' : '減' + shareWords(stage.cut)));
   // What his own blows do in this stage, when he strikes in the enemy phase.
-  if (stage?.pull) result.notes.push(stage.name + ' · 射程 ' + reach(s, t) + ' 格，他的招擊中誰，便把誰扯近 ' + stage.pull + ' 格');
+  if (stage?.pull) result.notes.push(stage.name + ' · 射程 ' + reach(s, t) + ' 格，他的招擊中誰，便把誰' + pullWords(stage.pull));
   if (stage?.round)
     result.notes.push(stage.name + ' · 他出手時，身旁每位俠客挨' + shareWords(Math.round(stage.round * 100)) + '力' + (stage.shove ? '並震退一格' : ''));
   let shield = t.conditions?.shield?.power || 0;
@@ -3368,19 +3368,24 @@ function stageOf(u, hp = u?.hp) {
     floor = u.maxHp - span * (index + 1);
   return { ...stages[index], index, count: n, share: (left - floor) / span, floor, top: floor + span };
 }
+// 軟劍's pull in words: to his side (true), or so many tiles nearer.
+const pullWords = (pull) => (pull === true ? '扯到身旁' : '扯近 ' + pull + ' 格');
 // What a stage does, in one plain line built from its numbers, so the words cannot drift from the
 // rule: the tip as he changes swords, his enemy page and the guide's wiki read it.
 function stageNote(st) {
   const parts = [];
   if (st.twice) parts.push('每一擊連出兩下，還擊亦然，第二下' + shareWords(Math.round(st.twice * 100)) + '力');
-  if (st.reach) parts.push('射程 ' + st.reach + ' 格' + (st.pull ? '，擊中便把人扯近 ' + st.pull + ' 格' : ''));
+  if (st.reach) parts.push('射程 ' + st.reach + ' 格' + (st.pull ? '，擊中便把人' + pullWords(st.pull) : ''));
   if (st.step != null && !st.turns) parts.push('每回合只走 ' + st.step + ' 步');
   if (st.round)
     parts.push(
       '每一擊都掃及身旁每位俠客（' + shareWords(Math.round(st.round * 100)) + '力）' + (st.shove ? '，並把他們震退一格' : '')
     );
   if (st.pierce) parts.push('代受與固守都擋不住');
-  if (st.turns) parts.push('每回合行動' + COUNTS[st.turns] + '次' + (st.step != null ? '，每次走 ' + st.step + ' 步' : ''));
+  if (st.turns)
+    parts.push(
+      '每回合行動' + COUNTS[st.turns] + '次' + (st.step === 0 ? '，站定不走，每次出一招' : st.step != null ? '，每次走 ' + st.step + ' 步' : '')
+    );
   if (st.unheld) parts.push(st.unheld.map((k) => CONDITION_NAMES[k]).join('、') + '皆不受');
   if (st.cut) parts.push('所受傷害' + (st.cut === 50 ? '減半' : '減' + shareWords(st.cut)));
   if (st.blink) parts.push('每回合出手前，身形一晃便到' + DETAILS[st.solo || YOUTH_ID].name + '身旁');
@@ -4097,7 +4102,7 @@ function enemyAction(s, u) {
   // 擒拿: the hero is dragged in after his counter and 反刺 were judged from where he was struck.
   // 軟劍: so is anyone 求敗's blow lands on in that stage.
   if (drag) dragNear(s, u, t);
-  else if (st?.pull && !blow.void && !isProp(t)) dragNear(s, u, t, st.name, st.pull);
+  else if (st?.pull && !blow.void && !isProp(t)) dragNear(s, u, t, st.name, st.pull === true ? Infinity : st.pull);
   // 重劍: then everyone beside him is thrown back a tile.
   if (st?.shove) shoveAll(s, u, friends);
   // 游擊: having struck, it walks off with what steps it has left.
@@ -4458,5 +4463,5 @@ function nextRound(s) {
   return true;
 }
 
-export { stageOf, stageNote, PREFERS, traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
+export { stageOf, stageNote, traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
 export { charmed, sideOf, immuneTo, holdsFire, drainOf, controlPlan, isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, LEVEL_GAINS, GROWTH_PACES, GROWTH_PROFILES, growthOf, levelGain, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor, seatOf, seatRow, seatNumbers, twinForm };

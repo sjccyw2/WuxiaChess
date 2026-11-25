@@ -1467,7 +1467,7 @@ async function runEnemy() {
     board.showEffects(effects);
     if (result(true)) return;
     await board.finished();
-    if (dragged) mapTip(uName(e) + (G.stageOf(e)?.pull ? ' · ' + G.stageOf(e).name + '一捲，將' + uName(dragged) + '扯近' : ' · 擒拿，將' + uName(dragged) + '扯到身前'), 3200);
+    if (dragged) mapTip(uName(e) + (G.stageOf(e)?.pull ? ' · ' + G.stageOf(e).name + '一捲，將' + uName(dragged) + '扯到身前' : ' · 擒拿，將' + uName(dragged) + '扯到身前'), 3200);
     await sleep(prefs.motion ? 150 : 45);
   }
 }

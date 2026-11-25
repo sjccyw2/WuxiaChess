@@ -30,7 +30,8 @@
 //   stages   [{ name, colour, ... }]: 五劍, its 氣血 in that many bars, each an equal share of
 //            the whole, fought one after another (求敗; game.js stageOf). What a stage does:
 //              twice  his strikes (and counters) land twice, the second at that share
-//              reach  his reach; pull: each blow drags the hero that many tiles nearer him
+//              reach  his reach; pull: each blow drags the hero to a free tile beside him (true)
+//                     or that many tiles nearer him (a number)
 //              step   his step, set; round: every blow strikes each hero beside him at that
 //                     share, and shove pushes them a tile back; pierce: no 代受, no 固守
 //              turns  actions a round; unheld: conditions that do nothing to him; cut: the
@@ -895,13 +896,13 @@ const VILLAINS = {
         // vermilion, the amber of a low bar and the blue of 內力; each bar names its sword too.
         stages: [
           { name: '利劍', colour: '#c4d0de', twice: 0.3 },
-          { name: '軟劍', colour: '#8c9dff', reach: 3, pull: 1 },
+          { name: '軟劍', colour: '#8c9dff', reach: 3, pull: true },
           { name: '重劍', colour: '#9b4dff', step: 1, round: 0.3, shove: true, pierce: true },
           {
             name: '木劍',
             colour: '#e040c8',
             turns: 2,
-            step: 1,
+            step: 0,
             unheld: ['freeze', 'mute', 'daze', 'seal', 'disarm', 'charm'],
             cut: 20,
             guarded: true

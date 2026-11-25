@@ -5602,6 +5602,9 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
   check('each of the ten masters has a line for the briefing as a guest', s.run.route.every((m) => !!GUEST_GISTS[G.refId(m, 'master')]) && R.briefing(s).foes.slice(1).every((f) => f.gist === GUEST_GISTS[f.key] && !/橋|琴臺|弟子|索樁|半血/.test(f.gist)));
   check('a guest keeps his mods and loses his post', !G.traitsOf(chief).post && !!G.unitDetails(chief).traits.post === !!G.DETAILS[chief.id].traits.post && chief.maxHp === Math.round(G.stageRows(G.LAST_MAP, 10).guest[0] * (G.DETAILS[chief.id].traits.mods?.hp ?? 1)));
   check('the briefing: 問劍, its win and its loss', R.briefing(s).kindName === '問劍' && R.briefing(s).win.startsWith('問劍 · ') && R.briefing(s).win.includes('削至 1 點') && R.briefing(s).loss.startsWith('無名倒下') && R.briefing(s).heading.startsWith('終局'));
+  // The producer, 2026-11-25: the winning condition in simple terms, and the one thing more a player
+  // must know to win; nothing else under 勝利 and 敗退 (no line on whom they go for).
+  check('the briefing says how it is won and lost, plainly', R.briefing(s).win === '問劍 · 在第十二回合結束前將求敗的氣血削至 1 點；最後一段只有無名傷得了他。' && R.briefing(s).loss === '無名倒下，或第十二回合結束仍未取勝。' && !('hunt' in R.briefing(s)), R.briefing(s).win + ' / ' + R.briefing(s).loss);
   check('ten masters and 求敗 in the briefing, the later five marked as coming', R.briefing(s).foes.length === 11 && R.briefing(s).foes[0].rank === '對弈' && R.briefing(s).foes.filter((f) => f.note).length === 5);
   check('a wave of masters is named man by man, and by the sword of 求敗’s it waits on', /^求敗換作木劍時，.+、.+趕到他身旁。$/.test(R.briefing(s).waves[0].line) && /^求敗換作無劍時，.+、.+、.+趕到他身旁。$/.test(R.briefing(s).waves[1].line) && !R.briefing(s).waves[0].line.includes('率'));
 
@@ -5704,7 +5707,7 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
     check('退守 is gone: in no stage does he fall back', !G.traitsOf(q).withdraw && [1, 2, 3, 4].every((i) => {
       q.hp = at(q, i);
       q.woke = true;
-      return G.standCells(e, q).length > 1;
+      return G.standCells(e, q).length === G.walkCells(e, q).length; // every tile he can walk to
     }));
   }
   {
@@ -5722,7 +5725,7 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
     check('利劍: his blow on 無名 lands twice', mine.length >= 2 && was - y.hp === mine.slice(0, 2).reduce((n, [, v]) => n + Number(v.slice(1)), 0) && e.logs.some((l) => l.who === '求敗' && l.text.includes('利劍連出兩下')), JSON.stringify(fx));
   }
   {
-    // 軟劍: reach three, and the hero struck comes a tile nearer.
+    // 軟劍: reach three, and the hero struck is pulled to his side.
     const e = last(),
       q = unit(e, 'qiubai'),
       y = put(e, 'youth', 6, 10);
@@ -5732,7 +5735,7 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
     check('軟劍: his reach is three', G.reach(e, q) === 3 && G.strikeReach(e, q) >= 3);
     e.phase = 'enemy';
     G.enemyAct(e, q);
-    check('軟劍: struck from three tiles off, 無名 is pulled a tile nearer', q.x === 6 && q.y === 7 && y.x === 6 && y.y === 9 && e.logs.some((l) => l.who === '無名' && l.text.startsWith('軟劍一捲')), [q.x, q.y, y.x, y.y].join());
+    check('軟劍: struck from three tiles off, 無名 is pulled to the free tile beside him', q.x === 6 && q.y === 7 && y.x === 6 && y.y === 8 && e.logs.some((l) => l.who === '無名' && l.text === '軟劍一捲，給扯到求敗身前。'), [q.x, q.y, y.x, y.y].join());
   }
   {
     // 重劍: one step; every blow strikes each hero beside him and throws them back; no 代受, no 固守.
@@ -5774,6 +5777,7 @@ section('the last board (終局): 問劍, 不敗, 無招, the forms that answer 
     check('木劍: whatever held him comes off as he takes it up (what is no hold stays)', !q.conditions.freeze && !q.conditions.daze && !!q.conditions.weak);
     e.phase = 'enemy';
     G.enemyAct(e, q);
+    check('木劍: he stands his ground', G.stat(q, 'step', e) === G.stageOf(q).step);
     check('木劍: after his first action he acts again', !q.acted && q.againRound === e.round && e.logs.some((l) => l.who === '求敗' && l.text === '木劍在手，再走一手。'));
     G.enemyAct(e, q);
     check('木劍: and then he is done for the round', q.acted && G.enemyAct(e, q).length === 0);

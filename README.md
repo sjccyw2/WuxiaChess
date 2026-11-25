@@ -140,14 +140,14 @@ fifteen boards a run draws from; the entry marked `last` in `game/src/data/battl
   a stage ends at 80%, 60%, 40% and 20%, and the next begins.
   - 利劍: each of his blows lands twice, the second at three tenths of the first, and so does his
     counter (`twice: 0.3`).
-  - 軟劍: his reach is three tiles, and a hero his blow lands on is pulled a tile nearer him, as
-    牽引 pulls (`reach: 3`, `pull: 1`; `dragNear`).
+  - 軟劍: his reach is three tiles, and a hero his blow lands on is pulled to the free tile beside
+    him nearest where he stood, as 擒拿 pulls (`reach: 3`, `pull: true`; `dragNear`).
   - 重劍: he walks one tile a turn; each blow also strikes every other hero beside him at three
     tenths and then throws every hero beside him a tile back; his blows pass 代受, and 固守's 防禦
     does not count against them (`step: 1`, `round: 0.3`, `shove`, `pierce`; `roundSweep`,
     `shoveAll`).
-  - 木劍: he acts twice a round, a walk of one tile and a blow each time (`turns: 2`, `step: 1`;
-    `enemyAct`); 定身, 閉穴, 失神, 封穴, 纏械 and 受制 do nothing to him (`unheld`, so that nothing
+  - 木劍: he acts twice a round, standing his ground and striking each time (`turns: 2`, `step: 0`;
+    `enemyAct`: the design's walk in each action is tuned to none, see below); 定身, 閉穴, 失神, 封穴, 纏械 and 受制 do nothing to him (`unheld`, so that nothing
     holds him: a strike's forecast drops them, and any on him comes off as he takes up the sword,
     `unhold`); every blow on him is cut by two tenths (`cut: 20`, through `stanceCut`).
   - 無劍: before he acts each round he is at 無名's side at once (`blink`): on the free tile beside
@@ -157,10 +157,13 @@ fifteen boards a run draws from; the entry marked `last` in `game/src/data/battl
     blow, counter, splash or poison takes nothing off him (`untouched`, in `received` and `wound`),
     and the forecast and the board say 無功 as for 金剛. The win is unchanged.
   The numbers were tuned with `node tools/sim-battles.mjs --last --runs 200 --seed 1` to the
-  producer's target of a third to a half: 38%, against 44% before the stages. The simulator learns
+  producer's target of a third to a half: 39% (35% and 50% at seeds 2 and 3), against 44% before
+  the stages. 木劍's second action is what weighs most: with a tile's walk in each action the same
+  player won 31%, 25% and 34% at seeds 1 to 3, and with a walk in the first only 33%, 29% and 39%.
+  The simulator learns
   the stages from `forecast`; its danger map is also told that in 無劍 he arrives beside 無名, that
   in 利劍 his blows land twice, and that in 木劍 he strikes twice, the second time after another
-  walk (`threatMap`). His 變招 at half (in 重劍) now adds 攻擊 +4 only: his step is the stage's.
+  walk if he has one (`threatMap`). His 變招 at half (in 重劍) now adds 攻擊 +4 only: his step is the stage's.
 - **His five bars.** His 氣血 is shown as five bars, one a stage, and the next appears full in its
   own colour when one empties. The colours heat as the danger rises, from cold
   steel through violet to a hot rose, clear of the heroes' jade, the enemies' vermilion, the amber
@@ -171,21 +174,17 @@ fifteen boards a run draws from; the entry marked `last` in `game/src/data/battl
   him), 敵情查探, 交鋒預覽 and the goals page. On the board he carries a round 求 seal and a ring in
   the bar's colour instead of the 主 every master has, painted over the figures around him; in
   軍情's plan he is a round 求 with his name in the key. When a bar empties the tip line names the
-  new stage's way of fighting (求敗換劍 · 軟劍 · 射程 3 格，擊中便把人扯近 1 格, from `stageNote`,
+  new stage's way of fighting (求敗換劍 · 軟劍 · 射程 3 格，擊中便把人扯到身旁, from `stageNote`,
   which builds the line from the stage's numbers) and the log keeps 利劍已盡，換作軟劍。 (`noteStage`
   in `app.js`). 敵情查探 lists all five with what each does, the one he is in marked; 交鋒預覽 shows
   his double counter, the cut, the holds that do nothing, 無劍's 唯無名傷得了他 with 0 for any other
   hero, and what his own blows do in 軟劍 and 重劍.
-- **Whom they go for.** Under 敗退, 軍情 and the goals page say it, read from each piece's 偏好
-  (`huntLine` in `journey.js`): 求敗 looks for the leader; of the masters, 李莫愁 looks for a healer
-  and 李秋水 for a hero behind cover or covered, when they are in the run, and the rest for no one in
-  particular; and from the seventh board on every enemy looks first for a leader with no hero beside
-  him and no cover under him (`aimCost` in `game.js`). The line goes on to say that from 木劍 the
-  masters beside him take the heroes' blows, and that in 無劍 only 無名 can hurt him and no one
-  takes 無名's blows for him (`guardLine`).
 - **No secondary.** 韋小寶 opens no book on the last board (`sides: []`, `run.side` is null),
   and its pages show no 支線.
-- **How it is won (問劍, kind `yield`).** 求敗 is 不敗 and never falls: bring him to 1 氣血. No 破招
+- **How it is won (問劍, kind `yield`).** 求敗 is 不敗 and never falls: bring him to 1 氣血. 軍情's
+  勝利 says it plainly, and the one thing more a player must know: only 無名 can bring the last
+  stage down (`soloWords` in `journey.js`; the producer, 2026-11-25: the winning condition in
+  simple terms). No 破招
   answers him (無招), and he does not counter the blow that ends it. If 無名 falls or the twelve
   rounds run out the board is lost, and the ten boards of 無劍境界 must be won again to reach it.
   The masters there are their own men: no post, no change at half, and their traits as strong as

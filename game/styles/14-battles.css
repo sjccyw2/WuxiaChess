@@ -602,15 +602,6 @@
   width: 11px;
   border-width: 1px;
 }
-/* 軍情, under 敗退: whom they all go for. */
-.brief-sec p.brief-hunt {
-  margin-top: 6px;
-  padding-left: 9px;
-  border-left: 3px solid #ffb79a;
-  color: #f6e3d2;
-  font-size: 14px;
-}
-
 /* 交鋒預覽: his bar is the stage's, in its colour; the stage he is on, and the next if the blow
    empties it, under the figures. */
 html.polish-forecast-bars #modal .fc-bar.staged .fc-now {
