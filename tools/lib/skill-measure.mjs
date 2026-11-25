@@ -510,7 +510,7 @@ export function artOf(heroId, artId) {
 // The factor a conditional mechanic adds when it holds (破招 is always +0.30; 合璧 counted at its
 // lesser, any-companion value; 傾力 at its minimum spend, see CONDITIONAL).
 const conditionalBonus = (k, art) =>
-  k === 'answer' ? 0.3 : k === 'paired' ? art.paired.any : k === 'surge' ? 0 : art[k];
+  k === 'answer' ? 0.3 : k === 'paired' ? art.paired.any || 0 : k === 'surge' ? 0 : art[k];
 
 // Plain strike equivalent, priced with the framework's R9 table and the prices in `prices`
 // (check-skills.mjs keeps them, with their sources). Mechanics with no price are listed.

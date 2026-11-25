@@ -684,7 +684,7 @@ section('conditional power');
   check('破招 master on the lieutenant', near(master.factor, 1.8) && master.f.notes.includes('破招 · 首領 ＋0.30'));
   check('the basic attack never takes a bonus', !G.forecast(hero, blade, false, s).notes.some((n) => n.startsWith('破招')));
 
-  // 孤行 and 合璧, with the partner table and 左右互搏.
+  // 孤行 and 合璧, with the partner table; 合璧 that counts only the partner (左右互搏 is gone).
   const p = board(['yang', 'xiao', 'hero']);
   const yang = put(p, 'yang', 4, 7),
     foe = put(p, 'blade', 5, 7);
@@ -703,18 +703,31 @@ section('conditional power');
   const xiao = put(lone, 'xiao', 4, 7),
     target = put(lone, 'blade', 5, 7);
   check('合璧 alone gives nothing', near(strike(lone, xiao, target, { paired: { any: 0.2, partner: 0.4 } }).factor, 1.5));
-  xiao.learned.push(defineArt({ pairsSelf: true }));
-  const self = strike(lone, xiao, target, { paired: { any: 0.2, partner: 0.4 } });
-  check('左右互搏 counts as a companion', near(self.factor, 1.7) && self.f.notes.includes('合璧 · 左右互搏 ＋0.20'));
+  // 小龍女's two arts: the any-companion bonus is in their base; only 楊過 adds.
+  check('no art carries 左右互搏, and 左右互搏術 keeps its double strike', !Object.values(TECHNIQUES).some((a) => 'pairsSelf' in a) && same(TECHNIQUES.pairedHands.hits, [0.75, 0.75]) && same(TECHNIQUES.guoPairedHands.hits, [0.75, 0.75]));
+  check('玉女心經 1.55, ＋0.20 with 楊過; 玉女素心劍法 1.45, ＋0.25 with him (today’s numbers with 左右互搏術)', TECHNIQUES.jadeHeart.factor === 1.55 && same(TECHNIQUES.jadeHeart.paired, { partner: 0.2 }) && TECHNIQUES.maidenHarmony.factor === 1.45 && same(TECHNIQUES.maidenHarmony.paired, { partner: 0.25 }));
+  const solo = strike(lone, xiao, target, { paired: { partner: 0.2 } });
+  check('a partner-only 合璧 alone gives nothing, and says whom it waits for', near(solo.factor, 1.5) && solo.f.notes.includes('合璧未成 · 楊過不在身旁'), solo.f.notes);
+  check('its card names only the partner', solo.facts.effectLines.includes('合璧 · 楊過相鄰時倍率 ＋0.20'), solo.facts.effectLines);
+  put(lone, 'hero', 4, 6);
+  check('another companion beside her adds nothing', near(strike(lone, xiao, target, { paired: { partner: 0.2 } }).factor, 1.5));
+  put(lone, 'yang', 3, 7);
+  const both = strike(lone, xiao, target, { paired: { partner: 0.2 } });
+  check('楊過 beside her adds its bonus', near(both.factor, 1.7) && both.f.notes.includes('合璧 · 楊過在旁 ＋0.20'), both.f.notes);
 
-  // 黯然, after the art's own price.
+  // 黯然, one step (Q-N132): 氣血 after the art's own price at three quarters or less.
   const d = board(['yang', 'hero', 'medic']);
-  const hurt = Object.assign(put(d, 'yang', 4, 7), { hp: 70, maxHp: 128 });
-  const dire = strike(d, hurt, put(d, 'blade', 5, 7), { dire: 0.6, hpCost: 9 });
-  const n = Math.round(0.6 * Math.min(1, (1 - 61 / 128) / 0.75) * 100) / 100;
-  check('黯然 reads 氣血 after the price', near(dire.factor, 1.5 + n) && dire.f.notes.includes('氣血已損 ＋' + n.toFixed(2) + '（氣血 61／128）'), dire.f.notes);
+  const hurt = Object.assign(put(d, 'yang', 4, 7), { hp: 105, maxHp: 128 });
+  const dire = strike(d, hurt, put(d, 'blade', 5, 7), { dire: 0.45, hpCost: 9 });
+  check('黯然 reads 氣血 after the price: 96 of 128 is three quarters, and meets it', near(dire.factor, 1.95) && dire.f.notes.includes('氣血不過四分之三 ＋0.45（氣血 96／128）'), dire.f.notes);
+  hurt.hp = 106;
+  const above = strike(d, hurt, unit(d, 'blade'), { dire: 0.45, hpCost: 9 });
+  check('97 of 128 does not, and the preview says so', near(above.factor, 1.5) && above.f.notes.includes('氣血尚逾四分之三，倍率不加'), above.f.notes);
   hurt.hp = 20;
-  check('黯然 is at most its number', near(strike(d, hurt, unit(d, 'blade'), { dire: 0.6 }).factor, 2.1));
+  const deep = strike(d, hurt, unit(d, 'blade'), { dire: 0.45 });
+  check('黯然 is one step, however low', near(deep.factor, 1.95));
+  check('its card states the step', deep.facts.effectLines.includes('自身氣血不過四分之三時倍率 ＋0.45'), deep.facts.effectLines);
+  check('黯然銷魂掌 carries ＋0.45', TECHNIQUES.solitaryPalm.dire === 0.45);
 
   // 斬殘 at half 氣血.
   const e = board(['hu', 'hero', 'medic']);

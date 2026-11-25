@@ -19,7 +19,7 @@ const GATE_LABELS = {
   side: '在場生還並完成支線'
 };
 // 左右互搏術 is one art, the same for every hero who learns it (郭靖 and 小龍女).
-const PAIRED_HANDS_DESC = '左右手各使一路，在兩格內連擊兩次。習得後，合璧之招即使身旁無人也有同伴相鄰之效。';
+const PAIRED_HANDS_DESC = '左右手各使一路，在兩格內連擊兩次。';
 // Naming (the producer's rule, 2026-11-22): 「本招・式名」 with 「・」 marks an upgrade, and only the
 // basic attack is upgraded (kind 'basic'). Every other node is a new art in its own slot and has a
 // name of its own; `family` names the art it belongs to (降龍十八掌 for 亢龍有悔), shown beneath it.
@@ -854,7 +854,6 @@ const MASTERY_ARTS = {
     target: 'enemy',
     factor: 1.25,
     hits: [0.75, 0.75],
-    pairsSelf: true,
     desc: PAIRED_HANDS_DESC,
     source: '周伯通在桃花島傳郭靖左右互搏：左手畫方，右手畫圓，一人可使兩路。'
   },
@@ -1002,9 +1001,10 @@ const MASTERY_ARTS = {
     icon: 'sword',
     visual: 'xiao',
     target: 'enemy',
-    factor: 1.35,
-    paired: { any: 0.2, partner: 0.4 },
-    desc: '依玉女心經出劍擊中相鄰敵人；有同伴相鄰時威力增加，相鄰的是楊過時增加更多。出招後仍可走完本回合未用的步數。',
+    // 左右互搏 is no rule now (Q-N132): the any-companion bonus is in the base, 楊過 adds the rest.
+    factor: 1.55,
+    paired: { partner: 0.2 },
+    desc: '依玉女心經出劍擊中相鄰敵人；相鄰的是楊過時威力增加。出招後仍可走完本回合未用的步數。',
     source: '玉女心經須兩人同練，小龍女與楊過在古墓中相助修習。'
   },
   pairedHands: {
@@ -1022,7 +1022,6 @@ const MASTERY_ARTS = {
     target: 'enemy',
     factor: 1.25,
     hits: [0.75, 0.75],
-    pairsSelf: true,
     desc: PAIRED_HANDS_DESC,
     source: '周伯通在絕情谷授小龍女左右互搏，自此一人可使兩人之劍。'
   },
@@ -1039,12 +1038,13 @@ const MASTERY_ARTS = {
     icon: 'swords',
     visual: 'xiao',
     target: 'enemy',
-    factor: 1.25,
+    // It needs 左右互搏術, whose clause always gave it the any-companion bonus: now in the base.
+    factor: 1.45,
     hits: [0.8, 0.8],
-    paired: { any: 0.2, partner: 0.45 },
+    paired: { partner: 0.25 },
     cooldown: 2,
     gate: { metric: 'side', map: 7, atLeast: 1, or: { metric: 'steps', atLeast: 10 } },
-    desc: '兩劍相合連擊相鄰敵人；有同伴相鄰時更強，若是楊過再增。施展後須調息兩回合。',
+    desc: '兩劍相合連擊相鄰敵人；楊過相鄰時更強。施展後須調息兩回合。',
     source: '玉女素心劍法本為一對情侶合使，全真、玉女兩路互補。'
   },
   fingerPrimer: {
@@ -1399,10 +1399,10 @@ const MASTERY_ARTS = {
     hpCost: 14,
     factor: 1.9,
     pierce: 0.5,
-    dire: 0.6,
+    dire: 0.45,
     lone: 0.25,
     gate: { metric: 'kills', atLeast: 4 },
-    desc: '自耗 14 點氣血重擊相鄰一敵，穿透一半防禦；自身氣血越少、四鄰越無同伴，掌力越重。出掌後須留至少 1 點氣血。',
+    desc: '自耗 14 點氣血重擊相鄰一敵，穿透一半防禦；自身氣血不過四分之三時掌力加重，四鄰無同伴時再重。出掌後須留至少 1 點氣血。',
     source: '楊過久候小龍女十六年，自創黯然銷魂掌十七式。'
   },
   nineYangMantle: {

@@ -2184,19 +2184,18 @@ function strikeFactor(s, u, art, t = null) {
   }
   if (art.paired) {
     const partner = beside.find((v) => v.id === PARTNERS[u.id]);
-    // 左右互搏: a hero who has learned it is her own second sword.
-    const self = u.learned?.some((id) => TECHNIQUES[id]?.pairsSelf);
-    const { any, partner: most } = art.paired;
+    // An art with no `any` (小龍女's two) counts only her partner (左右互搏 is gone, Q-N132).
+    const { any = 0, partner: most } = art.paired;
     if (partner) add(most, '合璧 · ' + unitDetails(partner).name + '在旁 ' + plus(most));
-    else if (beside.length) add(any, '合璧 ' + plus(any));
-    else if (self) add(any, '合璧 · 左右互搏 ' + plus(any));
-    else notes.push('合璧未成 · 四鄰沒有同伴');
+    else if (any && beside.length) add(any, '合璧 ' + plus(any));
+    else if (any) notes.push('合璧未成 · 四鄰沒有同伴');
+    else notes.push('合璧未成 · ' + DETAILS[PARTNERS[u.id]]?.name + '不在身旁');
   }
+  // 黯然, one step (Q-N132): 氣血 after the art's own cost at three quarters or less.
   if (art.dire) {
     const h = u.hp - (art.hpCost || 0);
-    const n = Math.round(art.dire * Math.min(1, (1 - h / u.maxHp) / 0.75) * 100) / 100;
-    if (n > 0) add(n, '氣血已損 ' + plus(n) + '（氣血 ' + h + '／' + u.maxHp + '）');
-    else notes.push('氣血未損，倍率不加');
+    if (h <= u.maxHp * 0.75) add(art.dire, '氣血不過四分之三 ' + plus(art.dire) + '（氣血 ' + h + '／' + u.maxHp + '）');
+    else notes.push('氣血尚逾四分之三，倍率不加');
   }
   if (art.avenge && s) {
     if (u.hurtRound === s.round - 1) add(art.avenge, '上回合受創 ' + plus(art.avenge));

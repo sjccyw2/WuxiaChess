@@ -98,13 +98,7 @@ const RULE_GROUPS = [
         id: 'paired',
         name: '合璧',
         art: 'paired',
-        text: '出手時有同伴相鄰，倍率提高；相鄰的是命定的那一人時更高'
-      },
-      {
-        id: 'pairsSelf',
-        name: '左右互搏',
-        art: 'pairsSelf',
-        text: '習得後，合璧之招孤身出手也算有同伴相鄰'
+        text: '出手時有同伴相鄰，倍率提高；相鄰的是命定的那一人時更高。有的招式只認那一人'
       }
     ]
   },

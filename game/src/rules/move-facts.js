@@ -27,13 +27,12 @@ function bonusLines(u, art) {
   if (art.paired) {
     const partner = G.DETAILS[G.PARTNERS[u.id]]?.name;
     lines.push(
-      '合璧 · 有同伴相鄰 ' +
-        plus(art.paired.any) +
-        (partner ? '，' + partner + '相鄰 ' + plus(art.paired.partner) : '')
+      art.paired.any
+        ? '合璧 · 有同伴相鄰 ' + plus(art.paired.any) + (partner ? '，' + partner + '相鄰 ' + plus(art.paired.partner) : '')
+        : '合璧 · ' + partner + '相鄰時倍率 ' + plus(art.paired.partner)
     );
   }
-  if (art.pairsSelf) lines.push('左右互搏 · 習得後，合璧之招孤身出手也算有同伴相鄰');
-  if (art.dire) lines.push('自身氣血越少倍率越高，剩四分之一以下時 ' + plus(art.dire));
+  if (art.dire) lines.push('自身氣血不過四分之三時倍率 ' + plus(art.dire));
   if (art.avenge) lines.push('上一個敵方回合曾受敵人攻擊而損血時倍率 ' + plus(art.avenge));
   if (art.execute) lines.push('目標氣血不過半時倍率 ' + plus(art.execute));
   if (art.surge)
