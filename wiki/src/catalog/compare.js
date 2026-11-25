@@ -341,7 +341,8 @@ const BOON_SHARE = {
   ground: 0.25, // 金蛇轉鋒: the foe struck stands on ground that guards him
   covered: 0.05, // ...or behind someone who would take the blow for him
   opening: 0.3, // 越女試劍: once a round for the side; this companion's share of it
-  spare: 1 / ROUNDS // 雪谷回生: a fall turned aside once a board, about a blow a board
+  spare: 1 / ROUNDS, // 雪谷回生: a fall turned aside once a board, about a blow a board
+  mercy: 0.5 // 靈鷲慈心: a round in which this companion heals rather than strikes
 };
 // 越女試劍 and 雪谷回生 keep count in a board's facts, which the scene has not: they are read off
 // the boon itself, on the counter his basic draws and the blow he takes.
@@ -354,8 +355,9 @@ function boonBlows(plain, lead, unit) {
   const swing = 1.5; // the best blow and half a basic, as the scene weighs them above
   const f = G.forecast(u, foe, false, s);
   let n = 0;
-  // 北冥真氣: 內力 back for the round's blow.
-  n += ((f.absorb || 0) * unit.mpWorth) / BLOW;
+  // 靈鷲慈心: a heal of his restores more, about once in each healer's round.
+  if (has('mercy') && G.equippedArts(u).some((id) => G.artFor(u, id).heal))
+    n += (BOON_SHARE.mercy * G.commandBonus(s, u, 'mercy')) / BLOW;
   // 打狗陣法: the same blow at a foe under 絆足.
   if (has('held')) {
     const held = { ...foe, conditions: { pin: { power: 2, through: s.round + 1 } } };

@@ -2458,8 +2458,19 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   }
   if (support) {
     const friends = s ? affectedFriends(s, u, t, art) : [t];
-    const power = heal ? healingPower(u, s, art) : 0;
-    result.recipients = friends.map((v) => supportEntry(result.forms, u, v, supportHeal(result.forms, v, power)));
+    // 靈鷲慈心 (a leader's boon): a heal by the leader or a hero within two tiles of him restores more.
+    const mercy = heal && s ? commandBonus(s, u, 'mercy') : 0;
+    if (mercy) result.notes.push(leaderBoon(s).name + ' · 療傷 ＋' + mercy);
+    const power = heal ? healingPower(u, s, art) + mercy : 0;
+    // 化符 (`purge`): each ailment its 解厄 lifts from a recipient adds to the heal on him.
+    const lifted = (v) =>
+      art.purge && result.forms.includes('cleanse') ? AILMENTS.filter((k) => v.conditions?.[k]).length : 0;
+    result.recipients = friends.map((v) =>
+      supportEntry(result.forms, u, v, supportHeal(result.forms, v, power + lifted(v) * (art.purge || 0)))
+    );
+    for (const v of friends)
+      if (lifted(v))
+        result.notes.push(unitDetails(v).name + '每化去一種多回 ' + art.purge + ' · ＋' + lifted(v) * art.purge);
     if (heal && !result.forms.includes('cleanse')) woundedHealNotes(t, friends, result);
     if (result.forms.includes('riposte'))
       result.effects.push({ kind: 'riposte', power: 9, turns: 1 });
@@ -2693,12 +2704,6 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.notes.push(
       result.amount >= t.hp ? '連環 · 此擊可擊倒，本回合可再出手' : '連環 · 擊倒則可再出手'
     );
-  // 北冥真氣: a blow that lands gives the striker back 內力.
-  const absorb = ally(u) && !result.void ? commandBonus(s, u, 'absorb') : 0;
-  if (absorb) {
-    result.absorb = absorb;
-    result.notes.push(leaderBoon(s).name + ' · 內力 ＋' + absorb);
-  }
   zoneNote(s, u, art, t, result); // 布陣 rider: the tiles round the target's feet
   selfLoss(s, u, art, result, true); // 內傷 and 亂氣: what the strike costs its caster after
   result.notes.push(...guardNotes(art), ...priceNotes(art));
@@ -3128,7 +3133,6 @@ function resolve(s, u, t, skill) {
       log(s, 'move', art?.push ? '被掌力震退一格。' : '被牽近一格。', unitDetails(t).name);
     }
     if (art?.recover) u.mp = Math.min(u.maxMp, u.mp + art.recover);
-    if (f.absorb) u.mp = Math.min(u.maxMp, u.mp + f.absorb); // 北冥真氣
     if (f.opening) s.tally.opened = s.round; // 越女試劍 is spent for the round
     for (const other of f.splash) {
       const v = find(s, other.id),

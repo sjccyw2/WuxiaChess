@@ -1823,10 +1823,9 @@ const MASTERY_ARTS = {
     icon: 'hand',
     visual: 'guo',
     target: 'enemy',
-    factor: 1.2,
+    factor: 1.25,
     safe: true,
-    disarm: { power: 5, turns: 2 },
-    desc: '三路掌法、三路擒拿，拿住相鄰敵人的兵刃，此擊免受還擊。敵人攻擊降低 5 點，且只能攻擊相鄰一格，持續兩回合。',
+    desc: '三路掌法、三路擒拿，拿住相鄰敵人的經脈，此擊免受還擊。截勁：本回合敵人不能還擊，也不能施展絕技；局主受過後，下一回合可抵抗。',
     source: '天山童姥傳虛竹天山折梅手，說它包含了逍遙派武學的精義，天下兵刃招數皆可化入其中。'
   },
   xzSixYang: {
@@ -1838,13 +1837,13 @@ const MASTERY_ARTS = {
     needs: ['xzNorthQi'],
     points: 2,
     mp: 12,
-    range: 1,
+    range: 3,
     icon: 'hand',
     visual: 'guo',
     target: 'enemy',
-    factor: 1.4,
+    factor: 1.35,
     paired: { any: 0.15, partner: 0.4 },
-    desc: '以天山六陽掌擊中相鄰敵人；有同伴相鄰時威力增加，相鄰的是蕭峰時增加更多。',
+    desc: '六陽掌力隔空吐出，擊中三格內一敵；有同伴相鄰時威力增加，相鄰的是蕭峰時增加更多。',
     source: '虛竹在少室山上以天山六陽掌力鬥丁春秋，其時兩位義兄俱在身旁。'
   },
   xzHeal: {
@@ -1862,7 +1861,8 @@ const MASTERY_ARTS = {
     visual: 'medic',
     target: 'ally',
     heal: 44,
-    desc: '以陽和掌力化去體內寒毒，為三格內一人療傷，基礎回復 44 點氣血並解除不良狀態，溢出的療量化為護盾。可對自己施術。',
+    purge: 8,
+    desc: '以陽和掌力化去體內寒毒，為三格內一人療傷，基礎回復 44 點氣血並解除不良狀態；每化去一種，多回復 8 點氣血。可對自己施術。',
     source: '生死符須以天山六陽掌方能化解，虛竹在靈鷲宮替群豪逐一拔除。'
   },
   xzLifeDeath: {

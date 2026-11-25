@@ -76,7 +76,7 @@ export const conditionalKeys = (art) => Object.keys(CONDITIONAL).filter((k) => a
 // caster as 架勢 does; 吸元 feeds the caster from the blow as 吸勁 does.
 export const CAPABILITIES = new Set([
   'siphon', 'again', 'glide', 'order', 'taunt', 'cover', 'stance', 'evade', 'redirect', 'zone',
-  'disarm', 'wound', 'freeze', 'mute', 'charm', 'immune', 'fortify', 'drain'
+  'disarm', 'wound', 'freeze', 'mute', 'charm', 'immune', 'fortify', 'drain', 'seal'
 ].flatMap((k) => [k, 'form:' + k]));
 
 // What an art does besides its measured numbers: every mechanic field and every form tag.

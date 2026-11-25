@@ -1408,6 +1408,46 @@ section('taunt tank');
   check('a blow 閃身 makes miss is not counted', dodge === 0, dodge);
 }
 
+// ── 虛竹, a healer-controller (0.45, Q-N150) ──────────────────────────────
+// 天山折梅手 lays 截勁 (his class word) in place of 黃蓉's 纏械; 化符 heals more for each ailment it
+// lifts, in place of 回春's overflow; 天山六陽掌 reaches three tiles, where 韋陀掌 is the cheap
+// palm beside him.
+section('healer-controller');
+{
+  const MF2 = await load('rules/move-facts.js');
+  const plum = TECHNIQUES.xzPlum, six = TECHNIQUES.xzSixYang, heal = TECHNIQUES.xzHeal;
+  check('天山折梅手 carries 截勁 and no 纏械', plum.forms.includes('seal') && !plum.disarm, plum.forms);
+  check('化符 lifts ailments and heals more for each (8), with no overflow', heal.forms.includes('cleanse') && !heal.forms.includes('overflow') && heal.purge === 8, heal.forms);
+  check('天山六陽掌 reaches three tiles; 韋陀掌 one, and cheaper', six.range === 3 && G.artFor(G.startingHero('xuZhu'), 'signature').range === 1 && G.artCost({ units: [] }, G.startingHero('xuZhu'), G.artFor(G.startingHero('xuZhu'), 'signature')) < six.mp);
+  // 截勁 from 折梅手: no counter, no signature this round; a master resists the next round's.
+  const s = board(['xuZhu', 'hero', 'medic']);
+  const xz = put(s, 'xuZhu', 4, 7);
+  const chief = put(s, 'chief', 5, 7);
+  teach(xz, 'xzPlum');
+  const f = G.forecast(xz, chief, true, s);
+  check('the preview lays 截勁 and draws no counter', f.effects.some((e) => e.kind === 'seal') && f.counterRaw === 0, f.effects);
+  check('the art’s facts name 截勁', MF2.moveFacts(s, xz, 'xzPlum').effectLines.some((l) => l.includes('截勁')), MF2.moveFacts(s, xz, 'xzPlum').effectLines);
+  G.resolve(s, xz, chief, true);
+  check('the master is sealed this round', chief.conditions?.seal?.through === s.round && chief.lastSealRound === s.round);
+  check('…and no 纏械 on him', !chief.conditions?.disarm);
+  // 化符: 44 and the level, more by 8 for each ailment it lifts.
+  const h = board(['xuZhu', 'hero', 'medic']);
+  const healer = put(h, 'xuZhu', 4, 7);
+  const sick = put(h, 'hero', 5, 7);
+  teach(healer, 'xzHeal');
+  sick.hp = 20;
+  const base = G.forecast(healer, sick, true, h).amount;
+  for (const kind of ['poison', 'weak', 'wound']) BM.applyCondition(h, sick, { kind, power: 3, turns: 2 }, unit(h, 'chief'));
+  const g = G.forecast(healer, sick, true, h);
+  check('three ailments lifted: 24 more, and the preview says so', g.amount === base + 24 && g.notes.some((n) => n.includes('每化去一種多回 8 · ＋24')), [base, g.amount, g.notes]);
+  check('the card says the rule', MF2.moveFacts(h, healer, 'xzHeal').effectLines.includes('每解去一種不良狀態，多回復 8 氣血'));
+  const was = sick.hp;
+  G.resolve(h, healer, sick, true);
+  check('the heal gives it, and lifts them', sick.hp - was === g.amount && !sick.conditions?.poison && !sick.conditions?.weak && !sick.conditions?.wound, sick.hp - was);
+  // 受制: the turned piece's blows are on its own side; the sim credits them to 虛竹 (tools).
+  check('生死符 still turns an ordinary foe for two rounds', TECHNIQUES.xzLifeDeath.charm?.turns === 2);
+}
+
 // ── 回身 glide (§2, §9.4) ────────────────────────────────────────────────
 section('glide');
 {
@@ -5837,21 +5877,27 @@ section('leader boons of the later ten');
     lead.hp = 0;
     check('with the leader fallen, nothing', G.stat(mate, 'atk', s) === mates);
   }
-  // 虛竹 北冥真氣: a blow that lands gives back 3 內力.
+  // 虛竹 靈鷲慈心 (0.45): a heal by the leader or a hero within two tiles restores 8 more.
   {
-    const { s, lead, near, far, foe, other } = led('xuZhu');
-    near.mp = 0;
-    const f = G.forecast(near, foe, false, s);
-    check('北冥真氣: the forecast gives back 3 內力', f.absorb === 3 && f.notes.includes('北冥真氣 · 內力 ＋3'), f.notes);
-    check('…but the move’s own page does not: a leader’s boon is the team’s, not the move’s', !MF.moveFacts(s, near, 'basic').effectLines.some((l) => l.startsWith('北冥真氣')));
-    G.resolve(s, near, foe, false);
-    check('…and the strike gives it', near.mp === 3, near.mp);
-    check('not eight tiles off', !G.forecast(far, other, false, s).absorb);
-    BM.applyCondition(s, foe, { kind: 'evade', power: 1, turns: 1 }, foe);
-    check('not for a blow 閃身 makes miss', !G.forecast(lead, foe, false, s).absorb);
+    const { s, lead, near, far, foe } = led('xuZhu');
+    check('靈鷲慈心 is 虛竹’s boon, and pays on heals', BM.COMMANDS.xuZhu.name === '靈鷲慈心' && BM.COMMANDS.xuZhu.stat === 'mercy' && BM.COMMANDS.xuZhu.power === 8);
+    check('no boon gives 內力 on a hit any more', !Object.values(BM.COMMANDS).some((c) => c.stat === 'absorb'));
+    const healer = teach(near, defineArt({ target: 'ally', heal: 20, range: 3, mp: 2 }));
+    const hurt = (v) => (v.hp = v.maxHp - 80);
+    hurt(lead);
+    const plain = G.healingPower(near, s, TECHNIQUES[healer]);
+    const f = G.forecast(near, lead, true, s);
+    check('a heal two tiles from him restores 8 more, and says so', f.amount === plain + 8 && f.notes.includes('靈鷲慈心 · 療傷 ＋8'), [f.amount, plain, f.notes]);
+    check('…but the art’s own page does not: a leader’s boon is the team’s', !MF.moveFacts(s, near, healer).effectLines.some((l) => l.startsWith('靈鷲慈心')));
+    const was = lead.hp;
+    G.resolve(s, near, lead, true);
+    check('…and the heal gives it', lead.hp - was === plain + 8, lead.hp - was);
+    teach(far, defineArt({ target: 'ally', heal: 20, range: 9, mp: 2 }));
+    hurt(lead);
+    check('not eight tiles off', G.forecast(far, lead, true, s).amount === G.healingPower(far, s, G.artFor(far)), G.forecast(far, lead, true, s).notes);
+    check('not on a blow', !G.forecast(lead, foe, false, s).notes.some((n) => n.startsWith('靈鷲慈心')));
     lead.hp = 0;
-    delete foe.conditions.evade;
-    check('not with the leader fallen', !G.forecast(near, foe, false, s).absorb);
+    check('not with the leader fallen', !G.forecast(far, near, true, s).notes.some((n) => n.startsWith('靈鷲慈心')));
   }
   // 洪七公 打狗陣法: ＋8 on a held foe.
   {

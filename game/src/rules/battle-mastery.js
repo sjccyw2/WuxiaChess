@@ -58,12 +58,13 @@ const COMMANDS = {
     text: '每有一名敵人相鄰，攻擊增加 3，至多增加 6。',
     icon: 'flag'
   },
+  // 靈鷲宮: the master who drew the 生死符 out of every man in the hall (0.45).
   xuZhu: {
-    name: '北冥真氣',
-    stat: 'absorb',
-    power: 3,
-    text: '出手擊中敵人時，回復 3 點內力。',
-    icon: 'drop'
+    name: '靈鷲慈心',
+    stat: 'mercy',
+    power: 8,
+    text: '施展療傷時多回復 8 點氣血。',
+    icon: 'leaf'
   },
   hongQi: {
     name: '打狗陣法',

@@ -280,7 +280,9 @@ const PLAIN_FIELDS = {
     ...['name', 'family', 'owner', 'root', 'kind', 'tier', 'needs', 'points', 'icon', 'visual', 'basicBonus', 'desc', 'source', 'forms', 'mp', 'range', 'target', 'factor', 'gate', 'debuff', 'shield', 'price', 'stock', 'manual', 'radius'],
     // Folded: 連擊, 身法, 範圍, 回氣, 吸元, 自耗氣血, 號令, 留力, 壓箱, 調息, 轉護, 傾力, 後發,
     // 孤行, 黯然, 還報, 斬殘.
-    ...['hits', 'blink', 'aura', 'recover', 'drain', 'hpCost', 'order', 'poised', 'once', 'cooldown', 'consume', 'surge', 'retort', 'lone', 'dire', 'avenge', 'execute']
+    ...['hits', 'blink', 'aura', 'recover', 'drain', 'hpCost', 'order', 'poised', 'once', 'cooldown', 'consume', 'surge', 'retort', 'lone', 'dire', 'avenge', 'execute'],
+    // 化符's twist (0.45): each ailment 解厄 lifts heals more; its card says so.
+    'purge'
   ],
   item: ['name', 'kind', 'owner', 'atk', 'icon', 'desc', 'forms', 'power', 'def', 'step', 'hp', 'mp'],
   // mods and sig are numbers; post is read by 坐鎮's test. The rest are one enemy's way each,
