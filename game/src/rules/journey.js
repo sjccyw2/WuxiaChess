@@ -200,6 +200,9 @@ function prepareHero(u) {
     u.slots.includes(u.activeArt) && u.activeArt ? u.activeArt : u.slots.find(Boolean) || null;
   return u;
 }
+// The 武學點 each hero drawn brings to a run, over the hero's own: more once a run has reached the
+// fourth board.
+const startingPoints = (legacy) => 2 + (legacy.best >= 4 ? 1 : 0);
 function startRun(draw = drawLots(), legacy = LEGACY) {
   const lots = keptLots(draw);
   const ids = lots.includes(draw.leaderId)
@@ -221,11 +224,29 @@ function startRun(draw = drawLots(), legacy = LEGACY) {
   for (const [id, n] of Object.entries(legacy.parcel.stock)) s.stock[id] = (s.stock[id] || 0) + n;
   for (const u of G.party(s)) {
     prepareHero(u);
-    u.sp += 2 + (legacy.best >= 4 ? 1 : 0);
+    u.sp += startingPoints(legacy);
   }
   G.log(s, 'story', MAZE_TALE.draw, '抓子');
   G.log(s, 'story', ids.map((id) => G.DETAILS[id].name).join('、') + '入局。', '第一局');
   if (s.run.plus) G.log(s, 'story', fill(MAZE_TALE.finale.plus.joins, s), '第一局');
+  return s;
+}
+// 抓子's 俠客詳情: the five drawn as each would enter this run, to read before keeping three. A run
+// is started with three of them and the other two stand beside them, so every one of the five
+// has the run's starting 武學點 and its first tree. All five stand off the board (on the bench),
+// so no tile or neighbour adds to the numbers read. Nothing here is kept: 落子 starts the run.
+function lotPreview(draw, legacy = LEGACY) {
+  const ids = drawLots(draw.seed).ids;
+  const s = startRun({ seed: draw.seed, picks: ids.slice(0, KEPT), leaderId: ids[0], realm: draw.realm }, legacy);
+  const kept = G.party(s).filter((u) => ids.includes(u.id));
+  const others = ids.slice(KEPT).map((id) => {
+    const u = prepareHero(G.startingHero(id));
+    u.sp += startingPoints(legacy);
+    return u;
+  });
+  s.units = s.units.filter((u) => !kept.includes(u));
+  s.run.bench = ids.map((id) => [...kept, ...others].find((u) => u.id === id));
+  for (const u of s.run.bench) delete u.x, delete u.y;
   return s;
 }
 function validProfile(p) {
@@ -2162,4 +2183,4 @@ function campModel(s) {
 }
 
 export { LAST_BOON, devPress, devFirstBoard, stagesOf, nextMap, TENTH, LAST_STAGE, endsWithLast, finalStage, mapAt, plusRun, enterLast, fixedLead, stageTitle, KIND_NAMES, validProfile, fillProfile };
-export { DRAWN, KEPT, keptLots, routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { DRAWN, KEPT, keptLots, routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, lotPreview, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
