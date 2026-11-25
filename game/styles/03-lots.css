@@ -117,11 +117,38 @@
   border-color: #8fbfa5;
   outline-color: #1d3a30;
 }
+/* Above the card (which keeps or puts back its stone): 詳情, and 立為領隊 on a kept stone. */
+.lot-actions {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 6px;
+}
+.lot-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  font: 600 12px/1.4 var(--serif);
+  color: #d9e6dc;
+  background: #24433acc;
+  border: 1px solid #7fa996;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lot-info:hover,
+.lot-info:focus-visible {
+  background: #2f5a4b;
+  outline: 2px solid #fcdda0;
+  outline-offset: 1px;
+}
 .lot-lead {
   position: relative;
   z-index: 4;
   display: block;
-  margin: 6px auto 0;
   padding: 3px 9px;
   font: 600 12px/1.4 var(--serif);
   color: #f3dfbc;
@@ -289,4 +316,43 @@
 }
 .run-roll-footer {
   margin-top: 10px;
+}
+
+/* 俠客詳情 from 抓子: the five drawn in the strip (the two put back greyed, the kept marked), a line on
+   what the numbers are, and the count kept beside the footer's keep button. */
+.lot-detail .mj-picker-unit.back-unit img {
+  filter: grayscale(0.85) brightness(0.7);
+}
+.lot-detail .lot-mark {
+  margin-left: 2px;
+  padding: 0 4px;
+  font: 600 10px/1.6 var(--serif);
+  color: #f3dfbc;
+  background: #2f5a4b;
+  border: 1px solid #8fbfa5;
+  border-radius: 2px;
+}
+.lot-detail-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  color: #b9c3b0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.lot-detail-note svg {
+  flex: none;
+  color: #d1b581;
+}
+.lot-detail .mj-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.lot-detail-count {
+  margin-left: auto;
+  color: #f6d999;
+  font-size: 13px;
 }
