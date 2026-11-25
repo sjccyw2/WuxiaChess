@@ -54,11 +54,11 @@ const W = {
   foeEffectDefault: 1.2,
   allyEffect: { rally: 1.2, haste: 3 },
   allyEffectDefault: 0.8,
-  // 失神, 定身, 閉穴, 受制: per point of the blow the held foe would have struck, per turn it is held
+  // 定身, 閉穴, 受制: per point of the blow the held foe would have struck, per turn it is held
   // beyond what already holds it (a 閉穴 foe still walks, so a little less); a 受制 one also strikes
   // its own side, for this share of its blow. Its first turn on the striker himself is in his
   // place score instead (the danger where he ends leaves the held foe out).
-  hold: { freeze: 1.0, daze: 1.0, charm: 1.0, mute: 0.85 },
+  hold: { freeze: 1.0, charm: 1.0, mute: 0.85 },
   holdIdle: 0.4, // ...of the blow it could strike on someone, when it has no hero in reach now
   turncoat: 0.6,
   // 金剛 and 固守 on whoever a support art reaches: per point of the next enemy phase's expected
@@ -154,7 +154,7 @@ function fieldFrom(map, p) {
 function threatMap(s) {
   const ghosts = G.arrivalGhosts(s, s.round + 1);
   const seen = ghosts.length ? { ...s, units: [...s.units, ...ghosts] } : s;
-  // A piece held by 失神, 定身, 閉穴 or 受制 strikes no hero next enemy phase (G.holdsFire).
+  // A piece held by 定身, 閉穴 or 受制 strikes no hero next enemy phase (G.holdsFire).
   return [...G.enemies(s).filter((e) => G.living(e) && !G.holdsFire(e)), ...ghosts]
     .map((e) => {
       // Where the rules say it may end its action (a posted or charged piece stays put).
@@ -314,12 +314,11 @@ function foeBlow(s, t, ctx, except = null) {
   }
   return { reach: best, idle: any * W.holdIdle };
 }
-// The last round t is held through already (失神 lasts until its next action).
+// The last round t is held through already.
 function heldThrough(s, t) {
   const c = t.conditions || {};
   let n = s.round - 1;
   for (const k of ['freeze', 'mute', 'charm']) if (c[k]) n = Math.max(n, c[k].through);
-  if (c.daze) n = Math.max(n, s.round);
   return n;
 }
 // What holding t is worth: the blows it is kept from, per turn beyond what holds it already. The
@@ -329,7 +328,7 @@ function holdValue(s, u, t, f, ctx) {
   let best = 0;
   for (const e of f.effects) {
     if (!(e.kind in W.hold)) continue;
-    const through = e.kind === 'daze' ? s.round : s.round + (e.turns || 1) - 1;
+    const through = s.round + (e.turns || 1) - 1;
     const turns = Math.max(0, through - was);
     if (!turns) continue;
     const first = s.round > was; // the coming enemy phase is newly held
@@ -835,9 +834,9 @@ function worth(heroId, id, level) {
     base = Math.max(1, artProfile(heroId, 'basic', level).avgDamage);
   const scale = { strike: 1, safe: 1.05, ranged: 1, area: 0.9, debuff: 0.9, heal: 0.8, shield: 0.6, buff: 0.5, mobility: 0.4 }[p.job] ?? 0.5;
   const amount = p.job === 'mobility' ? base : p.job === 'debuff' ? p.avgDamage + p.mid.foeEffect : p.measure;
-  // 失神, 定身, 閉穴, 受制: the turns a foe is kept from striking, which the damage measure leaves out.
+  // 定身, 閉穴, 受制: the turns a foe is kept from striking, which the damage measure leaves out.
   const art = id === 'basic' ? null : id === 'signature' ? G.artFor(G.startingHero(heroId), 'signature') : TECHNIQUES[id];
-  let held = art?.daze ? W.hold.daze : 0;
+  let held = 0;
   for (const k of ['freeze', 'mute', 'charm']) if (art?.[k]) held += (art[k].turns || 1) * W.hold[k] * (k === 'charm' ? 1 + W.turncoat : 1);
   return { job: p.job, value: (amount / base) * scale + held * W.equipHold };
 }

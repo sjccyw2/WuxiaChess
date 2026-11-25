@@ -282,10 +282,10 @@ function measure(id, level, learned, talents, lead, unit, kit = learned) {
     if (art.taunt) v += 0.8;
     if (forms.includes('landing')) v += 0.3;
     // Holding foes back: fewer and weaker blows at his companions.
-    if (art.freeze) hold += art.freeze.turns || 1;
+    // A 定身 with a setup to meet (絆字訣) at half.
+    if (art.freeze) hold += art.freeze.setup ? 0.5 : art.freeze.turns || 1;
     if (art.mute) hold += 0.9 * (art.mute.turns || 1);
     if (art.charm) hold += 1.5 * (art.charm.turns || 1);
-    if (art.daze) hold += art.daze === true ? 1 : 0.5;
     if (art.debuff?.stat === 'atk') hold += (art.debuff.power * art.debuff.turns) / BLOW;
     if (art.debuff?.stat === 'def') hold += (weaker({ exposed: { power: art.debuff.power } }) * TAKEN * art.debuff.turns) / BLOW;
     if (art.wound) hold += (art.wound.power * art.wound.turns) / BLOW;

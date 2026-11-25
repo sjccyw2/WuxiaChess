@@ -72,11 +72,11 @@ export const conditionalKeys = (art) => Object.keys(CONDITIONAL).filter((k) => a
 // a foe's turn, to the hero's own tempo, or to who gets hit. A later strike that carries one is
 // bought for it, so R4 does not hold it to the starting art's damage. Form tags among them are
 // counted as mechanics, not as the small riders other form tags are.
-// 定身, 閉穴 and 受制 take a foe's turns as 失神 and 纏械 do; 金剛 and 固守 on a strike guard its
+// 定身, 閉穴 and 受制 take a foe's turns as 纏械 does; 金剛 and 固守 on a strike guard its
 // caster as 架勢 does; 吸元 feeds the caster from the blow as 吸勁 does.
 export const CAPABILITIES = new Set([
   'siphon', 'again', 'glide', 'order', 'taunt', 'cover', 'stance', 'evade', 'redirect', 'zone',
-  'disarm', 'daze', 'wound', 'freeze', 'mute', 'charm', 'immune', 'fortify', 'drain'
+  'disarm', 'wound', 'freeze', 'mute', 'charm', 'immune', 'fortify', 'drain'
 ].flatMap((k) => [k, 'form:' + k]));
 
 // What an art does besides its measured numbers: every mechanic field and every form tag.

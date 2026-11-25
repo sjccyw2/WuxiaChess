@@ -51,14 +51,13 @@ function useLines(art) {
   return [...lines, ...G.guardNotes(art), ...G.priceNotes(art)];
 }
 
-// What the conditions stage's fields do, as rules: 亂氣, a conditional 失神, 布陣.
+// What the conditions stage's fields do, as rules: 亂氣, a conditional 定身, 布陣.
 function conditionLines(art) {
   const lines = [];
   if (art.backlash) lines.push('亂氣 · 每次施展積一層，滿三層自損兩成最大氣血並清空');
-  if (art.daze === 'setup') lines.push('失神 · 目標兵刃遭纏或站在陣中時，失去下一次行動');
-  if (art.daze) lines.push('局主失神後，下一回合可抵抗');
+  if (art.freeze?.setup) lines.push('目標兵刃遭纏或站在陣中時方能定身');
   if (art.freeze || art.mute) lines.push('局主只受一回合，下一回合可抵抗');
-  if (art.charm) lines.push('局主與副手不受制，改為失神');
+  if (art.charm) lines.push('局主與副手不受制，改為定身一回合');
   if (art.zone)
     lines.push(
       '布陣 · 以' +

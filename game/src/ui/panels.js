@@ -1085,12 +1085,10 @@ function enemyPage(s, id) {
         (heldLine(s, u) ||
           (u.conditions?.seal
           ? '本回合截勁，無法施展絕技'
-          : u.conditions?.daze
-            ? '本回合失神，不會出手'
-            : turns === 0
-              ? CHARGED[special.style] ||
-                (traitsOf(u).stance ? CHARGED.stance : '本回合蓄勢，正是破綻')
-              : '距蓄勢 ' + turns + ' 回合')) +
+          : turns === 0
+            ? CHARGED[special.style] ||
+              (traitsOf(u).stance ? CHARGED.stance : '本回合蓄勢，正是破綻')
+            : '距蓄勢 ' + turns + ' 回合')) +
         '</span><p>' +
         // A mend or a mirror is no blow, so it has no strength against the normal strike.
         (special.strikes ? '普攻傷害 × ' + special.factor + '。' : '') +

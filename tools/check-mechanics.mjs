@@ -293,10 +293,11 @@ section('conditions');
     spent: '代價',
     backlash: '亂氣',
     wound: '內傷',
-    daze: '失神',
     disarm: '纏械'
   };
-  const CLEANSED = ['backlash', 'wound', 'daze', 'disarm'];
+  // 失神 is 定身 for one round now (Q-N132): no condition of its own, and 解厄 does not name it.
+  const CLEANSED = ['backlash', 'wound', 'disarm'];
+  check('失神 is no condition', !Object.hasOwn(BM.CONDITION_NAMES, 'daze') && !BM.HELD_KINDS.includes('daze'));
   for (const [kind, name] of Object.entries(CHIPS)) {
     const text = BM.effectDescription(kind, 3, 2);
     check(kind + ' is known as ' + name, BM.CONDITION_NAMES[kind] === name);
@@ -312,20 +313,20 @@ section('conditions');
   const target = BM.effectsOf({
     wound: { power: 5, turns: 2 },
     disarm: { power: 5, turns: 2 },
-    daze: true,
-    redirect: { cap: 24 }
+    redirect: { cap: 24 },
+    freeze: { turns: 1 }
   });
   check(
-    'effectsOf gives wound, disarm, daze and redirect',
+    'effectsOf gives wound, disarm, redirect and 定身',
     same(target, [
       { kind: 'wound', power: 5, turns: 2 },
       { kind: 'disarm', power: 5, turns: 2 },
-      { kind: 'daze', power: 1, turns: 1 },
-      { kind: 'redirect', power: 24, turns: 1 }
+      { kind: 'redirect', power: 24, turns: 1 },
+      { kind: 'freeze', power: 1, turns: 1 }
     ]),
     JSON.stringify(target)
   );
-  check('effectsOf leaves a setup daze to the strike', !BM.effectsOf({ daze: 'setup' }).length);
+  check('effectsOf reads no 失神 field', !BM.effectsOf({ daze: true }).length && !BM.effectsOf({ daze: 'setup' }).length);
   const own = BM.selfEffectsOf({
     stance: 30,
     cover: true,
@@ -404,7 +405,7 @@ section('conditions');
   const all = Object.fromEntries(Object.keys(CHIPS).map((k) => [k, { power: 1, through: 3, source: 'medic' }]));
   const patient = Object.assign(unit(c, 'guard'), { conditions: copy(all) });
   const entry = FR.supportEntry(['cleanse'], medic, patient, 10);
-  check('解厄 lifts 亂氣, 內傷, 失神 and 纏械 only', same(entry.clean, CLEANSED), entry.clean);
+  check('解厄 lifts 亂氣, 內傷 and 纏械 only', same(entry.clean, CLEANSED), entry.clean);
 
   // 亂氣 counts layers and lasts the board.
   const b = board();
@@ -1105,13 +1106,16 @@ section('cover');
     check('the debuff lands on the coverer', !!d.conditions?.weak && !boss.conditions?.weak);
     check('and he is pushed', d.x === 7 && d.y === 7);
 
-    // Sealed or dazed, a disciple still covers; he covers the master only.
+    // Sealed, a disciple still covers; held in 定身 he cannot step in (失神, which let him, is
+    // 定身 now). He covers the master only.
     const q = board();
     const sc = put(q, 'scout', 5, 8);
     put(q, 'chief', 5, 7);
     BM.applyCondition(q, sc, { kind: 'seal', power: 1, turns: 1 }, sc);
-    BM.applyCondition(q, sc, { kind: 'daze', power: 1, turns: 1 }, sc);
-    check('a sealed, dazed disciple still covers', G.coverer(q, unit(q, 'chief')) === sc);
+    check('a sealed disciple still covers', G.coverer(q, unit(q, 'chief')) === sc);
+    BM.applyCondition(q, sc, { kind: 'freeze', power: 1, turns: 1 }, sc);
+    check('one held in 定身 does not', G.coverer(q, unit(q, 'chief')) === null);
+    delete sc.conditions.freeze;
     put(q, 'chief', 0, 4);
     put(q, 'blade', 5, 7);
     check('he does not cover the lieutenant', G.coverer(q, unit(q, 'blade')) === null);
@@ -2082,47 +2086,80 @@ section('zone');
   }
 }
 
-// ── 失神 daze (§5) ───────────────────────────────────────────────────────
-section('daze');
+// ── 失神, merged into 定身 for one round (Q-N132) ────────────────────────────
+section('daze, now 定身 for one round');
 {
   const MF = await load('rules/move-facts.js');
-  function setup(daze, foe = 'chief') {
+  // The five arts that took a foe's next action hold it in 定身 for one round.
+  check('no art carries 失神 any more', !Object.values(TECHNIQUES).some((a) => 'daze' in a));
+  check('絆字訣, 轉字訣 and both 彈指神通: 定身 one round (絆字訣 with its setup)', same(TECHNIQUES.beggarTrip.freeze, { turns: 1, setup: true }) && ['hqTurn', 'ysSnap', 'fingerFlick'].every((id) => same(TECHNIQUES[id].freeze, { turns: 1 })));
+  const { RULE_GROUPS } = await load('data/rule-terms.js');
+  check('no rule word or text names 失神', !RULE_GROUPS.some((g) => g.terms.some((t) => t.name === '失神' || t.text.includes('失神'))) && !Object.values(TECHNIQUES).some((a) => (a.desc || '').includes('失神') || (a.desc || '').includes('失去下一次行動')) && !G.ITEMS.nineFlowerPill.desc.includes('失神'));
+  function setup(freeze, foe = 'chief', safe = false) {
     const s = board();
     const u = put(s, 'hero', 4, 7);
     const t = put(s, foe, 5, 7);
-    const art = teach(u, defineArt({ daze, safe: true, mp: 2, factor: 0.2 }));
+    const art = teach(u, defineArt({ freeze, safe, mp: 2, factor: 0.2 }));
     return { s, u, t, art };
   }
   {
-    const { s, u, t } = setup(true);
+    // One round of 定身 where a 失神 was: it does not answer the blow that lays it.
+    const { s, u, t } = setup({ turns: 1 });
     const f = G.forecast(u, t, true, s);
-    check('the preview says the target loses its next action', f.notes.includes('失神 · 余滄海失去下一次行動') && f.effects.some((e) => e.kind === 'daze'), f.notes);
+    check('the preview says one round of 定身, and no counter', f.notes.includes('定身 · 1 回合不能行動') && f.notes.includes('定身 · 無從還擊') && f.counterRaw === 0 && f.effects.some((e) => e.kind === 'freeze'), f.notes);
     G.resolve(s, u, t, true);
-    check('失神 lands until the end of this enemy phase', t.conditions?.daze?.through === 1 && t.lastDazeRound === 1);
-    check('the chip shows it', BM.activeEffects(t, s.round).some((l) => l.startsWith('失神')));
-    check('the enemy page says he will not strike this turn', P.enemyPage(s, 'chief').includes('本回合失神，不會出手'));
-    check('a save keeps it', !!unit(R.restoreRun(copy(s)), 'chief').conditions?.daze && unit(R.restoreRun(copy(s)), 'chief').lastDazeRound === 1);
-    // A second hero strikes the dazed master: he still counters, and the preview says both.
-    const guard = put(s, 'guard', 5, 6);
-    const g = G.forecast(guard, t, false, s);
-    check('a dazed enemy still counters, and the preview says it will not act', g.counterRaw > 0 && g.notes.includes('失神 · 余滄海本回合不會行動'), g.notes);
-    const dazed = new Set(dangerTiles(s));
-    const daze = t.conditions.daze;
-    delete t.conditions.daze;
-    const awake = new Set(dangerTiles(s));
-    t.conditions.daze = daze;
-    check('the danger zone leaves out a dazed enemy', awake.has('6,7') && !dazed.has('6,7') && dazed.size < awake.size);
-    const hp = [u.hp, guard.hp],
+    check('it lands until the end of this enemy phase, and marks the master', t.conditions?.freeze?.through === 1 && t.lastFreezeRound === 1);
+    check('the enemy page says so', P.enemyPage(s, 'chief').includes('定身 · 尚餘 1 回合'));
+    const hp = u.hp,
       at = [t.x, t.y];
     G.startEnemy(s);
-    const effects = G.enemyAct(s, t);
-    check('in the enemy phase it does nothing', t.x === at[0] && t.y === at[1] && u.hp === hp[0] && guard.hp === hp[1] && t.acted);
-    check('the condition is spent, and the action reports it', !t.conditions?.daze && same(effects, [['chief', '失神', 'status']]));
-    check('the log says so', s.logs.at(-1).text === '失神，錯過了這一手。' && s.logs.at(-1).who === '余滄海');
+    check('in the enemy phase it loses its turn', same(G.enemyAct(s, t), [['chief', '定身', 'status']]) && t.x === at[0] && t.y === at[1] && u.hp === hp);
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+    check('and is free by the next ally phase', !t.conditions?.freeze);
+  }
+  {
+    // A master's resistance is shared: held by one art, he shakes off another the round after.
+    const { s, u, t } = setup({ turns: 1 });
+    G.resolve(s, u, t, true);
+    quietTurn(s);
+    u.mp = u.maxMp;
+    teach(u, defineArt({ freeze: { turns: 2 }, mp: 2, factor: 0.2 }), 2);
+    const f = G.forecast(u, t, true, s);
+    check('the round after, the master resists any 定身', !f.effects.some((e) => e.kind === 'freeze') && f.notes.includes('局主已換氣，本回合抵抗定身'), f.notes);
+    const l = setup({ turns: 1 }, 'blade');
+    G.resolve(l.s, l.u, l.t, true);
+    quietTurn(l.s);
+    l.u.mp = l.u.maxMp;
+    G.resolve(l.s, l.u, l.t, true);
+    check('a lieutenant is held two rounds running', !!l.t.conditions?.freeze);
+  }
+  {
+    // A save made mid-fight under the old rule still loads, and the piece still loses its turn.
+    const { s, t } = setup({ turns: 1 });
+    t.conditions = { daze: { power: 1, through: 1, source: 'hero' } };
+    t.lastDazeRound = 1;
+    s.phase = 'enemy';
+    const back = R.restoreRun(copy(s));
+    const m = back && unit(back, 'chief');
+    check('a save holding a 失神 loads', !!m);
+    check('…the 失神 is read as one round of 定身, and as the master’s last hold', !!m && !m.conditions.daze && same(m.conditions.freeze, { power: 1, through: 1, source: 'hero' }) && m.lastFreezeRound === 1 && m.lastDazeRound === undefined, m && JSON.stringify([m.conditions, m.lastFreezeRound]));
+    if (m) {
+      const hero = unit(back, 'hero'),
+        hp = hero.hp,
+        at = [m.x, m.y];
+      for (const e of G.enemies(back)) if (e !== m) e.acted = true;
+      check('…and the piece loses its turn', same(G.enemyAct(back, m), [['chief', '定身', 'status']]) && m.x === at[0] && m.y === at[1] && hero.hp === hp);
+      G.nextRound(back);
+      const u = unit(back, 'hero');
+      u.mp = u.maxMp;
+      teach(u, defineArt({ freeze: { turns: 1 }, mp: 2, factor: 0.2 }), 2);
+      check('…and the round after he resists a 定身', G.forecast(u, m, true, back).notes.includes('局主已換氣，本回合抵抗定身'));
+    }
   }
   {
     // His signature, if due, stays due.
-    const { s, u, t } = setup(true);
+    const { s, u, t } = setup({ turns: 1 }, 'chief', true);
     s.round = 3;
     check('the master’s signature is due', G.signatureDue(s, t));
     G.resolve(s, u, t, true);
@@ -2130,55 +2167,27 @@ section('daze');
     G.enemyAct(s, t);
     for (const e of G.enemies(s)) e.acted = true;
     G.nextRound(s);
-    check('after losing his action it is still due', G.signatureDue(s, t) && !Number.isInteger(t.signatureRound));
+    check('after losing his turn it is still due', G.signatureDue(s, t) && !Number.isInteger(t.signatureRound));
   }
   {
-    // A master shakes off a daze the round after one; a lieutenant does not.
-    const { s, u, t } = setup(true);
-    G.resolve(s, u, t, true);
-    quietTurn(s);
-    u.mp = u.maxMp;
+    // 絆字訣's setup: only on a disarmed target, or one standing in a formation.
+    const { s, u, t, art } = setup({ turns: 1, setup: true }, 'blade', true);
     const f = G.forecast(u, t, true, s);
-    check('the round after, the master resists', !f.effects.some((e) => e.kind === 'daze') && f.notes.includes('局主已換氣，本回合抵抗失神'), f.notes);
+    check('without the setup there is no 定身, and the preview says so', !f.effects.some((e) => e.kind === 'freeze') && f.notes.includes('條件未成 · 未能定身'), f.notes);
     G.resolve(s, u, t, true);
-    check('and is not dazed', !t.conditions?.daze && t.lastDazeRound === 1);
-    quietTurn(s);
-    u.mp = u.maxMp;
-    G.resolve(s, u, t, true);
-    check('the round after that he can be again', !!t.conditions?.daze && t.lastDazeRound === 3);
-    const l = setup(true, 'blade');
-    G.resolve(l.s, l.u, l.t, true);
-    quietTurn(l.s);
-    l.u.mp = l.u.maxMp;
-    G.resolve(l.s, l.u, l.t, true);
-    check('a lieutenant is dazed two rounds running', !!l.t.conditions?.daze);
-  }
-  {
-    // 'setup': only on a disarmed target, or one standing in a formation.
-    const { s, u, t, art } = setup('setup', 'blade');
-    const f = G.forecast(u, t, true, s);
-    check('without the setup it does not daze, and says so', !f.effects.some((e) => e.kind === 'daze') && f.notes.includes('條件未成 · 未能失神'), f.notes);
-    G.resolve(s, u, t, true);
-    check('nor does the strike', !t.conditions?.daze);
-    check('moveFacts states the setup', MF.moveFacts(s, u, art).effectLines.includes('失神 · 目標兵刃遭纏或站在陣中時，失去下一次行動'));
+    check('nor does the strike lay it', !t.conditions?.freeze);
+    check('moveFacts states the setup', MF.moveFacts(s, u, art).effectLines.includes('目標兵刃遭纏或站在陣中時方能定身'), MF.moveFacts(s, u, art).effectLines);
     quietTurn(s);
     u.mp = u.maxMp;
     BM.applyCondition(s, t, { kind: 'disarm', power: 5, turns: 2 }, u);
     const g = G.forecast(u, t, true, s);
-    check('on a disarmed target it dazes', g.effects.some((e) => e.kind === 'daze') && g.notes.includes('失神 · ' + G.unitDetails(t).name + '失去下一次行動'));
+    check('on a disarmed target it holds', g.effects.some((e) => e.kind === 'freeze') && g.notes.includes('定身 · 1 回合不能行動'), g.notes);
     G.resolve(s, u, t, true);
-    check('and the strike lands it', !!t.conditions?.daze);
-    const z = setup('setup', 'blade');
+    check('and the strike lands it', !!t.conditions?.freeze);
+    const z = setup({ turns: 1, setup: true }, 'blade', true);
     z.s.zones = [{ owner: 'medic', tiles: G.zoneTiles(z.s, { x: 5, y: 7 }), through: 2 }];
     G.resolve(z.s, z.u, z.t, true);
-    check('on a target standing in a formation it dazes', !!z.t.conditions?.daze);
-  }
-  {
-    // Not consumed (it never got to act): gone at the end of the enemy phase all the same.
-    const { s, u, t } = setup(true);
-    G.resolve(s, u, t, true);
-    quietTurn(s);
-    check('a daze never spent is gone by the next ally phase', !t.conditions?.daze);
+    check('on a target standing in a formation it holds', !!z.t.conditions?.freeze);
   }
 }
 
@@ -2655,7 +2664,7 @@ section('charm');
     const { s, u, t, art } = setup('scout', 1);
     const f = G.forecast(u, t, true, s);
     check('the preview says it turns', f.notes.includes('受制 · 倒戈 1 回合') && f.effects.some((e) => e.kind === 'charm'), f.notes);
-    check('the art’s page states it', MF.moveFacts(s, u, art).effectLines.includes('受制 · 倒戈，以普攻攻擊同夥 · 1 回合') && MF.moveFacts(s, u, art).effectLines.includes('局主與副手不受制，改為失神'));
+    check('the art’s page states it', MF.moveFacts(s, u, art).effectLines.includes('受制 · 倒戈，以普攻攻擊同夥 · 1 回合') && MF.moveFacts(s, u, art).effectLines.includes('局主與副手不受制，改為定身一回合'));
     G.resolve(s, u, t, true);
     check('受制 lands until the end of this enemy phase', t.conditions?.charm?.through === 1 && G.charmed(t));
     check('a save keeps it', !!unit(R.restoreRun(copy(s)), 'scout').conditions?.charm);
@@ -2688,19 +2697,24 @@ section('charm');
     check('once it wears off it is an ordinary enemy again', !G.charmed(t) && G.hostile(u, t));
   }
   {
-    // Masters and lieutenants are not charmed: the art takes their next action instead.
+    // Masters and lieutenants are not charmed: the art holds them in 定身 for one round instead
+    // (it took their next action, 失神, before Q-N132).
     const { s, u, t } = setup('chief');
     const f = G.forecast(u, t, true, s);
-    check('a master is dazed instead, and the preview says so', !f.effects.some((e) => e.kind === 'charm') && f.effects.some((e) => e.kind === 'daze') && f.notes.includes('局主不受制，改為失神') && f.notes.includes('失神 · 余滄海失去下一次行動'), f.notes);
+    check('a master is held in 定身 one round instead, and the preview says so', !f.effects.some((e) => e.kind === 'charm') && f.effects.some((e) => e.kind === 'freeze' && e.turns === 1) && f.notes.includes('局主不受制，改為定身一回合') && f.notes.includes('定身 · 1 回合不能行動'), f.notes);
     G.resolve(s, u, t, true);
-    check('…by 失神’s own rule', !!t.conditions?.daze && !t.conditions?.charm && t.lastDazeRound === 1);
+    check('…by 定身’s own rule', !!t.conditions?.freeze && t.conditions.freeze.through === 1 && !t.conditions?.charm && t.lastFreezeRound === 1);
     quietTurn(s);
     u.mp = u.maxMp;
     const g = G.forecast(u, t, true, s);
-    check('the round after, he resists the 失神', !g.effects.some((e) => e.kind === 'daze' || e.kind === 'charm') && g.notes.includes('局主已換氣，本回合抵抗失神'), g.notes);
+    check('the round after, he resists it', !g.effects.some((e) => e.kind === 'freeze' || e.kind === 'charm') && g.notes.includes('局主已換氣，本回合抵抗定身'), g.notes);
+    // The resistance is 定身's own: after a 定身 from another art, 生死符's hold is shaken off too.
+    const o = setup('chief');
+    o.t.lastFreezeRound = o.s.round - 1;
+    check('a master held by another art’s 定身 last round resists it as well', G.forecast(o.u, o.t, true, o.s).notes.includes('局主已換氣，本回合抵抗定身'));
     const l = setup('blade');
     const lf = G.forecast(l.u, l.t, true, l.s);
-    check('a lieutenant is dazed instead', lf.notes.includes('副手不受制，改為失神') && lf.effects.some((e) => e.kind === 'daze') && !lf.effects.some((e) => e.kind === 'charm'), lf.notes);
+    check('a lieutenant is held instead', lf.notes.includes('副手不受制，改為定身一回合') && lf.effects.some((e) => e.kind === 'freeze') && !lf.effects.some((e) => e.kind === 'charm'), lf.notes);
   }
   {
     // The board: 殲滅 still needs it down; 斬將 is won with the master down, whoever is charmed.
@@ -2759,7 +2773,7 @@ section('interactions');
   const formation = (s, centre, owner = 'medic') =>
     (s.zones = [{ owner, tiles: G.zoneTiles(s, centre), through: s.round + 1 }]);
 
-  // 代受 with 吸勁 and 失神: the blow, and what rides on it, lands on the coverer.
+  // 代受 with 吸勁 and 定身: the blow, and what rides on it, lands on the coverer.
   withTraits('scout-0', { cover: 'master' }, () => {
     Object.assign(G.DETAILS['scout-0'], { ...G.DETAILS.scout, name: '星宿弟子', traits: { cover: 'master' } });
     const s = board();
@@ -2767,23 +2781,24 @@ section('interactions');
       chief = put(s, 'chief', 5, 7),
       scout = put(s, 'scout', 6, 7);
     scout.hp = scout.maxHp = 300;
-    teach(hero, defineArt({ forms: ['siphon'], daze: true, mp: 4, factor: 0.3 }));
+    teach(hero, defineArt({ forms: ['siphon'], freeze: { turns: 1 }, mp: 4, factor: 0.3 }));
     hero.mp = 20;
     const push = chief.signaturePush || 0;
     const f = G.forecast(hero, chief, true, s);
-    check('a covered blow is planned on the coverer, daze and all', f.coveredBy === 'scout' && f.effects.some((e) => e.kind === 'daze') && f.notes.includes('失神 · 星宿弟子失去下一次行動'), f.notes);
+    check('a covered blow is planned on the coverer, 定身 and all', f.coveredBy === 'scout' && f.effects.some((e) => e.kind === 'freeze') && f.notes.includes('定身 · 1 回合不能行動'), f.notes);
     G.resolve(s, hero, chief, true);
-    check('the coverer is dazed, not the master', !!scout.conditions?.daze && !chief.conditions?.daze);
+    check('the coverer is held, not the master', !!scout.conditions?.freeze && !chief.conditions?.freeze);
     check('吸勁 draws 內力 from the coverer’s blow', hero.mp === 20 - f.mpCost + 8, hero.mp);
     check('and does not put back the master’s signature', (chief.signaturePush || 0) === push && chief.lastSiphonRound === undefined);
-    // A dazed disciple still covers, though it will not act; one in reach of a taunter is not bound.
+    // A held disciple cannot step in for its master (a dazed one could, before 失神 was 定身);
+    // one in reach of a taunter is not bound.
     G.startEnemy(s);
-    check('dazed, it still covers', G.coverer(s, chief) === scout);
+    check('held, it covers no one', G.coverer(s, chief) === null);
     cond(s, put(s, 'guard', 7, 7), 'taunt', 2);
-    check('dazed, no taunt binds it', !G.taunters(s, scout).length);
+    check('held, no taunt binds it', !G.taunters(s, scout).length);
     const life = unit(s, 'guard').hp;
     G.enemyAct(s, scout);
-    check('dazed, it does nothing, and the taunter draws no blow', unit(s, 'guard').hp === life && !scout.conditions?.daze);
+    check('held, it does nothing, and the taunter draws no blow', unit(s, 'guard').hp === life && !!scout.conditions?.freeze);
   });
 
   // 挪移 and 閃身 with 吸勁, 內傷 and 亂氣: a blow that does not land carries none of its riders,
@@ -2793,16 +2808,16 @@ section('interactions');
     const hero = put(s, 'hero', 4, 7),
       chief = put(s, 'chief', 5, 7);
     s.round = 3;
-    teach(hero, defineArt({ forms: ['siphon'], daze: true, backlash: true, mp: 4, factor: 0.3 }));
+    teach(hero, defineArt({ forms: ['siphon'], freeze: { turns: 1 }, backlash: true, mp: 4, factor: 0.3 }));
     hero.mp = 20;
     cond(s, hero, 'wound', 5, 2);
     const f = G.forecast(hero, chief, true, s);
-    check('mirrored, there is no 吸勁 and no 失神', !f.siphon && !f.effects.length && !f.notes.some((n) => n.startsWith('失神') || n.startsWith('吸勁')), f.notes);
+    check('mirrored, there is no 吸勁 and no 定身', !f.siphon && !f.effects.length && !f.notes.some((n) => n.startsWith('定身') || n.startsWith('吸勁')), f.notes);
     check('the self bar counts the rebound and then 內傷', f.rebound > 0 && f.selfLoss === 5);
     const hp = hero.hp;
     G.resolve(s, hero, chief, true);
     check('the striker takes the rebound and his 內傷', hp - hero.hp === f.rebound + 5, hp - hero.hp);
-    check('no 內力 came back, the signature was spent by the mirror, not put back', hero.mp === 20 - f.mpCost && chief.signatureRound === 3 && !chief.signaturePush && !chief.conditions?.daze);
+    check('no 內力 came back, the signature was spent by the mirror, not put back', hero.mp === 20 - f.mpCost && chief.signatureRound === 3 && !chief.signaturePush && !chief.conditions?.freeze);
     check('亂氣 lays its layer all the same', hero.conditions?.backlash?.power === 1);
   });
   {
@@ -2810,14 +2825,14 @@ section('interactions');
     const hero = put(s, 'hero', 4, 7),
       chief = put(s, 'chief', 5, 7);
     cond(s, chief, 'evade');
-    teach(hero, defineArt({ forms: ['siphon'], daze: true, mp: 4, factor: 0.3 }));
+    teach(hero, defineArt({ forms: ['siphon'], freeze: { turns: 1 }, mp: 4, factor: 0.3 }));
     hero.mp = 20;
     cond(s, hero, 'wound', 5, 2);
     const f = G.forecast(hero, chief, true, s);
-    check('evaded, no 吸勁 and no 失神 are planned', !f.siphon && !f.effects.length && f.selfLoss === 5);
+    check('evaded, no 吸勁 and no 定身 are planned', !f.siphon && !f.effects.length && f.selfLoss === 5);
     const hp = hero.hp;
     G.resolve(s, hero, chief, true);
-    check('evaded: no 內力, no delay, no daze; the striker still bleeds', hero.mp === 20 - f.mpCost && !chief.signaturePush && !chief.conditions?.daze && !chief.conditions?.evade && hp - hero.hp === 5);
+    check('evaded: no 內力, no delay, no 定身; the striker still bleeds', hero.mp === 20 - f.mpCost && !chief.signaturePush && !chief.conditions?.freeze && !chief.conditions?.evade && hp - hero.hp === 5);
   }
   // A hero's ward with an enemy who is wounded: the turned share and its own 內傷 both land.
   {
@@ -4142,10 +4157,10 @@ section('items');
   const m = board();
   const h = unit(m, 'hero');
   h.hp = 20;
-  for (const kind of ['wound', 'poison', 'daze']) BM.applyCondition(m, h, { kind, power: 3, turns: 2 }, h);
+  for (const kind of ['wound', 'poison', 'disarm']) BM.applyCondition(m, h, { kind, power: 3, turns: 2 }, h);
   m.stock.nineFlowerPill = 1;
   check('九花玉露丸 is taken', G.consume(m, h, 'nineFlowerPill') && !m.stock.nineFlowerPill);
-  check('it lifts 內傷, 中毒 and 失神', !h.conditions.wound && !h.conditions.poison && !h.conditions.daze);
+  check('it lifts 內傷, 中毒 and 纏械', !h.conditions.wound && !h.conditions.poison && !h.conditions.disarm);
   check('its healing is not halved by the 內傷 it lifted', h.hp === 20 + pill.hp, h.hp);
   m.stock.nineFlowerPill = 1;
   h.hp = h.maxHp;

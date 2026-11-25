@@ -69,7 +69,7 @@ const COMMANDS = {
     name: '打狗陣法',
     stat: 'held',
     power: 8,
-    text: '擊中絆足、截勁、纏械、失神、定身或閉穴的敵人時，傷害增加 8。',
+    text: '擊中絆足、截勁、纏械、定身或閉穴的敵人時，傷害增加 8。',
     icon: 'target'
   },
   yaoShi: {
@@ -121,7 +121,7 @@ const COMMANDS = {
   youth: { name: '不棄一子', stat: 'def', power: 4, text: '防禦增加 4。', icon: 'shield' }
 };
 // What 打狗陣法 counts as a held foe, and what 桃花迷陣 keeps on a foe longer (by its power).
-const HELD_KINDS = ['pin', 'seal', 'disarm', 'daze', 'freeze', 'mute'];
+const HELD_KINDS = ['pin', 'seal', 'disarm', 'freeze', 'mute'];
 const LINGER_KINDS = ['poison', 'weak', 'exposed', 'pin', 'mark', 'wound', 'disarm'];
 function commandDescription(id) {
   return (COMMANDS[id].foes ? '距離領隊兩格內的敵人' : '領隊與距離兩格內的友軍') + COMMANDS[id].text;
@@ -186,7 +186,6 @@ const CONDITION_NAMES = {
   spent: '代價',
   backlash: '亂氣',
   wound: '內傷',
-  daze: '失神',
   disarm: '纏械',
   fortify: '固守',
   immune: '金剛',
@@ -208,12 +207,10 @@ function effectsOf(art) {
   }
   if (art.debuff)
     effects.push({ kind: art.debuff.stat === 'def' ? 'exposed' : 'weak', ...art.debuff });
-  // `daze: 'setup'` depends on the target at the moment of the strike, so it is decided there.
-  if (art.daze === true) effects.push({ kind: 'daze', power: 1, turns: 1 });
   if (art.redirect) effects.push({ kind: 'redirect', power: art.redirect.cap, turns: 1 });
   if (supportArt(art)) for (const kind of GUARDS) if (art[kind]) effects.push(guardEffect(art, kind));
-  // 定身, 閉穴 and 受制 as the art's page states them; the strike decides what a master takes
-  // (rules/game.js controlPlan).
+  // 定身, 閉穴 and 受制 as the art's page states them; the strike decides what a master takes, and
+  // whether a 定身 with a setup lands (rules/game.js controlPlan).
   for (const kind of ['freeze', 'mute', 'charm'])
     if (art[kind]) effects.push({ kind, power: 1, turns: art[kind].turns || 1 });
   return effects;
@@ -267,7 +264,6 @@ function effectDescription(kind, power, turns) {
     spent: '不能施展絕技',
     backlash: power + '／3 層',
     wound: '療傷減半，出手後自損 ' + power,
-    daze: '失去下一次行動',
     disarm: '攻擊 −' + power + '，只能攻擊相鄰',
     fortify: '防禦 ＋' + power,
     immune: '直接攻擊無功，不受其附帶之效',

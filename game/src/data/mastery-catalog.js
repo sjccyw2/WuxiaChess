@@ -1243,9 +1243,9 @@ const MASTERY_ARTS = {
     visual: 'huang',
     target: 'enemy',
     factor: 1.1,
-    daze: 'setup',
-    desc: '棒影絆住兩格內敵人的腳步，絆足兩回合；目標兵刃遭纏或站在陣中時，失去下一次行動。',
-    source: '絆是打狗棒法的棒訣之一。失神的條件為本作演繹。'
+    freeze: { turns: 1, setup: true },
+    desc: '棒影絆住兩格內敵人的腳步，絆足兩回合；目標兵刃遭纏或站在陣中時，定身一回合。',
+    source: '絆是打狗棒法的棒訣之一。定身的條件為本作演繹。'
   },
   peachGate: {
     name: '開生門',
@@ -1882,7 +1882,7 @@ const MASTERY_ARTS = {
     wound: { power: 6, turns: 2 },
     cooldown: 2,
     gate: { metric: 'heals', atLeast: 60 },
-    desc: '掌心凝酒成冰，打入三格內敵人體內。尋常敵人受制倒戈兩回合，轉而攻擊同夥；局主與副手不受制，改為失去下一次行動。中者另受內傷兩回合：療傷減半，每次出手後自損 6 點氣血。施展後須調息兩回合。',
+    desc: '掌心凝酒成冰，打入三格內敵人體內。尋常敵人受制倒戈兩回合，轉而攻擊同夥；局主與副手不受制，改為定身一回合。中者另受內傷兩回合：療傷減半，每次出手後自損 6 點氣血。施展後須調息兩回合。',
     source: '生死符是天山童姥控制群豪的暗器，中者求生不得，求死不能，只得俯首聽命。調息是本作所定的代價。'
   },
   hqTap: {
@@ -1973,8 +1973,8 @@ const MASTERY_ARTS = {
     visual: 'huang',
     target: 'enemy',
     factor: 1.4,
-    daze: true,
-    desc: '棒頭繞著兩格內敵人後心連點，逼他團團轉動，腳下一亂，失去下一次行動，並絆足兩回合；局主受過後下一回合可抵抗。',
+    freeze: { turns: 1 },
+    desc: '棒頭繞著兩格內敵人後心連點，逼他團團轉動，腳下一亂，定身一回合，並絆足兩回合；局主受過後下一回合可抵抗。',
     source: '轉是打狗棒法八字訣之一，專打敵人後心各處大穴。'
   },
   hqThirtySix: {
@@ -2084,9 +2084,9 @@ const MASTERY_ARTS = {
     visual: 'duan',
     target: 'enemy',
     factor: 1.0,
-    daze: true,
+    freeze: { turns: 1 },
     cooldown: 2,
-    desc: '屈指彈出石子打中四格內敵人穴道，使其失去下一次行動；局主受過後下一回合可抵抗。施展後須調息兩回合。',
+    desc: '屈指彈出石子打中四格內敵人穴道，使其定身一回合；局主受過後下一回合可抵抗。施展後須調息兩回合。',
     source: '彈指神通是黃藥師的成名指法，小小石子在他指上勁力非凡。'
   },
   ysWhirl: {
@@ -2845,9 +2845,9 @@ const TRADE_MANUALS = {
     icon: 'target',
     visual: 'duan',
     target: 'enemy',
-    daze: true,
+    freeze: { turns: 1 },
     cooldown: 2,
-    desc: '屈指彈出石子打中四格內敵人穴道，使其失去下一次行動；局主受過後下一回合可抵抗。施展後須調息兩回合。',
+    desc: '屈指彈出石子打中四格內敵人穴道，使其定身一回合；局主受過後下一回合可抵抗。施展後須調息兩回合。',
     source: '黃藥師的彈指神通見《射鵰英雄傳》《神鵰俠侶》。通吃坊的抄本出自本作。'
   },
   softPalm: {

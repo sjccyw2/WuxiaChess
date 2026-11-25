@@ -39,7 +39,7 @@ function dangerTiles(s) {
   if (mark === memo.mark) return memo.tiles;
   const tiles = new Set();
   for (const u of alive) {
-    // A dazed, frozen, muted or charmed enemy strikes no hero this turn, so it threatens nothing.
+    // A frozen, muted or charmed enemy strikes no hero this turn, so it threatens nothing.
     if (G.ally(u) || G.holdsFire(u)) continue;
     // Only where it will actually end its action: a posted piece within its tether, a charged
     // 蓄勢反擊 on its own tile, a fleeing master where its flight takes it.

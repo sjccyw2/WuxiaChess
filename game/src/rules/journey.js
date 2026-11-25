@@ -338,7 +338,7 @@ const ROUND_MARKS = [
   ...BOARD_MARKS.slice(0, 6),
   'signaturePush',
   'lastSiphonRound',
-  'lastDazeRound',
+  'lastFreezeRound',
   'fleeThrough',
   'enteredRound'
 ];
@@ -439,8 +439,30 @@ function validTally(t) {
     typeof t.crossed === 'boolean'
   );
 }
+// 失神 became 定身 for one round (Q-N132). A save made mid-fight may hold one: it is read as the
+// 定身 it now is, lasting as long, so the piece still loses its turn; a master's last 失神 counts
+// toward 定身's resistance, which the two now share.
+function migrateHolds(s) {
+  for (const u of Array.isArray(s?.units) ? s.units : []) {
+    const daze = u?.conditions?.daze;
+    if (daze) {
+      const held = u.conditions.freeze;
+      u.conditions.freeze = {
+        power: 1,
+        through: Math.max(daze.through, held?.through ?? daze.through),
+        source: held?.source ?? daze.source
+      };
+      delete u.conditions.daze;
+    }
+    if (u && u.lastDazeRound != null) {
+      if (!(u.lastFreezeRound >= u.lastDazeRound)) u.lastFreezeRound = u.lastDazeRound;
+      delete u.lastDazeRound;
+    }
+  }
+}
 function restoreRun(raw) {
   if (!raw) return null;
+  migrateHolds(raw);
   if ([4, 5].includes(raw.version)) migrateSave(raw);
   if (![4, 5].includes(raw.version)) {
     const s = G.restoreGame(raw);

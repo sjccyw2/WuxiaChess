@@ -1294,20 +1294,20 @@ async function runEnemy() {
       }
       return;
     }
-    // 失神 and 定身: the piece loses its action, and says so.
-    const dazed = e.conditions?.daze ? '失神' : e.conditions?.freeze ? '定身' : '';
+    // 定身: the piece loses its action, and says so.
+    const frozen = e.conditions?.freeze ? '定身' : '';
     // 受制 turns it on its own side; 閉穴 lets it walk but not strike.
-    const turned = !dazed && !!e.conditions?.charm,
-      muted = !dazed && !turned && !!e.conditions?.mute;
+    const turned = !frozen && !!e.conditions?.charm,
+      muted = !frozen && !turned && !!e.conditions?.mute;
     const pulls = state.tally?.fired?.pull || 0;
     const effects = G.enemyAct(state, e);
-    audio(effects.length && !dazed ? 'ready' : 'move'); // footfalls and blows follow as board cues
+    audio(effects.length && !frozen ? 'ready' : 'move'); // footfalls and blows follow as board cues
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
     const struck = effects[0] && G.find(state, effects[0][0]);
     // 擒拿: who was dragged in, said once the blow and the drag have played.
     const dragged = (state.tally?.fired?.pull || 0) > pulls && effects[0] ? G.find(state, effects[0][0]) : null;
-    if (dazed) mapTip(uName(e) + ' ' + dazed + '，錯過了這一手');
+    if (frozen) mapTip(uName(e) + ' ' + frozen + '，錯過了這一手');
     else if (turned)
       mapTip(uName(e) + (struck ? ' 受制倒戈，出手打向同夥' + uName(struck) : ' 受制倒戈，不向我方出手'), 3000);
     else if (muted && !effects.length) mapTip(uName(e) + ' 穴道受制，只走不出手');

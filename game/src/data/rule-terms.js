@@ -153,7 +153,6 @@ const RULE_GROUPS = [
     icon: 'pin',
     terms: [
       { id: 'wound', name: '內傷', art: 'wound', condition: 'wound', guide: true, text: '療傷減半，每次出手攻擊後自損氣血' },
-      { id: 'daze', name: '失神', art: 'daze', condition: 'daze', guide: true, text: '失去下一次行動；局主受過後，下一回合可抵抗' },
       { id: 'disarm', name: '纏械', art: 'disarm', condition: 'disarm', guide: true, text: '攻擊降低，普攻與絕技只能攻擊相鄰一格' },
       { id: 'freeze', name: '定身', art: 'freeze', condition: 'freeze', guide: true, text: '數回合不能移動、出手、施展絕技或還擊；局主只受一回合，下一回合可抵抗' },
       { id: 'mute', name: '閉穴', art: 'mute', condition: 'mute', guide: true, text: '數回合不能出手、施展絕技或還擊，仍可移動；局主只受一回合，下一回合可抵抗' },
@@ -163,7 +162,7 @@ const RULE_GROUPS = [
         art: 'charm',
         condition: 'charm',
         guide: true,
-        text: '尋常敵人倒戈數個敵方回合，走向最近的同夥以普攻出手；我方不攻擊他，他仍算敵人。局主與副手不受制，改為失神'
+        text: '尋常敵人倒戈數個敵方回合，走向最近的同夥以普攻出手；我方不攻擊他，他仍算敵人。局主與副手不受制，改為定身一回合'
       },
       { id: 'poison', name: '中毒', art: 'poison', condition: 'poison', text: '每回合失去氣血，到期自解' },
       {

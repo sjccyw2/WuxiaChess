@@ -105,11 +105,11 @@ function hostile(u, t) {
 }
 // 金剛: a direct attack of any kind takes nothing off its holder and puts nothing on him.
 const immuneTo = (v) => !!v?.conditions?.immune;
-// Whether an enemy will strike no hero on its coming turn: 失神, 定身 and 閉穴 keep its hand
+// Whether an enemy will strike no hero on its coming turn: 定身 and 閉穴 keep its hand
 // still, and under 受制 it strikes its own side. The danger zone and 挑釁 leave such a piece out.
 function holdsFire(u) {
   const c = u?.conditions || {};
-  return !!(c.daze || c.freeze || c.mute || c.charm);
+  return !!(c.freeze || c.mute || c.charm);
 }
 // While the heroes are being deployed (journey.js deployLineup) nobody acts; swaps only.
 const canAct = (s, u) =>
@@ -1693,48 +1693,19 @@ function expireZones(s) {
   s.zones = s.zones.filter((z) => z.through > s.round);
   if (!s.zones.length) delete s.zones;
 }
-// 失神 (§5): whether this strike takes the target's next action. `daze: 'setup'` needs the target
-// disarmed or standing in a formation as the blow lands; a master who lost an action last round
-// shakes off a second (the rule 截勁 follows). A strike at a piece already dazed says it will
-// not act; whether it counters is the counter line's to say (a dazed piece still does).
-function dazePlan(s, u, t, art, result) {
-  const name = unitDetails(t).name;
-  if (t.conditions?.daze) result.notes.push('失神 · ' + name + '本回合不會行動');
-  if (!art?.daze) return;
-  const drop = () => (result.effects = result.effects.filter((e) => e.kind !== 'daze'));
-  if (art.daze === 'setup' && !(t.conditions?.disarm || zoneAt(s, t))) {
-    drop();
-    result.notes.push('條件未成 · 未能失神');
-    return;
-  }
-  if (unitDetails(t).rank === 'boss' && t.lastDazeRound === s?.round - 1) {
-    drop();
-    result.notes.push('局主已換氣，本回合抵抗失神');
-    return;
-  }
-  if (!result.effects.some((e) => e.kind === 'daze'))
-    result.effects.push({ kind: 'daze', power: 1, turns: 1 });
-  result.notes.push('失神 · ' + name + '失去下一次行動');
-}
-// 失神 in the enemy phase: the dazed piece does nothing this turn and the condition is spent.
-// A signature that was due stays due.
-function loseAction(s, u) {
-  u.acted = true;
-  delete u.conditions.daze;
-  log(s, 'combat', '失神，錯過了這一手。', unitDetails(u).name);
-  return [[u.id, '失神', 'status']];
-}
 // 定身 and 閉穴: a held piece loses each of its own turns until the condition runs out (`turns`
 // enemy phases from the strike). A master is held for one turn at most, and the round after one
-// shakes off another of the same kind, as with 失神.
+// shakes off another of the same kind (the rule 截勁 follows). 失神 is 定身 for one round now
+// (Q-N132), so its arts share 定身's resistance.
 const CONTROLS = {
   freeze: { word: '定身', verb: '不能行動', mark: 'lastFreezeRound' },
   mute: { word: '閉穴', verb: '不能出手', mark: 'lastMuteRound' }
 };
-// What this strike's 定身, 閉穴 and 受制 put on its target, with the preview's lines. 受制 takes
-// only rank-and-file pieces: on a master or a lieutenant (any piece of rank 'boss' or 'mini') the
-// art takes its next action instead, under 失神's rule. The lines a blow that does not land would
-// not keep are listed in `result.riders`. A strike at a piece already held says so.
+// What this strike's 定身, 閉穴 and 受制 put on its target, with the preview's lines. A 定身 with
+// `setup` (絆字訣) needs the target disarmed or standing in a formation as the blow lands. 受制
+// takes only rank-and-file pieces: on a master or a lieutenant (any piece of rank 'boss' or
+// 'mini') the art holds it in 定身 for one round instead. The lines a blow that does not land
+// would not keep are listed in `result.riders`. A strike at a piece already held says so.
 function controlPlan(s, u, t, art, result) {
   const info = unitDetails(t),
     name = info.name,
@@ -1749,6 +1720,11 @@ function controlPlan(s, u, t, art, result) {
   const drop = (kind) => (result.effects = result.effects.filter((e) => e.kind !== kind));
   for (const [kind, c] of Object.entries(CONTROLS)) {
     if (!art[kind]) continue;
+    if (art[kind].setup && !(t.conditions?.disarm || zoneAt(s, t))) {
+      drop(kind);
+      result.notes.push('條件未成 · 未能' + c.word);
+      continue;
+    }
     if (boss && t[c.mark] === s?.round - 1) {
       drop(kind);
       rider('局主已換氣，本回合抵抗' + c.word);
@@ -1765,15 +1741,15 @@ function controlPlan(s, u, t, art, result) {
     return;
   }
   drop('charm');
-  rider((boss ? '局主' : '副手') + '不受制，改為失神');
-  if (boss && t.lastDazeRound === s?.round - 1) {
-    // An art with 失神 of its own has said so already.
-    if (!result.notes.includes('局主已換氣，本回合抵抗失神')) rider('局主已換氣，本回合抵抗失神');
+  rider((boss ? '局主' : '副手') + '不受制，改為定身一回合');
+  if (boss && t.lastFreezeRound === s?.round - 1) {
+    // An art with 定身 of its own has said so already.
+    if (!result.notes.includes('局主已換氣，本回合抵抗定身')) rider('局主已換氣，本回合抵抗定身');
     return;
   }
-  if (result.effects.some((e) => e.kind === 'daze')) return;
-  result.effects.push({ kind: 'daze', power: 1, turns: 1 });
-  rider('失神 · ' + name + '失去下一次行動');
+  if (result.effects.some((e) => e.kind === 'freeze')) return;
+  result.effects.push({ kind: 'freeze', power: 1, turns: 1 });
+  rider('定身 · 1 回合不能行動');
 }
 // 定身 in the enemy phase: the piece does nothing, and the condition stays until it runs out. A
 // signature that was due stays due.
@@ -2244,7 +2220,7 @@ function attackPower(s, u, art, basic = basicFor(u), target = null, struckHp = t
   const atk = stat(u, 'atk', s) - traitEdge(s, u, target, struckHp);
   return atk * (art ? strikeFactor(s, u, art, target).factor : 1) + base + pursuit + held;
 }
-// 打狗陣法: the leader's boon on a foe already held (絆足, 截勁, 纏械, 失神, 定身, 閉穴).
+// 打狗陣法: the leader's boon on a foe already held (絆足, 截勁, 纏械, 定身, 閉穴).
 const heldBonus = (s, u, t) =>
   t && HELD_KINDS.some((k) => t.conditions?.[k]) ? commandBonus(s, u, 'held') : 0;
 // What a villain's own traits take off (+) or add to (−) its attack against this hero, blows and
@@ -2520,8 +2496,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   }
   if (art) result.notes.push(...strikeFactor(s, u, art, t).notes);
   result.effects.push(...plan.effects);
-  dazePlan(s, u, t, art, result); // 失神: a setup to meet, a master to resist
-  controlPlan(s, u, t, art, result); // 定身, 閉穴, 受制
+  controlPlan(s, u, t, art, result); // 定身 (with a setup to meet), 閉穴, 受制
   boonPlan(s, u, t, result); // the leader's boon on this blow
   const baseHits = (art?.hits || [1]).map(
     (part, i) => Math.round(single * part) + (i === 0 ? plan.extra : 0)
@@ -2764,7 +2739,7 @@ function answerBlow(s, u, t, blow, result) {
   if (blow.void) {
     result.void = true;
     result.effects = [];
-    // 失神, 定身, 閉穴 and 受制 ride on the blow: a blow that does not land puts none of them on.
+    // 定身, 閉穴 and 受制 ride on the blow: a blow that does not land puts none of them on.
     result.notes = result.notes.filter(
       (n) => !n.endsWith('失去下一次行動') && !result.riders.includes(n)
     );
@@ -3136,8 +3111,6 @@ function resolve(s, u, t, skill) {
       if (f.plan.spentMark) delete t.conditions.mark;
       if (f.plan.spentPoison) delete t.conditions.poison;
       if (f.effects.some((e) => e.kind === 'seal')) t.lastSealRound = s.round;
-      if (f.effects.some((e) => e.kind === 'daze') && unitDetails(t).rank === 'boss')
-        t.lastDazeRound = s.round;
       for (const [kind, c] of Object.entries(CONTROLS))
         if (f.effects.some((e) => e.kind === kind) && unitDetails(t).rank === 'boss')
           t[c.mark] = s.round;
@@ -3748,7 +3721,7 @@ function startEnemy(s) {
 // 挑釁: the taunting heroes enemy u is bound to strike this turn — each one whose radius u starts
 // its action within and whom it can strike from a tile it can stand on (`cells`, with `range`).
 function taunters(s, u, cells = null, range = strikeReach(s, u)) {
-  if (holdsFire(u)) return []; // 失神, 定身, 閉穴: it strikes no one; 受制: none of the heroes
+  if (holdsFire(u)) return []; // 定身, 閉穴: it strikes no one; 受制: none of the heroes
   cells ??= [u, ...Array.from(reachable(s, u).keys(), (k) => fromKey(k))];
   return party(s).filter(
     (t) =>
@@ -3831,7 +3804,6 @@ function enemyAct(s, u) {
   return effects;
 }
 function enemyAction(s, u) {
-  if (u.conditions?.daze) return loseAction(s, u); // 失神: the action is lost, not the reflexes
   if (u.conditions?.freeze) return frozenTurn(s, u); // 定身: no move, no blow
   if (charmed(u)) return charmAction(s, u); // 受制: it fights its own side
   const muted = !!u.conditions?.mute; // 閉穴: it walks as its kind does, and strikes no one

@@ -249,7 +249,6 @@ const STATUS_SIGNS = {
   spent: '招',
   backlash: '亂',
   disarm: '纏',
-  daze: '失',
   formation: '陣' // derived: the piece has a 布陣 on the board
 };
 // The corners of a badge: 'up' or 'down' for a stat that went up or down, 'lock' for a price.
