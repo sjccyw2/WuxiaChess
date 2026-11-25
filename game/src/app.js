@@ -1145,11 +1145,10 @@ dialog.addEventListener('click', (e) => {
     if (e.clientX < r.left || e.clientY < r.top || e.clientX > r.right || e.clientY > r.bottom)
       dismissOutside(true);
   } else if (
-    // A mouse click on a story's words or picture turns its page too (R-60). A finger's tap
-    // there does what it always did (nothing), and a drag that selected words is reading.
+    // A click or a tap on a story's words or picture turns its page too (R-31, R-60; the tap by
+    // the producer's word of 2026-11-25). A drag that selected words is reading.
     STORY_PAGES.includes(dialogState) &&
     e.detail > 0 &&
-    pointerKind !== 'touch' &&
     e.target.closest('.fy-story-body, .fy-scene') &&
     !e.target.closest('button, a, summary') &&
     getSelection()?.isCollapsed !== false
@@ -1159,8 +1158,6 @@ dialog.addEventListener('click', (e) => {
 // The pages whose lines are read one by one: the stories between boards, one reread from the
 // battle's 選單, and the prologue.
 const STORY_PAGES = ['encounter', 'story', 'prologue'];
-let pointerKind = '';
-document.addEventListener('pointerdown', (e) => (pointerKind = e.pointerType), true);
 // A control that Enter or Space presses for itself.
 const onControl = (el) =>
   el?.closest?.('button, a, input, select, textarea, summary, [role="button"], [role="tab"]') || null;
