@@ -156,7 +156,7 @@ const ITEMS = {
     name: '玄鐵重劍',
     kind: 'weapon',
     owner: 'yang',
-    atk: 8,
+    atk: 9,
     icon: 'sword',
     desc: '獨臂也能揮動的玄鐵劍，威勢沉雄。'
   },
@@ -172,7 +172,7 @@ const ITEMS = {
     name: '胡家單刀',
     kind: 'weapon',
     owner: 'hu',
-    atk: 6,
+    atk: 7,
     icon: 'sword',
     desc: '關外長刀，利於翻腕連斬。'
   },
@@ -233,7 +233,7 @@ const ITEMS = {
     kind: 'weapon',
     icon: 'hand',
     owner: 'guo',
-    atk: 3,
+    atk: 4,
     desc: '一雙護住指節的舊布纏，隨郭靖走過草原與中原。'
   },
   twins: {
@@ -1868,11 +1868,11 @@ const SIGNATURE_RULES_BY_HERO = {
   xiao: { factor: 1.25 },
   duan: { factor: 1.1, safe: true },
   huang: { factor: 1.05, mute: { turns: 1 }, visual: 'guard' },
-  yang: { factor: 1.32, visual: 'guo' },
+  yang: { factor: 1.32, visual: 'guo' }, // 定勢 gone; its share (6 of 65 blows) rounds to nothing
   zhang: { visual: 'medic', heal: 40, target: 'ally' },
   hu: { factor: 1.3, visual: 'xiao' },
   qiaoFeng: { factor: 1.2, push: true, visual: 'guo' },
-  xuZhu: { factor: 1.3, visual: 'guo' },
+  xuZhu: { factor: 1.4, visual: 'guo' },
   hongQi: { factor: 1.2, safe: true, visual: 'guo' },
   yaoShi: { factor: 1.25, visual: 'guo' },
   sanFeng: { factor: 1.2, stance: 20, visual: 'guo' },
@@ -2560,8 +2560,6 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   result.push = t.hp > result.amount ? step : null;
   // 閃身, 挪移: what the receiver's guard did to the blow as a whole.
   if (blow.ward || blow.void) answerBlow(s, u, t, blow, result);
-  if (result.plan.partnerMp)
-    result.notes.push(unitDetails(find(s, plan.partner)).name + '內力 ＋' + plan.partnerMp);
   if (result.plan.clearPoison) result.notes.push('擊中中毒者，解除自身中毒');
   if (result.forms.includes('leech')) {
     result.selfHeal = Math.min(
@@ -2776,7 +2774,6 @@ function answerBlow(s, u, t, blow, result) {
       effects: [],
       spentMark: false,
       spentPoison: false,
-      partnerMp: 0,
       clearPoison: false
     };
   }
@@ -3111,7 +3108,7 @@ function resolve(s, u, t, skill) {
     const facts = {
       how: skill ? 'art' : 'basic',
       art: skill ? id : null,
-      combo: !!(f.plan.spentMark || f.plan.spentPoison || f.plan.partner),
+      combo: !!(f.plan.spentMark || f.plan.spentPoison),
       answered: !!art?.answer && strikeFactor(s, u, art, t).notes.some((n) => n.startsWith('破招'))
     };
     blowing(facts, () => {
@@ -3152,7 +3149,6 @@ function resolve(s, u, t, skill) {
       u.mp = Math.max(0, u.mp - f.contact); // 化功
       log(s, 'combat', '被化功大法化去 ' + f.contact + ' 點內力。', who);
     }
-    if (f.plan.partnerMp) find(s, f.plan.partner).mp += f.plan.partnerMp;
     if (f.plan.clearPoison) delete u.conditions.poison;
     restoreHealth(s, u, u, f.selfHeal, effects);
     if (f.push) {

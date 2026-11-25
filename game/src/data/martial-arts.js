@@ -95,10 +95,10 @@ const WARES = {
   dragonSaber: {
     name: '屠龍刀',
     kind: 'weapon',
-    atk: 17,
+    atk: 18,
     step: -1,
     icon: 'sword',
-    desc: '刀身烏沉，重逾百斤，揮動須站穩腳步。攻擊增加 17，移動減少 1 格。'
+    desc: '刀身烏沉，重逾百斤，提著它走不快。攻擊增加 18，移動減少 1 格。'
   },
   // 反震 (game.js, barbStrike): whoever strikes the wearer from beside her pays for it.
   hedgehogVest: {

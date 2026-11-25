@@ -1,12 +1,14 @@
 // Keys match the combat and mastery catalogues. A weapon's offensive forms belong
 // to deliberate normal attacks. Its support forms belong to support skills.
+// A push needs no form for the blow that is blocked: 擊退 has it in its rule. (定勢, 夾擊 and 撞關
+// are gone as forms, Q-N132; their carriers have flat numbers instead.)
 const ART_FORMS = {
   // 無名. 總訣式, 破劍式, 破箭式 and 破氣式 are 令狐冲's arts too and carry the same forms.
   'signature:youth': ['exploit'],
   youthKeenEdge: [],
   youthBreakSword: [],
   youthBreakBlade: [],
-  youthBreakPole: ['collision'],
+  youthBreakPole: [],
   youthBreakSoft: [],
   youthBreakMace: [],
   youthBreakArrow: [],
@@ -43,13 +45,13 @@ const ART_FORMS = {
 
   // 郭靖
   'signature:guo': [],
-  southernStance: ['still'],
-  kanglongRegret: ['collision'],
+  southernStance: [],
+  kanglongRegret: [],
   guoPairedHands: ['distill'],
   fieldDragonWard: [],
   flyingDragon: [],
   armyBookRally: ['channel'],
-  dragonReserve: ['collision'],
+  dragonReserve: [],
 
   // 小龍女
   'signature:xiao': ['pin'],
@@ -63,10 +65,10 @@ const ART_FORMS = {
   // 段譽
   'signature:duan': ['siphon'],
   fingerPrimer: ['pin'],
-  shangYang: ['still'],
+  shangYang: [],
   ripplingSteps: [],
   lesserMarsh: ['mark'],
-  guanChong: ['collision'],
+  guanChong: [],
   shaoShang: ['line'],
   sixMeridians: ['line', 'exploit'],
 
@@ -80,7 +82,7 @@ const ART_FORMS = {
   staffWithoutDogs: [],
 
   // 楊過
-  'signature:yang': ['still'],
+  'signature:yang': [],
   quanzhenSword: [],
   darkIronEdge: ['line'],
   jadeFluteCut: [],
@@ -92,9 +94,9 @@ const ART_FORMS = {
   'signature:zhang': ['overflow'],
   nineYangMantle: ['cleanse'],
   qiankunYield: [],
-  qiankunShove: ['collision'],
+  qiankunShove: [],
   holyFireTurn: ['pull'],
-  taijiGate: ['still'],
+  taijiGate: [],
   qiankunSeventh: ['cleanse'],
 
   // 胡斐
@@ -108,17 +110,17 @@ const ART_FORMS = {
   cliffCut: ['exploit', 'mark'],
 
   // 蕭峰
-  'signature:qiaoFeng': ['collision'],
+  'signature:qiaoFeng': [],
   qfSeize: ['pin'],
   qfDragonGrab: ['pull', 'collision'],
-  qfRegret: ['collision'],
+  qfRegret: [],
   qfField: [],
   qfWine: [],
   qfWild: [],
   qfEighteen: [],
 
   // 虛竹
-  'signature:xuZhu': ['still'],
+  'signature:xuZhu': [],
   xzArhat: ['mark'],
   xzNorthQi: ['channel'],
   xzPlum: [],
@@ -151,7 +153,7 @@ const ART_FORMS = {
   sfPureYang: ['cleanse'],
   sfSword: ['pull'],
   sfSeven: [],
-  sfCloud: ['collision'],
+  sfCloud: [],
   sfTaiji: [],
 
   // 趙敏
@@ -184,7 +186,7 @@ const ART_FORMS = {
 
   // 袁承志
   'signature:chengZhi': ['pin'],
-  czHunyuan: ['still'],
+  czHunyuan: [],
   czSteps: [],
   czCone: ['mark'],
   czFist: ['glide'],
@@ -205,7 +207,7 @@ const ART_FORMS = {
   softPalm: ['pin'],
   yangFinger: ['channel'],
   yijinjing: ['cleanse'],
-  iceSoulNeedle: ['still'],
+  iceSoulNeedle: [],
   diamondWard: [],
   sevenInjuries: [],
   waterSkim: ['landing']
@@ -215,13 +217,13 @@ const WEAPON_FORMS = {
   pine: ['mark'],
   staff: ['channel'],
   pole: ['pin'],
-  wraps: ['flank', 'riposte'],
+  wraps: ['riposte'],
   twins: ['arc', 'antidote'],
   fan: ['mark', 'channel'],
   jadeCane: ['pull'],
-  darkIron: ['still'],
+  darkIron: [],
   mingSash: ['antidote', 'riposte'],
-  foxSaber: ['flank'],
+  foxSaber: [],
   frost: ['distill'],
   blueEdge: ['exploit'],
   keenSword: ['mark'],
@@ -229,7 +231,7 @@ const WEAPON_FORMS = {
   silkWhip: ['pull', 'pin'],
   travelBlade: ['arc'],
   starSteel: ['line'],
-  dragonSaber: ['still'],
+  dragonSaber: [],
   goldSerpentBlade: ['arc']
 };
 
@@ -244,7 +246,7 @@ const COMBINATIONS = [
     name: '前掌後刀',
     skills: ['kanglongRegret'],
     weapons: ['foxSaber'],
-    text: '郭靖和胡斐各站在敵人南北相鄰的一格。胡斐持胡家單刀先攻，夾擊多打 7 點，郭靖回 4 點內力。郭靖再出亢龍有悔，敵人的退路正被胡斐佔住，掌力再添 7 點。'
+    text: '郭靖和胡斐各站在敵人南北相鄰的一格。胡斐持胡家單刀先攻，郭靖再出亢龍有悔：敵人的退路正被胡斐佔住，推不動，掌力多打 7 點。'
   },
   {
     name: '飛針催毒',

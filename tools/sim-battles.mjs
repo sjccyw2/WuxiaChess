@@ -467,7 +467,7 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
       main: gone.has(victim) ? victim : null,
       gone,
       wins: G.winsIfFalls(s, [...gone].map((v) => v.id)),
-      combo: !!(f.plan?.spentMark || f.plan?.spentPoison || f.plan?.partner),
+      combo: !!(f.plan?.spentMark || f.plan?.spentPoison),
       answered: !!art?.answer && G.strikeFactor(s, u, art, victim).notes.some((n) => n.startsWith('破招 · '))
     };
     const side = ctx.sidePolicy.fell ? ctx.sidePolicy.fell(s, ctx.side, blow) : { score: 0 };

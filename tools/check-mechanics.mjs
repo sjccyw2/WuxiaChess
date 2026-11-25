@@ -4166,15 +4166,15 @@ section('items');
     return G.consume(m, h, 'remedy') && h.hp === 10 + G.ITEMS.remedy.hp && m.logs.at(-1).text === '服用金創藥，回復 48 點氣血。';
   })());
 
-  // 屠龍刀: the most attack of any weapon, one step less, 定勢 on the basic attack.
+  // 屠龍刀: the most attack of any weapon, one step less (定勢 gone, a point of attack instead).
   const w = board();
   const bearer = unit(w, 'guard');
   const step = G.stat(bearer, 'step', w),
     atk = G.stat(bearer, 'atk', w);
   bearer.weapon = 'dragonSaber';
-  check('屠龍刀 adds 17 attack and costs a step', G.stat(bearer, 'atk', w) === atk - (G.ITEMS[G.startingHero('guard').weapon].atk || 0) + 17 && G.stat(bearer, 'step', w) === step - 1);
-  check('its basic attack carries 定勢', G.formsFor(bearer, null).includes('still'));
-  check('no shop weapon out-hits it', Object.entries(G.ITEMS).every(([id, it]) => it.kind !== 'weapon' || id === 'dragonSaber' || (it.atk || 0) < 17));
+  check('屠龍刀 adds 18 attack and costs a step', G.stat(bearer, 'atk', w) === atk - (G.ITEMS[G.startingHero('guard').weapon].atk || 0) + 18 && G.stat(bearer, 'step', w) === step - 1);
+  check('its basic attack carries no form', !G.formsFor(bearer, null).length);
+  check('no shop weapon out-hits it', Object.entries(G.ITEMS).every(([id, it]) => it.kind !== 'weapon' || id === 'dragonSaber' || (it.atk || 0) < 18));
 
   // Taking an item out of the shop is one line: off the table, never on the shelf or under a cup.
   const offered = (id) => {
@@ -6234,6 +6234,82 @@ section('the review of 2026-11-25: rulings and fixes');
   }
   check('速勝 pays no secondary, even one kept to the end', keep > 0 && paid === 0, keep + ' keep, ' + paid + ' paid');
   check('速勝・支線 meets every one', met === 40, met);
+}
+
+// ── Rule words, step 3 (0.46): the first pass's number changes (Q-N132) ───────
+section('rule words, step 3');
+{
+  const MF = await load('rules/move-facts.js');
+  const { ART_FORMS, WEAPON_FORMS, COMBINATIONS } = await load('data/form-catalog.js');
+  const carried = (form) => [
+    ...Object.entries(ART_FORMS).filter(([, f]) => f.includes(form)).map(([id]) => id),
+    ...Object.entries(WEAPON_FORMS).filter(([, f]) => f.includes(form)).map(([id]) => id)
+  ];
+  // 定勢 and 夾擊 are gone, as forms and as words; their carriers have a flat number.
+  check('定勢 and 夾擊 are no forms, and nothing carries them', !FR.FORM_RULES.still && !FR.FORM_RULES.flank && !carried('still').length && !carried('flank').length);
+  const sig = (id) => G.artFor(G.startingHero(id), 'signature');
+  // 蛤蟆功 stays at 1.32: the proposal's 1.35 would out-hit 玉簫劍法 (check-skills R4), and 定勢
+  // was worth under half a point a blow to it.
+  check('定勢’s arts: 蛤蟆功 1.32, 韋陀掌 1.40, 商陽劍 1.20, 冰魄銀針 1.05', sig('yang').factor === 1.32 && sig('xuZhu').factor === 1.4 && TECHNIQUES.shangYang.factor === 1.2 && TECHNIQUES.iceSoulNeedle.factor === 1.05);
+  check('定勢’s basic attacks: 穩樁 ＋8, 攬雀尾 ＋10, 發勁 ＋8', TECHNIQUES.southernStance.basicBonus === 8 && TECHNIQUES.taijiGate.basicBonus === 10 && TECHNIQUES.czHunyuan.basicBonus === 8);
+  check('定勢’s weapons: 玄鐵重劍 9, 屠龍刀 18 (still a step less); 夾擊’s: 布纏護手 4, 胡家單刀 7', G.ITEMS.darkIron.atk === 9 && G.ITEMS.dragonSaber.atk === 18 && G.ITEMS.dragonSaber.step === -1 && G.ITEMS.wraps.atk === 4 && G.ITEMS.foxSaber.atk === 7);
+  check('no text names 定勢, 夾擊 or 撞關', !Object.values(G.ITEMS).some((it) => /定勢|夾擊|撞關/.test(it.desc)) && !Object.values(TECHNIQUES).some((a) => /定勢|夾擊|撞關|未移動/.test(a.desc || '')) && !COMBINATIONS.some((c) => /定勢|夾擊|撞關/.test(c.text)));
+  {
+    // Standing still or not, 蛤蟆功 lands the same.
+    const s = board(['yang', 'hero', 'medic']);
+    const yang = put(s, 'yang', 4, 7),
+      foe = put(s, 'blade', 5, 7);
+    const still = G.forecast(yang, foe, true, s);
+    yang.moved = true;
+    const walked = G.forecast(yang, foe, true, s);
+    check('a hero who has not moved gains nothing for it', still.amount === walked.amount && !still.notes.some((n) => n.includes('定勢')), still.notes);
+  }
+  {
+    // A companion directly behind the foe adds nothing now, and gives him no 內力.
+    const s = board(['hu', 'guo', 'medic']);
+    const hu = put(s, 'hu', 4, 7),
+      guo = put(s, 'guo', 6, 7),
+      foe = put(s, 'blade', 5, 7);
+    hu.weapon = 'foxSaber';
+    guo.mp = 0;
+    const f = G.forecast(hu, foe, false, s);
+    check('胡家單刀 with 郭靖 behind the foe: no 夾擊', f.plan.extra === 0 && !f.notes.some((n) => n.includes('夾擊') || n.includes('內力 ＋')), f.notes);
+    G.resolve(s, hu, foe, false);
+    check('…and 郭靖 regains no 內力', guo.mp === 0);
+  }
+  // 撞關 is part of 擊退: every push that is blocked gains 7 on its first hit.
+  check('no push art carries a form for it; only 金鈴索 and 擒龍功 keep it, as a sentence', same(carried('collision').sort(), ['qfDragonGrab', 'silkBell']) && FR.PLAIN_FORMS.has('collision'));
+  const { RULE_TERMS } = await load('data/rule-terms.js');
+  check('擊退’s rule says so', RULE_TERMS.push.text.includes('去路受阻則推不動，首段威力 ＋7'));
+  {
+    const s = board(['hero', 'medic', 'guard']);
+    const hero = put(s, 'hero', 4, 7),
+      foe = put(s, 'blade', 5, 7);
+    const id = teach(hero, defineArt({ push: true, mp: 2, factor: 0.3 }));
+    const open = G.forecast(hero, foe, true, s);
+    check('a push with room behind: no bonus, the foe is pushed', open.plan.extra === 0 && !!open.push);
+    put(s, 'scout', 6, 7);
+    const blocked = G.forecast(hero, foe, true, s);
+    check('a push blocked by a piece: ＋7 on the first hit, said as 擊退受阻', blocked.plan.extra === 7 && blocked.notes.includes('擊退受阻 · 首段 ＋7') && !blocked.push, blocked.notes);
+    check('the card says it', MF.moveFacts(s, hero, id).effectLines.includes('擊退 1 格；去路受阻則推不動，首段 ＋7'));
+    // A pull: only a pull that carries the sentence gains it.
+    teach(hero, defineArt({ forms: ['pull'], mp: 2, factor: 0.3 }));
+    check('a plain pull that cannot draw its foe gains nothing', G.forecast(hero, foe, true, s).plan.extra === 0);
+    const bell = teach(hero, defineArt({ forms: ['pull', 'collision'], mp: 2, factor: 0.3 }));
+    const held = G.forecast(hero, foe, true, s);
+    check('a pull with the sentence, blocked: ＋7, said as 牽引受阻', held.plan.extra === 7 && held.notes.includes('牽引受阻 · 首段 ＋7'), held.notes);
+    check('金鈴索’s card says it in a sentence, with no word', MF.moveFacts(s, hero, bell).formRules.includes('牽引的去路受阻、拉不動時，首段威力加 7。') && !MF.moveFacts(s, hero, 'silkBell')?.shortEffect.includes('撞關'));
+  }
+  // 合招制敵: 引爆餘毒 or 乘破綻; 夾擊 counts no more.
+  check('合招制敵 names 引爆餘毒 and 乘破綻 only', R.SIDE_KINDS.combo.detail() === '以合招擊倒一名敵人：引爆餘毒或乘破綻的一擊。');
+  {
+    const n = board(['guo', 'medic', 'guard']);
+    unit(n, 'guo').learned = [];
+    unit(n, 'guo').weapon = 'wraps';
+    n.run.next = ['guo', 'medic', 'guard'];
+    check('布纏護手 alone no longer makes a lineup eligible for it', !R.SIDE_KINDS.combo.eligible(n, {}));
+    n.run.next = ['hero', 'medic', 'guard'];
+  }
 }
 
 console.log(failures ? '\n' + failures + ' check(s) failed.' : '\nAll mechanics checks passed.');

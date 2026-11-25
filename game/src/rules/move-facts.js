@@ -135,7 +135,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
     const drain = G.drainOf(art);
     if (drain)
       lines.push('回復主目標損血的 ' + percent(drain.share) + '，最多 ' + drain.cap + ' 氣血');
-    if (art?.push) lines.push('擊退 1 格，須有空位');
+    if (art?.push) lines.push('擊退 1 格；去路受阻則推不動，首段 ＋7');
     if (art?.safe) lines.push('免受還擊');
     if (art?.recover) lines.push('命中回復 ' + art.recover + ' 內力');
     // A basic attack whose counter is stronger than 五成半 (it was 後發).

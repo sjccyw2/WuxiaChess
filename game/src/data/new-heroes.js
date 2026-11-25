@@ -30,7 +30,7 @@ const NEW_HEROES = {
     skillIcon: 'hand',
     skillRange: 1,
     cost: 10,
-    skillDesc: '伏身蓄勁，向相鄰敵人猛推一掌。本回合未移動時威力更強。',
+    skillDesc: '伏身蓄勁，向相鄰敵人猛推一掌。',
     voice: '我等過十六年，再等十局也等得起。走罷。'
   },
   zhang: {
@@ -102,7 +102,7 @@ const NEW_HEROES = {
     skillIcon: 'hand',
     skillRange: 1,
     cost: 9,
-    skillDesc: '以少林韋陀掌擊中相鄰敵人。本回合未移動時威力更強。',
+    skillDesc: '以少林韋陀掌擊中相鄰敵人。',
     voice: '阿彌陀佛。小僧不願傷人，可也不能眼看著旁人受傷。'
   },
   hongQi: {

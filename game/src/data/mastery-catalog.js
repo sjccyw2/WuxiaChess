@@ -815,8 +815,8 @@ const MASTERY_ARTS = {
     points: 1,
     icon: 'hand',
     visual: 'guo',
-    basicBonus: 6,
-    desc: '掌發於足，普攻命中時傷害增加 6 點；本回合未移動時再增。',
+    basicBonus: 8,
+    desc: '掌發於足，普攻命中時傷害增加 8 點。',
     source: '以江南七怪中南希仁一脈的南山掌法為本。「穩」取馬鈺在懸崖上傳他的全真呼吸，為本作的讀法。'
   },
   kanglongRegret: {
@@ -1075,9 +1075,9 @@ const MASTERY_ARTS = {
     icon: 'target',
     visual: 'duan',
     target: 'enemy',
-    factor: 1.15,
+    factor: 1.2,
     pierce: 0.5,
-    desc: '食指凝成一線劍氣，射程四格，穿透一半防禦；本回合未移動時威力再增。',
+    desc: '食指凝成一線劍氣，射程四格，穿透一半防禦。',
     source: '商陽劍是六脈神劍的食指劍路，巧妙活潑。各脈先後為本作的讀法。'
   },
   ripplingSteps: {
@@ -1491,9 +1491,9 @@ const MASTERY_ARTS = {
     points: 2,
     icon: 'hand',
     visual: 'zhang',
-    basicBonus: 8,
+    basicBonus: 10,
     retort: 0.8,
-    desc: '以靜制動，普攻命中時傷害增加 8 點，本回合未移動時再增；還擊改按普攻八成計算。',
+    desc: '以靜制動，普攻命中時傷害增加 10 點；還擊改按普攻八成計算。',
     source: '張三丰在武當山為張無忌演太極拳，以靜制動，後發制人。'
   },
   qiankunSeventh: {
@@ -2609,8 +2609,8 @@ const MASTERY_ARTS = {
     points: 2,
     icon: 'hand',
     visual: 'guo',
-    basicBonus: 6,
-    desc: '掌上帶著混元功的內勁，普攻命中時傷害增加 6 點；本回合未移動時再增。',
+    basicBonus: 8,
+    desc: '掌上帶著混元功的內勁，普攻命中時傷害增加 8 點。',
     source: '混元掌與混元功是華山派穆人清一脈的根基，袁承志在華山絕頂練了十年。'
   },
   czSteps: {
@@ -2925,7 +2925,7 @@ const TRADE_MANUALS = {
     icon: 'feather',
     visual: 'xiao',
     target: 'enemy',
-    factor: 1,
+    factor: 1.05,
     poison: { power: 5, turns: 2 },
     freeze: { turns: 2 },
     cooldown: 2,

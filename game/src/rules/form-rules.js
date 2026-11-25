@@ -19,11 +19,11 @@ const FORM_RULES = {
   ],
   arc: ['餘勁躍向兩格內另一敵人', '餘勁躍向主目標兩格內最近的另一敵人，威力 32%。等距時取靠北、再靠西者。'],
   distill: ['引爆目標的餘毒', '引爆目標已有的餘毒，一次加上尚餘毒量，最多 16 威力，舊毒消散。'],
-  flank: ['夾擊', '與同伴隔敵同軸，且同伴緊貼敵人背面時，首段威力加 7，同伴回復 4 內力。'],
   leech: ['吸回損血的四分之一', '依主目標實際損血回復四分之一氣血，捨去小數，每次最多 9 點。'],
   landing: ['落地護住身旁同伴', '落地時自己與相鄰同伴各得 8 點護盾，持續至本回合結束。'],
-  still: ['定勢', '本回合未移動，首段威力加 5。'],
-  collision: ['撞關', '牽引或擊退的去路受阻時，首段威力加 7。'],
+  // 擊退 has this in its own rule (a push that is blocked gains 7); two pull arts keep it as a
+  // plain sentence (Q-N132: 撞關 is no longer a word).
+  collision: ['牽引受阻時首段 ＋7', '牽引的去路受阻、拉不動時，首段威力加 7。'],
   antidote: ['擊中中毒者解自身毒', '擊中已有中毒的敵人時，解去施術者自身中毒。'],
   again: ['連環', '此招擊倒主目標時，本回合可再出手一次；每回合限一次。'],
   glide: ['回身', '出招後仍可走完本回合未用的步數，走後不能撤步。'],
@@ -34,7 +34,7 @@ const FORM_RULES = {
 };
 // Forms whose name is a plain phrase, not a rule word: the card and the weapon's text print
 // their rule as it stands. (濺射 身後兩格 is the 濺射 term's, worded with its shape.)
-const PLAIN_FORMS = new Set(['channel', 'overflow', 'line', 'arc', 'distill', 'leech', 'landing', 'antidote', 'siphon']);
+const PLAIN_FORMS = new Set(['channel', 'overflow', 'line', 'arc', 'distill', 'leech', 'landing', 'collision', 'antidote', 'siphon']);
 // A form as a card's detail prints it: 「破綻 · rule」, or a plain form's rule alone.
 const formRule = (id) => (PLAIN_FORMS.has(id) ? FORM_RULES[id][1] : FORM_RULES[id].join(' · '));
 // What 解厄 lifts. The prices of a summit (露空, 無守, 立樁, 曲終) are left out on purpose, so a
@@ -98,22 +98,10 @@ function contactPlan(s, u, t, art, forms, step, boss) {
     extra += n;
     notes.push('餘毒轉成 ' + n + ' 威力');
   }
-  if (has('still') && !u.moved) {
-    extra += 5;
-    notes.push('定勢 · 首段 ＋5');
-  }
-  if (has('collision') && (art?.push || has('pull')) && !step) {
+  // 擊退: a push whose way is blocked lands harder; so does a pull that carries the plain form.
+  if (!step && (art?.push || (has('collision') && has('pull')))) {
     extra += 7;
-    notes.push('撞關 · 去路受阻，首段 ＋7');
-  }
-  let partner = null;
-  if (has('flank') && s && (u.x === t.x || u.y === t.y)) {
-    const other = standing(s, t.x + Math.sign(t.x - u.x), t.y + Math.sign(t.y - u.y));
-    if (other && other !== u && other.side === u.side) {
-      partner = other;
-      extra += 7;
-      notes.push('夾擊 · 首段 ＋7');
-    }
+    notes.push((art?.push ? '擊退' : '牽引') + '受阻 · 首段 ＋7');
   }
   const effects = [];
   if (has('mark') && !spentMark) effects.push({ kind: 'mark', power: 1, turns: 2 });
@@ -123,8 +111,6 @@ function contactPlan(s, u, t, art, forms, step, boss) {
   else if (has('seal')) notes.push('局主已換氣，本回合抵抗截勁');
   return {
     extra,
-    partner: partner?.id,
-    partnerMp: partner ? Math.min(4, partner.maxMp - partner.mp) : 0,
     spentMark,
     spentPoison,
     clearPoison: !!(has('antidote') && c.poison && u.conditions?.poison),

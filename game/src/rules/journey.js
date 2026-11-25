@@ -1047,8 +1047,8 @@ const fallIndex = (s, id) => s.tally?.falls.findIndex((f) => f.id === id) ?? -1;
 const masterNames = (map, board) => board.masters.map((ref) => pieceName(map, ref)).join('與');
 // The heroes a secondary may name: the lineup as the board is built.
 const lineup = (s) => s.run.next.map((id) => G.find(s, id)).filter(Boolean);
-// Whether a hero can make a 合招: a form that spends a mark or poison, or strikes with a partner.
-const COMBO_FORMS = ['exploit', 'distill', 'flank'];
+// Whether a hero can make a 合招: a form that spends a mark or poison another laid.
+const COMBO_FORMS = ['exploit', 'distill'];
 function hasCombo(u) {
   const arts = ['signature', ...(u.learned || []).filter((id) => TECHNIQUES[id]?.kind !== 'basic')];
   const forms = [
@@ -1168,7 +1168,7 @@ const SIDE_KINDS = {
     name: () => '合招制敵',
     sort: 'reach',
     eligible: (s) => lineup(s).some(hasCombo),
-    detail: () => '以合招擊倒一名敵人：引爆餘毒、乘破綻或夾擊的一擊。',
+    detail: () => '以合招擊倒一名敵人：引爆餘毒或乘破綻的一擊。',
     state: (s) => (s.tally?.falls.some((f) => f.combo) ? 'met' : 'open'),
     progress: () => '',
     lost: () => ''
@@ -1273,7 +1273,7 @@ function sideForecast(s, u, t, f) {
     id: target.id,
     by: u.id,
     how: art ? 'art' : 'basic',
-    combo: !!(f.plan?.spentMark || f.plan?.spentPoison || f.plan?.partner),
+    combo: !!(f.plan?.spentMark || f.plan?.spentPoison),
     answered: !!art?.answer && G.strikeFactor(s, u, art, target).notes.some((n) => n.startsWith('破招')),
     round: s.round,
     phase: s.phase
