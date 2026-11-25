@@ -4,7 +4,7 @@ import { FerryCamera } from './camera.js';
 import { makeScenery, decorateWorld, Cutaway } from './environment.js';
 import { SoftwareScene } from './software.js';
 import { ActorLayer } from '../actors/actors.js';
-import { PULSE_MS } from '../actors/zones.js';
+import { PULSE_MS, PEEK_MS } from '../actors/zones.js';
 // Tap again to take the enemy behind (BattleBoard.tapPick): within this long, and this near.
 const CYCLE_MS = 6000,
   CYCLE_PX = 22,
@@ -217,7 +217,10 @@ class BattleBoard {
     this.onCamera?.();
   }
   focusSelected() {
-    const u = this.s && G.find(this.s, this.s.selected);
+    this.focusPiece(this.s && G.find(this.s, this.s.selected));
+  }
+  // The view brought to one piece, near enough to read it (定位俠客; 求敗's pinned gauge).
+  focusPiece(u) {
     if (!u || this.title) return;
     this.view.focusTile(u.x, u.y, Math.max(1.45, this.zoom));
     this.changed();
@@ -262,13 +265,17 @@ class BattleBoard {
     this.layers.pose(u, t, kind, origin);
   }
   // The tiles the aimed art reaches swell for a moment (actors/zones.js, reachPulse): what the
-  // board shows when an enemy outside them is tapped.
+  // board shows when an enemy outside them is tapped. A reach not drawn (hideAim: the basic
+  // strike after a walk, not yet picked) is drawn for that moment and then hidden again.
   pulseReach() {
-    this.layers.reachPulse = performance.now();
+    const now = performance.now(),
+      hidden = this.layers.hideAim;
+    this.layers.reachPulse = now;
+    this.layers.peekAim = hidden ? { at: now, unit: this.s?.selected, mode: this.mode } : null;
     this.draw();
     // With motion off nothing else would redraw the board to take the highlight away again.
     clearTimeout(this.pulseTimer);
-    this.pulseTimer = setTimeout(() => this.draw(), PULSE_MS + 40);
+    this.pulseTimer = setTimeout(() => this.draw(), (hidden ? PEEK_MS : PULSE_MS) + 40);
   }
   // ---- Combat feel: camera direction (polish switch cameraFollow; see scene/camera.js) ----
   // The enemy phase begins (true) or hands back to the player (false).
@@ -415,8 +422,8 @@ class BattleBoard {
         : null;
     return pick;
   }
-  // The next tap on the same spot takes the same enemy again, not the next one: the game
-  // asked for that tap (an enemy out of reach: once more to read his page).
+  // The next tap on the same spot takes the same enemy again, not the next one: the first tap
+  // was spent on him (an enemy out of reach: once more reads his page).
   holdCycle() {
     if (this.cycle) this.cycle.hold = true;
   }
@@ -490,6 +497,7 @@ class BattleBoard {
           g = piece ? { x: piece.x, y: piece.y } : pick;
         if (g?.x !== this.hover?.x || g?.y !== this.hover?.y) {
           this.hover = g;
+          this.pointerHover = true;
           this.onHover?.(g?.x, g?.y);
           this.draw();
         }
@@ -498,6 +506,15 @@ class BattleBoard {
     el.addEventListener('pointerleave', () => {
       if (!this.pointers.size) clearHover();
     });
+    // The tile label goes when the pointer leaves the board, also where no leave reaches it: the
+    // pointer onto a control, a page or a card laid over the board, or out of the window. Only a
+    // hover the pointer made (not a tile the keyboard is on) and not while a drag holds it.
+    const away = (e) => {
+      if (this.hover && this.pointerHover && !this.pointers.size && !el.contains(e.target))
+        clearHover();
+    };
+    document.addEventListener('pointerover', (e) => e.pointerType !== 'touch' && away(e), true);
+    document.documentElement.addEventListener('pointerleave', (e) => away(e));
     const release = (e, cancel) => {
       if (!this.pointers.has(e.pointerId)) return;
       this.pointers.delete(e.pointerId);
@@ -550,6 +567,7 @@ class BattleBoard {
       b.addEventListener('focus', () => {
         this.keyboardIndex = index;
         this.hover = { x, y };
+        this.pointerHover = false;
         const p = this.view.tile(x, y);
         if (p.x < 0.04 || p.x > 0.96 || p.y < 0.07 || p.y > 0.93) {
           this.view.focusTile(x, y);

@@ -85,8 +85,8 @@ tools/
 
 Every visual upgrade layered on the original look has a switch in `game/src/polish.js`: board
 pieces, combat effects, lighting and water, panel finish, the loading veil, and the added
-controls (danger zone, `Tab` to the next hero, the side-docked strike forecast, and the
-action flow that replaces the four-button command bar), the painted skill effects, and the
+controls (danger zone, `Tab` to the next hero, the side-docked strike forecast, the
+action flow that replaces the four-button command bar, and the key hints on the battle's buttons), the painted skill effects, and the
 marks for reinforcements and the secondary objective on the board. `statusLooks` draws the states that hold a piece on the board: 定身 freezes the figure frost-white, 閉穴 hangs a sealed talisman at its hands, 受制 turns its base, outline and health bar green-gold, 金剛 puts a gold ring and sheen on the hero and shows 無功 for a voided blow, and 固守 raises a stone ward, each with a short flourish as it starts and ends. (The outline of the tiles a two- or three-tile splash will catch is a rule the player needs, so it has no switch.) Set a switch to
 `false` to turn that one feature off; nothing else needs to change.
 
@@ -100,7 +100,7 @@ rule there is scoped under an `html.polish-…` class that the switch controls.
 
 The briefing page (軍情) and the deployment step before round one are game flow, not polish:
 
-整備 (and the team page in battle and in the shop) has three tabs, 陣容 · 武學 · 裝備物資. Each 陣容 card shows the hero's numbers, equipped arts and unspent 武學點; tapping a card opens a pane beside the line-up with the whole sheet, the line-up buttons and 修習, which opens the 武學 tab (the skill tree, the slots and the manuals) for that hero. Weapons, armour and manuals change only here and on the shop's team page; in battle the 裝備物資 tab only gives medicine (`canOutfit` in `game.js`; the producer, 2026-11-25). This is game flow, not polish: its styles are in `styles/17-preparation.css`, with no switch.
+整備 (and the team page in battle and in the shop) has three tabs, 陣容 · 武學 · 裝備物資. Each 陣容 card shows the hero's numbers, equipped arts and unspent 武學點; tapping a card opens a pane beside the line-up with the whole sheet, the line-up buttons and 修習, which opens the 武學 tab (the skill tree, the slots and the manuals) for that hero. A 陣容 card drags onto another seat, and an item in 裝備物資 onto a hero (`ui/panel-drag.js`). With a mouse a drag starts once the card has moved a few pixels; on a touch screen only once the finger has been held still on it for 0.3 s (`HOLD_MS`; the producer's ruling of 2026-11-25, playtest R-04), when the card lifts, and any movement before that is a scroll, so a swipe that starts on a card scrolls the page. This is game flow, not polish: its styles are in `styles/17-preparation.css`, with no switch. Weapons, armour and manuals change only here and on the shop's team page; in battle the 裝備物資 tab only gives medicine (`canOutfit` in `game.js`; the producer, 2026-11-25). This is game flow, not polish: its styles are in `styles/17-preparation.css`, with no switch.
 they have no switch. Their styles are in `styles/14-battles.css`.
 
 ## The five 境界 (difficulty)
@@ -127,16 +127,64 @@ fifteen boards a run draws from; the entry marked `last` in `game/src/data/battl
   stronger there than a copied piece (`LAST_BOON` in `journey.js`: 氣血 +100, 內力 +40, 攻擊 +10,
   防禦 +6, a step more), added once as the company is mustered. Across the board are 求敗, at the
   centre with a dry twig, and the masters of the ten boards the run met (`guest` pieces): the
-  first five from the start; two more step to his side the moment he is at half his 氣血, and
-  the last three when a quarter is left (waves with `when: { below }`, `rally` in `game.js`;
-  they enter at once on the free tiles nearest him, with no round's notice).
-- **How they guard him.** From half on, a master beside 求敗 takes the heroes' direct blows for
-  him (`coverer`), and the masters keep to his side. With a quarter left he falls back
-  (`withdraw` in his traits): to the tile in his walk farthest from the heroes with most of his
-  own beside it, striking from there only if someone is in reach.
+  first five from the start; two more step to his side the moment he takes up 木劍, and the last
+  three when he comes to 無劍 (waves with `when: { stage }`, `rally` in `game.js`; they enter at
+  once on the free tiles nearest him, with no round's notice).
+- **How they guard him.** From 木劍 on (`guarded` in his stages), a master beside 求敗 takes the
+  heroes' direct blows for him (`coverer`), and the masters keep to his side; in 無劍 no one takes
+  無名's blows for him, the last stage being a duel. He no longer falls back at a quarter:
+  無劍's step to 無名's side took its place.
+- **His five swords (五劍, the producer, 2026-11-25).** 求敗 fights in five stages named after the
+  swords of his tomb, each a fifth of his 氣血 and harder than the last (`stages` in his traits;
+  `stageOf` in `game.js` gives the stage for any 氣血, and every rule of the stages reads it there):
+  a stage ends at 80%, 60%, 40% and 20%, and the next begins.
+  - 利劍: each of his blows lands twice, the second at three tenths of the first, and so does his
+    counter (`twice: 0.3`).
+  - 軟劍: his reach is three tiles, and a hero his blow lands on is pulled to the free tile beside
+    him nearest where he stood, as 擒拿 pulls (`reach: 3`, `pull: true`; `dragNear`).
+  - 重劍: he walks one tile a turn; each blow also strikes every other hero beside him at three
+    tenths and then throws every hero beside him a tile back; his blows pass 代受, and 固守's 防禦
+    does not count against them (`step: 1`, `round: 0.3`, `shove`, `pierce`; `roundSweep`,
+    `shoveAll`).
+  - 木劍: he acts twice a round, standing his ground and striking each time (`turns: 2`, `step: 0`;
+    `enemyAct`: the design's walk in each action is tuned to none, see below); 定身, 閉穴, 失神, 封穴, 纏械 and 受制 do nothing to him (`unheld`, so that nothing
+    holds him: a strike's forecast drops them, and any on him comes off as he takes up the sword,
+    `unhold`); every blow on him is cut by two tenths (`cut: 20`, through `stanceCut`).
+  - 無劍: before he acts each round he is at 無名's side at once (`blink`): on the free tile beside
+    無名 with the fewest other heroes beside it, then the most of his own, then the topmost and
+    leftmost; with none free, the nearest free tile by the same order; already beside him, he
+    stays (`blinkTile`). Only 無名's blows bring this last bar down (`solo: 'youth'`): any other
+    blow, counter, splash or poison takes nothing off him (`untouched`, in `received` and `wound`),
+    and the forecast and the board say 無功 as for 金剛. The win is unchanged.
+  The numbers were tuned with `node tools/sim-battles.mjs --last --runs 200 --seed 1` to the
+  producer's target of a third to a half: 39% (35% and 50% at seeds 2 and 3), against 44% before
+  the stages. 木劍's second action is what weighs most: with a tile's walk in each action the same
+  player won 31%, 25% and 34% at seeds 1 to 3, and with a walk in the first only 33%, 29% and 39%.
+  The simulator learns
+  the stages from `forecast`; its danger map is also told that in 無劍 he arrives beside 無名, that
+  in 利劍 his blows land twice, and that in 木劍 he strikes twice, the second time after another
+  walk if he has one (`threatMap`). His 變招 at half (in 重劍) now adds 攻擊 +4 only: his step is the stage's.
+- **His five bars.** His 氣血 is shown as five bars, one a stage, and the next appears full in its
+  own colour when one empties. The colours heat as the danger rises, from cold
+  steel through violet to a hot rose, clear of the heroes' jade, the enemies' vermilion, the amber
+  of a low bar and the blue of 內力, and every bar names its sword as well. Wherever his 氣血 is
+  shown it is the bar he is on with his real figures: the board's gauge, a gauge pinned at the top
+  of the battlefield (`ui/boss-gauge.js`; under the plaque on a desktop, across the top under the
+  top row on an upright phone, beside the plaque on a sideways phone; a press brings the view to
+  him), 敵情查探, 交鋒預覽 and the goals page. On the board he carries a round 求 seal and a ring in
+  the bar's colour instead of the 主 every master has, painted over the figures around him; in
+  軍情's plan he is a round 求 with his name in the key. When a bar empties the tip line names the
+  new stage's way of fighting (求敗換劍 · 軟劍 · 射程 3 格，擊中便把人扯到身旁, from `stageNote`,
+  which builds the line from the stage's numbers) and the log keeps 利劍已盡，換作軟劍。 (`noteStage`
+  in `app.js`). 敵情查探 lists all five with what each does, the one he is in marked; 交鋒預覽 shows
+  his double counter, the cut, the holds that do nothing, 無劍's 唯無名傷得了他 with 0 for any other
+  hero, and what his own blows do in 軟劍 and 重劍.
 - **No secondary.** 韋小寶 opens no book on the last board (`sides: []`, `run.side` is null),
   and its pages show no 支線.
-- **How it is won (問劍, kind `yield`).** 求敗 is 不敗 and never falls: bring him to 1 氣血. No 破招
+- **How it is won (問劍, kind `yield`).** 求敗 is 不敗 and never falls: bring him to 1 氣血. 軍情's
+  勝利 says it plainly, and the one thing more a player must know: only 無名 can bring the last
+  stage down (`soloWords` in `journey.js`; the producer, 2026-11-25: the winning condition in
+  simple terms). No 破招
   answers him (無招), and he does not counter the blow that ends it. If 無名 falls or the twelve
   rounds run out the board is lost, and the ten boards of 無劍境界 must be won again to reach it.
   The masters there are their own men: no post, no change at half, and their traits as strong as
@@ -158,6 +206,38 @@ fifteen boards a run draws from; the entry marked `last` in `game/src/data/battl
 Its numbers are its own (`LAST_ROWS` in `game/src/rules/game.js`), measured with
 `node tools/sim-battles.mjs --last`. The design is in `wiki/content/世界觀設定.md` §8.4 and
 `wiki/content/單輪劇本.md` §9.5.
+
+## Saves
+
+The game keeps four saves in the browser's `localStorage`, and the player's lasting record apart
+from them (`game/src/rules/saves.js`; the pages are in `game/src/ui/save-views.js`):
+
+| Key | What it holds |
+| --- | --- |
+| `jianying.qingzhudu.chapter1.v1` | 自動存檔: the game being played, written after nearly every action. The title's 繼續 continues it. |
+| `jianying.qingzhudu.slot1.v1` to `slot3.v1` | 存檔一 to 存檔三: `{ at, save }`, a game the player saved by hand and when. |
+| `jianying.qingzhudu.record.v1` | The lasting record: the run's `chronicle` (境界 opened and won, runs finished, the ending seen, 悟, the boards seen, the parcel the shop keeps for the next run). |
+
+存檔・讀檔 opens the page of the four saves: from the title, from the battle's 選單 (beside 主畫面),
+from 設定, and as 存檔 in the head of the pages between boards (the stories, 軍情, 整備, the shop).
+Each save shows the board and round (or the page between boards), the 境界, the heroes and when it
+was saved; an empty one says 空. Saving into a filled slot asks first; loading asks first when
+the autosave holds a run still under way. A slot loaded is copied into the autosave and played
+on from there.
+
+Every save still carries its own copy of the chronicle, so it loads alone (`restoreRun` checks
+it) and an older build can read it. Whatever is loaded takes the record in place of that copy,
+merged so that nothing goes back (`mergeRecord`): every count is the higher, every list the union.
+The parcel is the exception, since a new run takes it: it is always the record's, so an older
+slot can neither empty it nor hand it out twice. A save from before the slots (the autosave
+alone) gives its chronicle to the record the first time it loads, and is otherwise left as it was.
+
+另開新局 asks before replacing a run under way, naming its board, and offers to save it into a
+slot first (先存檔). With the game open in two tabs, a tab that sees another write the saves (the
+`storage` event on these keys) stops saving at once and says so, with 在此頁接手 to load the
+page again from storage. The draw being set up (`jianying.tenfold.pending-lots.v1`) and the
+tutorial's record stay per browser: the draw is kept for the run it follows (its `source` is that
+run's seed), so a loaded slot simply draws afresh.
 
 ## Developer mode
 
@@ -191,6 +271,8 @@ In a battle, from its story, briefing or 整備 as well:
 - 速敗 loses it;
 - 局主半血, once the fight is on, takes half of what 氣血 the board's master has, as a blow would
   (`devPress`): his 變招 follows, and on the last board two presses bring all ten masters on.
+  From full, the presses take 求敗 to 重劍, 木劍 and 無劍; 軟劍 needs a blow. On the last board the
+  press is no blow, so 無劍's rule that only 無名 hurts him does not stop it.
 - 重試此局 puts the run back to the board's 起陣, everything as it was then: the heroes, the purse
   and the record (`retryPoint` in `app.js`). The run is copied the first time a board reaches
   起陣 and kept for the tab in `sessionStorage` (`jianying.dev-retry.v1`). The button stays while
@@ -218,7 +300,8 @@ film, the empty record, the first board's tutorial):
 
 - 清空紀錄 puts this browser back to the state of someone who has never opened the game and loads
   the page again at the title. Every key the game keeps in the browser goes (all begin with
-  `jianying.`: the save, the settings, the draw being set up, the tutorial's record), except
+  `jianying.`: the autosave, the three slots, the record, the settings, the draw being set up,
+  the tutorial's record), except
   developer mode's own, which begin with `jianying.dev-` (that it is on, the last 試局 pick, the
   window's place).
 - 清空・首局 does the same and then opens on the first board's 起陣 in an ordinary first run: a
@@ -238,16 +321,26 @@ The first time someone plays, the first board (青竹渡) carries coach marks: a
 
 What the board does for every player, tutorial or not (the playtest of 2026-11-22, R-14 to R-16, and the producer's notes of 2026-11-23):
 
-- **An enemy out of reach.** With an art ready, the first tap on an enemy the art cannot reach says why in the board's message (naming the diagonal case: 斜角不算相鄰) and swells the tiles the art does reach (`pulseReach` in `scene/board.js`); the same enemy tapped again opens 敵情查探 (`unitClick` in `app.js`). With no art ready a tap opens it at once.
+- **An enemy out of reach.** With a blow ready, an art picked or (after a walk) the basic strike whose reach is not drawn, the first tap on an enemy it cannot reach only swells the tiles the blow does reach (`pulseReach` in `scene/board.js`; a reach not drawn shows for that moment, `PEEK_MS` in `actors/zones.js`, and goes again); the same enemy tapped again opens 敵情查探 (`unitClick` in `app.js`). Before a walk, or with no blow ready, a tap opens it at once. The first tap puts up no message (the producer's ruling, 2026-11-25: a tap that does nothing tells the player to try something else); until then it said why in the board's message for four seconds.
 - **The whole figure is the target.** A tap is measured against each figure as it is drawn, the sprite's own shape and not only the tile under it (`actors/figure-pick.js`, `resolveBoardPick` in `scene/board.js`): the figure in front wins, an aimed art prefers a piece it can be used on, and a fingertip may land a little beside a figure. Open ground beside a figure is still the tile.
-- **A way back to walking.** While an art is ready and the hero has not walked, the arts list ends with 走位, which shows the walk tiles again (`walkRow` in `ui/action-flow.js`); a tap on open ground the art has no use for does the same, and so does Esc.
-- **Enemies in a crowd** (2026-11-23). A tap again on the same spot within six seconds takes the next enemy behind the one taken last, then the front one again (`tapPick` in `scene/board.js`); heroes are left out, since a second tap on a hero opens his list. The second tap that an out-of-reach message asks for stays on the same enemy (`holdCycle`). The view also zooms to 340% (`MAX_ZOOM` in `scene/camera.js`; it was 240%).
+- **A way back to walking.** While an art is ready and the hero has not walked, the arts list ends with 走位, which shows the walk tiles again (`walkRow` in `ui/action-flow.js`); a tap on open ground the art has no use for does the same, and so does Esc once the list is closed.
+- **Enemies in a crowd** (2026-11-23). A tap again on the same spot within six seconds takes the next enemy behind the one taken last, then the front one again (`tapPick` in `scene/board.js`); heroes are left out, since a second tap on a hero opens his list. The second tap on an enemy out of reach, which opens his page, stays on the same enemy (`holdCycle`). The view also zooms to 340% (`MAX_ZOOM` in `scene/camera.js`; it was 240%).
 - **No reach drawn until an art is picked** (2026-11-23). A hero who has walked, or is held in place, has the basic strike ready, but its red tiles appear only once an art (the basic strike included) is picked from the list (`aimHidden` in `app.js`, `hideAim` in the board and the actor layer). A tap on an enemy in the basic strike's reach still opens 交鋒預覽 for it.
-- **An art's full rules.** A long press on an entry of the arts list, a resting mouse pointer or keyboard focus shows a card with everything `moveFacts` knows about the art (濺射, 擊退, 連擊, conditions, 破招 …) and its description (`ui/art-detail.js`, `styles/19-art-detail.css`). The press only reads: the tap that ends it does not pick the art.
+- **An art's full rules.** A long press on an entry of the arts list, a resting mouse pointer or keyboard focus shows a card with everything `moveFacts` knows about the art (濺射, 擊退, 連擊, conditions, 破招 …) and its description (`ui/art-detail.js`, `styles/19-art-detail.css`). The press only reads: the tap that ends it does not pick the art. A card the mouse opened closes as soon as the pointer is off its entry (2026-11-25), and any card closes when its art is picked or the list closes; a tile's label under the board goes when the pointer leaves the board.
 
 - **When it shows.** Once per browser (`jianying.tutorial.v1` in the browser's storage), on the first board of an ordinary run, for a record with no board won and no run finished; not in a 試局, not in a run with 無名 on the board, and not under `game/?classic`. 略過指引 ends it at once, and so does the end of the board.
 - **Seeing it again.** In any battle, 選單 › 指南 › 重看新手指引 plays it from the top on the board being fought.
 - **Where it is.** `game/src/ui/tutorial.js` (the steps and how each ends), `game/src/data/tutorial-text.js` (every word it shows, in one place) and `game/styles/18-tutorial.css` (where the card sits on each screen format). `app.js` only installs it and calls it when the game repaints.
+
+## The keyboard
+
+The producer's rulings of 2026-11-25 (the playtest's R-59 to R-62). Touch is untouched by all of it.
+
+- **Enter is the red button.** Every page's main action is the gold `gold-btn` in its footer (`primaryButton` in `app.js`). A page opens with the focus on it (`startFocus`), and Enter presses it wherever the focus is, unless the focus is on another control, which Enter presses as usual; with no red button the focus goes to the page's body. × is never where the focus starts. On 結束我方回合 a second E is 結束回合 too. On the title, Enter is 入夢 or 繼續 from the first moment.
+- **Stories and the prologue.** Enter, Space and → turn the line, ← goes back where there is 上一句; a key held down turns one line, and no single key skips a scene. A click or a tap on the words or the picture turns the line too (the tap since 2026-11-25), as does a tap outside the box.
+- **The films.** Space pauses and resumes, with a small 暫停 sign; Esc is 略過. The focus starts on the film, not on 略過, and the game's own keys wait while a film plays.
+- **Esc in battle only closes or lets go**, one thing a press: an open list or panel, then the art picked (back to the walk tiles for a hero who has not walked); with nothing open it opens the 選單, and the next Esc closes it. **Backspace** takes back a walk, as 撤步 does. Esc never does.
+- **Key hints.** 結束回合 (E), the arts list's first four rows (1 to 4), 撤步 (Backspace) and the 選單 (Esc) carry their key in a small mark, only on a device with a fine pointer (`keyHint` in `ui/field-extras.js`, the `keyHints` switch; never by the screen's width). The guide (操作指南) lists every key first, under 按鍵, hidden on touch screens; the list is `flowHotkeys` in `ui/action-flow.js`, `extraHotkeys` in `ui/field-extras.js` and `pageHotkeys` in `ui/panels.js`, which the wiki's 按鍵 page reads too.
 
 ## How the story is put together
 
@@ -350,8 +443,8 @@ When the wiki needs something new from the game, export it from the game module 
 
 `game/src/data/rule-terms.js` holds the game's rule words (連環, 代價, 升降, 坐鎮, 勝負 …), one sentence each, and the paragraphs of the in-game guide. The guide (`ui/panels.js`, `helpPage`) and the wiki's 戰鬥規則 section both read it, so a rule is worded once.
 
-- **Few words, on purpose.** A rule is a word only if it leaves a state on a piece the player must track, or many cards share it, and the player meets it often (the producer, Q-N132 and Q-N152; 0.46). Everything else is said in a plain sentence on its own card (`rules/move-facts.js`), item or enemy page (`enemyTraitLines` in `rules/game.js`), and its field is listed in `PLAIN_FIELDS`; a 戰鬥效果 of that kind is in `PLAIN_FORMS` (`rules/form-rules.js`), whose name is a short phrase rather than a word. The six stat ups and downs share one word, 升降, and the four prices of a summit one word, 代價; the 勝負 entry has a line for each way a board is won (`OUTCOMES`), and the wiki a page for each.
-- **What the in-game guide shows** (Q-N152, 0.46). The words are taught in tiers. 基本規則 comes first and open: the first tier (`FIRST_TIER`), the words of the first boards: 還擊, 免受還擊, 濺射, 擊退, 療傷, 待命, 連環, 點穴 (one idea in three steps, 截勁 → 閉穴 → 定身), 中毒, 護盾, 領隊陣法, 勝負. In a battle, 本局所見 follows: of the other words, only those something on the board carries (`carriedWords` in `rules/rule-words.js`: the learned and equipped arts of the heroes on the board, the items worn and in the stores, the enemies' traits and the states their signatures lay, any state on a living piece, a laid 布陣, the secondary, and 援軍 once a wave is announced or on the board). 其餘規則 holds the rest, under their groups' titles, one tap away. Outside a battle there is no 本局所見 and 其餘規則 holds every other word. The three 戰鬥效果 that are words (破綻, 截勁, 牽引) are listed with the terms (`FORM_WORDS`). The how-to paragraphs follow the words. The wiki lists every word, and its tests of which arts, items and enemies carry a word are the same functions (`artWords`, `itemWords`, `traitWords`).
+- **Few words, on purpose.** A rule is a word only if it leaves a state on a piece the player must track, or many cards share it, and the player meets it often (the producer, Q-N132 and Q-N161; 0.51). Everything else is said in a plain sentence on its own card (`rules/move-facts.js`), item or enemy page (`enemyTraitLines` in `rules/game.js`), and its field is listed in `PLAIN_FIELDS`; a 戰鬥效果 of that kind is in `PLAIN_FORMS` (`rules/form-rules.js`), whose name is a short phrase rather than a word. The six stat ups and downs share one word, 升降, and the four prices of a summit one word, 代價; the 勝負 entry has a line for each way a board is won (`OUTCOMES`), and the wiki a page for each.
+- **What the in-game guide shows** (Q-N161, 0.51). The words are taught in tiers. 基本規則 comes first and open: the first tier (`FIRST_TIER`), the words of the first boards: 還擊, 免受還擊, 濺射, 擊退, 療傷, 待命, 連環, 點穴 (one idea in three steps, 截勁 → 閉穴 → 定身), 中毒, 護盾, 領隊陣法, 勝負. In a battle, 本局所見 follows: of the other words, only those something on the board carries (`carriedWords` in `rules/rule-words.js`: the learned and equipped arts of the heroes on the board, the items worn and in the stores, the enemies' traits and the states their signatures lay, any state on a living piece, a laid 布陣, the secondary, and 援軍 once a wave is announced or on the board). 其餘規則 holds the rest, under their groups' titles, one tap away. Outside a battle there is no 本局所見 and 其餘規則 holds every other word. The three 戰鬥效果 that are words (破綻, 截勁, 牽引) are listed with the terms (`FORM_WORDS`). The how-to paragraphs follow the words. The wiki lists every word, and its tests of which arts, items and enemies carry a word are the same functions (`artWords`, `itemWords`, `traitWords`).
 - **Adding a mechanic:** add its term there, with the field that carries it (`art`, `item`, `trait`, `condition` or `form`; a term may name a list of them), or list the field in `PLAIN_FIELDS` and have the card say it. The wiki gives a term a page and lists every art, item and enemy that has it, and those pages link back.
 - **The marks on a piece** (`STATUS_SIGNS` in `game/src/actors/tokens.js`): one character from each condition's name; a stat that went up or down shows 攻, 防 or 移 with an arrow in the badge's corner, a price what it holds back with a lock (解厄 cannot lift it), and 亂氣 its layers (`STATUS_MARKS`). The wiki's 棋子上的記號 lists them as 「攻（升）」, 「防（降、鎖）」.
 - **What stops the wiki falling behind:** `node tools/check-wiki.mjs` fails when an art, item or enemy carries a field no term accounts for, when an enemy, board piece, kind of battle or kind of secondary has no page, or when a page shows a value that failed to resolve.
@@ -374,7 +467,7 @@ Builds the catalog and the text listing from the game sources and fails if a pag
 node tools/check-mechanics.mjs
 ```
 
-Builds small battles with the real rules and checks each mechanic of the skill and villain redesign against its specification: conditions from application to expiry, conditional bonuses on and off, use restrictions and their reasons, villain traits, the last board (問劍, 不敗, 無招, the forms that answer a weapon, 無名 joining and leading, new game plus), and old saves loading. One line per check; exits 1 on any failure. Each mechanic is its own block in the file, so a new mechanic adds a block.
+Builds small battles with the real rules and checks each mechanic of the skill and villain redesign against its specification: conditions from application to expiry, conditional bonuses on and off, use restrictions and their reasons, villain traits, the last board (問劍, 不敗, 無招, the forms that answer a weapon, 無名 joining and leading, new game plus), old saves loading, and the save slots (a slot saved and loaded gives the same game, an older slot never lowers the record, a save from before the slots moves over with nothing lost). One line per check; exits 1 on any failure. Each mechanic is its own block in the file, so a new mechanic adds a block.
 
 ### Skill trees
 

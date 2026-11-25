@@ -2,14 +2,16 @@
 // asset-gen/prologue-video, in place of its first pages) and the ending one (asset-gen/finale-video,
 // after the last board is won). A film fills the screen above everything else. There are two cuts on one timeline: 9:16 for a screen taller than wide, 16:9 otherwise; a
 // screen that turns mid-film switches cuts and keeps its place. 略過 leaves at any time; at the end
-// it offers 重看 and 繼續.
+// it offers 重看 and 繼續. On a keyboard Space pauses and resumes and Esc leaves, as 略過 does; the
+// focus starts on the film itself, so no key leaves it by accident (R-60).
 import { art } from './artwork.js';
 import { icon } from './icons.js';
 
 const TALL = '(orientation: portrait)';
 
 let layer = null,
-  unturn = null;
+  unturn = null,
+  unkey = null;
 
 // tall, wide: { file, poster }, picture names in game/assets, for each cut; label: what the film
 // is, for a screen reader; onDone(shown): called once, with true when the player skips or
@@ -25,17 +27,22 @@ function playFilm({ tall, wide, onDone, label = '序幕影片', muted = false })
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', label);
+  layer.tabIndex = -1;
   layer.innerHTML =
     '<video playsinline webkit-playsinline preload="auto"></video>' +
     '<button type="button" class="film-skip" data-film="skip">略過</button>' +
     '<button type="button" class="film-sound" data-film="sound" aria-pressed="true"></button>' +
     '<button type="button" class="film-start" data-film="start" hidden>播放</button>' +
+    '<div class="film-paused" role="status" hidden>' +
+    icon('pause', 18) +
+    '<span>暫停</span></div>' +
     '<div class="film-end" hidden><button type="button" class="film-replay" data-film="replay">重看</button>' +
     '<button type="button" class="film-continue" data-film="continue">繼續</button></div>';
   const video = layer.querySelector('video'),
     end = layer.querySelector('.film-end'),
     skip = layer.querySelector('.film-skip'),
-    start = layer.querySelector('.film-start');
+    start = layer.querySelector('.film-start'),
+    paused = layer.querySelector('.film-paused');
   const media = globalThis.matchMedia?.(TALL);
   const cut = () => (media?.matches ? tall : wide);
   let showing = cut();
@@ -79,14 +86,25 @@ function playFilm({ tall, wide, onDone, label = '序幕影片', muted = false })
   const run = () => {
     end.hidden = true;
     start.hidden = true;
+    paused.hidden = true;
     skip.hidden = false;
     video.play()?.catch?.(() => {
       // The browser wants a tap of its own before it plays with sound.
       start.hidden = false;
     });
   };
+  // Space: held where it is, with a small sign that says so, until Space again.
+  const hold = () => {
+    if (!end.hidden) return;
+    if (video.paused) run();
+    else {
+      video.pause();
+      paused.hidden = false;
+    }
+  };
   video.addEventListener('ended', () => {
     end.hidden = false;
+    paused.hidden = true;
     skip.hidden = true;
     layer?.querySelector('.film-continue')?.focus({ preventScroll: true });
   });
@@ -103,21 +121,36 @@ function playFilm({ tall, wide, onDone, label = '序幕影片', muted = false })
       video.muted = !video.muted;
       showSound();
     }
+    // A button the mouse pressed hands the focus back to the film, so Space still pauses.
+    if (what && e.detail > 0 && layer) layer.focus({ preventScroll: true });
   });
-  layer.addEventListener('keydown', (e) => {
+  // On the document, not the film: a key pressed with the focus nowhere still reaches it. The
+  // game's own keys wait for the film (playingFilm).
+  const keys = (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.key === 'Escape') {
       e.preventDefault();
       finish();
+    } else if (e.key === ' ' && !e.target.closest?.('button')) {
+      e.preventDefault();
+      if (!e.repeat) hold();
     }
-  });
+  };
+  doc.addEventListener('keydown', keys);
+  unkey = () => doc.removeEventListener('keydown', keys);
   doc.body.append(layer);
-  skip.focus({ preventScroll: true });
+  layer.focus({ preventScroll: true });
   run();
 }
+
+// True while a film fills the screen.
+const playingFilm = () => !!layer;
 
 function closeFilm() {
   unturn?.();
   unturn = null;
+  unkey?.();
+  unkey = null;
   const v = layer?.querySelector('video');
   if (v) {
     v.pause();
@@ -128,4 +161,4 @@ function closeFilm() {
   layer = null;
 }
 
-export { playFilm, closeFilm };
+export { playFilm, closeFilm, playingFilm };

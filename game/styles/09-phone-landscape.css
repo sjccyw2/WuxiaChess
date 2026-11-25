@@ -893,7 +893,6 @@
   color: #fff0ce;
   text-shadow: 0 1px 3px #0d140e;
   font: 18px/1 sans-serif;
-  touch-action: none;
 }
 .fo-seat .fo-action,
 .fo-post-label {
@@ -1467,8 +1466,10 @@
 #arts-panel .fo-move:disabled > b {
   color: #dea697;
 }
+/* A swipe that starts on a card scrolls the page: a finger drags a card only after holding it
+   still (ui/panel-drag.js), and the browser's long-press selection and callout stay off it. */
 [data-drag] {
-  touch-action: none;
+  touch-action: pan-x pan-y;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
@@ -1480,6 +1481,8 @@
 }
 #modal .fo-drag-source {
   opacity: 0.65;
+  outline: 2px solid #f1d49a;
+  outline-offset: -2px;
   cursor: grabbing;
 }
 #modal.fo-dragging [data-drop] {

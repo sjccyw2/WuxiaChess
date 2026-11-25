@@ -24,7 +24,7 @@ const PAIRED_HANDS_DESC = '左右手各使一路，在兩格內連擊兩次。';
 // Naming (the producer's rule, 2026-11-22): 「本招・式名」 with 「・」 marks an upgrade, and only the
 // basic attack is upgraded (kind 'basic'). Every other node is a new art in its own slot and has a
 // name of its own; `family` names the art it belongs to (降龍十八掌 for 亢龍有悔), shown beneath it.
-// `boon` names the hero's leader boon, as COMMANDS in rules/battle-mastery.js has it (0.44;
+// `boon` names the hero's leader boon, as COMMANDS in rules/battle-mastery.js has it (0.49;
 // check-mechanics holds the two together).
 const HERO_PATHS = {
   hero: {

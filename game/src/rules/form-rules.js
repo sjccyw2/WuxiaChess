@@ -2,7 +2,7 @@
 //
 // [name, rule]. Most names are rule words (破綻, 截勁, 牽引 …). The ones in PLAIN_FORMS are not:
 // their name is a short plain phrase, and a card prints their rule as a sentence, not as a word
-// to learn (the producer, Q-N132 and Q-N152).
+// to learn (the producer, Q-N132 and Q-N161).
 const FORM_RULES = {
   mark: ['破綻', '命中後在目標身上留下兩回合破綻。同一擊若已乘破綻，便不重留。'],
   exploit: ['破綻', '乘目標已有的破綻出手，首段威力加 9，該敵無法還擊，破綻隨之收去。'],

@@ -58,7 +58,7 @@ const COMMANDS = {
     text: '每有一名敵人相鄰，攻擊增加 3，至多增加 6。',
     icon: 'flag'
   },
-  // 靈鷲宮: the master who drew the 生死符 out of every man in the hall (0.45).
+  // 靈鷲宮: the master who drew the 生死符 out of every man in the hall (0.50).
   xuZhu: {
     name: '靈鷲慈心',
     stat: 'mercy',
@@ -179,7 +179,7 @@ const CONDITION_NAMES = {
   taunt: '挑釁',
   evade: '閃身',
   redirect: '挪移',
-  // The four prices of a summit go by one word, 代價; the state says which (Q-N152, P4).
+  // The four prices of a summit go by one word, 代價; the state says which (Q-N161, P4).
   recoil: '代價',
   unguarded: '代價',
   rooted: '代價',
@@ -295,7 +295,7 @@ function applyCondition(s, target, effect, caster) {
     source: owner
   };
 }
-// `struck` (enemy blows taken, 0.45) is newer than the rest: a record saved before it has none,
+// `struck` (enemy blows taken, 0.50) is newer than the rest: a record saved before it has none,
 // and counts from 0.
 function blankRecord() {
   return { kills: 0, casts: 0, heals: 0, protects: 0, steps: 0, struck: 0, sides: [] };

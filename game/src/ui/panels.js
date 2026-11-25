@@ -10,8 +10,10 @@ import { fieldSize, fieldCells, terrainTypes, mapLayout, tileInfo } from '../dat
 import { NUMERALS, guideInventory, acceptsGuide, briefing, boardBrief, sideForecast, mapAt, stagesOf, stageTitle, TENTH } from '../rules/journey.js';
 import { seatsFor } from '../rules/formation.js';
 import { POSTS, boardPlan, planGrid, planKey } from './board-plan.js';
+import { stageRow, stageTicks, stageWords } from './boss-gauge.js';
 import {
   DETAILS,
+  stageOf,
   unitDetails,
   enemyTechnique,
   enemyTraitLines,
@@ -67,7 +69,7 @@ import { itemPicture } from './item-art.js';
 import { POLISH } from '../polish.js';
 import { guideEntries } from '../data/rule-terms.js';
 import { carriedWords } from '../rules/rule-words.js';
-import { extraHotkeys } from './field-extras.js';
+import { extraHotkeys, keyHint } from './field-extras.js';
 import { ON as actionFlow, anyIdle, flowHotkeys } from './action-flow.js';
 const portraits = {
   huang: 'huang',
@@ -181,7 +183,7 @@ function renderParty(s) {
 // What the hero's own last turns have readied, shown while he can still act (SPEC-mechanics §4):
 // he did not strike last turn, so an equipped art that needs it (`poised`) may be used; an enemy
 // hurt him in the last enemy phase, so an equipped art that pays it back (`avenge`) is stronger.
-// Plain facts, not rule words (Q-N132, Q-N152).
+// Plain facts, not rule words (Q-N132, Q-N161).
 function turnPips(s, u) {
   if (s.phase !== 'ally' || !canAct(s, u)) return '';
   const arts = equippedArts(u).map((id) => artFor(u, id));
@@ -267,9 +269,9 @@ function commander(s, mode, { picked = false } = {}) {
         : '') +
       btn(
         'end',
-        icon('end', 18) + '<span>結束回合</span>',
+        icon('end', 18) + '<span>結束回合</span>' + keyHint('E'),
         'field-action turn-action' + (s.phase === 'ally' && !anyIdle(s) ? ' ready' : ''),
-        'title="結束回合" ' + (s.phase !== 'ally' ? 'disabled' : '')
+        'title="結束回合" aria-keyshortcuts="E" ' + (s.phase !== 'ally' ? 'disabled' : '')
       )
     );
   }
@@ -404,11 +406,12 @@ function conditionChips(s, u) {
 function sheetPage(s, id) {
   return titleHead('people', '俠客錄') + allyPick(s, id) + profileContents(s, id);
 }
-function profileContents(s, id) {
+// `preview`: read only, a hero not yet in the run (抓子's 俠客詳情): no buttons to other pages.
+function profileContents(s, id, preview = false) {
   const u = find(s, id);
   // The tile the hero stands on and what it does: only on the board, in a battle.
   const location =
-    s.units.includes(u) && s.run?.status !== 'camp' && s.run?.scene !== 'prep'
+    !preview && s.units.includes(u) && s.run?.status !== 'camp' && s.run?.scene !== 'prep'
       ? tileInfo(u.x, u.y, s.mapIndex)
       : null;
   return (
@@ -440,7 +443,7 @@ function profileContents(s, id) {
     '</div><div><h4>隨身裝備</h4>' +
     equippedCard(u, u.weapon, '兵器') +
     equippedCard(u, u.gear, '護具／佩飾') +
-    btn('inventory', '整理行囊 ' + arrow, 'text-btn inline') +
+    (preview ? '' : btn('inventory', '整理行囊 ' + arrow, 'text-btn inline')) +
     '</div></div>' +
     '<div class="skill-feature">' +
     icon(basicFor(u).icon || 'sword', 23) +
@@ -451,7 +454,7 @@ function profileContents(s, id) {
       .map((id) => artFor(u, id).name)
       .join('、') || '尚未配置') +
     '</p></div>' +
-    btn('skills', '修習 ' + arrow, 'text-btn') +
+    (preview ? '' : btn('skills', '修習 ' + arrow, 'text-btn')) +
     '</div>'
   );
 }
@@ -923,9 +926,11 @@ function terrainPage(s) {
     '</ul></div>'
   );
 }
+// The keys of the pages between boards and the films, under either flow.
+const pageHotkeys = '<kbd>Enter</kbd> <kbd>Space</kbd> <kbd>→</kbd> 下一句 <kbd>←</kbd> 上一句 <kbd>Space</kbd> 影片暫停';
 // `extra` is put above the paragraphs: in a battle, the control that replays the tutorial.
 // `s`, in a battle, is the board being fought: the guide then names, beyond the first tier, only
-// the rule words something on it carries (Q-N152), and keeps the rest under 其餘規則.
+// the rule words something on it carries (Q-N161), and keeps the rest under 其餘規則.
 function helpPage(extra = '', s = null) {
   // The paragraphs are worded in data/rule-terms.js, which the wiki reads too.
   const rules = guideEntries({ actionFlow, carried: s?.units?.length ? carriedWords(s) : null });
@@ -948,10 +953,26 @@ function helpPage(extra = '', s = null) {
         .join('')
     );
   };
+  const keys =
+    (actionFlow
+      ? flowHotkeys
+      : '<kbd>1</kbd> 移動 <kbd>2</kbd> 招式 <kbd>3</kbd> 待命 <kbd>Enter</kbd> 確認 <kbd>E</kbd> 結束回合 <kbd>Backspace</kbd> 撤步 <kbd>Esc</kbd> 返回・選單 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>?</kbd> 指南') +
+    extraHotkeys() +
+    ' ' +
+    pageHotkeys;
+  // 按鍵 comes first, as a section of its own (R-62); a touch screen hides it (styles/01-base.css).
+  // Each run of keys with what it does stays together when the line wraps.
+  const pairs = [...keys.matchAll(/((?:<kbd>[^<]*<\/kbd>[–\s]*)+)([^<]+)/g)]
+    .map(([, run, label]) => '<li><span>' + run.trim() + '</span>' + label.trim() + '</li>')
+    .join('');
   return (
     titleHead('help', '操作指南') +
     extra +
-    '<div class="field-help">' +
+    '<section class="hotkeys" aria-labelledby="hotkeys-title"><h3 id="hotkeys-title">' +
+    icon('keyboard', 17) +
+    ' 按鍵</h3><ul>' +
+    pairs +
+    '</ul></section><div class="field-help">' +
     rules
       .map(
         ([ic, title, body, list], i) =>
@@ -960,11 +981,6 @@ function helpPage(extra = '', s = null) {
           '</details>'
       )
       .join('') +
-    '</div><div class="hotkeys">' +
-    (actionFlow
-      ? flowHotkeys
-      : '<kbd>1</kbd> 移動 <kbd>2</kbd> 招式 <kbd>3</kbd> 待命 <kbd>G</kbd> 棋格 <kbd>[ ]</kbd> 旋轉 <kbd>E</kbd> 結束回合 <kbd>Esc</kbd> 返回 <kbd>?</kbd> 指南') +
-    extraHotkeys() +
     '</div>'
   );
 }
@@ -995,8 +1011,9 @@ function settingsPage(p, inBattle = true) {
           '</div>'
       )
       .join('') +
-    '</div><div class="save-panel"><h4>章回存檔</h4><p>行動後自動存檔於此瀏覽器。</p>' +
+    '</div><div class="save-panel"><h4>章回存檔</h4><p>行動後自動存檔於此瀏覽器。另有三格存檔，可隨時存檔、讀檔。</p>' +
     '<div class="save-options">' +
+    btn('saves', icon('chest', 15) + '存檔・讀檔', 'outline-btn') +
     (inBattle
       ? btn('home', icon('undo', 15) + '返回主畫面', 'outline-btn') +
         btn('reset-ask', icon('restart', 15) + '另起一輪', 'outline-btn')
@@ -1119,7 +1136,8 @@ function enemyPage(s, id) {
         signatureLines(s, u).map(esc).join('') +
         '</p></div>'
       : '') +
-    bar('氣血', u.hp, u.maxHp, 'hp', 'heart') +
+    // 五劍: 求敗's 氣血 as the bar he is on.
+    (stageOf(u) ? stageRow(u, icon('heart', 13) + '氣血') : bar('氣血', u.hp, u.maxHp, 'hp', 'heart')) +
     conditionChips(s, u) +
     '<div class="detail-list"><span>攻擊 <b>' +
     stat(u, 'atk', s) +
@@ -1237,6 +1255,11 @@ function attackPage(s, source, target, skill) {
       v === u ? f.selfHeal - f.hpCost - f.counter - (f.selfLoss || 0) - (f.rebound || 0) : 0;
     const taken = friendly || blink ? healed : v === t ? -f.amount : 0;
     const after = Math.max(0, Math.min(v.maxHp, v.hp + own + taken));
+    // 五劍: a piece with stages shows the bar it is on; a blow that empties it takes the rest of
+    // that bar, and the figures say which bar comes next.
+    const stage = stageOf(v),
+      next = stage && stageOf(v, after);
+    if (stage) return stagedBar(v, after, stage, next);
     const share = (n) => Math.max(0, Math.min(100, (100 * n) / v.maxHp));
     const from = share(Math.min(v.hp, after)),
       to = share(Math.max(v.hp, after));
@@ -1263,6 +1286,44 @@ function attackPage(s, source, target, skill) {
       '<small>／' +
       v.maxHp +
       '</small></span></span>'
+    );
+  };
+  const stagedBar = (v, after, stage, next) => {
+    const span = stage.top - stage.floor,
+      share = (n) => Math.max(0, Math.min(100, (100 * (n - stage.floor)) / span));
+    const from = share(Math.min(v.hp, after)),
+      to = share(Math.max(v.hp, after));
+    const kind = after < v.hp ? ' loss' : after > v.hp ? ' gain' : '';
+    return (
+      '<span class="fc-bar staged' +
+      kind +
+      '" style="--stage:' +
+      stage.colour +
+      '" role="img" aria-label="氣血 ' +
+      v.hp +
+      (kind ? ' → ' + after : '') +
+      '／' +
+      v.maxHp +
+      '，' +
+      stageWords(stage) +
+      (next.index !== stage.index ? ' → ' + next.name : '') +
+      '"><span class="fc-track"><i class="fc-now" style="width:' +
+      from +
+      '%"></i>' +
+      (kind ? '<i class="fc-delta" style="left:' + from + '%;width:' + (to - from) + '%"></i>' : '') +
+      '</span><span class="fc-figures"><b>' +
+      v.hp +
+      '</b>' +
+      (kind ? '<i>→</i><b class="fc-after">' + after + '</b>' : '') +
+      '<small>／' +
+      v.maxHp +
+      '</small></span><span class="fc-stage">' +
+      stageTicks(v, stage) +
+      '<b>' +
+      stage.name +
+      '</b>' +
+      (next.index !== stage.index ? '<i>→</i><b style="color:' + next.colour + '">' + next.name + '</b>' : '') +
+      '</span></span>'
     );
   };
   const lines = [];
@@ -1298,6 +1359,12 @@ function attackPage(s, source, target, skill) {
           t.hp + ' → ' + (f.heal ? Math.min(t.maxHp, t.hp + f.amount) : Math.max(0, t.hp - f.amount))
         )
       );
+    // 五劍, with no bars to show it: the bar he is on, and the next if this blow empties it.
+    const stage = !POLISH.forecastBars && !f.heal && stageOf(t);
+    if (stage) {
+      const next = stageOf(t, t.hp - f.amount);
+      lines.push(line('五劍', stageWords(stage) + (next.index !== stage.index ? ' → ' + next.name : '')));
+    }
   }
   if (!blink && !friendly)
     lines.push(line('敵方還擊', f.counterRaw ? '−' + f.counter + ' 氣血' : '無'));
@@ -1392,4 +1459,4 @@ function resultPage(s) {
   );
 }
 
-export { itemBonus, medicineIdle, portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, briefPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };
+export { pageHotkeys, itemBonus, medicineIdle, portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, briefPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };

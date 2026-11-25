@@ -200,6 +200,9 @@ function prepareHero(u) {
     u.slots.includes(u.activeArt) && u.activeArt ? u.activeArt : u.slots.find(Boolean) || null;
   return u;
 }
+// The 武學點 each hero drawn brings to a run, over the hero's own: more once a run has reached the
+// fourth board.
+const startingPoints = (legacy) => 2 + (legacy.best >= 4 ? 1 : 0);
 function startRun(draw = drawLots(), legacy = LEGACY) {
   const lots = keptLots(draw);
   const ids = lots.includes(draw.leaderId)
@@ -221,11 +224,29 @@ function startRun(draw = drawLots(), legacy = LEGACY) {
   for (const [id, n] of Object.entries(legacy.parcel.stock)) s.stock[id] = (s.stock[id] || 0) + n;
   for (const u of G.party(s)) {
     prepareHero(u);
-    u.sp += 2 + (legacy.best >= 4 ? 1 : 0);
+    u.sp += startingPoints(legacy);
   }
   G.log(s, 'story', MAZE_TALE.draw, '抓子');
   G.log(s, 'story', ids.map((id) => G.DETAILS[id].name).join('、') + '入局。', '第一局');
   if (s.run.plus) G.log(s, 'story', fill(MAZE_TALE.finale.plus.joins, s), '第一局');
+  return s;
+}
+// 抓子's 俠客詳情: the five drawn as each would enter this run, to read before keeping three. A run
+// is started with three of them and the other two stand beside them, so every one of the five
+// has the run's starting 武學點 and its first tree. All five stand off the board (on the bench),
+// so no tile or neighbour adds to the numbers read. Nothing here is kept: 落子 starts the run.
+function lotPreview(draw, legacy = LEGACY) {
+  const ids = drawLots(draw.seed).ids;
+  const s = startRun({ seed: draw.seed, picks: ids.slice(0, KEPT), leaderId: ids[0], realm: draw.realm }, legacy);
+  const kept = G.party(s).filter((u) => ids.includes(u.id));
+  const others = ids.slice(KEPT).map((id) => {
+    const u = prepareHero(G.startingHero(id));
+    u.sp += startingPoints(legacy);
+    return u;
+  });
+  s.units = s.units.filter((u) => !kept.includes(u));
+  s.run.bench = ids.map((id) => [...kept, ...others].find((u) => u.id === id));
+  for (const u of s.run.bench) delete u.x, delete u.y;
   return s;
 }
 function validProfile(p) {
@@ -442,7 +463,7 @@ function validTally(t) {
 // 失神 became 定身 for one round (Q-N132). A save made mid-fight may hold one: it is read as the
 // 定身 it now is, lasting as long, so the piece still loses its turn; a master's last 失神 counts
 // toward 定身's resistance, which the two now share.
-// 卸勁 became 固守 (0.45): a hero's 卸勁 from a save is read as the 固守 his art now gives (the
+// 卸勁 became 固守 (0.50): a hero's 卸勁 from a save is read as the 固守 his art now gives (the
 // three 30% ones 防禦 ＋10, 羅漢拳's 20% ＋7), lasting as long.
 function migrateHolds(s) {
   for (const u of Array.isArray(s?.units) ? s.units : []) {
@@ -699,7 +720,7 @@ function restoreRun(raw) {
     ['heals', 'steps', 'protects', 'casts', 'kills'].every(
       (k) => Number.isInteger(u.mastery[k]) && u.mastery[k] >= 0
     ) &&
-    // 'struck' came in 0.45: a record saved before has none and counts from 0.
+    // 'struck' came in 0.50: a record saved before has none and counts from 0.
     (u.mastery.struck == null || (Number.isInteger(u.mastery.struck) && u.mastery.struck >= 0)) &&
     uniqueMembers(u.mastery.sides, [...r.route, LAST_MAP]);
   for (const u of s.units) if (!G.living(u)) delete u.conditions;
@@ -1348,14 +1369,19 @@ function waveLine(map, wave) {
   const list = G.waveList(wave.pieces);
   if (wave.when.round)
     return '第' + NUMERALS[wave.when.round - 1] + '回合，' + list + '自' + wave.place + '入場。';
-  // The last board: they come to the master's side the moment his 氣血 is down to a share.
-  if (wave.when.below) {
-    const share = { 0.5: '一半', 0.25: '四分之一' }[wave.when.below] || Math.round(wave.when.below * 100) + '%';
-    const liege = G.DETAILS[BATTLES[map].commander]?.name || pieceName(map, BATTLES[map].commander);
-    return liege + '氣血只剩' + share + '時，' + list + '趕到他身旁。';
+  // The last board: they come to the master's side the moment he takes up a sword of his 五劍.
+  if (wave.when.stage != null) {
+    const liege = G.DETAILS[BATTLES[map].commander];
+    return liege.name + '換作' + liege.traits.stages[wave.when.stage].name + '時，' + list + '趕到他身旁。';
   }
   const masters = wave.when.halved.map((ref) => pieceName(map, ref)).join('或');
   return masters + '氣血首次過半，兩回合後，' + list + '自' + wave.place + '入場。';
+}
+// 問劍 (the producer, 2026-11-25: lay out the winning condition in simple terms): the one thing
+// beyond 1 氣血 a player must know to win, that only one hero can bring the last stage down.
+function soloWords(board) {
+  const solo = G.DETAILS[board.commander]?.traits?.stages?.find((v) => v.solo)?.solo;
+  return solo ? '；最後一段只有' + heroName(solo) + '傷得了他' : '；他不會倒下，其餘的人不必擊敗';
 }
 const KIND_NAMES = { slay: '斬將', rout: '殲滅', keep: '守', break: '破', yield: '問劍' };
 const SIDE_MARKS = { open: '◇', met: '✓', failed: '✕' };
@@ -1389,7 +1415,7 @@ function boardModel(map, stage, s = null, live = false, route = null) {
         : kind === 'break'
           ? within + '擊毀' + things.join('、') + '；局主不必擊敗。'
           : kind === 'yield'
-            ? within + '將' + masters.join('與') + '的氣血削至 1 點；他不會倒下，其餘的人不必擊敗。'
+            ? within + '將' + masters.join('與') + '的氣血削至 1 點' + soloWords(board) + '。'
             : within + '擊敗' + masters.join('與') + (masters.length > 1 ? '，' + COUNT_WORDS[masters.length] + '人都要擊敗' : '') + '；其餘敵人不必打完。');
   const leader = s ? heroName(r.scene === 'fight' ? s.leader : r.next[0]) : '領隊';
   // 敵情: each 局主, then each 副手; the board's own first, then the leaders of its waves.
@@ -1497,8 +1523,16 @@ function boardModel(map, stage, s = null, live = false, route = null) {
       masters: G.masterIds(s).map((id) => {
         const u = G.find(s, id),
           name = G.unitDetails(u)?.name || '';
-        const hp = Math.max(0, u?.hp || 0);
-        return { id, name, hp, maxHp: u?.maxHp || 0, fallen: !left.masters.includes(id), line: name + ' 氣血 ' + hp + '／' + (u?.maxHp || 0) };
+        const hp = Math.max(0, u?.hp || 0),
+          stage = G.stageOf(u); // 五劍: 求敗's line names the bar he is on
+        return {
+          id,
+          name,
+          hp,
+          maxHp: u?.maxHp || 0,
+          fallen: !left.masters.includes(id),
+          line: name + ' 氣血 ' + hp + '／' + (u?.maxHp || 0) + (stage ? ' · ' + stage.name : '')
+        };
       }),
       remaining: kind === 'rout' ? '尚餘敵人 ' + left.foes + ' 名' : '',
       waiting: kind === 'rout' && left.waiting ? '援軍未到 ' + left.waiting + ' 名' : '',
@@ -2191,5 +2225,5 @@ function campModel(s) {
   };
 }
 
-export { LAST_BOON, devPress, devFirstBoard, stagesOf, nextMap, TENTH, LAST_STAGE, endsWithLast, finalStage, mapAt, plusRun, enterLast, fixedLead, stageTitle, KIND_NAMES };
-export { DRAWN, KEPT, keptLots, routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
+export { LAST_BOON, devPress, devFirstBoard, stagesOf, nextMap, TENTH, LAST_STAGE, endsWithLast, finalStage, mapAt, plusRun, enterLast, fixedLead, stageTitle, KIND_NAMES, validProfile, fillProfile };
+export { DRAWN, KEPT, keptLots, routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, lotPreview, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

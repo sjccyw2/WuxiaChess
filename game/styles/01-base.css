@@ -1591,20 +1591,47 @@ body:has(dialog[open]) {
   align-items: flex-start;
 }
 .hotkeys {
+  margin-block: 4px 12px;
+  padding: 0 4px;
+  color: #ced8c8;
+}
+.hotkeys h3 {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 9px 0 6px;
+  color: #e2c89b;
+  font: 600 15px/1.4 var(--sans);
+}
+.hotkeys ul {
+  display: flex;
   flex-wrap: wrap;
-  font-size: 11px;
-  color: #afbbaf;
-  margin-top: 14px;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+.hotkeys li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hotkeys li > span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 .hotkeys kbd {
-  border: 1px solid #4b5b51;
-  border-radius: 2px;
-  padding: 2px 4px;
-  font: 11px var(--sans);
-  color: #d6cdaf;
+  min-width: 22px;
+  border: 1px solid #66776a;
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font: 600 13px/1.3 var(--sans);
+  text-align: center;
+  color: #efe4c2;
+  background: #ffffff0d;
 }
 /* No keyboard to press them on: the same test the tutorial uses for its touch wording. */
 @media (pointer: coarse) {

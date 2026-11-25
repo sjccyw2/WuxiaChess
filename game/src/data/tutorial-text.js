@@ -4,7 +4,7 @@
 // 俠客, 領隊, 氣血, 招式, 射程, 撤步, 走位, 起陣, 交鋒預覽. It is not story text and nobody speaks it.
 // Where a step shows one of the first tier's rule words on the screen (FIRST_TIER in rule-terms.js:
 // 還擊 in 交鋒預覽, 待命 at the end of the turn, 勝負 and 領隊陣法 with the leader), its card names it,
-// and the last card sends the player to the guide's 基本規則 (Q-N152, T1).
+// and the last card sends the player to the guide's 基本規則 (Q-N161, T1).
 //
 // A card has room for two short sentences. On a phone held sideways it is a strip of two lines
 // between the unit tools and 結束回合: a step fits in two lines there up to about 40 characters,
@@ -41,9 +41,9 @@ const TUTORIAL_TEXT = {
     // list's 走位 row; a tap on open ground does the same).
     stuck: '還沒走位就選了招式。要先走位，按招式表的「走位」，或點一下空地。',
     // 敵情查探 opened by tapping an enemy: before any art is ready; and with one ready, which
-    // takes a second tap on an enemy out of reach (the first says why on the board).
+    // takes a second tap on an enemy out of reach (the first only shows the reach on the board).
     profile: '這是敵情查探，只看資料，不算出招。要出招：先走位、選招式，再點紅色地格上的敵人。',
-    profileArmed: '這是敵情查探，不算出招。射程外的敵人，點第一下會說明原因，再點一下才開這一頁。',
+    profileArmed: '這是敵情查探，不算出招。射程外的敵人，點第一下只亮出射程，再點一下才開這一頁。',
     // 交鋒預覽, and the preview of an art that is not a blow at an enemy.
     preview: '這是交鋒預覽：雙方氣血的前後變化、預計傷害與敵方還擊。看清楚了，按「確認出招」。',
     previewOther: '出招前先看預覽：對象、效果與消耗。看清楚了，按右下角的按鈕施展。',

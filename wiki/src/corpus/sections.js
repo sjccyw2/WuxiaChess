@@ -41,6 +41,7 @@ export const FILE_GROUP = {
   'src/data/realms.js': '開場與操作',
   'src/ui/realm-views.js': '開場與操作',
   'src/ui/dev-mode.js': '系統與提示',
+  'src/ui/save-views.js': '系統與提示',
   'src/rules/journey.js': '目標與棋路',
   'src/data/martial-arts.js': '行裝與商肆',
   'src/data/mastery-catalog.js': '武學與效果',

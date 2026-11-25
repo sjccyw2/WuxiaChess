@@ -22,7 +22,7 @@ const ANSWERED = {
 function bonusLines(u, art) {
   const lines = [];
   if (art.answer) lines.push('破招 · 目標為' + ANSWERED[art.answer] + '時倍率 ＋0.30');
-  // 孤行, 黯然, 還報 and 斬殘 are plain conditions, not words to learn (Q-N152, P5).
+  // 孤行, 黯然, 還報 and 斬殘 are plain conditions, not words to learn (Q-N161, P5).
   if (art.lone) lines.push('四鄰沒有同伴時倍率 ' + plus(art.lone));
   if (art.paired) {
     const partner = G.DETAILS[G.PARTNERS[u.id]]?.name;

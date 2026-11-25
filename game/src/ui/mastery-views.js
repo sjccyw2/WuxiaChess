@@ -156,7 +156,8 @@ function schoolMap(nodes, selected) {
     .join('');
   return `<div class="mj-map-window" role="group" aria-label="門派脈絡與修習先後"><div class="mj-map" style="--mj-lanes:${lanes};--mj-levels:${levels.length};--mj-map-min:${36 + lanes * 61}px"><div class="mj-levels" aria-hidden="true">${levels.map((level) => `<span>${tierName(level)}</span>`).join('')}</div><div class="mj-weave">${mapWires(positions, lanes, levels.length)}${controls}</div></div></div>`;
 }
-function nodeDetails(node, tab, nodes, library) {
+// `preview`: a hero not yet in the run (抓子's 俠客詳情): read only, no study or slot buttons.
+function nodeDetails(node, tab, nodes, library, preview = false) {
   if (!node) return '';
   const hasCost = node.cost !== undefined && node.cost !== null && node.cost !== '';
   const visibleStudy = node.canLearn || !node.learned;
@@ -180,7 +181,7 @@ function nodeDetails(node, tab, nodes, library) {
       `<div><dt>修習條件</dt><dd>${text(node.requirement || parents.join('、'))}</dd></div>`
     );
   let action = '';
-  if (visibleStudy)
+  if (visibleStudy && !preview)
     action = btn(
       'learn',
       glyph('book', 15) +
@@ -192,7 +193,7 @@ function nodeDetails(node, tab, nodes, library) {
       'mj-action mj-primary',
       `${data(node.id)} ${node.canLearn ? '' : 'disabled'} aria-label="修習${text(node.name)}"`
     );
-  else if (inLibrary)
+  else if (inLibrary && !preview)
     action = btn('skill-tab', glyph('swords', 15) + '前往招式配置', 'mj-action', data('loadout'));
   // The small line at the top: what the node is and its tier, said once where the two are one
   // word (根基). The fold holds the readable version of the badges, then the note on the novel.
@@ -204,7 +205,7 @@ function schoolContents(model, ui) {
   const nodes = list(model.school),
     current = chooseNode(nodes, ui.node);
   if (!current) return '<p class="mj-empty">此俠客尚無門派武學可供查看。</p>';
-  return `<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library))}</div>${pathOrigin(model)}`;
+  return `<div class="mj-school">${schoolMap(nodes, current)}${nodeDetails(current, 'school', nodes, list(model.library), model.preview)}</div>${pathOrigin(model)}`;
 }
 // In the team page (inTeam) the company's spare manuals are listed under this page, so the empty
 // page points down to them instead of away to the team.
@@ -286,6 +287,8 @@ function loadout(model, ui) {
 // team page's spare manuals under 授業武譜), `more.team` says it is drawn in the team page, and
 // `more.details` is that page's 俠客詳情 button for the header card.
 function personalTraining(model, ui, more = {}) {
+  // A hero not yet in the run has no manuals and no slots to set: the tree alone.
+  if (model.preview) return skillHeading(model) + schoolContents(model, ui);
   const tab = skillTabs.some(([id]) => id === ui.tab) ? ui.tab : 'school';
   const body =
     tab === 'school'

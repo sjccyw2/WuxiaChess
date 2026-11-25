@@ -108,12 +108,12 @@ function plan(layer, reach) {
     old.reach === reach &&
     old.state === s &&
     old.mode === layer.mode &&
-    old.hideAim === layer.hideAim
+    old.hideAim === aimHiddenNow(layer)
   )
     return old;
   const u = G.find(s, s.selected),
     can = G.canAct(s, u),
-    cast = ['attack', 'skill'].includes(layer.mode) && can && !layer.hideAim,
+    cast = ['attack', 'skill'].includes(layer.mode) && can && !aimHiddenNow(layer),
     skill = layer.mode === 'skill',
     art = cast && skill ? G.artFor(u) : null,
     range = cast ? (art ? art.range : u.range) : 0,
@@ -199,7 +199,7 @@ function plan(layer, reach) {
     reach,
     state: s,
     mode: layer.mode,
-    hideAim: layer.hideAim,
+    hideAim: aimHiddenNow(layer),
     unit: u,
     grid,
     covers: cells.filter(({ x, y }) => G.cover(x, y, s.mapIndex)),
@@ -396,6 +396,21 @@ function paintField(layer, reach, now) {
 // `reachPulse` (scene/board.js, pulseReach). With motion off the edge is held bright and steady
 // for the same time instead.
 const PULSE_MS = 1100;
+// A reach not drawn until an art is picked (app.js, aimHidden) is drawn for the pulse and a
+// moment after it, then hidden again; `peekAim` (scene/board.js, pulseReach) holds the hero and
+// mode it was asked for, so another hero or another mode does not show it.
+const PEEK_MS = 1700;
+function aimHiddenNow(layer) {
+  if (!layer.hideAim) return false;
+  const peek = layer.peekAim,
+    since = peek ? performance.now() - peek.at : Infinity;
+  return !(
+    since >= 0 &&
+    since < PEEK_MS &&
+    peek.unit === layer.state?.selected &&
+    peek.mode === layer.mode
+  );
+}
 function reachPulse(layer) {
   const since = performance.now() - (layer.reachPulse ?? -Infinity);
   if (!(since >= 0 && since < PULSE_MS)) return 0;
@@ -707,5 +722,7 @@ export {
   paintTauntAim,
   paintSplashAim,
   reachPulse,
+  aimHiddenNow,
+  PEEK_MS,
   PULSE_MS
 };

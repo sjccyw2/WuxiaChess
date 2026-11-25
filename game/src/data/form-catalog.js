@@ -123,9 +123,9 @@ const ART_FORMS = {
   'signature:xuZhu': [],
   xzArhat: ['mark'],
   xzNorthQi: ['channel'],
-  xzPlum: ['seal'], // 截勁, in place of 纏械 (0.45): his class word, and no longer 黃蓉's 纏字訣
+  xzPlum: ['seal'], // 截勁, in place of 纏械 (0.50): his class word, and no longer 黃蓉's 纏字訣
   xzSixYang: [],
-  xzHeal: ['cleanse'], // its own twist is `purge`, not 回春's overflow (0.45)
+  xzHeal: ['cleanse'], // its own twist is `purge`, not 回春's overflow (0.50)
   xzLifeDeath: [],
 
   // 洪七公

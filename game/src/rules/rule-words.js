@@ -1,6 +1,6 @@
 // Which rule words something carries: an art, an item, an enemy, a state on a piece, and a whole
 // battle (carriedWords). The in-game guide names a word beyond the first tier only when the board
-// carries it (Q-N152, T2); the wiki uses the same tests to list, on each word's page, every art,
+// carries it (Q-N161, T2); the wiki uses the same tests to list, on each word's page, every art,
 // item and enemy that has it (wiki/src/catalog/terms.js).
 //
 // A term (data/rule-terms.js) names its carriers by its fields: `art`, `item` and `trait` a field

@@ -20,8 +20,8 @@ import { FieldHud } from './ui/field-hud.js';
 import { icon } from './ui/icons.js';
 import { codexPage } from './ui/gates.js';
 import * as R from './rules/journey.js';
-import { rollView, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
-import { playFilm } from './ui/intro-film.js';
+import { rollView, lotDetail, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
+import { playFilm, playingFilm } from './ui/intro-film.js';
 import { realmView } from './ui/realm-views.js';
 import { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick } from './ui/dev-mode.js';
 import { MAZE_TALE } from './data/maze-tale.js';
@@ -29,15 +29,18 @@ import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
 import { mapLayout } from './data/terrain.js';
 import { showPhase, phaseLead } from './ui/phase-banner.js';
+import { syncBossGauge, stagedPiece } from './ui/boss-gauge.js';
 // The first board's tutorial: coach marks, the first time someone plays.
 import { installTutorial } from './ui/tutorial.js';
 import { installArtDetail } from './ui/art-detail.js';
 import { MAX_ZOOM } from './scene/camera.js';
 import * as S from './audio/index.js';
+// The saves: 自動存檔, three slots and the lasting record (rules/saves.js), and their pages.
+import * as Saves from './rules/saves.js';
+import { savesPage, newRunAsk, lockPage, savesButton, savedNotice, loadedNotice, SAVE_FAILED, LOAD_FAILED } from './ui/save-views.js';
 
 const $ = (id) => document.getElementById(id);
-const saveKey = 'jianying.qingzhudu.chapter1.v1',
-  prefKey = 'jianying.qingzhudu.preferences.v1';
+const prefKey = 'jianying.qingzhudu.preferences.v1';
 function read(key, fallback) {
   try {
     return JSON.parse(localStorage.getItem(key)) ?? fallback;
@@ -46,12 +49,31 @@ function read(key, fallback) {
   }
 }
 const drawKey = 'jianying.tenfold.pending-lots.v1';
-const saved = R.restoreRun(read(saveKey, null));
+// The autosave, with the lasting record (a save from before the slots is moved over to them here).
+const opened = (() => {
+  try {
+    return Saves.openGame(localStorage);
+  } catch {
+    return { state: null, record: null };
+  }
+})();
+const saved = opened.state;
 let hasSave = !!saved,
   screen = 'title';
 let state = saved || R.startRun(R.drawLots(0));
+// With no game in the autosave the record still stands: the next run starts from it.
+if (!saved && opened.record) state.run.chronicle = opened.record;
+// Set when another tab has written the saves: this one writes nothing more (see lockOut).
+let lockedOut = false;
+// The page of the saves: a question it is asking, whether it saves before 另開新局, and the page
+// it was opened from (it goes back there).
+let savesUI = { ask: null, thenNew: false, from: null };
 let draft = null,
   codexId = 'hero';
+// 抓子's 俠客詳情: the hero shown, its tab and the node picked on its tree; and the five drawn as
+// they would enter the run (R.lotPreview), made once per draw and 境界.
+let lotUI = { id: null, tab: 'sheet', node: null },
+  lotState = null;
 // The prologue shown before the draw: which page it is on, whether the
 // opening film told its first pages, and the 境界 picked for the run.
 let prologue = { step: 0, film: false, realm: 1 };
@@ -99,6 +121,8 @@ let aiRun = 0,
   transientTip = false;
 const dialog = $('modal');
 let returnControl = '';
+// The page drawn last, to tell a page newly shown from the same page redrawn.
+let shownPage = null;
 const navItems = [
   ['team', 'people', '隊伍'],
   ['sheet', 'person', '當前俠客'],
@@ -118,9 +142,10 @@ document.querySelectorAll('[data-icon]').forEach((el) => {
   el.innerHTML = icon(el.dataset.icon);
 });
 function save() {
+  if (lockedOut) return;
   hasSave = true;
   try {
-    localStorage.setItem(saveKey, JSON.stringify(state));
+    Saves.writeGame(localStorage, state);
     $('save-state').textContent = '進度已自動保存';
   } catch {
     $('save-state').textContent = '本次進度僅保留於此頁';
@@ -226,8 +251,10 @@ const board = new BattleBoard({
         skill = mode === 'skill';
       if (target && G.targetOK(state, u, target, skill)) {
         const facts = moveFacts(state, u, skill ? u.activeArt || 'signature' : 'basic', target);
-        // 代受: the figure is for the coverer, so the tip names him.
-        const guard = !G.ally(target) && G.coverer(state, target);
+        // 代受: the figure is for the coverer, so the tip names him (the forecast says who it is:
+        // no one, for 無名's blow at 求敗 in 無劍).
+        const covered = !G.ally(target) && G.forecast(u, target, skill, state).coveredBy,
+          guard = covered && G.find(state, covered);
         t.textContent =
           uName(target) +
           (guard ? '（' + uName(guard) + '代受）' : '') +
@@ -360,6 +387,7 @@ function paint() {
     $('round-badge').innerHTML = phase;
     $('round-badge').dataset.phase = phase;
   }
+  syncBossGauge($('boss-gauge'), state, screen === 'battle');
   const u = selected();
   $('active-hero').innerHTML = P.activeHero(state);
   $('active-hero').setAttribute(
@@ -384,6 +412,12 @@ function paint() {
     F.glideRows(state, u) ||
     equippedMoves(state, u) + F.undoRow(state, u) + F.walkRow(state, u, mode);
   F.markReady($('field-arts'), state, u, mode);
+  // Polish (keyHints): the list's first four rows are the keys 1 to 4 (the keydown handler).
+  if (F.ON)
+    [...$('field-arts').querySelectorAll('.field-art')].slice(0, 4).forEach((b, i) => {
+      b.setAttribute('aria-keyshortcuts', String(i + 1));
+      b.insertAdjacentHTML('beforeend', X.keyHint(i + 1));
+    });
   markAnswers($('field-arts'), state, u, board.hover && G.at(state, board.hover.x, board.hover.y));
   artCard.sync();
   if (hud.panel === 'arts' && !G.canAct(state, u) && !(F.ON && G.canGlide(state, u)))
@@ -435,7 +469,23 @@ function showArrivals() {
 const seenLogs = new WeakSet();
 let notedBoard = null,
   notedRun = null,
-  notedSide = null;
+  notedSide = null,
+  notedStage = null;
+// 五劍: when 求敗's bar empties and the next one appears, the plaque line says so and the log
+// keeps a line (written here, before the save, so a reload neither loses nor repeats it).
+function noteStage() {
+  const u = stagedPiece(state),
+    now = G.stageOf(u),
+    was = notedStage;
+  notedStage = now;
+  if (!now || !was || now.index <= was.index) return;
+  const stages = G.unitDetails(u).traits.stages,
+    gone = stages.slice(was.index, now.index).map((v) => v.name).join('、');
+  G.log(state, 'combat', gone + '已盡，換作' + now.name + '。', uName(u));
+  seenLogs.add(state.logs[state.logs.length - 1]);
+  // The tip names the new stage's way of fighting, in its own plain line (G.stageNote).
+  if (screen === 'battle' && !state.result) heldTip(uName(u) + '換劍 · ' + now.name + ' · ' + G.stageNote(now), 5200);
+}
 function waveTip(text) {
   const line = text.replace(/。$/, '');
   if (line.startsWith('下一回合，')) return ['下回合敵援 · ' + line.slice(5), 3200];
@@ -452,8 +502,10 @@ function noteBoard() {
     notedUnits = new Set(state.units.map((u) => u.id));
     for (const l of state.logs) seenLogs.add(l);
     notedSide = R.sideState(state);
+    notedStage = G.stageOf(stagedPiece(state));
     return;
   }
+  noteStage();
   const came = state.units.filter((u) => !notedUnits.has(u.id));
   for (const u of came) notedUnits.add(u.id);
   if (came.length) arrivals = came.filter((u) => !G.ally(u) && G.living(u));
@@ -732,38 +784,26 @@ function unitClick(id) {
     mapTip(targetHint(G.artFor(u)));
     return;
   }
-  // An art is aimed and this enemy is outside its reach. Opening his page at once hid the reason
-  // and read as a blow that did nothing, so the first tap says why on the board and shows the
-  // tiles the art does reach; the same enemy tapped again is a wish to read his page.
+  // A blow is ready (an art picked, or after a walk the basic strike, its reach not drawn) and
+  // this enemy is outside its reach. Opening his page at once read as a blow that did nothing, so
+  // the first tap only shows the tiles the blow does reach (a hidden reach only for a moment:
+  // board.pulseReach). It puts up no message (the producer's ruling, 2026-11-25): a tap that
+  // changes nothing tells the player to try another. The same enemy tapped again is a wish to
+  // read his page. Before a walk (mode 'move') nothing is aimed: his page opens at once.
   if (
     !again &&
     G.canAct(state, u) &&
-    (skill || (mode === 'attack' && !aimHidden)) &&
+    (skill || mode === 'attack') &&
     G.distance(u, t) > G.rangeFor(u, skill)
   ) {
     missedId = id;
     audio('deny');
-    notice(missText(u, t, skill), 4200);
     board.pulseReach();
     board.holdCycle(); // the tap that reads his page must land on him, not the one behind
     return;
   }
-  // The second tap: the message that asked for it has been answered.
-  if (again) $('toast').classList.remove('visible');
   subjectId = id;
   openPage('enemy-info');
-}
-// Why the aimed art cannot be used on an enemy out of its reach. Reach is counted along rows and
-// columns, and on the turned board a diagonal neighbour looks adjacent: that case is said plainly.
-function missText(u, t, skill) {
-  const art = '「' + (skill ? G.artFor(u) : G.basicFor(u)).name + '」',
-    diagonal =
-      G.rangeFor(u, skill) === 1 && Math.abs(u.x - t.x) === 1 && Math.abs(u.y - t.y) === 1;
-  return (
-    uName(t) +
-    (diagonal ? '站在斜角，斜角不算相鄰，' + art + '打不到。' : '不在' + art + '的射程內。') +
-    '再點一次可查探敵情。'
-  );
 }
 const groundArt = (u) => G.targetType(G.artFor(u)) === 'ground';
 function targetHint(art) {
@@ -796,6 +836,14 @@ function pageHtml() {
         draft.leaderId,
         draft.picks
       );
+    case 'lot-detail':
+      if (lotState?.draw !== draft || lotState.realm !== prologue.realm)
+        lotState = {
+          draw: draft,
+          realm: prologue.realm,
+          s: R.lotPreview({ seed: draft.seed, realm: prologue.realm }, state.run.chronicle)
+        };
+      return lotDetail(lotState.s, draft.ids, draft.picks, draft.leaderId, lotUI);
     case 'encounter':
       return encounterPage(state, state.run.scene, state.run.beat);
     case 'team':
@@ -840,6 +888,10 @@ function pageHtml() {
       return P.enemyPage(state, subjectId);
     case 'attack-preview':
       return P.attackPage(state, strikeData.source, strikeData.target, strikeData.skill);
+    case 'saves':
+      return savesPage(slotsModel());
+    case 'new-ask':
+      return newRunAsk(state);
     default:
       return '';
   }
@@ -849,8 +901,12 @@ function drawModal(keepScroll = false) {
   const top = dialog.querySelector('.mj-scroll')?.scrollTop || 0;
   const keepPlan = keepScroll && dialog.querySelector('.fo-map-plan')?.hasAttribute('open');
   const active = dialog.contains(document.activeElement) ? document.activeElement.dataset : null;
+  const reading = document.activeElement?.matches?.('#modal .mj-scroll');
+  const fresh = shownPage !== dialogState;
+  shownPage = dialogState;
   $('modal-content').innerHTML = pageHtml();
   const body = frameDialog($('modal-content'));
+  addSavesButton();
   if (keepPlan) dialog.querySelector('.fo-map-plan')?.setAttribute('open', '');
   if (active?.do) {
     const equivalent = [...dialog.querySelectorAll('[data-do]')].find(
@@ -863,28 +919,26 @@ function drawModal(keepScroll = false) {
         b.dataset.dest === active.dest &&
         b.dataset.delta === active.delta
     );
-    const next =
-      equivalent && !equivalent.disabled
-        ? equivalent
-        : dialog.querySelector(
-            '[data-do="scene-next"],.fy-tabs [aria-selected="true"],[data-do="close"]'
-          );
-    next?.focus({ preventScroll: true });
-  }
+    if (equivalent && !equivalent.disabled) equivalent.focus({ preventScroll: true });
+    else startFocus(!fresh);
+  } else if (fresh && dialog.open) startFocus();
+  else if (reading) body?.focus({ preventScroll: true });
   const close = dialog.querySelector('.modal-head [data-do="close"]');
   if (close) {
     const label =
-      personalPages.includes(dialogState) && heroParent === 'team'
-        ? state.run.scene === 'prep'
-          ? '返回整備'
-          : '返回隊伍'
-        : dialogState === 'team' && state.run.scene === 'shop'
-          ? '返回通吃坊'
-          : (dialogState === 'team' && state.run.scene === 'prep') ||
-              dialogState === 'camp' ||
-              dialogState === 'result'
-            ? '返回主畫面'
-            : '關閉視窗';
+      dialogState === 'lot-detail'
+        ? '返回抓子'
+        : personalPages.includes(dialogState) && heroParent === 'team'
+          ? state.run.scene === 'prep'
+            ? '返回整備'
+            : '返回隊伍'
+          : dialogState === 'team' && state.run.scene === 'shop'
+            ? '返回通吃坊'
+            : (dialogState === 'team' && state.run.scene === 'prep') ||
+                dialogState === 'camp' ||
+                dialogState === 'result'
+              ? '返回主畫面'
+              : '關閉視窗';
     close.title = label;
     close.setAttribute('aria-label', label);
   }
@@ -920,7 +974,8 @@ function openPage(name, heroId) {
     returnControl = hud.panel ? hud.button(hud.panel)?.id : document.activeElement?.id;
     hud.closePanel();
   }
-  if (name === 'team' && dialogState !== 'team' && !personalPages.includes(dialogState)) {
+  // (Back from the saves' page, 整備 is as it was left.)
+  if (name === 'team' && dialogState !== 'team' && dialogState !== 'saves' && !personalPages.includes(dialogState)) {
     viewId = state.selected;
     // (作戰目標 stays as it was left, folded or open, the next time the page opens.)
     teamUI = { tab: 'line', slot: 0, skill: 'school', node: null, missionShut: teamUI.missionShut };
@@ -939,14 +994,34 @@ function openPage(name, heroId) {
   drawModal();
   if (!dialog.open) {
     dialog.showModal();
-    (
-      dialog.querySelector('[data-do="scene-next"], [data-do="brief-next"]') ||
-      dialog.querySelector('.mj-tabs [aria-selected="true"]') ||
-      dialog.querySelector('[data-do="close"]') ||
-      dialog.querySelector('button')
-    )?.focus({ preventScroll: true });
+    startFocus();
   }
+  // A page opened behind the notice that another tab has the game stays behind it.
+  if (lockedOut) raiseLock();
   refreshDev();
+}
+// The page's red button: the gold one in its footer, where every page builder puts its main action
+// (下一句, 進入整備, 出陣, 前往…, 再入夢, 結束回合, 確認出招 …). Buttons of that look in a page's body
+// (a slot's 讀檔) are one choice among several, not the page's.
+function primaryButton() {
+  return [...dialog.querySelectorAll('.mj-fixed-foot .gold-btn, .modal-foot .gold-btn')].find(
+    (b) => !b.disabled && !b.closest('[hidden]')
+  );
+}
+// Where the keyboard starts on a page (R-59): its red button, so Enter does the page's main
+// thing, else the selected tab, else the page's body, never ×. The same page redrawn (`within`,
+// the focused control gone) prefers the tab: a lost focus there must not land on 出陣.
+function startFocus(within = false) {
+  const tab = dialog.querySelector('.mj-tabs [aria-selected="true"]'),
+    primary = primaryButton();
+  const first = [...dialog.querySelectorAll('button:not(:disabled)')].find(
+    (b) => !b.matches('.modal-head [data-do="close"]') && !b.closest('[hidden], .dev-panel')
+  );
+  (
+    (within ? tab || primary : primary || tab) ||
+    dialog.querySelector('.mj-scroll') ||
+    first
+  )?.focus({ preventScroll: true });
 }
 function closePage() {
   if (dialog.open) {
@@ -976,6 +1051,18 @@ function dismissOutside(tap) {
   else if (tap && dialogState === 'prologue') command('prologue-next');
 }
 function dismissLayer() {
+  // The saves' page goes back to the page it was opened from, or closes.
+  if (dialogState === 'saves') {
+    const from = savesUI.from;
+    savesUI = { ask: null, thenNew: false, from: null };
+    if (from) openPage(from);
+    else closePage();
+    return;
+  }
+  if (dialogState === 'lot-detail') {
+    openPage('formation');
+    return;
+  }
   if (dialogState === 'brief' && briefFrom) {
     briefFrom = null;
     openPage('team', viewId);
@@ -1004,6 +1091,12 @@ function dismissLayer() {
     openTitle();
     return;
   }
+  // 返回 on 選境界, the prologue or the draw always lands on the title, even when the page was
+  // opened over a battle (再入夢 on the run's last page).
+  if (RUN_STEPS.includes(dialogState) && screen !== 'title') {
+    openTitle();
+    return;
+  }
   closePage();
 }
 function showScene() {
@@ -1028,6 +1121,9 @@ function showScene() {
     shop: 'camp',
     ended: 'result'
   }[state.run.scene];
+  // The run's last page (眼破, or 好棋 for a run won at its tenth board) opens over the title, so
+  // that what follows it (再入夢, 返回) starts from there and never from the board that ended it.
+  if (page === 'result' && screen !== 'title') openTitle();
   if (page) openPage(page);
   return !!page;
 }
@@ -1048,7 +1144,11 @@ dialog.addEventListener('close', () => {
   // showed a step of the run: put the step back, so the player is never left on a bare screen.
   const lost = !own && stepOfRun() ? dialogState : null;
   if (lost) setTimeout(() => !dialog.open && (RUN_STEPS.includes(lost) ? openPage(lost) : showScene()));
+  // The same for the saves' page opened from one: back to that page.
+  const from = !own && dialogState === 'saves' ? savesUI.from : null;
+  if (from) setTimeout(() => !dialog.open && openPage(from));
   dialogState = null;
+  shownPage = null;
   if (board?.layers) board.layers.aim = null;
   board.uncover();
   (screen === 'battle' ? $('field') : document.body).append($('toast'));
@@ -1063,6 +1163,51 @@ dialog.addEventListener('click', (e) => {
     const r = dialog.getBoundingClientRect();
     if (e.clientX < r.left || e.clientY < r.top || e.clientX > r.right || e.clientY > r.bottom)
       dismissOutside(true);
+  } else if (
+    // A click or a tap on a story's words or picture turns its page too (R-31, R-60; the tap by
+    // the producer's word of 2026-11-25). A drag that selected words is reading.
+    STORY_PAGES.includes(dialogState) &&
+    e.detail > 0 &&
+    e.target.closest('.fy-story-body, .fy-scene') &&
+    !e.target.closest('button, a, summary') &&
+    getSelection()?.isCollapsed !== false
+  )
+    primaryButton()?.click();
+});
+// The pages whose lines are read one by one: the stories between boards, one reread from the
+// battle's 選單, and the prologue.
+const STORY_PAGES = ['encounter', 'story', 'prologue'];
+// A control that Enter or Space presses for itself.
+const onControl = (el) =>
+  el?.closest?.('button, a, input, select, textarea, summary, [role="button"], [role="tab"]') || null;
+// The keys of an open page (R-59, R-60). Enter is its red button wherever the focus is, unless
+// the focus is on another control, which Enter presses as usual; on 結束我方回合 a second E is
+// 結束回合 too. On a story's pages Enter, Space and → turn the line and ← goes back: a key held
+// down turns one line, and no key skips a scene. On the document, not the dialog: a click on the
+// words, or a redraw, can leave the focus outside it.
+document.addEventListener('keydown', (e) => {
+  if (!dialog.open || lockedOut || playingFilm() || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey)
+    return;
+  const primary = primaryButton(),
+    control = onControl(e.target),
+    other = control && control !== primary;
+  if (STORY_PAGES.includes(dialogState)) {
+    const back = e.key === 'ArrowLeft',
+      turn = e.key === 'ArrowRight' || (!other && (e.key === 'Enter' || e.key === ' '));
+    if (!back && !turn) return;
+    e.preventDefault();
+    const b = back ? dialog.querySelector('[data-do="scene-prev"], [data-do="prologue-prev"]') : primary;
+    if (!b || e.repeat) return;
+    b.click();
+    if (!dialog.contains(document.activeElement)) startFocus();
+    return;
+  }
+  if (e.key === 'Enter' && !other && primary) {
+    e.preventDefault();
+    if (!e.repeat) primary.click();
+  } else if (dialogState === 'end' && e.key.toLowerCase() === 'e' && primary) {
+    e.preventDefault();
+    if (!e.repeat) primary.click();
   }
 });
 function result(afterMotion = false) {
@@ -1258,6 +1403,9 @@ function strikeTip(u, effects, skill) {
   }
   const voided = voidedBy(effects);
   if (voided) lines.push(voided + ' 金剛護體，還擊無功');
+  // 無劍: a blow by anyone but 無名 lands nothing on 求敗.
+  const solo = effects.map(([id, value]) => value === '−0' && G.find(state, id)).find((t) => G.stageOf(t)?.solo && t.id !== u.id);
+  if (solo) lines.push(uName(solo) + ' ' + G.stageOf(solo).name + '在手，唯' + uName(G.find(state, G.stageOf(solo).solo)) + '傷得了他，這一擊無功');
   const art = skill ? G.artFor(u) : null,
     mend = art && G.drainOf(art) && effects.find(([id, value]) => id === u.id && value.startsWith('+'));
   if (mend) lines.push(uName(u) + ' 吸回 ' + mend[1].slice(1) + ' 氣血');
@@ -1300,8 +1448,10 @@ async function runEnemy() {
     // 受制 turns it on its own side; 閉穴 lets it walk but not strike.
     const turned = !frozen && !!e.conditions?.charm,
       muted = !frozen && !turned && !!e.conditions?.mute;
-    const pulls = state.tally?.fired?.pull || 0;
+    const pulls = state.tally?.fired?.pull || 0,
+      blinks = e.blinkSerial || 0; // 無劍: 求敗 at 無名's side before he acts
     const effects = G.enemyAct(state, e);
+    if ((e.blinkSerial || 0) > blinks) mapTip(uName(e) + ' · ' + G.stageOf(e).name + '，身形一晃，已到' + uName(G.find(state, G.stageOf(e).solo)) + '身旁', 3200);
     audio(effects.length && !frozen ? 'ready' : 'move'); // footfalls and blows follow as board cues
     update();
     board.follow(e, effects[0] && G.find(state, effects[0][0])); // combat feel: camera
@@ -1333,7 +1483,7 @@ async function runEnemy() {
     board.showEffects(effects);
     if (result(true)) return;
     await board.finished();
-    if (dragged) mapTip(uName(e) + ' · 擒拿，將' + uName(dragged) + '扯到身前', 3200);
+    if (dragged) mapTip(uName(e) + (G.stageOf(e)?.pull ? ' · ' + G.stageOf(e).name + '一捲，將' + uName(dragged) + '扯到身前' : ' · 擒拿，將' + uName(dragged) + '扯到身前'), 3200);
     await sleep(prefs.motion ? 150 : 45);
   }
 }
@@ -1469,6 +1619,107 @@ function devFinish(won, side = false) {
   update();
   result();
 }
+// ── Saves: the slots' page, saving into a slot and loading one, and a second tab ──
+function slotsModel() {
+  let slots = Saves.SLOT_KEYS.map(() => null);
+  try {
+    slots = Saves.readSlots(localStorage);
+  } catch {}
+  return {
+    auto: hasSave ? state : null,
+    autoLive: hasSave && Saves.inProgress(state),
+    slots,
+    canSave: hasSave && !lockedOut,
+    ask: savesUI.ask,
+    thenNew: savesUI.thenNew
+  };
+}
+// The page opened from the title, the battle's 選單, a page between boards or 設定 (`thenNew`: from
+// 另開新局's question, to save before the new run).
+function openSaves(thenNew) {
+  savesUI = { ask: null, thenNew, from: dialog.open ? dialogState : null };
+  openPage('saves');
+}
+function saveSlot(n) {
+  if (lockedOut || !hasSave) return;
+  try {
+    Saves.writeSlot(localStorage, n, state);
+  } catch {
+    notice(SAVE_FAILED, 4200);
+    return;
+  }
+  audio('chime');
+  notice(savedNotice(n));
+  if (savesUI.thenNew) {
+    savesUI = { ask: null, thenNew: false, from: null };
+    beginNewRun();
+    return;
+  }
+  drawModal(true);
+}
+// A slot loaded becomes the autosave, with the record, and play continues from it as 繼續 would.
+function loadSlot(n) {
+  let next = null;
+  try {
+    next = Saves.loadSlot(localStorage, n, state.run.chronicle);
+  } catch {}
+  if (!next || lockedOut) return notice(LOAD_FAILED, 4200);
+  ++aiRun;
+  state = next;
+  savesUI = { ask: null, thenNew: false, from: null };
+  strikeData = null;
+  logFilter = 'all';
+  mapTip(null);
+  save();
+  enterBattle(false);
+  audio('chime');
+  notice(loadedNotice(n));
+}
+// The pages between boards (the stories, 軍情, 整備, the shop) carry 存檔 in their head.
+function addSavesButton() {
+  const between =
+    ['encounter', 'brief', 'team', 'camp'].includes(dialogState) &&
+    state.run.scene !== 'fight' &&
+    !(dialogState === 'brief' && briefFrom);
+  const head = dialog.querySelector('.modal-head');
+  if (!between || !hasSave || lockedOut || !head) return;
+  const box = document.createElement('template');
+  box.innerHTML = savesButton();
+  head.insertBefore(box.content, head.querySelector('[data-do="close"]'));
+}
+// Two tabs: when another tab writes the saves, this one stops writing and says so, with a button
+// that loads the page again from storage (the other tab then stops in its turn when this one saves).
+const lockDialog = document.createElement('dialog');
+lockDialog.className = 'tab-lock';
+lockDialog.setAttribute('aria-labelledby', 'tab-lock-title');
+lockDialog.innerHTML = lockPage();
+lockDialog.addEventListener('cancel', (e) => e.preventDefault());
+lockDialog.addEventListener('keydown', (e) => e.key === 'Escape' && e.preventDefault());
+// Closed some other way (a back gesture): shown again. Closed to be raised above a page: not.
+let relocking = false;
+lockDialog.addEventListener('close', () => {
+  if (relocking) relocking = false;
+  else if (lockedOut) setTimeout(() => !lockDialog.open && raiseLock());
+});
+document.body.append(lockDialog);
+function raiseLock() {
+  if (lockDialog.open) {
+    relocking = true;
+    lockDialog.close();
+  }
+  lockDialog.showModal();
+  lockDialog.querySelector('button')?.focus({ preventScroll: true });
+}
+function lockOut() {
+  lockedOut = true;
+  ++aiRun; // the enemy's turn, if one is playing, stops here
+  hud.closePanel();
+  raiseLock();
+}
+addEventListener('storage', (e) => {
+  if (lockedOut || (e.key !== null && !Saves.SAVE_KEYS.includes(e.key))) return;
+  lockOut();
+});
 function openTitle() {
   ++aiRun;
   closePage();
@@ -1494,6 +1745,8 @@ function openTitle() {
             : '繼續' + R.stageTitle(state.run.stage, '')
     : '入夢';
   $('title-new').hidden = !hasSave;
+  // 存檔・讀檔 once there is a game to save or a slot to load.
+  $('title-saves').hidden = !hasSave && !Saves.SLOT_KEYS.some((key) => read(key, null));
   refreshDev();
   window.scrollTo({ top: 0, behavior: 'instant' });
   paint();
@@ -1657,6 +1910,7 @@ function command(action, id, data = {}, keyboard = false) {
       drawModal();
       break;
     case 'hud-panel':
+      menuByEsc = false;
       hud.togglePanel(id, keyboard);
       break;
     // Polish (actionFlow): the chip that names the ready art opens and closes the arts list.
@@ -1724,11 +1978,68 @@ function command(action, id, data = {}, keyboard = false) {
       openTitle();
       break;
     case 'start-primary':
-      if (hasSave) enterBattle(false);
-      else beginNewRun();
+      if (!hasSave) beginNewRun();
+      // A run that has ended: its last page, over the title (the ending film first if a reload
+      // cut it short).
+      else if (state.run.scene === 'ended' && !(state.run.last?.ended && !state.run.last.shown)) openPage('result');
+      else enterBattle(false);
       break;
     case 'title-new':
+      // A run still under way is not replaced without a question (new-ask), asked on the title.
+      if (hasSave && Saves.inProgress(state)) {
+        if (screen !== 'title') openTitle();
+        openPage('new-ask');
+        break;
+      }
       beginNewRun();
+      break;
+    case 'new-go':
+      if (dialogState === 'new-ask') beginNewRun();
+      break;
+    case 'new-save':
+      if (dialogState === 'new-ask') openSaves(true);
+      break;
+    case 'saves':
+      if (lockedOut || dialogState === 'saves') break;
+      openSaves(false);
+      audio('page');
+      break;
+    case 'slot-save': {
+      const n = Number(id);
+      if (dialogState !== 'saves' || savesUI.ask || !hasSave || !(n >= 1 && n <= Saves.SLOT_COUNT)) break;
+      if (slotsModel().slots[n - 1]) {
+        savesUI.ask = { kind: 'save', n };
+        drawModal();
+        audio('page');
+      } else saveSlot(n);
+      break;
+    }
+    case 'slot-load': {
+      const n = Number(id);
+      if (dialogState !== 'saves' || savesUI.ask || !slotsModel().slots[n - 1]?.state) break;
+      if (hasSave && Saves.inProgress(state)) {
+        savesUI.ask = { kind: 'load', n };
+        drawModal();
+        audio('page');
+      } else loadSlot(n);
+      break;
+    }
+    case 'slot-yes': {
+      const ask = savesUI.ask;
+      if (dialogState !== 'saves' || !ask) break;
+      savesUI.ask = null;
+      if (ask.kind === 'save') saveSlot(ask.n);
+      else loadSlot(ask.n);
+      break;
+    }
+    case 'slot-no':
+      if (dialogState !== 'saves' || !savesUI.ask) break;
+      savesUI.ask = null;
+      drawModal();
+      break;
+    case 'tab-take':
+      // Back from storage: the page loads again with the newest saves, and writes from then on.
+      if (lockedOut) location.reload();
       break;
     case 'realm-pick': {
       const n = Number(id);
@@ -1766,7 +2077,7 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-retry': {
       // Back to this board's 起陣, everything as it was then (the run, the heroes, the purse).
       if (!dev || !canRetry()) break;
-      const next = R.restoreRun(JSON.parse(retryPoint.save));
+      const next = Saves.withRecord(R.restoreRun(JSON.parse(retryPoint.save)), state.run.chronicle);
       if (!next) return notice('此刻不能這樣做。');
       ++aiRun;
       state = next;
@@ -1889,8 +2200,32 @@ function command(action, id, data = {}, keyboard = false) {
     case 'sound-toggle':
       toggleSound();
       break;
+    // 俠客詳情 for one of the five drawn: its numbers and tree, read before keeping three.
+    case 'lot-detail':
+      if (dialogState === 'formation' && draft?.ids.includes(id)) {
+        lotUI = { id, tab: 'sheet', node: null };
+        draft.settled = true; // back on 抓子, the cards are not dealt again
+        openPage('lot-detail');
+        audio('tap');
+      }
+      break;
+    case 'lot-view':
+      if (dialogState === 'lot-detail' && draft?.ids.includes(id) && id !== lotUI.id) {
+        lotUI.id = id;
+        lotUI.node = null;
+        drawModal(false);
+        audio('tap');
+      }
+      break;
+    case 'lot-tab':
+      if (dialogState === 'lot-detail' && ['sheet', 'skills'].includes(id)) {
+        lotUI.tab = id;
+        lotUI.node = null;
+        drawModal();
+      }
+      break;
     case 'lead-lot':
-      if (dialogState === 'formation' && draft?.picks.includes(id)) {
+      if (['formation', 'lot-detail'].includes(dialogState) && draft?.picks.includes(id)) {
         draft.leaderId = id;
         draft.settled = true; // the cards have been dealt: no second deal on redrawing
         rememberDraw();
@@ -1900,7 +2235,7 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     // Keep a drawn stone or put it back: three are kept. The leader is one of the three.
     case 'keep-lot':
-      if (dialogState === 'formation' && draft?.ids.includes(id)) {
+      if (['formation', 'lot-detail'].includes(dialogState) && draft?.ids.includes(id)) {
         if (draft.picks.includes(id)) draft.picks = draft.picks.filter((p) => p !== id);
         else if (draft.picks.length < R.KEPT) draft.picks = draft.ids.filter((p) => p === id || draft.picks.includes(p));
         else {
@@ -1919,7 +2254,7 @@ function command(action, id, data = {}, keyboard = false) {
       ++aiRun;
       state = R.startRun({ ...draft, realm: prologue.realm }, state.run.chronicle);
       prologue = { step: 0, film: false, realm: 1 };
-      draft = null;
+      draft = lotState = null;
       try {
         localStorage.removeItem(drawKey);
       } catch {}
@@ -2126,7 +2461,7 @@ function command(action, id, data = {}, keyboard = false) {
       strikeData = null;
       if (state.run.status === 'ended') {
         update();
-        openPage('result');
+        showScene(); // the run's last page, over the title
       } else enterBattle(true);
       break;
     case 'skill-tab':
@@ -2145,7 +2480,10 @@ function command(action, id, data = {}, keyboard = false) {
       }
       break;
     case 'skill-node':
-      if (dialogState === 'skills') {
+      if (dialogState === 'lot-detail') {
+        lotUI.node = id;
+        drawModal(true);
+      } else if (dialogState === 'skills') {
         studyUI.node = id;
         drawModal(true);
       } else if (dialogState === 'team' && teamUI.tab === 'arts') {
@@ -2204,6 +2542,11 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'goals':
       openPage('goals');
+      break;
+    case 'boss-focus':
+      // 求敗's pinned gauge: the view goes to him.
+      board.focusPiece(stagedPiece(state));
+      audio('tap');
       break;
     case 'battle':
       closePage();
@@ -2296,18 +2639,23 @@ function command(action, id, data = {}, keyboard = false) {
       audio('tap');
       break;
     case 'reset-ask':
-      // As 新的一輪 on the title: the 境界 is picked first once more than one is open.
+      // 另起一輪 (設定, in a battle): to the title, and on as 另開新局 goes, question included.
       openTitle();
-      beginNewRun();
+      command('title-new');
       break;
   }
 }
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-do]');
   if (b && !b.disabled) command(b.dataset.do, b.dataset.id, b.dataset, e.detail === 0);
+  // After a mouse press on a story's 上一句, Enter and Space turn the line again, not back.
+  if (b && e.detail > 0 && dialog.open && STORY_PAGES.includes(dialogState)) primaryButton()?.focus({ preventScroll: true });
 });
 const bind = (id, fn) => $(id).addEventListener('click', fn);
 bind('terrain-guide', () => openPage('terrain'));
+// Polish (keyHints): Esc opens the 選單 when nothing else is open.
+$('menu-toggle').setAttribute('aria-keyshortcuts', 'Escape');
+$('menu-toggle').insertAdjacentHTML('beforeend', X.keyHint('Esc'));
 bind('focus-piece', () => {
   board.focusSelected();
   hud.closePanel(true);
@@ -2321,8 +2669,21 @@ bind('camera', () => {
 });
 bind('rotate-left', () => board.rotate(-1));
 bind('rotate-right', () => board.rotate(1));
+// The 選單 opened by Esc closes by Esc to where the keyboard was, not onto its button, where the
+// next Enter would open it again.
+let menuByEsc = false;
+function escMenu() {
+  hud.togglePanel('menu', true);
+  menuByEsc = true;
+}
+function escClose() {
+  const back = !(menuByEsc && hud.panel === 'menu');
+  menuByEsc = false;
+  hud.closePanel(back);
+}
 document.addEventListener('keydown', (e) => {
-  if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.repeat || dialog.open) return;
+  if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.repeat || dialog.open || playingFilm())
+    return;
   const k = e.key.toLowerCase();
   if (k === '[' || k === ']') {
     e.preventDefault();
@@ -2332,14 +2693,20 @@ document.addEventListener('keydown', (e) => {
   if (screen === 'title') {
     if (k === 'escape' && hud.fallback) hud.setFallback(false);
     if (k === '?') openPage('help');
+    // Enter is 入夢 or 繼續 from the first moment, with no Tab first (R-62).
+    if (k === 'enter' && !onControl(e.target) && !lockedOut) {
+      e.preventDefault();
+      $('start-primary').click();
+    }
     return;
   }
   // The deployment step: E or Enter begins, Esc lets go of the pick, Tab picks the next hero, D says the
   // zone stays lit; the number keys do nothing. G, ?, [ and ] work as always.
   if (deploying()) {
     if (k === 'escape') {
-      if (hud.panel) hud.closePanel(true);
+      if (hud.panel) escClose();
       else if (deployPick) pickDeploy(null);
+      else escMenu();
       return;
     }
     // Enter on a focused control (a board tile, a button) presses that control instead.
@@ -2363,21 +2730,27 @@ document.addEventListener('keydown', (e) => {
     }
     if (k !== '?' && k !== 'g') return;
   }
+  // Esc only closes or lets go, one thing a press (R-61): the open panel or list, the focus view,
+  // then the art picked; with nothing left, it opens the 選單. It never takes back a walk.
+  const u = screen === 'battle' && state.phase === 'ally' ? selected() : null;
   if (k === 'escape') {
-    // Polish (actionFlow): Esc takes back the move while the hero has not yet struck.
-    const u = screen === 'battle' && F.ON && state.phase === 'ally' ? selected() : null;
-    // For a hero who readied an art before walking it is the list's 走位: back to the walk tiles.
-    // (Either way one press does one thing: he has no move to take back.)
-    const stepBack =
-      u &&
-      G.canAct(state, u) &&
-      (u.moved ? !!u.origin : G.canMove(state, u) && ['attack', 'skill'].includes(mode));
-    if (stepBack && (!hud.panel || hud.panel === 'arts')) doCommand('move');
-    else if (hud.panel) hud.closePanel(true);
+    const picked = u && G.canAct(state, u) && (mode === 'skill' || (mode === 'attack' && !aimHidden));
+    if (hud.panel) escClose();
     else if (hud.fallback) hud.setFallback(false);
-    else {
-      mode = 'move';
+    else if (picked && G.canMove(state, u)) doCommand('move'); // 走位: the walk tiles again
+    else if (picked) {
+      mode = 'attack';
+      aimHidden = true;
       paint();
+      mapTip(null);
+    } else escMenu();
+    return;
+  }
+  // Backspace takes back the walk, as 撤步 does, while the hero has not struck.
+  if (k === 'backspace') {
+    if (u && G.canAct(state, u) && !G.canGlide(state, u) && u.moved && u.origin) {
+      e.preventDefault();
+      doCommand('move');
     }
     return;
   }

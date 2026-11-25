@@ -21,7 +21,8 @@ import {
   paintFormationAim,
   paintTauntAim,
   paintSplashAim,
-  reachPulse
+  reachPulse,
+  aimHiddenNow
 } from './zones.js';
 import {
   compactImage,
@@ -37,7 +38,7 @@ import {
 } from './sprite-sheets.js';
 import { POLISH } from '../polish.js';
 import { paintFrame } from './sprite-frames.js';
-import { paintBase, paintGauge } from './tokens.js';
+import { paintBase, paintGauge, paintStageRing } from './tokens.js';
 import { spentAmount } from './spent.js';
 import {
   statusWord,
@@ -103,6 +104,7 @@ class ActorLayer {
   warm(ids) {
     this.image('battle-poses');
     for (const id of new Set(ids)) {
+      if (!id) continue; // a piece with no sheet of its own (a board object) asks for none
       this.image('motion-' + id);
       if (compactSheetName(id) !== 'battle-poses') this.image(compactSheetName(id));
     }
@@ -114,7 +116,7 @@ class ActorLayer {
   // drawn with the shared rank-and-file sheet, archer or swordsman, rather than not at all.
   standIn(details) {
     const id = details.mini;
-    const own = ['motion-' + id, compactSheetName(id), 'mini-' + id];
+    const own = id ? ['motion-' + id, compactSheetName(id), 'mini-' + id] : [];
     for (const name of own) this.image(name);
     if (!own.every((name) => this.imageFailures.has(name))) return null;
     return this.sheet(details.row === 'bow' ? 'archer' : 'bandit');
@@ -181,8 +183,10 @@ class ActorLayer {
       const waiting = [...this.tracks].some(([id, track]) => {
         if (!track.clips.some((clip) => clip.end > this.time && clip.start <= this.time + 60))
           return false;
-        const artId = (G.unitDetails(this.state && G.find(this.state, id)) || G.DETAILS[id]).mini;
-        if (this.sheet(artId)) return false;
+        const artId = (G.unitDetails(this.state && G.find(this.state, id)) || G.DETAILS[id])?.mini;
+        // A struck board object (the qin, the drum, the posts) has a track for its shake and
+        // gauge but no sheet: its pictures are 'object-…', loaded by sync().
+        if (!artId || this.sheet(artId)) return false;
         return [compactSheetName(artId), 'motion-' + artId].some((name) => {
           const image = this.image(name);
           return !this.imageFailures.has(name) && !(image.complete && image.naturalWidth > 0);
@@ -451,7 +455,8 @@ class ActorLayer {
       // statusLooks: a status word starts its look as it pops; a blow 金剛 voided says 無功, not
       // −0; a 吸元 draws its health over from the piece struck.
       statusWord(this, id, value, start);
-      const voided = POLISH.statusLooks && value === '−0' && G.immuneTo(struck);
+      // (無劍: on 求敗, whom only 無名 can hurt there, a −0 is a blow that touched nothing.)
+      const voided = POLISH.statusLooks && value === '−0' && (G.immuneTo(struck) || !!G.stageOf(struck)?.solo);
       if (voided) voidBlow(this, id, start);
       if (
         POLISH.statusLooks &&
@@ -642,7 +647,7 @@ class ActorLayer {
       s = this.state,
       u = G.find(s, s.selected);
     const can = G.canAct(s, u),
-      cast = ['attack', 'skill'].includes(this.mode) && can && !this.hideAim;
+      cast = ['attack', 'skill'].includes(this.mode) && can && !aimHiddenNow(this);
     drawDanger(this); // Polish (dangerZone): the enemy's strike zone, under everything else
     const art = cast && this.mode === 'skill' ? G.artFor(u) : null;
     const range = cast ? (art ? art.range : u.range) : 0;
@@ -933,6 +938,9 @@ class ActorLayer {
       turned = !!look?.charm;
     if (tokens) paintBase(this, u, pos, now, { human, selected, spent: grey > 0.5, turned });
     else this.circle(pos.x + 0.055, pos.y + 0.035, title ? 0.25 : 0.33, 0.094);
+    // 五劍: the bar 求敗 is on, as the wounds landing show it (his ring here, his gauge below).
+    const stage = title || u.hp <= 0 ? null : G.stageOf(u, this.healthAt(u, now));
+    if (stage) paintStageRing(this, pos, stage);
     c.fillStyle = 'rgba(27,32,25,.32)';
     if (!tokens) c.fill();
     if (!title && !tokens) {
@@ -1062,7 +1070,10 @@ class ActorLayer {
           bar: { y: top + h * 0.135, half: scale * 0.34 }
         });
       if (tokens) {
-        paintGauge(this, u, {
+        // 求敗's gauge waits until every figure is drawn, so in a crowd of masters his seal is
+        // never under one of their 主.
+        const paint = stage ? (u, g) => this.lateGauges.push([u, g]) : (u, g) => paintGauge(this, u, g);
+        paint(u, {
           x: p.x,
           y: top + h * 0.135,
           scale,
@@ -1073,6 +1084,9 @@ class ActorLayer {
           shown: visibleHP,
           spent: grey > 0.5,
           rank: details.rank,
+          stage,
+          stages: details.traits?.stages,
+          seal: details.name[0],
           leader: u.id === this.state.leader,
           formation: !!this.state.zones?.some((z) => z.owner === u.id)
         });
@@ -1083,8 +1097,8 @@ class ActorLayer {
         y = top + h * 0.135;
       c.fillStyle = '#17241fe8';
       c.fillRect(p.x - len / 2 - 1, y - 1, len + 2, 4);
-      c.fillStyle = human ? '#abe9c4' : turned ? '#d6e27a' : '#ffa280';
-      c.fillRect(p.x - len / 2, y, (len * visibleHP) / u.maxHp, 2);
+      c.fillStyle = stage ? stage.colour : human ? '#abe9c4' : turned ? '#d6e27a' : '#ffa280';
+      c.fillRect(p.x - len / 2, y, stage ? len * stage.share : (len * visibleHP) / u.maxHp, 2);
       if (selected) {
         c.fillStyle = '#ffe0a0';
         c.beginPath();
@@ -1095,7 +1109,17 @@ class ActorLayer {
         c.fill();
       }
       const commandRank = G.unitDetails(u).rank;
-      if (commandRank) {
+      if (stage) {
+        // 求敗's seal in place of the 主: round, in the colour of his bar.
+        c.fillStyle = stage.colour;
+        c.beginPath();
+        c.arc(p.x + len / 2 + 10.5, y, 6.5, 0, Math.PI * 2);
+        c.fill();
+        c.fillStyle = '#1d1424';
+        c.font = 'bold 10px serif';
+        c.textAlign = 'center';
+        c.fillText(details.name[0], p.x + len / 2 + 10.5, y + 3.5);
+      } else if (commandRank) {
         const boss = commandRank === 'boss',
           bx = p.x + len / 2 + 4;
         c.fillStyle = boss ? '#6a291e' : '#473238';
@@ -1316,7 +1340,9 @@ class ActorLayer {
         return { u, p, z: d.z };
       })
       .sort((a, b) => b.z - a.z);
+    this.lateGauges = [];
     for (const { u, p } of units) this.actor(u, p, time, title);
+    for (const [u, g] of this.lateGauges) paintGauge(this, u, g);
     if (!title) this.drawEffects(time, !covered && !this.waitingForArt);
     if (!title) paintBursts(this, time); // statusLooks: a state starting, ending, a blow voided
     for (const tr of this.tracks.values()) {
