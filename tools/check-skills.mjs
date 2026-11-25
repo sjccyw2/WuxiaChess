@@ -209,7 +209,7 @@ function checkHero(heroId) {
     }
     if (!(a.needs || []).length && a.kind !== 'basic')
       fail('structure', id + ' has no prerequisite: every node should hang from the starting art or the basic upgrade');
-    if (a.gate && !['kills', 'casts', 'heals', 'protects', 'steps', 'side', 'level'].includes(a.gate.metric))
+    if (a.gate && !['kills', 'casts', 'heals', 'protects', 'steps', 'struck', 'side', 'level'].includes(a.gate.metric))
       warn('structure', id + ' has a gate on an unknown measure "' + a.gate.metric + '"');
   }
   const known = new Set(['signature', ...Object.keys(G.TALENTS)]);

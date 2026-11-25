@@ -58,12 +58,13 @@ const COMMANDS = {
     text: '每有一名敵人相鄰，攻擊增加 3，至多增加 6。',
     icon: 'flag'
   },
+  // 靈鷲宮: the master who drew the 生死符 out of every man in the hall (0.45).
   xuZhu: {
-    name: '北冥真氣',
-    stat: 'absorb',
-    power: 3,
-    text: '出手擊中敵人時，回復 3 點內力。',
-    icon: 'drop'
+    name: '靈鷲慈心',
+    stat: 'mercy',
+    power: 8,
+    text: '施展療傷時多回復 8 點氣血。',
+    icon: 'leaf'
   },
   hongQi: {
     name: '打狗陣法',
@@ -174,7 +175,6 @@ const CONDITION_NAMES = {
   pin: '絆足',
   seal: '截勁',
   riposte: '反震',
-  stance: '卸勁',
   cover: '代受',
   taunt: '挑釁',
   evade: '閃身',
@@ -228,7 +228,6 @@ function selfEffectsOf(art) {
   if (!art) return [];
   const effects = [],
     put = (kind, power = 1, turns = 1) => effects.push({ kind, power, turns });
-  if (art.stance) put('stance', art.stance);
   if (art.cover) put('cover');
   if (art.taunt) put('taunt', art.taunt);
   if (art.evade) put('evade');
@@ -253,7 +252,6 @@ function effectDescription(kind, power, turns) {
     pin: '移動 −' + power,
     seal: '停用還擊及敵方絕技',
     riposte: '下次受傷震回最多 ' + power,
-    stance: '受敵傷害減 ' + power + '%，還擊全力',
     cover: '代相鄰同伴承受直接攻擊',
     taunt: power + ' 格內可攻到自己的敵人只能攻擊自己',
     evade: '下一次直接攻擊落空',
@@ -297,11 +295,13 @@ function applyCondition(s, target, effect, caster) {
     source: owner
   };
 }
+// `struck` (enemy blows taken, 0.45) is newer than the rest: a record saved before it has none,
+// and counts from 0.
 function blankRecord() {
-  return { kills: 0, casts: 0, heals: 0, protects: 0, steps: 0, sides: [] };
+  return { kills: 0, casts: 0, heals: 0, protects: 0, steps: 0, struck: 0, sides: [] };
 }
 function progress(unit, metric, delta) {
-  if (unit?.mastery && delta > 0) unit.mastery[metric] += delta;
+  if (unit?.mastery && delta > 0) unit.mastery[metric] = (unit.mastery[metric] || 0) + delta;
 }
 
 export { COMMANDS, HELD_KINDS, LINGER_KINDS, commandDescription, commandBonus, commandAura, leaderBoon, prepPost, CONDITION_NAMES, effectsOf, selfEffectsOf, effectDescription, activeEffects, applyCondition, blankRecord, progress };

@@ -281,7 +281,6 @@ section('save migration');
 section('conditions');
 {
   const CHIPS = {
-    stance: '卸勁',
     cover: '代受',
     taunt: '挑釁',
     evade: '閃身',
@@ -298,6 +297,8 @@ section('conditions');
   // 失神 is 定身 for one round now (Q-N132): no condition of its own, and 解厄 does not name it.
   const CLEANSED = ['backlash', 'wound', 'disarm'];
   check('失神 is no condition', !Object.hasOwn(BM.CONDITION_NAMES, 'daze') && !BM.HELD_KINDS.includes('daze'));
+  // 卸勁 became 固守 (0.45): no condition of its own, and no art leaves one.
+  check('卸勁 is no condition', !Object.hasOwn(BM.CONDITION_NAMES, 'stance'));
   for (const [kind, name] of Object.entries(CHIPS)) {
     const text = BM.effectDescription(kind, 3, 2);
     check(kind + ' is known as ' + name, BM.CONDITION_NAMES[kind] === name);
@@ -328,7 +329,6 @@ section('conditions');
   );
   check('effectsOf reads no 失神 field', !BM.effectsOf({ daze: true }).length && !BM.effectsOf({ daze: 'setup' }).length);
   const own = BM.selfEffectsOf({
-    stance: 30,
     cover: true,
     taunt: 2,
     evade: true,
@@ -343,7 +343,6 @@ section('conditions');
     same(
       own.map((e) => [e.kind, e.power, e.turns]),
       [
-        ['stance', 30, 1],
         ['cover', 1, 1],
         ['taunt', 2, 1],
         ['evade', 1, 1],
@@ -600,13 +599,14 @@ section('reach and counters');
   const r = board();
   const guard = unit(r, 'guard'),
     chief = unit(r, 'chief');
-  const cond = (u, kind) => BM.applyCondition(r, u, { kind, power: kind === 'stance' ? 30 : 1, turns: 1 }, u);
+  const cond = (u, kind) => BM.applyCondition(r, u, { kind, power: kind === 'fortify' ? 10 : 1, turns: 1 }, u);
   check('a counter is 0.55 of a basic strike', G.counterRatio(r, guard) === 0.55);
   const retort = defineArt({ kind: 'basic', name: '試後發', retort: 0.8 });
   guard.learned.push(retort);
   check('a learned 後發 sets 0.8', G.counterRatio(r, guard) === 0.8);
-  cond(guard, 'stance');
-  check('卸勁 gives 1.0', G.counterRatio(r, guard) === 1);
+  // 卸勁 became 固守 (0.45): a flat 防禦, and the counter stays what it was.
+  cond(guard, 'fortify');
+  check('固守 leaves the counter as it was (no full counter since 卸勁 went)', G.counterRatio(r, guard) === 0.8);
   cond(guard, 'unguarded');
   check('無守 gives 0 whatever else holds', G.counterRatio(r, guard) === 0);
   r.round = 3;
@@ -632,17 +632,17 @@ section('reach and counters');
     const e = board();
     const foe = put(e, 'blade', 4, 7),
       tank = put(e, 'guard', 5, 7);
-    if (kind) BM.applyCondition(e, tank, { kind, power: kind === 'stance' ? 30 : 1, turns: 1 }, tank);
+    if (kind) BM.applyCondition(e, tank, { kind, power: kind === 'fortify' ? 10 : 1, turns: 1 }, tank);
     G.startEnemy(e);
     const life = foe.hp;
     G.enemyAct(e, foe);
     return { taken: life - foe.hp, expected: Math.round(G.damage(tank, foe, false, e.mapIndex, e)) };
   }
   const usual = counterOf(null),
-    stanced = counterOf('stance'),
+    fortified = counterOf('fortify'),
     open = counterOf('unguarded');
   check('an enemy-phase counter is 0.55 of the hero’s basic', usual.taken === Math.max(2, Math.round(usual.expected * 0.55)), usual.taken);
-  check('under 卸勁 it is the full basic', stanced.taken === Math.max(2, stanced.expected), stanced.taken);
+  check('under 固守 it is still 0.55 of the basic', fortified.taken === Math.max(2, Math.round(fortified.expected * 0.55)), fortified.taken);
   check('under 無守 there is none', open.taken === 0, open.taken);
 }
 
@@ -900,95 +900,44 @@ function blowAt(s, foeId, heroId) {
   return { taken: life - hero.hp, raw };
 }
 
-// ── 卸勁 stance: the cut (§6) ────────────────────────────────────────────
-section('stance');
+// ── 卸勁 into 固守 (0.45; Q-N132's row) ─────────────────────────────────────
+// 向問天's three 卸勁 arts and 張三丰's 羅漢拳 leave 固守 on their caster until his next turn
+// (防禦 ＋10, ＋7) in place of a cut and a full counter; the counter is back to the usual share.
+section('stance into fortify');
 {
-  const stance = (u, s) => BM.applyCondition(s, u, { kind: 'stance', power: 30, turns: 1 }, u);
-  // The art: the guard lands on the caster, and the preview and the art's facts say so.
+  const own = (id, heroId) => BM.selfEffectsOf(id === 'signature' ? G.artFor(G.startingHero(heroId), 'signature') : TECHNIQUES[id]);
+  for (const [heroId, id, power] of [['guard', 'signature', 10], ['guard', 'reverseForce', 10], ['guard', 'earthThroughChain', 10], ['sanFeng', 'signature', 7]]) {
+    const art = id === 'signature' ? G.artFor(G.startingHero(heroId), 'signature') : TECHNIQUES[id];
+    const fort = own(id, heroId).find((e) => e.kind === 'fortify');
+    check(heroId + ' ' + art.name + ': 固守 ＋' + power + ' until his next turn, and no 卸勁', !('stance' in art) && fort?.power === power && fort.turns === 1, JSON.stringify(fort));
+  }
+  check('no art of any hero carries 卸勁', !Object.values(TECHNIQUES).some((a) => a && 'stance' in a));
+  const { RULE_TERMS: TERMS } = await load('data/rule-terms.js');
+  check('卸勁 is no rule word', !('stance' in TERMS) && !Object.values(TERMS).some((t) => t?.name === '卸勁'));
+  // The starting art: the guard lands on the caster, and the preview and the art's facts say so.
   const s = board(['guard', 'hero', 'medic']);
   const guard = put(s, 'guard', 4, 7);
   const foe = put(s, 'blade', 5, 7);
-  const art = teach(guard, defineArt({ stance: 30, safe: true, mp: 2 }));
   const MF = await load('rules/move-facts.js');
-  check('the preview names the guard', G.forecast(guard, foe, true, s).notes.includes('卸勁 · 至下回合受擊減三成，還擊全力'));
-  check('the art’s facts name it too', MF.moveFacts(s, guard, art).effectLines.includes('卸勁 · 至下回合受擊減三成，還擊全力'));
+  const line = '固守 · 至下回合，自身防禦 ＋10';
+  check('the preview names it', G.forecast(guard, foe, true, s).notes.includes(line), G.forecast(guard, foe, true, s).notes);
+  check('the art’s facts name it too', MF.moveFacts(s, guard, 'signature').effectLines.includes(line), MF.moveFacts(s, guard, 'signature').effectLines);
+  const plain = G.damage(foe, guard, false, s.mapIndex, s);
   G.resolve(s, guard, foe, true);
-  check('卸勁 lands on the caster until his next turn', guard.conditions?.stance?.power === 30 && guard.conditions.stance.through === 1);
-  check('a save with it restores', unit(R.restoreRun(copy(s)), 'guard').conditions?.stance?.power === 30);
-  check('G.stanceCut reads it', G.stanceCut(s, guard) === 30);
+  check('固守 lands on the caster until his next turn', guard.conditions?.fortify?.power === 10 && guard.conditions.fortify.through === 1, JSON.stringify(guard.conditions));
+  check('no 卸勁 on him', !guard.conditions?.stance && G.stanceCut(s, guard) === 0);
+  const fortified = G.damage(foe, guard, false, s.mapIndex, s);
+  check('an enemy blow on him is smaller by the 防禦 it adds', fortified < plain, fortified + ' < ' + plain);
   const hit = blowAt(s, 'blade', 'guard');
-  check('an enemy blow is cut by three tenths, rounded half up', hit.taken === Math.round(hit.raw * 0.7), hit.taken + ' of ' + hit.raw);
-  check('the counter is at full ratio', foe.hp < foe.maxHp);
-
-  // Plain, then with a shield: the cut comes first, the shield takes what is left.
-  const plain = board(['guard', 'hero', 'medic']);
-  put(plain, 'guard', 4, 7);
-  put(plain, 'blade', 5, 7);
-  const bare = blowAt(plain, 'blade', 'guard');
-  check('without it the blow is whole', bare.taken === bare.raw, bare.taken + ' of ' + bare.raw);
-  const sh = board(['guard', 'hero', 'medic']);
-  const wall = put(sh, 'guard', 4, 7);
-  put(sh, 'blade', 5, 7);
-  stance(wall, sh);
-  BM.applyCondition(sh, wall, { kind: 'shield', power: 2, turns: 1 }, wall);
-  const shielded = blowAt(sh, 'blade', 'guard');
-  check('the shield absorbs after the cut', shielded.taken === Math.round(shielded.raw * 0.7) - 2, shielded.taken + ' of ' + shielded.raw);
-
-  // A counter in the ally phase is enemy damage too: the preview and the strike both cut it.
-  const c = board(['guard', 'hero', 'medic']);
-  const striker = put(c, 'guard', 4, 7);
-  const target = put(c, 'blade', 5, 7);
-  const whole = G.forecast(striker, target, false, c).counterRaw;
-  stance(striker, c);
-  const f = G.forecast(striker, target, false, c);
-  check('the preview cuts the counter it shows', f.counterRaw === Math.round(whole * 0.7) && f.counterRaw < whole, f.counterRaw + ' / ' + whole);
-  const life = striker.hp;
-  G.resolve(c, striker, target, false);
-  check('and the strike takes what the preview showed', life - striker.hp === f.counter);
-
-  // Poison is no blow: the tick is whole.
-  const p = board(['guard', 'hero', 'medic']);
-  const sick = unit(p, 'guard');
-  stance(sick, p);
-  BM.applyCondition(p, sick, { kind: 'poison', power: 10, turns: 2 }, sick);
-  const before = sick.hp;
-  quietTurn(p);
-  check('poison is not cut', before - sick.hp === 10, before - sick.hp);
-
-  // A sweep's chip on a stanced neighbour is cut.
-  const w = board(['guard', 'hero', 'medic']);
-  put(w, 'chief', 4, 7);
-  put(w, 'hero', 5, 7);
-  const side = put(w, 'guard', 5, 6);
-  stance(side, w);
-  w.round = 3;
-  const styled = G.DETAILS.chief.style;
-  G.DETAILS.chief.style = 'sweep';
-  try {
-    for (const v of G.party(w)) if (v !== unit(w, 'hero')) v.hp = v.maxHp;
-    unit(w, 'hero').hp = 30; // the cheapest target, so the sweep centres on him
-    G.startEnemy(w);
-    const raw = Math.round(G.damage(unit(w, 'chief'), unit(w, 'hero'), false, w.mapIndex, w) * G.enemyTechnique(unit(w, 'chief'), w).factor);
-    const was = side.hp;
-    G.enemyAct(w, unit(w, 'chief'));
-    check('a sweep chip on a stanced hero is cut', was - side.hp === Math.round(Math.max(1, Math.round(raw / 4)) * 0.7), was - side.hp);
-  } finally {
-    G.DETAILS.chief.style = styled;
-  }
-
-  // The enemy weighs the cut: a stanced hero counts as sturdier than he is.
-  const ai = (stanced) => {
-    const a = board(['guard', 'hero', 'medic']);
-    put(a, 'blade', 5, 7);
-    Object.assign(put(a, 'hero', 4, 7), { hp: 100 });
-    const g = Object.assign(put(a, 'guard', 6, 7), { hp: 80 });
-    if (stanced) stance(g, a);
-    G.startEnemy(a);
-    G.enemyAct(a, unit(a, 'blade'));
-    return g.hp < 80 ? 'guard' : unit(a, 'hero').hp < 100 ? 'hero' : 'none';
-  };
-  check('without the guard the enemy strikes the weaker hero', ai(false) === 'guard');
-  check('with it, 80 under 卸勁 weighs more than 100, and the other is struck', ai(true) === 'hero');
+  check('and the blow takes what the damage says', hit.taken === hit.raw, hit.taken + ' of ' + hit.raw);
+  check('his counter is the usual share, not a full one', G.counterRatio(s, guard) === 0.55);
+  // A save made mid-fight with a 卸勁 on a hero reads it as the 固守 it now is.
+  const old = board(['guard', 'sanFeng', 'medic']);
+  unit(old, 'guard').conditions = { stance: { power: 30, through: 1, source: 'guard' } };
+  unit(old, 'sanFeng').conditions = { stance: { power: 20, through: 1, source: 'sanFeng' } };
+  const back = R.restoreRun(copy(old));
+  check('a save with 卸勁 30 loads as 固守 ＋10', back && unit(back, 'guard').conditions?.fortify?.power === 10 && !unit(back, 'guard').conditions.stance, JSON.stringify(back && unit(back, 'guard').conditions));
+  check('…and 羅漢拳’s 20 as ＋7', back && unit(back, 'sanFeng').conditions?.fortify?.power === 7);
 
   // A villain's 蓄勢反擊 with a written cut, while charged.
   const v = board();
@@ -1171,8 +1120,6 @@ section('redirect');
   check('what is turned back is at most the cap', capped.life.foe - capped.foe.hp === 1 + capped.counter, capped.life.foe - capped.foe.hp);
   const felled = warded(24, (e, foe) => (foe.hp = 2));
   check('the turned share can fell the striker', felled.foe.hp === 0 && felled.bearer.hp === felled.life.bearer - Math.round(felled.raw * 0.5));
-  const cut = warded(24, (e, foe, b) => BM.applyCondition(e, b, { kind: 'stance', power: 30, turns: 1 }, b));
-  check('the kept half is then cut by 卸勁', cut.life.bearer - cut.bearer.hp === Math.round(Math.round(cut.raw * 0.5) * 0.7));
 
   // A signature on a warded hero still puts its effect on her.
   const sig = board(['medic', 'zhang', 'hero']);
@@ -1386,6 +1333,119 @@ section('taunt');
     guo.hp = guo.maxHp = 300;
   });
   check('a coverer beside the taunter takes the blow', !covered.guard && !covered.weak && unit(covered.e, 'medic').hp < 300);
+}
+
+// ── 向問天, a taunt tank (0.45, Q-N150) ───────────────────────────────────
+// 鐵索並肩 binds within three tiles, measured where he stands as each enemy acts; 內力 60 pays for it
+// every round; his summit asks for enemy blows taken ('struck'), not 'protects'.
+section('taunt tank');
+{
+  const art = TECHNIQUES.chainShelter;
+  check('鐵索並肩: 挑釁 three tiles, a first-tier node for one point, 6 內力', art.taunt === 3 && art.tier === 1 && art.points === 1 && art.mp === 6 && same(art.needs, ['signature']));
+  const fresh = G.startingHero('guard');
+  check('向問天 starts with 60 內力', fresh.maxMp === 60 && fresh.mp === 60, fresh.maxMp);
+  check('…and 鐵索並肩 costs no more than the 6 內力 a round brings back, so he can taunt every round', art.mp <= 6);
+  const at12 = G.startingHero('guard');
+  G.raiseLevel(at12, 11);
+  check('at level 12 his 內力 is the common growth on top (60 + 66)', at12.maxMp === 126, at12.maxMp);
+  // The preview says three tiles, and the outline is three tiles round him.
+  const s = board(['guard', 'hero', 'medic']);
+  const guard = put(s, 'guard', 4, 7);
+  teach(guard, 'chainShelter');
+  const f = G.forecast(guard, guard, true, s);
+  check('the preview says three tiles', f.notes.includes('挑釁 · 至下回合，三格內可攻到他的敵人只能攻擊他'), f.notes);
+  G.resolve(s, guard, guard, true);
+  check('the cast leaves 挑釁 3 until his next turn', guard.conditions?.taunt?.power === 3 && guard.conditions.taunt.through === s.round);
+  // Three tiles off, able to reach him: bound. Four off: free. Moved in the enemy phase, the
+  // radius goes with him.
+  const scene = (foeAt, guardAt, moveTo) =>
+    loose(() => {
+      const e = board(['guard', 'hero', 'medic']);
+      const foe = put(e, 'blade', ...foeAt);
+      const g = put(e, 'guard', ...guardAt);
+      const weak = Object.assign(put(e, 'hero', foeAt[0], foeAt[1] + 1), { hp: 20 });
+      BM.applyCondition(e, g, { kind: 'taunt', power: 3, turns: 1 }, g);
+      G.startEnemy(e);
+      if (moveTo) Object.assign(g, { x: moveTo[0], y: moveTo[1] });
+      const bound = G.taunters(e, foe).map((v) => v.id);
+      const hp = [g.hp, weak.hp, g.mastery.struck];
+      G.enemyAct(e, foe);
+      return { bound, guard: g.hp < hp[0], weak: weak.hp < hp[1], struck: g.mastery.struck - hp[2] };
+    });
+  const three = scene([7, 7], [4, 7]);
+  check('three tiles off and able to reach him, it is bound and strikes him', same(three.bound, ['guard']) && three.guard && !three.weak, JSON.stringify(three));
+  check('the blow counts as one taken', three.struck === 1);
+  const four = scene([8, 7], [4, 7]);
+  check('four tiles off, it is not bound', !four.bound.length && four.weak && !four.guard, JSON.stringify(four));
+  const moved = scene([8, 7], [3, 7], [5, 7]);
+  check('cast five tiles off, then carried within three in the enemy phase: bound from where he stands', same(moved.bound, ['guard']) && moved.guard, JSON.stringify(moved));
+  // 'struck': a record saved before it reads as none, and the gate counts it.
+  const gated = board(['guard', 'hero', 'medic']);
+  const g = unit(gated, 'guard');
+  delete g.mastery.struck;
+  const back = R.restoreRun(copy(gated));
+  check('a record saved before \'struck\' still loads', !!back && unit(back, 'guard'));
+  check('涼亭鐵鏈 is gated on blows taken', TECHNIQUES.earthThroughChain.gate?.metric === 'struck' && TECHNIQUES.earthThroughChain.gate.atLeast === 12);
+  const u = unit(back, 'guard');
+  u.learned.push('bloodAtPass', 'chainShelter', 'sweepingWhip', 'reverseForce', 'ironChainForm');
+  u.sp = 9;
+  const closed = R.studyState(back, u, 'earthThroughChain');
+  check('…closed with none taken, and the page counts them', closed?.status === '待完成歷練' && JSON.stringify(closed).includes('親身承受敵人攻擊 0／12'), JSON.stringify(closed));
+  u.mastery.struck = 12;
+  check('…open at twelve', R.studyState(back, u, 'earthThroughChain')?.canLearn === true);
+  // A blow 閃身 makes miss is not one taken.
+  const dodge = loose(() => {
+    const e = board(['guard', 'hero', 'medic']);
+    const foe = put(e, 'blade', 5, 7);
+    const t = put(e, 'guard', 4, 7);
+    put(e, 'hero', 1, 1);
+    BM.applyCondition(e, t, { kind: 'evade', power: 1, turns: 1 }, t);
+    G.startEnemy(e);
+    const was = t.mastery.struck;
+    G.enemyAct(e, foe);
+    return t.mastery.struck - was;
+  });
+  check('a blow 閃身 makes miss is not counted', dodge === 0, dodge);
+}
+
+// ── 虛竹, a healer-controller (0.45, Q-N150) ──────────────────────────────
+// 天山折梅手 lays 截勁 (his class word) in place of 黃蓉's 纏械; 化符 heals more for each ailment it
+// lifts, in place of 回春's overflow; 天山六陽掌 reaches three tiles, where 韋陀掌 is the cheap
+// palm beside him.
+section('healer-controller');
+{
+  const MF2 = await load('rules/move-facts.js');
+  const plum = TECHNIQUES.xzPlum, six = TECHNIQUES.xzSixYang, heal = TECHNIQUES.xzHeal;
+  check('天山折梅手 carries 截勁 and no 纏械', plum.forms.includes('seal') && !plum.disarm, plum.forms);
+  check('化符 lifts ailments and heals more for each (8), with no overflow', heal.forms.includes('cleanse') && !heal.forms.includes('overflow') && heal.purge === 8, heal.forms);
+  check('天山六陽掌 reaches three tiles; 韋陀掌 one, and cheaper', six.range === 3 && G.artFor(G.startingHero('xuZhu'), 'signature').range === 1 && G.artCost({ units: [] }, G.startingHero('xuZhu'), G.artFor(G.startingHero('xuZhu'), 'signature')) < six.mp);
+  // 截勁 from 折梅手: no counter, no signature this round; a master resists the next round's.
+  const s = board(['xuZhu', 'hero', 'medic']);
+  const xz = put(s, 'xuZhu', 4, 7);
+  const chief = put(s, 'chief', 5, 7);
+  teach(xz, 'xzPlum');
+  const f = G.forecast(xz, chief, true, s);
+  check('the preview lays 截勁 and draws no counter', f.effects.some((e) => e.kind === 'seal') && f.counterRaw === 0, f.effects);
+  check('the art’s facts name 截勁', MF2.moveFacts(s, xz, 'xzPlum').effectLines.some((l) => l.includes('截勁')), MF2.moveFacts(s, xz, 'xzPlum').effectLines);
+  G.resolve(s, xz, chief, true);
+  check('the master is sealed this round', chief.conditions?.seal?.through === s.round && chief.lastSealRound === s.round);
+  check('…and no 纏械 on him', !chief.conditions?.disarm);
+  // 化符: 44 and the level, more by 8 for each ailment it lifts.
+  const h = board(['xuZhu', 'hero', 'medic']);
+  const healer = put(h, 'xuZhu', 4, 7);
+  const sick = put(h, 'hero', 5, 7);
+  teach(healer, 'xzHeal');
+  sick.hp = 20;
+  const base = G.forecast(healer, sick, true, h).amount;
+  for (const kind of ['poison', 'weak', 'wound']) BM.applyCondition(h, sick, { kind, power: 3, turns: 2 }, unit(h, 'chief'));
+  const g = G.forecast(healer, sick, true, h);
+  check('three ailments lifted: 24 more, and the preview says so', g.amount === base + 24 && g.notes.some((n) => n.includes('每化去一種多回 8 · ＋24')), [base, g.amount, g.notes]);
+  check('the card says the rule', MF2.moveFacts(h, healer, 'xzHeal').effectLines.includes('每解去一種不良狀態，多回復 8 氣血'));
+  const was = sick.hp;
+  G.resolve(h, healer, sick, true);
+  check('the heal gives it, and lifts them', sick.hp - was === g.amount && !sick.conditions?.poison && !sick.conditions?.weak && !sick.conditions?.wound, sick.hp - was);
+  // 受制: the turned piece's blows are on its own side; the sim credits them to 虛竹 (tools).
+  check('生死符 still turns an ordinary foe for two rounds', TECHNIQUES.xzLifeDeath.charm?.turns === 2);
 }
 
 // ── 回身 glide (§2, §9.4) ────────────────────────────────────────────────
@@ -2862,29 +2922,29 @@ section('interactions');
     check('a wounded striker of a ward takes the turned half, the counter and its 內傷', life - foe.hp === Math.round(raw * 0.5) + counter + 5, life - foe.hp);
   }
 
-  // 卸勁 and 內傷: the cut is on enemy blows, never on what the wound costs.
+  // 固守 and 內傷: the 防禦 is on enemy blows, never on what the wound costs.
   {
     const s = board(['guard', 'hero', 'medic']);
     const guard = put(s, 'guard', 4, 7);
     const foe = put(s, 'blade', 5, 7);
-    cond(s, guard, 'stance', 30);
+    cond(s, guard, 'fortify', 10);
     cond(s, guard, 'wound', 5, 2);
     const f = G.forecast(guard, foe, false, s);
-    check('a stanced, wounded striker’s 內傷 is whole in the preview', f.selfLoss === 5);
+    check('a fortified, wounded striker’s 內傷 is whole in the preview', f.selfLoss === 5);
     const hp = guard.hp;
     G.resolve(s, guard, foe, false);
     check('and in the strike', hp - guard.hp === f.counter + 5, hp - guard.hp);
     const e = board(['guard', 'hero', 'medic']);
     const tank = put(e, 'guard', 4, 7),
       blade = put(e, 'blade', 5, 7);
-    cond(e, tank, 'stance', 30);
+    cond(e, tank, 'fortify', 10);
     cond(e, blade, 'wound', 5, 2);
     G.startEnemy(e);
     const raw = G.damage(blade, tank, false, e.mapIndex, e);
     const [a, b] = [tank.hp, blade.hp];
     G.enemyAct(e, blade);
-    const counter = Math.max(2, Math.round(G.damage(tank, blade, false, e.mapIndex, e)));
-    check('a wounded enemy’s blow on a stanced hero is cut; its 內傷 is not', a - tank.hp === Math.round(raw * 0.7) && b - blade.hp === counter + 5, [a - tank.hp, b - blade.hp]);
+    const counter = Math.max(2, Math.round(G.damage(tank, blade, false, e.mapIndex, e) * 0.55));
+    check('a wounded enemy’s blow on a fortified hero is what the damage says; its 內傷 is whole', a - tank.hp === raw && b - blade.hp === counter + 5, [a - tank.hp, raw, b - blade.hp, counter]);
   }
 
   // 挑釁 and 布陣: bound only if it can strike the taunter this turn, formations included.
@@ -5817,21 +5877,33 @@ section('leader boons of the later ten');
     lead.hp = 0;
     check('with the leader fallen, nothing', G.stat(mate, 'atk', s) === mates);
   }
-  // 虛竹 北冥真氣: a blow that lands gives back 3 內力.
+  // 0.44: each tree names its hero's boon as the game has it.
   {
-    const { s, lead, near, far, foe, other } = led('xuZhu');
-    near.mp = 0;
-    const f = G.forecast(near, foe, false, s);
-    check('北冥真氣: the forecast gives back 3 內力', f.absorb === 3 && f.notes.includes('北冥真氣 · 內力 ＋3'), f.notes);
-    check('…but the move’s own page does not: a leader’s boon is the team’s, not the move’s', !MF.moveFacts(s, near, 'basic').effectLines.some((l) => l.startsWith('北冥真氣')));
-    G.resolve(s, near, foe, false);
-    check('…and the strike gives it', near.mp === 3, near.mp);
-    check('not eight tiles off', !G.forecast(far, other, false, s).absorb);
-    BM.applyCondition(s, foe, { kind: 'evade', power: 1, turns: 1 }, foe);
-    check('not for a blow 閃身 makes miss', !G.forecast(lead, foe, false, s).absorb);
+    const { HERO_PATHS } = await load('data/mastery-catalog.js');
+    const drift = Object.entries(HERO_PATHS).filter(([id, p]) => p.boon !== BM.COMMANDS[id]?.name).map(([id]) => id);
+    check('every tree names the boon its hero leads with', !drift.length, drift);
+  }
+  // 虛竹 靈鷲慈心 (0.45): a heal by the leader or a hero within two tiles restores 8 more.
+  {
+    const { s, lead, near, far, foe } = led('xuZhu');
+    check('靈鷲慈心 is 虛竹’s boon, and pays on heals', BM.COMMANDS.xuZhu.name === '靈鷲慈心' && BM.COMMANDS.xuZhu.stat === 'mercy' && BM.COMMANDS.xuZhu.power === 8);
+    check('no boon gives 內力 on a hit any more', !Object.values(BM.COMMANDS).some((c) => c.stat === 'absorb'));
+    const healer = teach(near, defineArt({ target: 'ally', heal: 20, range: 3, mp: 2 }));
+    const hurt = (v) => (v.hp = v.maxHp - 80);
+    hurt(lead);
+    const plain = G.healingPower(near, s, TECHNIQUES[healer]);
+    const f = G.forecast(near, lead, true, s);
+    check('a heal two tiles from him restores 8 more, and says so', f.amount === plain + 8 && f.notes.includes('靈鷲慈心 · 療傷 ＋8'), [f.amount, plain, f.notes]);
+    check('…but the art’s own page does not: a leader’s boon is the team’s', !MF.moveFacts(s, near, healer).effectLines.some((l) => l.startsWith('靈鷲慈心')));
+    const was = lead.hp;
+    G.resolve(s, near, lead, true);
+    check('…and the heal gives it', lead.hp - was === plain + 8, lead.hp - was);
+    teach(far, defineArt({ target: 'ally', heal: 20, range: 9, mp: 2 }));
+    hurt(lead);
+    check('not eight tiles off', G.forecast(far, lead, true, s).amount === G.healingPower(far, s, G.artFor(far)), G.forecast(far, lead, true, s).notes);
+    check('not on a blow', !G.forecast(lead, foe, false, s).notes.some((n) => n.startsWith('靈鷲慈心')));
     lead.hp = 0;
-    delete foe.conditions.evade;
-    check('not with the leader fallen', !G.forecast(near, foe, false, s).absorb);
+    check('not with the leader fallen', !G.forecast(far, near, true, s).notes.some((n) => n.startsWith('靈鷲慈心')));
   }
   // 洪七公 打狗陣法: ＋8 on a held foe.
   {
@@ -5868,9 +5940,10 @@ section('leader boons of the later ten');
     const { s, lead, near, far, foe } = led('sanFeng');
     check('太極圓轉: counters at 0.75 in range', G.counterRatio(s, near) === 0.75 && G.counterRatio(s, lead) === 0.75);
     check('…0.55 eight tiles off', G.counterRatio(s, far) === 0.55);
-    BM.applyCondition(s, near, { kind: 'stance', power: 30, turns: 1 }, near);
-    check('…and a full counter stays full', G.counterRatio(s, near) === 1);
-    delete near.conditions.stance;
+    // 卸勁 is gone (0.45): 固守 does not change the counter, so the boon still raises it.
+    BM.applyCondition(s, near, { kind: 'fortify', power: 10, turns: 1 }, near);
+    check('…and under 固守 it is still the boon’s share', G.counterRatio(s, near) === 0.75);
+    delete near.conditions.fortify;
     loose(() => {
       Object.assign(foe, { step: 0, range: 1 });
       const want = Math.max(2, Math.round(G.damage(near, foe, false, 0, s) * 0.75)),

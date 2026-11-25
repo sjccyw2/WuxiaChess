@@ -67,6 +67,11 @@ const W = {
   fortify: 0.9,
   holdLater: 0.5,
   equipHold: 0.5, // choosing arts: a turn a foe is held, in basic attacks (W.hold weights the kinds)
+  // 挑釁 and 代受: the enemy blows a guard draws onto himself from softer companions. In play the
+  // gain is read from the threats (guardShift); choosing arts, a taunt is worth this many basic
+  // attacks per tile of its radius, and a cover this many (it guards only those beside him).
+  equipTaunt: 0.45,
+  equipCover: 0.6,
   medicineAt: 0.4, // drink medicine below this fraction of health (leader: + 0.15)
   // 守: the object the heroes keep
   keepThreat: 1.7, // a point of damage on a foe that could strike the kept object next turn
@@ -256,6 +261,7 @@ function placeScore(s, u, ctx, hpAfter, gone, after = null) {
   let score = -d.expected * W.danger * (leader ? leaderCare(ctx) : 1);
   if (d.total >= hpAfter) score -= leader ? W.leaderLethal : W.lethal * (ctx.sidePolicy.lethal || 1) + u.maxHp / 2;
   else if (leader && d.total >= hpAfter * 0.75) score -= W.leaderLethal / 20;
+  if (after?.guard?.taunt || after?.guard?.cover) score += guardShift(s, u, ctx, after.held ? new Set([...gone, ...after.held]) : gone, after.guard, hpAfter, d);
   score += (tileInfo(u.x, u.y, s.mapIndex)?.defense || 0) * W.cover;
   const heal = tileInfo(u.x, u.y, s.mapIndex)?.heal || 0;
   if (heal) score += Math.min(heal, u.maxHp - hpAfter) * 0.8;
@@ -295,11 +301,68 @@ function guardedDanger(s, u, threats, gone, guard) {
   }
 }
 // The guard an art leaves on its own caster (rules/battle-mastery.js selfEffectsOf: 金剛 and
-// 固守 on a strike guard the striker).
+// 固守 on a strike guard the striker; 挑釁 and 代受 stand on the caster whatever the art aims at).
 function selfGuard(art) {
-  if (!art || G.isSupport(art)) return null;
-  if (!art.immune && !art.fortify) return null;
-  return { immune: !!art.immune, fortify: art.fortify?.power || 0 };
+  if (!art) return null;
+  const strike = !G.isSupport(art);
+  const guard = {
+    immune: strike && !!art.immune,
+    fortify: strike ? art.fortify?.power || 0 : 0,
+    taunt: art.taunt || 0,
+    cover: !!art.cover
+  };
+  return guard.immune || guard.fortify || guard.taunt || guard.cover ? guard : null;
+}
+// 挑釁 and 代受: what the guard u leaves for the coming enemy phase is worth, as blows moved.
+// A taunt binds every foe within its radius that can strike him where he ends (G.taunters); a
+// cover takes every direct blow aimed at a companion beside him. Worth the danger lifted off the
+// companions (more for the leader, less for one who may still walk away), less what he takes on:
+// every bound foe strikes him for certain, and a covered companion's foes may turn on him. `d` is
+// his own danger before the guard, with his other guards counted (placeScore).
+function guardShift(s, u, ctx, gone, guard, hpAfter, d) {
+  const here = key(u.x, u.y),
+    leader = u.id === s.leader;
+  const drawn = guard.taunt
+    ? ctx.threats.filter((th) => !gone.has(th.e) && G.distance(th.e, u) <= guard.taunt && th.hits.has(here)).map((th) => th.e)
+    : [];
+  const without = new Set([...gone, ...drawn]);
+  let relief = 0;
+  const turned = new Set(); // foes that would strike a covered companion
+  for (const v of G.party(s)) {
+    if (v === u || !G.living(v)) continue;
+    const before = dangerAt(s, v, ctx.threats, gone);
+    if (!before.total) continue;
+    const covered = guard.cover && G.distance(u, v) === 1;
+    const after = covered ? { total: 0, expected: 0 } : dangerAt(s, v, ctx.threats, without);
+    const free = G.canAct(s, v); // he may still walk out of reach this turn
+    relief += (before.expected - after.expected) * W.danger * (v.id === s.leader ? leaderCare(ctx) : 1) * (free ? 0.5 : 1);
+    if (!free && before.total >= v.hp && after.total < v.hp) relief += v.id === s.leader ? W.leaderLethal / 20 : W.lethal;
+    if (covered) for (const th of ctx.threats) if (!without.has(th.e) && th.hits.has(key(v.x, v.y)) && !th.hits.has(here)) turned.add(th.e);
+  }
+  if (guard.immune) return relief; // 金剛: nothing the guard draws lands on him
+  // What lands on him: each bound foe's whole blow, the rest of his danger as before, and a
+  // covered companion's foes as if they came for him.
+  const blow = (th) => Math.round(G.damage(th.e, u, false, s.mapIndex, s) * th.factor);
+  const fort = guard.fortify ? { fortify: guard.fortify } : null;
+  const bound = withGuard(s, u, fort, () => ctx.threats.filter((th) => drawn.includes(th.e)).reduce((n, th) => n + blow(th), 0));
+  const rest = withGuard(s, u, fort, () => dangerAt(s, u, ctx.threats.filter((th) => !drawn.includes(th.e)), gone));
+  const extra = withGuard(s, u, fort, () => dangerAt(s, u, ctx.threats.filter((th) => turned.has(th.e)).map((th) => ({ ...th, hits: new Set([here]) })), gone));
+  const expected = bound + rest.expected + extra.expected,
+    total = d.total + extra.total;
+  let score = relief - Math.max(0, expected - d.expected) * W.danger * (leader ? leaderCare(ctx) : 1);
+  if (total >= hpAfter && d.total < hpAfter) score -= leader ? W.leaderLethal : W.lethal * (ctx.sidePolicy.lethal || 1) + u.maxHp / 2;
+  return score;
+}
+// Runs fn with 固守's 防禦 laid on u for the count, as guardedDanger does.
+function withGuard(s, u, guard, fn) {
+  if (!guard?.fortify) return fn();
+  const had = u.conditions;
+  u.conditions = { ...(had || {}), fortify: { power: Math.max(guard.fortify, had?.fortify?.power || 0), through: s.round + 1 } };
+  try {
+    return fn();
+  } finally {
+    u.conditions = had;
+  }
 }
 // The blow foe t would strike next enemy phase: on the hero it would hurt most among those it can
 // reach (`except` left out), or, with none in reach, a share of its blow on the softest hero.
@@ -433,8 +496,7 @@ function foeValue(s, t, ctx) {
 // What an option is worth, read entirely from the rules' forecast. A blow at a covered piece
 // lands on its coverer (forecast's coveredBy), so that is the piece it may fell.
 function strikeScore(s, u, t, f, ctx, mp, art = null) {
-  // 北冥真氣 (a leader's boon) gives back 內力 for a blow that lands, as if it cost that much less.
-  let score = -(mp - (f.absorb || 0)) * W.mp - f.hpCost * W.hpCost;
+  let score = -mp * W.mp - f.hpCost * W.hpCost;
   const gone = new Set();
   const leader = u.id === s.leader;
   const victim = (f.coveredBy && G.find(s, f.coveredBy)) || t;
@@ -585,6 +647,7 @@ function bestOption(s, u, ctx) {
           continue;
         }
         r = f.support ? supportScore(s, u, t, f, ctx, mp) : strikeScore(s, u, t, f, ctx, mp, art);
+        r.after ??= { guard: selfGuard(art) }; // a support art's 挑釁 or 代受 stands on its caster
         consider({ score: r.score + placeScore(s, u, ctx, r.hpAfter, r.gone, r.after), P, act: 'art', id, t });
       }
     }
@@ -606,9 +669,11 @@ function hpSnapshot(s) {
   return new Map(s.units.map((v) => [v, v.hp]));
 }
 function credit(rec, before, s, actor) {
-  // Health lost by foes goes to the actor, health lost by heroes is what they took.
+  // Health lost by foes goes to the actor, health lost by heroes is what they took; health a hero
+  // regains in the actor's own action is what the actor healed (himself included).
   for (const [v, hp] of before) {
     const lost = hp - v.hp;
+    if (lost < 0 && v.side === 'ally' && actor && rec.heroes[actor] && G.living(v)) rec.heroes[actor].healed -= lost;
     if (lost <= 0) continue;
     if (v.side === 'ally') rec.heroes[v.id].taken += lost;
     else if (actor && rec.heroes[actor]) {
@@ -699,9 +764,26 @@ function enemyPhase(s, rec) {
     const e = G.enemies(s).find((v) => G.living(v) && !v.acted);
     if (!e) break;
     const before = hpSnapshot(s);
+    // 受制: what a turned foe does to its own side is the doing of the hero who turned it.
+    const turner = G.charmed(e) ? rec.heroes[e.conditions.charm.source] : null;
+    // 挑釁: the heroes this foe is bound to strike as it begins (the rules' own taunters).
+    const bound = turner ? [] : G.taunters(s, e).map((v) => v.id);
+    rec.coverLine = null;
     const effects = G.enemyAct(s, e);
     const target = effects[0] && G.find(s, effects[0][0]);
+    if (turner) {
+      for (const [v, hp] of before) if (v.side === 'enemy' && hp > v.hp) turner.turned += hp - v.hp;
+      continue;
+    }
     credit(rec, before, s, target?.side === 'ally' ? target.id : null);
+    // A blow that landed on a hero: counted, and counted as drawn when a 挑釁 bound the foe to him
+    // or he stepped in for a companion (代受's line in the log, by the coverer's name).
+    if (target?.side === 'ally' && rec.heroes[target.id]) {
+      const h = rec.heroes[target.id];
+      h.struck++;
+      if (bound.includes(target.id)) h.taunted++;
+      else if (rec.coverLine === G.unitDetails(target).name) h.covered++;
+    }
   }
   if (s.result) return;
   const before = hpSnapshot(s);
@@ -721,7 +803,7 @@ function fight(s) {
   const rec = { stage: s.run.stage, map: s.mapIndex, usage: { basic: 0, start: 0, tier1: 0, tier2: 0, tier3: 0, tier4: 0, manual: 0, wait: 0 }, heroes: {}, misfires: 0 };
   rec.arts = {};
   for (const u of G.party(s)) {
-    rec.heroes[u.id] = { dealt: 0, taken: 0, kills: 0, level: u.level, sp: u.sp, spent: spentPoints(u) };
+    rec.heroes[u.id] = { dealt: 0, taken: 0, kills: 0, healed: 0, turned: 0, struck: 0, taunted: 0, covered: 0, level: u.level, sp: u.sp, spent: spentPoints(u) };
     for (const id of G.equippedArts(u)) (rec.arts[u.id + '/' + id] ??= { equipped: 0, used: 0 }).equipped = 1;
   }
   // The battle log keeps only its last lines; a traced board keeps its own copy.
@@ -735,6 +817,7 @@ function fight(s) {
   let sideNow = R.sideState(s);
   s.logs.push = function (entry) {
     for (const [name, test] of EVENTS) if (test(entry, phaseLines)) rec.events[name] = (rec.events[name] || 0) + 1;
+    if (entry.phase === 'enemy' && /^挺身代.+受招。$/.test(entry.text)) rec.coverLine = entry.who;
     const n = Array.prototype.push.call(this, entry);
     lines?.push(entry);
     const state = s.result ? sideNow : R.sideState(s);
@@ -758,6 +841,7 @@ function fight(s) {
   rec.downed = team.filter((u) => !G.living(u)).length;
   rec.side = R.sideDone(s);
   rec.leaderFell = !G.living(G.find(s, s.leader));
+  rec.leader = s.leader;
   // What kind of board it was, and what came onto it.
   const board = G.boardOf(s);
   rec.kind = G.boardKind(s);
@@ -838,7 +922,9 @@ function worth(heroId, id, level) {
   const art = id === 'basic' ? null : id === 'signature' ? G.artFor(G.startingHero(heroId), 'signature') : TECHNIQUES[id];
   let held = 0;
   for (const k of ['freeze', 'mute', 'charm']) if (art?.[k]) held += (art[k].turns || 1) * W.hold[k] * (k === 'charm' ? 1 + W.turncoat : 1);
-  return { job: p.job, value: (amount / base) * scale + held * W.equipHold };
+  // 挑釁 and 代受: the blows drawn off softer companions, which the damage measure leaves out.
+  const drawn = (art?.taunt || 0) * W.equipTaunt + (art?.cover ? W.equipCover : 0);
+  return { job: p.job, value: (amount / base) * scale + held * W.equipHold + drawn };
 }
 function equipArts(s, u) {
   const known = ['signature', ...u.learned.filter((id) => TECHNIQUES[id] && TECHNIQUES[id].kind !== 'basic')];
@@ -1101,15 +1187,23 @@ function aggregate(runs) {
         A.used += a.used;
       }
       const totalKills = Object.values(b.heroes).reduce((n, h) => n + h.kills, 0),
-        totalDealt = Object.values(b.heroes).reduce((n, h) => n + h.dealt, 0);
+        totalDealt = Object.values(b.heroes).reduce((n, h) => n + h.dealt, 0),
+        totalStruck = Object.values(b.heroes).reduce((n, h) => n + (h.struck || 0), 0);
       for (const [id, h] of Object.entries(b.heroes)) {
-        const H = (heroes[id] ??= { boards: 0, dealt: 0, taken: 0, kills: 0, teamKills: 0, teamDealt: 0, at: Array.from({ length: STAGES }, () => ({ n: 0, level: 0, sp: 0, spent: 0 })) });
+        const H = (heroes[id] ??= { boards: 0, dealt: 0, taken: 0, kills: 0, teamKills: 0, teamDealt: 0, healed: 0, turned: 0, struck: 0, taunted: 0, covered: 0, teamStruck: 0, led: 0, ledLost: 0, at: Array.from({ length: STAGES }, () => ({ n: 0, level: 0, sp: 0, spent: 0 })) });
         H.boards++;
         H.dealt += h.dealt;
         H.taken += h.taken;
         H.kills += h.kills;
         H.teamKills += totalKills;
         H.teamDealt += totalDealt;
+        for (const k of ['healed', 'turned', 'struck', 'taunted', 'covered']) H[k] += h[k] || 0;
+        H.teamStruck += totalStruck;
+        // Boards he led, and those lost by the leader falling.
+        if (b.leader === id) {
+          H.led++;
+          if (!b.won && b.leaderFell) H.ledLost++;
+        }
         const A = H.at[b.stage];
         A.n++;
         A.level += h.level;
@@ -1168,6 +1262,17 @@ function aggregate(runs) {
           takenPerBoard: r1(H.taken / H.boards),
           killShare: H.teamKills ? r2(H.kills / H.teamKills) : 0,
           damageShare: H.teamDealt ? r2(H.dealt / H.teamDealt) : 0,
+          // What a support's or a guard's worth is: 氣血 restored, damage done by foes he turned
+          // (受制), the enemy blows that landed on him, and of those the ones drawn by 挑釁 or 代受.
+          healedPerBoard: r1(H.healed / H.boards),
+          turnedPerBoard: r1(H.turned / H.boards),
+          struckPerBoard: r2(H.struck / H.boards),
+          struckShare: H.teamStruck ? r2(H.struck / H.teamStruck) : 0,
+          tauntedPerBoard: r2(H.taunted / H.boards),
+          coveredPerBoard: r2(H.covered / H.boards),
+          drawn: H.taunted + H.covered,
+          led: H.led,
+          ledLostLeader: H.ledLost,
           levelAt: H.at.map((A) => (A.n ? r1(A.level / A.n) : null)),
           spentAt: H.at.map((A) => (A.n ? r1(A.spent / A.n) : null)),
           unspentAt: H.at.map((A) => (A.n ? r1(A.sp / A.n) : null))
@@ -1228,6 +1333,12 @@ function print(out) {
     console.log(
       pad(id, 7) + pad(h.name, 5) + lpad(h.boards, 6) + lpad(h.dealtPerBoard, 7) + lpad(h.takenPerBoard, 7) + lpad(pc(h.killShare), 7) + lpad(pc(h.damageShare), 6) + '   ' +
         h.levelAt.map((v) => lpad(v == null ? '-' : Math.round(v), 2)).join(' ') + '  /  ' + h.spentAt.map((v) => lpad(v == null ? '-' : Math.round(v), 2)).join(' ')
+    );
+  console.log('\nPer hero, support and guard (per board fought: healed; turned = damage dealt by foes he turned (受制); struck = enemy blows landed on him, and his share of the team\'s; taunt, cover = of those, drawn by 挑釁 and by 代受; drawn = both, in all; led = boards he led, L:ldr = of those lost by the leader falling)');
+  console.log(pad('hero', 9) + pad('name', 5) + lpad('healed', 7) + lpad('turned', 7) + lpad('struck', 7) + lpad('share', 6) + lpad('taunt', 7) + lpad('cover', 7) + lpad('drawn', 7) + lpad('led', 6) + lpad('L:ldr', 6));
+  for (const [id, h] of Object.entries(out.heroes))
+    console.log(
+      pad(id, 9) + pad(h.name, 5) + lpad(h.healedPerBoard, 7) + lpad(h.turnedPerBoard, 7) + lpad(h.struckPerBoard, 7) + lpad(pc(h.struckShare), 6) + lpad(h.tauntedPerBoard, 7) + lpad(h.coveredPerBoard, 7) + lpad(h.drawn, 7) + lpad(h.led, 6) + lpad(h.ledLostLeader, 6)
     );
   if (ARTS && out.arts) {
     console.log('\nPer art (boards fought with it equipped, uses, uses per such board)');

@@ -153,7 +153,7 @@ const NEW_HEROES = {
     skillIcon: 'hand',
     skillRange: 1,
     cost: 9,
-    skillDesc: '一招一式穩穩打出，擊中相鄰敵人。至下回合受擊減兩成，還擊全力。',
+    skillDesc: '一招一式穩穩打出，擊中相鄰敵人。至下回合自身防禦增加 7 點。',
     voice: '不必著急。他快由他快，我們慢慢的來。'
   },
   zhaoMin: {

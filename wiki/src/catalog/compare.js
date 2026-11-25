@@ -16,7 +16,7 @@ const TOP = LEVELS.at(-1);
 const AXES = [
   { key: 'melee', name: '近身攻擊', hint: '貼身出手的傷害：最強兩招（普攻也算）加還擊；破招、合璧等條件加成與連環也算；射程兩格以上的招式貼身使用只算一半。' },
   { key: 'ranged', name: '遠程攻擊', hint: '兩格以外出手的傷害，射程越遠越高；條件加成、連環與濺射波及兩格以外的餘勁也算。' },
-  { key: 'vitality', name: '氣血防禦', hint: '倒下前挨得住幾擊，再加護盾、固守、卸勁、金剛、閃身、免受還擊、自療、吸血與代受。' },
+  { key: 'vitality', name: '氣血防禦', hint: '倒下前挨得住幾擊，再加護盾、固守、金剛、閃身、免受還擊、自療、吸血與代受。' },
   { key: 'inner', name: '內力回氣', hint: '八回合內，內力上限加每回合回氣，夠施展幾次本門最耗內力的三招（以學全後為準）；凝氣、命中回復內力與領隊減耗都算。' },
   { key: 'speed', name: '身法速度', hint: '移動步數，加輕身、越障身法與出招後回身。' },
   { key: 'support', name: '輔助同伴', hint: '替同伴療傷、護盾、振奮、輕身、固守、代受、令同伴再動，與壓制敵人；領隊陣法按三分之一計。' }
@@ -341,7 +341,8 @@ const BOON_SHARE = {
   ground: 0.25, // 金蛇轉鋒: the foe struck stands on ground that guards him
   covered: 0.05, // ...or behind someone who would take the blow for him
   opening: 0.3, // 越女試劍: once a round for the side; this companion's share of it
-  spare: 1 / ROUNDS // 雪谷回生: a fall turned aside once a board, about a blow a board
+  spare: 1 / ROUNDS, // 雪谷回生: a fall turned aside once a board, about a blow a board
+  mercy: 0.5 // 靈鷲慈心: a round in which this companion heals rather than strikes
 };
 // 越女試劍 and 雪谷回生 keep count in a board's facts, which the scene has not: they are read off
 // the boon itself, on the counter his basic draws and the blow he takes.
@@ -354,8 +355,9 @@ function boonBlows(plain, lead, unit) {
   const swing = 1.5; // the best blow and half a basic, as the scene weighs them above
   const f = G.forecast(u, foe, false, s);
   let n = 0;
-  // 北冥真氣: 內力 back for the round's blow.
-  n += ((f.absorb || 0) * unit.mpWorth) / BLOW;
+  // 靈鷲慈心: a heal of his restores more, about once in each healer's round.
+  if (has('mercy') && G.equippedArts(u).some((id) => G.artFor(u, id).heal))
+    n += (BOON_SHARE.mercy * G.commandBonus(s, u, 'mercy')) / BLOW;
   // 打狗陣法: the same blow at a foe under 絆足.
   if (has('held')) {
     const held = { ...foe, conditions: { pin: { power: 2, through: s.round + 1 } } };

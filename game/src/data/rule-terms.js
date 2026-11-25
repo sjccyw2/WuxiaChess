@@ -119,7 +119,7 @@ const RULE_GROUPS = [
         id: 'taunt',
         name: '挑釁',
         art: 'taunt',
-        text: '至下回合，兩格內能攻到自己的敵人只能攻擊自己，兩格從出招後所站之處算起，預覽時棋盤會框出範圍'
+        text: '至下回合，數格內能攻到自己的敵人只能攻擊自己（招式寫明幾格），從敵人出手時他所站之處算起，預覽時棋盤會框出範圍'
       },
       {
         id: 'zone',
@@ -127,7 +127,6 @@ const RULE_GROUPS = [
         art: 'zone',
         text: '以落點為中心布下五格陣勢，至下一敵方回合結束；敵人踏入即須停步，回合開始時站在陣中移動減 2，我方站在陣中防禦 ＋4'
       },
-      { id: 'stance', name: '卸勁', art: 'stance', text: '至下回合受到的傷害減少，還擊改以全力' },
       { id: 'evade', name: '閃身', art: 'evade', text: '下一次受到的直接攻擊落空' },
       { id: 'redirect', name: '挪移', art: 'redirect', text: '下一次受擊傷害減半，並把一部分反震給出手者' },
       { id: 'shield', name: '護盾', condition: 'shield', text: '替受術者吸收一定傷害，到期消散；多重護盾取較強者' },
@@ -278,7 +277,9 @@ const PLAIN_FIELDS = {
     ...['name', 'family', 'owner', 'root', 'kind', 'tier', 'needs', 'points', 'icon', 'visual', 'basicBonus', 'desc', 'source', 'forms', 'mp', 'range', 'target', 'factor', 'gate', 'debuff', 'shield', 'price', 'stock', 'manual', 'radius'],
     // Folded: 連擊, 身法, 範圍, 回氣, 吸元, 自耗氣血, 號令, 留力, 壓箱, 調息, 轉護, 傾力, 後發,
     // 孤行, 黯然, 還報, 斬殘.
-    ...['hits', 'blink', 'aura', 'recover', 'drain', 'hpCost', 'order', 'poised', 'once', 'cooldown', 'consume', 'surge', 'retort', 'lone', 'dire', 'avenge', 'execute']
+    ...['hits', 'blink', 'aura', 'recover', 'drain', 'hpCost', 'order', 'poised', 'once', 'cooldown', 'consume', 'surge', 'retort', 'lone', 'dire', 'avenge', 'execute'],
+    // 化符's twist (0.45): each ailment 解厄 lifts heals more; its card says so.
+    'purge'
   ],
   item: ['name', 'kind', 'owner', 'atk', 'icon', 'desc', 'forms', 'power', 'def', 'step', 'hp', 'mp'],
   // mods and sig are numbers; post is read by 坐鎮's test. The rest are one enemy's way each,

@@ -15,6 +15,7 @@ const GATE_LABELS = {
   casts: '親自施展絕技',
   heals: '累計療復氣血（含領隊療效）',
   protects: '護持人次（自身護盾亦計）',
+  struck: '親身承受敵人攻擊',
   steps: '實際行走格數',
   side: '在場生還並完成支線'
 };
@@ -23,6 +24,8 @@ const PAIRED_HANDS_DESC = '左右手各使一路，在兩格內連擊兩次。';
 // Naming (the producer's rule, 2026-11-22): 「本招・式名」 with 「・」 marks an upgrade, and only the
 // basic attack is upgraded (kind 'basic'). Every other node is a new art in its own slot and has a
 // name of its own; `family` names the art it belongs to (降龍十八掌 for 亢龍有悔), shown beneath it.
+// `boon` names the hero's leader boon, as COMMANDS in rules/battle-mastery.js has it (0.44;
+// check-mechanics holds the two together).
 const HERO_PATHS = {
   hero: {
     title: '思過崖劍訣',
@@ -167,7 +170,7 @@ const HERO_PATHS = {
   qiaoFeng: {
     title: '聚賢莊斷義錄',
     book: '天龍八部',
-    boon: '一呼百應',
+    boon: '聚賢豪氣',
     signature: '太祖長拳',
     origin:
       '蕭峰入境只餘江湖上最尋常的太祖長拳。恩師所傳降龍掌法須逐掌想回，直到末了，廿八掌才會俱全。',
@@ -195,7 +198,7 @@ const HERO_PATHS = {
   hongQi: {
     title: '華山絕頂棒掌錄',
     book: '射鵰英雄傳、神鵰俠侶',
-    boon: '九指點撥',
+    boon: '打狗陣法',
     signature: '逍遙遊',
     origin:
       '洪七公入境只餘少年最早學的逍遙遊。降龍掌、打狗棒須逐招逐訣想起，直到三十六路棒法使全。',
@@ -209,7 +212,7 @@ const HERO_PATHS = {
   yaoShi: {
     title: '桃花島簫劍錄',
     book: '射鵰英雄傳、神鵰俠侶',
-    boon: '東邪奇學',
+    boon: '桃花迷陣',
     signature: '落英神劍掌',
     origin:
       '黃藥師入境只餘落英神劍掌。劈空掌、島上奇陣、簫中劍、指上飛石須逐樣想回，碧海潮生曲留在最後。',
@@ -223,7 +226,7 @@ const HERO_PATHS = {
   sanFeng: {
     title: '武當山太極初演錄',
     book: '倚天屠龍記',
-    boon: '真武鎮山',
+    boon: '太極圓轉',
     signature: '羅漢拳',
     origin:
       '張三丰入境只餘少年照一對鐵羅漢學成的羅漢拳，是他最早的拳路。自創武當拳劍須從頭想回，太極拳仍在最後。',
@@ -237,7 +240,7 @@ const HERO_PATHS = {
   zhaoMin: {
     title: '靈蛇島三劍錄',
     book: '倚天屠龍記',
-    boon: '郡主妙算',
+    boon: '軟筋餘香',
     signature: '萬安寺劍招',
     origin:
       '趙敏入境只餘萬安寺向各派偷學的零碎劍招。靈蛇島那三招與敵偕亡的劍法須逐招想回，天地同壽留到最後。',
@@ -251,7 +254,7 @@ const HERO_PATHS = {
   lingSu: {
     title: '藥王谷七心錄',
     book: '飛狐外傳',
-    boon: '藥王調息',
+    boon: '碧蠶毒蠱',
     signature: '藥王方脈',
     origin:
       '程靈素入境只餘師父傳的方脈醫理。辨毒使毒須逐樣想回，七心海棠在最後。',
@@ -265,7 +268,7 @@ const HERO_PATHS = {
   diYun: {
     title: '雪谷神照錄',
     book: '連城訣',
-    boon: '血刀破甲',
+    boon: '雪谷回生',
     signature: '躺屍劍法',
     origin:
       '狄雲入境只餘最早學的躺屍劍法，連名目都是師父教錯的。老丐三招、雪谷血刀須逐樣想回，丁典的神照經在最後。',
@@ -279,7 +282,7 @@ const HERO_PATHS = {
   chengZhi: {
     title: '華山金蛇錄',
     book: '碧血劍',
-    boon: '金蛇追影',
+    boon: '金蛇轉鋒',
     signature: '伏虎掌',
     origin:
       '袁承志入境只餘幼時崔秋山教的伏虎掌。石洞裡所得的金蛇秘笈早在少年練全，因而想回得最快，反是華山混元功、木桑身法須慢慢想起。',
@@ -293,7 +296,7 @@ const HERO_PATHS = {
   aQing: {
     title: '苧蘿竹枝譜',
     book: '越女劍',
-    boon: '越女輕步',
+    boon: '越女試劍',
     signature: '白猿竹枝',
     origin:
       '阿青入境只餘竹棒與同白猿打著玩的幾下，自己並不知是劍法。獨敵三千甲士的那一路，須最後才會想起。',
@@ -711,15 +714,15 @@ const MASTERY_ARTS = {
     tier: 1,
     needs: ['signature'],
     points: 1,
-    mp: 8,
+    mp: 6,
     range: 0,
     icon: 'shield',
     visual: 'guard',
     target: 'self',
-    taunt: 2,
+    taunt: 3,
     fortify: { power: 4, turns: 2 },
     aura: 1,
-    desc: '抖響鐵索挑釁四周，自身與相鄰同伴防禦增加 4 點，持續兩回合。至下回合，兩格內能攻到他的敵人只能攻擊他。',
+    desc: '抖響鐵索挑釁四周，自身與相鄰同伴防禦增加 4 點，持續兩回合。至下回合，三格內能攻到他的敵人只能攻擊他。',
     source: '向問天與令狐冲在涼亭並肩，獨引群敵。此招為本作所擬。'
   },
   sweepingWhip: {
@@ -757,9 +760,9 @@ const MASTERY_ARTS = {
     factor: 1.3,
     safe: true,
     avenge: 0.4,
-    stance: 30,
+    fortify: { power: 10, turns: 1 },
     recover: 6,
-    desc: '把卸入地底的勁力送還相鄰敵人，敵人無法還擊，命中回收 6 點內力；上一敵方回合曾受傷時威力更強。至下回合受擊減三成，還擊全力。',
+    desc: '把卸入地底的勁力送還相鄰敵人，敵人無法還擊，命中回收 6 點內力；上一敵方回合曾受傷時威力更強。至下回合自身防禦增加 10 點。',
     source: '向問天的吸功入地小法能將勁力卸入地下，送還與回氣是本作的演繹。'
   },
   bloodAtPass: {
@@ -799,10 +802,10 @@ const MASTERY_ARTS = {
     splash: 0.35,
     safe: true,
     avenge: 0.4,
-    stance: 30,
+    fortify: { power: 10, turns: 1 },
     rooted: true,
-    gate: { metric: 'protects', atLeast: 4 },
-    desc: '鐵鏈橫掃相鄰一敵，四鄰敵人承受三成半餘勁，敵人無法還擊；上一敵方回合曾受傷時威力更強。至下回合受擊減三成，下一回合不能移動。',
+    gate: { metric: 'struck', atLeast: 12 },
+    desc: '鐵鏈橫掃相鄰一敵，四鄰敵人承受三成半餘勁，敵人無法還擊；上一敵方回合曾受傷時威力更強。至下回合自身防禦增加 10 點，下一回合不能移動。',
     source: '涼亭中向問天身縛鐵鏈，獨抗正邪數百人。此招為本作所擬。'
   },
   southernStance: {
@@ -1822,10 +1825,9 @@ const MASTERY_ARTS = {
     icon: 'hand',
     visual: 'guo',
     target: 'enemy',
-    factor: 1.2,
+    factor: 1.25,
     safe: true,
-    disarm: { power: 5, turns: 2 },
-    desc: '三路掌法、三路擒拿，拿住相鄰敵人的兵刃，此擊免受還擊。敵人攻擊降低 5 點，且只能攻擊相鄰一格，持續兩回合。',
+    desc: '三路掌法、三路擒拿，拿住相鄰敵人的經脈，此擊免受還擊。截勁：本回合敵人不能還擊，也不能施展絕技；局主受過後，下一回合可抵抗。',
     source: '天山童姥傳虛竹天山折梅手，說它包含了逍遙派武學的精義，天下兵刃招數皆可化入其中。'
   },
   xzSixYang: {
@@ -1837,13 +1839,13 @@ const MASTERY_ARTS = {
     needs: ['xzNorthQi'],
     points: 2,
     mp: 12,
-    range: 1,
+    range: 3,
     icon: 'hand',
     visual: 'guo',
     target: 'enemy',
-    factor: 1.4,
+    factor: 1.35,
     paired: { any: 0.15, partner: 0.4 },
-    desc: '以天山六陽掌擊中相鄰敵人；有同伴相鄰時威力增加，相鄰的是蕭峰時增加更多。',
+    desc: '六陽掌力隔空吐出，擊中三格內一敵；有同伴相鄰時威力增加，相鄰的是蕭峰時增加更多。',
     source: '虛竹在少室山上以天山六陽掌力鬥丁春秋，其時兩位義兄俱在身旁。'
   },
   xzHeal: {
@@ -1855,13 +1857,14 @@ const MASTERY_ARTS = {
     tier: 3,
     needs: ['xzSixYang'],
     points: 2,
-    mp: 13,
+    mp: 11,
     range: 3,
     icon: 'leaf',
     visual: 'medic',
     target: 'ally',
-    heal: 44,
-    desc: '以陽和掌力化去體內寒毒，為三格內一人療傷，基礎回復 44 點氣血並解除不良狀態，溢出的療量化為護盾。可對自己施術。',
+    heal: 50,
+    purge: 8,
+    desc: '以陽和掌力化去體內寒毒，為三格內一人療傷，基礎回復 50 點氣血並解除不良狀態；每化去一種，多回復 8 點氣血。可對自己施術。',
     source: '生死符須以天山六陽掌方能化解，虛竹在靈鷲宮替群豪逐一拔除。'
   },
   xzLifeDeath: {

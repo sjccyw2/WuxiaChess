@@ -341,7 +341,7 @@ const DETAILS = {
     basic: '鐵鞭橫江',
     skill: '吸功入地小法',
     skillIcon: 'spark',
-    skillDesc: '卸去相鄰敵人的來勁並還擊，此擊免受還擊；至下回合受到的傷害減三成，還擊改以全力計算。',
+    skillDesc: '卸去相鄰敵人的來勁並還擊，此擊免受還擊；至下回合自身防禦增加 10 點。',
     skillRange: 1,
     cost: 9
   },
@@ -772,21 +772,22 @@ function strikeReach(s, u) {
   const sig = signatureDue(s, u) ? enemyTechnique(u, s) : null;
   return u.conditions?.disarm ? 1 : Math.max(reach(s, u), sig?.reach || 0);
 }
-// The share of a full basic strike a counter carries: none while 無守; full under 卸勁, or for a
-// villain whose 蓄勢反擊 is charged; a learned 後發 sets its own; otherwise 0.55.
+// The share of a full basic strike a counter carries: none while 無守; full for a villain whose
+// 蓄勢反擊 is charged; a learned 後發 sets its own; otherwise 0.55. (A hero's 卸勁, which also gave
+// a full counter, became 固守 in 0.45.)
 // 太極圓轉 (the leader's boon) adds its share, up to a full counter.
 function counterRatio(s, defender) {
   const c = defender.conditions || {};
   if (c.unguarded || c.freeze || c.mute) return 0; // 無守; 定身 and 閉穴 do not counter
-  if (c.stance || (unitDetails(defender)?.traits?.stance && signatureDue(s, defender))) return 1;
+  if (unitDetails(defender)?.traits?.stance && signatureDue(s, defender)) return 1;
   const share = basicFor(defender).retort || 0.55,
     more = commandBonus(s, defender, 'retort') / 100;
   return more ? Math.min(1, Math.round((share + more) * 100) / 100) : share;
 }
-// 卸勁's cut, in percent, on the damage a unit takes from its foes' blows and counters: a hero's
-// stance condition; a villain's 蓄勢反擊 cuts by its own `cut` while charged.
+// The cut, in percent, on the damage an enemy piece takes from the heroes' blows and counters: a
+// villain's 蓄勢反擊 or 盾牆 by its own `cut` while it holds, 沉樁 below its share of 氣血. (Heroes
+// have no cut since 卸勁 became 固守, a flat 防禦, in 0.45.)
 function stanceCut(s, v) {
-  if (v.conditions?.stance) return v.conditions.stance.power;
   const traits = unitDetails(v)?.traits,
     stance = traits?.stance;
   const held = stance && stanceHolds(s, v) ? stance.cut || 0 : 0;
@@ -1446,7 +1447,7 @@ const HERO_STATS = {
   hu: [104, 36, 17, 9, 5, 1, 'foxSaber'],
   hero: [148, 74, 25, 11, 4, 1, 'pine'],
   medic: [64, 46, 15, 7, 3, 2, 'staff'],
-  guard: [166, 34, 19, 16, 3, 1, 'pole'],
+  guard: [166, 60, 19, 16, 3, 1, 'pole'], // 內力 34 → 60 (0.45): enough to taunt every round
   guo: [180, 76, 24, 19, 3, 1, 'wraps'],
   xiao: [102, 66, 21, 9, 4, 1, 'twins'],
   duan: [76, 70, 17, 7, 4, 2, 'fan'],
@@ -1839,7 +1840,7 @@ function stat(u, k, s) {
 const SIGNATURE_RULES_BY_HERO = {
   hero: { factor: 1.35 },
   medic: { heal: 30 },
-  guard: { factor: 1.15, safe: true, stance: 30 },
+  guard: { factor: 1.15, safe: true, fortify: { power: 10, turns: 1 } }, // 卸勁 became 固守 (0.45)
   guo: { factor: 1.28, debuff: { stat: 'atk', power: 4, turns: 2 } },
   xiao: { factor: 1.25 },
   duan: { factor: 1.1, safe: true },
@@ -1851,7 +1852,7 @@ const SIGNATURE_RULES_BY_HERO = {
   xuZhu: { factor: 1.4, visual: 'guo' },
   hongQi: { factor: 1.2, safe: true, visual: 'guo' },
   yaoShi: { factor: 1.25, visual: 'guo' },
-  sanFeng: { factor: 1.2, stance: 20, visual: 'guo' },
+  sanFeng: { factor: 1.2, fortify: { power: 7, turns: 1 }, visual: 'guo' }, // 卸勁 became 固守 (0.45)
   zhaoMin: { factor: 1.2, pierce: 0.5, visual: 'hero' },
   lingSu: { visual: 'medic', heal: 22, target: 'ally' },
   diYun: { factor: 1.3, visual: 'hero' },
@@ -2457,8 +2458,19 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   }
   if (support) {
     const friends = s ? affectedFriends(s, u, t, art) : [t];
-    const power = heal ? healingPower(u, s, art) : 0;
-    result.recipients = friends.map((v) => supportEntry(result.forms, u, v, supportHeal(result.forms, v, power)));
+    // 靈鷲慈心 (a leader's boon): a heal by the leader or a hero within two tiles of him restores more.
+    const mercy = heal && s ? commandBonus(s, u, 'mercy') : 0;
+    if (mercy) result.notes.push(leaderBoon(s).name + ' · 療傷 ＋' + mercy);
+    const power = heal ? healingPower(u, s, art) + mercy : 0;
+    // 化符 (`purge`): each ailment its 解厄 lifts from a recipient adds to the heal on him.
+    const lifted = (v) =>
+      art.purge && result.forms.includes('cleanse') ? AILMENTS.filter((k) => v.conditions?.[k]).length : 0;
+    result.recipients = friends.map((v) =>
+      supportEntry(result.forms, u, v, supportHeal(result.forms, v, power + lifted(v) * (art.purge || 0)))
+    );
+    for (const v of friends)
+      if (lifted(v))
+        result.notes.push(unitDetails(v).name + '每化去一種多回 ' + art.purge + ' · ＋' + lifted(v) * art.purge);
     if (heal && !result.forms.includes('cleanse')) woundedHealNotes(t, friends, result);
     if (result.forms.includes('riposte'))
       result.effects.push({ kind: 'riposte', power: 9, turns: 1 });
@@ -2606,7 +2618,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       stanceCut(s, u)
     );
     result.counter = Math.max(0, result.counterRaw - (u.conditions?.shield?.power || 0));
-    if (share === 1 && !t.conditions?.stance) result.notes.push('蓄勢反擊 · 還擊全力');
+    if (share === 1) result.notes.push('蓄勢反擊 · 還擊全力');
     const traits = traitsOf(t);
     if (traits.crowded && distance(t, u) <= traits.crowded.within)
       result.notes.push('近身失準 · 還擊攻擊 −' + traits.crowded.atk);
@@ -2692,12 +2704,6 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     result.notes.push(
       result.amount >= t.hp ? '連環 · 此擊可擊倒，本回合可再出手' : '連環 · 擊倒則可再出手'
     );
-  // 北冥真氣: a blow that lands gives the striker back 內力.
-  const absorb = ally(u) && !result.void ? commandBonus(s, u, 'absorb') : 0;
-  if (absorb) {
-    result.absorb = absorb;
-    result.notes.push(leaderBoon(s).name + ' · 內力 ＋' + absorb);
-  }
   zoneNote(s, u, art, t, result); // 布陣 rider: the tiles round the target's feet
   selfLoss(s, u, art, result, true); // 內傷 and 亂氣: what the strike costs its caster after
   result.notes.push(...guardNotes(art), ...priceNotes(art));
@@ -2789,7 +2795,6 @@ const tenths = (n) => (n % 10 ? n + '%' : '一二三四五六七八九'[n / 10 -
 // The guard an art leaves on its caster until his next turn, as the preview states it.
 function guardNotes(art) {
   const notes = [];
-  if (art?.stance) notes.push('卸勁 · 至下回合受擊減' + tenths(art.stance) + '，還擊全力');
   if (art?.cover) notes.push('代受 · 至下回合，敵人對相鄰同伴的直接攻擊改由自己承受');
   if (art?.evade) notes.push('閃身 · 下一次直接攻擊落空');
   // 固守 and 金剛 on an art that is not aimed at a companion or himself guard its caster.
@@ -2801,7 +2806,7 @@ function guardNotes(art) {
   }
   if (art?.taunt)
     notes.push(
-      '挑釁 · 至下回合，' + (art.taunt === 2 ? '兩' : art.taunt) + '格內可攻到他的敵人只能攻擊他'
+      '挑釁 · 至下回合，' + (COUNTS[art.taunt] || art.taunt) + '格內可攻到他的敵人只能攻擊他'
     );
   return notes;
 }
@@ -3128,7 +3133,6 @@ function resolve(s, u, t, skill) {
       log(s, 'move', art?.push ? '被掌力震退一格。' : '被牽近一格。', unitDetails(t).name);
     }
     if (art?.recover) u.mp = Math.min(u.maxMp, u.mp + art.recover);
-    if (f.absorb) u.mp = Math.min(u.maxMp, u.mp + f.absorb); // 北冥真氣
     if (f.opening) s.tally.opened = s.round; // 越女試劍 is spent for the round
     for (const other of f.splash) {
       const v = find(s, other.id),
@@ -3719,6 +3723,8 @@ function startEnemy(s) {
 }
 // 挑釁: the taunting heroes enemy u is bound to strike this turn — each one whose radius u starts
 // its action within and whom it can strike from a tile it can stand on (`cells`, with `range`).
+// The radius is measured from where the taunter stands as u begins to act, not where he cast it:
+// a taunter pulled or pushed in the enemy phase binds from his new tile.
 function taunters(s, u, cells = null, range = strikeReach(s, u)) {
   if (holdsFire(u)) return []; // 定身, 閉穴: it strikes no one; 受制: none of the heroes
   cells ??= [u, ...Array.from(reachable(s, u).keys(), (k) => fromKey(k))];
@@ -3730,8 +3736,8 @@ function taunters(s, u, cells = null, range = strikeReach(s, u)) {
       cells.some((c) => distance(c, t) <= range)
   );
 }
-// How little an enemy wants to strike hero t: lower is the better target. A hero under 卸勁 counts
-// his 氣血 as the cut makes it last. A covered hero is scored as the one who would take the blow.
+// How little an enemy wants to strike hero t: lower is the better target. A piece that cuts the
+// blows it takes counts its 氣血 as the cut makes it last. A covered hero is scored as the one who would take the blow.
 function aimCost(s, u, t, friends, walk) {
   const lean = preference(s, u, t, friends, walk); // 偏好: whom this villain looks for
   t = (!traitsOf(u).bend && coverer(s, t)) || t; // 轉折: no one takes its blow for another
@@ -3896,6 +3902,9 @@ function enemyAction(s, u) {
   const raw = damage(u, t, false, s.mapIndex, s);
   const strikePower = art ? Math.round(raw * art.factor) : raw;
   const blow = received(s, t, [strikePower]);
+  // An enemy blow that reaches a hero (not one 閃身 makes miss) counts toward 'struck', the
+  // record 向問天's summit is gated on (0.45).
+  if (ally(t) && !blow.evaded) progress(t, 'struck', 1);
   const n = wound(s, t, blow.hits[0], u);
   // 還報 counts only 氣血 an enemy's own action took, never what a shield caught.
   if (n) t.hurtRound = s.round;
@@ -4155,7 +4164,7 @@ function lineVictim(s, from, t) {
   return null;
 }
 // The second hero takes half the blow: a pass-through, so no 代受, 閃身 or 挪移 meets it, but his
-// 卸勁 and shield do.
+// shield does.
 function lineThrough(s, u, t, strikePower, effects) {
   const v = lineVictim(s, u, t);
   if (!v) return;
@@ -4189,7 +4198,7 @@ function basicRiders(s, u, t, effects) {
 // 分刺 (`flurry`): after its blow, plain or signature, the villain strikes one more hero within its
 // reach of where it stands — the one it would rather strike, never the one just struck — for its
 // share of the first blow. Like a blow that passes through, no 代受, 閃身 or 挪移 meets it and it
-// draws no counter; the hero's 卸勁 and shield do meet it.
+// draws no counter; the hero's shield does meet it.
 function secondNeedle(s, u, first, strikePower, friends, effects) {
   const flurry = traitsOf(u).flurry;
   if (!flurry || !living(u)) return;

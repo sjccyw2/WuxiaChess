@@ -57,6 +57,7 @@ function conditionLines(art) {
   if (art.freeze?.setup) lines.push('目標兵刃遭纏或站在陣中時方能定身');
   if (art.freeze || art.mute) lines.push('局主只受一回合，下一回合可抵抗');
   if (art.charm) lines.push('局主與副手不受制，改為定身一回合');
+  if (art.purge) lines.push('每解去一種不良狀態，多回復 ' + art.purge + ' 氣血');
   if (art.zone)
     lines.push(
       '布陣 · 以' +
