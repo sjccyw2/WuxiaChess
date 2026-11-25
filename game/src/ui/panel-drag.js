@@ -1,5 +1,15 @@
 // All pointers use the whole card. The dialog's scroll region remains available
 // between cards, and a held card scrolls it when approaching either edge.
+//
+// A finger scrolls by dragging, so on touch a drag starts only once the finger has rested on the
+// card for HOLD_MS; any movement before that is a scroll (the producer's ruling of 2026-11-25,
+// after a swipe over 裝備物資 equipped an item: playtest R-04). A mouse does not scroll by
+// dragging, and drags as soon as it moves. A plain tap selects the card either way.
+const HOLD_MS = 300;
+// How far a resting finger may tremble during the hold and still be held still.
+const HOLD_SLOP = 8;
+// How far a mouse moves before its press is a drag and not a click.
+const MOUSE_SLOP = 6;
 function panelDrag(dialog, commit, allowed = () => true) {
   const doc = dialog.ownerDocument;
   let pointer = null,
@@ -35,6 +45,7 @@ function panelDrag(dialog, commit, allowed = () => true) {
   }
   function clear() {
     const p = pointer;
+    clearTimeout(p?.hold);
     pointer = null;
     source = null;
     if (frame) cancelAnimationFrame(frame);
@@ -88,7 +99,42 @@ function panelDrag(dialog, commit, allowed = () => true) {
     if (!el || el.disabled || !dialog.contains(el)) return;
     blockedClick = null;
     pointer = { id: e.pointerId, el, ix: e.clientX, iy: e.clientY, x: e.clientX, y: e.clientY };
+    if (e.pointerType !== 'mouse') {
+      pointer.touch = true;
+      pointer.hold = setTimeout(lift, HOLD_MS);
+    }
   });
+  // The press becomes a drag: the card dims and its copy appears at the pointer, which for a
+  // finger at rest is the sign that the hold has picked it up.
+  function lift() {
+    if (!pointer || source) return;
+    if (!dialog.contains(pointer.el)) {
+      clear();
+      return;
+    }
+    start(pointer.el);
+    try {
+      pointer.el.setPointerCapture?.(pointer.id);
+    } catch {}
+    ghost = doc.createElement('div');
+    ghost.className = 'fo-drag-ghost';
+    ghost.setAttribute('aria-hidden', 'true');
+    const img = pointer.el.querySelector('img');
+    if (img) ghost.append(img.cloneNode(false));
+    ghost.append(
+      doc.createTextNode(
+        pointer.el.querySelector('strong')?.textContent || pointer.el.textContent.trim()
+      )
+    );
+    dialog.appendChild(ghost);
+    follow();
+    frame = requestAnimationFrame(scrollEdge);
+  }
+  function follow(target) {
+    ghost.style.left = pointer.x + 12 + 'px';
+    ghost.style.top = pointer.y - 28 + 'px';
+    mark(hit(pointer.x, pointer.y, target));
+  }
   doc.addEventListener(
     'pointermove',
     (e) => {
@@ -96,35 +142,34 @@ function panelDrag(dialog, commit, allowed = () => true) {
       pointer.x = e.clientX;
       pointer.y = e.clientY;
       if (!source) {
-        if (Math.hypot(pointer.x - pointer.ix, pointer.y - pointer.iy) < 6) return;
-        if (!dialog.contains(pointer.el)) {
-          clear();
+        const moved = Math.hypot(pointer.x - pointer.ix, pointer.y - pointer.iy);
+        // A finger that moves before the hold is up is scrolling: the gesture is the browser's.
+        if (pointer.touch) {
+          if (moved > HOLD_SLOP) clear();
           return;
         }
-        start(pointer.el);
-        try {
-          pointer.el.setPointerCapture?.(pointer.id);
-        } catch {}
-        ghost = doc.createElement('div');
-        ghost.className = 'fo-drag-ghost';
-        ghost.setAttribute('aria-hidden', 'true');
-        const img = pointer.el.querySelector('img');
-        if (img) ghost.append(img.cloneNode(false));
-        ghost.append(
-          doc.createTextNode(
-            pointer.el.querySelector('strong')?.textContent || pointer.el.textContent.trim()
-          )
-        );
-        dialog.appendChild(ghost);
-        frame = requestAnimationFrame(scrollEdge);
+        if (moved < MOUSE_SLOP) return;
+        lift();
+        if (!source) return;
       }
       e.preventDefault();
-      ghost.style.left = pointer.x + 12 + 'px';
-      ghost.style.top = pointer.y - 28 + 'px';
-      mark(hit(pointer.x, pointer.y, e.target));
+      follow(e.target);
     },
     { capture: true, passive: false }
   );
+  // Once a held card is lifted, the finger moves it and no longer scrolls the page (the cards
+  // let the browser pan, so that a swipe over them scrolls).
+  dialog.addEventListener(
+    'touchmove',
+    (e) => {
+      if (source && pointer?.touch && e.cancelable) e.preventDefault();
+    },
+    { passive: false }
+  );
+  // A finger resting on a card is not asking for the browser's long-press menu.
+  dialog.addEventListener('contextmenu', (e) => {
+    if (pointer?.touch && e.target.closest?.('[data-drag]')) e.preventDefault();
+  });
   doc.addEventListener(
     'pointerup',
     (e) => {
