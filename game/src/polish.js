@@ -30,7 +30,8 @@ const SWITCHES = {
   // World
   lighting: true, // key light, shadow and colour grade
   water: true, // water surface shading
-  smoothIdle: true, // idle scene paced at the display rate, not ~9 frames a second
+  smoothIdle: true, // idle scene paced by measured frame cost, up to 30 frames a second, not ~9
+  adaptiveRes: true, // a device too slow for the 3D world draws it at fewer pixels; the pieces stay sharp
 
   // Panels
   uiChrome: true, // HUD and dialog finish, transitions, button states
