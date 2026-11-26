@@ -607,8 +607,12 @@ function compute() {
     boards.push({ map, stages, realms });
   }
   const rows = [...groups.values()];
-  // One ruler for every 境界: each axis's strongest piece, in any 境界, is 100.
-  const scale = Object.fromEntries(KEYS.map((k) => [k, Math.max(...rows.flatMap((r) => Object.values(r.byRealm).map((b) => b.raw[k])))]));
+  // One ruler for every 境界: each axis's strongest piece, in any 境界, is 100. 求敗 (the last
+  // board's commander) is left off the ruler and capped at 100 (the producer, 2026-11-26): his
+  // 1700 氣血, 不敗 and the masters he calls would squeeze every other piece's 耐打 and 統御 to a
+  // few points and hide the differences between them.
+  const ruler = rows.filter((r) => r.key !== G.castBoard(FINAL).commander);
+  const scale = Object.fromEntries(KEYS.map((k) => [k, Math.max(...ruler.flatMap((r) => Object.values(r.byRealm).map((b) => b.raw[k])))]));
   const score = (raw) => Object.fromEntries(KEYS.map((k) => [k, Math.max(0, Math.min(100, Math.round((100 * raw[k]) / scale[k])))]));
   const composite = (s) => Math.round(KEYS.reduce((n, k) => n + WEIGHTS[k] * s[k], 0));
   const pieces = rows.map((r) => {
@@ -679,7 +683,7 @@ const NOTES = [
   '攻勢按一個敵方回合計：絕技按每幾回合一次輪到，斬殘、孤行、夾衛、近身失準、分刺、穿行、掃及身旁等按成立的機會折算，還擊按每回合挨 ' + STRUCK + ' 擊計。',
   '牽制與統御折成擊數：攻勢受挫與削內力折成俠客少打的擊數，破防、中毒、內傷折成黑子多打的擊數，一步按 ' + STEP_WORTH + ' 擊；代受一回合按一擊；援軍按把它們打倒所需的擊數攤到 ' + ROUNDS + ' 回合。',
   '有變招的局主，一半氣血按變招前、一半按變招後計；求敗的五劍各佔五分之一。',
-  '五項各以全部境界中最強的一子為 100，五個境界同一把尺。綜合分是五項的加權平均：攻勢、耐打各佔三成，出手範圍兩成，牽制、統御各一成（多數黑子沒有這兩項）。',
+  '五項各以全部境界中最強的一子為 100，五個境界同一把尺；求敗不入這把尺，遠在尺外的各項一律記 100。綜合分是五項的加權平均：攻勢、耐打各佔三成，出手範圍兩成，牽制、統御各一成（多數黑子沒有這兩項）。',
   '各局合計：該局每一子的綜合分相加，援軍按在場的時間折算（第 r 回合到的按 ' + ROUNDS + ' 回合中剩下的比例，半血或換劍時叫來的另計）。終局只在無劍境界出現。各局的勝負條件、要守要破的器物不計在內。'
 ];
 
