@@ -1879,6 +1879,225 @@ a.cmp-pick:hover {
 .foe-none {
   color: var(--faint);
 }
+/* 黑子對照's picker: the chips carry the board, the rank filter beside 加入, and every board a
+   group that opens (on a phone one column, on a desktop as many as fit). */
+.cmp-legend small,
+.cmp-who small,
+.compare h2 small {
+  margin-left: 4px;
+  font: 400 12px var(--sans);
+  color: var(--faint);
+}
+.cmp-table thead th small {
+  display: block;
+  font: 400 11px var(--sans);
+  color: var(--faint);
+}
+.foe-picker .cmp-chip button span small,
+.cmp-pick small {
+  display: block;
+  font: 400 11px/1.25 var(--sans);
+  color: var(--faint);
+}
+.foe-add-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 8px;
+}
+.foe-add-head .cmp-add-title {
+  margin: 0;
+}
+.foe-kinds {
+  margin: 0;
+  gap: 4px;
+}
+.foe-kinds a,
+.foe-kinds span {
+  padding: 3px 9px;
+  font-size: 13px;
+}
+.foe-kinds small {
+  margin-left: 3px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+.foe-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+  gap: 6px;
+  align-items: start;
+}
+.foe-group {
+  min-width: 0;
+  border: 1px solid #e4dfd0;
+  border-radius: 4px;
+  background: #fffdf6;
+}
+.foe-group summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 8px 4px 24px;
+  position: relative;
+  cursor: pointer;
+  list-style: none;
+}
+.foe-group summary::-webkit-details-marker {
+  display: none;
+}
+.foe-group summary:before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -4px;
+  border: solid var(--faint);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+.foe-group[open] summary:before {
+  transform: rotate(45deg);
+  margin-top: -5px;
+}
+.foe-group summary:hover {
+  background: #f3ece0;
+}
+.foe-group summary:focus-visible {
+  outline: 2px solid #ae6934;
+  outline-offset: -2px;
+}
+.foe-group[open] summary {
+  border-bottom: 1px solid #eee9db;
+}
+.foe-group-name {
+  flex: none;
+  font: 700 14px var(--serif);
+  white-space: nowrap;
+}
+.foe-group-name small {
+  margin-left: 6px;
+  font: 400 11px var(--sans);
+  color: var(--faint);
+}
+.foe-group-faces {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding-left: 5px;
+}
+.foe-group-faces img {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-left: -5px;
+  border-radius: 50%;
+  border: 1.5px solid #fffdf6;
+  object-fit: cover;
+  object-position: center 28%;
+  background: #e3dac8;
+}
+.foe-group-in {
+  display: flex;
+  flex: none;
+}
+.foe-group-in .cmp-key {
+  width: 22px;
+}
+.foe-group-n {
+  flex: none;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.foe-picks {
+  padding: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+}
+/* A reinforcement's mark, on its portrait's shoulder. */
+.foe-picks .cmp-pick {
+  position: relative;
+}
+.foe-wave {
+  position: absolute;
+  top: 2px;
+  right: calc(50% - 26px);
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--red);
+  color: #fffdf6;
+  font: 700 10px/1.5 var(--sans);
+  font-style: normal;
+}
+.cmp-pick.is-in {
+  border-color: var(--c);
+  background: #f1ede1;
+}
+.cmp-pick.is-in .cmp-key {
+  width: 24px;
+  margin: auto;
+}
+/* The table's scores show their reason in the readout when tapped. */
+.cmp-table td[data-cmp-point] {
+  cursor: pointer;
+}
+.cmp-table td[data-cmp-point]:hover {
+  outline: 1px solid #c3bca9;
+  outline-offset: -3px;
+}
+.cmp-table td[data-cmp-point]:focus-visible {
+  outline: 2px solid #ae6934;
+  outline-offset: -3px;
+}
+/* 評分由來: every chosen piece's reasons, as many columns as fit. */
+.foe-compare .foe-why {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+  gap: 14px 22px;
+}
+.foe-why .foe-readout + .foe-readout {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.cmp-pick > span {
+  max-width: 100%;
+  min-width: 0;
+}
+.cmp-pick small {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* On a phone the chips shrink so that two stand in a row. */
+@media (max-width: 760px) {
+  .foe-picks {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  }
+  .foe-picker .cmp-chip button {
+    gap: 4px;
+    font-size: 14px;
+  }
+  .foe-picker .cmp-chip img {
+    width: 26px;
+    height: 26px;
+  }
+  .foe-picker .cmp-chip .cmp-key {
+    width: 20px;
+  }
+  .foe-picker .cmp-x {
+    min-width: 28px;
+  }
+}
 /* 群俠列傳: each hero card shows its 綜合 score. */
 .card-score {
   margin-left: auto;

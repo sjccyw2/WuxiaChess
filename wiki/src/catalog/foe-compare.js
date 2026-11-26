@@ -640,6 +640,7 @@ function compute() {
       board: G.mapLayout(r.map).name,
       stages: r.stages,
       rank: rankOf(r.key, r.d, u),
+      role: r.d.role || '',
       troop: troopIds().includes(r.key) || !r.d.rank,
       wave: r.wave ? waveWords(r.wave) : '',
       count: Object.values(realms)[0].count,
