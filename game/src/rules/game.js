@@ -603,7 +603,8 @@ function stageBase(map, depth) {
   if (map === 0 && depth === 0)
     return {
       master: [104, 25, 12, 2, 1],
-      lieutenant: [56, 20, 7, 2, 1],
+      // 副手 a step above the men (the producer, 2026-11-26), gently on the tutorial's board.
+      lieutenant: [64, 20, 8, 2, 1],
       bow: [48, 18, 5, 2, 3],
       scout: [56, 19, 8, 3, 1]
     };
@@ -618,10 +619,13 @@ function stageBase(map, depth) {
       depth >= 7 ? 4 : depth >= 3 ? 3 : 2,
       boss || depth >= 6 || [2, 4, 8].includes(map) ? 2 : 1
     ],
+    // 副手 (the producer, 2026-11-26): his own art and ways were always a master's man's, but his
+    // body was a scout's (the same 防禦, a few more 氣血). Now 氣血 ×1.2 and 防禦 +2, between the
+    // men and the master; 攻擊 was already near the master's and stays.
     lieutenant: [
-      55 + depth * 12 + seasoned * 29,
+      Math.round((55 + depth * 12 + seasoned * 29) * 1.2),
       19 + veteran * 3 + Math.round(depth * 2.2 + seasoned * 5.4),
-      7 + depth,
+      9 + depth,
       depth >= 3 ? 3 : 2,
       depth >= 6 ? 2 : 1
     ],

@@ -12,7 +12,7 @@ const DEFAULT = ['guo', 'huang', 'xiao'];
 // Five colours for the wiki's paper (#fcf9f0), checked as a set for colour-blind separation
 // across every pair, since the radar's shapes all overlap. Gold sits under 3:1 against the paper,
 // so every value is also in the table, and each slot has its own marker and line pattern.
-const SERIES = ['#2b7bd4', '#d6517f', '#3c740d', '#b8921c', '#64349f'];
+export const SERIES = ['#2b7bd4', '#d6517f', '#3c740d', '#b8921c', '#64349f'];
 const DASH = ['', '7 4', '0.5 4.5', '10 3.5 1 3.5', '3.5 3'];
 const SHAPE = ['圓點', '方塊', '三角', '菱形', '倒三角'];
 const STAT_NAMES = [
@@ -105,7 +105,7 @@ function marker(slot, x, y, r = 4.5) {
   }
 }
 // The key beside a name: a short stroke in the hero's pattern with the hero's marker on it.
-const key = (slot) =>
+export const key = (slot) =>
   '<svg class="cmp-key" viewBox="0 0 30 14" width="30" height="14" aria-hidden="true"><line x1="2" y1="7" x2="28" y2="7" stroke="' +
   SERIES[slot] +
   '" stroke-width="2" stroke-linecap="round"' +
@@ -113,13 +113,13 @@ const key = (slot) =>
   '/>' +
   marker(slot, 15, 7, 4) +
   '</svg>';
-const legend = (list) =>
+export const legend = (list) =>
   '<ul class="cmp-legend">' +
   list.map(({ hero, slot }) => '<li>' + key(slot) + esc(hero.name) + '</li>').join('') +
   '</ul>';
 
 // ── radar ───────────────────────────────────────────────────────────────────
-function radarSvg(list, axes, width = 420) {
+export function radarSvg(list, axes, width = 420) {
   const w = Math.max(280, Math.min(width, 460)),
     // Room beside the circle for the labels: one line of four characters, or on a narrow
     // screen the side labels fold into two lines of two, so the circle can be larger.
@@ -240,7 +240,7 @@ function radarSvg(list, axes, width = 420) {
     w +
     '" height="' +
     h.toFixed(0) +
-    '" role="group" aria-label="六項評分雷達圖，數值另見右方對照表">' +
+    '" role="group" aria-label="各項評分雷達圖，數值另見對照表">' +
     rings +
     spokes +
     ringText +
@@ -734,7 +734,7 @@ function rankingTable(data, slots, list, measure, sort) {
     '</tbody></table></div></section>'
   );
 }
-function notesBox(data) {
+export function notesBox(data) {
   return data.notes?.length
     ? '<aside class="cmp-notes" aria-labelledby="cmp-notes-h"><h2 id="cmp-notes-h">說明</h2><ul>' +
         data.notes.map((s) => '<li>' + esc(s) + '</li>').join('') +

@@ -5,13 +5,14 @@ import { menu, nav } from './view/chrome.js';
 import { home, listPage, entry, textEntry, searchPage, lost } from './view/pages.js';
 import { loreIndex, loreEntry } from './view/lore.js';
 import { comparePage, mountCompare } from './view/compare.js';
+import { foeComparePage, mountFoeCompare } from './view/foe-compare.js';
 
 let shown = '';
 function render() {
   if (!store.entries) return;
   const { group: g, id, p } = route();
-  // 俠客對照 re-renders on every pick: keep the reader where they were, and on the same hero.
-  const stay = g === 'compare' && shown === 'compare',
+  // 俠客對照 and 黑子對照 re-render on every pick: keep the reader where they were, and on the same hero.
+  const stay = ['compare', 'foecompare'].includes(g) && shown === g,
     focusKey = stay ? document.activeElement?.dataset?.cmpKey : '';
   menu(false);
   nav(g);
@@ -23,6 +24,8 @@ function render() {
         ? searchPage(p)
         : g === 'compare'
           ? comparePage(p)
+          : g === 'foecompare'
+          ? foeComparePage(p)
           : g === 'text' && id
           ? textEntry(id)
           : store.docs[g]
@@ -36,6 +39,7 @@ function render() {
             : lost();
   document.title = (content.querySelector('h1')?.textContent || '江湖誌') + ' · 劍影江湖';
   mountCompare(content);
+  mountFoeCompare(content);
   if (focusKey) content.querySelector('[data-cmp-key="' + CSS.escape(focusKey) + '"]')?.focus({ preventScroll: true });
   if (window.scrollTo && !stay) window.scrollTo(0, 0);
   shown = g;

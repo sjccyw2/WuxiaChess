@@ -135,11 +135,52 @@ const comparison = compareData();
   }
 }
 
+// ── 黑子對照 ─────────────────────────────────────────────────────────────────
+// The enemies' scoring page: whole numbers in 0..100 on every axis and in every 境界, a piece at
+// 100 on each axis, a page for every piece, every piece of every board counted in its sum.
+const { foeCompareData } = await import(new URL('wiki/src/catalog/foe-compare.js', root));
+const foeComparison = foeCompareData();
+{
+  const keys = foeComparison.axes.map((a) => a.key),
+    score = (n) => Number.isInteger(n) && n >= 0 && n <= 100;
+  if (keys.join() !== 'attack,tough,reach,hold,command') problems.push('foecompare: the axes are ' + keys.join());
+  for (const p of foeComparison.pieces) {
+    const at = 'foecompare/' + p.id;
+    if (!has('foes', p.page)) problems.push(at + ': no foes page ' + p.page);
+    if (!has('missions', 'map-' + p.map)) problems.push(at + ': no missions page for board ' + p.map);
+    for (const realm of foeComparison.realms) {
+      const r = p.realms[realm];
+      if (!r) {
+        problems.push(at + ': no scores in 境界 ' + realm);
+        continue;
+      }
+      for (const k of keys) {
+        if (!score(r.scores[k])) problems.push(at + ': ' + k + ' scores ' + r.scores[k] + ' in 境界 ' + realm);
+        if (!Number.isFinite(r.raw[k]?.value) || !Array.isArray(r.raw[k].why)) problems.push(at + ': ' + k + ' has no raw value or reasons');
+      }
+      if (!score(r.composite)) problems.push(at + ': composite ' + r.composite + ' in 境界 ' + realm);
+    }
+    const bad = JSON.stringify(p).match(/undefined|NaN|\[object/);
+    if (bad) problems.push(at + ': shows "' + bad[0] + '"');
+  }
+  for (const k of keys)
+    if (!foeComparison.pieces.some((p) => foeComparison.realms.some((r) => p.realms[r].scores[k] === 100))) problems.push('foecompare: no piece scores 100 on ' + k);
+  // Every enemy a board fields (its fixed four, its own pieces and every wave's) is in its sum.
+  for (const b of foeComparison.boards) {
+    const board = G.castBoard(b.map),
+      fielded = G.fixedSlots(b.map).length + board.pieces.length + board.waves.reduce((n, w) => n + w.pieces.length, 0);
+    if (b.count !== fielded) problems.push('foecompare: ' + b.name + ' counts ' + b.count + ' pieces of ' + fielded);
+    for (const [realm, v] of Object.entries(b.totals))
+      if (v != null && !(Number.isFinite(v) && v > 0)) problems.push('foecompare: ' + b.name + ' sums to ' + v + ' in 境界 ' + realm);
+  }
+}
+
 if (corpus.entries.length < 500) problems.push('text listing looks too small: ' + corpus.entries.length);
 
 console.log(Object.entries(catalog.groups).map(([g, l]) => g + ' ' + l.length).join(' · '));
 console.log('遊戲原文 ' + corpus.entries.length + ' 條，來自 ' + TEXT_FILES.length + ' 個檔案');
 console.log('群俠比較 ' + comparison.heroes.length + ' 位俠客 · ' + comparison.axes.length + ' 項 · ' + comparison.levels.length + ' 級');
+console.log('黑子對照 ' + foeComparison.pieces.length + ' 子 · ' + foeComparison.axes.length + ' 項 · ' + foeComparison.boards.length + ' 局 · ' + foeComparison.realms.length + ' 境界');
 if (problems.length) {
   console.error('\n' + problems.length + ' problem(s):\n  ' + problems.slice(0, 40).join('\n  '));
   process.exit(1);

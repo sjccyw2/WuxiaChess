@@ -3754,7 +3754,7 @@ section('board 0 青竹渡: the bridge wardens');
 {
   const s = realBoard(0, 0);
   const [chief, blade, bow, scout] = foesOf(s);
-  check('余滄海 and 木高峰 have the spec’s numbers', same(numbersOf(chief), [104, 25, 12, 2, 1]) && same(numbersOf(blade), [56, 20, 7, 2, 1]), numbersOf(chief) + ' / ' + numbersOf(blade));
+  check('余滄海 and 木高峰 have the spec’s numbers', same(numbersOf(chief), [104, 25, 12, 2, 1]) && same(numbersOf(blade), [64, 20, 8, 2, 1]), numbersOf(chief) + ' / ' + numbersOf(blade));
   check('archer and scout keep the stage curve and their 青城 names', same(numbersOf(bow), [48, 18, 5, 2, 3]) && G.unitDetails(bow).name === '青城弓手' && G.unitDetails(scout).name === '青城斥候', numbersOf(bow) + G.unitDetails(bow).name + G.unitDetails(scout).name);
   check('both hold their spawn, tether 0, waking', ['chief', 'lieutenant-0'].every((k) => same(G.DETAILS[k].traits.post && { ...G.DETAILS[k].traits.post, note: 0 }, { tile: 'spawn', tether: 0, wake: true, note: 0 })));
   check('余滄海’s page', same(pageOf(s, chief).slice(1), ['【坐鎮】守在橋頭不動；有俠客踏入他的攻擊範圍，或他受到攻擊後，才離位追擊。']), JSON.stringify(pageOf(s, chief)));
@@ -3778,7 +3778,7 @@ section('board 1 紅楓驛: the physician');
 for (const stage of [1, 2]) {
   const s = realBoard(1, stage);
   const [tian, yan, bow, scout] = foesOf(s);
-  const want = { 1: [[118, 26, 14, 3, 1], [60, 18, 8, 2, 1]], 2: [[147, 29, 15, 3, 1], [71, 20, 9, 2, 1]] }[stage];
+  const want = { 1: [[118, 26, 14, 3, 1], [72, 18, 10, 2, 1]], 2: [[147, 29, 15, 3, 1], [86, 20, 11, 2, 1]] }[stage];
   check('stage ' + stage + ': 田歸農 and 閻基 have the spec’s numbers', same(numbersOf(tian), want[0]) && same(numbersOf(yan), want[1]), numbersOf(tian) + ' / ' + numbersOf(yan));
   check('stage ' + stage + ': 閻基 knows 接骨續筋, a mend', G.unitDetails(yan).skill === '接骨續筋' && G.enemyTechnique(yan, s).style === 'mend' && !G.enemyTechnique(yan, s).strikes);
   const heal = 20 + 5 * stage;
@@ -3797,7 +3797,7 @@ section('board 2 蘆花汀: the dissolver and his disciples');
 for (const stage of [1, 2]) {
   const s = realBoard(2, stage);
   const [ding, zhai, bow, scout] = foesOf(s);
-  const want = { 1: [[131, 26, 12, 2, 2], [67, 21, 8, 2, 1]], 2: [[163, 29, 13, 2, 2], [79, 23, 9, 2, 1]] }[stage];
+  const want = { 1: [[131, 26, 12, 2, 2], [80, 21, 10, 2, 1]], 2: [[163, 29, 13, 2, 2], [95, 23, 11, 2, 1]] }[stage];
   check('stage ' + stage + ': 丁春秋 and 摘星子 have the spec’s numbers', same(numbersOf(ding), want[0]) && same(numbersOf(zhai), want[1]), numbersOf(ding) + ' / ' + numbersOf(zhai));
   check('stage ' + stage + ': 化功大法 drains 6 + 2 × stage at 1.10', G.enemyTechnique(ding, s).factor === 1.1 && G.enemyTechnique(ding, s).power === 6 + 2 * stage);
   check('stage ' + stage + ': 摘星子’s signature reaches 3', G.enemyTechnique(zhai, s).reach === 3 && pageOf(s, zhai).includes('絕技射程 3 格。'));
@@ -3832,7 +3832,7 @@ section('board 3 聽雪棧: the survivor and the scavenger');
 for (const stage of [3, 4]) {
   const s = realBoard(3, stage);
   const [xue, bao, bow, scout] = foesOf(s);
-  const want = { 3: [[195, 35, 13, 3, 1], [100, 26, 10, 3, 1]], 4: [[267, 38, 14, 3, 1], [145, 33, 11, 3, 1]] }[stage];
+  const want = { 3: [[195, 35, 13, 3, 1], [120, 26, 12, 3, 1]], 4: [[267, 38, 14, 3, 1], [174, 33, 13, 3, 1]] }[stage];
   check('stage ' + stage + ': 血刀老祖 and 寶象 have the spec’s numbers', same(numbersOf(xue), want[0]) && same(numbersOf(bao), want[1]), numbersOf(xue) + ' / ' + numbersOf(bao));
   check('stage ' + stage + ': his sweep takes a third', G.enemyTechnique(xue, s).sweep === 0.33 && pageOf(s, xue)[0] === '相鄰的其他我方俠客也會受到三分之一傷害。');
   check('stage ' + stage + ': 血刀老祖’s page', pageOf(s, xue).includes('【半血變招 · 遁走】氣血過半後退向最近的藥草地，三回合內只打身邊的人；在藥草地每回合回復最大氣血的 8%，回到七成五即止。'), JSON.stringify(pageOf(s, xue)));
@@ -3864,7 +3864,7 @@ section('board 4 空山琴臺: the commander behind the gate');
 for (const stage of [3, 4]) {
   const s = realBoard(4, stage);
   const [zuo, fei, bow, scout] = foesOf(s);
-  const want = { 3: [[215, 33, 17, 3, 2], [109, 26, 13, 2, 1]], 4: [[294, 36, 18, 3, 2], [158, 33, 14, 2, 1]] }[stage];
+  const want = { 3: [[215, 33, 17, 3, 2], [131, 26, 15, 2, 1]], 4: [[294, 36, 18, 3, 2], [190, 33, 16, 2, 1]] }[stage];
   check('stage ' + stage + ': 左冷禪 and 費彬 have the spec’s numbers', same(numbersOf(zuo), want[0]) && same(numbersOf(fei), want[1]), numbersOf(zuo) + ' / ' + numbersOf(fei));
   const n = 1 + stage;
   check('stage ' + stage + ': 盟令 gives every other enemy ＋' + n, [fei, bow, scout].every((u) => G.stat(u, 'atk', s) === u.atk + n && G.standingLines(s, u).includes('盟令 ＋' + n)) && G.stat(zuo, 'atk', s) === zuo.atk);
@@ -3893,7 +3893,7 @@ section('board 5 桃花石陣: the coiled beast');
 for (const stage of [5, 6]) {
   const s = realBoard(5, stage);
   const [ou, ke, bow, scout] = foesOf(s);
-  const want = { 5: [[339, 47, 18, 3, 2], [173, 40, 12, 3, 2]], 6: [[411, 59, 20, 3, 2], [214, 50, 13, 3, 2]] }[stage];
+  const want = { 5: [[339, 47, 18, 3, 2], [208, 40, 14, 3, 2]], 6: [[411, 59, 20, 3, 2], [257, 50, 15, 3, 2]] }[stage];
   check('stage ' + stage + ': 歐陽鋒 and 歐陽克 have the spec’s numbers', same(numbersOf(ou), want[0]) && same(numbersOf(ke), want[1]), numbersOf(ou) + ' / ' + numbersOf(ke));
   check('stage ' + stage + ': 蛤蟆功 at 1.40; 靈蛇拳法 pins at 1.12', G.enemyTechnique(ou, s).factor === 1.4 && G.enemyTechnique(ke, s).style === 'pin' && G.enemyTechnique(ke, s).factor === 1.12);
   check('stage ' + stage + ': 歐陽鋒’s page', same(pageOf(s, ou).slice(1), ['【蓄勢反擊】蓄勢時原地不動，只打兩格內的人；兩格內打他，必遭全力還擊（免受還擊之招與截勁除外）。', '【半血變招 · 逆練】攻擊 ＋6、防禦 −4、移動 ＋1，絕技每兩回合一次，不再原地等待，見人就撲。']), JSON.stringify(pageOf(s, ou)));
@@ -3923,7 +3923,7 @@ section('board 6 襄陽殘垣: the siege engine and the picker');
 for (const stage of [5, 6]) {
   const s = realBoard(6, stage);
   const [jin, huo, bow, scout] = foesOf(s);
-  const want = { 5: [[373, 47, 20, 2, 2], [156, 44, 12, 4, 2]], 6: [[452, 59, 22, 2, 2], [193, 54, 13, 4, 2]] }[stage];
+  const want = { 5: [[373, 47, 20, 2, 2], [187, 44, 14, 4, 2]], 6: [[452, 59, 22, 2, 2], [231, 54, 15, 4, 2]] }[stage];
   check('stage ' + stage + ': 金輪國師 and 霍都 have the spec’s numbers', same(numbersOf(jin), want[0]) && same(numbersOf(huo), want[1]), numbersOf(jin) + ' / ' + numbersOf(huo));
   check('stage ' + stage + ': 龍象般若功 is a line at 1.30 reaching 3', G.enemyTechnique(jin, s).style === 'line' && G.enemyTechnique(jin, s).factor === 1.3 && G.enemyTechnique(jin, s).reach === 3);
   check('stage ' + stage + ': 金輪國師’s page', same(pageOf(s, jin), ['輪勢穿過目標，再以一半威力擊中其後兩格內首名俠客（危險範圍不顯示穿透）。', '絕技射程 3 格。', '【雙局主】與完顏洪烈同為局主，兩人都倒下才算取勝（守滿回合亦勝）。']), JSON.stringify(pageOf(s, jin)));
@@ -3963,7 +3963,7 @@ section('board 7 寒玉石室: the venom that stops the healing');
 {
   const s = realBoard(7, 7);
   const [li, hong, bow, scout] = foesOf(s);
-  check('李莫愁 and 洪凌波 have the spec’s numbers', same(numbersOf(li), [483, 70, 19, 4, 2]) && same(numbersOf(hong), [255, 65, 16, 3, 2]), numbersOf(li) + ' / ' + numbersOf(hong));
+  check('李莫愁 and 洪凌波 have the spec’s numbers', same(numbersOf(li), [483, 70, 19, 4, 2]) && same(numbersOf(hong), [306, 65, 18, 3, 2]), numbersOf(li) + ' / ' + numbersOf(hong));
   check('冰魄銀針: poison 10 and 內傷, reach 3', G.enemyTechnique(li, s).power === 10 && G.enemyTechnique(li, s).extra === 'wound' && G.enemyTechnique(li, s).reach === 3);
   check('李莫愁’s page', same(pageOf(s, li), ['令目標中毒，兩次毒發各損 10 氣血，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。', '絕技射程 3 格。', '【偏好】專挑療傷者。']), JSON.stringify(pageOf(s, li)));
   check('洪凌波’s post is (6,4), walkable', G.walkable(5, 3, 7) && same(G.enemyTraitLines(s, hong), ['【坐鎮】守在石頸北口（6，4）一格內，不離位。']), JSON.stringify(G.enemyTraitLines(s, hong)));
@@ -3993,7 +3993,7 @@ section('board 8 倒影天街: the masked duelist');
 {
   const s = realBoard(8, 8);
   const [yue, lao, bow, scout] = foesOf(s);
-  check('岳不群 and 勞德諾 have the spec’s numbers', same(numbersOf(yue), [555, 82, 23, 4, 1]) && same(numbersOf(lao), [296, 76, 15, 4, 2]), numbersOf(yue) + ' / ' + numbersOf(lao));
+  check('岳不群 and 勞德諾 have the spec’s numbers', same(numbersOf(yue), [555, 82, 23, 4, 1]) && same(numbersOf(lao), [355, 76, 17, 4, 2]), numbersOf(yue) + ' / ' + numbersOf(lao));
   check('岳不群’s page', same(pageOf(s, yue).slice(1), ['【游擊】出手後退開至多 2 步，離俠客越遠越好。', '【半血變招 · 辟邪現形】移動 ＋2、防禦 −3，絕技每兩回合一次。', '【雙局主】與鮮于通同為局主，兩人都倒下才算取勝。']), JSON.stringify(pageOf(s, yue)));
   check('勞德諾 hunts the leader', same(G.enemyTraitLines(s, lao), ['【偏好】專挑領隊。']));
   check('the archer holds the footbridge', same(G.enemyTraitLines(s, bow), ['【坐鎮】守在橋頭（13，5）一格內，不離位。']) && G.unitDetails(scout).name === '嵩山密探');
@@ -4014,7 +4014,7 @@ section('board 9 無刻漏臺: the mirror');
 {
   const s = realBoard(9, 9);
   const [mu, jiu, bow, scout] = foesOf(s);
-  check('慕容博 and 鳩摩智 have the spec’s numbers', same(numbersOf(mu), [867, 93, 24, 4, 2]) && same(numbersOf(jiu), [337, 86, 16, 3, 2]), numbersOf(mu) + ' / ' + numbersOf(jiu));
+  check('慕容博 and 鳩摩智 have the spec’s numbers', same(numbersOf(mu), [867, 93, 24, 4, 2]) && same(numbersOf(jiu), [404, 86, 18, 3, 2]), numbersOf(mu) + ' / ' + numbersOf(jiu));
   check('斗轉星移 is the mirror, no blow', G.enemyTechnique(mu, s).style === 'mirror' && !G.enemyTechnique(mu, s).strikes);
   check('慕容博’s page', same(pageOf(s, mu), ['蓄勢時，第一次受到的直接攻擊全數不中，反震一半給出手者（截勁時無效）。', '【坐鎮】星索樁倒下一根，便退到另一根旁守著，守在一格內。與那根樁相鄰時，替它承受俠客的直接攻擊。不離位。', '【星索】每根立著的星索樁替他抵擋 35% 傷害。', '【半血變招】攻擊 ＋5、防禦 ＋4、射程擴至三格。']), JSON.stringify(pageOf(s, mu)));
   check('while both posts stand he keeps no post', G.holdOf(s, mu) === null);
@@ -4322,7 +4322,8 @@ function oldRows(map, depth) {
     seasoned = Math.max(0, depth - 3);
   return [
     [99 + depth * 32 + seasoned * 40 + (boss ? 240 : 0), 23 + veteran * 3 + Math.round(depth * 3.2 + veteran * 5.3), 10 + Math.round(depth * 1.6), depth >= 7 ? 4 : depth >= 3 ? 3 : 2, boss || depth >= 6 || [2, 4, 8].includes(map) ? 2 : 1],
-    [55 + depth * 12 + seasoned * 29, 19 + veteran * 3 + Math.round(depth * 2.2 + seasoned * 5.4), 7 + depth, depth >= 3 ? 3 : 2, depth >= 6 ? 2 : 1],
+    // 副手 raised 2026-11-26: 氣血 ×1.2, 防禦 +2.
+    [Math.round((55 + depth * 12 + seasoned * 29) * 1.2), 19 + veteran * 3 + Math.round(depth * 2.2 + seasoned * 5.4), 9 + depth, depth >= 3 ? 3 : 2, depth >= 6 ? 2 : 1],
     [48 + depth * 11 + seasoned * 29, 17 + veteran * 1 + Math.round(depth * 2.2 + seasoned * 5.4), 5 + depth, depth >= 4 ? 3 : 2, depth >= 6 ? 4 : 3],
     [51 + depth * 11 + seasoned * 29, 18 + Math.round(depth * 2.2 + seasoned * 5.4), 7 + depth, depth >= 5 ? 4 : 3, depth >= 7 ? 2 : 1]
   ];
@@ -4392,20 +4393,20 @@ section('battle data');
 
 section('stage rows');
 {
-  check('stageRows(0, 0) is the first board’s fixed numbers', same(G.SLOTS.map((k) => G.stageRows(0, 0)[k]), [[104, 25, 12, 2, 1], [56, 20, 7, 2, 1], [48, 18, 5, 2, 3], [56, 19, 8, 3, 1]]));
+  check('stageRows(0, 0) is the first board’s fixed numbers', same(G.SLOTS.map((k) => G.stageRows(0, 0)[k]), [[104, 25, 12, 2, 1], [64, 20, 8, 2, 1], [48, 18, 5, 2, 3], [56, 19, 8, 3, 1]]));
   let all = true;
   for (let map = 1; map < 10; map++) for (const d of R.mapStages(map)) if (!same(G.SLOTS.map((k) => G.stageRows(map, d)[k]), oldRows(map, d))) all = false;
   check('stageRows equals the old defenders’ numbers for every board at every stage it is met', all);
   const want = {
-    0: { 0: { fengTiannan: [56, 20, 7, 3, 1], 'fiveTiger#1': [56, 19, 8, 3, 2] } },
-    1: { 1: { zhaoZhong: [67, 21, 10, 3, 1], 'qingShield#1': [74, 20, 11, 2, 1] }, 2: { zhaoZhong: [79, 23, 11, 3, 1], 'qingShield#2': [88, 22, 12, 2, 1] } },
+    0: { 0: { fengTiannan: [64, 20, 8, 3, 1], 'fiveTiger#1': [56, 19, 8, 3, 2] } },
+    1: { 1: { zhaoZhong: [80, 21, 12, 3, 1], 'qingShield#1': [74, 20, 11, 2, 1] }, 2: { zhaoZhong: [95, 23, 13, 3, 1], 'qingShield#2': [88, 22, 12, 2, 1] } },
     2: { 1: { 'bow-2#1': [59, 17, 6, 2, 3], 'scout-2#1': [62, 18, 8, 3, 1] }, 2: { 'bow-2#2': [70, 19, 7, 2, 3], 'scout-2#2': [73, 20, 9, 3, 1] } },
     3: { 3: { 'scout-3#1': [84, 25, 10, 3, 1] }, 4: { 'scout-3#2': [124, 32, 11, 3, 1] } },
     4: { 3: { 'bow-4#1': [81, 24, 8, 2, 3], 'scout-4#1': [84, 25, 10, 3, 1] }, 4: { 'bow-4#2': [121, 31, 9, 3, 3], 'scout-4#2': [124, 32, 11, 3, 1] } },
     5: { 5: { 'bow-5#1': [113, 40, 10, 3, 3], 'scout-5#2': [115, 40, 12, 4, 1] }, 6: { 'bow-5#3': [141, 48, 11, 3, 4], 'scout-5#1': [143, 47, 13, 4, 1] } },
-    6: { 5: { 'scout-6#1': [123, 40, 12, 5, 1], wanYan: [156, 42, 12, 3, 1], 'jinBow#1': [161, 40, 10, 3, 4] }, 6: { 'scout-6#4': [153, 47, 13, 5, 1], wanYan: [193, 52, 13, 3, 2], 'jinBow#2': [201, 48, 11, 3, 4] } },
+    6: { 5: { 'scout-6#1': [123, 40, 12, 5, 1], wanYan: [187, 42, 14, 3, 1], 'jinBow#1': [161, 40, 10, 3, 4] }, 6: { 'scout-6#4': [153, 47, 13, 5, 1], wanYan: [231, 52, 15, 3, 2], 'jinBow#2': [201, 48, 11, 3, 4] } },
     8: { 8: { xianYu: [389, 82, 21, 3, 1], 'huaBlade#3': [213, 61, 15, 4, 1] } },
-    9: { 9: { wanZhen: [337, 86, 17, 3, 2], 'wanDisciple#2': [259, 70, 16, 4, 1] } }
+    9: { 9: { wanZhen: [404, 86, 19, 3, 2], 'wanDisciple#2': [259, 70, 16, 4, 1] } }
   };
   for (const [map, stages] of Object.entries(want))
     for (const [stage, pieces] of Object.entries(stages))
