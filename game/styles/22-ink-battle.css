@@ -1407,3 +1407,33 @@ html.polish-ink-look #modal[data-page='attack-preview'] .modal-foot .gold-btn,
 html.polish-ink-look #modal[data-full] .mj-fixed-foot .gold-btn {
   padding-inline: calc(var(--ink-stone-size) * 0.2);
 }
+
+/* 結束回合 level with the piece's plate (centred on it), and clear of the screen's bottom edge
+   (the producer, 2026-11-27). */
+html.polish-ink-look .battlefield .field-dock {
+  bottom: calc(var(--bottom) + 14px);
+  align-items: center;
+}
+@media (max-width: 600px) {
+  html.polish-ink-look .battlefield .field-dock {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'card stone' 'tools tools';
+    align-items: center;
+    row-gap: 2px;
+  }
+  html.polish-ink-look .battlefield .unit-dock {
+    display: contents;
+  }
+  html.polish-ink-look .battlefield .unit-card {
+    grid-area: card;
+  }
+  html.polish-ink-look .battlefield .unit-tools {
+    grid-area: tools;
+    justify-self: start;
+  }
+  html.polish-ink-look .battlefield .command-dock {
+    grid-area: stone;
+    align-self: center;
+  }
+}

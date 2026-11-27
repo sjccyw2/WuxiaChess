@@ -594,3 +594,28 @@ html.polish-ink-look #modal[data-full] .fy-dialogue {
     max-width: 100%;
   }
 }
+
+/* The story's words: in from the edges and well clear of the foot (the producer, 2026-11-27). */
+html.polish-ink-look #modal[data-full] .fy-story .mj-scroll {
+  padding-bottom: calc(var(--ink-stone-size) + 64px);
+}
+html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot .gold-btn {
+  padding: 6px;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+@media (max-width: 600px) {
+  html.polish-ink-look #modal[data-full] .fy-story .mj-scroll {
+    padding-left: calc(var(--ink-pad) + 10px);
+    padding-right: calc(var(--ink-pad) + 10px);
+  }
+  html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot {
+    padding-left: calc(var(--ink-pad) + 10px);
+    padding-right: calc(var(--ink-pad) + 4px);
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  html.polish-ink-look #modal[data-full] .fy-story .mj-scroll {
+    padding-bottom: 20px;
+  }
+}
