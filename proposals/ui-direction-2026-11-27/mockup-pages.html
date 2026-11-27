@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>其餘頁面試樣</title>
+<link rel="stylesheet" href="mockup.css">
+<style>
+.wide { width: 844px; height: 390px; }
+.A { --a: '../../game/assets/'; }
+.dim { color: var(--white-dim); }
+.q { font: 600 15px var(--serif); letter-spacing: .16em; color: var(--white-dim); }
+.u { font: 700 16px var(--serif); letter-spacing: .14em; color: var(--white); padding-bottom: 5px; border-bottom: 2px solid var(--kaya); }
+.page .backdrop { position: absolute; inset: -40px; background: center / cover no-repeat; filter: blur(16px) saturate(.7) brightness(.4); }
+.page .wash { position: absolute; inset: 0; background: radial-gradient(ellipse 75% 80% at 50% 46%, rgba(var(--wash), .15), rgba(var(--wash), .72) 100%); }
+.page .top { padding-left: 64px; }
+.foot { position: absolute; left: 64px; bottom: 58px; display: flex; gap: 34px; align-items: baseline; }
+.lead-line { position: absolute; left: 64px; top: 118px; font: 400 16px/1.6 var(--sans); color: var(--white-dim); }
+.seal.s { width: 26px; height: 26px; font-size: 13px; }
+
+/* ---------- 選境界 ---------- */
+.realms { position: absolute; left: 64px; right: 64px; top: 170px; height: 560px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; }
+.realm { position: relative; padding: 34px 26px 26px; background: linear-gradient(180deg, rgba(var(--wash), .55), rgba(var(--wash), .2)); opacity: .62; }
+.realm.on { opacity: 1; background: linear-gradient(180deg, rgba(var(--wash), .75), rgba(var(--wash), .35)); box-shadow: inset 1px 0 0 rgba(201,164,98,.7), inset -1px 0 0 rgba(201,164,98,.7); }
+.realm .ord { font: 600 15px var(--serif); color: var(--white-dim); letter-spacing: .2em; }
+.realm .vt { position: absolute; left: 34px; top: 82px; writing-mode: vertical-rl; font: 800 46px/1.05 var(--serif); letter-spacing: .1em; }
+.realm .vs { position: absolute; left: 112px; top: 92px; writing-mode: vertical-rl; font: 400 16px var(--serif); letter-spacing: .32em; color: var(--white-dim); }
+.realm .fx { position: absolute; left: 26px; right: 20px; bottom: 26px; font: 400 14px/1.75 var(--sans); color: var(--white-dim); border-top: 1px solid rgba(242,238,230,.12); padding-top: 14px; }
+.realm .fx b { font: 700 20px var(--serif); color: var(--white); }
+.realm .seal { position: absolute; right: 22px; top: 28px; width: 34px; height: 34px; font-size: 16px; transform: rotate(-5deg); }
+.realm.on .stone { position: absolute; right: 24px; top: 28px; width: 30px; height: 30px; }
+
+/* ---------- 抓子 ---------- */
+.draw { position: absolute; left: 64px; right: 64px; top: 176px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 30px; }
+.lot { text-align: center; }
+.lot .scroll { position: relative; left: auto; top: auto; width: 100%; height: 360px; background-size: 205px auto; background-position: center 50%; }
+.lot.out .scroll { filter: grayscale(.9) brightness(.55); }
+.lot .mark { position: absolute; left: 12px; top: 14px; width: 28px; height: 28px; font-size: 14px; }
+.lot .seal { right: 12px; bottom: 16px; width: 40px; height: 40px; font-size: 16px; }
+.lot h3 { margin-top: 26px; font: 800 30px var(--serif); letter-spacing: .14em; }
+.lot.out h3 { color: var(--white-dim); }
+.lot p { font: 400 13px var(--sans); color: var(--white-dim); margin-top: 6px; }
+.lot p b { font: 600 15px var(--serif); color: var(--white); }
+.lot .act { margin-top: 16px; display: inline-block; }
+.kept { position: absolute; right: 200px; bottom: 74px; text-align: right; font: 500 14px var(--sans); color: var(--white-dim); }
+.kept .num { font-size: 44px; color: var(--white); }
+
+/* ---------- 軍情 ---------- */
+.plan { position: absolute; left: 120px; top: 150px; width: 540px; height: 540px; border-radius: 4px; background: linear-gradient(135deg, #d6b678, #c39d5c 55%, #b48d4f); box-shadow: 0 30px 60px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,240,200,.25); }
+.plan svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.legend { position: absolute; left: 120px; top: 716px; display: flex; gap: 26px; font: 400 14px var(--sans); color: var(--white-dim); align-items: center; }
+.legend i { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: -2px; margin-right: 8px; }
+.legend i.w { background: var(--white); } .legend i.b { background: #121416; box-shadow: 0 0 0 1px #6a7074; }
+.terms { position: absolute; left: 740px; top: 160px; width: 590px; }
+.term { display: grid; grid-template-columns: 74px 1fr; padding: 22px 0; border-bottom: 1px solid rgba(242,238,230,.09); }
+.term > b { font: 800 40px/1 var(--serif); color: var(--kaya); }
+.term h4 { font: 700 21px var(--serif); letter-spacing: .08em; display: flex; align-items: center; gap: 12px; }
+.term h4 .medal { width: 34px; height: 34px; }
+.term p { font: 400 16px/1.65 var(--sans); color: var(--white-dim); margin-top: 6px; }
+.term p .num { font-size: 22px; color: var(--white); }
+
+/* ---------- 武學 ---------- */
+.heroes { position: absolute; left: 132px; top: 124px; display: flex; gap: 18px; align-items: center; }
+.heroes .medal { width: 46px; height: 46px; box-shadow: 0 0 0 3px var(--white), 0 6px 12px rgba(0,0,0,.5); opacity: .55; }
+.heroes .on .medal { width: 58px; height: 58px; opacity: 1; box-shadow: 0 0 0 3px var(--white), 0 0 0 6px rgba(201,164,98,.8), 0 6px 12px rgba(0,0,0,.5); }
+.heroes span { position: relative; }
+.heroes em { position: absolute; right: -8px; bottom: -6px; font: 700 11px var(--sans); font-style: normal; color: #1d2022; background: var(--kaya); border-radius: 8px; padding: 0 5px; }
+.subtabs { position: absolute; left: 132px; top: 212px; display: flex; gap: 30px; align-items: baseline; }
+.treehead { position: absolute; left: 132px; top: 252px; }
+.treehead small { font: 400 14px var(--sans); color: var(--white-dim); }
+.treehead strong { display: block; font: 800 34px var(--serif); letter-spacing: .12em; margin-top: 2px; }
+.points { position: absolute; right: 64px; top: 122px; text-align: right; font: 500 14px var(--sans); color: var(--white-dim); }
+.points .num { font-size: 48px; color: var(--white); line-height: 1; margin-right: 6px; }
+.tree { position: absolute; left: 132px; top: 330px; width: 720px; height: 520px; }
+.tree svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.tier { position: absolute; left: 0; font: 500 13px var(--sans); color: rgba(242,238,230,.4); letter-spacing: .2em; }
+.node { position: absolute; transform: translate(-50%, -16px); text-align: center; width: 150px; }
+.node i { display: block; margin: 0 auto; width: 32px; height: 32px; border-radius: 50%; }
+.node.has i { background: radial-gradient(circle at 34% 28%, #fff 0, #f3efe7 30%, #d8d1c3 72%, #aaa293 100%); box-shadow: 0 5px 10px rgba(0,0,0,.5); }
+.node.can i { box-shadow: inset 0 0 0 2.5px var(--white), 0 0 14px rgba(242,238,230,.35); background: rgba(9,13,12,.6); }
+.node.no i { width: 16px; height: 16px; margin-top: 8px; margin-bottom: 8px; background: rgba(242,238,230,.18); }
+.node.sel i { box-shadow: inset 0 0 0 2.5px var(--white), 0 0 0 5px rgba(201,164,98,.85), 0 0 18px rgba(201,164,98,.5); }
+.node.peak i { width: 44px; height: 44px; margin-top: -6px; background: rgba(9,13,12,.6); box-shadow: inset 0 0 0 2px rgba(242,238,230,.3); }
+.node b { display: block; margin-top: 9px; font: 700 16px var(--serif); letter-spacing: .06em; }
+.node.no b { color: rgba(242,238,230,.48); font-weight: 600; }
+.node small { display: block; font: 400 12px var(--sans); color: var(--white-dim); margin-top: 1px; }
+.node.peak b { font-size: 20px; }
+.detail { position: absolute; left: 900px; top: 330px; width: 420px; }
+.detail small { font: 500 14px var(--sans); color: var(--white-dim); letter-spacing: .1em; }
+.detail h3 { font: 800 56px/1.1 var(--serif); letter-spacing: .12em; margin: 6px 0 18px; }
+.detail .gain { display: flex; align-items: baseline; gap: 14px; font: 500 15px var(--sans); color: var(--white-dim); }
+.detail .gain .num { font-size: 44px; color: var(--white); }
+.detail p { font: 400 15px/1.7 var(--sans); color: var(--white-dim); margin-top: 10px; }
+.detail .rows { margin-top: 24px; border-top: 1px solid rgba(201,164,98,.28); }
+.detail .rows div { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(242,238,230,.08); font: 400 15px var(--sans); color: var(--white-dim); }
+.detail .rows b { font: 700 17px var(--serif); color: var(--white); }
+.detail .acts { margin-top: 26px; display: flex; gap: 32px; align-items: baseline; }
+
+/* ---------- 裝備 ---------- */
+.gear-hero { position: absolute; left: 132px; top: 220px; }
+.gear-hero .scroll { left: 0; top: 0; width: 220px; height: 380px; background-size: 210px auto; }
+.slots { position: absolute; left: 400px; top: 230px; width: 340px; }
+.slot { display: grid; grid-template-columns: 84px 1fr; gap: 18px; align-items: center; padding: 18px 0; border-bottom: 1px solid rgba(242,238,230,.09); }
+.slot .art { width: 84px; height: 84px; border-radius: 50%; background: rgba(9,13,12,.6) center / 74% no-repeat; box-shadow: inset 0 0 0 1px rgba(201,164,98,.45); }
+.slot.empty .art { box-shadow: inset 0 0 0 1.5px rgba(242,238,230,.25); display: grid; place-items: center; font: 300 30px var(--serif); color: rgba(242,238,230,.35); }
+.slot small { font: 500 13px var(--sans); color: var(--white-dim); letter-spacing: .12em; }
+.slot b { display: block; font: 700 21px var(--serif); letter-spacing: .08em; margin-top: 2px; }
+.slot.empty b { color: rgba(242,238,230,.35); font-weight: 500; }
+.slot span { font: 400 14px var(--sans); color: var(--white-dim); }
+.compare { margin-top: 26px; font: 500 14px var(--sans); color: var(--white-dim); }
+.compare .num { font-size: 40px; color: var(--white); }
+.compare .num.up { color: var(--celadon); }
+.stock { position: absolute; left: 820px; top: 222px; width: 520px; }
+.filters { display: flex; gap: 26px; align-items: baseline; margin-bottom: 20px; }
+.items { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px 18px; }
+.item { text-align: center; opacity: .9; }
+.item .art { width: 104px; height: 104px; margin: 0 auto; border-radius: 50%; background: radial-gradient(circle, rgba(242,238,230,.08), rgba(9,13,12,.5) 70%) center / 80% no-repeat; }
+.item .art { background-size: 78%, auto; }
+.item.sel .art { box-shadow: 0 0 0 2px var(--kaya), 0 0 20px rgba(201,164,98,.35); }
+.item b { display: block; font: 700 17px var(--serif); letter-spacing: .06em; margin-top: 10px; }
+.item small { display: block; font: 400 13px var(--sans); color: var(--white-dim); margin-top: 2px; }
+.item.worn { opacity: .5; }
+
+/* ---------- battle: arts list, forecast, enemy turn ---------- */
+.arts-pop { position: absolute; left: 70px; top: 200px; width: 590px; padding: 80px 110px 70px; background: rgba(var(--wash), .82); --f: linear-gradient(90deg, transparent, #000 100px, #000 calc(100% - 100px), transparent), linear-gradient(transparent, #000 70px, #000 calc(100% - 70px), transparent); -webkit-mask-image: var(--f); mask-image: var(--f); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.arts-line { position: absolute; left: 556px; top: 322px; width: 128px; height: 1px; background: linear-gradient(90deg, var(--kaya), rgba(201,164,98,.15)); transform-origin: left; transform: rotate(33deg); }
+.art-row { position: relative; display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; padding: 12px 0; align-items: start; }
+.art-row .stone { width: 26px; height: 26px; font-size: 13px; margin-top: 3px; }
+.art-row .ring { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--serif); box-shadow: inset 0 0 0 1.5px rgba(242,238,230,.55); margin-top: 3px; color: var(--white-dim); }
+.art-row b { font: 800 21px var(--serif); letter-spacing: .08em; }
+.art-row p { font: 400 13px/1.6 var(--sans); color: var(--white-dim); margin-top: 4px; }
+.art-row p .num { font-size: 18px; color: var(--white); }
+.art-row .cost { font: 600 13px var(--sans); color: var(--white-dim); margin-top: 6px; }
+.art-row .cost .num { font-size: 16px; color: var(--qi); }
+.art-row.on b { color: var(--white); }
+.art-row.on::after { display: none; content: ''; position: absolute; left: calc(100% + 34px); top: 24px; width: 72px; height: 1px; background: linear-gradient(90deg, var(--kaya), transparent); }
+.arts-pop .back { display: block; margin-top: 10px; font: 600 14px var(--serif); letter-spacing: .16em; color: var(--white-dim); }
+.arts-pop .back kbd { font: 400 11px var(--sans); color: rgba(242,238,230,.4); margin-left: 8px; }
+
+.fc { position: absolute; left: 40px; bottom: 34px; display: grid; grid-template-columns: auto auto auto; align-items: end; gap: 34px; }
+.fc .side { display: flex; gap: 16px; align-items: flex-end; }
+.fc .side .medal { width: 92px; height: 92px; }
+.fc .side.foe { flex-direction: row-reverse; text-align: right; }
+.fc .side strong { font: 800 26px var(--serif); letter-spacing: .1em; }
+.fc .side small { display: block; font: 400 12px var(--sans); color: var(--white-dim); }
+.fc .hpx { font-family: var(--serif); font-weight: 700; font-size: 26px; margin-top: 4px; }
+.fc .hpx i { font-style: normal; color: var(--white-dim); font-size: 16px; margin: 0 6px; }
+.fc .hpx em { font-style: normal; font-size: 14px; color: var(--white-dim); font-weight: 500; }
+.fc .hpx .after { color: #e9a08f; }
+.fc .bar { width: 200px; margin-top: 8px; }
+.fc .bar .loss { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, #c0533e 0 4px, #8e3527 4px 8px); }
+.fc .bar.foe i { background: #b8604c; }
+.fc .mid { text-align: center; padding-bottom: 6px; }
+.fc .mid .num { display: block; font-size: 64px; line-height: 1; color: var(--white); text-shadow: 0 4px 18px rgba(0,0,0,.6); }
+.fc .mid b { font: 700 16px var(--serif); letter-spacing: .14em; color: var(--kaya); }
+.fc .mid p { font: 400 13px/1.6 var(--sans); color: var(--white-dim); margin-top: 6px; }
+.fc .mid p .num { display: inline; font-size: 15px; text-shadow: none; }
+.confirm { position: absolute; right: 48px; bottom: 182px; font: 500 13px var(--sans); color: var(--white-dim); text-align: center; width: 120px; }
+
+.enemy-wash { position: absolute; inset: 0; background: rgba(var(--wash), .32); }
+.band { position: absolute; left: 0; right: 0; top: 380px; height: 140px; display: flex; align-items: center; justify-content: center; gap: 30px; background: linear-gradient(90deg, transparent, rgba(8,9,10,.9) 22%, rgba(8,9,10,.9) 78%, transparent); }
+.band .stone { width: 80px; height: 80px; }
+.band strong { font: 800 52px var(--serif); letter-spacing: .3em; }
+.band small { display: block; font: 500 14px var(--sans); letter-spacing: .3em; color: var(--white-dim); }
+.end.off { opacity: .28; }
+
+/* ---------- 劇情 ---------- */
+.story .backdrop { filter: blur(6px) saturate(.6) brightness(.38); }
+.speaker { position: absolute; left: 0; bottom: 0; width: 640px; height: 820px; background: center top / cover no-repeat;     --m: linear-gradient(90deg, #000 50%, transparent 98%), linear-gradient(180deg, transparent 0, #000 24%, #000 80%, transparent); -webkit-mask-image: var(--m); mask-image: var(--m); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.story .low { position: absolute; left: 0; right: 0; bottom: 0; height: 360px; background: linear-gradient(0deg, rgba(var(--wash), .95) 0, rgba(var(--wash), .75) 55%, transparent); }
+.line { position: absolute; left: 520px; right: 140px; bottom: 96px; }
+.line h3 { font: 800 38px var(--serif); letter-spacing: .14em; }
+.line h3 small { font: 500 15px var(--sans); color: var(--white-dim); margin-left: 14px; letter-spacing: .1em; }
+.line p { font: 500 26px/1.75 var(--serif); margin-top: 14px; max-width: 30em; }
+.dots { position: absolute; left: 520px; bottom: 50px; display: flex; gap: 10px; align-items: center; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(242,238,230,.22); }
+.dots i.on { background: var(--white); }
+.story .next { right: 56px; bottom: 56px; width: 64px; height: 64px; font-size: 15px; }
+.story .skip { position: absolute; right: 56px; top: 40px; }
+.story .where { position: absolute; left: 56px; top: 36px; }
+
+/* ---------- 通吃坊 ---------- */
+.wei { position: absolute; left: 0; bottom: 0; width: 470px; height: 800px; background: center 12% / cover no-repeat;   opacity: .95;  --m: linear-gradient(90deg, #000 42%, transparent 96%), linear-gradient(180deg, transparent 0, #000 26%); -webkit-mask-image: var(--m); mask-image: var(--m); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.wei-name { position: absolute; left: 56px; top: 150px; writing-mode: vertical-rl; font: 800 60px var(--serif); letter-spacing: .1em; text-shadow: 0 6px 20px rgba(0,0,0,.7); }
+.cup { position: absolute; left: 56px; bottom: 56px; display: flex; gap: 18px; align-items: center; padding: 0; text-shadow: 0 2px 10px #000; }
+.cup img { width: 74px; height: 74px; object-fit: contain; }
+.cup b { font: 800 22px var(--serif); letter-spacing: .14em; }
+.cup small { display: block; font: 400 13px var(--sans); color: var(--white-dim); margin-top: 3px; }
+.purse { position: absolute; right: 64px; top: 34px; text-align: right; font: 500 14px var(--sans); color: var(--white-dim); }
+.purse .num { font-size: 46px; color: var(--white); margin-right: 6px; line-height: 1; }
+.result { position: absolute; left: 480px; top: 44px; }
+.result small { font: 500 13px var(--sans); color: var(--white-dim); letter-spacing: .1em; }
+.result strong { display: block; font: 800 30px var(--serif); letter-spacing: .12em; margin-top: 2px; }
+.result span { font: 400 15px var(--sans); color: var(--white-dim); }
+.result span b { font: 700 16px var(--serif); color: var(--white); }
+.goods { position: absolute; left: 480px; right: 64px; top: 150px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 48px; }
+.goods h4 { grid-column: span 1; font: 700 15px var(--serif); letter-spacing: .3em; color: var(--kaya); padding: 14px 0 4px; }
+.good { display: grid; grid-template-columns: 64px 1fr auto; gap: 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(242,238,230,.08); }
+.good .art { width: 64px; height: 64px; background: center / contain no-repeat; }
+.good .art.book { display: grid; place-items: center; }
+.good b { font: 700 19px var(--serif); letter-spacing: .06em; }
+.good small { display: block; font: 400 13px var(--sans); color: var(--white-dim); margin-top: 3px; }
+.good small em { font-style: normal; color: var(--celadon); }
+.good .price { text-align: right; font: 400 13px var(--sans); color: var(--white-dim); }
+.good .price .num { font-size: 24px; color: var(--white); margin-right: 3px; }
+.good.sel { box-shadow: inset 3px 0 0 var(--kaya); padding-left: 14px; margin-left: -14px; background: linear-gradient(90deg, rgba(201,164,98,.12), transparent 70%); }
+
+/* ---------- phone pages ---------- */
+.phone.page .top, .phone .top { padding: 18px 16px 0; }
+.phone .lead-line { left: 16px; right: 16px; top: 84px; font-size: 13px; }
+.phone .plan { left: 16px; top: 92px; width: 358px; height: 358px; }
+.phone .legend { left: 16px; top: 462px; gap: 14px; font-size: 12px; }
+.phone .terms { left: 16px; right: 16px; top: 490px; width: auto; }
+.phone .term { grid-template-columns: 44px 1fr; padding: 11px 0; }
+.phone .term > b { font-size: 26px; }
+.phone .term h4 { font-size: 16px; }
+.phone .term h4 .medal { width: 26px; height: 26px; }
+.phone .term p { font-size: 13px; margin-top: 2px; }
+.phone .go.p { right: 16px; bottom: 18px; width: 84px; height: 84px; }
+.phone .go.p b { font-size: 18px; }
+.phone .foot { left: 18px; bottom: 50px; gap: 22px; }
+
+.phone .draw { left: 16px; right: auto; top: 130px; display: flex; gap: 14px; width: max-content; }
+.phone .lot { width: 160px; }
+.phone .lot .scroll { height: 330px; background-size: 156px auto; }
+.phone .lot h3 { font-size: 22px; margin-top: 18px; }
+.phone .lot .seal { width: 30px; height: 30px; font-size: 12px; }
+.phone .kept { right: auto; left: 18px; bottom: 120px; text-align: left; }
+.phone .kept .num { font-size: 32px; }
+
+.phone .heroes { left: 16px; top: 76px; gap: 14px; }
+.phone .heroes .medal { width: 38px; height: 38px; }
+.phone .heroes .on .medal { width: 46px; height: 46px; }
+.phone .points { right: 16px; top: 80px; }
+.phone .points .num { font-size: 34px; }
+.phone .treehead { left: 16px; top: 140px; }
+.phone .treehead strong { font-size: 24px; }
+.phone .tree { left: 0; top: 214px; width: 390px; height: 400px; }
+.phone .node { width: 90px; }
+.phone .node b { font-size: 13px; margin-top: 6px; }
+.phone .node small { font-size: 10px; }
+.phone .node i { width: 26px; height: 26px; }
+.phone .node.no i { width: 12px; height: 12px; margin: 7px auto; }
+.phone .node.peak i { width: 34px; height: 34px; }
+.phone .node.peak b { font-size: 15px; }
+.phone .tier { font-size: 10px; letter-spacing: .1em; left: 6px; }
+.sheet-low { position: absolute; left: 0; right: 0; bottom: 0; height: 236px; padding: 22px 16px; background: linear-gradient(0deg, rgba(var(--wash), .97) 70%, rgba(var(--wash), .0)); }
+.sheet-low h3 { font: 800 30px var(--serif); letter-spacing: .12em; }
+.sheet-low h3 small { font: 500 12px var(--sans); color: var(--white-dim); margin-left: 10px; letter-spacing: .08em; }
+.sheet-low .gain { font: 500 13px var(--sans); color: var(--white-dim); margin-top: 6px; }
+.sheet-low .gain .num { font-size: 30px; color: var(--white); }
+
+.phone .fcp { position: absolute; left: 16px; right: 16px; top: 88px; padding: 14px 0 16px; background: linear-gradient(180deg, rgba(var(--wash), .0), rgba(var(--wash), .82) 18%, rgba(var(--wash), .82) 82%, rgba(var(--wash), 0)); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
+.fcp .s { display: flex; align-items: center; gap: 10px; }
+.fcp .s.foe { flex-direction: row-reverse; text-align: right; }
+.fcp .medal { width: 48px; height: 48px; flex: none; }
+.fcp strong { font: 800 16px var(--serif); letter-spacing: .06em; }
+.fcp .hpx { font: 700 15px var(--serif); }
+.fcp .hpx i { font-style: normal; color: var(--white-dim); margin: 0 3px; font-size: 12px; }
+.fcp .hpx .after { color: #e9a08f; }
+.fcp .mid { text-align: center; }
+.fcp .mid .num { display: block; font-size: 38px; line-height: 1; }
+.fcp .mid small { font: 400 11px var(--sans); color: var(--white-dim); }
+.phone .arts-low { position: absolute; left: 0; right: 0; bottom: 0; padding: 70px 16px 22px; background: linear-gradient(0deg, rgba(var(--wash), .95) 0, rgba(var(--wash), .88) 70%, transparent); }
+.phone .arts-low .art-row { grid-template-columns: 30px 1fr auto; padding: 9px 0; }
+.phone .arts-low .art-row b { font-size: 18px; }
+.phone .arts-low .art-row p { font-size: 12px; }
+.phone .arts-low .art-row.on::after { display: none; }
+.phone .arts-low .art-row.on { box-shadow: inset 2px 0 0 var(--kaya); padding-left: 10px; margin-left: -10px; }
+.phone .arts-low .foot2 { display: flex; justify-content: space-between; margin-top: 10px; }
+
+.phone.story .speaker { width: 390px; height: 560px; top: 0; bottom: auto;    --m: linear-gradient(0deg, transparent 0, #000 40%), linear-gradient(180deg, transparent 0, #000 12%); -webkit-mask-image: var(--m); mask-image: var(--m); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.phone.story .low { height: 470px; }
+.phone .line { left: 22px; right: 22px; bottom: 104px; }
+.phone .line h3 { font-size: 28px; }
+.phone .line p { font-size: 19px; }
+.phone .dots { left: 22px; bottom: 64px; }
+.phone.story .next { right: 22px; bottom: 40px; width: 56px; height: 56px; }
+.phone.story .skip { right: 20px; top: 22px; }
+.phone.story .where { left: 20px; top: 20px; }
+
+.phone .wei { width: 260px; height: 300px; top: 64px; bottom: auto; background-position: center 10%;    --m: linear-gradient(90deg, #000 40%, transparent 95%), linear-gradient(180deg, transparent 0, #000 20%, #000 70%, transparent); -webkit-mask-image: var(--m); mask-image: var(--m); -webkit-mask-composite: source-in; mask-composite: intersect; }
+.phone .purse { right: 16px; top: 76px; }
+.phone .purse .num { font-size: 34px; }
+.phone .result { left: 16px; top: 18px; }
+.phone .result strong { font-size: 22px; }
+.phone .cup { left: auto; right: 16px; top: 140px; bottom: auto; padding: 8px 12px 8px 8px; background: linear-gradient(270deg, rgba(var(--wash), .85), rgba(var(--wash), .4)); }
+.phone .cup img { width: 50px; height: 50px; }
+.phone .cup b { font-size: 17px; }
+.phone .goods { left: 16px; right: 16px; top: 300px; grid-template-columns: 1fr; gap: 0; }
+.phone .goods h4 { padding: 12px 0 2px; font-size: 13px; }
+.phone .good { grid-template-columns: 46px 1fr auto; gap: 12px; padding: 7px 0; }
+.phone .good .art { width: 46px; height: 46px; }
+.phone .good b { font-size: 16px; }
+.phone .good .price .num { font-size: 19px; }
+
+/* sideways phone */
+.wide .tl { width: 420px; height: 160px; }
+.wide .bl { width: 520px; height: 200px; }
+.wide .br { width: 300px; height: 220px; }
+.wide .tr { width: 360px; height: 140px; }
+.wide .turn { left: 18px; top: 14px; gap: 10px; }
+.wide .turn .stone { width: 42px; height: 42px; font-size: 20px; }
+.wide .turn .where small { font-size: 11px; }
+.wide .turn .where strong { font-size: 19px; }
+.wide .turn em { font-size: 11px; margin-top: 1px; }
+.wide .goal { right: 18px; top: 16px; }
+.wide .goal b { font-size: 14px; }
+.wide .goal span { font-size: 11px; }
+.wide .goal .tools { gap: 16px; margin-top: 8px; }
+.wide .glyph { width: 19px; height: 19px; }
+.wide .unit { left: 18px; bottom: 14px; gap: 12px; }
+.wide .unit .medal { width: 62px; height: 62px; }
+.wide .unit .who strong { font-size: 20px; }
+.wide .unit .hp .num { font-size: 22px; }
+.wide .unit .bar { width: 140px; margin-top: 5px; }
+.wide .unit .acts { gap: 16px; font-size: 13px; margin-top: 8px; }
+.wide .end { right: 18px; bottom: 16px; width: 76px; height: 76px; }
+.wide .end b { font-size: 15px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="g-grid" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 12h16M12 4v16"/></symbol>
+  <symbol id="g-danger" viewBox="0 0 24 24"><path d="M12 3 2.8 20h18.4zM12 10v4.5M12 17.4v.1"/></symbol>
+  <symbol id="g-full" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></symbol>
+  <symbol id="g-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="g-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <!-- the board plan of 青竹渡 as a go board; positions follow today's 軍情 plan, approximately -->
+  <symbol id="plan" viewBox="0 0 440 440">
+    <defs>
+      <radialGradient id="sw" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#f1ede4"/><stop offset=".8" stop-color="#cfc8ba"/><stop offset="1" stop-color="#a39b8c"/></radialGradient>
+      <radialGradient id="sb" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#6c7276"/><stop offset=".4" stop-color="#2c3135"/><stop offset="1" stop-color="#0b0c0d"/></radialGradient>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse" x="20" y="20"><path d="M0 .5H40M.5 0V40" stroke="#3b2a17" stroke-opacity=".55" stroke-width="1"/></pattern>
+    </defs>
+    <g fill="#244a4a" fill-opacity=".42">
+      <rect x="0" y="0" width="100" height="100"/><rect x="180" y="0" width="140" height="60"/><rect x="400" y="0" width="40" height="160"/>
+      <rect x="220" y="100" width="60" height="140"/><rect x="0" y="340" width="60" height="100"/><rect x="140" y="380" width="80" height="60"/>
+      <rect x="300" y="380" width="140" height="60"/><rect x="0" y="140" width="40" height="80"/>
+    </g>
+    <rect x="20" y="20" width="400" height="400" fill="url(#grid)"/>
+    <rect x="20.5" y="20.5" width="400" height="400" fill="none" stroke="#3b2a17" stroke-opacity=".75" stroke-width="1.5"/>
+    <g fill="#3b2a17" fill-opacity=".7"><circle cx="100" cy="100" r="3.5"/><circle cx="340" cy="100" r="3.5"/><circle cx="220" cy="220" r="3.5"/><circle cx="100" cy="340" r="3.5"/><circle cx="340" cy="340" r="3.5"/></g>
+    <g font-family="RiverSerif, RiverSerifX, serif" font-weight="800" font-size="15" text-anchor="middle">
+      <g fill="url(#sw)" stroke="#000" stroke-opacity=".2"><circle cx="140" cy="300" r="16"/><circle cx="100" cy="340" r="16"/><circle cx="220" cy="340" r="16"/><circle cx="180" cy="380" r="16"/><circle cx="60" cy="300" r="16"/></g>
+      <g fill="#1d2022"><text x="140" y="305">一</text><text x="100" y="345">二</text><text x="220" y="345">三</text><text x="180" y="385">四</text><text x="60" y="305">五</text></g>
+      <g fill="url(#sb)"><circle cx="340" cy="60" r="17"/><circle cx="220" cy="180" r="16"/><circle cx="140" cy="100" r="16"/><circle cx="300" cy="260" r="16"/></g>
+      <rect x="352" y="38" width="20" height="20" rx="2" fill="#b5402c"/><text x="362" y="53" font-size="13" fill="#f6e3cf">主</text>
+      <rect x="232" y="158" width="20" height="20" rx="2" fill="#7c4a2b"/><text x="242" y="173" font-size="13" fill="#f6e3cf">副</text>
+      <circle cx="340" cy="340" r="13" fill="none" stroke="#7a3d14" stroke-width="2" stroke-dasharray="3 3"/><text x="340" y="345" font-size="14" fill="#7a3d14">燈</text>
+    </g>
+  </symbol>
+</svg>
+
+<!-- ================= 選境界 ================= -->
+<section>
+  <p class="label">選境界　桌面</p>
+  <div class="board desk page" id="realm-desk">
+    <div class="backdrop" style="background-image:url(plates/plate-title-desk.jpg)"></div><div class="wash"></div>
+    <header class="top"><div class="where"><small>新的一輪</small><strong>選境界</strong></div><div class="right"><span>返回</span></div></header>
+    <p class="lead-line">越往後敵人越強。勝了已開的最高一重，下一重方開；無劍境界十局皆勝，接著打終局。</p>
+    <div class="realms">
+      <div class="realm"><span class="ord">第一重</span><span class="seal">勝</span><div class="vt">利劍境界</div><div class="vs">深谷一枰逢稚子</div><div class="fx">敵方數值不變</div></div>
+      <div class="realm"><span class="ord">第二重</span><span class="seal">勝</span><div class="vt">軟劍境界</div><div class="vs">棄劍容易棄子難</div><div class="fx">敵方氣血 <b class="num">+6%</b><br>攻擊 <b class="num">+3%</b></div></div>
+      <div class="realm"><span class="ord">第三重</span><span class="seal">勝</span><div class="vt">重劍境界</div><div class="vs">始聞盤上不平聲</div><div class="fx">敵方氣血 <b class="num">+12%</b><br>攻擊 <b class="num">+6%</b>　防禦 <b class="num">+1</b></div></div>
+      <div class="realm"><span class="ord">第四重</span><span class="seal">勝</span><div class="vt">木劍境界</div><div class="vs">草木竹石皆可劍</div><div class="fx">敵方氣血 <b class="num">+22%</b><br>攻擊 <b class="num">+11%</b>　防禦 <b class="num">+2</b></div></div>
+      <div class="realm on"><span class="ord">第五重</span><span class="stone"></span><div class="vt">無劍境界</div><div class="vs">無劍猶握一枰棋</div><div class="fx">敵方氣血 <b class="num">+30%</b><br>攻擊 <b class="num">+15%</b>　防禦 <b class="num">+2</b><br>十局之後，入終局</div></div>
+    </div>
+    <div class="stone go" style="right:52px;bottom:40px;width:120px;height:120px"><div><b>入夢</b><small>無劍境界</small></div></div>
+  </div>
+</section>
+
+<!-- ================= 抓子 ================= -->
+<section>
+  <p class="label">抓子（五留三，立領隊）　桌面</p>
+  <div class="board desk page" id="draw-desk">
+    <div class="backdrop" style="background-image:url(../../game/assets/scene-board.webp);filter:blur(3px) saturate(.6) brightness(.34)"></div><div class="wash"></div>
+    <header class="top"><div class="where"><small>利劍境界</small><strong>抓子</strong></div><div class="right"><span>局規</span><span>返回</span></div></header>
+    <p class="lead-line">五位留三，再立一位領隊。領隊倒下，這一輪便結束。</p>
+    <div class="draw">
+      <div class="lot"><div class="scroll" style="background-image:url(../../game/assets/figure-huang.webp)"><span class="stone mark">留</span><span class="seal">領隊</span></div><h3>黃蓉</h3><p>《射鵰英雄傳》《神鵰俠侶》</p><p><b>蘭花拂穴手</b></p><span class="q act">詳情</span></div>
+      <div class="lot"><div class="scroll" style="background-image:url(../../game/assets/figure-diYun.webp)"><span class="stone mark">留</span></div><h3>狄雲</h3><p>《連城訣》</p><p><b>躺屍劍法</b></p><span class="u act">立為領隊</span></div>
+      <div class="lot"><div class="scroll" style="background-image:url(../../game/assets/figure-guo.webp)"><span class="stone mark">留</span></div><h3>郭靖</h3><p>《射鵰英雄傳》《神鵰俠侶》</p><p><b>分筋錯骨手</b></p><span class="u act">立為領隊</span></div>
+      <div class="lot out"><div class="scroll" style="background-image:url(../../game/assets/figure-yaoShi.webp)"></div><h3>黃藥師</h3><p>《射鵰英雄傳》《神鵰俠侶》</p><p><b>落英神劍掌</b></p><span class="q act">放回</span></div>
+      <div class="lot out"><div class="scroll" style="background-image:url(../../game/assets/figure-duan.webp)"></div><h3>段譽</h3><p>《天龍八部》</p><p><b>北冥神功</b></p><span class="q act">放回</span></div>
+    </div>
+    <div class="kept">已留 <span class="num">3</span>／3</div>
+    <div class="stone go" style="right:52px;bottom:40px;width:120px;height:120px"><div><b>落子</b><small>三人入盤</small></div></div>
+  </div>
+</section>
+
+<!-- ================= 軍情 ================= -->
+<section>
+  <p class="label">軍情　桌面</p>
+  <div class="board desk page" id="brief-desk">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-desk.jpg)"></div><div class="wash"></div>
+    <header class="top"><div class="where"><small>第一局</small><strong>青竹渡</strong></div><div class="right"><span>存檔</span><span>主畫面</span></div></header>
+    <div class="plan"><svg viewBox="0 0 440 440"><use href="#plan"/></svg></div>
+    <div class="legend"><span><i class="w"></i>起陣</span><span><i class="b"></i>敵方</span><span><span class="seal s">主</span> 局主</span><span><span class="seal s" style="background:#7c4a2b">副</span> 副手</span><span>燈　支線燈記</span></div>
+    <div class="terms">
+      <div class="term"><b>勝</b><div><h4><span class="medal enemy" style="background-image:url(../../game/assets/captain-0.webp)"></span>斬將　余滄海</h4><p>第 <span class="num">12</span> 回合結束前擊敗他。其餘敵人不必打完。</p></div></div>
+      <div class="term"><b>敗</b><div><h4>領隊令狐冲倒下</h4><p>或第 <span class="num">12</span> 回合結束仍未取勝。</p></div></div>
+      <div class="term"><b>支</b><div><h4>點亮引路燈</h4><p>讓一名俠客在燈記上結束行動，且他生還。勝利時另得賞銀 <span class="num">24</span> 兩。</p></div></div>
+      <div class="term"><b>入</b><div><h4><span class="medal" style="background-image:url(../../game/assets/portraits-duan.webp)"></span>段譽</h4><p>取勝後加入。</p></div></div>
+    </div>
+    <div class="stone go" style="right:52px;bottom:40px;width:120px;height:120px"><div><b>整備</b><small>進入</small></div></div>
+  </div>
+</section>
+
+<!-- ================= 武學 ================= -->
+<section>
+  <p class="label">戰前整備・武學　桌面</p>
+  <div class="board desk prep" id="arts-desk">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-desk.jpg)"></div><div class="wash"></div>
+    <header class="top"><div class="where"><small>第一局</small><strong>青竹渡</strong></div><div class="right"><span>軍情</span><span>存檔</span><svg class="glyph"><use href="#g-x"/></svg></div></header>
+    <nav class="rail"><span>陣容</span><span class="on">武學</span><span>裝備</span></nav>
+    <div class="heroes" style="top:118px;left:420px">
+      <span class="on"><div class="medal" style="background-image:url(../../game/assets/portraits-shen.webp)"></div><em>20</em></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-lu.webp)"></div><em>20</em></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-pei.webp)"></div><em>20</em></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-guo.webp)"></div><em>20</em></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-xiao.webp)"></div><em>20</em></span>
+    </div>
+    <div class="points"><span class="num">20</span>武學點</div>
+    <div class="subtabs"><span class="u">門派武學</span><span class="q">授業武譜</span><span class="q">招式配置</span></div>
+    <div class="treehead"><small>令狐冲　《笑傲江湖》</small><strong>思過崖劍訣</strong></div>
+    <div class="tree">
+      <svg viewBox="0 0 720 520" preserveAspectRatio="none">
+        <g stroke="#c9a462" stroke-width="1.5" fill="none">
+          <path d="M630 16 L330 120" />
+        </g>
+        <g stroke="rgba(242,238,230,.22)" stroke-width="1.2" stroke-dasharray="4 5" fill="none">
+          <path d="M150 120 L150 224"/><path d="M330 120 L150 224"/><path d="M330 120 L330 224"/><path d="M330 120 L510 224"/>
+          <path d="M510 224 L510 328"/><path d="M150 224 L330 432"/><path d="M510 328 L330 432"/>
+        </g>
+      </svg>
+      <span class="tier" style="top:8px">根基</span><span class="tier" style="top:112px">一階</span><span class="tier" style="top:216px">二階</span><span class="tier" style="top:320px">三階</span><span class="tier" style="top:424px">四階</span>
+      <div class="node can sel" style="left:150px;top:16px"><i></i><b>淬鋒</b><small>可修習</small></div>
+      <div class="node can" style="left:330px;top:16px"><i></i><b>固本</b><small>可修習</small></div>
+      <div class="node can" style="left:510px;top:16px"><i></i><b>凝氣</b><small>可修習</small></div>
+      <div class="node has" style="left:630px;top:16px"><i></i><b>石壁劍招</b><small>已習</small></div>
+      <div class="node can" style="left:150px;top:120px"><i></i><b>白虹貫日</b><small>普攻精進　華山劍法</small></div>
+      <div class="node can" style="left:330px;top:120px"><i></i><b>總訣式</b><small>獨孤九劍</small></div>
+      <div class="node no" style="left:150px;top:224px"><i></i><b>破箭式</b><small>獨孤九劍</small></div>
+      <div class="node no" style="left:330px;top:224px"><i></i><b>破劍式</b><small>獨孤九劍</small></div>
+      <div class="node no" style="left:510px;top:224px"><i></i><b>吸星大法</b></div>
+      <div class="node no" style="left:510px;top:328px"><i></i><b>破氣式</b><small>獨孤九劍</small></div>
+      <div class="node no peak" style="left:330px;top:432px"><i></i><b>獨孤九劍</b><small>絕學，有代價</small></div>
+    </div>
+    <div class="detail">
+      <small>根基　第 0／3 重</small>
+      <h3>淬鋒</h3>
+      <div class="gain">每重　攻擊 <span class="num">+3</span></div>
+      <p>習得後一直生效。</p>
+      <div class="rows"><div>修習所需<b>1 武學點</b></div><div>修了三重之後<b>攻擊 +9</b></div></div>
+      <div class="acts"><span class="u">修習</span><span class="q">招式解說</span></div>
+    </div>
+    <div class="stone go sortie" style="right:52px;bottom:48px;width:112px;height:112px"><div><b>出陣</b><small>五人</small></div></div>
+  </div>
+</section>
+
+<!-- ================= 裝備 ================= -->
+<section>
+  <p class="label">戰前整備・裝備　桌面</p>
+  <div class="board desk prep" id="gear-desk">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-desk.jpg)"></div><div class="wash"></div>
+    <header class="top"><div class="where"><small>第一局</small><strong>青竹渡</strong></div><div class="right"><span>軍情</span><span>存檔</span><svg class="glyph"><use href="#g-x"/></svg></div></header>
+    <nav class="rail"><span>陣容</span><span>武學</span><span class="on">裝備</span></nav>
+    <div class="heroes" style="top:118px;left:420px">
+      <span class="on"><div class="medal" style="background-image:url(../../game/assets/portraits-shen.webp)"></div></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-lu.webp)"></div></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-pei.webp)"></div></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-guo.webp)"></div></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-xiao.webp)"></div></span>
+    </div>
+    <div class="gear-hero"><div class="scroll" style="background-image:url(../../game/assets/figure-hero.webp)"></div></div>
+    <div class="slots">
+      <div class="where"><small>令狐冲</small><strong style="font-size:26px">隨身</strong></div>
+      <div class="slot"><div class="art" style="background-image:url(../../game/assets/item-pine.webp)"></div><div><small>兵器</small><b>華山長劍</b><span>攻擊 +4</span></div></div>
+      <div class="slot empty"><div class="art">＋</div><div><small>護具</small><b>空</b></div></div>
+      <div class="compare">換上雁翎刀　攻擊 <span class="num">29</span> <span class="dim">→</span> <span class="num up">33</span></div>
+    </div>
+    <div class="stock">
+      <div class="filters"><span class="u">全部</span><span class="q">兵器</span><span class="q">護具</span><span class="q">丹藥</span></div>
+      <div class="items">
+        <div class="item sel"><div class="art" style="background-image:url(../../game/assets/item-travelBlade.webp)"></div><b>雁翎刀</b><small>攻擊 +8　×1</small></div>
+        <div class="item worn"><div class="art" style="background-image:url(../../game/assets/item-pine.webp)"></div><b>華山長劍</b><small>令狐冲帶著</small></div>
+        <div class="item"><div class="art" style="background-image:url(../../game/assets/item-bracer.webp)"></div><b>玄鐵護腕</b><small>防禦 +3　×1</small></div>
+        <div class="item"><div class="art" style="background-image:url(../../game/assets/item-remedy.webp)"></div><b>金創藥</b><small>氣血 +48　×2</small></div>
+        <div class="item"><div class="art" style="background-image:url(../../game/assets/item-elixir.webp)"></div><b>回氣丹</b><small>內力 +30　×2</small></div>
+      </div>
+      <p class="q" style="margin-top:26px;letter-spacing:.06em;font:400 13px var(--sans)">拖到左邊的格位，或點一下再點格位。</p>
+    </div>
+    <div class="stone go sortie" style="right:52px;bottom:48px;width:112px;height:112px"><div><b>出陣</b><small>五人</small></div></div>
+  </div>
+</section>
+
+<!-- ================= 出招與交鋒預覽 ================= -->
+<section>
+  <p class="label">戰場：走位後出招，瞄準時的交鋒預覽　桌面</p>
+  <div class="board desk hud" id="aim-desk" style="background-image:url(plates/plate-aim-desk.jpg)">
+    <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl" style="width:1100px;height:330px"></div><div class="corner br"></div>
+    <div class="turn"><div class="stone num">1</div><div class="where"><small>第一局　第 1 回合</small><strong>青竹渡</strong><em>我方落子</em></div></div>
+    <div class="goal"><b>斬將　余滄海</b><span>尚餘十一回合</span><div class="tools"><svg class="glyph"><use href="#g-grid"/></svg><svg class="glyph"><use href="#g-danger"/></svg><svg class="glyph"><use href="#g-full"/></svg><svg class="glyph"><use href="#g-menu"/></svg></div></div>
+
+    <div class="arts-pop">
+      <div class="art-row on"><span class="stone num">1</span><div><b>鐵鞭橫江</b><p>普攻　1 格　威力 <span class="num">23</span><br>對方可還擊　絆足</p></div><span class="cost">免內力</span></div>
+      <div class="art-row"><span class="ring">2</span><div><b>吸功入地小法</b><p>1 格　威力 <span class="num">30</span>　免受還擊<br>固守：至下回合防禦 +10</p></div><span class="cost"><span class="num">9</span> 內力</span></div>
+      <span class="back">撤步<kbd>Backspace</kbd></span>
+    </div>
+
+    <div class="fc">
+      <div class="side"><div class="medal" style="background-image:url(../../game/assets/portraits-pei.webp)"></div><div><small>日月神教</small><strong>向問天</strong><div class="hpx"><span>166</span><i>→</i><span>157</span><em>／166</em></div><div class="bar"><i style="width:94.6%"></i><span class="loss" style="left:94.6%;width:5.4%"></span></div></div></div>
+      <div class="mid"><b>鐵鞭橫江</b><span class="num">−19</span><p>敵方還擊 <span class="num">−9</span>　絆足一回合</p></div>
+      <div class="side foe"><div class="medal enemy" style="background-image:url(../../game/assets/npc-blade.webp)"></div><div><small>青城派</small><strong>青城劍徒</strong><div class="hpx"><span>96</span><i>→</i><span class="after">77</span><em>／96</em></div><div class="bar foe"><i style="width:80.2%"></i><span class="loss" style="left:80.2%;width:19.8%"></span></div></div></div>
+    </div>
+    <p class="confirm">再點一次出招</p>
+    <div class="arts-line"></div>
+    <div class="stone go end"><div><b>出招</b><small>Enter</small></div></div>
+  </div>
+</section>
+
+<!-- ================= 敵方回合 ================= -->
+<section>
+  <p class="label">戰場：輪到敵方　桌面</p>
+  <div class="board desk hud" id="enemy-desk" style="background-image:url(plates/plate-battle-desk.jpg)">
+    <div class="enemy-wash"></div>
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="turn"><div class="stone black num">1</div><div class="where"><small>第一局　第 1 回合</small><strong>青竹渡</strong><em style="color:var(--white-dim)">敵方落子</em></div></div>
+    <div class="goal"><b>斬將　余滄海</b><span>尚餘十一回合</span></div>
+    <div class="band"><div class="stone black"></div><div><small>第 1 回合</small><strong>敵方落子</strong></div></div>
+    <div class="stone go end off"><div><b>結束<br>回合</b></div></div>
+  </div>
+</section>
+
+<!-- ================= 劇情 ================= -->
+<section>
+  <p class="label">劇情（戰後對話）　桌面</p>
+  <div class="board desk page story" id="story-desk">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-desk.jpg)"></div>
+    <div class="speaker" style="background-image:url(../../game/assets/npc-youth.webp)"></div>
+    <div class="low"></div>
+    <div class="where"><small>第一局　戰後</small><strong style="font-size:24px">青竹渡</strong></div>
+    <span class="q skip">略過</span>
+    <div class="line"><h3>無名<small>執子之人</small></h3><p>問他也沒用，他也不知道為甚麼守橋。兩個人都醒了。<br>橋已讓開，走罷。</p></div>
+    <div class="dots"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><span class="q" style="margin-left:18px;font-size:13px">上一句</span></div>
+    <div class="stone go next"><div><b style="font-size:15px">續</b></div></div>
+  </div>
+</section>
+
+<!-- ================= 通吃坊 ================= -->
+<section>
+  <p class="label">通吃坊（韋小寶的店）　桌面</p>
+  <div class="board desk page" id="shop-desk">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-desk.jpg)"></div><div class="wash"></div>
+    <div class="wei" style="background-image:url(../../game/assets/npc-wei.webp)"></div>
+    <div class="wei-name">通吃坊</div>
+    <div class="result"><small>青竹渡　勝</small><strong>賞銀 +36 兩</strong><span><b>段譽</b>入隊</span></div>
+    <div class="purse"><span class="num">1036</span>兩</div>
+    <div class="goods">
+      <div>
+        <h4>兵器</h4>
+        <div class="good sel"><div class="art" style="background-image:url(../../game/assets/item-ironFan.webp)"></div><div><b>鐵骨折扇</b><small>攻擊 <em>+4</em>　絕技威力 <em>+7</em></small></div><div class="price"><span class="num">32</span>兩</div></div>
+        <div class="good"><div class="art" style="background-image:url(../../game/assets/item-frost.webp)"></div><div><b>寒潭短劍</b><small>攻擊 <em>+7</em></small></div><div class="price"><span class="num">26</span>兩</div></div>
+        <h4>丹藥</h4>
+        <div class="good"><div class="art" style="background-image:url(../../game/assets/item-greatPill.webp)"></div><div><b>大還丹</b><small>氣血 <em>+92</em>　尚有三顆</small></div><div class="price"><span class="num">21</span>兩</div></div>
+        <div class="good"><div class="art" style="background-image:url(../../game/assets/item-elixir.webp)"></div><div><b>回氣丹</b><small>內力 <em>+30</em>　已有兩顆</small></div><div class="price"><span class="num">11</span>兩</div></div>
+      </div>
+      <div>
+        <h4>護具與佩飾</h4>
+        <div class="good"><div class="art" style="background-image:url(../../game/assets/item-bracer.webp)"></div><div><b>玄鐵護腕</b><small>防禦 <em>+3</em>　已有一副</small></div><div class="price"><span class="num">21</span>兩</div></div>
+        <div class="good"><div class="art" style="background-image:url(../../game/assets/item-trailBoots.webp)"></div><div><b>踏雲靴</b><small>移動 <em>+1</em></small></div><div class="price"><span class="num">34</span>兩</div></div>
+        <h4>武譜抄本</h4>
+        <div class="good"><div class="art book"><span class="seal" style="width:44px;height:52px;font-size:18px;background:#3c4a44">譜</span></div><div><b>《冰魄銀針》</b><small>授業武譜</small></div><div class="price"><span class="num">40</span>兩</div></div>
+        <div class="good"><div class="art book"><span class="seal" style="width:44px;height:52px;font-size:18px;background:#3c4a44">譜</span></div><div><b>《彈指神通》</b><small>授業武譜</small></div><div class="price"><span class="num">36</span>兩</div></div>
+      </div>
+    </div>
+    <div class="cup"><img src="../../game/assets/bowl-cover.webp" alt=""><div><b>三盅通吃</b><small>免費揭一盅</small></div></div>
+    <div class="foot" style="left:480px"><span class="q">整理隊伍</span><span class="q">重讀戰後對話</span></div>
+    <div class="stone go" style="right:52px;bottom:40px;width:120px;height:120px"><div><b>啟程</b><small>神龍竹堂</small></div></div>
+  </div>
+</section>
+
+<!-- ================= phone: 軍情 ================= -->
+<section>
+  <p class="label">軍情　手機直向</p>
+  <div class="board phone page" id="brief-phone">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-phone.jpg)"></div><div class="wash"></div>
+    <header class="top"><div class="where"><small>第一局</small><strong>青竹渡</strong></div><div class="right" style="gap:18px;font-size:14px"><span>存檔</span><span>主畫面</span></div></header>
+    <div class="plan"><svg viewBox="0 0 440 440"><use href="#plan"/></svg></div>
+    <div class="legend"><span><i class="w"></i>起陣</span><span><i class="b"></i>敵方</span><span><span class="seal s" style="width:20px;height:20px;font-size:11px">主</span> 局主</span><span>燈 支線</span></div>
+    <div class="terms">
+      <div class="term"><b>勝</b><div><h4>斬將　余滄海</h4><p>第 12 回合結束前擊敗他。</p></div></div>
+      <div class="term"><b>敗</b><div><h4>令狐冲倒下，或逾 12 回合</h4></div></div>
+      <div class="term"><b>支</b><div><h4>點亮引路燈</h4><p>俠客在燈記上結束行動且生還，賞銀 24 兩。</p></div></div>
+      <div class="term" style="border:0"><b>入</b><div><h4>勝後段譽加入</h4></div></div>
+    </div>
+    <div class="stone go p"><div><b>整備</b></div></div>
+  </div>
+</section>
+
+<!-- ================= phone: 抓子 ================= -->
+<section>
+  <p class="label">抓子　手機直向（橫向滑動）</p>
+  <div class="board phone page" id="draw-phone">
+    <div class="backdrop" style="background-image:url(../../game/assets/scene-board.webp);filter:blur(3px) saturate(.6) brightness(.34)"></div><div class="wash"></div>
+    <header class="top"><div class="where"><small>利劍境界</small><strong>抓子</strong></div><div class="right" style="font-size:14px"><span>局規</span></div></header>
+    <p class="lead-line">五位留三，再立一位領隊。</p>
+    <div class="draw">
+      <div class="lot"><div class="scroll" style="background-image:url(../../game/assets/figure-huang.webp)"><span class="stone mark">留</span><span class="seal">領隊</span></div><h3>黃蓉</h3><p><b>蘭花拂穴手</b></p><span class="q act">詳情</span></div>
+      <div class="lot"><div class="scroll" style="background-image:url(../../game/assets/figure-diYun.webp)"><span class="stone mark">留</span></div><h3>狄雲</h3><p><b>躺屍劍法</b></p><span class="u act">立為領隊</span></div>
+      <div class="lot"><div class="scroll" style="background-image:url(../../game/assets/figure-guo.webp)"><span class="stone mark">留</span></div><h3>郭靖</h3><p><b>分筋錯骨手</b></p><span class="u act">立為領隊</span></div>
+    </div>
+    <div class="kept">已留 <span class="num">3</span>／3　<span class="dim" style="font-size:12px">往左滑看另外兩位</span></div>
+    <span class="home" style="bottom:46px">返回</span>
+    <div class="stone go p"><div><b>落子</b></div></div>
+  </div>
+</section>
+
+<!-- ================= phone: 武學 ================= -->
+<section>
+  <p class="label">戰前整備・武學　手機直向</p>
+  <div class="board phone prep" id="arts-phone">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-phone.jpg)"></div><div class="wash"></div>
+    <header class="top"><div class="where"><small>第一局　武學</small><strong>青竹渡</strong></div><div class="right" style="gap:18px;font-size:14px"><span>軍情</span><svg class="glyph"><use href="#g-x"/></svg></div></header>
+    <div class="heroes">
+      <span class="on"><div class="medal" style="background-image:url(../../game/assets/portraits-shen.webp)"></div></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-lu.webp)"></div></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-pei.webp)"></div></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-guo.webp)"></div></span>
+      <span><div class="medal" style="background-image:url(../../game/assets/portraits-xiao.webp)"></div></span>
+    </div>
+    <div class="points"><span class="num">20</span>點</div>
+    <div class="treehead"><small>門派武學　授業武譜　招式配置</small><strong>思過崖劍訣</strong></div>
+    <div class="tree">
+      <svg viewBox="0 0 390 400">
+        <path d="M340 14 L175 94" stroke="#c9a462" stroke-width="1.5" fill="none"/>
+        <g stroke="rgba(242,238,230,.22)" stroke-width="1.2" stroke-dasharray="4 5" fill="none"><path d="M75 94 L75 174"/><path d="M175 94 L75 174"/><path d="M175 94 L175 174"/><path d="M175 94 L275 174"/><path d="M275 174 L275 254"/><path d="M75 174 L175 334"/><path d="M275 254 L175 334"/></g>
+      </svg>
+      <div class="node can sel" style="left:50px;top:14px"><i></i><b>淬鋒</b></div>
+      <div class="node can" style="left:130px;top:14px"><i></i><b>固本</b></div>
+      <div class="node can" style="left:210px;top:14px"><i></i><b>凝氣</b></div>
+      <div class="node has" style="left:340px;top:14px"><i></i><b>石壁劍招</b></div>
+      <div class="node can" style="left:75px;top:94px"><i></i><b>白虹貫日</b></div>
+      <div class="node can" style="left:175px;top:94px"><i></i><b>總訣式</b></div>
+      <div class="node no" style="left:75px;top:174px"><i></i><b>破箭式</b></div>
+      <div class="node no" style="left:175px;top:174px"><i></i><b>破劍式</b></div>
+      <div class="node no" style="left:275px;top:174px"><i></i><b>吸星大法</b></div>
+      <div class="node no" style="left:275px;top:254px"><i></i><b>破氣式</b></div>
+      <div class="node no peak" style="left:175px;top:334px"><i></i><b>獨孤九劍</b></div>
+    </div>
+    <div class="sheet-low">
+      <h3>淬鋒<small>根基　第 0／3 重</small></h3>
+      <div class="gain">每重　攻擊 <span class="num">+3</span>　　1 武學點</div>
+      <div style="display:flex;gap:26px;margin-top:22px;align-items:baseline"><span class="u">修習</span><span class="q">招式解說</span></div>
+    </div>
+    <div class="stone go p" style="bottom:26px"><div><b>出陣</b></div></div>
+  </div>
+</section>
+
+<!-- ================= phone: 出招與預覽 ================= -->
+<section>
+  <p class="label">戰場：出招與交鋒預覽　手機直向</p>
+  <div class="board phone hud" id="aim-phone" style="background-image:url(plates/plate-battle-phone.jpg)">
+    <div class="corner tl"></div>
+    <div class="turn"><div class="stone num">1</div><div class="where"><small>第一局　第 1 回合</small><strong>青竹渡</strong></div></div>
+    <div class="goal"><b>斬將　余滄海</b><span>尚餘十一回合</span></div>
+    <div class="fcp">
+      <div class="s"><div class="medal" style="background-image:url(../../game/assets/portraits-pei.webp)"></div><div><strong>向問天</strong><div class="hpx">166<i>→</i>157</div></div></div>
+      <div class="mid"><span class="num">−19</span><small>還擊 −9</small></div>
+      <div class="s foe"><div class="medal enemy" style="background-image:url(../../game/assets/npc-blade.webp)"></div><div><strong>青城劍徒</strong><div class="hpx">96<i>→</i><span class="after">77</span></div></div></div>
+    </div>
+    <div class="arts-low">
+      <div class="art-row on"><span class="stone num">1</span><div><b>鐵鞭橫江</b><p>普攻　1 格　威力 23　對方可還擊　絆足</p></div><span class="cost">免內力</span></div>
+      <div class="art-row"><span class="ring">2</span><div><b>吸功入地小法</b><p>威力 30　免受還擊　防禦 +10 至下回合</p></div><span class="cost"><span class="num">9</span> 內力</span></div>
+      <div class="foot2"><span class="q">撤步</span><span class="q" style="font-size:13px;letter-spacing:.06em">再點敵人一次出招</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= phone: 劇情 ================= -->
+<section>
+  <p class="label">劇情　手機直向</p>
+  <div class="board phone page story" id="story-phone">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-phone.jpg)"></div>
+    <div class="speaker" style="background-image:url(../../game/assets/npc-youth.webp)"></div>
+    <div class="low"></div>
+    <div class="where"><small>第一局　戰後</small><strong style="font-size:20px">青竹渡</strong></div>
+    <span class="q skip">略過</span>
+    <div class="line"><h3>無名<small>執子之人</small></h3><p>問他也沒用，他也不知道為甚麼守橋。兩個人都醒了。橋已讓開，走罷。</p></div>
+    <div class="dots"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="stone go next"><div><b style="font-size:14px">續</b></div></div>
+  </div>
+</section>
+
+<!-- ================= phone: 通吃坊 ================= -->
+<section>
+  <p class="label">通吃坊　手機直向</p>
+  <div class="board phone page" id="shop-phone">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-phone.jpg)"></div><div class="wash"></div>
+    <div class="wei" style="background-image:url(../../game/assets/npc-wei.webp)"></div>
+    <div class="result"><small>青竹渡　勝　段譽入隊</small><strong>通吃坊</strong></div>
+    <div class="purse"><span class="num">1036</span>兩</div>
+    <div class="cup"><img src="../../game/assets/bowl-cover.webp" alt=""><div><b>三盅通吃</b><small>免費揭一盅</small></div></div>
+    <div class="goods">
+      <div>
+        <h4>兵器</h4>
+        <div class="good sel"><div class="art" style="background-image:url(../../game/assets/item-ironFan.webp)"></div><div><b>鐵骨折扇</b><small>攻擊 <em>+4</em>　絕技威力 <em>+7</em></small></div><div class="price"><span class="num">32</span>兩</div></div>
+        <div class="good"><div class="art" style="background-image:url(../../game/assets/item-frost.webp)"></div><div><b>寒潭短劍</b><small>攻擊 <em>+7</em></small></div><div class="price"><span class="num">26</span>兩</div></div>
+        <h4>護具與佩飾</h4>
+        <div class="good"><div class="art" style="background-image:url(../../game/assets/item-bracer.webp)"></div><div><b>玄鐵護腕</b><small>防禦 <em>+3</em></small></div><div class="price"><span class="num">21</span>兩</div></div>
+        <div class="good"><div class="art" style="background-image:url(../../game/assets/item-trailBoots.webp)"></div><div><b>踏雲靴</b><small>移動 <em>+1</em></small></div><div class="price"><span class="num">34</span>兩</div></div>
+      </div>
+    </div>
+    <span class="home" style="bottom:46px">整理隊伍</span>
+    <div class="stone go p"><div><b>啟程</b><small>神龍竹堂</small></div></div>
+  </div>
+</section>
+
+<!-- ================= sideways phone: battle ================= -->
+<section>
+  <p class="label">戰場　手機橫向 844 × 390</p>
+  <div class="board wide hud" id="battle-wide" style="background-image:url(plates/plate-battle-wide.jpg)">
+    <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+    <div class="turn"><div class="stone num">1</div><div class="where"><small>第一局　第 1 回合</small><strong>青竹渡</strong><em>我方落子</em></div></div>
+    <div class="goal"><b>斬將　余滄海</b><span>尚餘十一回合</span><div class="tools"><svg class="glyph"><use href="#g-grid"/></svg><svg class="glyph"><use href="#g-danger"/></svg><svg class="glyph"><use href="#g-menu"/></svg></div></div>
+    <div class="unit"><div class="medal" style="background-image:url(../../game/assets/portraits-lu.webp)"></div><div class="who"><strong>任盈盈</strong><small>等級 1</small><div class="hp"><span class="num">64<em>／64</em></span></div><div class="bar"><i style="width:100%"></i></div><div class="bar qi"><i style="width:100%"></i></div><div class="acts"><span>隊伍</span><span>藥囊</span><span>視角</span></div></div></div>
+    <div class="stone go end"><div><b>結束<br>回合</b></div></div>
+  </div>
+</section>
+
+</body>
+</html>
