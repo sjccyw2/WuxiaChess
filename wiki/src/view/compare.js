@@ -113,9 +113,11 @@ export const key = (slot) =>
   '/>' +
   marker(slot, 15, 7, 4) +
   '</svg>';
+// A series may carry `sub`, a word that tells apart two of the same name (黑子對照: the board).
+const subOf = (hero) => (hero.sub ? '<small>' + esc(hero.sub) + '</small>' : '');
 export const legend = (list) =>
   '<ul class="cmp-legend">' +
-  list.map(({ hero, slot }) => '<li>' + key(slot) + esc(hero.name) + '</li>').join('') +
+  list.map(({ hero, slot }) => '<li>' + key(slot) + esc(hero.name) + subOf(hero) + '</li>').join('') +
   '</ul>';
 
 // ── radar ───────────────────────────────────────────────────────────────────
@@ -380,16 +382,21 @@ function growthSvg(list, data, measure, width = 640) {
 }
 
 // ── table, readouts, arts ───────────────────────────────────────────────────
-function scoreTable(list, axes) {
-  const rows = [...axes.map((a) => [a.name, (h) => h.scores[a.key]]), ['綜合', (h) => h.composite]];
+// One column per series, a row per measure and 綜合, the best of each row marked. `cell(hero, key)`
+// may add attributes to a cell (黑子對照: its reason, and what a tap on it shows).
+export function scoreTable(list, axes, { caption = '各俠客六項評分與綜合分數（0 至 100）', cell = () => '' } = {}) {
+  const rows = [...axes.map((a) => [a.name, (h) => h.scores[a.key], a.key]), ['綜合', (h) => h.composite, 'composite']];
   return (
-    '<div class="cmp-table-wrap"><table class="cmp-table"><caption class="sr">各俠客六項評分與綜合分數（0 至 100）</caption><thead><tr><th scope="col">項目</th>' +
-    list.map(({ hero, slot }) => '<th scope="col">' + key(slot) + '<span>' + esc(hero.name) + '</span></th>').join('') +
+    '<div class="cmp-table-wrap"><table class="cmp-table"><caption class="sr">' +
+    esc(caption) +
+    '</caption><thead><tr><th scope="col">項目</th>' +
+    list.map(({ hero, slot }) => '<th scope="col">' + key(slot) + '<span>' + esc(hero.name) + '</span>' + subOf(hero) + '</th>').join('') +
     '</tr></thead><tbody>' +
     rows
-      .map(([name, get], i) => {
+      .map(([name, get, k], i) => {
         const values = list.map(({ hero }) => get(hero)),
-          best = Math.max(...values);
+          best = Math.max(...values),
+          extra = list.map(({ hero }) => cell(hero, k));
         return (
           '<tr' +
           (i === rows.length - 1 ? ' class="cmp-total"' : '') +
@@ -397,10 +404,10 @@ function scoreTable(list, axes) {
           esc(name) +
           '</th>' +
           values
-            .map((v) =>
+            .map((v, c) =>
               list.length > 1 && v === best
-                ? '<td class="is-best">' + esc(v) + '<span class="sr">（最高）</span></td>'
-                : '<td>' + esc(v) + '</td>'
+                ? '<td class="is-best"' + extra[c] + '>' + esc(v) + '<span class="sr">（最高）</span></td>'
+                : '<td' + extra[c] + '>' + esc(v) + '</td>'
             )
             .join('') +
           '</tr>'
@@ -412,7 +419,7 @@ function scoreTable(list, axes) {
 }
 const why = (r) =>
   r?.why?.length ? '<span class="cmp-why">' + r.why.map(esc).join('；') + '</span>' : '';
-function axisReadout(axis, list) {
+export function axisReadout(axis, list) {
   return (
     '<h3>' +
     esc(axis.name) +
@@ -429,6 +436,7 @@ function axisReadout(axis, list) {
           esc(hero.scores[axis.key]) +
           '</b><span class="cmp-who">' +
           esc(hero.name) +
+          subOf(hero) +
           '</span>' +
           why(hero.raw?.[axis.key]) +
           '</li>'
