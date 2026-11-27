@@ -169,9 +169,14 @@ function grantLot(s, id) {
 function visiting(s) {
   return s.run?.status === 'camp' && s.run.scene === 'shop' ? s.run.last?.visit : null;
 }
+// 扣盅換位: which cup holds which thing is drawn only now, as the cups are covered, and nothing
+// on screen follows it (the cups gather, swirl and spread as one; bowl-views.js), so watching the
+// shuffle tells the player nothing (the producer, 2026-11-27). The draw comes from the run's own
+// random source, so a run started from a fixed seed still plays the same every time (Q-N168).
 function coverBowls(s) {
   const v = visiting(s);
   if (v?.phase !== 'show') return false;
+  v.order = shuffled([0, 1, 2], ferryRandom(s.run, 0x1b873593));
   v.phase = 'hidden';
   return true;
 }

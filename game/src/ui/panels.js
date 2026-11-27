@@ -119,6 +119,10 @@ function bookCitation(titles) {
     .map((title) => '《' + esc(title) + '》')
     .join('、');
 }
+// Polish (inkLook): a page's step forward is a round stone, with room for a word and a small line
+// under it (出陣 / 5 人); without the look the button keeps its old one-line label.
+const stoneLabel = (main, sub, classic) =>
+  POLISH.inkLook ? main + '<small class="ink-sub">' + sub + '</small>' : classic;
 const btn = (action, label, cls = 'outline-btn', attrs = '') =>
   '<button class="' + cls + '" data-do="' + action + '" ' + attrs + '>' + label + '</button>';
 const arrow = icon('chevron', 13);
@@ -204,7 +208,9 @@ function activeHero(s) {
   const flag =
     u.id === leader(s) ? `<i class="unit-flag" title="領隊">${icon('flag', 12)}</i>` : '';
   const vitality = (ic, key, v, max) =>
-    `<span class="unit-vital ${key}">${icon(ic, 12)}${meter(v, max, key)}<b>${v}</b></span>`;
+    `<span class="unit-vital ${key}">${icon(ic, 12)}${meter(v, max, key)}<b>${v}</b>${
+      POLISH.inkLook ? `<small class="ink-max">／${max}</small>` : ''
+    }</span>`;
   return `<span class="unit-face"><img src="${face(u.id)}" alt="">${flag}</span><span class="unit-summary">
     <span class="unit-name"><strong>${DETAILS[u.id].name}</strong><small>Lv.${u.level}</small>${stateMark}${turnPips(s, u)}</span>
     ${vitality('heart', 'hp', u.hp, u.maxHp)}${vitality('drop', 'mp', u.mp, u.maxMp)}</span>`;
@@ -1459,4 +1465,4 @@ function resultPage(s) {
   );
 }
 
-export { pageHotkeys, itemBonus, medicineIdle, portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, briefPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage };
+export { pageHotkeys, itemBonus, medicineIdle, portraits, face, unitFace, esc, factBadge, bookCitation, btn, arrow, titleHead, renderParty, activeHero, commander, goalRows, logRow, sheetPage, profileContents, inventoryPage, skillPage, storyPage, logPage, briefPage, goalsPage, terrainPage, helpPage, settingsPage, endPage, enemyPage, attackPage, resultPage, stoneLabel };

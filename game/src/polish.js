@@ -45,7 +45,10 @@ const SWITCHES = {
   forecastTrim: true, // drop the forecast's target-health row, which the health bar now shows
   tipClear: true, // phone held sideways: the tip line sits in the top row, clear of the buttons
   keyHints: true, // with a mouse at hand: the key beside 結束回合, the arts list's rows, 撤步 and the menu
-  actionFlow: true // no command bar: arts open beside the hero after a move, undo sits there, End turn stands alone
+  actionFlow: true, // no command bar: arts open beside the hero after a move, undo sits there, End turn stands alone
+
+  // The look (approved by the owner on 2026-11-27, Q-N169; proposals/ui-direction-2026-11-27/)
+  inkLook: true // full-screen pages, the white stone as the step forward, ink-wash shading for boxes, large numbers
 };
 
 const query = new URLSearchParams(globalThis.location?.search || '');

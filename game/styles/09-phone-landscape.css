@@ -1631,18 +1631,24 @@
   opacity: 1;
   cursor: wait;
 }
+/* All three cups take the same path: into the middle, a swirl there as one, back to their places. */
 @keyframes lk-shuffle {
-  0% {
-    transform: translateX(var(--from));
-  }
-  33% {
-    transform: translate(var(--mid), -6px);
-  }
-  66% {
-    transform: translate(var(--cross), 4px);
-  }
+  0%,
   100% {
     transform: translateX(0);
+  }
+  18%,
+  82% {
+    transform: translateX(var(--home));
+  }
+  34% {
+    transform: translate(calc(var(--home) - 28%), -8px);
+  }
+  50% {
+    transform: translate(calc(var(--home) + 28%), 6px);
+  }
+  66% {
+    transform: translate(calc(var(--home) - 16%), -4px);
   }
 }
 .lk-status {

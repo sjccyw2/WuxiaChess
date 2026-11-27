@@ -54,18 +54,11 @@ function bowlsPage(s, mixing) {
           : '');
       if (shown || done)
         return '<div class="lk-lot ' + (done && face ? 'won' : '') + '">' + content + '</div>';
-      const from = v.order[i] - i,
-        mid = ((v.order[i] + 1) % 3) - i,
-        cross = ((v.order[i] + 2) % 3) - i;
-      const offset = (d) => 'calc(' + d + ' * (100% + var(--lot-gap)))';
+      // While the cups are shuffled each one goes to the middle, swirls there with the others and
+      // comes back to its own place: the same path for all three, so none can be followed, and
+      // nothing of which cup holds what (v.order) reaches the screen.
       const style = mixing
-        ? 'style="--from:' +
-          offset(from) +
-          ';--mid:' +
-          offset(mid) +
-          ';--cross:' +
-          offset(cross) +
-          '"'
+        ? 'style="--home:calc(' + (1 - i) + ' * (100% + var(--lot-gap)))"'
         : '';
       return btn(
         'bowl-pick',

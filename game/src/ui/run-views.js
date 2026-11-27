@@ -1,3 +1,4 @@
+import { POLISH } from '../polish.js';
 import { wakeJournal } from './wake-views.js';
 import { COMMANDS, commandDescription } from '../rules/battle-mastery.js';
 import { rollLeaderInfo, personalTraining } from './mastery-views.js';
@@ -15,7 +16,11 @@ const amount = (value) => Math.max(0, Math.trunc(Number(value) || 0));
 const idAttr = (id) => `data-id="${esc(id)}"`;
 const text = (value) => esc(value ?? '');
 const coin = '<i class="run-coin" aria-hidden="true"></i>';
-const playerImage = (id) => `<img src="${esc(face(id))}" alt="" decoding="async">`;
+// Polish (inkLook): on 抓子 the drawn heroes hang as scrolls of their full-length figures.
+const playerImage = (id) =>
+  POLISH.inkLook && DETAILS[id]?.kind !== 'enemy'
+    ? `<img class="ink-lot-figure" src="${esc(art('figure-' + id + '.webp'))}" alt="" decoding="async">`
+    : `<img src="${esc(face(id))}" alt="" decoding="async">`;
 const scene = (file, cls) => `<img class="tale-scene ${cls}" src="${text(art(file))}" alt="" decoding="async">`;
 
 // One of the five drawn. The card itself keeps the stone or puts it back (three are kept). Above
@@ -98,7 +103,7 @@ function lotDetail(s, ids, kept, captain, ui) {
     .map((k) =>
       btn(
         'lot-view',
-        playerImage(k) + `<span>${text(DETAILS[k].name)}</span>` + (mark(k) ? `<small class="lot-mark">${mark(k)}</small>` : ''),
+        `<img src="${esc(face(k))}" alt="" decoding="async">` + `<span>${text(DETAILS[k].name)}</span>` + (mark(k) ? `<small class="lot-mark">${mark(k)}</small>` : ''),
         'mj-picker-unit' + (kept.includes(k) ? '' : ' back-unit'),
         `${idAttr(k)} aria-pressed="${k === id}" aria-label="查看${text(DETAILS[k].name)}${mark(k) ? '（' + mark(k) + '）' : ''}"`
       )

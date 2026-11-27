@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>介面方向試樣</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<!-- glyphs: drawn once, used by the tools rows -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="g-grid" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 12h16M12 4v16"/></symbol>
+  <symbol id="g-danger" viewBox="0 0 24 24"><path d="M12 3 2.8 20h18.4zM12 10v4.5M12 17.4v.1"/></symbol>
+  <symbol id="g-full" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></symbol>
+  <symbol id="g-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="g-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 9.5a4 4 0 0 1 0 5"/></symbol>
+  <symbol id="g-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M5.5 18.5l2.1-2.1M16.4 7.6l2.1-2.1"/></symbol>
+</svg>
+
+<!-- 1 · title, desktop -->
+<section>
+  <p class="label">標題　桌面 1440 × 900</p>
+  <div class="board desk title" id="title-desk" style="background-image:url(plates/plate-title-desk.jpg)">
+    <div class="wash"></div>
+    <img class="logo" src="../../game/assets/title-jianying.webp" alt="劍影江湖">
+    <ul class="menu">
+      <li class="on"><span class="stone"></span>入夢<small>續第三局　空山琴臺</small></li>
+      <li>新的一輪</li>
+      <li>群俠列傳</li>
+      <li>江湖誌</li>
+    </ul>
+    <p class="ver">武俠戰棋　0.59</p>
+    <div class="tools">
+      <svg class="glyph"><use href="#g-full"/></svg>
+      <svg class="glyph"><use href="#g-sound"/></svg>
+      <svg class="glyph"><use href="#g-gear"/></svg>
+    </div>
+  </div>
+</section>
+
+<!-- 2 · prep, desktop -->
+<section>
+  <p class="label">戰前整備　桌面 1440 × 900</p>
+  <div class="board desk prep" id="prep-desk">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-desk.jpg)"></div>
+    <div class="wash"></div>
+
+    <header class="top">
+      <div class="where"><small>第一局</small><strong>青竹渡</strong></div>
+      <div class="objective">
+        <div class="medal enemy" style="background-image:url(../../game/assets/captain-0.webp)"></div>
+        <div><b>斬將　余滄海</b><span>十二回合內擊敗他；支線　點亮引路燈</span></div>
+      </div>
+      <div class="right"><span>軍情</span><span>存檔</span><svg class="glyph" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></div>
+    </header>
+
+    <nav class="rail"><span class="on">陣容</span><span>武學</span><span>裝備</span></nav>
+
+    <div class="scroll"><span class="seal">領隊</span></div>
+    <div class="vname">令狐冲</div>
+    <div class="vsect">華山派</div>
+
+    <div class="sheet">
+      <div class="level">等級 <span class="num">1</span> 歷練 20／100 <div class="bar"><i style="width:20%"></i></div></div>
+      <div class="stats">
+        <div><small>氣血</small><span class="num">148</span></div>
+        <div><small>內力</small><span class="num">74</span></div>
+        <div><small>攻擊</small><span class="num">29</span></div>
+        <div><small>防禦</small><span class="num">11</span></div>
+        <div><small>移動</small><span class="num">4<em> 步</em></span></div>
+        <div><small>射程</small><span class="num">1<em> 格</em></span></div>
+      </div>
+      <ul class="arts">
+        <li><small>普攻</small><b>華山劍法</b></li>
+        <li><small>第一格</small><b>石壁劍招</b></li>
+        <li class="empty"><small>第二格</small><b>空</b></li>
+        <li class="empty"><small>第三格</small><b>空</b></li>
+      </ul>
+      <div class="lead"><span class="seal">領</span><div><b>料敵先機</b><p>兩格內的友軍，普攻與還擊多 6 點傷害。</p></div></div>
+      <div class="acts"><span>修習<span class="pts">20</span></span><span class="quiet">俠客詳情</span><span class="quiet">轉為候補</span></div>
+    </div>
+
+    <div class="lineup">
+      <figure class="on"><div class="medal" style="background-image:url(../../game/assets/portraits-shen.webp)"></div><figcaption>令狐冲<small>一</small></figcaption></figure>
+      <figure><div class="medal" style="background-image:url(../../game/assets/portraits-lu.webp)"></div><figcaption>任盈盈<small>二</small></figcaption></figure>
+      <figure><div class="medal" style="background-image:url(../../game/assets/portraits-pei.webp)"></div><figcaption>向問天<small>三</small></figcaption></figure>
+      <figure><div class="medal" style="background-image:url(../../game/assets/portraits-guo.webp)"></div><figcaption>郭靖<small>四</small></figcaption></figure>
+      <figure><div class="medal" style="background-image:url(../../game/assets/portraits-xiao.webp)"></div><figcaption>小龍女<small>五</small></figcaption></figure>
+      <figure class="bench"><div class="medal">＋</div><figcaption>候補<small>空</small></figcaption></figure>
+    </div>
+
+    <div class="stone go sortie" style="right:52px;bottom:48px;width:128px;height:128px"><div><b>出陣</b><small>五人</small></div></div>
+  </div>
+</section>
+
+<!-- 3 · battle, desktop -->
+<section>
+  <p class="label">戰場　桌面 1440 × 900</p>
+  <div class="board desk hud" id="battle-desk" style="background-image:url(plates/plate-battle-desk.jpg)">
+    <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+
+    <div class="turn">
+      <div class="stone num">1</div>
+      <div class="where"><small>第一局　第 1 回合</small><strong>青竹渡</strong><em>我方落子</em></div>
+    </div>
+
+    <div class="goal">
+      <b>斬將　余滄海</b><span>尚餘十一回合</span>
+      <div class="tools">
+        <svg class="glyph"><use href="#g-grid"/></svg>
+        <svg class="glyph"><use href="#g-danger"/></svg>
+        <svg class="glyph"><use href="#g-full"/></svg>
+        <svg class="glyph"><use href="#g-menu"/></svg>
+      </div>
+    </div>
+
+    <div class="unit">
+      <div class="medal" style="background-image:url(../../game/assets/portraits-lu.webp)"></div>
+      <div class="who">
+        <strong>任盈盈</strong><small>等級 1</small>
+        <div class="hp"><span class="num">64<em>／64</em></span></div>
+        <div class="bar"><i style="width:100%"></i></div>
+        <div class="bar qi"><i style="width:100%"></i></div>
+        <div class="qitext">內力 46／46</div>
+        <div class="acts"><span><b>隊</b>伍</span><span><b>藥</b>囊</span><span><b>視</b>角</span></div>
+      </div>
+    </div>
+
+    <div class="stone go end"><div><b>結束<br>回合</b><small>E</small></div></div>
+  </div>
+</section>
+
+<!-- 4 · battle, phone -->
+<section>
+  <p class="label">戰場　手機直向 390 × 844</p>
+  <div class="board phone hud" id="battle-phone" style="background-image:url(plates/plate-battle-phone.jpg)">
+    <div class="corner tl"></div><div class="corner bl"></div>
+    <div class="turn">
+      <div class="stone num">1</div>
+      <div class="where"><small>第一局　第 1 回合</small><strong>青竹渡</strong><em>我方落子</em></div>
+    </div>
+    <div class="goal">
+      <b>斬將　余滄海</b><span>尚餘十一回合</span>
+      <div class="tools">
+        <svg class="glyph"><use href="#g-grid"/></svg>
+        <svg class="glyph"><use href="#g-danger"/></svg>
+        <svg class="glyph"><use href="#g-menu"/></svg>
+      </div>
+    </div>
+    <div class="unit">
+      <div class="medal" style="background-image:url(../../game/assets/portraits-lu.webp)"></div>
+      <div class="who">
+        <strong>任盈盈</strong><small>等級 1</small>
+        <div class="hp"><span class="num">64<em>／64</em></span></div>
+        <div class="bar"><i style="width:100%"></i></div>
+        <div class="bar qi"><i style="width:100%"></i></div>
+        <div class="acts"><span>隊伍</span><span>藥囊</span><span>視角</span></div>
+      </div>
+    </div>
+    <div class="stone go end"><div><b>結束<br>回合</b></div></div>
+  </div>
+</section>
+
+<!-- 5 · prep, phone -->
+<section>
+  <p class="label">戰前整備　手機直向 390 × 844</p>
+  <div class="board phone prep" id="prep-phone">
+    <div class="backdrop" style="background-image:url(plates/plate-battle-phone.jpg)"></div>
+    <div class="wash"></div>
+    <header class="top">
+      <div class="where"><small>第一局　斬將余滄海</small><strong>青竹渡</strong></div>
+      <div class="right" style="gap:20px;font-size:14px"><span>軍情</span><svg class="glyph" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></div>
+    </header>
+    <nav class="tabs"><span class="on">陣容</span><span>武學</span><span>裝備</span></nav>
+    <div class="scroll"><span class="seal">領隊</span></div>
+    <div class="vname">令狐冲</div>
+    <div class="vsect">華山派　等級一</div>
+    <div class="pstats">
+      <div><small>氣血</small><span class="num">148</span></div>
+      <div><small>內力</small><span class="num">74</span></div>
+      <div><small>攻擊</small><span class="num">29</span></div>
+      <div><small>防禦</small><span class="num">11</span></div>
+      <div><small>移動　射程</small><span class="num">4　1</span></div>
+    </div>
+    <div class="parts">
+      <ul class="arts">
+        <li><small>普攻</small><b>華山劍法</b></li>
+        <li><small>第一格</small><b>石壁劍招</b></li>
+        <li class="empty"><small>第二格</small><b>空</b></li>
+      </ul>
+      <div class="lead plead"><span class="seal">領</span><div><b>料敵先機</b><p>兩格內的友軍，普攻與還擊多 6 點傷害。</p></div></div>
+    </div>
+    <div class="lineup">
+      <figure class="on"><div class="medal" style="background-image:url(../../game/assets/portraits-shen.webp)"></div><figcaption>令狐冲</figcaption></figure>
+      <figure><div class="medal" style="background-image:url(../../game/assets/portraits-lu.webp)"></div><figcaption>任盈盈</figcaption></figure>
+      <figure><div class="medal" style="background-image:url(../../game/assets/portraits-pei.webp)"></div><figcaption>向問天</figcaption></figure>
+      <figure><div class="medal" style="background-image:url(../../game/assets/portraits-guo.webp)"></div><figcaption>郭靖</figcaption></figure>
+      <figure><div class="medal" style="background-image:url(../../game/assets/portraits-xiao.webp)"></div><figcaption>小龍女</figcaption></figure>
+    </div>
+    <span class="home">主畫面</span>
+    <span class="ptrain">修習<span class="pts">20</span></span>
+    <div class="stone go sortie"><div><b>出陣</b><small>五人</small></div></div>
+  </div>
+</section>
+
+<!-- 6 · title, phone -->
+<section>
+  <p class="label">標題　手機直向 390 × 844</p>
+  <div class="board phone title" id="title-phone" style="background-image:url(plates/plate-title-phone.jpg)">
+    <div class="wash"></div>
+    <img class="logo" src="../../game/assets/title-jianying.webp" alt="劍影江湖">
+    <ul class="menu">
+      <li class="on"><span class="stone"></span>入夢</li>
+      <li>新的一輪</li>
+      <li>群俠列傳</li>
+      <li>江湖誌</li>
+    </ul>
+    <p class="ver">0.59</p>
+    <div class="tools">
+      <svg class="glyph"><use href="#g-sound"/></svg>
+      <svg class="glyph"><use href="#g-gear"/></svg>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -1,3 +1,4 @@
+import { POLISH } from '../polish.js';
 import { COMBINATIONS } from '../data/form-catalog.js';
 import { art } from './artwork.js';
 import { armory, formationCards, heroStats, planningMap } from './armory-views.js';
@@ -8,7 +9,7 @@ import * as R from '../rules/journey.js';
 import { mapLayout } from '../data/terrain.js';
 import { COMMANDS, commandDescription } from '../rules/battle-mastery.js';
 import { TECHNIQUES } from '../data/martial-arts.js';
-import { face, unitFace, btn, titleHead, profileContents, esc } from './panels.js';
+import { face, unitFace, btn, titleHead, profileContents, esc, stoneLabel } from './panels.js';
 import { personalTraining } from './mastery-views.js';
 import { icon } from './icons.js';
 
@@ -180,7 +181,21 @@ function heroPane(s, u, line) {
   return (
     '<aside class="fy-pane" aria-label="' +
     name(u) +
-    '的資料"><header class="fy-pane-head"><img src="' +
+    '的資料">' +
+    // Polish (inkLook): the hero's full-length figure (every hero has one) hung as a scroll, the
+    // name set vertically beside it.
+    (POLISH.inkLook
+      ? '<div class="ink-scroll" aria-hidden="true" style="background-image:url(' +
+        art('figure-' + u.id + '.webp') +
+        ')">' +
+        (role === '領隊' ? '<b class="ink-seal">領隊</b>' : '') +
+        '</div><div class="ink-vname" aria-hidden="true">' +
+        name(u) +
+        '<small>' +
+        G.DETAILS[u.id].school +
+        '</small></div>'
+      : '') +
+    '<header class="fy-pane-head"><img src="' +
     face(u.id) +
     '" alt=""><div><small>' +
     role +
@@ -361,7 +376,7 @@ function teamPage(s, u, ui) {
     ? btn('home', '主畫面', 'mj-action')
     : btn('close', s.run.scene === 'shop' ? '返回通吃坊' : '返回戰盤', 'mj-action');
   const right = prep
-    ? btn('field-deploy', icon('flag', 16) + ' 出陣 · ' + s.run.next.length + ' 人', 'gold-btn')
+    ? btn('field-deploy', stoneLabel('出陣', s.run.next.length + ' 人', icon('flag', 16) + ' 出陣 · ' + s.run.next.length + ' 人'), 'gold-btn')
     : '';
   return (
     '<section class="mj-view fy-team' +

@@ -1488,6 +1488,11 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     heading: stageTitle(stage) + layout.name,
     kind,
     kindName: KIND_NAMES[kind],
+    // For the battle screen's one-line objective (inkLook): who must fall, what must stand or
+    // break, and the round the board ends on.
+    masterNames: masters,
+    thingNames: things,
+    roundLimit: board.rounds || G.LIMIT,
     win,
     // The last board: what 無名 gains as he steps onto it, a line of its own under 勝利.
     boon: kind === 'yield' ? boonLine() : '',
