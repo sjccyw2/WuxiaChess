@@ -102,7 +102,7 @@ To compare without editing the file:
 big pages fill the screen over the blurred scene with no window or title bar, the step forward on
 any page is a white go stone at the bottom right, ink-wash shading takes the place of boxes,
 numbers are large, and red is kept for seals. Its styles are `styles/21-ink.css` to
-`styles/25-ink-opening.css`, every rule under `html.polish-ink-look`; `?polish-off=inkLook` shows the
+`styles/26-ink-more.css`, every rule under `html.polish-ink-look`; `?polish-off=inkLook` shows the
 look from before it.
 
 Styles for these features live in `styles/12-combat.css` and `styles/13-panels.css`, and every

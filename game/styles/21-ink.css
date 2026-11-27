@@ -49,7 +49,9 @@ html.polish-ink-look #modal:is(
     [data-page='skills'],
     [data-page='inventory'],
     [data-page='wake'],
-    [data-page='codex']
+    [data-page='codex'],
+    [data-page='help'],
+    [data-page='bowls']
   ) {
   --mj-max-h: 100dvh;
   --mj-pad: var(--ink-pad);
@@ -241,7 +243,7 @@ html.polish-ink-look #modal[data-page] .mj-tab[aria-selected='true']::before {
 }
 
 /* ---------- the small dialogs (a question, the enemy's page, the guide, saves, settings) ---------- */
-html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [data-page='lot-detail'], [data-page='prologue'], [data-page='encounter'], [data-page='story'], [data-page='team'], [data-page='camp'], [data-page='brief'], [data-page='goals'], [data-page='result'], [data-page='sheet'], [data-page='skills'], [data-page='inventory'], [data-page='wake'], [data-page='codex']) {
+html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [data-page='lot-detail'], [data-page='prologue'], [data-page='encounter'], [data-page='story'], [data-page='team'], [data-page='camp'], [data-page='brief'], [data-page='goals'], [data-page='result'], [data-page='sheet'], [data-page='skills'], [data-page='inventory'], [data-page='wake'], [data-page='codex'], [data-page='help'], [data-page='bowls']) {
   border: 0;
   border-radius: 3px;
   background: rgba(13, 18, 17, 0.94);
@@ -249,12 +251,12 @@ html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [d
     0 30px 80px rgba(0, 0, 0, 0.6),
     inset 0 1px 0 rgba(201, 164, 98, 0.35);
 }
-html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [data-page='lot-detail'], [data-page='prologue'], [data-page='encounter'], [data-page='story'], [data-page='team'], [data-page='camp'], [data-page='brief'], [data-page='goals'], [data-page='result'], [data-page='sheet'], [data-page='skills'], [data-page='inventory'], [data-page='wake'], [data-page='codex']) :is(.mj-fixed-head, .mj-fixed-foot, .mj-tools) {
+html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [data-page='lot-detail'], [data-page='prologue'], [data-page='encounter'], [data-page='story'], [data-page='team'], [data-page='camp'], [data-page='brief'], [data-page='goals'], [data-page='result'], [data-page='sheet'], [data-page='skills'], [data-page='inventory'], [data-page='wake'], [data-page='codex'], [data-page='help'], [data-page='bowls']) :is(.mj-fixed-head, .mj-fixed-foot, .mj-tools) {
   background: none;
   border-color: var(--ink-rule);
 }
 html.polish-ink-look #modal .modal-foot .gold-btn,
-html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [data-page='lot-detail'], [data-page='prologue'], [data-page='encounter'], [data-page='story'], [data-page='team'], [data-page='camp'], [data-page='brief'], [data-page='goals'], [data-page='result'], [data-page='sheet'], [data-page='skills'], [data-page='inventory'], [data-page='wake'], [data-page='codex']) .mj-fixed-foot .gold-btn {
+html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [data-page='lot-detail'], [data-page='prologue'], [data-page='encounter'], [data-page='story'], [data-page='team'], [data-page='camp'], [data-page='brief'], [data-page='goals'], [data-page='result'], [data-page='sheet'], [data-page='skills'], [data-page='inventory'], [data-page='wake'], [data-page='codex'], [data-page='help'], [data-page='bowls']) .mj-fixed-foot .gold-btn {
   padding: 9px 26px;
   min-height: 42px;
   font-size: 15px;
