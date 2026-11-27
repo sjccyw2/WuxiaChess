@@ -1506,3 +1506,45 @@ html.polish-ink-look .battlefield .unit-summary {
     max-width: calc(100% - 2 * var(--left));
   }
 }
+
+/* The reach back in the phone's arts list (the producer, 2026-11-27): on the name's line, after
+   the name, as the desktop list shows it ("普攻 · 1 格", "友軍 · 2 格"). */
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art {
+    grid-template-columns: 26px auto minmax(0, 1fr) auto;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art strong {
+    grid-column: 2;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > span > small {
+    display: block;
+    grid-column: 3;
+    grid-row: 1;
+    align-self: baseline;
+    margin-left: 4px;
+    font: 500 13px var(--sans);
+    letter-spacing: 0.04em;
+    color: var(--ink-kaya);
+    white-space: nowrap;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > b {
+    grid-column: 4;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-facts {
+    grid-column: 2 / 5;
+  }
+}
+/* The same words a little stronger on every screen, since the reach decides what can be struck. */
+html.polish-ink-look .battlefield #arts-panel .field-art > span > small {
+  color: var(--ink-kaya);
+}
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-nearby {
+    display: block;
+    grid-column: 2 / 5;
+    grid-row: 3;
+    margin: 1px 0 0;
+    font: 500 12px var(--sans);
+    color: var(--ink-kaya);
+  }
+}
