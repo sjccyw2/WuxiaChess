@@ -23,7 +23,8 @@ import * as R from './rules/journey.js';
 import { rollView, lotDetail, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
 import { playFilm, playingFilm } from './ui/intro-film.js';
 import { realmView } from './ui/realm-views.js';
-import { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick } from './ui/dev-mode.js';
+import { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick, testRun } from './ui/dev-mode.js';
+import { createAutoplay } from './ui/autoplay.js';
 import { MAZE_TALE } from './data/maze-tale.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
 import { equippedMoves, markAnswers, journeyEnding } from './ui/journey-pages.js';
@@ -655,6 +656,7 @@ function beginDeployed() {
 }
 function cellClick(x, y) {
   if (screen !== 'battle' || dialog.open || state.run.scene !== 'fight') return;
+  if (auto?.on) return; // 自動對弈 plays the board
   if (deploying()) {
     deployClick(x, y);
     return;
@@ -753,6 +755,7 @@ function zoneTip(x, y) {
 let missedId = null;
 function unitClick(id) {
   if (screen !== 'battle' || dialog.open || state.run.scene !== 'fight') return;
+  if (auto?.on) return; // 自動對弈 plays the board
   if (deploying()) {
     const t = G.find(state, id);
     if (t) deployClick(t.x, t.y);
@@ -1153,6 +1156,7 @@ dialog.addEventListener('close', () => {
   board.uncover();
   (screen === 'battle' ? $('field') : document.body).append($('toast'));
   refreshDev();
+  auto?.kick(); // 自動對弈 goes on once a page the player opened is closed
   const opener = returnControl && $(returnControl);
   if (opener && !opener.disabled && !opener.closest('[hidden]'))
     opener.focus({ preventScroll: true });
@@ -1279,7 +1283,39 @@ function advanceAfterStrike(id, hit = {}) {
     } else finishAlly();
   });
 }
+// A hero's blow or art on t, resolved and shown: the strike's motion, its numbers, what it laid on,
+// a level gained. The hit, or null if the rules refused it. (The strike page's 出招, and 自動對弈.)
+function playStrike(u, t, skill) {
+  const hit = G.resolve(state, u, t, skill);
+  if (!hit) return null;
+  strikeData = null;
+  closePage();
+  mode = '';
+  update();
+  board.strikeEffect(
+    u,
+    skill && groundArt(u) ? u : t,
+    skill && G.artFor(u).blink
+      ? 'blink'
+      : skill && groundArt(u)
+        ? 'support' // 布陣 is cast where she stands
+        : skill && G.isSupport(G.artFor(u))
+          ? 'healing'
+          : skill
+            ? 'signature-hit'
+            : 'basic-hit',
+    hit.from
+  );
+  board.showEffects(hit.effects);
+  strikeTip(u, hit.effects, skill);
+  if (hit.leveled) {
+    audio('level');
+    notice(uName(u) + '升至等級 ' + u.level + '，武學點 +1');
+  } else if (!state.result && !skill) notice(uName(u) + '施展「' + G.basicFor(u).name + '」');
+  return hit;
+}
 function doCommand(action, selectedArt = false, keyboard = false) {
+  if (auto?.on) return; // 自動對弈 plays the board
   const u = selected();
   // 回身: walk on (the list's row, or the bar's move button) or stay (its other row, or wait).
   if (G.canGlide(state, u)) {
@@ -1415,7 +1451,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function runEnemy() {
   const token = ++aiRun;
   await board.finished();
-  await sleep(prefs.motion ? 240 : 60);
+  await sleep(paced(prefs.motion ? 240 : 60));
   await phaseLead(); // combat feel: let the phase banner land before the first enemy moves
   while (token === aiRun && screen === 'battle' && state.phase === 'enemy' && !state.result) {
     const e = G.enemies(state).find((u) => G.living(u) && !u.acted);
@@ -1484,7 +1520,7 @@ async function runEnemy() {
     if (result(true)) return;
     await board.finished();
     if (dragged) mapTip(uName(e) + (G.stageOf(e)?.pull ? ' · ' + G.stageOf(e).name + '一捲，將' + uName(dragged) + '扯到身前' : ' · 擒拿，將' + uName(dragged) + '扯到身前'), 3200);
-    await sleep(prefs.motion ? 150 : 45);
+    await sleep(paced(prefs.motion ? 150 : 45));
   }
 }
 function beginEnemy() {
@@ -1512,7 +1548,7 @@ function askEnd() {
     result(true);
     return;
   }
-  if (state.phase !== 'ally') return;
+  if (state.phase !== 'ally' || auto?.on) return;
   if (F.ON ? F.shouldConfirmEnd(state) : G.party(state).some((u) => G.canAct(state, u)))
     openPage('end');
   else beginEnemy();
@@ -1577,6 +1613,79 @@ function playEnding(onDone) {
 // Developer mode (?dev): a small floating window (dev-mode.js), kept inside the open dialog so
 // that it stays clickable.
 const dev = devMode() ? devWindow() : null;
+// 自動對弈 (ui/autoplay.js): the simulated player plays the board through the game's own steps.
+const auto = dev
+  ? createAutoplay(
+      {
+        view: () => ({
+          state,
+          screen,
+          page: dialog.open ? dialogState : null,
+          deploying: deploying(),
+          playing: board.layers.playing,
+          bowlsBusy: Date.now() < bowlUntil // the cups still being shuffled
+        }),
+        command: (action, id) => command(action, id),
+        swap: (from, to) => swapPosts(from, to),
+        select: (id) => {
+          hud.closePanel();
+          choose(id, true);
+          board.follow(G.find(state, id));
+        },
+        walk: (u, x, y) => {
+          if (!G.move(state, u, x, y)) return false;
+          mode = 'attack';
+          aimHidden = true;
+          audio('move');
+          update();
+          return true;
+        },
+        strike: (u, t, skill, id) => {
+          if (skill && !R.readyArt(state, u, id)) return false;
+          hud.closePanel();
+          const hit = playStrike(u, t, skill);
+          if (hit && state.result) result(true);
+          return !!hit;
+        },
+        brace: (u) => {
+          if (!G.waitUnit(state, u)) return false;
+          audio('wait');
+          finishAlly();
+          return true;
+        },
+        glide: (u, p) => {
+          if (p && G.glideMove(state, u, p.x, p.y)) audio('move');
+          else G.stopGlide(state, u);
+          finishAlly();
+        },
+        consume: (s, u, id) => {
+          const ok = G.consume(s, u, id);
+          if (ok) {
+            audio('heal');
+            update();
+            notice(uName(u) + '已服用' + G.ITEMS[id].name + '。');
+          }
+          return ok;
+        },
+        endTurn: () => {
+          hud.closePanel();
+          beginEnemy();
+        },
+        finished: () => board.finished(),
+        prepared: () => {
+          update();
+          if (dialog.open) drawModal(true);
+          audio('grow');
+        },
+        rate: (n) => (board.layers.rate = n),
+        said: (text) => notice(text),
+        changed: () => refreshDev()
+      },
+      G
+    )
+  : null;
+// The enemy phase's pauses between pieces, at 自動對弈's speed while it plays.
+const paced = (ms) => (auto ? auto.paced(ms) : ms);
 // The test battle being set up on the 試局 page (dev-mode.js).
 let devPick = dev ? loadPick() : null;
 // 重試此局: the run as it stood when the board's 起陣 began, kept for this tab (so a reload keeps
@@ -1602,11 +1711,15 @@ function refreshDev() {
   if (!dev) return;
   keepRetry();
   const battle = screen === 'battle' && state.run.status === 'battle' && !state.result;
+  // 自動整輪 may start from any step of a run still going: a board, its pages, the shop.
+  const inRun = screen === 'battle' && ['battle', 'camp'].includes(state.run.status);
   const html = devPanel({
     battle,
     side: !!state.run.side,
     fight: battle && state.run.scene === 'fight' && !state.run.deploying,
-    retry: canRetry()
+    retry: canRetry(),
+    auto: inRun || auto.on ? { on: auto.on, speed: auto.speed, board: battle } : null,
+    prep: dialog.open && dialogState === 'team' && state.run.scene === 'prep'
   });
   dev.show(html, dialog.open ? dialog : document.body);
 }
@@ -2089,6 +2202,22 @@ function command(action, id, data = {}, keyboard = false) {
       notice('已回到本局起陣。');
       break;
     }
+    case 'dev-auto':
+    case 'dev-auto-run': {
+      // 自動對弈 (this board) or 自動整輪 (the run); either button stops whichever plays.
+      if (!dev) break;
+      const how = action === 'dev-auto' ? 'board' : 'run',
+        was = auto.kind;
+      dev.fold();
+      notice(auto.toggle(how) ? auto.name(how) + '開始（' + auto.speed + '×）。' : auto.name(was) + '已停止。');
+      break;
+    }
+    case 'dev-auto-speed':
+      if (dev) notice('自動對弈速度 ' + auto.cycleSpeed() + '×');
+      break;
+    case 'dev-prep':
+      if (dev) auto.prepareNow();
+      break;
     case 'dev-press':
       // The board's master loses half the 氣血 he has, as a blow would take it.
       if (dev && state.phase === 'ally' && R.devPress(state)) update();
@@ -2104,7 +2233,7 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-finale': {
       // The last board at once, with the heroes last picked on the 試局 page.
       if (!dev) break;
-      const next = R.devTestRun({ ...loadPick(), map: G.LAST_MAP }, state.run.chronicle);
+      const next = R.devTestRun(testRun({ ...loadPick(), map: G.LAST_MAP }), state.run.chronicle);
       if (!next) break;
       ++aiRun;
       state = next;
@@ -2136,6 +2265,7 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-test-realm':
     case 'dev-test-hero':
     case 'dev-test-all':
+    case 'dev-test-seed':
       if (!dev || dialogState !== 'devtest') break;
       devPick = changePick(devPick, action.slice(9), id);
       drawModal(true);
@@ -2143,7 +2273,7 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'dev-test-go': {
       if (!dev || dialogState !== 'devtest' || !devPick.heroes.length) break;
-      const next = R.devTestRun(devPick, state.run.chronicle);
+      const next = R.devTestRun(testRun(devPick), state.run.chronicle);
       if (!next) break;
       ++aiRun;
       state = next;
@@ -2601,33 +2731,9 @@ function command(action, id, data = {}, keyboard = false) {
       const { source, target, skill } = strikeData;
       const u = G.find(state, source),
         t = typeof target === 'string' ? G.find(state, target) : target;
-      const hit = G.resolve(state, u, t, skill);
+      const hit = playStrike(u, t, skill);
       if (!hit) return;
-      strikeData = null;
-      closePage();
-      mode = '';
-      update();
-      board.strikeEffect(
-        u,
-        skill && groundArt(u) ? u : t,
-        skill && G.artFor(u).blink
-          ? 'blink'
-          : skill && groundArt(u)
-            ? 'support' // 布陣 is cast where she stands
-            : skill && G.isSupport(G.artFor(u))
-              ? 'healing'
-              : skill
-                ? 'signature-hit'
-                : 'basic-hit',
-        hit.from
-      );
-      board.showEffects(hit.effects);
-      strikeTip(u, hit.effects, skill);
       advanceAfterStrike(u.id, hit);
-      if (hit.leveled) {
-        audio('level');
-        notice(uName(u) + '升至等級 ' + u.level + '，武學點 +1');
-      } else if (!state.result && !skill) notice(uName(u) + '施展「' + G.basicFor(u).name + '」');
       break;
     }
     case 'pref':

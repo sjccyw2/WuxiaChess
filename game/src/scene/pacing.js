@@ -56,6 +56,13 @@ class FramePacer {
     this.action = new Estimate(START);
     this.actionFits = true;
   }
+  // The world is now drawn at a different size (board.js, adaptiveRes): forget what it cost.
+  restart() {
+    this.settle();
+    this.world = new Estimate(START);
+    this.fluid = true;
+    this.still = false;
+  }
   begin(now) {
     const last = this.last;
     this.last = null;

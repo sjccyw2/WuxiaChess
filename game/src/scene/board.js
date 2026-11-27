@@ -12,6 +12,15 @@ const CYCLE_MS = 6000,
 import { POLISH } from '../polish.js';
 import { installGrade } from './stage-light.js';
 import { FramePacer } from './pacing.js';
+// Idle motion (rippling water, idle poses, the cursor's pulse) is slow: thirty frames a second
+// show it as smoothly as the display's own rate, at a half to a quarter of the GPU's work on a 60
+// to 120 Hz screen. Moves, blows, effects, camera eases and the pointer are drawn on every frame.
+const IDLE_FPS = 30,
+  IDLE_MS = 1000 / IDLE_FPS;
+// adaptiveRes: the scales of the screen's pixels the 3D world steps down through on a device that
+// cannot draw it in a display frame, and how long it must have been too slow before each step.
+const WORLD_SCALES = [1, 0.8, 0.65],
+  SLOW_MS = 3000;
 
 // What a tap on the board means: a piece (its id) or a ground tile.
 //
@@ -89,6 +98,7 @@ class BattleBoard {
     this.reach = new Map();
     this.prefs = { motion: true, grid: true };
     this.pointers = new Map();
+    this.worldStep = 0; // adaptiveRes: index into WORLD_SCALES
 
     this.layers = new ActorLayer(tactics, this.view, () => this.draw(), onTechnique);
     this.layers.onCue = onCue; // sound: timed board events (see actors.js releaseCues)
@@ -291,17 +301,39 @@ class BattleBoard {
     if (this.view.follow(tiles, this.prefs.motion ? 320 : 0)) this.draw();
   }
   // ---- end combat feel ----
+  // A frame for something that changed: drawn on the very next animation frame.
   draw() {
+    this.urgent = true;
+    this.request();
+  }
+  // A frame only for idle motion (water, idle poses, pulses): drawn at most IDLE_FPS times a
+  // second, however fast the display refreshes. Anything that calls draw() meanwhile is not held.
+  idle() {
+    this.request();
+  }
+  request() {
     if (this.pending || document.hidden) return;
     clearTimeout(this.timer);
     this.pending = requestAnimationFrame((time) => {
+      const urgent = this.urgent;
       this.pending = 0;
-      this.render(time);
+      this.urgent = false;
+      this.render(time, urgent);
     });
   }
-  render(now) {
+  render(now, urgent = true) {
     if (document.hidden || !this.scene.clientWidth || !this.scene.clientHeight) return;
     if (!this.scenery) this.initScenery();
+    // Idle cap: an idle frame that comes too soon after the last one paints nothing. The pacer is
+    // still told of it, as a frame that drew no world, so it keeps timing the display.
+    if (!urgent && this.pace && !this.dirty && !this.layout && now - this.painted < IDLE_MS - 4) {
+      this.pace.begin(now);
+      this.pace.end(now, false, false);
+      this.pace.chain();
+      this.idle();
+      return;
+    }
+    this.painted = now;
     if (this.layout) {
       const w = this.scene.clientWidth,
         h = this.scene.clientHeight;
@@ -317,7 +349,10 @@ class BattleBoard {
       this.view.size(w, h, frame);
       const dpr = Math.min(1.65, globalThis.devicePixelRatio || 1);
       if (this.renderer) {
-        this.renderer.setPixelRatio(dpr);
+        // The world may be drawn at fewer pixels than the 2D layer (adaptiveRes, below); the
+        // pieces, numbers and marks on the 2D layer stay at the screen's own sharpness.
+        const scale = WORLD_SCALES[this.worldStep];
+        this.renderer.setPixelRatio(Math.max(Math.min(dpr, 0.8), dpr * scale));
         this.renderer.setSize(w, h, false);
       } else {
         const factor = this.dragged
@@ -344,6 +379,7 @@ class BattleBoard {
       if (this.pacedScenery !== this.scenery) pace.settle();
       this.pacedScenery = this.scenery;
       pace.begin(now);
+      if (POLISH.adaptiveRes && this.renderer) this.fitWorld(pace, now);
     }
     const playing = this.layers.playing;
     // While fighters are acting, their frames take priority over animated water.
@@ -365,10 +401,10 @@ class BattleBoard {
       pace?.chain();
     } else if (this.prefs.motion) {
       if (pace?.smooth) {
-        // Idle motion at the display's rate; draw() does nothing while the tab is hidden.
-        this.draw();
+        // Idle motion, up to IDLE_FPS a second; nothing is drawn while the tab is hidden.
+        this.idle();
         pace.chain();
-      } else this.timer = setTimeout(() => this.draw(), 105);
+      } else this.timer = setTimeout(() => this.idle(), 105);
     }
     // The reach pulse is short: every frame of it is drawn, whatever pace idle motion keeps.
     const pulsed = performance.now() - (this.layers.reachPulse ?? -Infinity);
@@ -378,6 +414,22 @@ class BattleBoard {
       this.draw();
       pace?.chain();
     }
+  }
+  // adaptiveRes: while the world has not fitted in a display frame for SLOW_MS, whether idle or
+  // while pieces act, draw it at the next smaller scale (WORLD_SCALES) and measure afresh. It only
+  // ever steps down: a device that could not keep up once is spared the trial of going back.
+  fitWorld(pace, now) {
+    const slow = !pace.fluid || !pace.actionFits;
+    if (!slow || pace.settling > 0 || this.worldStep >= WORLD_SCALES.length - 1) {
+      this.slowSince = null;
+      return;
+    }
+    this.slowSince ??= now;
+    if (now - this.slowSince < SLOW_MS) return;
+    this.worldStep++;
+    this.slowSince = null;
+    pace.restart();
+    this.layout = true;
   }
   pointFromEvent(e) {
     const r = this.scene.getBoundingClientRect();

@@ -323,9 +323,19 @@ function devWindow() {
 //   side    it has a secondary (the last board has none)
 //   fight   its fight has begun
 //   retry   the board's 起陣 is kept and this is still that board (won, lost or being fought)
+//   auto    the run is still going, so 自動整輪 (ui/autoplay.js) can play it, and 自動對弈 this board
+//           where one is being played (`board`): { on, speed, board }
+//   prep    整備 is open before the board: 自動整備 makes its choices
 // The two clearing buttons come last, apart from the rest (the window words them: CLEAR).
-function devPanel({ battle, side = true, fight = false, retry = false }) {
+function devPanel({ battle, side = true, fight = false, retry = false, auto = null, prep = false }) {
   return (
+    (auto
+      ? (auto.on
+          ? btn('dev-auto', '停止對弈', 'dev-btn dev-on')
+          : (auto.board ? btn('dev-auto', '自動對弈', 'dev-btn') : '') + btn('dev-auto-run', '自動整輪', 'dev-btn')) +
+        btn('dev-auto-speed', '對弈速度 ' + auto.speed + '×', 'dev-btn')
+      : '') +
+    (prep ? btn('dev-prep', '自動整備', 'dev-btn') : '') +
     (retry ? btn('dev-retry', '重試此局', 'dev-btn') : '') +
     (battle
       ? btn('dev-win', '速勝', 'dev-btn') +
@@ -387,8 +397,12 @@ function devEnter() {
   }
 }
 
-// The test battle last set up, remembered between visits: { map, realm, heroes } with heroes in
-// the order they were picked (the first five fight, the first of all leads).
+// The seeds a test run may take (試局's 種子): a fixed one makes the whole run the same every time
+// it is started (its route, its secondaries, the shop's stock, the dice cups), so a run 自動整輪
+// plays can be watched again move for move; null (隨機) draws a new one each time, as a run does.
+const TEST_SEEDS = [1, 2, 3, 4, 5];
+// The test battle last set up, remembered between visits: { map, realm, heroes, seed } with heroes
+// in the order they were picked (the first five fight, the first of all leads); seed 1 at first.
 function loadPick() {
   let pick = null;
   try {
@@ -398,8 +412,14 @@ function loadPick() {
   return {
     map: Number.isInteger(pick?.map) && pick.map >= 0 && pick.map < MAP_LAYOUTS.length ? pick.map : 0,
     realm: Number.isInteger(pick?.realm) && pick.realm >= 1 && pick.realm <= REALMS.length ? pick.realm : 1,
-    heroes: heroes.length ? heroes : PARTY.slice(0, 5)
+    heroes: heroes.length ? heroes : PARTY.slice(0, 5),
+    seed: pick?.seed === null ? null : TEST_SEEDS.includes(pick?.seed) ? pick.seed : TEST_SEEDS[0]
   };
+}
+// What journey.js devTestRun takes for a pick: its seed only when it is a fixed one.
+function testRun(pick) {
+  const { seed, ...rest } = pick;
+  return seed ? { ...rest, seed } : rest;
 }
 function keepPick(pick) {
   try {
@@ -412,6 +432,7 @@ function changePick(pick, what, id) {
   const next = { ...pick, heroes: [...pick.heroes] };
   if (what === 'map') next.map = Math.min(MAP_LAYOUTS.length - 1, Math.max(0, Number(id) || 0));
   if (what === 'realm') next.realm = Math.min(REALMS.length, Math.max(1, Number(id) || 1));
+  if (what === 'seed') next.seed = TEST_SEEDS.includes(Number(id)) ? Number(id) : null;
   if (what === 'hero' && PARTY.includes(id))
     next.heroes = next.heroes.includes(id) ? next.heroes.filter((h) => h !== id) : [...next.heroes, id];
   if (what === 'all') next.heroes = next.heroes.length === PARTY.length ? [] : [...PARTY];
@@ -430,6 +451,7 @@ function devTestView(pick) {
     )
     .join('');
   const realms = REALMS.map((r, i) => chip('dev-test-realm', i + 1, `${esc(r.sword)}境界`, pick.realm === i + 1)).join('');
+  const seeds = [null, ...TEST_SEEDS].map((n) => chip('dev-test-seed', n ?? 'random', n ?? '隨機', pick.seed === n)).join('');
   const heroes = PARTY.map((id) => {
     const at = pick.heroes.indexOf(id),
       tag = at < 0 ? '' : at === 0 ? '領隊' : at < 5 ? `上陣 ${at + 1}` : '候補';
@@ -440,9 +462,10 @@ function devTestView(pick) {
     <p class="dev-test-lead">直接從一局的軍情開始，敵人照該局在一輪中的位置與所選境界。每位俠客 ${DEV_TEST.points} 武學點，行囊 ${DEV_TEST.coins} 兩。終局只在無劍境界，無名自會入盤領隊，眾人招式俱全；對面的十位局主，取自隨機抽出的一輪十局。打完這一局，這一輪照常往下走。開局會取代目前的存檔。</p>
     <h3>棋局</h3><div class="dev-chips">${boards}</div>
     <h3>境界</h3><div class="dev-chips">${realms}</div>
+    <h3>種子 <small>同一種子、同一陣容，整輪每次都一樣（自動整輪看得到）；隨機則每次不同</small></h3><div class="dev-chips">${seeds}</div>
     <h3>俠客 <small>按選的先後：第一位領隊，前五位上陣，其餘候補</small></h3><div class="dev-chips">${heroes}</div>
     <footer class="run-footer">${btn('close', '返回', 'outline-btn')}${btn('dev-test-all', pick.heroes.length === PARTY.length ? '全不選' : '全選', 'outline-btn')}${btn('dev-test-go', '開局', 'gold-btn', pick.heroes.length ? '' : 'disabled')}</footer>
   </section>`;
 }
 
-export { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick };
+export { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick, testRun };
