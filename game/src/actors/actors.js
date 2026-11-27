@@ -203,7 +203,8 @@ class ActorLayer {
       const dt = Math.max(0, now - previous);
       // A landed blow may hold the action clock for a few frames (hit-stop). Held time is
       // only postponed: `until`, the health-bar impacts and finished() all still arrive.
-      this.time += this.impact.tick(this.playing ? Math.min(dt, 40) : dt, dt);
+      // `rate`: developer mode's 自動對弈 plays the board's motion faster (ui/autoplay.js).
+      this.time += this.impact.tick(this.playing ? Math.min(dt, 40) : dt, dt) * (this.rate || 1);
     }
   }
   sync(state, mode, prefs, hideAim = false) {

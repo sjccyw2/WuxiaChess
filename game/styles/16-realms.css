@@ -284,6 +284,12 @@ body:has(> .intro-film) > .dev-panel {
 .dev-btn:hover {
   background: #4a3d24;
 }
+/* 自動對弈 while it plays: lit, so the window shows it is on. */
+.dev-btn.dev-on {
+  border-color: #5fb08a;
+  background: #1f4a3a;
+  color: #e4fff1;
+}
 /* The two clearing buttons stand apart, on a line of their own; one pressed once is lit. */
 .dev-rule {
   flex: 0 0 100%;

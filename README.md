@@ -79,6 +79,9 @@ tools/
   roster-preview.html stands fighters on a battlefield and plays each row of their sheets
   shoot-roster.mjs    photographs every frame of a character's sheet on the board, beside another
   sound-check.mjs     renders every sound and fails if one clips or is out of balance
+  sim-battles.mjs     plays whole runs with the simulated player and reports how the boards went
+  lib/hero-policy.mjs the simulated player itself, shared with developer mode's 自動對弈
+  lib/skill-measure.mjs measures arts with the rules' own arithmetic (check-skills, the player)
 ```
 
 ## Presentation switches
@@ -277,6 +280,29 @@ In a battle, from its story, briefing or 整備 as well:
   and the record (`retryPoint` in `app.js`). The run is copied the first time a board reaches
   起陣 and kept for the tab in `sessionStorage` (`jianying.dev-retry.v1`). The button stays while
   the run is still on that board, so it also works from the page after a win or a loss.
+
+**自動對弈 (watching the AI play).** In a battle, from its story, briefing or 整備 as well, 自動對弈
+hands the board to the simulated player, the same one the battle simulator measures the game with
+(`tools/lib/hero-policy.mjs`), and 停止對弈 takes it back; 對弈速度 cycles 1×, 2× and 4× (remembered
+in `jianying.dev-auto-speed.v1`; 2× at first). From wherever the board stands it turns the story's
+pages and 軍情, makes 整備's choices (below), presses 出陣, puts the leader on the post fewest enemies
+can reach, presses 開戰, and plays every hero turn through the game's own steps, so each one shows
+as a player's would: the hero chosen and his walk tiles, the walk, the blow or art with its motion,
+numbers and tips, 回身, bracing, medicine; the enemy phase is the game's own. The speed applies to
+the board's motion (`rate` in `actors/actors.js`) and to the pauses between pieces. It stops when
+the board is decided, at the page after it. While it plays, taps on the board, the arts and 結束回合
+do nothing; a page opened meanwhile (a hero's sheet, the log) pauses it until it is closed. It is
+deterministic: the player has nothing random in it and neither has the enemy, so a board played
+again from its 起陣 (重試此局) is played move for move the same (checked on 2026-11-27: the same 222
+lines of battle log twice). The code is `game/src/ui/autoplay.js`; it loads the player only when
+first used.
+
+**自動整備**, in 整備 before a board, makes the choices the simulated player makes before every
+board, and nothing else: it spends each hero's 武學點 (the cheapest node toward the summit; it saves
+for a summit still gated before the eighth board; spare points into talents, the hero's lean
+first), puts on the best weapons and gear in the stock (by 攻擊, 內力, 防禦 and 移動, weighed for the
+hero's job and the leader), and picks each hero's three arts (strongest first, three different jobs
+where it can). 自動對弈 does the same on its own as it passes through 整備.
 
 Each goes through the game's own settling (`devFinish` in `game/src/rules/journey.js`), so
 rewards, the next hero, the story and the end of the run follow as in play. 跳至終局, always
@@ -492,7 +518,7 @@ node tools/sim-battles.mjs --runs 1 --trace            # the battle log of one r
 node tools/sim-battles.mjs --runs 40 --arts            # also: how often each art was equipped and used
 ```
 
-A fixed, deterministic headless player fights whole runs with the real rules and enemy code: it draws heroes, starts the run, spends points (cheapest node toward the summit, spare points into talents), equips its three strongest arts with distinct jobs, buys medicine and gear, and on every turn scores each legal move-and-action with `forecast` (kills, damage minus counter, cover, the enemy reach it ends in, the leader's safety, the board's marker or time limit), with a value for every enemy turn an art takes away (定身, 閉穴, 受制) and every blow a guard voids (金剛, 固守). Per board it reports win rate, rounds to win, health left, heroes downed, side objectives and how often the basic attack, the starting art and each tier were used; per hero, damage dealt and taken, share of kills and damage, and level and points at each board; and, for the supports and guards, 氣血 healed, the damage done by foes the hero turned (受制, credited to him and not to the foe), the enemy blows that landed on him and his share of the team's, how many of those a 挑釁 or a 代受 of his drew, and the boards he led and lost by the leader falling. `--compare` prints what moved between two saved runs and flags boards whose win rate changed by more than ten points. `--growth` adds a table, per board won, of the average level and points of the heroes who fought it, of those on the bench, and of the hero who joins (the simulated player never changes its line-up, so everyone recruited after the second board stays on the bench). The same seed always gives the same result, so compare runs made with the same `--runs` and `--seed`.
+The player is `tools/lib/hero-policy.mjs` (its weights, `W`, are its whole character), which developer mode's 自動對弈 also plays on screen. A fixed, deterministic headless player fights whole runs with the real rules and enemy code: it draws heroes, starts the run, spends points (cheapest node toward the summit, spare points into talents), equips its three strongest arts with distinct jobs, buys medicine and gear, and on every turn scores each legal move-and-action with `forecast` (kills, damage minus counter, cover, the enemy reach it ends in, the leader's safety, the board's marker or time limit), with a value for every enemy turn an art takes away (定身, 閉穴, 受制) and every blow a guard voids (金剛, 固守). Per board it reports win rate, rounds to win, health left, heroes downed, side objectives and how often the basic attack, the starting art and each tier were used; per hero, damage dealt and taken, share of kills and damage, and level and points at each board; and, for the supports and guards, 氣血 healed, the damage done by foes the hero turned (受制, credited to him and not to the foe), the enemy blows that landed on him and his share of the team's, how many of those a 挑釁 or a 代受 of his drew, and the boards he led and lost by the leader falling. `--compare` prints what moved between two saved runs and flags boards whose win rate changed by more than ten points. `--growth` adds a table, per board won, of the average level and points of the heroes who fought it, of those on the bench, and of the hero who joins (the simulated player never changes its line-up, so everyone recruited after the second board stays on the bench). The same seed always gives the same result, so compare runs made with the same `--runs` and `--seed`.
 
 ### Scenery and sound
 

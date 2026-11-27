@@ -323,9 +323,16 @@ function devWindow() {
 //   side    it has a secondary (the last board has none)
 //   fight   its fight has begun
 //   retry   the board's 起陣 is kept and this is still that board (won, lost or being fought)
+//   auto    自動對弈 (ui/autoplay.js) can play this board: { on, speed }
+//   prep    整備 is open before the board: 自動整備 makes its choices
 // The two clearing buttons come last, apart from the rest (the window words them: CLEAR).
-function devPanel({ battle, side = true, fight = false, retry = false }) {
+function devPanel({ battle, side = true, fight = false, retry = false, auto = null, prep = false }) {
   return (
+    (auto
+      ? btn('dev-auto', auto.on ? '停止對弈' : '自動對弈', 'dev-btn' + (auto.on ? ' dev-on' : '')) +
+        btn('dev-auto-speed', '對弈速度 ' + auto.speed + '×', 'dev-btn')
+      : '') +
+    (prep ? btn('dev-prep', '自動整備', 'dev-btn') : '') +
     (retry ? btn('dev-retry', '重試此局', 'dev-btn') : '') +
     (battle
       ? btn('dev-win', '速勝', 'dev-btn') +
