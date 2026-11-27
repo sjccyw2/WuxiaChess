@@ -1,6 +1,6 @@
 import { visitorInvite } from './bowl-views.js';
 import { factBadge } from './panels.js';
-import { btn, titleHead, face, esc, bookCitation, itemBonus } from './panels.js';
+import { btn, titleHead, face, esc, bookCitation, itemBonus, stoneLabel } from './panels.js';
 import { icon } from './icons.js';
 import { art } from './artwork.js';
 import { itemPicture } from './item-art.js';
@@ -363,7 +363,7 @@ function shop(model) {
   return `${campRecap(model)}${message}${stock ? `<div class="mj-shelves">${stock}</div>` : '<p class="mj-empty">今日的貨架已空。</p>'}`;
 }
 function campView(model) {
-  const destination = model.final ? '結束此行' : '前往' + text(model.nextName);
+  const destination = model.final ? '結束此行' : stoneLabel('啟程', text(model.nextName), '前往' + text(model.nextName));
   return `<section class="mj-view mj-market">${titleHead('bag', '通吃坊')}<div class="mj-tools fy-shopbar" data-frame-tools><div class="mj-wallet">${coin}<b>${whole(model.coins)}</b> 兩</div></div>${visitorInvite(model.visit)}${shop(model)}${btn('story', '重讀戰後對話', 'mj-text-button', 'data-id="after"')}<footer class="mj-footer">${model.final ? btn('home', '主畫面', 'mj-action') : btn('team', glyph('people', 16) + ' 整理隊伍', 'mj-action')}${btn('march', destination, 'gold-btn')}</footer></section>`;
 }
 

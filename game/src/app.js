@@ -379,11 +379,14 @@ function paint() {
         ? '敵方行動'
         : '我方行動';
   const phase =
+    // Polish (inkLook): the round is written on a stone, white on the heroes' turn, black on the enemy's.
+    (POLISH.inkLook ? `<i class="ink-turn${state.phase === 'enemy' ? ' black' : ''}" aria-hidden="true">${state.round}</i>` : '') +
     `<small>第 <b>${state.round}</b> 回合</small><strong class="${state.phase === 'enemy' ? 'enemy' : ''}">${side}</strong>` +
     (coming ? `<em class="reinforce">敵援 · 下回合 ${coming} 名</em>` : '') +
     // 守: the rounds still to hold, this one included.
     (!state.result && G.holdLeft(state) ? `<em class="reinforce hold">守 · 尚須 ${G.holdLeft(state)} 回合</em>` : '');
   board.layers.pick = deploying() ? deployPick : null;
+  if (POLISH.inkLook) inkGoal();
   if ($('round-badge').dataset.phase !== phase) {
     $('round-badge').innerHTML = phase;
     $('round-badge').dataset.phase = phase;
@@ -899,6 +902,34 @@ function pageHtml() {
       return '';
   }
 }
+// Polish (inkLook): the battle screen's objective in one line at the top right (斬將　余滄海, and
+// the rounds left). Read from the briefing's model, once per board.
+let inkGoalFor = null;
+function inkGoal() {
+  const line = $('goal-line');
+  if (screen !== 'battle' || !state.run) {
+    line.hidden = true;
+    return;
+  }
+  const key = state.mapIndex + ':' + state.run.stage + ':' + state.run.route;
+  if (inkGoalFor?.key !== key) inkGoalFor = { key, model: R.briefing(state) };
+  const m = inkGoalFor.model;
+  const what =
+    m.kind === 'rout'
+      ? '全數敵軍'
+      : m.kind === 'keep' || m.kind === 'break'
+        ? m.thingNames.join('、')
+        : m.masterNames.join('、');
+  const left = Math.max(0, m.roundLimit - state.round + 1);
+  const html =
+    `<b>${P.esc(m.kindName)}　${P.esc(what)}</b>` +
+    (state.result || !left ? '' : `<span>尚餘 <em class="ink-num">${left}</em> 回合</span>`);
+  if (line.dataset.shown !== html) {
+    line.innerHTML = html;
+    line.dataset.shown = html;
+  }
+  line.hidden = false;
+}
 function drawModal(keepScroll = false) {
   cancelPanelDrag?.();
   const top = dialog.querySelector('.mj-scroll')?.scrollTop || 0;
@@ -908,6 +939,8 @@ function drawModal(keepScroll = false) {
   const fresh = shownPage !== dialogState;
   shownPage = dialogState;
   $('modal-content').innerHTML = pageHtml();
+  // Polish (inkLook): the stylesheet tells the full-screen pages from the small ones by name.
+  if (POLISH.inkLook) dialog.dataset.page = dialogState;
   const body = frameDialog($('modal-content'));
   addSavesButton();
   if (keepPlan) dialog.querySelector('.fo-map-plan')?.setAttribute('open', '');

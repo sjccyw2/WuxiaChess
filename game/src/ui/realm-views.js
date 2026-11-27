@@ -1,7 +1,7 @@
 // The 境界 picker shown before a run. The 境界 are difficulty levels (data/realms.js); the story
 // keys 求敗's lines to the one picked. Once the ending has been seen it also offers the ending
 // film again and says what the ending opened (無名 on the board, MAZE_TALE.finale.plus).
-import { btn, titleHead, esc } from './panels.js';
+import { btn, titleHead, esc, stoneLabel } from './panels.js';
 import { icon } from './icons.js';
 import { REALMS } from '../data/realms.js';
 import { WAKES } from '../data/wake-tale.js';
@@ -36,7 +36,7 @@ function realmView(profile, picked) {
     <p class="realm-lead">境界即難度，越後敵人越強。勝了已開的最高一重，下一重方開；無劍境界十局皆勝，接著打終局。</p>
     <ol class="realm-list" aria-label="五重境界">${cards}</ol>
     ${ended ? `<p class="realm-plus">${icon('spark', 15)}<span><strong>${esc(plus.title)}</strong>${esc(plus.text.replaceAll('{name}', YOUTH.name))}</span></p>` : ''}
-    <footer class="run-footer">${btn('close', '返回', 'outline-btn')}<span class="realm-actions">${ended ? btn('ending-replay', '重看終局', 'outline-btn') : ''}${btn('realm-go', '入夢・' + REALMS[picked - 1].sword + '境界', 'gold-btn')}</span></footer>
+    <footer class="run-footer">${btn('close', '返回', 'outline-btn')}<span class="realm-actions">${ended ? btn('ending-replay', '重看終局', 'outline-btn') : ''}${btn('realm-go', stoneLabel('入夢', REALMS[picked - 1].sword + '境界', '入夢・' + REALMS[picked - 1].sword + '境界'), 'gold-btn')}</span></footer>
   </section>`;
 }
 

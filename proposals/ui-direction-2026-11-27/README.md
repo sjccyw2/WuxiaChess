@@ -1,6 +1,6 @@
 # A less machine-made interface: a layout mock-up (2026-11-27)
 
-Asked by the producer on 2026-11-27: the game looks good but has a strong AI-made flavour, and should feel more like a AAA tactics game on phone and desktop. This is a mock-up of the layout to decide on before anything in the game changes. **Nothing in the game was changed.**
+Asked by the producer on 2026-11-27: the game looks good but has a strong AI-made flavour, and should feel more like a AAA tactics game on phone and desktop. This is a mock-up of the layout to decide on before anything in the game changes. **Decided and built on 2026-11-27** (ROADMAP Q-N169, 0.61): as sketched, except that 軍情 keeps its square plan, the enemy's turn keeps the red banner, and the skill tree keeps its curved lines. The look is the switch `inkLook` in `game/src/polish.js`; `?polish-off=inkLook` or `?classic` rolls it back.
 
 - `mockup.html`: the first six artboards (title, 整備, battle), built over clean captures of the game's own 3D scenes (`plates/`, the interface hidden) and the game's own art and fonts. Open it from a served copy of the repository (`python3 -m http.server`, then `/proposals/ui-direction-2026-11-27/mockup.html`).
 - `mockup-pages.html`: sixteen more artboards for the other pages (below), added the same day at the producer's word to sketch every page before building. Both files share `mockup.css`.

@@ -112,6 +112,11 @@
     <link rel="stylesheet" href="styles/18-tutorial.css" />
     <link rel="stylesheet" href="styles/19-art-detail.css" />
     <link rel="stylesheet" href="styles/20-saves.css" />
+    <link rel="stylesheet" href="styles/21-ink.css" />
+    <link rel="stylesheet" href="styles/22-ink-battle.css" />
+    <link rel="stylesheet" href="styles/23-ink-prep.css" />
+    <link rel="stylesheet" href="styles/24-ink-pages.css" />
+    <link rel="stylesheet" href="styles/25-ink-opening.css" />
     <!--
       The three modules most of the import graph hangs off. With them already here the
       browser finds the rest in fewer round trips. A stale entry costs only that saving.
@@ -192,6 +197,7 @@
           <button id="expand" class="hud-icon hud-fullscreen" data-do="fullscreen" aria-pressed="false" title="全螢幕" aria-label="全螢幕"><span data-icon="expand"></span><span>全螢幕</span></button>
           <button id="menu-toggle" class="hud-icon" data-do="hud-panel" data-id="menu" aria-expanded="false" aria-controls="menu-panel" title="選單" aria-label="選單"><span data-icon="menu"></span></button>
         </div>
+        <div id="goal-line" class="ink-goal" aria-hidden="true" hidden></div>
         <section id="menu-panel" class="hud-flyout menu-flyout" aria-labelledby="menu-title" hidden>
           <div class="flyout-head"><h2 id="menu-title">選單</h2><button class="flyout-close" data-do="hud-close" aria-label="關閉選單"><span data-icon="close"></span></button></div>
           <nav id="nav" class="field-menu" aria-label="戰場選單"></nav>

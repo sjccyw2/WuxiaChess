@@ -98,6 +98,13 @@ To compare without editing the file:
 - `game/?classic` turns every switch off and shows the original look.
 - `game/?polish-off=hitStop,screenShake` turns off only the ones named.
 
+`inkLook` is the look the producer approved on 2026-11-27 (proposals/ui-direction-2026-11-27/): the
+big pages fill the screen over the blurred scene with no window or title bar, the step forward on
+any page is a white go stone at the bottom right, ink-wash shading takes the place of boxes,
+numbers are large, and red is kept for seals. Its styles are `styles/21-ink.css` to
+`styles/25-ink-opening.css`, every rule under `html.polish-ink-look`; `?polish-off=inkLook` shows the
+look from before it.
+
 Styles for these features live in `styles/12-combat.css` and `styles/13-panels.css`, and every
 rule there is scoped under an `html.polish-…` class that the switch controls.
 
