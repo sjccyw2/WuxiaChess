@@ -758,3 +758,23 @@ html.polish-ink-look .opening-glaze {
     font-size: 18px;
   }
 }
+/* The title: the same room at the edges as the pages. */
+html.polish-ink-look .opening-content {
+  margin-inline-start: max(var(--ink-pad), calc(var(--rim) + clamp(0px, 2.2vw, 42px)));
+}
+html.polish-ink-look .opening-head {
+  right: var(--ink-pad);
+  bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+}
+@media (max-width: 600px) {
+  html.polish-ink-look .opening-head {
+    top: max(18px, calc(env(safe-area-inset-top, 0px) + 10px));
+    bottom: auto;
+    left: var(--ink-pad);
+    right: var(--ink-pad);
+  }
+  html.polish-ink-look .opening-tools {
+    justify-content: space-between;
+    width: 100%;
+  }
+}

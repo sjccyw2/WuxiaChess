@@ -302,6 +302,14 @@ const artCard = installArtDetail($('field-arts'), () => ({
   state,
   unit: state?.run ? selected() : null
 }));
+// The same card for the arts equipped in 整備's 陣容 pane (inkLook), read from the hero shown there.
+const paneArtCard = POLISH.inkLook
+  ? installArtDetail(
+      $('modal-content'),
+      () => ({ state, unit: state?.run && dialogState === 'team' ? G.find(state, viewId) : null }),
+      { entry: '.ink-art[data-id]', host: dialog, id: 'pane-art-detail' }
+    )
+  : null;
 // The first board's tutorial reads the game through this and changes nothing in it.
 const coach = installTutorial({
   dialog,
@@ -999,6 +1007,7 @@ function drawModal(keepScroll = false) {
     dialog.classList.toggle('ui-turn', !dialog.open || shown !== dialog.dataset.shown);
     dialog.dataset.shown = shown;
   }
+  paneArtCard?.sync();
   X.dockForecast(dialog, board?.layers, state, strikeData, dialogState);
   refreshDev();
   // 布陣: the board outlines the formation the open preview would lay.
@@ -2446,6 +2455,15 @@ function command(action, id, data = {}, keyboard = false) {
       if (dialogState === 'team' && G.company(state).some((v) => v.id === id)) {
         viewId = id;
         Object.assign(teamUI, { tab: 'arts', skill: 'school', node: null, slot: 0, pickedHero: null });
+        drawModal();
+        audio('tap');
+      }
+      break;
+    // 配招 beside the arts in the 陣容 pane (inkLook): the 武學 tab's 招式配置, for that hero.
+    case 'hero-loadout':
+      if (dialogState === 'team' && G.company(state).some((v) => v.id === id)) {
+        viewId = id;
+        Object.assign(teamUI, { tab: 'arts', skill: 'loadout', node: null, slot: 0, pickedHero: null });
         drawModal();
         audio('tap');
       }

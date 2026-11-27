@@ -323,7 +323,7 @@ html.polish-ink-look #modal :is(.gold-btn, .run-primary, .mj-march)::after {
 @media (max-height: 500px) and (orientation: landscape) {
   html.polish-ink-look {
     --ink-stone-size: 74px;
-    --ink-pad: 18px;
+    --ink-pad: max(28px, calc(env(safe-area-inset-left, 0px) + 14px));
   }
   html.polish-ink-look #modal[data-full] .mj-fixed-head {
     padding-top: 10px;
@@ -364,5 +364,55 @@ html.polish-ink-look #modal :is(.gold-btn, .run-primary, .mj-march)::after {
   html.polish-ink-look #modal[data-full] .mj-scroll {
     padding-right: calc(var(--ink-stone-size) + 2 * var(--ink-pad) + 8px);
     padding-bottom: 16px;
+  }
+}
+
+/* The old title bar's striped bookmark (10-folio.css) and gold tick (09-phone-landscape.css): the
+   bar is gone, so they go with it. */
+html.polish-ink-look #modal .mj-fixed-head::after {
+  display: none;
+}
+
+/* Room at the edges (the producer, 2026-11-27: the words felt as if they ran off the screen).
+   Pages: at least 24 px on a phone, up to 80 px on a wide screen; the battle: at least 20 px.
+   A notch or rounded corner (safe-area insets) adds to it. */
+html.polish-ink-look {
+  --ink-pad: max(clamp(24px, 5.2vw, 80px), calc(env(safe-area-inset-left, 0px) + 14px));
+}
+html.polish-ink-look .battlefield {
+  --margin: clamp(20px, 2.4vw, 44px);
+  --left: max(var(--margin), calc(env(safe-area-inset-left, 0px) + 12px));
+  --right: max(var(--margin), calc(env(safe-area-inset-right, 0px) + 12px));
+  --top: max(var(--margin), calc(env(safe-area-inset-top, 0px) + 8px));
+  --bottom: max(var(--margin), calc(env(safe-area-inset-bottom, 0px) + 8px));
+}
+html.polish-ink-look #modal[data-full] .mj-fixed-foot {
+  padding-bottom: max(clamp(22px, 3.4vh, 40px), calc(env(safe-area-inset-bottom, 0px) + 12px));
+}
+html.polish-ink-look #modal[data-full] .mj-fixed-head {
+  padding-top: max(clamp(20px, 3.6vh, 40px), calc(env(safe-area-inset-top, 0px) + 10px));
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  html.polish-ink-look {
+    --ink-pad: max(28px, calc(env(safe-area-inset-left, 0px) + 14px));
+  }
+  html.polish-ink-look .battlefield {
+    --margin: 16px;
+    --left: max(26px, calc(env(safe-area-inset-left, 0px) + 12px));
+    --right: max(26px, calc(env(safe-area-inset-right, 0px) + 12px));
+  }
+  html.polish-ink-look #modal[data-full] .mj-fixed-head {
+    padding-top: 14px;
+  }
+  html.polish-ink-look #modal[data-full] .mj-fixed-foot {
+    padding-bottom: 14px;
+  }
+}
+/* An upright phone: the page scrolls under the foot, so the foot stands on a wash of ink and
+   nothing passing under it is read through the words. */
+@media (max-width: 600px) and (orientation: portrait) {
+  html.polish-ink-look #modal[data-full] .mj-fixed-foot {
+    padding-top: 26px;
+    background: linear-gradient(0deg, rgba(var(--ink-wash), 0.96) 0, rgba(var(--ink-wash), 0.9) 62%, rgba(var(--ink-wash), 0));
   }
 }

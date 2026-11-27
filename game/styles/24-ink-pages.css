@@ -541,3 +541,81 @@ html.polish-ink-look #modal[data-page='camp'] .mj-buy:is(:hover, :focus, :focus-
     grid-template-columns: 1fr;
   }
 }
+
+/* The painted figures start below the page's title and fade in at the top, so no head meets the
+   edge of the screen (the producer, 2026-11-27). */
+html.polish-ink-look #modal[data-full] .fy-story-body > .fy-speaker-portrait {
+  --m: linear-gradient(90deg, #000 50%, transparent 98%), linear-gradient(180deg, transparent 0, #000 16%, #000 78%, transparent);
+  top: clamp(64px, 9vh, 96px);
+  bottom: 0;
+  height: auto;
+  object-position: center 6%;
+}
+html.polish-ink-look #modal[data-page='camp'] .mj-market::before,
+html.polish-ink-look #modal[data-page='bowls'] .lk-table::before {
+  --m: linear-gradient(90deg, #000 42%, transparent 96%), linear-gradient(180deg, transparent 0, #000 18%);
+  top: clamp(64px, 9vh, 96px);
+  height: auto;
+  background-position: center 6%;
+}
+@media (max-width: 600px) {
+  html.polish-ink-look #modal[data-full] .fy-story-body > .fy-speaker-portrait {
+    --m: linear-gradient(0deg, transparent 0, #000 38%), linear-gradient(180deg, transparent 0, #000 18%);
+    top: 60px;
+    bottom: auto;
+    height: 58dvh;
+    object-position: center 4%;
+  }
+  html.polish-ink-look #modal[data-full] .fy-story .mj-scroll {
+    padding-left: var(--ink-pad);
+    padding-right: var(--ink-pad);
+  }
+  html.polish-ink-look #modal[data-page='camp'] .mj-market::before,
+  html.polish-ink-look #modal[data-page='bowls'] .lk-table::before {
+    top: 56px;
+    height: 280px;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  html.polish-ink-look #modal[data-full] .fy-story-body > .fy-speaker-portrait {
+    top: 44px;
+  }
+  html.polish-ink-look #modal[data-page='camp'] .mj-market::before,
+  html.polish-ink-look #modal[data-page='bowls'] .lk-table::before {
+    top: 44px;
+  }
+}
+/* The line stops short of the stone's column. */
+html.polish-ink-look #modal[data-full] .fy-dialogue {
+  max-width: min(780px, calc(100% - var(--ink-stone-size) - 40px));
+}
+@media (max-width: 600px) {
+  html.polish-ink-look #modal[data-full] .fy-dialogue {
+    max-width: 100%;
+  }
+}
+
+/* The story's words: in from the edges and well clear of the foot (the producer, 2026-11-27). */
+html.polish-ink-look #modal[data-full] .fy-story .mj-scroll {
+  padding-bottom: calc(var(--ink-stone-size) + 64px);
+}
+html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot .gold-btn {
+  padding: 6px;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+@media (max-width: 600px) {
+  html.polish-ink-look #modal[data-full] .fy-story .mj-scroll {
+    padding-left: calc(var(--ink-pad) + 10px);
+    padding-right: calc(var(--ink-pad) + 10px);
+  }
+  html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot {
+    padding-left: calc(var(--ink-pad) + 10px);
+    padding-right: calc(var(--ink-pad) + 4px);
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  html.polish-ink-look #modal[data-full] .fy-story .mj-scroll {
+    padding-bottom: 20px;
+  }
+}

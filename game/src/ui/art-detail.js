@@ -74,14 +74,16 @@ function artDetail(s, u, id) {
 }
 
 // list: the element the arts list is drawn into (it is redrawn often, so events are read on it);
-// read: () => ({ state, unit }) for the hero whose list it is.
-function installArtDetail(list, read) {
+// read: () => ({ state, unit }) for the hero whose list it is. 整備's 陣容 pane uses it too (inkLook).
+// options.entry: which elements are entries (the battle list's by default); options.host: where the
+// card lives (a page in the modal dialog needs it inside the dialog, which shuts out the rest).
+function installArtDetail(list, read, { entry = '.field-art[data-id]', host = document.body, id = 'art-detail' } = {}) {
   const card = document.createElement('div');
   card.className = 'art-detail';
-  card.id = 'art-detail';
+  card.id = id;
   card.setAttribute('role', 'tooltip');
   card.hidden = true;
-  document.body.append(card);
+  host.append(card);
   let timer = 0,
     press = null, // the finger resting on an entry: { id, x, y }
     swallow = false, // the click that ends a long press is not a pick
@@ -89,7 +91,7 @@ function installArtDetail(list, read) {
     byMouse = false, // the card was opened by a resting mouse pointer
     picked = null; // the entry just picked: no card for it until the pointer or focus leaves it
 
-  const entryOf = (e) => e.target.closest?.('.field-art[data-id]');
+  const entryOf = (e) => e.target.closest?.(entry);
   function place(button) {
     const r = button.getBoundingClientRect(),
       vw = innerWidth,
@@ -239,7 +241,7 @@ function installArtDetail(list, read) {
     sync() {
       if (list.closest('[hidden]')) picked = null;
       if (card.hidden) return;
-      const b = list.querySelector('.field-art[data-id="' + CSS.escape(shownFor || '') + '"]');
+      const b = list.querySelector(entry.replace('[data-id]', '') + '[data-id="' + CSS.escape(shownFor || '') + '"]');
       if (!b || b.closest('[hidden]')) hide();
       else place(b);
     },
