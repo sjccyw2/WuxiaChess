@@ -770,28 +770,32 @@ function equipItems(s) {
     if (!best || !G.equip(s, best.u, best.id)) return;
   }
 }
+// 韋小寶's shop: the dice cups first (the first cup, when he has brought them), then purchases
+// one at a time (nextBuy) until none is worth it, at most twelve.
 function shop(s) {
   const r = s.run;
   if (r.last?.visit && FM.coverBowls(s)) FM.pickBowl(s, 0);
-  const healing = () => Object.entries(s.stock).filter(([id, n]) => G.ITEMS[id]?.kind === 'use' && G.ITEMS[id].hp).reduce((a, [, n]) => a + n, 0);
   for (let guard = 0; guard < 12; guard++) {
-    const offers = r.shop.filter((o) => o.left > 0 && o.price <= r.coins && G.ITEMS[o.id]);
-    const meds = offers.filter((o) => G.ITEMS[o.id].kind === 'use' && G.ITEMS[o.id].hp).sort((a, b) => a.price - b.price);
-    if (healing() < 4 && meds.length) {
-      R.buy(s, meds[0].id);
-      continue;
-    }
-    const kit = offers
-      .filter((o) => G.ITEMS[o.id].kind !== 'use' && r.coins - o.price >= 10)
-      .map((o) => ({ o, g: Math.max(...G.company(s).map((u) => itemGain(s, u, o.id))) }))
-      .filter((x) => x.g > 1)
-      .sort((a, b) => b.g / b.o.price - a.g / a.o.price);
-    if (kit.length) {
-      R.buy(s, kit[0].o.id);
-      continue;
-    }
-    break;
+    const id = nextBuy(s);
+    if (!id) break;
+    R.buy(s, id);
   }
+}
+// The next thing to buy, or null: the cheapest medicine while the stock holds fewer than four
+// healing doses, else the weapon or gear that most raises a hero for its price, keeping 10 兩 back.
+// (自動整輪 asks it once a purchase, so each shows on screen.)
+function nextBuy(s) {
+  const r = s.run;
+  const healing = () => Object.entries(s.stock).filter(([id, n]) => G.ITEMS[id]?.kind === 'use' && G.ITEMS[id].hp).reduce((a, [, n]) => a + n, 0);
+  const offers = r.shop.filter((o) => o.left > 0 && o.price <= r.coins && G.ITEMS[o.id]);
+  const meds = offers.filter((o) => G.ITEMS[o.id].kind === 'use' && G.ITEMS[o.id].hp).sort((a, b) => a.price - b.price);
+  if (healing() < 4 && meds.length) return meds[0].id;
+  const kit = offers
+    .filter((o) => G.ITEMS[o.id].kind !== 'use' && r.coins - o.price >= 10)
+    .map((o) => ({ o, g: Math.max(...G.company(s).map((u) => itemGain(s, u, o.id))) }))
+    .filter((x) => x.g > 1)
+    .sort((a, b) => b.g / b.o.price - a.g / a.o.price);
+  return kit.length ? kit[0].o.id : null;
 }
 function prepare(s) {
   for (const u of G.company(s)) spendPoints(s, u);
@@ -840,5 +844,6 @@ export {
   equipArts,
   prepare,
   shop,
+  nextBuy,
   deployPost
 };

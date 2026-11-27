@@ -290,11 +290,19 @@ can reach, presses 開戰, and plays every hero turn through the game's own step
 as a player's would: the hero chosen and his walk tiles, the walk, the blow or art with its motion,
 numbers and tips, 回身, bracing, medicine; the enemy phase is the game's own. The speed applies to
 the board's motion (`rate` in `actors/actors.js`) and to the pauses between pieces. It stops when
-the board is decided, at the page after it. While it plays, taps on the board, the arts and 結束回合
+the board is decided, at the page after it.
+
+**自動整輪 (watching the AI play a whole run)**, from any step of a run still going (a board, its
+pages, 韋小寶's shop), plays each board as 自動對弈 does and goes on between them: the story after
+the board, 韋小寶's dice cups (it opens the first cup), his shop (one purchase at a time, what the
+simulated player buys: medicine until the stock holds four healing doses, then the weapon or gear
+that most raises a hero for its price, keeping 10 兩; `nextBuy`), 啟程, and the next board, to the
+run's last page or, when the last board is won, the ending film. 停止對弈 stops either. While it plays, taps on the board, the arts and 結束回合
 do nothing; a page opened meanwhile (a hero's sheet, the log) pauses it until it is closed. It is
 deterministic: the player has nothing random in it and neither has the enemy, so a board played
 again from its 起陣 (重試此局) is played move for move the same (checked on 2026-11-27: the same 222
-lines of battle log twice). The code is `game/src/ui/autoplay.js`; it loads the player only when
+lines of battle log twice), and a whole run started again from 試局 with the same fixed 種子 is
+played the same, board for board. The code is `game/src/ui/autoplay.js`; it loads the player only when
 first used.
 
 **自動整備**, in 整備 before a board, makes the choices the simulated player makes before every
@@ -317,8 +325,11 @@ the bench; the last board is always in the fifth 境界, with 無名 leading and
 beside him). The run
 starts at that board's 軍情 page, its enemies as strong as at the board's usual place in a run and
 in the 境界 picked; every hero has 20 武學點 and the purse 1000 兩 (`DEV_TEST` and `devTestRun` in
-`game/src/rules/journey.js`). After the board the run goes on as usual. The last pick is
-remembered. Starting a test battle replaces the save, and its result counts in the profile like
+`game/src/rules/journey.js`). After the board the run goes on as usual. 種子 fixes the run's seed
+(1 to 5, and 1 unless another is picked) so that the run is the same every time it is started:
+its route, its secondaries, the shop's stock and the dice cups, and so whatever 自動整輪 plays in it
+(`TEST_SEEDS` and `testRun` in `game/src/ui/dev-mode.js`); 隨機 draws a new seed each time, as a
+run does. 跳至終局 takes the same seed. The last pick is remembered. Starting a test battle replaces the save, and its result counts in the profile like
 any run.
 
 Two more buttons, always there and set apart, are for seeing the first visit again (the opening

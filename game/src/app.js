@@ -23,7 +23,7 @@ import * as R from './rules/journey.js';
 import { rollView, lotDetail, prologuePage, prologueSteps, firstVisit } from './ui/run-views.js';
 import { playFilm, playingFilm } from './ui/intro-film.js';
 import { realmView } from './ui/realm-views.js';
-import { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick } from './ui/dev-mode.js';
+import { devMode, devWindow, devPanel, devRestart, devEnter, devTestView, loadPick, changePick, testRun } from './ui/dev-mode.js';
 import { createAutoplay } from './ui/autoplay.js';
 import { MAZE_TALE } from './data/maze-tale.js';
 import { campView, frameDialog } from './ui/mastery-views.js';
@@ -1622,9 +1622,10 @@ const auto = dev
           screen,
           page: dialog.open ? dialogState : null,
           deploying: deploying(),
-          playing: board.layers.playing
+          playing: board.layers.playing,
+          bowlsBusy: Date.now() < bowlUntil // the cups still being shuffled
         }),
-        command: (action) => command(action),
+        command: (action, id) => command(action, id),
         swap: (from, to) => swapPosts(from, to),
         select: (id) => {
           hud.closePanel();
@@ -1710,12 +1711,14 @@ function refreshDev() {
   if (!dev) return;
   keepRetry();
   const battle = screen === 'battle' && state.run.status === 'battle' && !state.result;
+  // 自動整輪 may start from any step of a run still going: a board, its pages, the shop.
+  const inRun = screen === 'battle' && ['battle', 'camp'].includes(state.run.status);
   const html = devPanel({
     battle,
     side: !!state.run.side,
     fight: battle && state.run.scene === 'fight' && !state.run.deploying,
     retry: canRetry(),
-    auto: battle ? { on: auto.on, speed: auto.speed } : null,
+    auto: inRun || auto.on ? { on: auto.on, speed: auto.speed, board: battle } : null,
     prep: dialog.open && dialogState === 'team' && state.run.scene === 'prep'
   });
   dev.show(html, dialog.open ? dialog : document.body);
@@ -2200,10 +2203,15 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     }
     case 'dev-auto':
+    case 'dev-auto-run': {
+      // 自動對弈 (this board) or 自動整輪 (the run); either button stops whichever plays.
       if (!dev) break;
+      const how = action === 'dev-auto' ? 'board' : 'run',
+        was = auto.kind;
       dev.fold();
-      notice(auto.toggle() ? '自動對弈開始（' + auto.speed + '×）。' : '自動對弈已停止。');
+      notice(auto.toggle(how) ? auto.name(how) + '開始（' + auto.speed + '×）。' : auto.name(was) + '已停止。');
       break;
+    }
     case 'dev-auto-speed':
       if (dev) notice('自動對弈速度 ' + auto.cycleSpeed() + '×');
       break;
@@ -2225,7 +2233,7 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-finale': {
       // The last board at once, with the heroes last picked on the 試局 page.
       if (!dev) break;
-      const next = R.devTestRun({ ...loadPick(), map: G.LAST_MAP }, state.run.chronicle);
+      const next = R.devTestRun(testRun({ ...loadPick(), map: G.LAST_MAP }), state.run.chronicle);
       if (!next) break;
       ++aiRun;
       state = next;
@@ -2257,6 +2265,7 @@ function command(action, id, data = {}, keyboard = false) {
     case 'dev-test-realm':
     case 'dev-test-hero':
     case 'dev-test-all':
+    case 'dev-test-seed':
       if (!dev || dialogState !== 'devtest') break;
       devPick = changePick(devPick, action.slice(9), id);
       drawModal(true);
@@ -2264,7 +2273,7 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'dev-test-go': {
       if (!dev || dialogState !== 'devtest' || !devPick.heroes.length) break;
-      const next = R.devTestRun(devPick, state.run.chronicle);
+      const next = R.devTestRun(testRun(devPick), state.run.chronicle);
       if (!next) break;
       ++aiRun;
       state = next;
