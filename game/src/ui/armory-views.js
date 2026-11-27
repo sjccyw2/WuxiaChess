@@ -1,3 +1,4 @@
+import { POLISH } from '../polish.js';
 import { POSTS, boardPlan, planGrid, planKey } from './board-plan.js';
 import * as G from '../rules/game.js';
 import * as R from '../rules/journey.js';
@@ -347,6 +348,65 @@ function armory(s, u, ui, more = '') {
       '</small></div><aside>' +
       actions +
       '</aside></section>'
+    );
+  }
+  // Polish (inkLook): the hero's figure in the middle, weapons in a column on the left, armour in
+  // a column on the right, medicine in a row along the bottom (the producer, 2026-11-27). What
+  // the hero wears leads its column, ringed in gold. A tap picks a thing and the card under the
+  // figure says what it does and offers 裝備 / 卸回公庫 / 服用; things still drag onto the figure.
+  if (POLISH.inkLook) {
+    const rank = (v) => (v.owner === u.id ? 0 : v.owner === 'stock' ? 1 : 2);
+    const reel = (kind, label, glyph) => {
+      const items = all.filter((v) => v.item.kind === kind).sort((a, b) => rank(a) - rank(b));
+      return (
+        '<section class="ink-rail ink-rail-' +
+        kind +
+        '" aria-label="' +
+        label +
+        '"><h4>' +
+        label +
+        '</h4><div class="ink-reel">' +
+        (items.map((v) => tile(v).replace('class="fo-item', 'class="fo-item' + (v.owner === u.id ? ' worn' : ''))).join('') ||
+          '<p class="ink-reel-empty">' + icon(glyph, 20) + '<span>無' + label + '</span></p>') +
+        '</div></section>'
+      );
+    };
+    const wearing = (kind) =>
+      '<span class="ink-wearing"><small>' +
+      slotNames[kind] +
+      '</small><b>' +
+      (G.ITEMS[u[kind]]?.name || '未裝備') +
+      '</b></span>';
+    return (
+      '<div class="ink-armory"><header class="ink-arm-head"><h3>' +
+      who(u) +
+      '</h3><small>氣血 ' +
+      u.hp +
+      '／' +
+      u.maxHp +
+      '　內力 ' +
+      u.mp +
+      '／' +
+      u.maxMp +
+      '</small>' +
+      more +
+      '</header><div class="ink-arm-stage">' +
+      reel('weapon', '兵器', 'sword') +
+      '<div class="ink-arm-figure" ' +
+      dropAttrs('gear', 'auto') +
+      '><img draggable="false" alt="' +
+      who(u) +
+      '的全身立像" src="' +
+      esc(art('figure-' + u.id + '.webp')) +
+      '"><div class="ink-arm-worn">' +
+      wearing('weapon') +
+      wearing('gear') +
+      '</div></div>' +
+      reel('gear', '護具', 'shield') +
+      '</div>' +
+      inspector(chosen) +
+      reel('use', '丹藥', 'bottle') +
+      '</div>'
     );
   }
   const filters = ['all', 'weapon', 'gear', 'use']

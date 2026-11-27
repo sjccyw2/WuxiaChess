@@ -160,11 +160,14 @@ function heroPane(s, u, line) {
         '</dd></div>'
     )
     .join('');
+  // Polish (inkLook): each equipped art can be read in full on a long press or a resting pointer
+  // (ui/art-detail.js), so it carries its id and can take the keyboard's focus.
+  const readable = (key) => (POLISH.inkLook && key ? ' data-id="' + esc(key) + '" tabindex="0"' : '');
   const slots = (u.slots || []).map((key, i) => {
     const a = key ? G.artFor(u, key) : null;
     return (
       '<li' +
-      (a ? '' : ' class="fy-art-empty"') +
+      (a ? ' class="ink-art"' + readable(key) : ' class="fy-art-empty"') +
       '>' +
       icon(a ? a.icon || 'diamond' : 'plus', 15) +
       '<small>第' +
@@ -224,7 +227,14 @@ function heroPane(s, u, line) {
     '</strong><p>領隊效果 · ' +
     commandDescription(u.id) +
     '</p></div></div>' +
-    '<section class="fy-pane-arts" aria-label="出戰招式"><h4>出戰招式</h4><ul><li class="fy-art-basic">' +
+    '<section class="fy-pane-arts" aria-label="出戰招式"><h4>出戰招式</h4>' +
+    // Polish (inkLook): straight to 招式配置 for this hero.
+    (POLISH.inkLook
+      ? btn('hero-loadout', '配招', 'mj-action ink-loadout', tag(u.id) + ' title="到「招式配置」為' + name(u) + '配招"')
+      : '') +
+    '<ul><li class="fy-art-basic' +
+    (POLISH.inkLook ? ' ink-art"' + readable('basic') : '"') +
+    '>' +
     icon('sword', 15) +
     '<small>普攻</small><span>' +
     esc(G.basicFor(u).name) +

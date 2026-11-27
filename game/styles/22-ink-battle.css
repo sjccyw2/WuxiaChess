@@ -1061,3 +1061,349 @@ html.polish-ink-look .battlefield .boss-gauge {
     width: min(240px, 34vw);
   }
 }
+/* An upright phone with the wider margins: the plate and its three words fit across. */
+@media (max-width: 600px) {
+  html.polish-ink-look .battlefield .unit-dock {
+    gap: 12px;
+  }
+  html.polish-ink-look .battlefield .unit-card {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 10px;
+  }
+  html.polish-ink-look .battlefield :is(.unit-face, .unit-face img) {
+    width: 64px;
+    height: 64px;
+  }
+  html.polish-ink-look .battlefield .unit-vital .meter {
+    width: 118px;
+  }
+  html.polish-ink-look .battlefield .unit-tools {
+    gap: 12px;
+  }
+  html.polish-ink-look .battlefield .hud-tool {
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+}
+/* An upright phone: the plate keeps its own width and its numbers never wrap; 隊伍 / 藥囊 / 視角
+   sit under it instead of beside it, so they never squeeze it (the producer's phone, 2026-11-27). */
+@media (max-width: 600px) {
+  html.polish-ink-look .battlefield .unit-dock {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  html.polish-ink-look .battlefield .unit-card {
+    flex: none;
+    grid-template-columns: 64px max-content;
+  }
+  html.polish-ink-look .battlefield :is(.unit-name, .unit-vital, .unit-vital > b, .unit-vital .ink-max) {
+    white-space: nowrap;
+  }
+  html.polish-ink-look .battlefield .unit-tools {
+    margin-left: 74px;
+    padding: 0;
+    gap: 22px;
+  }
+  html.polish-ink-look .battlefield .hud-tool {
+    min-height: 32px;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+  }
+}
+
+/* An upright phone: the arts one under another, each with what it does (the producer: the compact
+   two-abreast entries said too little), and the numbers in fixed columns so they line up:
+     ○ 鐵鞭橫江                    免內力
+       普攻 · 1 格        威力 23
+       對方可還擊　絆足 */
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel.arts-flyout {
+    left: var(--left);
+    right: var(--right);
+    width: auto;
+    padding: 26px 22px 16px;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #field-arts {
+    display: block;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) 86px 64px;
+    grid-template-rows: auto auto auto;
+    column-gap: 10px;
+    row-gap: 2px;
+    align-items: baseline;
+    width: 100%;
+    padding: 10px 0;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > i {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    align-self: start;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > span,
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-facts {
+    display: contents;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art strong {
+    grid-column: 2 / 4;
+    grid-row: 1;
+    font-size: 19px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > b {
+    grid-column: 4;
+    grid-row: 1;
+    justify-self: end;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > span > small {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-power {
+    grid-column: 3 / 5;
+    grid-row: 2;
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    margin: 0;
+    white-space: nowrap;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-power small {
+    font-size: 11px;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-power b {
+    font-size: 19px;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-effects {
+    grid-column: 2 / 5;
+    grid-row: 3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 12px;
+    font: 400 13px/1.5 var(--sans);
+    color: var(--ink-white-dim);
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-effects span {
+    display: inline;
+    margin: 0;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel :is(.field-undo, .field-loadout) {
+    display: inline-flex;
+    width: auto;
+    margin-top: 6px;
+    padding: 6px 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art.armed,
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art[aria-pressed='true'] {
+    border: 0;
+    background: none;
+    box-shadow: inset 3px 0 0 var(--ink-kaya);
+    padding-left: 12px;
+    margin-left: -12px;
+    width: calc(100% + 12px);
+  }
+}
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-power small {
+    display: inline;
+  }
+}
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  html.polish-ink-look .battlefield:has(#arts-panel:not([hidden])) .unit-dock {
+    visibility: hidden;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel.arts-flyout {
+    top: auto;
+    bottom: calc(var(--bottom) + var(--ink-stone-size) + 14px);
+  }
+}
+
+/* ---------- an upright phone, second pass (the producer's phone, 2026-11-27) ----------
+   The arts list: a low strip over the foot, each art in two lines (name and cost; what it does),
+   so most of the board stays in view. */
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel.arts-flyout {
+    --f: linear-gradient(transparent, #000 18px, #000 calc(100% - 12px), transparent);
+    padding: 16px 16px 8px;
+    max-height: 38dvh;
+    overflow-y: auto;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art {
+    grid-template-columns: 26px minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    row-gap: 0;
+    padding: 7px 0;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > i {
+    width: 24px;
+    height: 24px;
+    grid-row: 1 / 3;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art strong {
+    grid-column: 2;
+    font-size: 16px;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > b {
+    grid-column: 3;
+    font-size: 12px;
+  }
+  /* Second line: reach, power and what it does, one run of text. */
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > span > small,
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-power,
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-effects {
+    grid-row: 2;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-facts {
+    display: block;
+    grid-column: 2 / 4;
+    grid-row: 2;
+    margin: 0;
+    font: 400 12px/1.5 var(--sans);
+    color: var(--ink-white-dim);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > span > small {
+    display: none;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-facts > * {
+    display: inline;
+    margin: 0 8px 0 0;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-power small {
+    display: none;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-power b {
+    font-size: 15px;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-power b::before {
+    content: '威力 ';
+    font: 400 12px var(--sans);
+    color: var(--ink-white-dim);
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-effects,
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-effects span {
+    display: inline;
+    font-size: 12px;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-effects span::before {
+    content: '';
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-effects span + span::before {
+    content: '・';
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel :is(.field-undo, .field-loadout) {
+    margin-top: 2px;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-undo .key-hint {
+    display: none;
+  }
+
+  /* The strike preview: the two fighters across the top, facing; the blow large under them;
+     the notes in one centred column; the foot. Names never break. */
+  html.polish-ink-look #modal[data-page='attack-preview'] .mj-frame {
+    padding: 40px 18px 14px;
+    gap: 6px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .mj-scroll {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: 'a b' 'mid mid' 'lines lines';
+    gap: 4px 12px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .duelist {
+    grid-template-columns: 50px minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    column-gap: 10px;
+    justify-items: start;
+    align-items: center;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .duelist:last-child {
+    direction: rtl;
+    justify-items: start;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .duelist > img {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    width: 50px;
+    height: 50px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] :is(.duelist > small, .duelist > strong, .fc-bar) {
+    grid-column: 2;
+    white-space: nowrap;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .duelist > small {
+    font-size: 11px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .duelist > strong {
+    font-size: 16px;
+    letter-spacing: 0.04em;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .fc-bar {
+    width: 100%;
+    gap: 3px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .fc-figures {
+    font-size: 14px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .fc-figures i {
+    margin: 0 2px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .fc-figures small {
+    font-size: 11px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .fc-track {
+    height: 6px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .duel-mid {
+    padding-top: 8px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .duel-mid strong {
+    font-size: 14px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .forecast-lines {
+    gap: 2px;
+    font-size: 12px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .forecast-lines > div {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .forecast-lines > div:first-child {
+    flex-direction: column;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .forecast-lines > div:first-child b {
+    font-size: 44px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .forecast-lines > div b {
+    font-size: 13px;
+  }
+  html.polish-ink-look #modal[data-page='attack-preview'] .modal-foot {
+    margin-top: 4px;
+  }
+}
+/* A stone's word breaks evenly: 確認／出招, 施展／招式, not 確認出／招. */
+html.polish-ink-look :is(#modal .gold-btn, .battlefield .command-dock .turn-action) {
+  text-wrap: balance;
+}
+html.polish-ink-look #modal[data-page='attack-preview'] .modal-foot .gold-btn,
+html.polish-ink-look #modal[data-full] .mj-fixed-foot .gold-btn {
+  padding-inline: calc(var(--ink-stone-size) * 0.2);
+}
