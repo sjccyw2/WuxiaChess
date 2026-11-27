@@ -33,26 +33,7 @@ html.polish-ink-look {
 }
 
 /* ---------- the full-screen pages ---------- */
-html.polish-ink-look #modal:is(
-    [data-page='realm'],
-    [data-page='formation'],
-    [data-page='lot-detail'],
-    [data-page='prologue'],
-    [data-page='encounter'],
-    [data-page='story'],
-    [data-page='team'],
-    [data-page='camp'],
-    [data-page='brief'],
-    [data-page='goals'],
-    [data-page='result'],
-    [data-page='sheet'],
-    [data-page='skills'],
-    [data-page='inventory'],
-    [data-page='wake'],
-    [data-page='codex'],
-    [data-page='help'],
-    [data-page='bowls']
-  ) {
+html.polish-ink-look #modal[data-full] {
   --mj-max-h: 100dvh;
   --mj-pad: var(--ink-pad);
   --ink-full: 1;
@@ -72,38 +53,38 @@ html.polish-ink-look #modal[data-page]::backdrop {
   background: rgba(6, 10, 9, 0.38);
   backdrop-filter: blur(14px) saturate(0.7) brightness(0.62);
 }
-html.polish-ink-look #modal[data-page] > .modal-shell,
-html.polish-ink-look #modal[data-page] #modal-content {
+html.polish-ink-look #modal[data-full] > .modal-shell,
+html.polish-ink-look #modal[data-full] #modal-content {
   height: 100%;
 }
-html.polish-ink-look #modal[data-page] .mj-frame {
+html.polish-ink-look #modal[data-full] .mj-frame {
   max-height: 100dvh;
   height: 100%;
 }
 
 /* The page's head: no bar. Where it is, in small type, and the page's name, large. */
-html.polish-ink-look #modal[data-page] .mj-fixed-head {
+html.polish-ink-look #modal[data-full] .mj-fixed-head {
   border: 0;
   background: none;
   padding: clamp(16px, 3.4vh, 34px) var(--ink-pad) 8px;
   min-height: 0;
   align-items: flex-start;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-head .modal-title {
+html.polish-ink-look #modal[data-full] .mj-fixed-head .modal-title {
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-head .modal-title > svg,
-html.polish-ink-look #modal[data-page] .mj-fixed-head .modal-title > [data-icon] {
+html.polish-ink-look #modal[data-full] .mj-fixed-head .modal-title > svg,
+html.polish-ink-look #modal[data-full] .mj-fixed-head .modal-title > [data-icon] {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-head .modal-title h2 {
+html.polish-ink-look #modal[data-full] .mj-fixed-head .modal-title h2 {
   font: 700 clamp(22px, 2.2vw, 30px) / 1.2 var(--serif);
   letter-spacing: 0.12em;
   color: var(--ink-white);
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-head .square-btn,
-html.polish-ink-look #modal[data-page] .mj-fixed-head .head-saves {
+html.polish-ink-look #modal[data-full] .mj-fixed-head .square-btn,
+html.polish-ink-look #modal[data-full] .mj-fixed-head .head-saves {
   border: 0;
   background: none;
   box-shadow: none;
@@ -111,21 +92,21 @@ html.polish-ink-look #modal[data-page] .mj-fixed-head .head-saves {
   font: 600 15px var(--serif);
   letter-spacing: 0.14em;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-head .square-btn:hover,
-html.polish-ink-look #modal[data-page] .mj-fixed-head .head-saves:hover {
+html.polish-ink-look #modal[data-full] .mj-fixed-head .square-btn:hover,
+html.polish-ink-look #modal[data-full] .mj-fixed-head .head-saves:hover {
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .mj-tools {
+html.polish-ink-look #modal[data-full] .mj-tools {
   background: none;
   border: 0;
 }
-html.polish-ink-look #modal[data-page] .mj-scroll {
+html.polish-ink-look #modal[data-full] .mj-scroll {
   scrollbar-color: rgba(242, 238, 230, 0.25) transparent;
   padding-top: 8px;
 }
 
 /* The foot: no bar. The step forward is the white stone; the rest are words. */
-html.polish-ink-look #modal[data-page] .mj-fixed-foot {
+html.polish-ink-look #modal[data-full] .mj-fixed-foot {
   border: 0;
   background: none;
   padding: 10px var(--ink-pad) clamp(14px, 3vh, 34px);
@@ -159,7 +140,7 @@ html.polish-ink-look #modal .modal-foot .gold-btn:disabled {
   opacity: 0.35;
   transform: none;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-foot .gold-btn {
+html.polish-ink-look #modal[data-full] .mj-fixed-foot .gold-btn {
   flex: 0 0 auto;
   width: var(--ink-stone-size);
   height: var(--ink-stone-size);
@@ -174,10 +155,10 @@ html.polish-ink-look #modal[data-page] .mj-fixed-foot .gold-btn {
   flex-direction: column;
   gap: 2px;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-foot .gold-btn :is(svg, [data-icon], .key-hint, kbd) {
+html.polish-ink-look #modal[data-full] .mj-fixed-foot .gold-btn :is(svg, [data-icon], .key-hint, kbd) {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-foot :is(.outline-btn, .mj-action, .text-btn, .mj-text-button) {
+html.polish-ink-look #modal[data-full] .mj-fixed-foot :is(.outline-btn, .mj-action, .text-btn, .mj-text-button) {
   border: 0;
   background: none;
   box-shadow: none;
@@ -187,12 +168,12 @@ html.polish-ink-look #modal[data-page] .mj-fixed-foot :is(.outline-btn, .mj-acti
   font: 600 15px var(--serif);
   letter-spacing: 0.16em;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-foot :is(.outline-btn, .mj-action, .text-btn):hover {
+html.polish-ink-look #modal[data-full] .mj-fixed-foot :is(.outline-btn, .mj-action, .text-btn):hover {
   color: var(--ink-white);
 }
 
 /* Words for buttons inside the big pages: no box; the main one of a group is underlined in gold. */
-html.polish-ink-look #modal[data-page] .mj-scroll :is(.outline-btn, .mj-action) {
+html.polish-ink-look #modal[data-full] .mj-scroll :is(.outline-btn, .mj-action) {
   border: 0;
   background: none;
   box-shadow: none;
@@ -202,10 +183,10 @@ html.polish-ink-look #modal[data-page] .mj-scroll :is(.outline-btn, .mj-action) 
   font-weight: 600;
   letter-spacing: 0.12em;
 }
-html.polish-ink-look #modal[data-page] .mj-scroll :is(.outline-btn, .mj-action):hover:not(:disabled) {
+html.polish-ink-look #modal[data-full] .mj-scroll :is(.outline-btn, .mj-action):hover:not(:disabled) {
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .mj-scroll :is(.mj-action.mj-primary, .mj-action.fy-train) {
+html.polish-ink-look #modal[data-full] .mj-scroll :is(.mj-action.mj-primary, .mj-action.fy-train) {
   color: var(--ink-white);
   border-bottom: 2px solid var(--ink-kaya);
   padding-left: 2px;
@@ -213,13 +194,13 @@ html.polish-ink-look #modal[data-page] .mj-scroll :is(.mj-action.mj-primary, .mj
 }
 
 /* Tabs: words; the open one white with a gold line under it. */
-html.polish-ink-look #modal[data-page] .mj-tabs {
+html.polish-ink-look #modal[data-full] .mj-tabs {
   border: 0;
   background: none;
   box-shadow: none;
   gap: clamp(18px, 2.4vw, 34px);
 }
-html.polish-ink-look #modal[data-page] .mj-tab {
+html.polish-ink-look #modal[data-full] .mj-tab {
   border: 0;
   background: none;
   box-shadow: none;
@@ -229,21 +210,21 @@ html.polish-ink-look #modal[data-page] .mj-tab {
   font: 600 16px var(--serif);
   letter-spacing: 0.24em;
 }
-html.polish-ink-look #modal[data-page] .mj-tab :is(svg, [data-icon]) {
+html.polish-ink-look #modal[data-full] .mj-tab :is(svg, [data-icon]) {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .mj-tab[aria-selected='true'] {
+html.polish-ink-look #modal[data-full] .mj-tab[aria-selected='true'] {
   color: var(--ink-white);
   background: none;
   box-shadow: inset 0 -2px 0 var(--ink-kaya);
 }
-html.polish-ink-look #modal[data-page] .mj-tab[aria-selected='true']::after,
-html.polish-ink-look #modal[data-page] .mj-tab[aria-selected='true']::before {
+html.polish-ink-look #modal[data-full] .mj-tab[aria-selected='true']::after,
+html.polish-ink-look #modal[data-full] .mj-tab[aria-selected='true']::before {
   display: none;
 }
 
 /* ---------- the small dialogs (a question, the enemy's page, the guide, saves, settings) ---------- */
-html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [data-page='lot-detail'], [data-page='prologue'], [data-page='encounter'], [data-page='story'], [data-page='team'], [data-page='camp'], [data-page='brief'], [data-page='goals'], [data-page='result'], [data-page='sheet'], [data-page='skills'], [data-page='inventory'], [data-page='wake'], [data-page='codex'], [data-page='help'], [data-page='bowls']) {
+html.polish-ink-look #modal[data-page]:not([data-full]) {
   border: 0;
   border-radius: 3px;
   background: rgba(13, 18, 17, 0.94);
@@ -251,12 +232,12 @@ html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [d
     0 30px 80px rgba(0, 0, 0, 0.6),
     inset 0 1px 0 rgba(201, 164, 98, 0.35);
 }
-html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [data-page='lot-detail'], [data-page='prologue'], [data-page='encounter'], [data-page='story'], [data-page='team'], [data-page='camp'], [data-page='brief'], [data-page='goals'], [data-page='result'], [data-page='sheet'], [data-page='skills'], [data-page='inventory'], [data-page='wake'], [data-page='codex'], [data-page='help'], [data-page='bowls']) :is(.mj-fixed-head, .mj-fixed-foot, .mj-tools) {
+html.polish-ink-look #modal[data-page]:not([data-full]) :is(.mj-fixed-head, .mj-fixed-foot, .mj-tools) {
   background: none;
   border-color: var(--ink-rule);
 }
 html.polish-ink-look #modal .modal-foot .gold-btn,
-html.polish-ink-look #modal:not([data-page='realm'], [data-page='formation'], [data-page='lot-detail'], [data-page='prologue'], [data-page='encounter'], [data-page='story'], [data-page='team'], [data-page='camp'], [data-page='brief'], [data-page='goals'], [data-page='result'], [data-page='sheet'], [data-page='skills'], [data-page='inventory'], [data-page='wake'], [data-page='codex'], [data-page='help'], [data-page='bowls']) .mj-fixed-foot .gold-btn {
+html.polish-ink-look #modal[data-page]:not([data-full]) .mj-fixed-foot .gold-btn {
   padding: 9px 26px;
   min-height: 42px;
   font-size: 15px;
@@ -300,20 +281,20 @@ html.polish-ink-look #modal .gold-btn .ink-sub {
   letter-spacing: 0.08em;
   color: #5c5850;
 }
-html.polish-ink-look #modal[data-page] .mj-scroll {
+html.polish-ink-look #modal[data-full] .mj-scroll {
   flex: 1 1 auto;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-foot .gold-btn:focus-visible {
+html.polish-ink-look #modal[data-full] .mj-fixed-foot .gold-btn:focus-visible {
   outline: 2px solid var(--ink-kaya);
   outline-offset: 5px;
 }
 
 /* The foot floats over the page's lower edge instead of taking a band of its own; the body keeps
    room under its last line so nothing ends up under the stone. */
-html.polish-ink-look #modal[data-page] .mj-frame {
+html.polish-ink-look #modal[data-full] .mj-frame {
   position: relative;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-foot {
+html.polish-ink-look #modal[data-full] .mj-fixed-foot {
   position: absolute;
   left: 0;
   right: 0;
@@ -321,17 +302,67 @@ html.polish-ink-look #modal[data-page] .mj-fixed-foot {
   justify-content: flex-end;
   pointer-events: none;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-foot .gold-btn {
+html.polish-ink-look #modal[data-full] .mj-fixed-foot .gold-btn {
   margin-left: 6px;
 }
-html.polish-ink-look #modal[data-page] .mj-fixed-foot > *,
-html.polish-ink-look #modal[data-page] .mj-fixed-foot button {
+html.polish-ink-look #modal[data-full] .mj-fixed-foot > *,
+html.polish-ink-look #modal[data-full] .mj-fixed-foot button {
   pointer-events: auto;
 }
-html.polish-ink-look #modal[data-page] .mj-scroll {
+html.polish-ink-look #modal[data-full] .mj-scroll {
   padding-bottom: calc(var(--ink-stone-size) + 44px);
 }
 /* The polish layer's light that crosses a gold plate: a stone has no plate to cross. */
 html.polish-ink-look #modal :is(.gold-btn, .run-primary, .mj-march)::after {
   display: none;
+}
+
+/* A phone held sideways: little height, so the foot stands as a column at the right edge (the
+   stone at the bottom, its words above it) and the page keeps clear of that column, not of the
+   bottom. */
+@media (max-height: 500px) and (orientation: landscape) {
+  html.polish-ink-look {
+    --ink-stone-size: 74px;
+    --ink-pad: 18px;
+  }
+  html.polish-ink-look #modal[data-full] .mj-fixed-head {
+    padding-top: 10px;
+    padding-bottom: 2px;
+  }
+  html.polish-ink-look #modal[data-full] .mj-fixed-head .modal-title h2 {
+    font-size: 19px;
+  }
+  html.polish-ink-look #modal[data-full] .mj-fixed-foot {
+    left: auto;
+    top: auto;
+    width: calc(var(--ink-stone-size) + 2 * var(--ink-pad));
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 0 var(--ink-pad) 12px;
+  }
+  html.polish-ink-look #modal[data-full] .mj-fixed-foot > *,
+  html.polish-ink-look #modal[data-full] .mj-fixed-foot aside,
+  html.polish-ink-look #modal[data-full] .mj-fixed-foot .fy-reading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+  }
+  html.polish-ink-look #modal[data-full] .mj-fixed-foot :is(.outline-btn, .mj-action, .text-btn, .mj-text-button) {
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    padding: 4px 0;
+  }
+  html.polish-ink-look #modal[data-full] .mj-fixed-foot .gold-btn {
+    margin: 4px 0 0;
+    font-size: 15px;
+  }
+  html.polish-ink-look #modal[data-full] .mj-scroll {
+    padding-right: calc(var(--ink-stone-size) + 2 * var(--ink-pad) + 8px);
+    padding-bottom: 16px;
+  }
 }

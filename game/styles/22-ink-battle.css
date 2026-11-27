@@ -1008,3 +1008,56 @@ html.polish-ink-look .battlefield .unit-name .unit-spent {
   letter-spacing: 0.1em;
   color: var(--ink-white-dim);
 }
+
+/* Every hero has moved: the stone keeps the old signal as a gold ring that breathes. */
+html.polish-ink-look.polish-action-flow .battlefield .command-dock .field-action.turn-action.ready:enabled {
+  color: #1d2022;
+  background: var(--ink-stone);
+  box-shadow:
+    var(--ink-stone-shadow),
+    0 0 0 3px var(--ink-kaya),
+    0 0 18px rgba(201, 164, 98, 0.6);
+  animation: ink-ready 1.8s ease-in-out infinite;
+}
+@keyframes ink-ready {
+  50% {
+    box-shadow:
+      var(--ink-stone-shadow),
+      0 0 0 3px var(--ink-kaya),
+      0 0 30px rgba(201, 164, 98, 0.85);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.polish-ink-look.polish-action-flow .battlefield .command-dock .field-action.turn-action.ready:enabled {
+    animation: none;
+  }
+}
+/* 求敗's gauge on the last board sits under the board's name, on the same wash. */
+html.polish-ink-look .battlefield .boss-gauge {
+  margin-left: 78px;
+  border: 0;
+  background: rgba(var(--ink-wash), 0.55);
+  box-shadow: none;
+}
+@media (max-height: 500px) and (orientation: landscape), (max-width: 600px) {
+  html.polish-ink-look .battlefield .boss-gauge {
+    margin-left: 58px;
+    width: min(260px, 52vw);
+  }
+}
+/* A phone held sideways: the objective holds the top right, so the tip line takes its own row
+   under the top line, centred, whatever the gauge leaves free. */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 480px) {
+  html.polish-ink-look.polish-tip-clear .battlefield > .board-tip,
+  html.polish-ink-look.polish-tip-clear .battlefield:has(.boss-gauge:not([hidden])) > .board-tip {
+    top: calc(var(--top) + 64px);
+    left: 50%;
+    right: auto;
+    width: max-content;
+    max-width: min(520px, 62vw);
+  }
+  html.polish-ink-look .battlefield .boss-gauge {
+    margin-left: 0;
+    width: min(240px, 34vw);
+  }
+}

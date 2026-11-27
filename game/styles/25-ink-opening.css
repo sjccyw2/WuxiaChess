@@ -701,3 +701,60 @@ html.polish-ink-look .opening-glaze {
     display: none;
   }
 }
+
+@media (max-height: 500px) and (orientation: landscape) {
+  html.polish-ink-look #modal[data-page='realm'] .realm-name {
+    top: 48px;
+    left: 16px;
+  }
+  html.polish-ink-look #modal[data-page='realm'] .realm-name strong {
+    font-size: clamp(18px, 3.2vw, 26px);
+  }
+  html.polish-ink-look #modal[data-page='realm'] .realm-seal {
+    left: 14px;
+    top: 14px;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+  html.polish-ink-look #modal[data-page='realm'] .realm-note {
+    left: 12px;
+    right: 10px;
+    bottom: 10px;
+    padding-top: 6px;
+    font-size: 10px;
+    line-height: 1.45;
+  }
+  html.polish-ink-look #modal[data-page='realm'] .realm-card.won .realm-state {
+    width: 24px;
+    height: 30px;
+    font-size: 10px;
+    right: 10px;
+    top: 10px;
+  }
+  html.polish-ink-look #modal[data-page='realm'] .realm-choice[aria-pressed='true']::after {
+    right: 12px;
+    top: 48px;
+    width: 18px;
+    height: 18px;
+  }
+  html.polish-ink-look #modal[data-page='formation'] .run-lot-image {
+    height: calc(100dvh - 190px);
+    min-height: 150px;
+  }
+  html.polish-ink-look #modal[data-page='formation'] .run-lot-name h3 {
+    font-size: 18px;
+  }
+  html.polish-ink-look #modal[data-page='formation'] .draw-tale {
+    right: calc(var(--ink-pad) + 60px);
+    top: 10px;
+  }
+  html.polish-ink-look #modal[data-page='formation'] .lot-instruction {
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  html.polish-ink-look .opening-menu > :is(.embark, .embark-new, .codex-link) {
+    padding-top: 7px;
+    padding-bottom: 7px;
+    font-size: 18px;
+  }
+}

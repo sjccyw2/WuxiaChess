@@ -2,47 +2,47 @@
    See 21-ink.css for the tokens and the rule this follows. */
 
 /* ---------- the mission line: one quiet line, no bar ---------- */
-html.polish-ink-look #modal[data-page] .wake-mission {
+html.polish-ink-look #modal[data-full] .wake-mission {
   border: 0;
   background: none;
   box-shadow: none;
   padding: 0;
   margin: 0 0 14px;
 }
-html.polish-ink-look #modal[data-page] .wake-mission > header {
+html.polish-ink-look #modal[data-full] .wake-mission > header {
   border: 0;
   background: none;
   padding: 0;
   gap: 14px;
 }
-html.polish-ink-look #modal[data-page] .wake-mission > header > svg {
+html.polish-ink-look #modal[data-full] .wake-mission > header > svg {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .wake-mission h3 {
+html.polish-ink-look #modal[data-full] .wake-mission h3 {
   font: 600 13px var(--sans);
   letter-spacing: 0.12em;
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .wake-mission header > span,
-html.polish-ink-look #modal[data-page] .wake-mission .fy-mission-side {
+html.polish-ink-look #modal[data-full] .wake-mission header > span,
+html.polish-ink-look #modal[data-full] .wake-mission .fy-mission-side {
   font: 400 13px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .wake-mission .fy-mission-side strong {
+html.polish-ink-look #modal[data-full] .wake-mission .fy-mission-side strong {
   font: 700 15px var(--serif);
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .wake-mission .mj-action :is(svg) {
+html.polish-ink-look #modal[data-full] .wake-mission .mj-action :is(svg) {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .wake-mission dl {
+html.polish-ink-look #modal[data-full] .wake-mission dl {
   border: 0;
   background: none;
   padding: 10px 0 0;
 }
 
 /* ---------- 陣容: the chosen hero large, the line-up as stones underneath ---------- */
-html.polish-ink-look #modal[data-page] .fy-lineup {
+html.polish-ink-look #modal[data-full] .fy-lineup {
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-areas:
@@ -51,18 +51,18 @@ html.polish-ink-look #modal[data-page] .fy-lineup {
   align-items: end;
   gap: 18px 26px;
 }
-html.polish-ink-look #modal[data-page] .fy-lineup > .fy-pane {
+html.polish-ink-look #modal[data-full] .fy-lineup > .fy-pane {
   grid-area: pane;
 }
-html.polish-ink-look #modal[data-page] .fy-lineup > .fo-formation {
+html.polish-ink-look #modal[data-full] .fy-lineup > .fo-formation {
   grid-area: hand;
 }
-html.polish-ink-look #modal[data-page] .fy-lineup > .fo-bench {
+html.polish-ink-look #modal[data-full] .fy-lineup > .fo-bench {
   grid-area: bench;
 }
 
 /* The hero: scroll, name, sheet. */
-html.polish-ink-look #modal[data-page] .fy-pane {
+html.polish-ink-look #modal[data-full] .fy-pane {
   display: grid;
   grid-template-columns: 250px auto minmax(0, 1fr);
   grid-auto-rows: min-content;
@@ -77,7 +77,7 @@ html.polish-ink-look #modal[data-page] .fy-pane {
   max-height: none;
   overflow: visible;
 }
-html.polish-ink-look #modal[data-page] .fy-pane > :not(.ink-scroll, .ink-vname) {
+html.polish-ink-look #modal[data-full] .fy-pane > :not(.ink-scroll, .ink-vname) {
   grid-column: 3;
 }
 html.polish-ink-look .ink-scroll {
@@ -140,7 +140,7 @@ html.polish-ink-look .ink-vname small {
   color: var(--ink-white-dim);
   padding-top: 8px;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-head {
+html.polish-ink-look #modal[data-full] .fy-pane-head {
   display: flex;
   align-items: baseline;
   gap: 18px;
@@ -148,22 +148,22 @@ html.polish-ink-look #modal[data-page] .fy-pane-head {
   background: none;
   padding: 0 0 6px;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-head > img,
-html.polish-ink-look #modal[data-page] .fy-pane-head h3 {
+html.polish-ink-look #modal[data-full] .fy-pane-head > img,
+html.polish-ink-look #modal[data-full] .fy-pane-head h3 {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-head > div {
+html.polish-ink-look #modal[data-full] .fy-pane-head > div {
   display: flex;
   align-items: baseline;
   gap: 16px;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-head small,
-html.polish-ink-look #modal[data-page] .fy-pane-head p {
+html.polish-ink-look #modal[data-full] .fy-pane-head small,
+html.polish-ink-look #modal[data-full] .fy-pane-head p {
   font: 400 14px var(--sans);
   color: var(--ink-white-dim);
   margin: 0;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-points {
+html.polish-ink-look #modal[data-full] .fy-pane-points {
   margin-left: auto;
   display: flex;
   align-items: baseline;
@@ -173,15 +173,15 @@ html.polish-ink-look #modal[data-page] .fy-pane-points {
   box-shadow: none;
   padding: 0;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-points b {
+html.polish-ink-look #modal[data-full] .fy-pane-points b {
   font: 700 40px/1 var(--serif);
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fy-pane-points small {
+html.polish-ink-look #modal[data-full] .fy-pane-points small {
   font: 400 13px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fy-pane-stats {
+html.polish-ink-look #modal[data-full] .fy-pane-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px 20px;
@@ -189,29 +189,29 @@ html.polish-ink-look #modal[data-page] .fy-pane-stats {
   border: 0;
   background: none;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-stats > div {
+html.polish-ink-look #modal[data-full] .fy-pane-stats > div {
   border: 0;
   background: none;
   box-shadow: none;
   padding: 0;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-stats dt {
+html.polish-ink-look #modal[data-full] .fy-pane-stats dt {
   font: 500 13px var(--sans);
   letter-spacing: 0.12em;
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fy-pane-stats dd {
+html.polish-ink-look #modal[data-full] .fy-pane-stats dd {
   margin: 0;
   font: 700 clamp(28px, 2.8vw, 40px) / 1.1 var(--serif);
   font-variant-numeric: lining-nums;
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fy-pane-stats dd small {
+html.polish-ink-look #modal[data-full] .fy-pane-stats dd small {
   font: 500 16px var(--serif);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fo-captain-actions,
-html.polish-ink-look #modal[data-page] .fy-pane-foot {
+html.polish-ink-look #modal[data-full] .fo-captain-actions,
+html.polish-ink-look #modal[data-full] .fy-pane-foot {
   display: flex;
   gap: 30px;
   border: 0;
@@ -219,17 +219,17 @@ html.polish-ink-look #modal[data-page] .fy-pane-foot {
   padding: 0;
   margin: 4px 0 14px;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-foot {
+html.polish-ink-look #modal[data-full] .fy-pane-foot {
   margin: 18px 0 0;
 }
-html.polish-ink-look #modal[data-page] .fy-pane :is(.fo-captain-actions, .fy-pane-foot) .mj-action {
+html.polish-ink-look #modal[data-full] .fy-pane :is(.fo-captain-actions, .fy-pane-foot) .mj-action {
   padding: 4px 0;
   font-size: 15px;
 }
-html.polish-ink-look #modal[data-page] .fy-pane .mj-action svg {
+html.polish-ink-look #modal[data-full] .fy-pane .mj-action svg {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .fy-pane .fy-train b {
+html.polish-ink-look #modal[data-full] .fy-pane .fy-train b {
   margin-left: 6px;
   padding: 0 7px;
   border-radius: 9px;
@@ -237,7 +237,7 @@ html.polish-ink-look #modal[data-page] .fy-pane .fy-train b {
   color: #1d2022;
   font: 700 12px var(--sans);
 }
-html.polish-ink-look #modal[data-page] .fy-boon {
+html.polish-ink-look #modal[data-full] .fy-boon {
   display: grid;
   grid-template-columns: 30px 1fr;
   gap: 14px;
@@ -248,7 +248,7 @@ html.polish-ink-look #modal[data-page] .fy-boon {
   padding: 14px 0 6px;
   border-top: 1px solid var(--ink-gold-rule);
 }
-html.polish-ink-look #modal[data-page] .fy-boon > svg {
+html.polish-ink-look #modal[data-full] .fy-boon > svg {
   width: 30px;
   height: 30px;
   padding: 6px;
@@ -256,93 +256,93 @@ html.polish-ink-look #modal[data-page] .fy-boon > svg {
   background: var(--ink-cinnabar);
   color: #f6e3cf;
 }
-html.polish-ink-look #modal[data-page] .fy-boon strong {
+html.polish-ink-look #modal[data-full] .fy-boon strong {
   font: 700 17px var(--serif);
   letter-spacing: 0.08em;
 }
-html.polish-ink-look #modal[data-page] .fy-boon p {
+html.polish-ink-look #modal[data-full] .fy-boon p {
   font: 400 14px/1.6 var(--sans);
   color: var(--ink-white-dim);
   margin: 2px 0 0;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-arts {
+html.polish-ink-look #modal[data-full] .fy-pane-arts {
   border: 0;
   background: none;
   padding: 0;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-arts h4 {
+html.polish-ink-look #modal[data-full] .fy-pane-arts h4 {
   position: absolute;
   width: 1px;
   height: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
 }
-html.polish-ink-look #modal[data-page] .fy-pane-arts ul {
+html.polish-ink-look #modal[data-full] .fy-pane-arts ul {
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 30px;
   border-top: 1px solid var(--ink-rule);
 }
-html.polish-ink-look #modal[data-page] .fy-pane-arts li {
+html.polish-ink-look #modal[data-full] .fy-pane-arts li {
   display: grid;
   grid-template-columns: 64px 1fr;
   align-items: baseline;
   padding: 9px 0;
   border-bottom: 1px solid var(--ink-rule);
 }
-html.polish-ink-look #modal[data-page] .fy-pane-arts li svg {
+html.polish-ink-look #modal[data-full] .fy-pane-arts li svg {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-arts li small {
+html.polish-ink-look #modal[data-full] .fy-pane-arts li small {
   font: 500 13px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fy-pane-arts li span {
+html.polish-ink-look #modal[data-full] .fy-pane-arts li span {
   font: 600 17px var(--serif);
   letter-spacing: 0.06em;
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fy-pane-arts li.fy-art-empty span {
+html.polish-ink-look #modal[data-full] .fy-pane-arts li.fy-art-empty span {
   color: rgba(242, 238, 230, 0.3);
   font-weight: 400;
 }
-html.polish-ink-look #modal[data-page] .fy-pane-gear {
+html.polish-ink-look #modal[data-full] .fy-pane-gear {
   margin-top: 8px;
   font: 400 13px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fy-pane-gear svg {
+html.polish-ink-look #modal[data-full] .fy-pane-gear svg {
   display: none;
 }
 
 /* The line-up: each hero a stone, the one chosen ringed in gold. */
-html.polish-ink-look #modal[data-page] .fo-formation {
+html.polish-ink-look #modal[data-full] .fo-formation {
   border: 0;
   background: none;
   padding: 0;
 }
-html.polish-ink-look #modal[data-page] :is(.fo-formation, .fo-bench) .fo-section {
+html.polish-ink-look #modal[data-full] :is(.fo-formation, .fo-bench) .fo-section {
   border: 0;
   background: none;
   padding: 0 0 8px;
   gap: 12px;
 }
-html.polish-ink-look #modal[data-page] :is(.fo-formation, .fo-bench) .fo-section h3 {
+html.polish-ink-look #modal[data-full] :is(.fo-formation, .fo-bench) .fo-section h3 {
   font: 600 13px var(--sans);
   letter-spacing: 0.2em;
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fo-formation .fo-section span {
+html.polish-ink-look #modal[data-full] .fo-formation .fo-section span {
   font: 400 13px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fo-hand {
+html.polish-ink-look #modal[data-full] .fo-hand {
   display: flex;
   gap: 22px;
   align-items: flex-end;
   grid-template-columns: none;
 }
-html.polish-ink-look #modal[data-page] .fo-seat {
+html.polish-ink-look #modal[data-full] .fo-seat {
   display: grid;
   justify-items: center;
   gap: 4px;
@@ -352,7 +352,7 @@ html.polish-ink-look #modal[data-page] .fo-seat {
   box-shadow: none;
   padding: 0;
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-portrait {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-portrait {
   display: grid;
   justify-items: center;
   border: 0;
@@ -361,7 +361,7 @@ html.polish-ink-look #modal[data-page] .fo-seat .fo-portrait {
   padding: 0;
   width: 100%;
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-face {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-face {
   position: relative;
   display: grid;
   justify-items: center;
@@ -372,11 +372,11 @@ html.polish-ink-look #modal[data-page] .fo-seat .fo-face {
   background: none;
   overflow: visible;
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-face::before,
-html.polish-ink-look #modal[data-page] .fo-seat .fo-face::after {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-face::before,
+html.polish-ink-look #modal[data-full] .fo-seat .fo-face::after {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-face img {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-face img {
   position: static;
   width: 68px;
   height: 68px;
@@ -388,7 +388,7 @@ html.polish-ink-look #modal[data-page] .fo-seat .fo-face img {
     0 8px 16px rgba(0, 0, 0, 0.55);
   transition: width 0.15s ease, height 0.15s ease;
 }
-html.polish-ink-look #modal[data-page] .fo-seat.inspected .fo-face img {
+html.polish-ink-look #modal[data-full] .fo-seat.inspected .fo-face img {
   width: 82px;
   height: 82px;
   box-shadow:
@@ -396,7 +396,7 @@ html.polish-ink-look #modal[data-page] .fo-seat.inspected .fo-face img {
     0 0 0 7px rgba(201, 164, 98, 0.8),
     0 10px 20px rgba(0, 0, 0, 0.6);
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-name {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-name {
   position: static;
   display: grid;
   justify-items: center;
@@ -405,16 +405,16 @@ html.polish-ink-look #modal[data-page] .fo-seat .fo-name {
   background: none;
   text-shadow: none;
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-name strong {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-name strong {
   font: 700 15px var(--serif);
   letter-spacing: 0.08em;
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-name small {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-name small {
   font: 400 11px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-seal {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-seal {
   position: absolute;
   left: -4px;
   top: -4px;
@@ -430,11 +430,11 @@ html.polish-ink-look #modal[data-page] .fo-seat .fo-seal {
   box-shadow: inset 0 0 0 1px rgba(246, 227, 207, 0.55);
   writing-mode: horizontal-tb;
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-seal::after {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-seal::after {
   content: '領';
   font-size: 12px;
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-points {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-points {
   position: absolute;
   right: -14px;
   top: 50px;
@@ -447,55 +447,55 @@ html.polish-ink-look #modal[data-page] .fo-seat .fo-points {
   white-space: nowrap;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
-html.polish-ink-look #modal[data-page] .fo-seat.inspected .fo-points {
+html.polish-ink-look #modal[data-full] .fo-seat.inspected .fo-points {
   top: 64px;
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-facts,
-html.polish-ink-look #modal[data-page] .fo-seat .fo-grip {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-facts,
+html.polish-ink-look #modal[data-full] .fo-seat .fo-grip {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .fo-seat .fo-action {
+html.polish-ink-look #modal[data-full] .fo-seat .fo-action {
   padding: 0;
   font: 400 11px var(--sans);
   letter-spacing: 0.1em;
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fo-bench {
+html.polish-ink-look #modal[data-full] .fo-bench {
   border: 0;
   background: none;
   padding: 0;
   min-height: 0;
 }
-html.polish-ink-look #modal[data-page] .fo-bench.vacant {
+html.polish-ink-look #modal[data-full] .fo-bench.vacant {
   align-self: end;
 }
 
-html.polish-ink-look #modal[data-page] :is(.fo-formation, .fo-hand, .fo-seat, .fo-portrait, .fo-face) {
+html.polish-ink-look #modal[data-full] :is(.fo-formation, .fo-hand, .fo-seat, .fo-portrait, .fo-face) {
   overflow: visible;
   clip-path: none;
   -webkit-mask-image: none;
   mask-image: none;
 }
-html.polish-ink-look #modal[data-page] .fy-tabs {
+html.polish-ink-look #modal[data-full] .fy-tabs {
   justify-content: flex-start;
 }
-html.polish-ink-look #modal[data-page] .fy-tabs .mj-tab {
+html.polish-ink-look #modal[data-full] .fy-tabs .mj-tab {
   flex: 0 0 auto;
   min-width: 0;
 }
-html.polish-ink-look #modal[data-page] .fy-pane :is(.fo-captain-actions, .fy-pane-foot) .mj-action {
+html.polish-ink-look #modal[data-full] .fy-pane :is(.fo-captain-actions, .fy-pane-foot) .mj-action {
   flex: 0 0 auto;
   min-width: 0;
 }
 
 /* ---------- 武學: the tree on the page itself; each art a stone on its wire's end ---------- */
-html.polish-ink-look #modal[data-page] .mj-picker {
+html.polish-ink-look #modal[data-full] .mj-picker {
   border: 0;
   background: none;
   gap: 16px;
   padding: 6px 0 10px;
 }
-html.polish-ink-look #modal[data-page] .mj-picker-unit {
+html.polish-ink-look #modal[data-full] .mj-picker-unit {
   position: relative;
   display: grid;
   justify-items: center;
@@ -507,7 +507,7 @@ html.polish-ink-look #modal[data-page] .mj-picker-unit {
   color: var(--ink-white-dim);
   font: 600 13px var(--serif);
 }
-html.polish-ink-look #modal[data-page] .mj-picker-unit img {
+html.polish-ink-look #modal[data-full] .mj-picker-unit img {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -518,17 +518,17 @@ html.polish-ink-look #modal[data-page] .mj-picker-unit img {
     0 5px 10px rgba(0, 0, 0, 0.5);
   opacity: 0.7;
 }
-html.polish-ink-look #modal[data-page] .mj-picker-unit:is([aria-selected='true'], [aria-pressed='true'], .active) {
+html.polish-ink-look #modal[data-full] .mj-picker-unit:is([aria-selected='true'], [aria-pressed='true'], .active) {
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .mj-picker-unit:is([aria-selected='true'], [aria-pressed='true'], .active) img {
+html.polish-ink-look #modal[data-full] .mj-picker-unit:is([aria-selected='true'], [aria-pressed='true'], .active) img {
   opacity: 1;
   box-shadow:
     0 0 0 2px var(--ink-white),
     0 0 0 5px rgba(201, 164, 98, 0.85),
     0 5px 10px rgba(0, 0, 0, 0.5);
 }
-html.polish-ink-look #modal[data-page] .mj-picker-points {
+html.polish-ink-look #modal[data-full] .mj-picker-points {
   position: absolute;
   top: 0;
   right: -4px;
@@ -539,49 +539,49 @@ html.polish-ink-look #modal[data-page] .mj-picker-points {
   color: #1d2022;
   font: 700 10px/1.5 var(--sans);
 }
-html.polish-ink-look #modal[data-page] .mj-path {
+html.polish-ink-look #modal[data-full] .mj-path {
   border: 0;
   background: none;
   box-shadow: none;
   padding: 8px 0 4px;
 }
-html.polish-ink-look #modal[data-page] .mj-path > i,
-html.polish-ink-look #modal[data-page] .mj-path::before,
-html.polish-ink-look #modal[data-page] .mj-path::after {
+html.polish-ink-look #modal[data-full] .mj-path > i,
+html.polish-ink-look #modal[data-full] .mj-path::before,
+html.polish-ink-look #modal[data-full] .mj-path::after {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .mj-path h3,
-html.polish-ink-look #modal[data-page] .mj-path strong {
+html.polish-ink-look #modal[data-full] .mj-path h3,
+html.polish-ink-look #modal[data-full] .mj-path strong {
   font: 800 30px/1.2 var(--serif);
   letter-spacing: 0.12em;
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .mj-sp {
+html.polish-ink-look #modal[data-full] .mj-sp {
   border: 0;
   background: none;
   box-shadow: none;
 }
-html.polish-ink-look #modal[data-page] .mj-sp b {
+html.polish-ink-look #modal[data-full] .mj-sp b {
   font: 700 40px/1 var(--serif);
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .mj-sp svg {
+html.polish-ink-look #modal[data-full] .mj-sp svg {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .mj-map-window {
+html.polish-ink-look #modal[data-full] .mj-map-window {
   border: 0;
   background: none;
   box-shadow: none;
 }
-html.polish-ink-look #modal[data-page] .mj-map {
+html.polish-ink-look #modal[data-full] .mj-map {
   grid-template-columns: 44px 1fr;
 }
-html.polish-ink-look #modal[data-page] .mj-levels {
+html.polish-ink-look #modal[data-full] .mj-levels {
   grid-template-rows: repeat(var(--mj-levels), 96px);
   border: 0;
   background: none;
 }
-html.polish-ink-look #modal[data-page] .mj-levels > span {
+html.polish-ink-look #modal[data-full] .mj-levels > span {
   place-items: start start;
   padding-top: 38px;
   border: 0;
@@ -589,24 +589,24 @@ html.polish-ink-look #modal[data-page] .mj-levels > span {
   font: 500 12px var(--sans);
   letter-spacing: 0.2em;
 }
-html.polish-ink-look #modal[data-page] .mj-weave {
+html.polish-ink-look #modal[data-full] .mj-weave {
   grid-template-rows: repeat(var(--mj-levels), 96px);
   align-items: stretch;
   background: none;
 }
-html.polish-ink-look #modal[data-page] .mj-wires path {
+html.polish-ink-look #modal[data-full] .mj-wires path {
   stroke: rgba(242, 238, 230, 0.24);
   stroke-width: 1.2;
 }
-html.polish-ink-look #modal[data-page] .mj-wires path.mj-wire-open {
+html.polish-ink-look #modal[data-full] .mj-wires path.mj-wire-open {
   stroke: rgba(201, 164, 98, 0.75);
   stroke-width: 1.5;
 }
-html.polish-ink-look #modal[data-page] .mj-wires path.mj-wire-known {
+html.polish-ink-look #modal[data-full] .mj-wires path.mj-wire-known {
   stroke: var(--ink-kaya);
   stroke-width: 1.8;
 }
-html.polish-ink-look #modal[data-page] .mj-node {
+html.polish-ink-look #modal[data-full] .mj-node {
   justify-content: flex-start;
   gap: 1px;
   width: min(100%, 150px);
@@ -618,7 +618,7 @@ html.polish-ink-look #modal[data-page] .mj-node {
   box-shadow: none;
   color: rgba(242, 238, 230, 0.5);
 }
-html.polish-ink-look #modal[data-page] .mj-node::before {
+html.polish-ink-look #modal[data-full] .mj-node::before {
   content: '';
   position: absolute;
   top: 33px;
@@ -632,154 +632,154 @@ html.polish-ink-look #modal[data-page] .mj-node::before {
   box-shadow: inset 0 0 0 1px rgba(242, 238, 230, 0.2);
   transform: scale(0.5);
 }
-html.polish-ink-look #modal[data-page] .mj-node.mj-ready::before {
+html.polish-ink-look #modal[data-full] .mj-node.mj-ready::before {
   transform: none;
   box-shadow:
     inset 0 0 0 2.5px var(--ink-white),
     0 0 14px rgba(242, 238, 230, 0.3);
 }
-html.polish-ink-look #modal[data-page] .mj-node.mj-known::before {
+html.polish-ink-look #modal[data-full] .mj-node.mj-known::before {
   transform: none;
   background: var(--ink-stone);
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
 }
-html.polish-ink-look #modal[data-page] .mj-node[aria-pressed='true']::before {
+html.polish-ink-look #modal[data-full] .mj-node[aria-pressed='true']::before {
   outline: 0;
   box-shadow:
     inset 0 0 0 2.5px var(--ink-white),
     0 0 0 5px rgba(201, 164, 98, 0.85),
     0 0 18px rgba(201, 164, 98, 0.5);
 }
-html.polish-ink-look #modal[data-page] .mj-node.mj-known[aria-pressed='true']::before {
+html.polish-ink-look #modal[data-full] .mj-node.mj-known[aria-pressed='true']::before {
   box-shadow:
     0 0 0 5px rgba(201, 164, 98, 0.85),
     0 5px 10px rgba(0, 0, 0, 0.5);
 }
-html.polish-ink-look #modal[data-page] .mj-node[aria-pressed='true']::after {
+html.polish-ink-look #modal[data-full] .mj-node[aria-pressed='true']::after {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .mj-node-title {
+html.polish-ink-look #modal[data-full] .mj-node-title {
   font: 700 15px/1.25 var(--serif);
   letter-spacing: 0.06em;
   color: inherit;
 }
-html.polish-ink-look #modal[data-page] .mj-node:is(.mj-ready, .mj-known) {
+html.polish-ink-look #modal[data-full] .mj-node:is(.mj-ready, .mj-known) {
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .mj-node-family {
+html.polish-ink-look #modal[data-full] .mj-node-family {
   order: 2;
   font: 400 11px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .mj-node-state {
+html.polish-ink-look #modal[data-full] .mj-node-state {
   order: 3;
   font: 400 11px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .mj-node-state svg {
+html.polish-ink-look #modal[data-full] .mj-node-state svg {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .mj-node:hover {
+html.polish-ink-look #modal[data-full] .mj-node:hover {
   background: none;
   color: var(--ink-white);
 }
 
 /* The chosen art's page beside the tree. */
-html.polish-ink-look #modal[data-page] .mj-detail {
+html.polish-ink-look #modal[data-full] .mj-detail {
   border: 0;
   background: none;
   box-shadow: none;
   padding: 0 0 0 8px;
 }
-html.polish-ink-look #modal[data-page] .mj-detail .mj-seal {
+html.polish-ink-look #modal[data-full] .mj-detail .mj-seal {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .mj-detail :is(h3, h4) {
+html.polish-ink-look #modal[data-full] .mj-detail :is(h3, h4) {
   font: 800 clamp(34px, 3.6vw, 52px) / 1.1 var(--serif);
   letter-spacing: 0.12em;
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .mj-detail .fo-facts {
+html.polish-ink-look #modal[data-full] .mj-detail .fo-facts {
   border: 0;
   background: none;
   padding: 0;
   font: 400 14px/1.7 var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .mj-detail .fo-facts b {
+html.polish-ink-look #modal[data-full] .mj-detail .fo-facts b {
   font: 700 34px var(--serif);
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .mj-facts {
+html.polish-ink-look #modal[data-full] .mj-facts {
   border: 0;
   border-top: 1px solid var(--ink-gold-rule);
   background: none;
 }
-html.polish-ink-look #modal[data-page] .mj-facts > div {
+html.polish-ink-look #modal[data-full] .mj-facts > div {
   border: 0;
   border-bottom: 1px solid var(--ink-rule);
   background: none;
 }
-html.polish-ink-look #modal[data-page] .mj-facts dd {
+html.polish-ink-look #modal[data-full] .mj-facts dd {
   font: 700 16px var(--serif);
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .mj-detail .mj-primary {
+html.polish-ink-look #modal[data-full] .mj-detail .mj-primary {
   margin-top: 12px;
   font-size: 17px;
 }
-html.polish-ink-look #modal[data-page] .mj-detail .mj-primary svg,
-html.polish-ink-look #modal[data-page] .mj-detail details summary svg {
+html.polish-ink-look #modal[data-full] .mj-detail .mj-primary svg,
+html.polish-ink-look #modal[data-full] .mj-detail details summary svg {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .mj-origin {
+html.polish-ink-look #modal[data-full] .mj-origin {
   border: 0;
   background: none;
 }
-html.polish-ink-look #modal[data-page] .mj-node[aria-pressed='true'] {
+html.polish-ink-look #modal[data-full] .mj-node[aria-pressed='true'] {
   outline: 0;
   border: 0;
   box-shadow: none;
 }
-html.polish-ink-look #modal[data-page] .mj-node-title {
+html.polish-ink-look #modal[data-full] .mj-node-title {
   order: 1;
   margin-top: 38px;
 }
-html.polish-ink-look #modal[data-page] .mj-path {
+html.polish-ink-look #modal[data-full] .mj-path {
   background: none;
 }
-html.polish-ink-look #modal[data-page] .mj-path > :is(img, picture, .mj-art, [class*='illustration']) {
+html.polish-ink-look #modal[data-full] .mj-path > :is(img, picture, .mj-art, [class*='illustration']) {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .mj-path .mj-citation {
+html.polish-ink-look #modal[data-full] .mj-path .mj-citation {
   font: 400 13px var(--sans);
   color: var(--ink-white-dim);
 }
 
 /* ---------- 裝備物資: the hero's figure as a scroll with the two slots on it; the stock as art ---------- */
-html.polish-ink-look #modal[data-page] :is(.fo-doll, .fo-cabinet) {
+html.polish-ink-look #modal[data-full] :is(.fo-doll, .fo-cabinet) {
   border: 0;
   background: none;
   box-shadow: none;
   padding: 0;
 }
-html.polish-ink-look #modal[data-page] :is(.fo-doll, .fo-cabinet) > .fo-section {
+html.polish-ink-look #modal[data-full] :is(.fo-doll, .fo-cabinet) > .fo-section {
   border: 0;
   background: none;
   padding: 0 0 12px;
   align-items: baseline;
   gap: 14px;
 }
-html.polish-ink-look #modal[data-page] :is(.fo-doll, .fo-cabinet) > .fo-section h3 {
+html.polish-ink-look #modal[data-full] :is(.fo-doll, .fo-cabinet) > .fo-section h3 {
   font: 800 26px var(--serif);
   letter-spacing: 0.12em;
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fo-doll > .fo-section small {
+html.polish-ink-look #modal[data-full] .fo-doll > .fo-section small {
   font: 400 13px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fo-figure {
+html.polish-ink-look #modal[data-full] .fo-figure {
   position: relative;
   border: 0;
   border-radius: 0;
@@ -788,8 +788,8 @@ html.polish-ink-look #modal[data-page] .fo-figure {
   overflow: visible;
   max-width: 300px;
 }
-html.polish-ink-look #modal[data-page] .fo-figure::before,
-html.polish-ink-look #modal[data-page] .fo-figure::after {
+html.polish-ink-look #modal[data-full] .fo-figure::before,
+html.polish-ink-look #modal[data-full] .fo-figure::after {
   content: '';
   position: absolute;
   left: -11px;
@@ -799,18 +799,18 @@ html.polish-ink-look #modal[data-page] .fo-figure::after {
   background: linear-gradient(#3b2a1d, #22170f);
   z-index: 1;
 }
-html.polish-ink-look #modal[data-page] .fo-figure::before {
+html.polish-ink-look #modal[data-full] .fo-figure::before {
   top: -7px;
 }
-html.polish-ink-look #modal[data-page] .fo-figure::after {
+html.polish-ink-look #modal[data-full] .fo-figure::after {
   bottom: -7px;
 }
-html.polish-ink-look #modal[data-page] .fo-figure .fo-body {
+html.polish-ink-look #modal[data-full] .fo-figure .fo-body {
   filter: none;
   opacity: 1;
   mix-blend-mode: normal;
 }
-html.polish-ink-look #modal[data-page] .fo-slot {
+html.polish-ink-look #modal[data-full] .fo-slot {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -820,7 +820,7 @@ html.polish-ink-look #modal[data-page] .fo-slot {
   padding: 0;
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fo-slot > :is(img, i) {
+html.polish-ink-look #modal[data-full] .fo-slot > :is(img, i) {
   flex: none;
   display: grid;
   place-items: center;
@@ -835,34 +835,34 @@ html.polish-ink-look #modal[data-page] .fo-slot > :is(img, i) {
     0 6px 14px rgba(0, 0, 0, 0.5);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fo-slot:not([data-gear]) > i {
+html.polish-ink-look #modal[data-full] .fo-slot:not([data-gear]) > i {
   box-shadow:
     inset 0 0 0 1.5px rgba(242, 238, 230, 0.35),
     0 6px 14px rgba(0, 0, 0, 0.5);
 }
-html.polish-ink-look #modal[data-page] .fo-slot span {
+html.polish-ink-look #modal[data-full] .fo-slot span {
   padding: 4px 10px 4px 6px;
   background: rgba(9, 13, 12, 0.82);
   border-radius: 2px;
   text-align: start;
 }
-html.polish-ink-look #modal[data-page] .fo-slot small {
+html.polish-ink-look #modal[data-full] .fo-slot small {
   display: block;
   font: 400 11px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fo-slot strong {
+html.polish-ink-look #modal[data-full] .fo-slot strong {
   font: 700 15px var(--serif);
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fo-stock {
+html.polish-ink-look #modal[data-full] .fo-stock {
   border: 0;
   background: none;
   color: var(--ink-white-dim);
   font: 600 14px var(--serif);
   letter-spacing: 0.14em;
 }
-html.polish-ink-look #modal[data-page] .fo-filter {
+html.polish-ink-look #modal[data-full] .fo-filter {
   border: 0;
   border-radius: 0;
   background: none;
@@ -873,12 +873,12 @@ html.polish-ink-look #modal[data-page] .fo-filter {
   font: 600 15px var(--serif);
   letter-spacing: 0.2em;
 }
-html.polish-ink-look #modal[data-page] .fo-filter:is([aria-pressed='true'], [aria-selected='true'], .active, .on) {
+html.polish-ink-look #modal[data-full] .fo-filter:is([aria-pressed='true'], [aria-selected='true'], .active, .on) {
   color: var(--ink-white);
   background: none;
   box-shadow: inset 0 -2px 0 var(--ink-kaya);
 }
-html.polish-ink-look #modal[data-page] .fo-item {
+html.polish-ink-look #modal[data-full] .fo-item {
   display: grid;
   justify-items: center;
   gap: 6px;
@@ -889,7 +889,7 @@ html.polish-ink-look #modal[data-page] .fo-item {
   padding: 4px 0;
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fo-item .fo-item-img {
+html.polish-ink-look #modal[data-full] .fo-item .fo-item-img {
   width: 92px;
   height: 92px;
   padding: 10px;
@@ -897,49 +897,49 @@ html.polish-ink-look #modal[data-page] .fo-item .fo-item-img {
   object-fit: contain;
   background: radial-gradient(circle, rgba(242, 238, 230, 0.08), rgba(9, 13, 12, 0.55) 70%);
 }
-html.polish-ink-look #modal[data-page] .fo-item[aria-pressed='true'] .fo-item-img {
+html.polish-ink-look #modal[data-full] .fo-item[aria-pressed='true'] .fo-item-img {
   box-shadow:
     0 0 0 2px var(--ink-kaya),
     0 0 20px rgba(201, 164, 98, 0.35);
 }
-html.polish-ink-look #modal[data-page] .fo-item span {
+html.polish-ink-look #modal[data-full] .fo-item span {
   display: grid;
   justify-items: center;
   background: none;
 }
-html.polish-ink-look #modal[data-page] .fo-item strong {
+html.polish-ink-look #modal[data-full] .fo-item strong {
   font: 700 16px var(--serif);
   letter-spacing: 0.06em;
 }
-html.polish-ink-look #modal[data-page] .fo-item small {
+html.polish-ink-look #modal[data-full] .fo-item small {
   font: 400 12px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fo-item .fo-grip {
+html.polish-ink-look #modal[data-full] .fo-item .fo-grip {
   display: none;
 }
-html.polish-ink-look #modal[data-page] .fo-cabinet .fo-item span {
+html.polish-ink-look #modal[data-full] .fo-cabinet .fo-item span {
   border: 0;
   padding: 0;
 }
-html.polish-ink-look #modal[data-page] .fo-cabinet .fo-item strong {
+html.polish-ink-look #modal[data-full] .fo-cabinet .fo-item strong {
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fo-cabinet .fo-item:is([data-owner]:not([data-owner='stock'])) {
+html.polish-ink-look #modal[data-full] .fo-cabinet .fo-item:is([data-owner]:not([data-owner='stock'])) {
   opacity: 0.55;
 }
-html.polish-ink-look #modal[data-page] .fo-slot strong {
+html.polish-ink-look #modal[data-full] .fo-slot strong {
   white-space: nowrap;
 }
 
 /* An upright phone: the scroll and the name side by side, the sheet under them across the width;
    the stock wraps. */
 @media (max-width: 600px) {
-  html.polish-ink-look #modal[data-page] .fy-pane {
+  html.polish-ink-look #modal[data-full] .fy-pane {
     grid-template-columns: 140px auto;
     column-gap: 16px;
   }
-  html.polish-ink-look #modal[data-page] .fy-pane > :not(.ink-scroll, .ink-vname) {
+  html.polish-ink-look #modal[data-full] .fy-pane > :not(.ink-scroll, .ink-vname) {
     grid-column: 1 / -1;
   }
   html.polish-ink-look .ink-scroll {
@@ -950,48 +950,109 @@ html.polish-ink-look #modal[data-page] .fo-slot strong {
     grid-row: 1;
     font-size: 48px;
   }
-  html.polish-ink-look #modal[data-page] .fy-pane-stats dd {
+  html.polish-ink-look #modal[data-full] .fy-pane-stats dd {
     font-size: 26px;
   }
-  html.polish-ink-look #modal[data-page] .fy-pane-arts ul {
+  html.polish-ink-look #modal[data-full] .fy-pane-arts ul {
     grid-template-columns: 1fr;
   }
-  html.polish-ink-look #modal[data-page] .fy-lineup {
+  html.polish-ink-look #modal[data-full] .fy-lineup {
     grid-template-columns: 1fr;
     grid-template-areas: 'pane' 'hand' 'bench';
   }
-  html.polish-ink-look #modal[data-page] .fo-hand {
+  html.polish-ink-look #modal[data-full] .fo-hand {
     gap: 10px;
     flex-wrap: wrap;
   }
-  html.polish-ink-look #modal[data-page] .fo-seat {
+  html.polish-ink-look #modal[data-full] .fo-seat {
     width: 64px;
   }
-  html.polish-ink-look #modal[data-page] .fo-seat .fo-face img {
+  html.polish-ink-look #modal[data-full] .fo-seat .fo-face img {
     width: 52px;
     height: 52px;
   }
-  html.polish-ink-look #modal[data-page] .fo-seat.inspected .fo-face img {
+  html.polish-ink-look #modal[data-full] .fo-seat.inspected .fo-face img {
     width: 60px;
     height: 60px;
   }
-  html.polish-ink-look #modal[data-page] .fo-seat .fo-points {
+  html.polish-ink-look #modal[data-full] .fo-seat .fo-points {
     display: none;
   }
-  html.polish-ink-look #modal[data-page] .fo-cabinet :has(> .fo-item) {
+  html.polish-ink-look #modal[data-full] .fo-cabinet :has(> .fo-item) {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
   }
-  html.polish-ink-look #modal[data-page] .fo-item {
+  html.polish-ink-look #modal[data-full] .fo-item {
     width: 76px;
   }
-  html.polish-ink-look #modal[data-page] .fo-item .fo-item-img {
+  html.polish-ink-look #modal[data-full] .fo-item .fo-item-img {
     width: 62px;
     height: 62px;
     padding: 7px;
   }
-  html.polish-ink-look #modal[data-page] .fo-item strong {
+  html.polish-ink-look #modal[data-full] .fo-item strong {
     font-size: 13px;
+  }
+}
+
+/* A phone held sideways: a smaller scroll and name, numbers that fit three across. */
+@media (max-height: 500px) and (orientation: landscape) {
+  html.polish-ink-look #modal[data-full] .fy-pane {
+    grid-template-columns: 130px auto minmax(0, 1fr);
+    column-gap: 16px;
+  }
+  html.polish-ink-look .ink-scroll {
+    max-height: 230px;
+  }
+  html.polish-ink-look .ink-vname {
+    font-size: 44px;
+  }
+  html.polish-ink-look .ink-vname small {
+    font-size: 13px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-head > div {
+    flex-wrap: wrap;
+    gap: 0 10px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-points b {
+    font-size: 28px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-stats {
+    gap: 6px 14px;
+    margin: 8px 0 10px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-stats dd {
+    font-size: 22px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-stats dd small {
+    font-size: 12px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-arts ul {
+    grid-template-columns: 1fr;
+  }
+  html.polish-ink-look #modal[data-full] .fo-seat .fo-face img {
+    width: 52px;
+    height: 52px;
+  }
+  html.polish-ink-look #modal[data-full] .fo-seat.inspected .fo-face img {
+    width: 60px;
+    height: 60px;
+  }
+  html.polish-ink-look #modal[data-full] .fo-seat .fo-points {
+    display: none;
+  }
+  html.polish-ink-look #modal[data-full] .fo-figure {
+    max-width: 200px;
+  }
+  html.polish-ink-look #modal[data-full] .fo-item {
+    width: 80px;
+  }
+  html.polish-ink-look #modal[data-full] .fo-item .fo-item-img {
+    width: 62px;
+    height: 62px;
+  }
+  html.polish-ink-look #modal[data-full] .mj-detail :is(h3, h4) {
+    font-size: 30px;
   }
 }

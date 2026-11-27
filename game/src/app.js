@@ -905,6 +905,8 @@ function pageHtml() {
 // Polish (inkLook): the battle screen's objective in one line at the top right (斬將　余滄海, and
 // the rounds left). Read from the briefing's model, once per board.
 let inkGoalFor = null;
+// Polish (inkLook): the pages that fill the screen; the rest stay small dialogs over the board.
+const INK_FULL = new Set(['realm', 'formation', 'lot-detail', 'prologue', 'encounter', 'story', 'team', 'camp', 'brief', 'goals', 'result', 'sheet', 'skills', 'inventory', 'wake', 'codex', 'help', 'bowls']);
 function inkGoal() {
   const line = $('goal-line');
   if (screen !== 'battle' || !state.run) {
@@ -940,7 +942,10 @@ function drawModal(keepScroll = false) {
   shownPage = dialogState;
   $('modal-content').innerHTML = pageHtml();
   // Polish (inkLook): the stylesheet tells the full-screen pages from the small ones by name.
-  if (POLISH.inkLook) dialog.dataset.page = dialogState;
+  if (POLISH.inkLook) {
+    dialog.dataset.page = dialogState;
+    dialog.toggleAttribute('data-full', INK_FULL.has(dialogState));
+  }
   const body = frameDialog($('modal-content'));
   addSavesButton();
   if (keepPlan) dialog.querySelector('.fo-map-plan')?.setAttribute('open', '');

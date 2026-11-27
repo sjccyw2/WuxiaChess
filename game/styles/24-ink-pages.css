@@ -2,8 +2,8 @@
    (The owner kept 軍情's plan in squares on 2026-11-27: only its frame and words change here.) */
 
 /* ---------- 軍情: the square plan, large; each section headed by its first character ---------- */
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .modal-intro,
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-live {
+html.polish-ink-look #modal[data-full] .modal-intro,
+html.polish-ink-look #modal[data-full] .brief-live {
   font: 500 14px var(--sans);
   color: var(--ink-white-dim);
   letter-spacing: 0.08em;
@@ -11,16 +11,16 @@ html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-
   background: none;
   padding: 0;
 }
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-body {
+html.polish-ink-look #modal[data-full] .brief-body {
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: clamp(24px, 4vw, 64px);
   padding-top: 8px;
 }
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-plan .plan-grid {
+html.polish-ink-look #modal[data-full] .brief-plan .plan-grid {
   width: min(100%, calc(44px * var(--map-w)), 560px);
   box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
 }
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec {
+html.polish-ink-look #modal[data-full] .brief-sec {
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr);
   column-gap: 8px;
@@ -28,10 +28,10 @@ html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-
   margin: 0;
   border-bottom: 1px solid var(--ink-rule);
 }
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec > * {
+html.polish-ink-look #modal[data-full] .brief-sec > * {
   grid-column: 2;
 }
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec > h4 {
+html.polish-ink-look #modal[data-full] .brief-sec > h4 {
   grid-column: 1;
   grid-row: 1 / span 6;
   margin: 0;
@@ -40,61 +40,61 @@ html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-
   line-height: 1;
   color: var(--ink-kaya);
 }
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec > h4::first-letter {
+html.polish-ink-look #modal[data-full] .brief-sec > h4::first-letter {
   font: 800 40px/1 var(--serif);
 }
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec p {
+html.polish-ink-look #modal[data-full] .brief-sec p {
   font: 400 16px/1.7 var(--sans);
   color: var(--ink-white);
   margin: 0 0 4px;
 }
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec .brief-small,
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec .brief-note {
+html.polish-ink-look #modal[data-full] .brief-sec .brief-small,
+html.polish-ink-look #modal[data-full] .brief-sec .brief-note {
   font-size: 14px;
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-side-name strong {
+html.polish-ink-look #modal[data-full] .brief-side-name strong {
   font: 700 20px var(--serif);
   letter-spacing: 0.08em;
 }
-html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-progress li {
+html.polish-ink-look #modal[data-full] .brief-progress li {
   border: 0;
   background: none;
   color: var(--ink-white-dim);
 }
 
 /* ---------- the story: the speaker painted large, the line at the foot ---------- */
-html.polish-ink-look #modal:is([data-page='encounter'], [data-page='story'], [data-page='wake']) {
+html.polish-ink-look #modal[data-full] {
   background: linear-gradient(0deg, rgba(var(--ink-wash), 0.94) 0, rgba(var(--ink-wash), 0.7) 34%, rgba(var(--ink-wash), 0.25) 60%, rgba(var(--ink-wash), 0.35));
 }
-html.polish-ink-look #modal:is([data-page='encounter'], [data-page='story']) .fy-story .mj-fixed-head small {
+html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-head small {
   font: 500 13px var(--sans);
   color: var(--ink-white-dim);
   letter-spacing: 0.1em;
   margin-left: 14px;
   align-self: center;
 }
-html.polish-ink-look #modal:is([data-page='encounter'], [data-page='story']) .fy-story .mj-fixed-head .modal-title h2 {
+html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-head .modal-title h2 {
   font-size: clamp(18px, 1.7vw, 24px);
 }
-html.polish-ink-look #modal[data-page] .fy-story .mj-scroll,
-html.polish-ink-look #modal[data-page] .fy-story-body {
+html.polish-ink-look #modal[data-full] .fy-story .mj-scroll,
+html.polish-ink-look #modal[data-full] .fy-story-body {
   position: static;
 }
-html.polish-ink-look #modal[data-page] .fy-story .mj-scroll {
+html.polish-ink-look #modal[data-full] .fy-story .mj-scroll {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding-bottom: clamp(70px, 11vh, 120px);
 }
-html.polish-ink-look #modal[data-page] .fy-story-body {
+html.polish-ink-look #modal[data-full] .fy-story-body {
   display: block;
   border: 0;
   background: none;
   box-shadow: none;
   padding: 0;
 }
-html.polish-ink-look #modal[data-page] .fy-story-body > .fy-speaker-portrait {
+html.polish-ink-look #modal[data-full] .fy-story-body > .fy-speaker-portrait {
   --m: linear-gradient(90deg, #000 50%, transparent 98%), linear-gradient(180deg, transparent 0, #000 24%, #000 76%, transparent);
   position: absolute;
   left: 0;
@@ -115,7 +115,7 @@ html.polish-ink-look #modal[data-page] .fy-story-body > .fy-speaker-portrait {
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
-html.polish-ink-look #modal[data-page] .fy-dialogue {
+html.polish-ink-look #modal[data-full] .fy-dialogue {
   position: relative;
   z-index: 1;
   width: auto;
@@ -127,24 +127,24 @@ html.polish-ink-look #modal[data-page] .fy-dialogue {
   padding: 0;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
 }
-html.polish-ink-look #modal[data-page] .fy-byline {
+html.polish-ink-look #modal[data-full] .fy-byline {
   display: flex;
   align-items: baseline;
   gap: 14px;
   border: 0;
   padding: 0;
 }
-html.polish-ink-look #modal[data-page] .fy-byline strong {
+html.polish-ink-look #modal[data-full] .fy-byline strong {
   font: 800 clamp(28px, 2.7vw, 38px) / 1.2 var(--serif);
   letter-spacing: 0.14em;
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fy-byline small {
+html.polish-ink-look #modal[data-full] .fy-byline small {
   font: 500 15px var(--sans);
   letter-spacing: 0.1em;
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fy-dialogue blockquote {
+html.polish-ink-look #modal[data-full] .fy-dialogue blockquote {
   margin: 14px 0 0;
   padding: 0;
   border: 0;
@@ -152,11 +152,11 @@ html.polish-ink-look #modal[data-page] .fy-dialogue blockquote {
   font: 500 clamp(19px, 1.85vw, 26px) / 1.75 var(--serif);
   color: var(--ink-white);
 }
-html.polish-ink-look #modal[data-page] .fy-story .mj-fixed-foot {
+html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot {
   padding-left: calc(min(34vw, 500px) + var(--ink-pad));
   z-index: 2;
 }
-html.polish-ink-look #modal[data-page] .fy-story .mj-fixed-foot .fy-reading {
+html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot .fy-reading {
   margin-right: auto;
   display: flex;
   align-items: center;
@@ -164,12 +164,12 @@ html.polish-ink-look #modal[data-page] .fy-story .mj-fixed-foot .fy-reading {
   font: 400 13px var(--sans);
   color: var(--ink-white-dim);
 }
-html.polish-ink-look #modal[data-page] .fy-story .mj-fixed-foot aside {
+html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot aside {
   display: flex;
   align-items: center;
   gap: 26px;
 }
-html.polish-ink-look #modal[data-page] .fy-story .mj-fixed-foot .gold-btn {
+html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot .gold-btn {
   width: clamp(64px, 5.6vw, 80px);
   height: clamp(64px, 5.6vw, 80px);
   font-size: 15px;
@@ -406,27 +406,27 @@ html.polish-ink-look #modal[data-page='camp'] .mj-text-button {
 
 /* ---------- an upright phone ---------- */
 @media (max-width: 600px) {
-  html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec {
+  html.polish-ink-look #modal[data-full] .brief-sec {
     grid-template-columns: 40px minmax(0, 1fr);
     padding: 10px 0;
   }
-  html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec > h4::first-letter {
+  html.polish-ink-look #modal[data-full] .brief-sec > h4::first-letter {
     font-size: 26px;
   }
-  html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec p {
+  html.polish-ink-look #modal[data-full] .brief-sec p {
     font-size: 14px;
   }
-  html.polish-ink-look #modal[data-page] .fy-story-body > .fy-speaker-portrait {
+  html.polish-ink-look #modal[data-full] .fy-story-body > .fy-speaker-portrait {
     --m: linear-gradient(0deg, transparent 0, #000 40%), linear-gradient(180deg, transparent 0, #000 12%);
     top: 0;
     bottom: auto;
     width: 100vw;
     height: 64dvh;
   }
-  html.polish-ink-look #modal[data-page] .fy-dialogue {
+  html.polish-ink-look #modal[data-full] .fy-dialogue {
     margin-left: 0;
   }
-  html.polish-ink-look #modal[data-page] .fy-story .mj-fixed-foot {
+  html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot {
     padding-left: var(--ink-pad);
   }
   html.polish-ink-look #modal[data-page='camp'] .mj-market {
@@ -466,11 +466,78 @@ html.polish-ink-look #modal[data-page='camp'] .mj-text-button {
 }
 
 @media (max-width: 700px) {
-  html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-body {
+  html.polish-ink-look #modal[data-full] .brief-body {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 html.polish-ink-look #modal[data-page='camp'] .mj-buy:is(:hover, :focus, :focus-visible, :active) {
   background: none;
   box-shadow: none;
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-body {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 22px;
+  }
+  html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-plan .plan-grid {
+    width: min(calc(100dvh - 120px), calc(20px * var(--map-w)));
+  }
+  html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec {
+    grid-template-columns: 40px minmax(0, 1fr);
+    padding: 8px 0;
+  }
+  html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec > h4::first-letter {
+    font-size: 26px;
+  }
+  html.polish-ink-look #modal:is([data-page='brief'], [data-page='goals']) .brief-sec p {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot {
+    padding-left: var(--ink-pad);
+  }
+  html.polish-ink-look #modal[data-full] .fy-story .mj-scroll {
+    padding-bottom: 18px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-dialogue blockquote {
+    font-size: 17px;
+  }
+  html.polish-ink-look #modal[data-page='camp'] .mj-market {
+    padding-left: min(26vw, 220px);
+  }
+  html.polish-ink-look #modal[data-page='camp'] .mj-market::before {
+    width: min(30vw, 260px);
+  }
+  html.polish-ink-look #modal[data-page='camp'] .mj-market .mj-fixed-head {
+    margin-left: calc(-1 * min(26vw, 220px));
+  }
+  html.polish-ink-look #modal[data-page='camp'] .mj-market .mj-fixed-head .modal-title h2 {
+    font-size: 30px;
+    margin-top: 20px;
+  }
+  html.polish-ink-look #modal[data-page='camp'] .fy-shopbar {
+    padding: 10px calc(var(--ink-pad) + 120px) 0 0;
+  }
+  html.polish-ink-look #modal[data-page='camp'] .mj-wallet b {
+    font-size: 28px;
+  }
+  html.polish-ink-look #modal[data-page='camp'] .mj-outcome {
+    font-size: 17px;
+  }
+  html.polish-ink-look #modal[data-page='camp'] .lk-invite {
+    bottom: 12px;
+    left: 14px;
+    gap: 8px;
+  }
+  html.polish-ink-look #modal[data-page='camp'] .lk-invite::before {
+    width: 44px;
+    height: 44px;
+  }
+  html.polish-ink-look #modal[data-page='camp'] .lk-invite p strong {
+    font-size: 16px;
+  }
+  html.polish-ink-look #modal[data-page='camp'] .mj-shelves {
+    grid-template-columns: 1fr;
+  }
 }
