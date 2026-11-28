@@ -35,7 +35,7 @@ const giltDark = 0x8f733e;
 const bronze = 0x5a4e36;
 const paper = 0xf4c57a;
 const lampRed = 0xe4643a;
-const greyTile = [0x14171e, 0x232833, 0x3b4252]; // grey temple tile: shadow, body, lit edge
+const greyTile = [0x20252f, 0x343b49, 0x57617a]; // grey temple tile: shadow, body, lit edge
 const ridgeGrey = 0x1a1d25;
 const up = [0, 1, 0];
 
@@ -283,7 +283,7 @@ function redWall(m, ax, az, bx, bz, y, h = 1.9, thick = 0.34) {
 }
 // A tile coping along x of its own frame: two slopes of half-round tiles under a ridge.
 function coping(m, len, y, half, rise, tones = greyTile) {
-  const n = Math.max(2, Math.round(len / 0.22));
+  const n = Math.max(2, Math.round(len / 0.3));
   for (const s of [-1, 1]) {
     put(
       m,
@@ -309,7 +309,7 @@ function coping(m, len, y, half, rise, tones = greyTile) {
     );
     for (let i = 0; i <= n; i++) {
       const x = -len / 2 + (len * i) / n;
-      m.tube([x, y + 0.012, s * half], [x, y + rise + 0.01, 0], 0.022, 0.022, tones[2], 4);
+      m.tube([x, y + 0.012, s * half], [x, y + rise + 0.01, 0], 0.026, 0.026, tones[2], 3);
     }
   }
   m.box(0, y + rise + 0.03, 0, len, 0.08, 0.1, ridgeGrey);

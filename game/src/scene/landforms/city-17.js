@@ -4,7 +4,7 @@
 // a drum tower, and banks of pale mist lying in the low ground.
 import { circle } from '../scenery-kit.js';
 import { tiledRoof } from './roof-13.js';
-import { cypress, oldPine, trailingWillow } from './garden-13.js';
+import { cypress, trailingWillow } from './garden-13.js';
 import { put, mark, lattice, hangLamp, stoneLantern, plaster, timber, stoneDark, greyTile } from './kit-17.js';
 import { STREET } from './temple-17.js';
 
@@ -37,7 +37,7 @@ function house(m, x, z, yaw, w, d, h, o = {}) {
     let top = 0.2 + h;
     if (upper) {
       // An upper storey set back a little behind a short roof over the shopfront.
-      tiledRoof(m, w + 0.5, 0.9, top - 0.05, 0.25, { hip: 0, gable: true, lift: 0.05, rows: 2, rafters: false, tones: greyTile, tile: 0.45, beasts: 0 });
+      tiledRoof(m, w + 0.5, 0.9, top - 0.05, 0.25, { hip: 0, gable: true, lift: 0.05, rows: 1, rafters: false, tones: greyTile, tile: 0.9, beasts: 0 });
       m.box(0, top + 0.6, -0.15, w - 0.3, 1.2, d - 0.4, m.mix(houseWall, plaster, 0.3));
       for (let i = 0; i < n; i++) {
         const wx = -w / 2 + 0.55 + ((i + 0.5) * (w - 1.1)) / n,
@@ -50,10 +50,10 @@ function house(m, x, z, yaw, w, d, h, o = {}) {
       hip: 0,
       gable: true,
       lift: 0.08,
-      rows: 3,
+      rows: 2,
       rafters: false,
       tones: greyTile,
-      tile: 0.42,
+      tile: 0.75,
       beasts: 0
     });
     if (sign) {
@@ -92,58 +92,49 @@ function street(m, x0, x1, z0, z1, along) {
 
 // The streets outside the temple wall.
 function nearCity(m) {
-  street(m, -24, 26, 11.4, 14.2, 'x');
-  street(m, 13.1, 15.9, -26, 11.4, 'z');
-  street(m, -15.9, -13.1, -26, 11.4, 'z');
+  street(m, -24, 26, 14.8, 17.6, 'x');
+  street(m, 13.1, 15.9, -26, 14.8, 'z');
+  street(m, -15.9, -13.1, -26, 14.8, 'z');
   // South of the gate, facing it across the street.
   const south = [
-    [-17.5, 4.2, 3.0, 1.7, false],
-    [-13.0, 4.4, 3.2, 1.8, true],
-    [-8.4, 4.2, 3.0, 1.7, false],
-    [-3.8, 4.6, 3.4, 1.9, true],
-    [1.2, 4.6, 3.4, 1.8, true],
-    [6.0, 4.2, 3.0, 1.7, false],
-    [10.6, 4.4, 3.2, 1.8, true],
-    [15.2, 4.2, 3.0, 1.7, false],
-    [19.8, 4.2, 3.2, 1.8, false],
-    [24.2, 4.2, 3.0, 1.7, false]
+    [-11.6, 5.2, 3.2, 1.8, true],
+    [-5.6, 5.4, 3.0, 1.7, false],
+    [0.4, 5.4, 3.4, 1.9, true],
+    [6.4, 5.2, 3.0, 1.7, false],
+    [12.2, 5.0, 3.2, 1.8, true],
+    [18.0, 5.2, 3.0, 1.7, false]
   ];
   for (const [x, w, d, h, upper] of south)
-    house(m, x, 14.4 + d / 2 + 0.3, Math.PI, w, d, h, { upper, sign: upper, lit: 0.6 });
+    house(m, x, 17.8 + d / 2 + 0.3, Math.PI, w, d, h, { upper, sign: upper, lit: 0.6 });
   // East of the temple, facing its wall.
-  for (let i = 0; i < 8; i++) {
-    const z = -23 + i * 4.6,
+  for (let i = 0; i < 5; i++) {
+    const z = -15.4 + i * 6.0,
       upper = i % 3 === 1;
-    house(m, 17.8, z, -Math.PI / 2, 4.0, 3.2, 1.75, { upper, sign: upper, lit: 0.55 });
+    house(m, 17.8, z, -Math.PI / 2, 5.2, 3.2, 1.75, { upper, sign: upper, lit: 0.55 });
   }
   // West of the temple, the backs of houses across a lane.
-  for (let i = 0; i < 8; i++) house(m, -17.8, -23 + i * 4.6, Math.PI / 2, 4.0, 3.2, 1.7, { lit: 0.35, lamp: i % 2 === 0 });
+  for (let i = 0; i < 2; i++) house(m, -17.8, -6.0 + i * 8.0, Math.PI / 2, 5.4, 3.2, 1.7, { lit: 0.35, lamp: i % 2 === 0 });
   // Street lanterns on posts, and trees along the lanes.
   for (const [x, z] of [
-    [-6.2, 11.9],
-    [6.2, 11.9],
-    [-12.5, 13.8],
-    [12.9, 13.8],
+    [-6.2, 14.4],
+    [6.2, 14.4],
+    [12.9, 17.2],
     [13.5, 4.0],
-    [13.5, -6.0],
-    [13.5, -16.0],
-    [-13.5, 2.0],
-    [-13.5, -10.0]
+    [13.5, -10.0],
+    [-13.5, -4.0]
   ])
     stoneLantern(m, x, STREET, z, 1.05);
-  trailingWillow(m, 20.8, 12.6, 0.95, 2.6, 16);
-  trailingWillow(m, -21.0, 12.8, 0.9, 0.6, 16);
-  trailingWillow(m, 14.6, -12.0, 0.85, 1.4, 14);
+  trailingWillow(m, 20.6, 15.6, 0.95, 2.6, 12);
   for (const [x, z, s] of [
     [-14.6, -20.6, 1.1],
     [14.6, 8.5, 0.9],
     [-14.4, 7.2, 1.0],
-    [7.8, 13.0, 0.75],
-    [-9.2, 13.2, 0.8]
+    [7.8, 15.2, 0.75],
+    [-9.2, 15.4, 0.8]
   ])
     cypress(m, x, z, s, STREET);
   // A cart left by a door, and jars stacked against a wall.
-  m.frame(9.2, STREET, 12.9, 0.3, 1, () => {
+  m.frame(9.2, STREET, 15.6, 0.3, 1, () => {
     m.box(0, 0.45, 0, 1.3, 0.08, 0.8, timber);
     for (const s of [-1, 1]) m.box(0, 0.6, s * 0.4, 1.3, 0.25, 0.04, timber);
     for (const s of [-1, 1]) m.hoop(0, 0.38, s * 0.47, 0.36, 0.03, 0x2c241e, 12, 'xy');
@@ -151,9 +142,9 @@ function nearCity(m) {
     m.line([[0.65, 0.48, -0.3], [1.6, 0.2, -0.32]], 0.03, timber, 4);
   });
   for (const [x, z] of [
-    [-5.4, 12.6],
-    [-5.0, 12.7],
-    [-5.2, 13.05]
+    [-5.4, 15.2],
+    [-5.0, 15.3],
+    [-5.2, 15.65]
   ])
     m.lathe(x, STREET, z, [[0, 0.12], [0.1, 0.2], [0.32, 0.2], [0.42, 0.12], [0.46, 0.13]], 0x4a3a2e, 8);
 }
@@ -203,7 +194,7 @@ function farHall(m, x, z, yaw, w, d, h, rise, base = STREET) {
 function farCity(m) {
   const r = m.rng;
   // Rings of roofs, thinning with distance.
-  for (let i = 0; i < 140; i++) {
+  for (let i = 0; i < 70; i++) {
     const a = r.range(0, circle),
       rad = r.range(25, 47),
       x = Math.cos(a) * rad,
@@ -293,10 +284,10 @@ function farCity(m) {
     });
   }
   // Dark trees over the far roofs.
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 16; i++) {
     const a = r.range(0, circle),
-      rad = r.range(20, 30);
-    oldPine(m, Math.cos(a) * rad, Math.sin(a) * rad, r.range(1.2, 1.6), STREET);
+      rad = r.range(21, 30);
+    cypress(m, Math.cos(a) * rad, Math.sin(a) * rad, r.range(1.3, 1.8), STREET);
   }
 }
 

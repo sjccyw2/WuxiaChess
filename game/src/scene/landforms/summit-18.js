@@ -2,9 +2,9 @@ import { circle, midway } from '../scenery-kit.js';
 import { oldPine } from './peaks-4.js';
 import { pad, tuft } from './kit-12.js';
 
-const needles = [0x243b2c, 0x2b4532, 0x30492f],
-  needleEdge = 0x3e5a3e,
-  needleLight = 0x58704a;
+const needles = [0x1e3226, 0x23392a, 0x273f2b],
+  needleEdge = 0x33503a,
+  needleLight = 0x4a6242;
 import { granite, graniteLit, snow, flameMark } from './tiles-18.js';
 
 // The top of 光明頂: the summit rock round the board, its granite falling sheer on every
@@ -365,6 +365,29 @@ function snowPatches(m, land) {
   }
 }
 
+// Scree and grass along the foot of the board's cut edge, and on the summit ground
+// beyond it: frost-split stones lying where they fell, all of them low.
+function apronScree(m, land) {
+  const r = m.rng;
+  for (let k = 0; k < 150; k++) {
+    const i = Math.floor(r.range(0, SPOKES)),
+      a = (i * circle) / SPOKES,
+      R = land.rim[i] + 0.12,
+      T = land.top[i] - 0.12;
+    if (T <= R) continue;
+    const d = r.range(R, Math.min(T, R + 1.6)),
+      x = Math.cos(a) * d,
+      z = Math.sin(a) * d;
+    // Keep clear of the hall's podium and the head of the road.
+    if (Math.abs(x) < 3.6 && z < -6.2) continue;
+    if (Math.abs(x) < 1.8 && z > 6.4) continue;
+    const y = land.ground(x, z);
+    if (k % 3 === 0) tuft(m, x, y, z, r.range(0.12, 0.2));
+    else
+      m.rock(x, y - 0.03, z, r.range(0.05, 0.14), r.range(0.05, 0.12), r.range(0.05, 0.12), granite[k % 4], graniteLit, 6, r.range(0, 3));
+  }
+}
+
 // Life in the joints: tufts of grass on the narrow ledges, cushions of moss, and a
 // few stones fallen onto the shelves.
 function ledgeLife(m, sections) {
@@ -413,10 +436,10 @@ function cliffPine(m, x, y, z, yaw, size) {
     ]) {
       const end = [to[0] + r.range(-0.08, 0.08), to[1], to[2] + r.range(-0.08, 0.08)];
       m.tube(trunk[from], end, 0.038, 0.016, 0x5e4a3a, 5);
-      pad(m, end[0], end[1] + 0.04, end[2], size, true, needles, needleEdge, needleLight, 7, 0.95);
-      pad(m, end[0] - 0.12, end[1] + 0.01, end[2] + 0.1, size * 0.65, true, needles, needleEdge, needleLight, 6, 0.85);
+      pad(m, end[0], end[1] + 0.04, end[2], size, true, needles, needleEdge, needleLight, 7, 0.85);
+      pad(m, end[0] - 0.12, end[1] + 0.01, end[2] + 0.1, size * 0.65, true, needles, needleEdge, needleLight, 6, 0.75);
     }
-    pad(m, trunk[4][0] + 0.04, trunk[4][1] + 0.06, trunk[4][2], 0.4, true, needles, needleEdge, needleLight, 7, 1.05);
+    pad(m, trunk[4][0] + 0.04, trunk[4][1] + 0.06, trunk[4][2], 0.4, true, needles, needleEdge, needleLight, 7, 0.92);
   });
 }
 
@@ -630,6 +653,7 @@ export {
   cliffSection,
   crag,
   snowPatches,
+  apronScree,
   ledgeLife,
   cliffPine,
   mountainRoad,

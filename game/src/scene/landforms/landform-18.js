@@ -19,6 +19,7 @@ import {
   cliffSection,
   crag,
   snowPatches,
+  apronScree,
   ledgeLife,
   cliffPine,
   mountainRoad,
@@ -37,6 +38,7 @@ function landform18(T, layout) {
   const rock = new Model(T, 180101);
   const crowns = crag(rock, land, sections);
   snowPatches(rock, land);
+  apronScree(rock, land);
 
   const hall = new Model(T, 180203);
   hall.frame(0, 0, hallZ, 0, 1, () => sacredHall(hall));
@@ -52,39 +54,26 @@ function landform18(T, layout) {
     streamer(crags, x - 0.15, 0.6, z - 0.1, 2.6, 1.6, 0.5, salt);
   }
   for (const [x, z] of [
-    [-3.4, -7.1],
-    [3.4, -7.1]
+    [-3.85, -6.75],
+    [3.85, -6.75]
   ])
     fireBasket(crags, x, land.ground(x, z), z);
 
-  // Pines on the ledges of the cliff, leaning out over the drop: [bearing, ledge, size],
-  // and a few rooted in the joints of the sheer faces between.
+  // Pines rooted in the joints of the cliff, leaning out over the drop: [bearing,
+  // stratum they root in, size].
   const pines = new Model(T, 180411);
   for (const [bearing, k, size] of [
-    [70, 3, 0.62],
-    [104, 5, 0.75],
-    [46, 5, 0.8],
-    [18, 3, 0.58],
-    [-20, 5, 0.75],
-    [166, 3, 0.65],
-    [203, 5, 0.78],
-    [-72, 3, 0.6],
-    [-112, 5, 0.72],
-    [134, 5, 0.7]
-  ]) {
-    const i = Math.round(degrees(bearing)) % SPOKES,
-      a = (i * circle) / SPOKES,
-      [r0, y0] = sections[i][k - 1],
-      [r1, y1] = sections[i][k],
-      r = (r0 * 0.4 + r1 * 0.6),
-      y = Math.min(y0, y1) + 0.05;
-    oldPine(pines, Math.cos(a) * r, y, Math.sin(a) * r, -a + pines.rng.range(-0.3, 0.3), size, 1.1, 5);
-  }
-  for (const [bearing, k, size] of [
-    [84, 2, 0.8],
-    [28, 4, 1.0],
-    [190, 2, 0.85],
-    [-40, 4, 0.95]
+    [72, 2, 0.95],
+    [104, 4, 1.3],
+    [47, 4, 1.4],
+    [16, 2, 0.9],
+    [-18, 4, 1.3],
+    [168, 2, 1.05],
+    [205, 4, 1.35],
+    [-70, 2, 0.95],
+    [-115, 4, 1.2],
+    [132, 4, 1.25],
+    [88, 6, 1.4]
   ]) {
     const i = Math.round(degrees(bearing)) % SPOKES,
       a = (i * circle) / SPOKES,

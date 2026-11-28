@@ -45,7 +45,7 @@ function snowPeak(m, x, z, base, w, d, H, ridges, haze, horizon) {
       ];
     })
   );
-  const rock = m.mix(0x4a5560, 0x5e6873, r.next()),
+  const rock = m.mix(0x3a434d, 0x4d5661, r.next()),
     white = 0xf2f5f7;
   for (let j = 0; j < levels.length - 1; j++)
     for (let i = 0; i < n; i++) {
@@ -80,8 +80,8 @@ function snowPeak(m, x, z, base, w, d, H, ridges, haze, horizon) {
 function kunlunRange(m, level, horizon) {
   const r = m.rng;
   for (const [radius, count, haze, size, tall, spin] of [
-    [21, 11, 0.15, 2.6, 9, 0.2],
-    [33, 15, 0.5, 4.2, 15, 0.45]
+    [22, 9, 0.1, 2.8, 9.5, 0.2],
+    [34, 13, 0.45, 4.4, 16, 0.45]
   ])
     for (let j = 0; j < count; j++) {
       const a = spin + (j * circle) / count + r.range(-0.12, 0.12),

@@ -160,9 +160,13 @@ const BEDS = [
     events: [['chime', 9]]
   }, // 萬安寺
   {
-    wind: [700, 2.2, 0.5],
+    // High wind over the bare summit and the banners before the hall; a hawk now and then.
+    wind: [650, 1.6, 0.6],
     water: 0,
-    events: [['gust', 8]]
+    events: [
+      ['gust', 6],
+      ['bird', 23]
+    ]
   }, // 光明頂
   {
     // The sea coming in at both ends of the cave.

@@ -113,8 +113,6 @@ function channel(x, z) {
 function mouth(x, z) {
   return smooth(4.4, 6.0, z) * (1 - smooth(4.6, 6.2, Math.abs(x)));
 }
-// The cut stair from the board's south edge down to the landing.
-const STAIR = { x0: -0.95, x1: 0.95, z0: 5.5, z1: 7.3, steps: 5, foot: -0.42 };
 function floorHeight(x, z) {
   if (onBoard(x, z) && boardOff(x, z) === 0) return -0.12;
   const a = Math.atan2(z - ZC, x),
@@ -145,18 +143,14 @@ function floorHeight(x, z) {
     const bed = SEA - 0.42 - 0.18 * n1 - 0.3 * smooth(8.5, 11.5, Math.abs(x));
     y = lerp(y, bed, ch);
   }
-  // The mouth: ledges going down to the sea south of the board.
+  // The mouth: the floor runs on as bare rock and sand, then falls in ledges to the sea.
   const mo = mouth(x, z);
   if (mo > 0) {
-    const fall = smooth(5.3, 9.6, z + 0.25 * Math.sin(x * 1.3)),
-      ledges = Math.floor(fall * 5) / 5;
-    const target = -0.03 - 1.6 * (0.6 * ledges + 0.4 * fall) + 0.06 * (n2 - 0.5);
+    const zz = z + 0.3 * Math.sin(x * 1.3) + 0.4 * (n1 - 0.5),
+      ledges = Math.floor(smooth(7.6, 10.8, zz) * 4) / 4;
+    const target =
+      -0.03 - 0.2 * smooth(5.4, 7.7, zz) - 1.4 * (0.6 * ledges + 0.4 * smooth(7.6, 10.8, zz)) + 0.05 * (n2 - 0.5);
     y = lerp(y, target, mo);
-    // The stair is cut straight; its treads are drawn in tide-19.js on this ground.
-    if (x > STAIR.x0 - 0.25 && x < STAIR.x1 + 0.25 && z > STAIR.z0 && z < STAIR.z1 + 0.2) {
-      const t = clamp((z - STAIR.z0) / (STAIR.z1 - STAIR.z0), 0, 1);
-      y = Math.min(y, lerp(-0.06, STAIR.foot, t) - 0.08);
-    }
   }
   return Math.max(y, SEA - 2.2);
 }
@@ -199,6 +193,18 @@ function lightAt(x, y, z, base, gloom = 1) {
     for (let i = 0; i < 3; i++) out[i] += WARM[i] * w * (0.3 + out[i]);
   }
   return out.map((v) => Math.min(1, v));
+}
+
+// A face turned toward a direction: the kit's faces take the winding they are given, and a
+// flat mark whose normal points into the stone would shadow itself.
+function toward(m, pts, col, dir = [0, 1, 0]) {
+  const [a, b, c] = pts;
+  const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]],
+    v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+  const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+  const flip = n[0] * dir[0] + n[1] * dir[1] + n[2] * dir[2] < 0;
+  const perVertex = Array.isArray(col) && Array.isArray(col[0]);
+  m.face(flip ? [...pts].reverse() : pts, flip && perVertex ? [...col].reverse() : col);
 }
 
 // ---------------------------------------------------------------------------
@@ -294,13 +300,13 @@ export {
   channel,
   mouth,
   channelZ,
-  STAIR,
   floorHeight,
   buttresses,
   alcoveLamps,
   pillarLamps,
   lamps,
   lightAt,
+  toward,
   Shell,
   fromInside
 };

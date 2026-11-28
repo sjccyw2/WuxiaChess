@@ -18,7 +18,8 @@ import {
   hash,
   channelZ,
   walls,
-  lightAt
+  lightAt,
+  toward
 } from './kit-19.js';
 
 const G = 6;
@@ -87,10 +88,10 @@ function ground(m, p, cell) {
       const c = tone(wx, TOP, wz, 0.55);
       m.face(
         [
-          [-0.5, TOP - 0.02, 0.5],
-          [0.5, TOP - 0.02, 0.5],
+          [-0.5, -0.05, 0.5],
           [0.5, -0.05, 0.5],
-          [-0.5, -0.05, 0.5]
+          [0.5, TOP - 0.02, 0.5],
+          [-0.5, TOP - 0.02, 0.5]
         ],
         c
       );
@@ -124,7 +125,7 @@ function dress(m, cell, wx, wz) {
         [x0 + ca * l - sa * 0.008, y, z0 + sa * l + ca * 0.008],
         [x0 - ca * l - sa * 0.008, y, z0 - sa * l + ca * 0.008]
       ];
-      if (pts.every(([u, , v]) => Math.abs(u) < 0.46 && Math.abs(v) < 0.46)) m.face(pts, dark(x0, z0, 0.72));
+      if (pts.every(([u, , v]) => Math.abs(u) < 0.46 && Math.abs(v) < 0.46)) toward(m, pts, dark(x0, z0, 0.72));
     }
   }
   // A hairline crack wandering across.
@@ -137,7 +138,7 @@ function dress(m, cell, wx, wz) {
         nz = z + dz * 0.12 + r.range(-0.05, 0.05);
       if (Math.abs(nz) > 0.47 || nx > 0.47) break;
       const w = 0.006 + 0.006 * Math.sin((k / 6) * Math.PI);
-      m.face(
+      toward(m, 
         [
           [x, y, z - w],
           [nx, y, nz - w],
@@ -174,9 +175,9 @@ function dress(m, cell, wx, wz) {
       }
       const c = tone(wx + x, TOP, wz + z, 1.0),
         sand = blend(c, rgb(0xc4b998), 0.6);
-      m.face(ring, sand);
+      toward(m, ring, sand);
       for (let i = -1; i <= 1; i++)
-        m.face(
+        toward(m, 
           [
             [x - rx * 0.7, TOP + 0.0035, z + i * rz * 0.45],
             [x + rx * 0.7, TOP + 0.0035, z + i * rz * 0.45 + 0.01],
@@ -208,7 +209,7 @@ function shell(m, x, z, a) {
       const t = -0.9 + (i / 6) * 1.8;
       pts.push([Math.sin(t) * 0.03, 0.006 * Math.cos(t), Math.cos(t) * 0.025 - 0.012]);
     }
-    for (let i = 0; i < 6; i++) m.face([[0, 0.012, -0.015], pts[i], pts[i + 1]], i % 2 ? 0xd8cbb3 : 0xbba98f);
+    for (let i = 0; i < 6; i++) toward(m, [[0, 0.012, -0.015], pts[i], pts[i + 1]], i % 2 ? 0xd8cbb3 : 0xbba98f);
   });
 }
 
@@ -285,7 +286,7 @@ function herbBed(m, p, cell) {
       k = 1 / Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a)));
     ring.push([Math.cos(a) * 0.37 * Math.min(k, 1.25), TOP + 0.02, Math.sin(a) * 0.37 * Math.min(k, 1.25)]);
   }
-  m.face(ring, lit(0x3e3428));
+  toward(m, ring, lit(0x3e3428));
   // Herbs: rosettes of dark leaves, the taller ones with purple-red flower heads.
   for (let j = 0; j < 9; j++) {
     const x = -0.24 + (j % 3) * 0.24 + r.range(-0.04, 0.04),
@@ -339,7 +340,7 @@ function shallows(m, p, cell) {
       const pt = [cx + toward * Math.cos(a) * rad, -0.004, Math.sin(a) * rad * 1.1];
       if (prev && Math.abs(pt[0]) < 0.49 && Math.abs(pt[2]) < 0.49 && Math.abs(prev[0]) < 0.49 && Math.abs(prev[2]) < 0.49 && hash(i, k + wx) > 0.25) {
         const w = 0.012 + 0.008 * Math.sin(i);
-        m.face(
+        toward(m, 
           [
             [prev[0] - w, prev[1], prev[2]],
             [pt[0] - w, pt[1], pt[2]],

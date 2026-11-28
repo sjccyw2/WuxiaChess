@@ -112,8 +112,7 @@ function roundBurner(m) {
     stone,
     12
   );
-  m.hoop(0, 0.52, 0, 0.265, 0.012, stoneLight, 12);
-  for (const s of [-1, 1]) m.hoop(s * 0.27, 0.72, 0, 0.07, 0.016, stoneDark, 7, 'xy');
+  for (const s of [-1, 1]) m.hoop(s * 0.27, 0.72, 0, 0.07, 0.016, stoneDark, 6, 'xy');
   m.glow(() =>
     m.lathe(
       0,

@@ -26,7 +26,7 @@ const PZ = -6.0; // the pagoda's axis, on the board's north edge
 const BASE = 0.6; // top of the plinth
 const body = 0x565a68; // brick under a grey wash, dark against the sky
 const bodyDark = 0x3e424e;
-const eaveTones = [0x0f1217, 0x1c2029, 0x353c4b];
+const eaveTones = [0x14171e, 0x252a35, 0x46506a];
 const bracketTone = 0x3a4252;
 const bracketPaint = 0x2c4c52;
 const railTone = 0x7d8593;
@@ -177,7 +177,7 @@ function plinth(m) {
 // ridges with an upturned tip, and a bell hanging from each tip.
 function octEave(m, ai, yi, ao, yo, lift, bells = true) {
   const [dark, mid, hi] = eaveTones;
-  const rows = 4,
+  const rows = 3,
     rise = yi - yo;
   const prof = (t) => rise * (0.2 * t + 0.8 * t * t);
   for (let i = 0; i < 8; i++) {
@@ -192,7 +192,7 @@ function octEave(m, ai, yi, ao, yo, lift, bells = true) {
       p[1] = yo + prof(t) + lift * Math.pow(Math.abs(2 * s - 1), 3) * (1 - t) * (1 - t);
       return p;
     };
-    const n = Math.max(4, Math.round((ao * 0.83) / 0.16));
+    const n = Math.max(4, Math.round((ao * 0.83) / 0.21));
     for (let a = 0; a < n; a++)
       for (let k = 0; k < rows; k++) {
         const s0 = a / n,
@@ -224,11 +224,11 @@ function octEave(m, ai, yi, ao, yo, lift, bells = true) {
         const p = at(s, k / rows),
           r = 0.03,
           ring = [];
-        for (let q = 0; q <= 3; q++) {
-          const ang = (q * Math.PI) / 3;
+        for (let q = 0; q <= 2; q++) {
+          const ang = (q * Math.PI) / 2;
           ring.push([p[0] + ex * r * Math.cos(ang), p[1] + 0.03 * Math.sin(ang) + 0.004, p[2] + ez * r * Math.cos(ang)]);
         }
-        if (last) for (let q = 0; q < 3; q++) put(m, [last[q], ring[q], ring[q + 1], last[q + 1]], [mid, hi, dark][q], [out[0], 1, out[2]]);
+        if (last) for (let q = 0; q < 2; q++) put(m, [last[q], ring[q], ring[q + 1], last[q + 1]], [hi, mid][q], [out[0], 1, out[2]]);
         last = ring;
       }
     }
@@ -253,12 +253,11 @@ function octEave(m, ai, yi, ao, yo, lift, bells = true) {
         b[2],
         [
           [0, 0.05],
-          [0.04, 0.042],
-          [0.1, 0.03],
+          [0.1, 0.032],
           [0.13, 0]
         ],
         bronze,
-        6
+        5
       );
       m.box(b[0], b[1] - 0.28, b[2], 0.012, 0.05, 0.012, gilt);
     }
@@ -271,11 +270,8 @@ function brackets(m, a, y) {
     onFace(m, i, a, y, () => {
       const w = 0.83 * a;
       m.box(0, 0.03, 0.02, w + 0.02, 0.06, 0.06, bracketPaint);
-      for (const x of [-w / 4, w / 4]) {
-        m.box(x, 0.09, 0.05, 0.07, 0.07, 0.07, bracketTone);
-        m.box(x, 0.15, 0.09, 0.16, 0.05, 0.06, bracketPaint);
-        m.box(x, 0.2, 0.13, 0.06, 0.05, 0.12, bracketTone);
-      }
+      m.box(0, 0.12, 0.06, 0.08, 0.12, 0.1, bracketTone);
+      m.box(0, 0.18, 0.1, w * 0.5, 0.05, 0.06, bracketPaint);
     });
     const c = corner(i, a + 0.02, y);
     const out = [c[0], c[2] - PZ],
@@ -338,7 +334,11 @@ function walls(m, k, a, y, h) {
           m.box(0, h * 0.47, 0.015, ww, wh, 0.02, ink);
           m.box(0, h * 0.47, 0.03, 0.02, wh, 0.02, bodyDark);
         }
-      } else m.frame(0, h * 0.47, 0.02, 0, 1, () => lattice(m, w * 0.42, h * 0.42, 3, 3, false, bodyDark));
+      } else {
+        // A blind window: a dark panel crossed by a bar.
+        m.box(0, h * 0.47, 0.012, w * 0.42, h * 0.42, 0.02, bodyDark);
+        m.box(0, h * 0.47, 0.024, w * 0.42, 0.025, 0.02, lacquerDark);
+      }
     });
   }
 }
@@ -390,10 +390,8 @@ function gallery(m, a, y) {
   for (let i = 0; i <= 8; i++) ring.push(corner(i, o - 0.03, y + 0.2));
   m.line(ring, 0.014, railTone, 4);
   for (let i = 0; i < 8; i++) {
-    const c = corner(i, o - 0.03, y),
-      d = lerp3(corner(i, o - 0.03, y), corner(i + 1, o - 0.03, y), 0.5);
+    const c = corner(i, o - 0.03, y);
     m.box(c[0], y + 0.1, c[2], 0.03, 0.2, 0.03, railTone);
-    m.box(d[0], y + 0.1, d[2], 0.02, 0.2, 0.02, railTone);
   }
 }
 
@@ -437,13 +435,20 @@ function spire(m, y, a) {
   }
 }
 
-function pagoda(m) {
-  plinth(m);
+// The pagoda in two parts: its foot (the plinth and the ground storey), which never hides the
+// board, and the tower of twelve storeys over it, which the camera may see through.
+function pagoda(m, part) {
+  if (part === 'foot') plinth(m);
   let y = BASE;
   for (let k = 0; k < STOREYS; k++) {
     const a = k ? 1.05 - 0.03 * k : 1.12,
       h = k ? 0.78 - 0.012 * k : 1.45,
-      over = k ? 0.4 - 0.006 * k : 0.55;
+      over = k ? 0.4 - 0.006 * k : 0.55,
+      draw = (part === 'foot') === (k === 0);
+    if (!draw) {
+      y += h + 0.28;
+      continue;
+    }
     if (k) gallery(m, a, y);
     walls(m, k, a, y, h);
     brackets(m, a, y + h - 0.02);
@@ -473,7 +478,7 @@ function pagoda(m) {
       y = yi;
     }
   }
-  doorway(m);
+  if (part === 'foot') doorway(m);
   return y;
 }
 

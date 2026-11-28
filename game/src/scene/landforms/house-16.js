@@ -36,6 +36,7 @@ import {
 
 const PLAT = 0.42; // the hall's terrace
 const HALL = { x: 6.45, front: -6.75, back: -12.1, cols: -7.05, facade: -7.95, eave: 2.62, rise: 1.55 };
+const EAST = 13.7; // the east garden's outer wall
 const WING = { plat: 0.25, front: 6.52, cols: 6.86, wall: 7.7, back: 10.7, north: -6.35, south: 2.0, eave: 2.25, rise: 1.05 };
 const roofTones = tiles;
 const lanternRed = 0xb8402e;
@@ -291,18 +292,190 @@ function wing(m, s) {
   for (let k = 1; k < 4; k++) m.box(rx, -k * 0.25, south + 0.33, depth + 0.3, 0.03, 0.01, graniteDark);
 }
 
+// A lean-to roof of grey tiles along z, from its eave (xLow, yLow) up to (xHigh, yHigh): pan
+// tiles, a half-round row over every seam, round eave tiles and a fascia, rafters beneath.
+function leanRoof(m, z0, z1, xLow, yLow, xHigh, yHigh) {
+  const [dark, mid, hi] = tiles,
+    n = Math.max(3, Math.round((z1 - z0) / 0.26)),
+    out = [Math.sign(xLow - xHigh), 0, 0];
+  const at = (z, t) => [xLow + (xHigh - xLow) * t, yLow + (yHigh - yLow) * t, z];
+  const rows = 4;
+  for (let i = 0; i < n; i++) {
+    const za = z0 + ((z1 - z0) * i) / n,
+      zb = z0 + ((z1 - z0) * (i + 1)) / n;
+    for (let k = 0; k < rows; k++)
+      put(m, [at(za, k / rows), at(zb, k / rows), at(zb, (k + 1) / rows), at(za, (k + 1) / rows)], m.mix(dark, mid, 0.35 + ((i * 3 + k) % 4) * 0.08));
+    // The round row over the seam and its eave tile.
+    if (i > 0) {
+      let last = null;
+      for (let k = 0; k <= rows; k++) {
+        const p = at(za, k / rows),
+          ring = [0, 1, 2, 3, 4].map((q) => {
+            const a = (q * Math.PI) / 4;
+            return [p[0], p[1] + 0.04 * Math.sin(a), p[2] + 0.036 * Math.cos(a)];
+          });
+        if (last) for (let q = 0; q < 4; q++) put(m, [last[q], ring[q], ring[q + 1], last[q + 1]], [mid, hi, hi, dark][q]);
+        last = ring;
+      }
+      const e = at(za, 0);
+      put(m, [0, 1, 2, 3, 4, 5].map((q) => [e[0] + out[0] * 0.02, e[1] + 0.012 + 0.036 * Math.sin((q * circle) / 6), e[2] + 0.036 * Math.cos((q * circle) / 6)]), hi, out);
+    }
+  }
+  const e0 = at(z0, 0),
+    e1 = at(z1, 0);
+  put(m, [[e0[0], e0[1], z0], [e1[0], e1[1], z1], [e1[0], e1[1] - 0.12, z1], [e0[0], e0[1] - 0.12, z0]], timberDark, out);
+  for (let i = 0; i <= n; i += 2) {
+    const z = z0 + ((z1 - z0) * i) / n;
+    m.tube([xLow + out[0] * -0.05, yLow - 0.08, z], [xHigh, yHigh - 0.1, z], 0.035, 0.035, timber, 5);
+  }
+}
+
+// 美人靠: a bench between two columns with a curved back rail leaning out over the court.
+function beautyRest(m, x, za, zb, side) {
+  const y = 0.62;
+  slab(m, x - 0.16, x + 0.16, y - 0.05, y, za, zb, timber);
+  slab(m, x - 0.12, x + 0.12, 0.2, y - 0.05, za, zb, m.mix(timberDark, timber, 0.3));
+  const n = Math.max(3, Math.round((zb - za) / 0.12));
+  for (let i = 0; i <= n; i++) {
+    const z = za + ((zb - za) * i) / n;
+    m.line([[x + side * 0.14, y, z], [x + side * 0.24, y + 0.2, z], [x + side * 0.3, y + 0.42, z]], 0.012, timberDark, 4);
+  }
+  slab(m, x + side * 0.27, x + side * 0.33, y + 0.4, y + 0.45, za, zb, timber);
+}
+
+// 漏窗: a lattice window in a plastered wall, framed in grey brick, seen from both faces.
+function leakWindow(m, x, y, z, w, h, t) {
+  for (const s of [-1, 1]) {
+    const fx = x + s * (t / 2 + 0.006);
+    m.box(fx, y, z, 0.02, h + 0.12, w + 0.12, m.mix(brick, ridgeTone, 0.2));
+    put(m, [[fx + s * 0.006, y - h / 2, z - w / 2], [fx + s * 0.006, y - h / 2, z + w / 2], [fx + s * 0.006, y + h / 2, z + w / 2], [fx + s * 0.006, y + h / 2, z - w / 2]], 0x3f4644, [s, 0, 0]);
+    // A pattern of interlocking coins in grey tile.
+    for (let i = 0; i < 3; i++)
+      for (let j = 0; j < 3; j++) {
+        const cy = y - h / 2 + (h * (i + 0.5)) / 3,
+          cz = z - w / 2 + (w * (j + 0.5)) / 3;
+        m.frame(fx + s * 0.012, cy, cz, Math.PI / 2, 1, () => m.hoop(0, 0, 0, Math.min(w, h) / 6.2, 0.012, 0x8d918e, 8, 'xy'));
+      }
+  }
+}
+
+// 遊廊: the low covered gallery along the east side of the court, its roof sloping down to the
+// court so it stands clear of the board, a white wall at its back with lattice windows and a
+// moon gate into the east garden.
+function eastGallery(m) {
+  const front = 7.12,
+    cols = 7.48,
+    wall = 8.85,
+    north = WING.north - 0.1,
+    south = WING.south + 0.05,
+    plat = 0.2;
+  terrace(m, front, wall + 0.2, north, south, plat, [1, 0, 0, 1]);
+  floorTiles(m, front, wall - 0.15, north, south, plat, 0.42);
+  const posts = [north + 0.2, -4.15, -2.95, -1.45, 0.25, south - 0.2];
+  for (const z of posts) column(m, cols, z, plat, 1.62, 0.085);
+  slab(m, cols - 0.07, cols + 0.07, 1.42, 1.6, north, south, timberDark);
+  for (let i = 0; i < posts.length - 1; i++) {
+    if (Math.abs(posts[i] + 2.95) < 0.01) continue; // the opening before the moon gate
+    beautyRest(m, cols + 0.04, posts[i] + 0.12, posts[i + 1] - 0.12, -1);
+  }
+  // The back wall, in two runs either side of the moon gate.
+  const gate = { z: -2.2, half: 0.85, cy: plat + 0.82, r: 0.8 },
+    top = 2.75,
+    t = 0.3;
+  for (const [a, b] of [
+    [north - 0.15, gate.z - gate.half],
+    [gate.z + gate.half, south + 0.27]
+  ])
+    m.frame(wall, 0, (a + b) / 2, Math.PI / 2, 1, () => plasteredWall(m, -(b - a) / 2, (b - a) / 2, 0, top, t, true));
+  for (const z of [-5.3, -0.6, 1.1]) leakWindow(m, wall, 1.55, z, 0.62, 0.62, t);
+  // The moon gate: plaster round a circular opening, a brick reveal, and the coping over it.
+  const n = 24,
+    ring = [],
+    rim = [];
+  for (let i = 0; i <= n; i++) {
+    const a = -Math.PI / 2 + (i * circle) / n,
+      cz = Math.cos(a),
+      cy = Math.sin(a);
+    ring.push([gate.cy + cy * gate.r, gate.z + cz * gate.r]);
+    // Where the ray from the centre meets the opening's rectangle.
+    const k = Math.min(Math.abs(cz) > 1e-6 ? gate.half / Math.abs(cz) : 99, cy > 1e-6 ? (top - gate.cy) / cy : cy < -1e-6 ? (gate.cy - plat) / -cy : 99);
+    rim.push([gate.cy + cy * k, gate.z + cz * k]);
+  }
+  for (const s of [-1, 1]) {
+    const x = wall + (s * t) / 2;
+    for (let i = 0; i < n; i++)
+      put(m, [[x, ring[i][0], ring[i][1]], [x, rim[i][0], rim[i][1]], [x, rim[i + 1][0], rim[i + 1][1]], [x, ring[i + 1][0], ring[i + 1][1]]], plaster, [s, 0, 0]);
+    for (let i = 0; i < n; i++) {
+      const a = ring[i],
+        b = ring[i + 1],
+        sc = 1.08;
+      put(m, [[x + s * 0.01, a[0], a[1]], [x + s * 0.01, b[0], b[1]], [x + s * 0.01, gate.cy + (b[0] - gate.cy) * sc, gate.z + (b[1] - gate.z) * sc], [x + s * 0.01, gate.cy + (a[0] - gate.cy) * sc, gate.z + (a[1] - gate.z) * sc]], m.mix(brick, plasterShade, 0.3), [s, 0, 0]);
+    }
+  }
+  for (let i = 0; i < n; i++)
+    put(m, [[wall - t / 2, ring[i][0], ring[i][1]], [wall + t / 2, ring[i][0], ring[i][1]], [wall + t / 2, ring[i + 1][0], ring[i + 1][1]], [wall - t / 2, ring[i + 1][0], ring[i + 1][1]]], brick, [0, gate.cy - (ring[i][0] + ring[i + 1][0]) / 2, gate.z - (ring[i][1] + ring[i + 1][1]) / 2]);
+  m.box(wall, top - 0.05, gate.z, t + 0.03, 0.1, gate.half * 2, m.mix(brick, ridgeTone, 0.3));
+  m.frame(wall, 0, gate.z, Math.PI / 2, 1, () => tileCap(m, gate.half * 2 + 0.1, top + 0.16, t / 2 + 0.13, 0.12, false));
+  // The lean-to roof, and the end walls stepping up under it.
+  leanRoof(m, north - 0.1, south + 0.1, cols - 0.2, 1.68, wall - 0.12, 2.42);
+  for (const z of [north - 0.08, south + 0.08]) {
+    m.frame(0, 0, z, 0, 1, () => {
+      plasteredWall(m, front, 8.15, 0, 1.95, 0.24, true);
+      plasteredWall(m, 8.15, wall + 0.15, 0, 2.6, 0.24, true);
+    });
+  }
+  // The masonry under the south end, down the ravine's face.
+  slab(m, 6.47, EAST + 0.3, -SHELF - 0.05, 0.02, south - 0.07, south + 0.27, graniteShade);
+  for (let k = 1; k < 4; k++) m.box((6.47 + EAST + 0.3) / 2, -k * 0.25, south + 0.28, EAST + 0.3 - 6.47, 0.03, 0.01, graniteDark);
+}
+
+// The east garden beyond the moon gate: a scholar's study with its veranda, a low wall with
+// lattice windows along the ravine, and paving.
+function eastGarden(m) {
+  const x0 = 8.85,
+    x1 = EAST,
+    south = WING.south + 0.25;
+  floorTiles(m, x0 + 0.15, x1 - 0.15, HALL.back + 0.2, south - 0.1, 0.0, 0.9, 0x7f8380);
+  m.frame((x0 + x1) / 2, 0, south + 0.05, 0, 1, () => plasteredWall(m, -(x1 - x0) / 2, (x1 - x0) / 2, 0, 1.15, 0.24, true));
+  leakWindow(m, 11.3, 0.75, south + 0.05, 0.5, 0.5, 0.24);
+  // 書齋: the study, facing west onto the garden.
+  const sx0 = 10.3,
+    sx1 = 13.4,
+    sz0 = -7.2,
+    sz1 = -3.0,
+    plat = 0.3,
+    eave = 2.1;
+  terrace(m, sx0, sx1, sz0, sz1, plat, [1, 0, 1, 1]);
+  for (const z of [sz0 + 0.25, (sz0 + sz1) / 2 - 0.7, (sz0 + sz1) / 2 + 0.7, sz1 - 0.25]) column(m, sx0 + 0.3, z, plat, eave - 0.1, 0.08);
+  for (let i = 0; i < 6; i++) {
+    const z = sz0 + 0.3 + ((sz1 - sz0 - 0.6) * (i + 0.5)) / 6;
+    m.frame(sx0 + 0.95, plat, z, -Math.PI / 2, 1, () => latticePanel(m, ((sz1 - sz0 - 0.6) / 6) * 0.95, 1.55, { nx: 2, ny: 5, skirt: 0.4 }));
+  }
+  slab(m, sx0 + 0.9, sx0 + 1.0, plat + 1.55, eave + 0.2, sz0 + 0.2, sz1 - 0.2, timber);
+  for (const z of [sz0 + 0.1, sz1 - 0.1]) m.frame(0, 0, z, 0, 1, () => plasteredWall(m, sx0 + 0.9, sx1, plat, eave + 0.2, 0.22, false));
+  m.frame((sx0 + sx1) / 2 + 0.1, 0, (sz0 + sz1) / 2, Math.PI / 2, 1, () => tiledRoof(m, sz1 - sz0 + 0.3, sx1 - sx0 + 0.5, eave, 0.95, { hip: 0, gable: true, lift: 0.08, tones: roofTones, rafters: false, rows: 4, tile: 0.3 }));
+  for (const z of [sz0 - 0.05, sz1 + 0.05])
+    m.frame((sx0 + sx1) / 2 + 0.1, 0, z, Math.PI / 2, 1, () => horseHeadWall(m, sx1 - sx0 + 0.7, plat, [eave + 0.3, eave + 0.65, eave + 1.3], 0.24));
+}
+
 // The outer walls and what stands behind the hall: the rear court with its own little
 // buildings, the two-storey rear building (後樓) and the kitchen roofs, the high back wall.
 function rearCourt(m) {
+  const west = -10.85,
+    east = EAST;
+  // Walls joining the hall's back corners to the outer walls, the outer walls down both sides
+  // (the west wing's back is the rest of the west one), and the long back wall.
+  for (const [a, b] of [
+    [west, -HALL.x],
+    [HALL.x, east]
+  ])
+    m.frame((a + b) / 2, 0, HALL.back + 0.1, 0, 1, () => plasteredWall(m, -(b - a) / 2, (b - a) / 2, 0, 3.0, 0.3, true));
+  m.frame(west, 0, (WING.north - 19.5) / 2, Math.PI / 2, 1, () => plasteredWall(m, -(WING.north + 19.5) / 2, (WING.north + 19.5) / 2, 0, 3.2, 0.3, true));
+  m.frame(east, 0, (2.25 - 19.5) / 2, Math.PI / 2, 1, () => plasteredWall(m, -(2.25 + 19.5) / 2, (2.25 + 19.5) / 2, 0, 3.0, 0.3, true));
+  m.frame((west + east) / 2, 0, -19.5, 0, 1, () => plasteredWall(m, -(east - west) / 2, (east - west) / 2, 0, 3.2, 0.3, true));
   const outer = 10.85;
-  // Walls joining the hall's back corners to the wings' backs, and the long side walls behind.
-  for (const s of [-1, 1]) {
-    m.frame(s * (HALL.x + outer) / 2, 0, HALL.back + 0.1, 0, 1, () => plasteredWall(m, -(outer - HALL.x) / 2, (outer - HALL.x) / 2, 0, 3.0, 0.3, true));
-    m.frame(s * outer, 0, (WING.north + -19.5) / 2, Math.PI / 2, 1, () => plasteredWall(m, -(WING.north + 19.5) / 2, (WING.north + 19.5) / 2, 0, 3.2, 0.3, true));
-  }
-  m.frame(0, 0, -19.5, 0, 1, () => plasteredWall(m, -outer, outer, 0, 3.2, 0.3, true));
   // Paving of the rear court.
-  floorTiles(m, -outer, outer, -19.4, HALL.back - 0.1, 0.0, 1.1, 0x7f8380);
+  floorTiles(m, west, east, -19.4, HALL.back - 0.1, 0.0, 1.1, 0x7f8380);
   // 後樓: two storeys, a balcony with a railing along the upper floor, a roof over each.
   const z0 = -17.8,
     z1 = -14.2,
@@ -319,7 +492,7 @@ function rearCourt(m) {
     }
     for (let i = 0; i < 12; i++) {
       const x = -w + 0.3 + ((2 * w - 0.6) * (i + 0.5)) / 12;
-      m.frame(x, 0.3, d / 2 - 0.6, 0, 1, () => latticePanel(m, (2 * w - 0.6) / 12 * 0.95, 2.0, { nx: 3, ny: 6, skirt: 0.45 }));
+      m.frame(x, 0.3, d / 2 - 0.6, 0, 1, () => latticePanel(m, (2 * w - 0.6) / 12 * 0.95, 2.0, { nx: 2, ny: 4, skirt: 0.45 }));
     }
     // The lean-to roof over the ground floor, the balcony and the upper floor.
     m.frame(0, 0, d / 2 + 0.2, 0, 1, () => {
@@ -336,16 +509,16 @@ function rearCourt(m) {
     slab(m, -w, w, 3.68, 3.75, d / 2 - 0.65, d / 2 - 0.55, timber);
     for (let i = 0; i < 12; i++) {
       const x = -w + 0.3 + ((2 * w - 0.6) * (i + 0.5)) / 12;
-      m.frame(x, 3.1, d / 2 - 1.0, 0, 1, () => latticePanel(m, (2 * w - 0.6) / 12 * 0.95, 1.6, { nx: 3, ny: 5, skirt: 0.3 }));
+      m.frame(x, 3.1, d / 2 - 1.0, 0, 1, () => latticePanel(m, (2 * w - 0.6) / 12 * 0.95, 1.6, { nx: 2, ny: 3, skirt: 0.3 }));
     }
-    tiledRoof(m, 2 * w + 0.5, d + 0.6, 5.0, 1.35, { hip: 0, gable: true, lift: 0.1, tones: roofTones, rafters: false, rows: 5 });
+    tiledRoof(m, 2 * w + 0.5, d + 0.6, 5.0, 1.35, { hip: 0, gable: true, lift: 0.1, tones: roofTones, rafters: false, rows: 4, tile: 0.38 });
     for (const s of [-1, 1]) m.frame(s * (w + 0.12), 0, 0, 0, 1, () => horseHeadWall(m, d + 0.9, 0.3, [5.3, 5.8, 6.75], 0.3));
   });
   // Kitchen and store roofs along the sides of the rear court.
   for (const s of [-1, 1]) {
     m.frame(s * 9.2, 0, -16.5, Math.PI / 2, 1, () => {
       slab(m, -2.6, 2.6, 0, 2.0, -1.4, 1.4, plaster);
-      tiledRoof(m, 5.4, 3.2, 2.0, 0.8, { hip: 0, gable: true, lift: 0.06, tones: roofTones, rafters: false, rows: 4 });
+      tiledRoof(m, 5.4, 3.2, 2.0, 0.8, { hip: 0, gable: true, lift: 0.06, tones: roofTones, rafters: false, rows: 3, tile: 0.36 });
       for (const e of [-1, 1]) m.frame(e * 2.65, 0, 0, 0, 1, () => horseHeadWall(m, 3.4, 0, [2.25, 2.95], 0.24));
     });
     // A chimney with a wisp of smoke from the east kitchen.
@@ -367,4 +540,4 @@ function rearCourt(m) {
   void plasterBlock;
 }
 
-export { greatHall, wing, rearCourt, lantern, floorTiles, terrace, HALL, WING, PLAT };
+export { greatHall, wing, eastGallery, eastGarden, rearCourt, lantern, floorTiles, terrace, HALL, WING, PLAT, EAST };

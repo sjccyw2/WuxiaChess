@@ -38,7 +38,7 @@ const stonework = [
   [0x8a9a8e, 0xa9b5a3, 0x566159, 0x6f7d73, 0xb9b28b, 0x4f867f], // 谷底棋臺: valley stone and moss
   [0x8e8a80, 0xb0aa9c, 0x5e5c56, 0x77746a, 0xa89a7c, 0x55786e], // 石樑溫家: grey brick and old stone
   [0x5e6272, 0x878b98, 0x3d4150, 0x50566a, 0xc39a5c, 0x40566a], // 萬安寺: temple brick by lamplight
-  [0x9c968e, 0xc0b8aa, 0x6c6862, 0x86807a, 0xb29478, 0x7f98a6], // 光明頂: summit rock
+  [0x9a968e, 0xbab4a8, 0x66635d, 0x86827a, 0xa9a397, 0x7f98a6], // 光明頂: summit granite
   [0x7c8580, 0x9da59c, 0x4e5753, 0x66706a, 0xa8a088, 0x3f6f74] // 俠客島: cave stone and sea
 ];
 // The boards built round one villain (10 on) borrow the tile language of an earlier board (how
@@ -47,7 +47,7 @@ const stonework = [
 // the tile's own frame after its ground, and `ground` (m, p, cell), which may lay a dry tile's
 // ground itself (it returns true when it has). Their palette, depth, surroundings and landmarks
 // are their own.
-const LOOKS = { 10: 2, 11: 1, 12: 2, 13: 8, 14: 1, 16: 6, 17: 6, 18: 3, 19: 6 };
+const LOOKS = { 10: 2, 11: 1, 12: 2, 13: 8, 14: 1, 16: 8, 17: 6, 18: 6, 19: 6 };
 const OWN_TILES = { 10: tiles10, 11: tiles11, 12: tiles12, 13: tiles13, 14: tiles14, 16: tiles16, 17: tiles17, 18: tiles18, 19: tiles19 };
 const lookOf = (index) => LOOKS[index] ?? index;
 const directions = [
@@ -56,7 +56,7 @@ const directions = [
   [0, 1],
   [-1, 0]
 ];
-const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32, 1.1, 1.3, 1.0, 1.6, 3.2, 0.3, 2.6, 0.5, 1.0, 1.4];
+const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32, 1.1, 1.3, 1.0, 1.6, 3.2, 0.3, 1.0,0.5, 1.0, 1.4];
 // Each side is measured in local coordinates. The first and last point of
 // every course meet the neighbouring side even along a re-entrant corner.
 function exposedSide(m, index, p, cell, salt, depth = landDepth[index]) {

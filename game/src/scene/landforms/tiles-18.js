@@ -402,7 +402,7 @@ function brokenStele(m, cell) {
     side = (cell.x * 3 + cell.y) % 2 ? 1 : -1,
     stone = m.mix(granite[1], granite[2], r.next()),
     lit = m.mix(stone, graniteLit, 0.4);
-  m.frame(0, 0, -0.22, side * 0.18, 1, () => {
+  m.frame(0, 0, -0.22, side * 0.18, 1.18, () => {
     // The plinth, in two steps.
     m.box(0, 0.065, 0, 0.56, 0.05, 0.25, m.mix(granite[0], lit, 0.2));
     m.box(0, 0.1, 0, 0.48, 0.04, 0.2, granite[0]);
@@ -484,14 +484,14 @@ function brokenStele(m, cell) {
     );
 }
 
-// 贔屭: a stone tortoise on its plinth carrying the stump of a stele, the flame
+// A stone tortoise (bixi) on its plinth carrying the stump of a stele, the flame
 // still on what is left of its face.
 function tortoiseStele(m, cell) {
   const r = m.rng,
     side = cell.x < midX ? 1 : -1,
     stone = m.mix(granite[0], granite[1], r.next()),
     lit = m.mix(stone, graniteLit, 0.45);
-  m.frame(0, 0, -0.1, side * 0.25, 1, () => {
+  m.frame(0, 0, -0.08, side * 0.25, 1.3, () => {
     m.box(0, 0.06, 0, 0.66, 0.05, 0.5, m.mix(granite[3], lit, 0.2));
     // Shell, head and feet.
     m.rock(0, 0.07, 0, 0.27, 0.17, 0.21, stone, lit, 10, 0.3);
@@ -701,7 +701,7 @@ function clingingPine(m, p, cell) {
     bz = -0.18;
   m.rock(bx, bed - 0.03, bz, 0.3, 0.2, 0.25, granite[3], m.mix(graniteLit, 0x8a9070, 0.3), 8, r.range(0, 3));
   m.rock(bx + 0.18, bed - 0.02, bz + 0.16, 0.13, 0.1, 0.11, granite[1], graniteLit, 7, r.range(0, 3));
-  oldPine(m, bx, 0.16, bz, 0.46 + 0.06 * hash2(cell.x, cell.y, 40), -a, 0.65, 5);
+  oldPine(m, bx, 0.16, bz, 0.56 + 0.06 * hash2(cell.x, cell.y, 40), -a, 0.65, 5);
   // Needles and cones fallen round it.
   for (let k = 0; k < 10; k++) {
     const x = r.range(-0.45, 0.45),

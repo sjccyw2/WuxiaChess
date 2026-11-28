@@ -11,7 +11,6 @@ import {
   lattice,
   column,
   hangLamp,
-  redWall,
   stone,
   stoneLight,
   stoneDark,
@@ -27,7 +26,7 @@ import {
 
 const STREET = -1.0; // the city's streets, below the temple's raised court
 const teal = 0x2c5f66;
-const yellowGlaze = [0x3a2a12, 0x6e5424, 0xb08a45]; // the great hall's imperial glaze by night
+const yellowGlaze = [0x2a2418, 0x4c4230, 0x857152]; // the great hall's imperial glaze by night
 
 // A painted architrave along x of the frame, with roundels at the middle of each bay.
 function architrave(m, len, y, z, bays) {
@@ -117,7 +116,7 @@ function hall(m, o) {
     }
   architrave(m, w + 0.2, y + h - 0.1, d / 2, bays);
   const eave = y + h + (brackets ? 0.55 : 0.12);
-  if (brackets) bracketRow(m, posts, y + h + 0.06, d / 2, 1, 0.75);
+  if (brackets) bracketRow(m, posts, y + h + 0.06, d / 2, 0, 0.85);
   tiledRoof(m, w + over * 2, d + over * 2, eave, roof.rise ?? h * 0.62, { lift: 0.3, ...roof });
   if (lamps)
     for (let i = 0; i < bays; i++)
@@ -160,7 +159,7 @@ function mainHall(m) {
         lit: (i) => i >= 2 && i <= 4,
         brackets: true,
         over: 0.95,
-        roof: { rise: 2.0, lift: 0.45, rows: 6, beasts: 5, tones: yellowGlaze, tile: 0.3 }
+        roof: { rise: 2.0, lift: 0.45, rows: 5, beasts: 5, tones: yellowGlaze, tile: 0.5 }
       })
     );
     // A great bronze cauldron before the stair, smouldering.
@@ -195,7 +194,7 @@ function tower(m, x, z, yaw, bell) {
     for (const px of [-half, -half / 3, half / 3, half])
       for (const pz of [-half, half]) {
         column(m, px, pz, y, 1.6, 0.06);
-        column(m, pz, px, y, 1.6, 0.06);
+        if (Math.abs(px) < half) column(m, pz, px, y, 1.6, 0.06);
       }
     for (let f = 0; f < 4; f++)
       m.frame(0, 0, 0, (f * circle) / 4, 1, () => {
@@ -217,7 +216,7 @@ function tower(m, x, z, yaw, bell) {
       });
       m.box(0, y + 0.2, 0, 0.9, 0.4, 0.5, lacquerDark);
     }
-    tiledRoof(m, 4.2, 4.2, y + 1.66, 1.45, { hip: 0.55, lift: 0.4, rows: 5, beasts: 3, tones: greyTile, tile: 0.3 });
+    tiledRoof(m, 4.2, 4.2, y + 1.66, 1.45, { hip: 0.55, lift: 0.4, rows: 4, beasts: 3, tones: greyTile, tile: 0.46 });
     for (const [lx, lz] of [
       [-1.6, 1.6],
       [1.6, 1.6]
@@ -239,7 +238,7 @@ function quarters(m) {
       door: 4,
       lit: (i) => [1, 2, 4, 6, 7].includes(i),
       over: 0.6,
-      roof: { rise: 1.05, gable: true, hip: 0, lift: 0.08, rows: 4, rafters: false, tones: greyTile, tile: 0.34 }
+      roof: { rise: 1.05, gable: true, hip: 0, lift: 0.08, rows: 4, rafters: false, tones: greyTile, tile: 0.4 }
     })
   );
   // A water vat and a stack of firewood at the north end of the porch, and a bench.
@@ -256,7 +255,7 @@ function quarters(m) {
 // 東廊: an open corridor down the east side, kept low, a red wall at its back with small
 // lit windows, its roof hung with lanterns.
 function corridor(m) {
-  m.frame(9.55, OUT, 0, -Math.PI / 2, 1, () => {
+  m.frame(10.45, OUT, 0, -Math.PI / 2, 1, () => {
     hall(m, {
       w: 13.0,
       d: 1.9,
@@ -285,7 +284,7 @@ function corridor(m) {
 // 山門: the gate hall at the south, a red masonry body pierced by three arches, under a hipped
 // roof; a name board over the middle arch, lanterns, and stone lions on the street side.
 function gate(m) {
-  const z = 10.9,
+  const z = 12.1,
     w = 7.6,
     d = 2.6,
     h = 2.5;
@@ -375,7 +374,7 @@ function gate(m) {
     m.box(0, y + 2.08, d / 2 + 0.06, 1.3, 0.4, 0.05, 0x1f3354);
     m.box(0, y + 2.08, d / 2 + 0.09, 1.1, 0.26, 0.02, 0x2b4670);
     for (let k = 0; k < 3; k++) m.box(-0.32 + k * 0.32, y + 2.08, d / 2 + 0.105, 0.18, 0.18, 0.01, gilt);
-    tiledRoof(m, w + 1.5, d + 1.4, y + h + 0.22, 1.5, { hip: 0.42, lift: 0.4, rows: 5, beasts: 4, tones: greyTile, tile: 0.3 });
+    tiledRoof(m, w + 1.5, d + 1.4, y + h + 0.22, 1.5, { hip: 0.42, lift: 0.4, rows: 4, beasts: 4, tones: greyTile, tile: 0.36 });
     for (const s of [-1, 1])
       for (const e of [-1, 1]) hangLamp(m, e * 1.35, y + h - 0.35, s * (d / 2 + 0.45), 1.05, 0xe0583a, 0.2);
     // Stone lions on drums either side of the street steps.
@@ -391,21 +390,4 @@ function gate(m) {
   });
 }
 
-// The precinct wall: red, under grey tile, its foot on the street outside the raised court.
-function precinct(m) {
-  redWall(m, -12.6, 10.9, -3.85, 10.9, STREET, 2.95);
-  redWall(m, 3.85, 10.9, 12.6, 10.9, STREET, 2.95);
-  redWall(m, -12.6, -18.2, -12.6, 10.9, STREET, 2.95);
-  redWall(m, 12.6, -18.2, 12.6, 10.9, STREET, 2.95);
-  redWall(m, -12.6, -18.2, 12.6, -18.2, STREET, 2.95);
-  // The corridor's own back wall stands between it and the precinct wall.
-  redWall(m, 10.55, -6.9, 10.55, 6.9, OUT, 2.0, 0.26);
-  // A side gate in the east wall of the north court, lamplit.
-  m.frame(12.6, STREET, -9.0, Math.PI / 2, 1, () => {
-    m.box(0, 1.6, 0, 1.6, 3.2, 0.6, wallRed);
-    m.glow(() => put(m, [[-0.4, 0.64, 0.31], [0.4, 0.64, 0.31], [0.4, 1.9, 0.31], [-0.4, 1.9, 0.31]], 0x9a6a3a, [0, 0, 1]));
-    tiledRoof(m, 2.4, 1.3, 3.1, 0.55, { hip: 0.3, lift: 0.2, rows: 3, rafters: false, tones: greyTile, tile: 0.3, beasts: 0 });
-  });
-}
-
-export { mainHall, tower, quarters, corridor, gate, precinct, hall, architrave, STREET };
+export { mainHall, tower, quarters, corridor, gate, STREET };
