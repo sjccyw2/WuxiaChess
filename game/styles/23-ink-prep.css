@@ -1985,3 +1985,11 @@ html.polish-ink-look #modal[data-full] .ink-roster .fo-seat > .fo-portrait {
     font-size: 26px;
   }
 }
+
+/* 裝備物資: the figure keeps a narrow scroll at every width, as on a phone (the producer,
+   2026-11-28); the two columns close in beside it. */
+html.polish-ink-look #modal .ink-arm-stage {
+  grid-template-columns: var(--rail) min(calc(var(--stage) * 0.6), calc(100% - 2 * var(--rail) - 40px)) var(--rail);
+  justify-content: center;
+  max-width: none;
+}

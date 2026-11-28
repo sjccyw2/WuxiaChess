@@ -956,6 +956,7 @@ function drawModal(keepScroll = false) {
   }
   const body = frameDialog($('modal-content'));
   addSavesButton();
+  addFullscreenButton();
   if (keepPlan) dialog.querySelector('.fo-map-plan')?.setAttribute('open', '');
   if (active?.do) {
     const equivalent = [...dialog.querySelectorAll('[data-do]')].find(
@@ -1843,6 +1844,19 @@ function loadSlot(n) {
   notice(loadedNotice(n));
 }
 // The pages between boards (the stories, 軍情, 整備, the shop) carry 存檔 in their head.
+// Polish (inkLook): the full pages (整備, 軍情, the stories, the shop …) carry the full-screen
+// button too, not only the battle and the title (the producer, 2026-11-28). It sits before 存檔 and
+// the close button; hud.syncFullscreen draws its icon and keeps it in step with the screen.
+function addFullscreenButton() {
+  const head = dialog.querySelector('.modal-head');
+  if (!POLISH.inkLook || !dialog.hasAttribute('data-full') || !head) return;
+  const b = document.createElement('button');
+  b.className = 'head-fullscreen';
+  b.dataset.do = 'fullscreen';
+  b.type = 'button';
+  head.insertBefore(b, head.querySelector('.head-saves, [data-do="close"]'));
+  hud.syncFullscreen();
+}
 function addSavesButton() {
   const between =
     ['encounter', 'brief', 'team', 'camp'].includes(dialogState) &&

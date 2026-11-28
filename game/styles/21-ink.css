@@ -416,3 +416,27 @@ html.polish-ink-look #modal[data-full] .mj-fixed-head {
     background: linear-gradient(0deg, rgba(var(--ink-wash), 0.96) 0, rgba(var(--ink-wash), 0.9) 62%, rgba(var(--ink-wash), 0));
   }
 }
+
+/* The full-screen button in a full page's head (addFullscreenButton in app.js): a bare glyph,
+   as the battle's tools are. */
+html.polish-ink-look #modal[data-full] .mj-fixed-head .head-fullscreen {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-white-dim);
+}
+html.polish-ink-look #modal[data-full] .mj-fixed-head .head-fullscreen:hover {
+  color: var(--ink-white);
+}
+html.polish-ink-look #modal[data-full] .mj-fixed-head .head-fullscreen svg {
+  width: 20px;
+  height: 20px;
+}
+html.polish-ink-look #modal[data-full] .mj-fixed-head .head-fullscreen + :is(.head-saves, .square-btn) {
+  margin-left: 0;
+}
