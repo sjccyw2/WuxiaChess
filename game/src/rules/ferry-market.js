@@ -17,8 +17,29 @@ const VISITOR = {
   reveal: '看好，老規矩，三樣揀一樣。甚麼老規矩？我可沒說，是你聽錯。',
   blind: '三隻盅一樣重，掂也沒用。別盯我這雙揚州練的手。揭一隻罷。',
   win: '成，歸你。另兩件我留下。下回再賭。',
-  rules: '第一局獲勝後必定開局。其餘各局戰後有四成機會。每次可免費揭一盅，三個位置機會均等。'
+  rules: '第一局獲勝後必定開局。其餘各局戰後有四成機會。每次可免費揭一盅，三個位置機會均等。盅裡分常品、珍品、秘寶三品：珍品與秘寶攤上不賣。揭過一盅，可花 2 籌碼再揭一盅；沒開盅的一局，可花 3 籌碼請他開盅。籌碼只在押中支線時得。',
+  // His line when a second cup is lifted for chips, and when he is paid to open the table.
+  again: '再揭？成，籌碼拿來。韋小寶做生意，向來童叟無欺。',
+  paid: '好，好，有籌碼便是大爺。三樣揀一樣，老規矩。'
 };
+// ── Grades (the producer, 2026-11-28, Q-N170) ────────────────────────────
+// 常品 is what the shelf sells. 珍品 (items with `grade: 'rare'`) and 秘寶 (the 秘笈, manuals with
+// `secret`) are never on the shelf: they come only from the cups and the 支線.
+const RARE_STOCK = Object.keys(G.ITEMS).filter((id) => G.ITEMS[id].grade === 'rare');
+const SECRET_MANUALS = Object.keys(MANUAL_PRICES).filter((id) => TECHNIQUES[id].secret);
+const GRADES = {
+  common: { name: '常品' },
+  rare: { name: '珍品' },
+  secret: { name: '秘寶' }
+};
+const gradeOf = (id) =>
+  SECRET_MANUALS.includes(id) ? 'secret' : G.ITEMS[id]?.grade === 'rare' ? 'rare' : 'common';
+// Each cup is 秘寶 at `secret`, else 珍品 at `rare` + `rarePerStage` for each board after the first,
+// else 常品.
+const CUP_ODDS = { secret: 0.05, rare: 0.25, rarePerStage: 0.02 };
+// What 籌碼 buy at the table: a second cup once one is lifted, and a table on a board with none.
+const CHIP_PRICES = { again: 2, open: 3 };
+const chipsOf = (r) => r?.chips || 0;
 // Base prices exclude a small, seeded premium. Minimum depth is one-based.
 // Only what is listed here is ever on the shelf or under a cup: to keep an item for a quest or
 // another way of earning it, delete its line.
@@ -68,12 +89,13 @@ function pools(s) {
       continue;
     groups[item.kind].push(id);
   }
-  groups.manual = Object.keys(MANUAL_PRICES).filter((id) => manualStage(id) <= depth);
+  groups.manual = Object.keys(MANUAL_PRICES).filter((id) => !TECHNIQUES[id].secret && manualStage(id) <= depth);
   return groups;
 }
 // The first board (counted from 1) after which the shelf can carry this manual.
 function manualStage(id) {
   const tier = TECHNIQUES[id].tier;
+  if (TECHNIQUES[id].secret) return Infinity; // a 秘笈 is never on the shelf
   return tier > 4 ? Infinity : Math.max(1, tier - 1);
 }
 // Mix every bit of the run and stage before taking the first draw.
@@ -112,28 +134,70 @@ function makeOffers(s) {
 // A met secondary that pays a manual: one the shelf could carry after this board, preferring one
 // not already in the store and not held by every hero, drawn from the run and stage.
 // `ends`: the run ends with this board, so the manual goes to the parcel for the next run.
-function bonusManual(s, ends = s.run.stage === 9) {
+// `secret`: a bet at 一賠三 pays a 秘笈 instead (journey.js paySide).
+function bonusManual(s, ends = s.run.stage === 9, secret = false) {
   const r = s.run,
     store = ends ? r.chronicle.parcel.manuals : r.manuals;
   const known = (id) => store.includes(id) || G.company(s).every((u) => u.guides.includes(id));
   const deck = shuffled(
-    Object.keys(MANUAL_PRICES).filter((id) => manualStage(id) <= r.stage + 1),
+    secret ? SECRET_MANUALS : Object.keys(MANUAL_PRICES).filter((id) => manualStage(id) <= r.stage + 1),
     ferryRandom(r, 0x2c1b3c6d)
   ).sort((a, b) => Number(known(a)) - Number(known(b)));
   return deck[0] || null;
 }
-function makeVisit(s) {
+// `paid`: the table is opened for 籌碼 on a board where it did not open by itself.
+function makeVisit(s, paid = false) {
   const r = s.run,
     rng = ferryRandom(r, 0x5bd1e995);
   const chance = rng();
-  if (!(r.stage === 0 && r.last.won) && chance >= 0.4) return null;
+  if (!paid && !(r.stage === 0 && r.last.won) && chance >= 0.4) return null;
   const groups = pools(s);
   const take = (ids) => ids[Math.floor(rng() * ids.length)];
-  const cards = shuffled(
-    [take([...groups.weapon, ...groups.gear]), take(groups.manual), take(groups.use)],
-    rng
+  const lots = [take([...groups.weapon, ...groups.gear]), take(groups.manual), take(groups.use)];
+  // Each cup's grade. A 珍品 is of the cup's own kind where there is one (armour or a weapon for the
+  // first cup, 天山雪蓮 for the medicine's), else any; no two cups hold the same thing.
+  const rare = CUP_ODDS.rare + CUP_ODDS.rarePerStage * r.stage;
+  const used = new Set();
+  const kinds = [['weapon', 'gear'], [], ['use']];
+  const cards = lots.map((common, i) => {
+    const roll = rng(),
+      free = (ids) => ids.filter((id) => !used.has(id) && !lots.includes(id));
+    let id = common;
+    if (roll < CUP_ODDS.secret && free(SECRET_MANUALS).length) id = take(free(SECRET_MANUALS));
+    else if (roll < CUP_ODDS.secret + rare) {
+      const own = free(RARE_STOCK.filter((x) => kinds[i].includes(G.ITEMS[x].kind)));
+      const any = free(RARE_STOCK);
+      if (own.length || any.length) id = take(own.length ? own : any);
+    }
+    used.add(id);
+    return id;
+  });
+  return {
+    cards: shuffled(cards, rng),
+    order: shuffled([0, 1, 2], rng),
+    phase: 'show',
+    pick: null,
+    ...(paid ? { paid: true } : {})
+  };
+}
+// 開盅: on a board where the table did not open, 籌碼 open it.
+function canOpenTable(s) {
+  const r = s.run;
+  return (
+    r?.status === 'camp' &&
+    r.scene === 'shop' &&
+    !!r.last &&
+    !r.last.visit &&
+    chipsOf(r) >= CHIP_PRICES.open
   );
-  return { cards, order: shuffled([0, 1, 2], rng), phase: 'show', pick: null };
+}
+function openTable(s) {
+  if (!canOpenTable(s)) return false;
+  const r = s.run;
+  r.last.visit = makeVisit(s, true);
+  r.chips -= CHIP_PRICES.open;
+  G.log(s, 'item', '付了 ' + CHIP_PRICES.open + ' 籌碼，請韋小寶開盅。', VISITOR.name);
+  return true;
 }
 function validVisit(v) {
   return (
@@ -141,7 +205,12 @@ function validVisit(v) {
     Array.isArray(v.cards) &&
     v.cards.length === 3 &&
     new Set(v.cards).size === 3 &&
-    v.cards.every((id) => Object.hasOwn(MARKET_STOCK, id) || Object.hasOwn(MANUAL_PRICES, id)) &&
+    v.cards.every(
+      (id) => Object.hasOwn(MARKET_STOCK, id) || RARE_STOCK.includes(id) || Object.hasOwn(MANUAL_PRICES, id)
+    ) &&
+    (v.paid == null || v.paid === true) &&
+    (v.extra == null ||
+      (v.phase === 'claimed' && Number.isInteger(v.extra) && v.extra >= 0 && v.extra < 3 && v.extra !== v.pick)) &&
     Array.isArray(v.order) &&
     v.order.length === 3 &&
     new Set(v.order).size === 3 &&
@@ -155,7 +224,7 @@ function lotName(id) {
   return G.ITEMS[id]?.name || '《' + TECHNIQUES[id].name + '》';
 }
 function lotImage(id) {
-  return G.ITEMS[id] ? 'item-' + id + '.webp' : 'guide-cover.webp';
+  return G.ITEMS[id] ? 'item-' + id + '.webp' : TECHNIQUES[id]?.secret ? 'guide-secret.webp' : 'guide-cover.webp';
 }
 function grantLot(s, id) {
   const r = s.run,
@@ -180,14 +249,30 @@ function coverBowls(s) {
   v.phase = 'hidden';
   return true;
 }
+// 再揭一盅: once a cup is lifted, another of the two left can be lifted for 籌碼, once a table.
+function canLiftAgain(s, position = null) {
+  const v = visiting(s);
+  return (
+    v?.phase === 'claimed' &&
+    v.extra == null &&
+    chipsOf(s.run) >= CHIP_PRICES.again &&
+    (position == null || (Number.isInteger(position) && position >= 0 && position < 3 && position !== v.pick))
+  );
+}
 function pickBowl(s, position) {
   const v = visiting(s);
-  if (v?.phase !== 'hidden' || !Number.isInteger(position) || position < 0 || position > 2)
+  if (v?.phase === 'claimed') {
+    if (!canLiftAgain(s, position)) return false;
+    s.run.chips -= CHIP_PRICES.again;
+    v.extra = position;
+  } else if (v?.phase !== 'hidden' || !Number.isInteger(position) || position < 0 || position > 2)
     return false;
   const id = v.cards[v.order[position]];
   grantLot(s, id);
-  v.pick = position;
-  v.phase = 'claimed';
+  if (v.phase === 'hidden') {
+    v.pick = position;
+    v.phase = 'claimed';
+  }
   G.log(
     s,
     'item',
@@ -201,4 +286,4 @@ function pickBowl(s, position) {
   return true;
 }
 
-export { VISITOR, MARKET_STOCK, MARKET_RULES, manualStage, bonusManual, makeOffers, makeVisit, validVisit, lotName, lotImage, grantLot, coverBowls, pickBowl };
+export { VISITOR, MARKET_STOCK, MARKET_RULES, RARE_STOCK, SECRET_MANUALS, GRADES, gradeOf, CUP_ODDS, CHIP_PRICES, chipsOf, manualStage, bonusManual, makeOffers, makeVisit, canOpenTable, openTable, validVisit, lotName, lotImage, grantLot, coverBowls, canLiftAgain, pickBowl };

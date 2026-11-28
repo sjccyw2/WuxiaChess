@@ -539,6 +539,7 @@ const SIDE_TALES = {
   unhurt: '你那隻「眼」連油皮也沒破。敢押毫髮無傷的，只有我。',
   holdLine: '後來那幾個，誰也沒越線。我在外頭數著呢。',
   answer: '他出一招，便給你們那位拆一招。拆得乾淨，這口中了。',
+  spareLife: '那人我押他走得下盤去，你們真就留了他一口氣。心腸好，賭運也好。',
   // A kind without a line of its own.
   done: '這一口，你押中啦。'
 };

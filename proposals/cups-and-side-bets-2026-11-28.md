@@ -1,6 +1,6 @@
 # 三盅通吃 and 支線: new items, new arts, new mechanisms
 
-Proposal, 2026-11-28, asked by the producer: "improve the slot machine and the 支線 function … more exciting items and skills … new mechanisms … to make the game more fun". **Nothing in the game was changed.** The questions it raises are Q-N170 to Q-N175 in `ROADMAP.md`; the work is roadmap item 0.68.
+Proposal, 2026-11-28, asked by the producer: "improve the slot machine and the 支線 function … more exciting items and skills … new mechanisms … to make the game more fun". The questions it raised, Q-N170 to Q-N175, were answered the same day: the producer took every recommendation (`ROADMAP.md`, Decisions). The first slice (§7) is built (roadmap 0.68); the second and third are 0.69 and 0.70. Where the build differs from this text, the roadmap entry says so.
 
 "The slot machine" is read here as 韋小寶's 三盅通吃 (`rules/ferry-market.js`, `ui/bowl-views.js`), the game's only game of chance. If the producer meant something else, say so and this proposal will be redone for it.
 

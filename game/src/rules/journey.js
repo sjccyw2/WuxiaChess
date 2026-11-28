@@ -1,6 +1,6 @@
 import { WAKES, closingFor } from '../data/wake-tale.js';
 import { random, shuffled } from './lots.js';
-import { makeOffers, makeVisit, validVisit, grantLot, bonusManual } from './ferry-market.js';
+import { makeOffers, makeVisit, validVisit, grantLot, bonusManual, chipsOf, canOpenTable } from './ferry-market.js';
 import { seatsFor } from './formation.js';
 import { moveFacts } from './move-facts.js';
 import { ENCOUNTER_SCRIPT } from '../data/encounter-script.js';
@@ -171,6 +171,7 @@ function initialRun(ids, seed, legacy, realm) {
     formationOpen: true,
     marked: false,
     coins: 24 + Math.min(12, chronicle.embers) * 4,
+    chips: 0, // 籌碼: won at the 支線, spent at 三盅通吃 (the producer, 2026-11-28)
     bench: [],
     next: plusRun(chronicle) ? [...ids, G.YOUTH_ID] : [...ids],
     pool: shuffled(
@@ -552,6 +553,7 @@ function restoreRun(raw) {
     !['battle', 'camp', 'ended'].includes(r.status) ||
     !Number.isInteger(r.coins) ||
     r.coins < 0 ||
+    (r.chips != null && (!Number.isInteger(r.chips) || r.chips < 0)) ||
     !validProfile(r.chronicle) ||
     !Array.isArray(r.shop) ||
     !Array.isArray(r.manuals) ||
@@ -1257,6 +1259,16 @@ const SIDE_KINDS = {
     progress: (s) => (s.tally?.crossed ? '援軍已越線' : '援軍未越線'),
     lost: (s, side) => '援軍踏入' + side.place
   },
+  // 留活口: the named piece must still stand when the board is won (斬將 and 守 boards only).
+  spareLife: {
+    name: () => '留活口',
+    sort: 'keep',
+    eligible: (s) => ['slay', 'keep'].includes(G.boardKind(s)),
+    detail: (s, side, map) => '取勝時，' + pieceName(map, side.target) + '須仍未倒下。',
+    state: (s, side) => (fallOf(s, side.target) ? 'failed' : 'open'),
+    progress: (s, side) => pieceName(s.mapIndex, side.target) + '：' + (fallOf(s, side.target) ? '已倒' : '未倒'),
+    lost: (s, side) => pieceName(s.mapIndex, side.target) + '已倒下'
+  },
   answer: {
     name: () => '以招破招',
     sort: 'reach',
@@ -1270,6 +1282,12 @@ const SIDE_KINDS = {
 };
 const sideName = (side) => (side ? SIDE_KINDS[side.kind].name(side) : '');
 const sideTale = (side) => SIDE_TALES[side?.kind] || SIDE_TALES.done;
+// ── Odds (賠率; the producer, 2026-11-28, Q-N171) ──────────────────────────
+// Each pool entry carries its odds (battles.js `odds`), set from how often the simulated player
+// meets it in 重劍境界. A met bet pays its reward times the odds (an easy one pays what it always
+// did), and as many 籌碼 as the odds; at 一賠三 a manual is a 秘笈.
+const ODDS_NAMES = { 1: '一賠一', 2: '一賠二', 3: '一賠三' };
+const oddsOf = (side) => (ODDS_NAMES[side?.odds] ? side.odds : 1);
 // Draws the board's secondary: the pool shuffled once by run seed and stage, the first entry the
 // lineup can meet. The same seed, stage and lineup always give the same secondary; a named hero
 // is drawn from the lineup as the board is built.
@@ -1322,7 +1340,7 @@ function sideLost(s, side = s.run.side) {
 // The forecast's line when this blow would fell its target and so meet or fail the secondary.
 function sideForecast(s, u, t, f) {
   const side = s.run?.side;
-  if (!side || !s.tally || !['lastBlow', 'order', 'double', 'combo', 'answer'].includes(side.kind)) return '';
+  if (!side || !s.tally || !['lastBlow', 'order', 'double', 'combo', 'answer', 'spareLife'].includes(side.kind)) return '';
   const target = f.coveredBy ? G.find(s, f.coveredBy) : t;
   if (!target || f.type !== 'enemy' || f.amount < target.hp) return '';
   const art = f.mpCost ? G.artFor(u) : null;
@@ -1354,13 +1372,20 @@ function validSide(s, side) {
     return false;
   if (side.hero != null && !G.ROSTER.includes(side.hero)) return false;
   const pool = s.run.legacyBoard ? Object.values(LEGACY_SIDES) : G.boardOf(s).sides;
-  return pool.some((e) =>
+  // (A bet saved before odds had none: it takes its entry's, below.)
+  const entry = pool.find((e) =>
     [...new Set([...Object.keys(e), ...Object.keys(side)])].every((k) =>
-      k === 'hero' && e.hero === '*'
-        ? G.ROSTER.includes(side.hero)
-        : JSON.stringify(e[k]) === JSON.stringify(side[k])
+      k === 'odds'
+        ? true
+        : k === 'hero' && e.hero === '*'
+          ? G.ROSTER.includes(side.hero)
+          : JSON.stringify(e[k]) === JSON.stringify(side[k])
     )
   );
+  if (!entry) return false;
+  if (entry.odds) side.odds = entry.odds;
+  else delete side.odds;
+  return true;
 }
 
 // ── The briefing ─────────────────────────────────────────────────────────
@@ -1467,7 +1492,9 @@ function boardModel(map, stage, s = null, live = false, route = null) {
       name: SIDE_KINDS[entry.kind].name(entry),
       detail: s || entry.hero !== '*' ? SIDE_KINDS[entry.kind].detail(s, entry, map) : '',
       reward: entry.reward,
-      rewardText: '勝利時另得' + rewardText(entry, stage, null, r) + '。',
+      odds: oddsOf(entry),
+      oddsName: ODDS_NAMES[oddsOf(entry)],
+      rewardText: ODDS_NAMES[oddsOf(entry)] + ' · 勝利時另得' + rewardText(entry, stage, null, r) + '。',
       warning: s && entry.hero && sideBenched(s, entry) ? heroName(entry.hero) + '未在出陣名單中，此支線無法達成。' : '',
       ...(withState
         ? {
@@ -1705,7 +1732,7 @@ function settle(s) {
       G.log(s, 'story', MAZE_TALE.step, YOUTH.role);
     }
   }
-  if (bonus) G.log(s, 'grow', '支線達成，' + rewardText(r.side, r.stage, bonus.manual, r) + '。', '支線');
+  if (bonus) G.log(s, 'grow', '支線達成，' + rewardText(r.side, r.stage, bonus.manuals || bonus.manual, r) + '。', '支線');
   return true;
 }
 // A run's ten boards won: its 境界 is marked won, and winning the highest open 境界 opens the next.
@@ -1728,20 +1755,28 @@ function paySide(s) {
   const r = s.run,
     ends = r.stage === finalStage(r),
     kind = payKind(r.side.reward, ends);
-  const paid = { kind: r.side.kind, reward: kind, amount: 0, manual: null };
+  const odds = oddsOf(r.side);
+  const paid = { kind: r.side.kind, reward: kind, amount: 0, manual: null, odds, chips: odds };
+  r.chips = chipsOf(r) + odds;
   if (kind === 'coins') {
-    paid.amount = REWARDS.side + REWARDS.sidePerStage * r.stage;
+    paid.amount = (REWARDS.side + REWARDS.sidePerStage * r.stage) * odds;
     r.coins += paid.amount;
   } else if (kind === 'points') {
     const standing = G.party(s).filter(G.living);
-    for (const u of standing) u.sp += 1;
+    for (const u of standing) u.sp += odds;
     paid.amount = standing.length;
   } else {
-    paid.manual = bonusManual(s, ends);
-    if (paid.manual) {
-      (ends ? r.chronicle.parcel.manuals : r.manuals).push(paid.manual);
-      paid.amount = 1;
+    // 一賠三: one 秘笈. Otherwise as many of the shelf's manuals as the odds.
+    const store = ends ? r.chronicle.parcel.manuals : r.manuals;
+    paid.manuals = [];
+    for (let i = 0; i < (odds >= 3 ? 1 : odds); i++) {
+      const id = bonusManual(s, ends, odds >= 3);
+      if (!id) break;
+      store.push(id);
+      paid.manuals.push(id);
     }
+    paid.manual = paid.manuals[0] || null;
+    paid.amount = paid.manuals.length;
   }
   return paid;
 }
@@ -1751,14 +1786,23 @@ const payKind = (reward, ends) => (reward === 'points' && ends ? 'coins' : rewar
 // tenth and the last board.
 const endsRun = (stage, r = null) => (r ? stage === finalStage(r) : stage >= TENTH);
 // A reward as the text says it; a manual by name once it has been paid.
+// `manual` is the manuals paid (an id or a list), once paid. Every met bet also pays 籌碼.
 function rewardText(side, stage, manual = null, r = null) {
   const ends = endsRun(stage, r),
-    kind = payKind(side?.reward, ends);
-  if (kind === 'coins') return '賞銀 ' + (REWARDS.side + REWARDS.sidePerStage * stage) + ' 兩';
-  if (kind === 'points') return '出陣生還的俠客各 1 武學點';
+    kind = payKind(side?.reward, ends),
+    odds = oddsOf(side),
+    chips = '，並得籌碼 ' + odds;
+  if (kind === 'coins') return '賞銀 ' + (REWARDS.side + REWARDS.sidePerStage * stage) * odds + ' 兩' + chips;
+  if (kind === 'points') return '出陣生還的俠客各 ' + odds + ' 武學點' + chips;
+  const paid = [manual].flat().filter(Boolean);
+  const books = paid.length
+    ? paid.map((id) => '《' + TECHNIQUES[id].name + '》').join('、') + (paid.length > 1 ? '兩卷' : '一卷')
+    : odds >= 3
+      ? '秘笈一卷'
+      : '武譜' + (odds > 1 ? '兩卷' : '一卷');
   // On the board that ends the run the manual goes to the parcel for the next run (paySide).
-  if (ends) return manual ? '《' + TECHNIQUES[manual].name + '》一卷，寄在通吃坊，下一輪取用' : '武譜一卷（寄在通吃坊，下一輪取用）';
-  return manual ? '《' + TECHNIQUES[manual].name + '》一卷，已入公庫' : '武譜一卷（入公庫）';
+  if (ends) return books + (paid.length ? '，寄在通吃坊，下一輪取用' : '（寄在通吃坊，下一輪取用）') + chips;
+  return books + (paid.length ? '，已入公庫' : '（入公庫）') + chips;
 }
 function buy(s, id) {
   const r = s.run;
@@ -2177,6 +2221,8 @@ function campModel(s) {
     library = final ? r.chronicle.parcel.manuals : r.manuals;
   return {
     visit: r.last.visit,
+    chips: chipsOf(r),
+    canOpen: canOpenTable(s),
     stageName: mapLayout(s.mapIndex).name,
     nextName: final ? '' : mapLayout(mapAt(r, r.stage + 1)).name,
     final,
@@ -2190,7 +2236,7 @@ function campModel(s) {
     objective: !last.won || !r.side
       ? ''
       : last.optional
-        ? '支線達成：' + sideName(r.side) + '。' + rewardText(r.side, r.stage, last.side?.manual, r) + '。'
+        ? '支線達成：' + sideName(r.side) + '。' + rewardText(r.side, r.stage, last.side?.manuals || last.side?.manual, r) + '。'
         : '支線未成：' + sideName(r.side) + '。',
     // A lost board: the board's reason alone. What follows it is the banner of the next page.
     story: !last.won
@@ -2231,4 +2277,5 @@ function campModel(s) {
 }
 
 export { LAST_BOON, devPress, devFirstBoard, stagesOf, nextMap, TENTH, LAST_STAGE, endsWithLast, finalStage, mapAt, plusRun, enterLast, fixedLead, stageTitle, KIND_NAMES, validProfile, fillProfile };
+export { ODDS_NAMES, oddsOf };
 export { DRAWN, KEPT, keptLots, routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, lotPreview, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };

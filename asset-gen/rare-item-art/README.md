@@ -1,0 +1,17 @@
+# Pictures for the 珍品 and 秘寶
+
+The items and manuals that are never on the shelf: they come only from 三盅通吃 and the 支線
+(roadmap 0.68; the producer's decisions of 2026-11-28, Q-N170 to Q-N175). Painted on 2026-11-28
+in the manner of the item pictures already in the game (寒潭短劍 and 九花玉露丸 as references).
+
+| File | In the game |
+| --- | --- |
+| `full/snowLotus.webp` | `game/assets/item-snowLotus.webp`, 天山雪蓮 |
+| `full/yuanBlade.webp` | `game/assets/item-yuanBlade.webp`, 鴛刀 |
+| `full/yangBlade.webp` | `game/assets/item-yangBlade.webp`, 鴦刀 |
+| `full/scarletToad.webp` | `game/assets/item-scarletToad.webp`, 莽牯朱蛤 |
+| `full/ironDagger.webp` | `game/assets/item-ironDagger.webp`, 削鐵匕首 |
+| `full/guide-secret.webp` | `game/assets/guide-secret.webp`, the cover of a 秘笈, on the parchment of `guide-cover.webp` |
+
+- `make/paint.py` paints them (1024 × 1024, transparent) through `make/api.py`; the session proxy adds the key.
+- `make/cut.py` writes the game's files: items at 256 × 256, the cover at 360 × 360.

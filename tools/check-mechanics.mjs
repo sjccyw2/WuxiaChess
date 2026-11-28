@@ -4941,8 +4941,23 @@ section('rewards and recruit');
   };
   let s = realBoard(0, 0);
   let b = win(s, { kind: 'intact', reward: 'coins' });
-  check('coins: 36 for the board and 24 for the secondary at stage 0', s.run.coins - b.coins === 36 + 24 && s.run.last.reward === 60 && same(s.run.last.side, { kind: 'intact', reward: 'coins', amount: 24, manual: null }));
-  check('…logged as the secondary’s reward', logged(s, '支線達成，賞銀 24 兩。', '支線'));
+  check('coins: 36 for the board and 24 for the secondary at stage 0', s.run.coins - b.coins === 36 + 24 && s.run.last.reward === 60 && same(s.run.last.side, { kind: 'intact', reward: 'coins', amount: 24, manual: null, odds: 1, chips: 1 }));
+  check('…logged as the secondary’s reward, with its 籌碼', logged(s, '支線達成，賞銀 24 兩，並得籌碼 1。', '支線'));
+  check('…and the run holds the 籌碼', s.run.chips === 1);
+  // 賠率 (the producer, 2026-11-28, Q-N171): a met bet pays its reward times the odds, and as many 籌碼.
+  s = realBoard(0, 0);
+  b = win(s, { kind: 'intact', reward: 'coins', odds: 3 });
+  check('一賠三: three times the silver and three 籌碼', s.run.coins - b.coins === 36 + 72 && s.run.last.side.amount === 72 && s.run.chips === 3);
+  s = realBoard(0, 0);
+  b = win(s, { kind: 'noMedicine', reward: 'points', odds: 2 });
+  check('一賠二 on points: two to each fielded hero standing', G.party(s).every((u, i) => u.sp - b.sp[i] === 3) && s.run.chips === 2);
+  s = realBoard(0, 0);
+  b = win(s, { kind: 'noMedicine', reward: 'manual', odds: 3 });
+  check('一賠三 on a manual: one 秘笈 into the store', s.run.manuals.length === b.manuals.length + 1 && FM.SECRET_MANUALS.includes(s.run.last.side.manual));
+  s = realBoard(0, 0);
+  b = win(s, { kind: 'noMedicine', reward: 'manual', odds: 2 });
+  check('一賠二 on a manual: two of the shelf’s', s.run.manuals.length === b.manuals.length + 2 && s.run.last.side.manuals.every((id) => !FM.SECRET_MANUALS.includes(id)));
+  check('every pool entry has odds of 1 to 3', BATTLES.every((board) => board.sides.every((e) => [1, 2, 3].includes(e.odds))));
   check('a win brings the next hero', !!s.run.last.recruit && s.run.pool.length === b.pool - 1);
   s = realBoard(0, 0);
   unit(s, 'medic').hp = 0;
@@ -4978,7 +4993,7 @@ section('rewards and recruit');
   s = realBoard(0, 0);
   b = win(s, { kind: 'noMedicine', reward: 'manual' });
   const got = s.run.last.side.manual;
-  check('manual: one manual into the store, named in the log', !!got && s.run.manuals.length === b.manuals.length + 1 && s.run.manuals.includes(got) && logged(s, '支線達成，《' + TECHNIQUES[got].name + '》一卷，已入公庫。', '支線'));
+  check('manual: one manual into the store, named in the log', !!got && s.run.manuals.length === b.manuals.length + 1 && s.run.manuals.includes(got) && logged(s, '支線達成，《' + TECHNIQUES[got].name + '》一卷，已入公庫，並得籌碼 1。', '支線'));
   const again = realBoard(0, 0);
   win(again, { kind: 'noMedicine', reward: 'manual' });
   check('…the same manual for the same run', again.run.last.side.manual === got);
@@ -4996,7 +5011,114 @@ section('rewards and recruit');
   const pool = s.run.pool.length;
   R.settle(s);
   check('a loss never recruits', !s.run.last.recruit && s.run.pool.length === pool);
-  check('rewardText says each kind', R.rewardText({ reward: 'coins' }, 3) === '賞銀 33 兩' && R.rewardText({ reward: 'points' }, 3) === '出陣生還的俠客各 1 武學點' && R.rewardText({ reward: 'points' }, 9) === '賞銀 51 兩' && R.rewardText({ reward: 'manual' }, 3) === '武譜一卷（入公庫）');
+  check('rewardText says each kind', R.rewardText({ reward: 'coins' }, 3) === '賞銀 33 兩，並得籌碼 1' && R.rewardText({ reward: 'points' }, 3) === '出陣生還的俠客各 1 武學點，並得籌碼 1' && R.rewardText({ reward: 'points' }, 9) === '賞銀 51 兩，並得籌碼 1' && R.rewardText({ reward: 'manual' }, 3) === '武譜一卷（入公庫），並得籌碼 1');
+  check('…and with odds', R.rewardText({ reward: 'coins', odds: 2 }, 3) === '賞銀 66 兩，並得籌碼 2' && R.rewardText({ reward: 'manual', odds: 3 }, 3) === '秘笈一卷（入公庫），並得籌碼 3' && R.rewardText({ reward: 'manual', odds: 2 }, 3) === '武譜兩卷（入公庫），並得籌碼 2');
+}
+
+section('珍品, 秘笈, the cups’ grades and 籌碼 (the producer, 2026-11-28, Q-N170)');
+{
+  // 鴛鴦刀: each gains 4 攻擊 and 4 防禦 with the other blade beside him, nothing apart.
+  let s = board(['hero', 'medic', 'guard'], 7);
+  const a = put(s, 'hero', 3, 3),
+    c = put(s, 'medic', 6, 3);
+  a.weapon = 'yuanBlade';
+  c.weapon = 'yangBlade';
+  const apart = [G.stat(a, 'atk', s), G.stat(a, 'def', s), G.stat(c, 'atk', s)];
+  put(s, 'medic', 4, 3);
+  check('鴛鴦刀: beside each other, each gains 4 攻擊 and 4 防禦', G.stat(a, 'atk', s) === apart[0] + 4 && G.stat(a, 'def', s) === apart[1] + 4 && G.stat(c, 'atk', s) === apart[2] + 4);
+  c.weapon = 'pine';
+  check('…and nothing beside a companion with another weapon', G.stat(a, 'atk', s) === apart[0]);
+  // 削鐵匕首: its basic attack passes half the target's 防禦.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const h = put(s, 'hero', 3, 3),
+    foe = G.enemies(s)[0];
+  Object.assign(foe, { x: 4, y: 3 });
+  foe.def = 30;
+  h.weapon = 'ironDagger';
+  const pierced = G.damage(h, foe, false, s.mapIndex, s);
+  G.ITEMS.ironDagger.pierce = 0;
+  const plain = G.damage(h, foe, false, s.mapIndex, s);
+  G.ITEMS.ironDagger.pierce = 0.5;
+  check('削鐵匕首: the basic attack passes half the target’s 防禦', pierced > plain, pierced + ' vs ' + plain);
+  // 莽牯朱蛤: poison never takes hold.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const w = unit(s, 'guard');
+  w.gear = 'scarletToad';
+  check('莽牯朱蛤: poison never takes hold of the wearer', BM.applyCondition(s, w, { kind: 'poison', power: 7, turns: 3 }, G.enemies(s)[0]) === false && !w.conditions?.poison);
+  BM.applyCondition(s, w, { kind: 'weak', power: 3, turns: 2 }, G.enemies(s)[0]);
+  check('…other conditions still do', !!w.conditions?.weak);
+  // 天山雪蓮: clears, then restores 40 and 40.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const m = unit(s, 'medic');
+  m.hp = 10;
+  m.mp = 0;
+  m.conditions = { poison: { power: 5, through: 9, source: 'x' } };
+  s.stock.snowLotus = 1;
+  check('天山雪蓮: clears every ailment, then 40 氣血 and 40 內力', G.consume(s, m, 'snowLotus') && m.hp === 50 && m.mp === 40 && !m.conditions.poison);
+  // 珍品 and 秘笈 are never on the shelf.
+  check('no 珍品 is in the shelf’s stock', FM.RARE_STOCK.length === 5 && FM.RARE_STOCK.every((id) => !FM.MARKET_STOCK[id]));
+  check('no 秘笈 can be on the shelf', FM.SECRET_MANUALS.length === 4 && FM.SECRET_MANUALS.every((id) => FM.manualStage(id) === Infinity));
+  // 獅子吼: hurts heroes within two of the striker, never below 1, and not one under 固守.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const roarer = put(s, 'hero', 3, 3),
+    near = put(s, 'medic', 2, 3),
+    held = put(s, 'guard', 3, 4),
+    t = G.enemies(s)[0];
+  Object.assign(t, { x: 5, y: 3 });
+  roarer.learned = ['lionRoar'];
+  roarer.slots = ['signature', 'lionRoar', null];
+  roarer.activeArt = 'lionRoar';
+  roarer.mp = roarer.maxMp;
+  held.conditions = { fortify: { power: 6, through: 9, source: 'guard' } };
+  near.hp = 5;
+  const f = G.forecast(roarer, t, true, s);
+  check('獅子吼: the forecast names the companions it hurts, the one under 固守 spared', f.roar.length === 1 && f.roar[0].id === 'medic' && f.roar[0].amount === 4 && f.notes.some((n) => n.startsWith('獅子吼')));
+  G.resolve(s, roarer, t, true);
+  check('…and they lose it, never below 1', near.hp === 1 && held.hp === held.maxHp);
+  // The cups: grades, the second lift and the paid table.
+  const camp = (stage = 0) => {
+    const c = realBoard(0, 0);
+    c.run.side = { kind: 'intact', reward: 'coins', odds: 1 };
+    for (const e of G.enemies(c)) e.hp = 0;
+    c.arrivals = {};
+    G.check(c);
+    R.settle(c);
+    c.run.scene = 'shop';
+    return c;
+  };
+  let grades = { common: 0, rare: 0, secret: 0 },
+    valid = true;
+  for (let n = 0; n < 400; n++) {
+    const c = camp();
+    c.run.seed = Math.imul(n + 1, 2654435761) >>> 0;
+    c.run.stage = n % 10;
+    const v = FM.makeVisit(c, true);
+    valid &&= FM.validVisit(v);
+    for (const id of v.cards) grades[FM.gradeOf(id)]++;
+  }
+  check('every table drawn is valid, its three things different', valid);
+  check('…and its cups are 常品, 珍品 and 秘寶, 珍品 more often than 秘寶', grades.common > grades.rare && grades.rare > grades.secret && grades.secret > 0, JSON.stringify(grades));
+  s = camp();
+  s.run.last.visit = null;
+  s.run.chips = 2;
+  check('開盅 needs 3 籌碼', !FM.canOpenTable(s) && !FM.openTable(s));
+  s.run.chips = 5;
+  check('…and with them opens a table, for 3', FM.openTable(s) && s.run.chips === 2 && s.run.last.visit?.paid === true && FM.validVisit(s.run.last.visit));
+  FM.coverBowls(s);
+  const before = JSON.stringify([s.stock, s.run.manuals]);
+  check('the first cup is free', FM.pickBowl(s, 0) && s.run.chips === 2 && JSON.stringify([s.stock, s.run.manuals]) !== before);
+  check('…the same cup cannot be lifted again', !FM.pickBowl(s, 0));
+  const got = s.run.last.visit.cards[s.run.last.visit.order[1]];
+  check('再揭一盅: another for 2 籌碼, and it is granted', FM.pickBowl(s, 1) && s.run.chips === 0 && s.run.last.visit.extra === 1 && (G.ITEMS[got] ? s.stock[got] > 0 : s.run.manuals.includes(got)));
+  s.run.chips = 9;
+  check('…once a table', !FM.canLiftAgain(s) && !FM.pickBowl(s, 2) && s.run.chips === 9);
+  check('…and the table still loads', FM.validVisit(s.run.last.visit));
+  // 留活口: open while the piece stands, failed once it falls, met at a win.
+  s = realBoard(0, 0);
+  s.run.side = { kind: 'spareLife', target: 'master', reward: 'coins', odds: 2 };
+  check('留活口: open while the piece stands', R.sideState(s) === 'open');
+  s.tally.falls.push({ id: G.refId(s.mapIndex, 'master'), by: 'hero', round: 1, phase: 'ally' });
+  check('…failed once it falls, and says so', R.sideState(s) === 'failed' && R.sideLost(s).endsWith('已倒下'));
 }
 
 section('saves');

@@ -381,7 +381,7 @@ function holdValue(s, u, t, f, ctx) {
 const SIDE_W = {
   lastBlow: 60, lastBlowOther: -80, orderEarly: -80, lateRound: 10, double: 25, mirrorCharge: -60,
   mendValue: 30, herbsValue: 30, combo: 40, holdLineKill: 30, holdLinePlace: 8, holdLineReach: 2, answer: 50,
-  unhurtDanger: 4, intactLethal: 3
+  unhurtDanger: 4, intactLethal: 3, spareLife: -80
 };
 const piece = (s, ref) => G.find(s, G.refId(s.mapIndex, ref));
 const standing = (s, id) => {
@@ -450,6 +450,14 @@ const SIDE_POLICY = {
   },
   answer: {
     fell: (s, side, blow) => ({ score: blow.main && blow.u.id === side.hero && blow.answered ? SIDE_W.answer : 0 })
+  },
+  // 留活口: never fell the piece named, unless late in the board, as for lastBlow and order.
+  spareLife: {
+    fell: (s, side, blow) => {
+      const target = piece(s, side.target);
+      if (!target || !blow.gone.has(target) || s.round >= SIDE_W.lateRound) return { score: 0 };
+      return { score: SIDE_W.spareLife, holdWin: true };
+    }
   }
 };
 function foeValue(s, t, ctx) {
@@ -770,11 +778,14 @@ function equipItems(s) {
     if (!best || !G.equip(s, best.u, best.id)) return;
   }
 }
-// 韋小寶's shop: the dice cups first (the first cup, when he has brought them), then purchases
-// one at a time (nextBuy) until none is worth it, at most twelve.
+// 韋小寶's shop: the dice cups first (the first cup, when he has brought them, or when 籌碼 can
+// open them; then a second cup whenever 籌碼 allow), then purchases one at a time (nextBuy) until
+// none is worth it, at most twelve.
 function shop(s) {
   const r = s.run;
+  if (FM.canOpenTable(s)) FM.openTable(s);
   if (r.last?.visit && FM.coverBowls(s)) FM.pickBowl(s, 0);
+  if (FM.canLiftAgain(s)) FM.pickBowl(s, r.last.visit.pick === 0 ? 1 : 0);
   for (let guard = 0; guard < 12; guard++) {
     const id = nextBuy(s);
     if (!id) break;

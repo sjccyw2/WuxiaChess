@@ -1834,6 +1834,21 @@ function throngBonus(s, u) {
   ).length;
   return per * Math.min(near, leaderBoon(s)?.most || 3);
 }
+// 鴛鴦刀 (仁者無敵): a hero holding one of the pair, with a living companion holding the other
+// beside him, gains the pair's 攻擊 and 防禦; in 整備, beside his seat's post.
+function pairBonus(s, u, k) {
+  const pair = ITEMS[u?.weapon]?.pair;
+  if (!pair || !s?.units || !ally(u) || !living(u)) return 0;
+  const prep = s.run?.scene === 'prep',
+    at = prep ? prepPost(s, u.id) : u;
+  if (!at) return 0;
+  const near = s.units.some((v) => {
+    if (v.id === u.id || !ally(v) || !living(v) || v.weapon !== pair.with) return false;
+    const there = prep ? prepPost(s, v.id) : v;
+    return !!there && distance(there, at) === 1;
+  });
+  return near ? pair[k] || 0 : 0;
+}
 function stat(u, k, s) {
   // 重劍, 木劍: in those stages 求敗's step is the stage's, whatever else is on him.
   const fixed = k === 'step' && u.side === 'enemy' ? stageOf(u)?.step : null;
@@ -1854,6 +1869,7 @@ function stat(u, k, s) {
         (c.weak?.power || 0) -
         (c.disarm?.power || 0) +
         bannerBonus(s, u) +
+        pairBonus(s, u, 'atk') +
         sabreBonus(s, u) +
         throngBonus(s, u) -
         commandAura(s, u, 'sap')
@@ -1861,6 +1877,7 @@ function stat(u, k, s) {
         ? -(c.exposed?.power || 0) -
           (c.recoil?.power || 0) +
           (c.fortify?.power || 0) +
+          pairBonus(s, u, 'def') +
           (onZone(s, u) ? 4 : 0)
         : k === 'step'
           ? (c.haste?.power || 0) - (c.pin?.power || 0) - (zoneSlows(s, u) ? 2 : 0)
@@ -2310,7 +2327,10 @@ function damage(
   // 重劍: 固守's 防禦 does not count against 求敗's blows in that stage.
   const firm = !ally(u) && stageOf(u)?.pierce ? t.conditions?.fortify?.power || 0 : 0;
   const protection = stat(t, 'def', s) - firm + ground + (t.brace ? 4 : 0);
-  const pierce = art ? art.pierce || 0 : commandBonus(s, u, 'pierce') / 100;
+  // A weapon that passes 防禦 (削鐵匕首) does so for the basic attack and the counter only.
+  const pierce = art
+    ? art.pierce || 0
+    : Math.min(1, commandBonus(s, u, 'pierce') / 100 + (ITEMS[u.weapon]?.pierce || 0));
   return Math.max(
     3,
     Math.round(attackPower(s, u, art, basic, t, struckHp) - protection * 0.65 * (1 - pierce))
@@ -2472,6 +2492,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     shielded: 0,
     recipients: [],
     splash: [],
+    roar: [], // 獅子吼: companions near the striker it hurts, as { id, amount }
     effects: effectsOf(art),
     hpCost: art?.hpCost || 0,
     forms: formsFor(u, art, basic),
@@ -2713,6 +2734,17 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
       if (amount >= v.hp) guards.delete(v);
       result.splash.push({ id: v.id, raw, amount });
     }
+  }
+  // 獅子吼 (`roar`): every other hero within `roar.radius` of the striker loses `roar.hp` 氣血,
+  // never below 1; 固守 keeps it off.
+  if (s && art?.roar) {
+    for (const v of s.units) {
+      if (v.id === u.id || !ally(v) || !living(v) || distance(v, u) > art.roar.radius) continue;
+      const amount = v.conditions?.fortify ? 0 : Math.min(art.roar.hp, v.hp - 1);
+      if (amount > 0) result.roar.push({ id: v.id, amount });
+    }
+    if (result.roar.length)
+      result.notes.push(art.name + ' · ' + result.roar.map((h) => unitDetails(find(s, h.id)).name).join('、') + '各損 ' + art.roar.hp + ' 氣血');
   }
   // The board ends the moment it is won (the producer, 2026-11-25): when the blow's splash fells
   // the last of what must fall, the one it struck has no time to answer.
@@ -3027,7 +3059,7 @@ function finishAction(s, u) {
 }
 function putEffects(s, caster, target, specs, effects) {
   for (const effect of specs) {
-    applyCondition(s, target, effect, caster);
+    if (applyCondition(s, target, effect, caster) === false) continue;
     effects.push([target.id, CONDITION_NAMES[effect.kind], 'status']);
     log(
       s,
@@ -3199,6 +3231,15 @@ function resolve(s, u, t, skill) {
       effects.push([v.id, '−' + dealt]);
       log(s, 'combat', '受到氣勁波及，損失 ' + dealt + ' 點氣血。', unitDetails(v).name);
       if (!ally(v)) wakePost(s, v, true);
+    }
+    for (const hit of f.roar || []) {
+      const v = find(s, hit.id);
+      if (!v || !living(v)) continue;
+      const lost = Math.min(hit.amount, v.hp - 1);
+      if (lost <= 0) continue;
+      v.hp -= lost;
+      effects.push([v.id, '−' + lost]);
+      log(s, 'combat', '被' + art.name + '震得氣血翻湧，損失 ' + lost + ' 點氣血。', unitDetails(v).name);
     }
     // The board ends the moment it is won: nothing that comes after the blow can lose it.
     if (!s.result && KIND_RULES[boardKind(s)].won(s)) check(s);

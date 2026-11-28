@@ -17,6 +17,7 @@ planned for each pack and which decisions are waiting on the producer.
 | `hero-figures/` | The twenty heroes' full-length figures repainted in high definition on 2026-11-28 (`full/<id>.webp`, 1024 × 1536), each from the hero's portrait and earlier figure so face and costume are kept; `make/paint.py` paints them and `make/cut.py` writes `game/assets/figure-<id>.webp` at 560 × 880 (was 280 × 440). |
 | `jianying-roster-art/` | Thirty characters: a portrait and a sprite sheet each. |
 | `jianying-item-art/` | Eight skill effects and thirty-two item pictures, all animated. |
+| `rare-item-art/` | The 珍品 and 秘寶 that are never on the shelf (2026-11-28, roadmap 0.68): five item pictures (天山雪蓮, 鴛刀, 鴦刀, 莽牯朱蛤, 削鐵匕首) and the cover of a 秘笈, painted in the manner of the item pictures in the game; `make/paint.py` paints, `make/cut.py` writes `game/assets/item-<id>.webp` and `guide-secret.webp`. |
 
 Each pack has an `index.html` that previews its sheets, and a `manifest.json` / `manifest.csv`
 with every file, its frame layout and its checksum. Open the preview through a local web server

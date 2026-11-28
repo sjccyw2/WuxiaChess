@@ -473,12 +473,23 @@ function itemBonus(item) {
     ['power', '絕技威力'],
     ['step', '移動'],
     ['barbs', '反震'],
+    ['pierce', '普攻穿透'],
+    ['antivenom', '百毒不侵'],
+    ['pair', '成對'],
     ['hp', '氣血'],
     ['mp', '內力']
   ]
     .filter(([k]) => item[k])
     .map(([k, n]) =>
-      item[k] === true ? n : k === 'barbs' ? n + ' ' + item[k] : n + (item[k] < 0 ? ' −' + -item[k] : ' ＋' + item[k])
+      item[k] === true
+        ? n
+        : k === 'barbs'
+          ? n + ' ' + item[k]
+          : k === 'pierce'
+            ? n + ' ' + Math.round(item[k] * 100) + '%'
+            : k === 'pair'
+              ? ITEMS[item.pair.with].name + '在旁 攻防 ＋' + item.pair.atk
+              : n + (item[k] < 0 ? ' −' + -item[k] : ' ＋' + item[k])
     )
     .join(' · ');
 }

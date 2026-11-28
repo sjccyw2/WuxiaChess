@@ -1,5 +1,6 @@
 import { seatsFor } from './formation.js';
 import { mapLayout } from '../data/terrain.js';
+import { WARES } from '../data/martial-arts.js';
 // Combat mastery is saved on the hero. Formation bonuses are derived from the living board.
 const COMMANDS = {
   hero: {
@@ -285,6 +286,8 @@ function applyCondition(s, target, effect, caster) {
   const old = held[kind];
   // 金剛: a foe's blow puts nothing on its holder (its own and its companions' effects still do).
   if (held.immune && caster && caster !== target && caster.side !== target.side) return;
+  // 百毒不侵 (莽牯朱蛤): poison never takes hold of the wearer. False: nothing was put on.
+  if (kind === 'poison' && WARES[target.gear]?.antivenom) return false;
   const extra = ['haste', 'rally', 'fortify'].includes(kind) && target.acted ? 1 : 0;
   const through = s.round + turns - 1 + extra;
   const owner = old && old.power > power ? old.source : caster.id;

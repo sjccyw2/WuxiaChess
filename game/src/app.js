@@ -6,7 +6,7 @@ import * as X from './ui/field-extras.js';
 import * as F from './ui/action-flow.js';
 import { journalPage } from './ui/wake-views.js';
 import { bowlsPage } from './ui/bowl-views.js';
-import { coverBowls, pickBowl } from './rules/ferry-market.js';
+import { coverBowls, pickBowl, openTable } from './rules/ferry-market.js';
 import { panelDrag } from './ui/panel-drag.js';
 import { canPlaceEquipment, equipmentPlacement, planningMap } from './ui/armory-views.js';
 import { POSTS } from './ui/board-plan.js';
@@ -2617,6 +2617,14 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'back-shop':
       if (dialogState === 'bowls') openPage('camp');
+      break;
+    // 開盅: 籌碼 open the table on a board where it did not open by itself.
+    case 'open-table':
+      if (dialogState === 'camp' && openTable(state)) {
+        update();
+        audio('bowl');
+        openPage('bowls');
+      }
       break;
     case 'bowl-shuffle': {
       if (dialogState !== 'bowls' || !coverBowls(state)) break;

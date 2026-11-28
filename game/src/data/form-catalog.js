@@ -210,7 +210,12 @@ const ART_FORMS = {
   iceSoulNeedle: [],
   diamondWard: [],
   sevenInjuries: [],
-  waterSkim: ['landing']
+  waterSkim: ['landing'],
+  // 秘笈 (never on the shelf)
+  boneMeltPalm: [],
+  dragonClaw: ['pull'],
+  spiderHand: [],
+  lionRoar: []
 };
 
 const WEAPON_FORMS = {
@@ -232,7 +237,10 @@ const WEAPON_FORMS = {
   travelBlade: ['arc'],
   starSteel: ['line'],
   dragonSaber: [],
-  goldSerpentBlade: ['arc']
+  goldSerpentBlade: ['arc'],
+  yuanBlade: ['arc'],
+  yangBlade: ['riposte'],
+  ironDagger: []
 };
 
 const COMBINATIONS = [

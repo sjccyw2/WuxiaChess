@@ -32,6 +32,11 @@
 const FINAL_MAP = 9;
 // The reward kinds a secondary may pay (journey.js settle).
 const SIDE_REWARDS = ['coins', 'points', 'manual'];
+// Each pool entry's `odds` (賠率, 1 to 3; the producer, 2026-11-28, Q-N171) is set from how often
+// the simulated player met it in 重劍境界 (`node tools/sim-battles.mjs --runs 200 --seed 1
+// --realm 3`, 2026-11-28): 80% or more 一賠一, 40% to 80% 一賠二, under 40% 一賠三. A met bet
+// pays its reward times the odds and as many 籌碼 (journey.js paySide). 留活口 (spareLife) on
+// 空山琴臺 and 襄陽殘垣 took the place of 親手了斷 there, at 一賠二 until it is measured.
 
 const BATTLES = [
   // 0 青竹渡: the gentle first board; a wave lands behind the south bridge in round 3.
@@ -52,10 +57,10 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'lamp', reward: 'coins' },
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'intact', reward: 'coins' },
-      { kind: 'holdLine', zone: { x: [0, 6] }, place: '西岸與兩座木橋', reward: 'manual' }
+      { kind: 'lamp', reward: 'coins', odds: 1 },
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 1 },
+      { kind: 'intact', reward: 'coins', odds: 1 },
+      { kind: 'holdLine', zone: { x: [0, 6] }, place: '西岸與兩座木橋', reward: 'manual', odds: 2 }
     ]
   },
   // 1 紅楓驛: a second lieutenant and a shield pair before the east courtyard.
@@ -69,10 +74,10 @@ const BATTLES = [
     ],
     waves: [],
     sides: [
-      { kind: 'spare', behaviour: 'mend', piece: 'lieutenant', reward: 'points' },
-      { kind: 'order', first: 'zhaoZhong', reward: 'coins' },
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'manual' },
-      { kind: 'noMedicine', reward: 'coins' }
+      { kind: 'spare', behaviour: 'mend', piece: 'lieutenant', reward: 'points', odds: 1 },
+      { kind: 'order', first: 'zhaoZhong', reward: 'coins', odds: 3 },
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'manual', odds: 2 },
+      { kind: 'noMedicine', reward: 'coins', odds: 1 }
     ]
   },
   // 2 蘆花汀: defeat everyone; six disciples crowd round their master.
@@ -87,10 +92,10 @@ const BATTLES = [
     ],
     waves: [],
     sides: [
-      { kind: 'double', reward: 'coins' },
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'combo', reward: 'manual' },
-      { kind: 'unhurt', reward: 'coins' }
+      { kind: 'double', reward: 'coins', odds: 1 },
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
+      { kind: 'combo', reward: 'manual', odds: 3 },
+      { kind: 'unhurt', reward: 'coins', odds: 1 }
     ]
   },
   // 3 聽雪棧: two monks come up behind the heroes in round 4.
@@ -110,10 +115,10 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'spare', behaviour: 'herbs', piece: 'master', reward: 'manual' },
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'noMedicine', reward: 'coins' },
-      { kind: 'swift', by: 5, reward: 'coins' }
+      { kind: 'spare', behaviour: 'herbs', piece: 'master', reward: 'manual', odds: 1 },
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
+      { kind: 'noMedicine', reward: 'coins', odds: 1 },
+      { kind: 'swift', by: 5, reward: 'coins', odds: 1 }
     ]
   },
   // 4 空山琴臺: keep the qin on its stone seat at the foot of the heroes' steps, through round 8
@@ -171,10 +176,10 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'order', first: 'lieutenant', reward: 'coins' },
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'holdLine', zone: { y: [0, 4] }, place: '琴臺北階', reward: 'manual' },
-      { kind: 'lamp', reward: 'coins' }
+      { kind: 'order', first: 'lieutenant', reward: 'coins', odds: 1 },
+      { kind: 'spareLife', target: 'lieutenant', reward: 'points', odds: 2 },
+      { kind: 'holdLine', zone: { y: [0, 4] }, place: '琴臺北階', reward: 'manual', odds: 1 },
+      { kind: 'lamp', reward: 'coins', odds: 2 }
     ]
   },
   // 5 桃花石陣: lighter snake slaves come up from the east stream every two rounds.
@@ -212,10 +217,10 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'unhurt', reward: 'coins' },
-      { kind: 'holdLine', zone: { x: [0, 8] }, place: '陣井以西', reward: 'manual' },
-      { kind: 'lamp', reward: 'coins' }
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
+      { kind: 'unhurt', reward: 'coins', odds: 1 },
+      { kind: 'holdLine', zone: { x: [0, 8] }, place: '陣井以西', reward: 'manual', odds: 1 },
+      { kind: 'lamp', reward: 'coins', odds: 1 }
     ]
   },
   // 6 襄陽殘垣: keep the city's war drum through round 9 in the passage below the wall, where the
@@ -261,12 +266,12 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'intact', reward: 'coins' },
-      { kind: 'double', reward: 'coins' },
+      { kind: 'spareLife', target: 'lieutenant', reward: 'points', odds: 2 },
+      { kind: 'intact', reward: 'coins', odds: 2 },
+      { kind: 'double', reward: 'coins', odds: 1 },
       // 南面甬道 (holdLine, y 9–12) stood here: with the drum at the passage's mouth it was the
       // primary over again, met every time the board was won.
-      { kind: 'unhurt', reward: 'manual' }
+      { kind: 'unhurt', reward: 'manual', odds: 2 }
     ]
   },
   // 7 寒玉石室: the lean board, its four pieces only.
@@ -276,10 +281,10 @@ const BATTLES = [
     pieces: [],
     waves: [],
     sides: [
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'noMedicine', reward: 'coins' },
-      { kind: 'unhurt', reward: 'coins' },
-      { kind: 'double', reward: 'manual' }
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
+      { kind: 'noMedicine', reward: 'coins', odds: 1 },
+      { kind: 'unhurt', reward: 'coins', odds: 1 },
+      { kind: 'double', reward: 'manual', odds: 3 }
     ]
   },
   // 8 倒影天街: two masters, both must fall; a second blade pair when either is first at half.
@@ -303,10 +308,10 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'lastBlow', hero: '*', target: 'xianYu', reward: 'points' },
-      { kind: 'order', first: 'lieutenant', reward: 'coins' },
-      { kind: 'double', reward: 'manual' },
-      { kind: 'answer', hero: 'hero', reward: 'points' }
+      { kind: 'lastBlow', hero: '*', target: 'xianYu', reward: 'points', odds: 3 },
+      { kind: 'order', first: 'lieutenant', reward: 'coins', odds: 3 },
+      { kind: 'double', reward: 'manual', odds: 2 },
+      { kind: 'answer', hero: 'hero', reward: 'points', odds: 2 }
     ]
   },
   // 9 無刻漏臺: the final board; break the two posts the star ropes are tied to, each guarded by a
@@ -341,12 +346,12 @@ const BATTLES = [
       // 不觸斗轉星移 (spare, behaviour 'mirror') stood here; the simulator never met it, since the
       // mirror stays charged until it turns a blow. It can return once 吸勁 can hold the mirror off
       // (ROADMAP 0.8).
-      { kind: 'intact', reward: 'manual' },
+      { kind: 'intact', reward: 'manual', odds: 2 },
       // The last blow on 慕容博 stood here: the board ends when the second post falls, so it could
       // be met only by felling him first through his ward, and almost never was.
-      { kind: 'lastBlow', hero: '*', target: 'lieutenant', reward: 'coins' },
-      { kind: 'order', first: 'wanZhen', reward: 'coins' },
-      { kind: 'unhurt', reward: 'coins' }
+      { kind: 'lastBlow', hero: '*', target: 'lieutenant', reward: 'coins', odds: 3 },
+      { kind: 'order', first: 'wanZhen', reward: 'coins', odds: 2 },
+      { kind: 'unhurt', reward: 'coins', odds: 2 }
     ]
   },
   // Boards 10 to 14 are each built round one villain: he is the 局主, there is no lieutenant, and
@@ -370,10 +375,10 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'lamp', reward: 'coins' },
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'intact', reward: 'coins' },
-      { kind: 'holdLine', zone: { y: [9, 11] }, place: '南灘', reward: 'manual' }
+      { kind: 'lamp', reward: 'coins', odds: 2 },
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
+      { kind: 'intact', reward: 'coins', odds: 1 },
+      { kind: 'holdLine', zone: { y: [9, 11] }, place: '南灘', reward: 'manual', odds: 1 }
     ]
   },
   // 11 絕情花徑: defeat everyone; 公孫止 before his stone house, six 網手 along both paths round
@@ -388,10 +393,10 @@ const BATTLES = [
     ],
     waves: [],
     sides: [
-      { kind: 'double', reward: 'coins' },
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'unhurt', reward: 'coins' },
-      { kind: 'noMedicine', reward: 'manual' }
+      { kind: 'double', reward: 'coins', odds: 1 },
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
+      { kind: 'unhurt', reward: 'coins', odds: 1 },
+      { kind: 'noMedicine', reward: 'manual', odds: 1 }
     ]
   },
   // 12 鐵掌溪灘: 裘千仞 crosses the stream as if it were dry ground; his men stand on the stepping
@@ -412,10 +417,10 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'intact', reward: 'coins' },
-      { kind: 'lamp', reward: 'coins' },
-      { kind: 'unhurt', reward: 'manual' }
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
+      { kind: 'intact', reward: 'coins', odds: 1 },
+      { kind: 'lamp', reward: 'coins', odds: 2 },
+      { kind: 'unhurt', reward: 'manual', odds: 1 }
     ]
   },
   // 13 西夏夜苑: 李秋水 before the hall steps, a guard pair before her and one on the bridge; two
@@ -436,10 +441,10 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'double', reward: 'manual' },
-      { kind: 'noMedicine', reward: 'coins' },
-      { kind: 'lamp', reward: 'coins' }
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
+      { kind: 'double', reward: 'manual', odds: 3 },
+      { kind: 'noMedicine', reward: 'coins', odds: 1 },
+      { kind: 'lamp', reward: 'coins', odds: 2 }
     ]
   },
   // 14 黑木繡閣: 東方不敗 before the small house, the guards each alone about the garden; two more
@@ -460,10 +465,10 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
-      { kind: 'intact', reward: 'manual' },
-      { kind: 'unhurt', reward: 'coins' },
-      { kind: 'lamp', reward: 'coins' }
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 3 },
+      { kind: 'intact', reward: 'manual', odds: 2 },
+      { kind: 'unhurt', reward: 'coins', odds: 2 },
+      { kind: 'lamp', reward: 'coins', odds: 2 }
     ]
   },
   // 15 谷底棋臺: the last board (world view §8.4). 求敗 stands at 天元 and is never felled: bring

@@ -279,9 +279,15 @@ const PLAIN_FIELDS = {
     // 孤行, 黯然, 還報, 斬殘.
     ...['hits', 'blink', 'aura', 'recover', 'drain', 'hpCost', 'order', 'poised', 'once', 'cooldown', 'consume', 'surge', 'retort', 'lone', 'dire', 'avenge', 'execute'],
     // 化符's twist (0.50): each ailment 解厄 lifts heals more; its card says so.
-    'purge'
+    'purge',
+    // 秘笈 (2026-11-28): `secret` keeps a manual off the shelf; 獅子吼's `roar` (it hurts the
+    // striker's companions) is one art's, and its card says so.
+    'secret',
+    'roar'
   ],
-  item: ['name', 'kind', 'owner', 'atk', 'icon', 'desc', 'forms', 'power', 'def', 'step', 'hp', 'mp'],
+  // 珍品 (2026-11-28): `grade` keeps an item off the shelf; 鴛鴦刀's `pair`, 莽牯朱蛤's
+  // `antivenom` and 削鐵匕首's `pierce` are each one item's way, and its card says so.
+  item: ['name', 'kind', 'owner', 'atk', 'icon', 'desc', 'forms', 'power', 'def', 'step', 'hp', 'mp', 'grade', 'pair', 'antivenom', 'pierce'],
   // mods and sig are numbers; post is read by 坐鎮's test. The rest are one enemy's way each,
   // told on its own page.
   // 五劍 (求敗's five stages, 2026-11-25) is one enemy's: his page says it (enemyTraitLines).

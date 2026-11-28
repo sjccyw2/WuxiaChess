@@ -125,6 +125,58 @@ const WARES = {
     mp: 20,
     icon: 'drop',
     desc: '古墓玉蜂所釀的蜂漿，甘潤養氣。為使用者回復 30 點氣血與 20 點內力。每次用去一份。'
+  },
+  // ── 珍品: never on the shelf. They come only from 三盅通吃 and the 支線 (ferry-market.js
+  // RARE_STOCK; the producer, 2026-11-28, Q-N170). `grade` says so on every page that shows them.
+  snowLotus: {
+    name: '天山雪蓮',
+    kind: 'use',
+    grade: 'rare',
+    hp: 40,
+    mp: 40,
+    cleanse: true,
+    icon: 'leaf',
+    desc: '天山絕頂冰雪中所生，百年一開。先為使用者解除中毒、攻勢受挫、破防、絆足、破綻、截勁、亂氣、內傷與纏械，再回復 40 點氣血與 40 點內力。每次用去一份。'
+  },
+  // 鴛鴦刀: a pair. Each is a weapon on its own; held by two heroes standing side by side, each
+  // gains `pair.atk` and `pair.def` (game.js pairBonus).
+  yuanBlade: {
+    name: '鴛刀',
+    kind: 'weapon',
+    grade: 'rare',
+    atk: 8,
+    pair: { with: 'yangBlade', atk: 4, def: 4 },
+    icon: 'sword',
+    desc: '鴛鴦刀之一，刀身烏沉，護手鑄作鴛鳥。攻擊增加 8。【仁者無敵】持鴦刀的同伴站在身旁時，兩人攻擊各增加 4、防禦各增加 4。'
+  },
+  yangBlade: {
+    name: '鴦刀',
+    kind: 'weapon',
+    grade: 'rare',
+    atk: 7,
+    pair: { with: 'yuanBlade', atk: 4, def: 4 },
+    icon: 'sword',
+    desc: '鴛鴦刀之一，刀身雪亮，護手鑄作鴦鳥。攻擊增加 7。【仁者無敵】持鴛刀的同伴站在身旁時，兩人攻擊各增加 4、防禦各增加 4。'
+  },
+  // 百毒不侵: poison never takes hold of the wearer (battle-mastery.js applyCondition).
+  scarletToad: {
+    name: '莽牯朱蛤',
+    kind: 'gear',
+    grade: 'rare',
+    def: 3,
+    antivenom: true,
+    icon: 'shield',
+    desc: '萬毒之王，通體朱紅，以金絲繫作佩飾。防禦增加 3。【百毒不侵】佩者不會中毒。'
+  },
+  // The basic attack (and the counter) passes `pierce` of the target's 防禦, as 七傷拳 does.
+  ironDagger: {
+    name: '削鐵匕首',
+    kind: 'weapon',
+    grade: 'rare',
+    atk: 9,
+    pierce: 0.5,
+    icon: 'sword',
+    desc: '韋小寶從鰲拜府中抄來的匕首，削鐵如泥。攻擊增加 9。普攻與還擊穿透一半防禦。'
   }
 };
 const CAPTAINS = [
