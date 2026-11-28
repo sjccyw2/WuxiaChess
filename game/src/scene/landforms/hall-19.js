@@ -233,8 +233,15 @@ function caveWall(T) {
       cols[i].push(tone(i, k));
     }
   }
-  // Each quad is wound to face into the cave, and remembers that direction.
+  // Each quad is wound to face into the cave. What it remembers for folding away is the
+  // direction the wall faces there before its joints and bulges, so that whole stretches fold
+  // together along a clean line rather than block by block.
   const normals = [];
+  function smoothFacing(a, y) {
+    const slope = 0.13 + 0.024 * Math.max(0, y - 0.4),
+      l = Math.hypot(1, slope);
+    return [-Math.cos(a) / l, -slope / l, -Math.sin(a) / l];
+  }
   function inward(q, c, a) {
     const [p0, p1, p2] = q;
     const u = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]],
@@ -245,8 +252,9 @@ function caveWall(T) {
     if (n[0] * Math.cos(a) + n[2] * Math.sin(a) > 0) {
       q = [...q].reverse();
       c = [...c].reverse();
-      n = n.map((t) => -t);
     }
+    const y = q.reduce((t, p) => t + p[1] / q.length, 0);
+    n = smoothFacing(a, y);
     shell.face(q, c, n);
     return n;
   }
@@ -304,7 +312,8 @@ function caveWall(T) {
       ];
       for (const [ii, kk, A, B] of nb) {
         const o = holeAt(ii, kk);
-        if (!o) continue;
+        // The mouth is too wide for its thickness to show; only the arches are lined.
+        if (!o || o.name === 'mouth') continue;
         lining(pts[A[0]][A[1]], pts[B[0]][B[1]], cols[A[0]][A[1]], cols[B[0]][B[1]], n, o);
       }
     }

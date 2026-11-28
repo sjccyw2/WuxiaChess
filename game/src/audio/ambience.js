@@ -177,13 +177,16 @@ const BEDS = [
     ]
   }, // 光明頂
   {
-    // The sea coming in at both ends of the cave.
-    wind: [500, 1, 0.3],
-    water: 0.55,
-    room: 0.35,
+    // The sea washing in at both ends of the hall and lapping at the landing, the hall's own
+    // hollow hum, water dripping from the roof, now and then the sea wind in the mouth.
+    wind: [450, 0.9, 0.28],
+    water: 0.6,
+    room: 0.4,
     events: [
-      ['plip', 7],
-      ['gust', 14]
+      ['lap', 4],
+      ['drip', 6],
+      ['plip', 9],
+      ['gust', 16]
     ]
   } // 俠客島
 ];
