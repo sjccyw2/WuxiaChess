@@ -35,7 +35,16 @@ function litter(m, cell) {
   if (PUDDLES.has(cell.x + ',' + cell.y))
     lit(m, () => puddle(m, r.range(-0.1, 0.1), r.range(-0.1, 0.1), 0.3, 0.22, TOP, true));
   if (r.next() < (cell.y < 5 ? 0.6 : 0.32))
-    lit(m, () => fallenLeaves(m, r.range(-0.15, 0.15), r.range(-0.15, 0.15), 0.42, 2 + Math.floor(r.next() * 4), TOP));
+    lit(m, () =>
+      fallenLeaves(
+        m,
+        r.range(-0.15, 0.15),
+        r.range(-0.15, 0.15),
+        0.42,
+        2 + Math.floor(r.next() * 4),
+        TOP
+      )
+    );
   if (r.next() < 0.2) crack(m, r.range(-0.3, 0.3), r.range(-0.3, 0.3), 0.45, TOP);
 }
 

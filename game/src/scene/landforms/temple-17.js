@@ -44,11 +44,36 @@ function architrave(m, len, y, z, bays) {
 
 // Ridge ornaments for a roof whose main ridge runs along x at height `top`, `half` long each
 // side: a pearl in flames on a lotus at the middle, and on a gable roof (which tiledRoof leaves
-// plain) a fish-tailed 鴟吻 rearing at either end.
+// plain) a fish-tailed ridge beast rearing at either end.
 function ridgeDeco(m, half, top, gable) {
   const ridge = 0x1b1f27;
-  m.lathe(0, top + 0.14, 0, [[0, 0.1], [0.06, 0.14], [0.12, 0.08], [0.16, 0.1], [0.3, 0.06], [0.36, 0]], ridge, 6);
-  m.lathe(0, top + 0.44, 0, [[0, 0.05], [0.06, 0.07], [0.13, 0]], gilt, 6);
+  m.lathe(
+    0,
+    top + 0.14,
+    0,
+    [
+      [0, 0.1],
+      [0.06, 0.14],
+      [0.12, 0.08],
+      [0.16, 0.1],
+      [0.3, 0.06],
+      [0.36, 0]
+    ],
+    ridge,
+    6
+  );
+  m.lathe(
+    0,
+    top + 0.44,
+    0,
+    [
+      [0, 0.05],
+      [0.06, 0.07],
+      [0.13, 0]
+    ],
+    gilt,
+    6
+  );
   for (const s of [-1, 1])
     m.tube([s * 0.09, top + 0.2, 0], [s * 0.2, top + 0.38, 0], 0.035, 0.008, gilt, 4);
   if (!gable) return;
@@ -387,7 +412,7 @@ function quarters(m) {
       }
     })
   );
-  // A porch (抱廈) projecting over the door, its own hipped roof a step higher than the
+  // A porch projecting over the door, its own hipped roof a step higher than the
   // eaves, a name board under it and lanterns at its corners.
   m.frame(-10.35, OUT, -0.4, Math.PI / 2, 1, () => {
     const z0 = 1.5,
@@ -468,7 +493,16 @@ function corridor(m) {
     steps: false,
     ends: false,
     ornaments: true,
-    roof: { rise: 0.62, hip: 0.1, lift: 0.22, rows: 3, rafters: false, tones: greyTile, tile: 0.62, beasts: 2 }
+    roof: {
+      rise: 0.62,
+      hip: 0.1,
+      lift: 0.22,
+      rows: 3,
+      rafters: false,
+      tones: greyTile,
+      tile: 0.62,
+      beasts: 2
+    }
   };
   m.frame(10.45, OUT, 0, -Math.PI / 2, 1, () => {
     for (const s of [-1, 1])
@@ -478,10 +512,13 @@ function corridor(m) {
         for (let i = 0; i < 3; i++) {
           const x = -4.7 / 2 + (i + 0.5) * (4.7 / 3);
           if (i !== 1)
-            m.frame(x, 0.18 + 0.95, -0.83, 0, 1, () => lattice(m, 0.42, 0.42, 3, 3, (i + s) % 4 === 0));
+            m.frame(x, 0.18 + 0.95, -0.83, 0, 1, () =>
+              lattice(m, 0.42, 0.42, 3, 3, (i + s) % 4 === 0)
+            );
           else {
             m.box(x, 0.18 + 0.32, -0.55, 0.9, 0.05, 0.28, 0x4a3a2c);
-            for (const e of [-1, 1]) m.box(x + e * 0.36, 0.18 + 0.16, -0.55, 0.06, 0.3, 0.22, 0x3a2e26);
+            for (const e of [-1, 1])
+              m.box(x + e * 0.36, 0.18 + 0.16, -0.55, 0.06, 0.3, 0.22, 0x3a2e26);
           }
         }
       });
@@ -498,7 +535,16 @@ function corridor(m) {
       ends: false,
       ornaments: true,
       lampTone: 0xe8a050,
-      roof: { rise: 1.15, hip: 0.45, lift: 0.42, rows: 3, rafters: false, tones: greyTile, tile: 0.5, beasts: 3 }
+      roof: {
+        rise: 1.15,
+        hip: 0.45,
+        lift: 0.42,
+        rows: 3,
+        rafters: false,
+        tones: greyTile,
+        tile: 0.5,
+        beasts: 3
+      }
     });
     m.glow(() =>
       put(
@@ -634,7 +680,9 @@ function gate(m) {
     const lift = 0.85;
     m.box(0, y + h + lift / 2, 0, 3.2, lift, d - 0.3, wallRed);
     for (const s of [-1, 1]) {
-      m.frame(0, 0, (s * (d - 0.3)) / 2, 0, 1, () => architrave(m, 3.3, y + h + lift - 0.05, 0.02 * s, 2));
+      m.frame(0, 0, (s * (d - 0.3)) / 2, 0, 1, () =>
+        architrave(m, 3.3, y + h + lift - 0.05, 0.02 * s, 2)
+      );
       m.frame(0, y + h + lift * 0.45, (s * (d - 0.3)) / 2 + s * 0.02, s < 0 ? Math.PI : 0, 1, () =>
         lattice(m, 1.6, 0.36, 6, 2, s < 0)
       );

@@ -13,8 +13,17 @@ import { props17 } from './props-17.js';
 import { pagoda } from './pagoda-17.js';
 import { mainHall, tower, quarters, corridor, gate, STREET } from './temple-17.js';
 import { nearCity, farCity } from './city-17.js';
-import { ginkgo, fallenLeaves, puddle, moss, crack, pottedShrub, bonsai } from './flora-17.js';
-import { prayerFlags, lanternString, mast, candleRack, smoke } from './life-17.js';
+import {
+  osmanthus,
+  ginkgo,
+  fallenLeaves,
+  puddle,
+  moss,
+  crack,
+  pottedShrub,
+  bonsai
+} from './flora-17.js';
+import { prayerFlags, lanternString, mast, candleRack, smoke, well, bench } from './life-17.js';
 import {
   OUT,
   LAMPS,
@@ -264,7 +273,7 @@ function furnishings(m) {
         8
       );
     });
-  // 太平缸: bronze water vats on stone stands down the east side of the court.
+  // Bronze water vats on stone stands down the east side of the court.
   for (const z of [-5.0, 0.0, 5.0])
     m.frame(8.2, OUT, z, 0, 1, () => {
       m.box(0, 0.08, 0, 0.7, 0.16, 0.7, stoneDark);
@@ -309,10 +318,10 @@ function courtTrees(m, side) {
       [9.6, -15.4, 1.0, 'c']
     ],
     west: [
-      [-8.8, -8.4, 1.1, 'g'],
+      [-12.0, -8.3, 1.1, 'g'],
       [-8.2, 7.6, 1.2, 'c'],
       [-11.2, 8.4, 1.1, 'c'],
-      [-12.0, -8.0, 1.0, 'c'],
+      [-8.6, -8.6, 0.9, 'c'],
       [-14.3, -2.0, 1.4, 'c'],
       [-14.3, 4.6, 1.3, 'c']
     ],
@@ -361,7 +370,7 @@ function courtLife(m, layout) {
       Math.abs(x) < 12.3 &&
       z > -17.9 &&
       z < 11.8;
-  fallenLeaves(m, -8.8, -8.4, 2.6, 70);
+  fallenLeaves(m, -11.2, -8.3, 2.0, 55);
   fallenLeaves(m, 8.8, -7.7, 2.4, 60);
   fallenLeaves(m, -8.6, 9.4, 2.4, 60);
   for (let i = 0; i < 90; i++) {
@@ -386,7 +395,7 @@ function courtLife(m, layout) {
     [11.9, 8.5],
     [-11.8, 11.4],
     [11.8, 11.4],
-    [-8.8, -8.4],
+    [-11.6, -8.3],
     [8.8, -7.7],
     [-8.6, 9.4],
     [-4.8, -9.6],
@@ -408,12 +417,31 @@ function courtLife(m, layout) {
   pottedShrub(m, -7.9, 1.1, 1.0, OUT, 0);
   bonsai(m, -7.6, -5.4, 1.0, 0.3);
   bonsai(m, -7.6, 4.8, 1.0, -0.4);
+  // Sweet osmanthus in planters at the south corners of the board, a well and stone benches.
+  osmanthus(m, -6.5, 7.5, 1.0);
+  osmanthus(m, 6.7, 7.7, 0.95);
+  osmanthus(m, -7.6, -6.9, 1.0);
+  well(m, 9.4, 9.4, OUT, 0.5);
+  for (const s of [-1, 1]) bench(m, 8.75, s * 4.0, OUT, Math.PI / 2);
+  bench(m, -3.65, 10.0, OUT, 0);
+  bench(m, 3.65, 10.0, OUT, 0);
   // Votive candles either side of the censer, and a string of lanterns across the way.
   for (const s of [-1, 1]) candleRack(m, s * 1.55, 8.75, OUT, 0);
   for (const s of [-1, 1]) {
     m.box(s * 4.4, OUT + 0.08, 9.5, 0.3, 0.16, 0.3, stoneDark);
     m.tube([s * 4.4, OUT, 9.5], [s * 4.4, OUT + 2.15, 9.5], 0.045, 0.035, 0x4a2a22, 5);
-    m.lathe(s * 4.4, OUT + 2.15, 9.5, [[0, 0.05], [0.08, 0.06], [0.14, 0]], 0xc9a45c, 5);
+    m.lathe(
+      s * 4.4,
+      OUT + 2.15,
+      9.5,
+      [
+        [0, 0.05],
+        [0.08, 0.06],
+        [0.14, 0]
+      ],
+      0xc9a45c,
+      5
+    );
   }
   lanternString(m, [-4.4, OUT + 2.08, 9.5], [4.4, OUT + 2.08, 9.5], 0.32, 8);
   // Smoke from the censer on the way and from the cauldron before the hall.

@@ -69,7 +69,19 @@ function lanternString(m, a, b, drop, n, tones = [0xe0583a, 0xe8a050]) {
 function mast(m, x, z, h, y) {
   m.box(x, y + 0.15, z, 0.5, 0.3, 0.5, stoneDark);
   m.tube([x, y + 0.3, z], [x, y + h, z], 0.06, 0.04, 0x4a2a22, 6);
-  m.lathe(x, y + h, z, [[0, 0.07], [0.12, 0.1], [0.22, 0.04], [0.36, 0]], gilt, 6);
+  m.lathe(
+    x,
+    y + h,
+    z,
+    [
+      [0, 0.07],
+      [0.12, 0.1],
+      [0.22, 0.04],
+      [0.36, 0]
+    ],
+    gilt,
+    6
+  );
   // A long banner hanging furled down the mast.
   m.tube([x + 0.07, y + h - 0.3, z], [x + 0.07, y + h - 2.2, z], 0.06, 0.05, 0x8a2a22, 5);
   m.hoop(x + 0.07, y + h - 0.3, z, 0.07, 0.012, gilt, 6);
@@ -94,6 +106,69 @@ function candleRack(m, x, z, y, yaw = 0) {
     m.box(0, 0.06, 0, 1.0, 0.02, 0.32, 0x8a826e);
   });
   mark(m, x, y + 0.6, z, 1.1);
+}
+// 井: a well with a stone curb, a wooden frame and pulley, its bucket resting on the curb.
+function well(m, x, z, y, yaw = 0) {
+  m.frame(x, y, z, yaw, 1, () => {
+    m.lathe(
+      0,
+      0,
+      0,
+      [
+        [0, 0.46],
+        [0.36, 0.46],
+        [0.4, 0.4],
+        [0.42, 0.32]
+      ],
+      0x5e6676,
+      10
+    );
+    m.lathe(
+      0,
+      0.3,
+      0,
+      [
+        [0, 0.32],
+        [0.002, 0.32]
+      ],
+      0x121820,
+      10
+    );
+    for (const s of [-1, 1]) m.box(s * 0.52, 0.75, 0, 0.08, 1.5, 0.08, 0x4a3a2c);
+    m.box(0, 1.46, 0, 1.2, 0.08, 0.08, 0x4a3a2c);
+    m.hoop(0, 1.3, 0, 0.12, 0.02, 0x3a2e24, 8, 'xy');
+    m.tube([0, 1.18, 0], [0, 0.55, 0], 0.008, 0.008, rope, 3);
+    m.lathe(
+      0.32,
+      0.42,
+      0.22,
+      [
+        [0, 0.09],
+        [0.16, 0.11]
+      ],
+      0x5a4632,
+      7
+    );
+    m.hoop(0.32, 0.52, 0.22, 0.1, 0.008, ink, 7);
+  });
+}
+// A stone bench, a long slab on two drums.
+function bench(m, x, z, y, yaw = 0) {
+  m.frame(x, y, z, yaw, 1, () => {
+    for (const s of [-1, 1])
+      m.lathe(
+        s * 0.38,
+        0,
+        0,
+        [
+          [0, 0.13],
+          [0.3, 0.11]
+        ],
+        0x5a6272,
+        7
+      );
+    m.box(0, 0.33, 0, 1.1, 0.07, 0.34, 0x6a7383);
+  });
 }
 // Incense smoke: a few pale ribbons curling up from a burner.
 function smoke(m, x, y, z, h = 1.6, n = 3) {
@@ -133,18 +208,61 @@ function monksThings(m) {
   // A bamboo broom leaning on the wall.
   m.frame(-4.6, 0, 0.6, 0.2, 1, () => {
     m.tube([0, 0.05, 0], [0.05, 1.25, -0.25], 0.018, 0.016, 0x8a7a4a, 4);
-    m.lathe(0, 0, 0.02, [[0, 0.14], [0.22, 0.07], [0.32, 0.03]], 0x6a5a34, 7);
+    m.lathe(
+      0,
+      0,
+      0.02,
+      [
+        [0, 0.14],
+        [0.22, 0.07],
+        [0.32, 0.03]
+      ],
+      0x6a5a34,
+      7
+    );
   });
   // A low table with sutras wrapped in yellow cloth, a lamp and a bell.
   m.frame(-1.6, 0, 0.62, 0, 1, () => {
     m.box(0, 0.36, 0, 1.0, 0.05, 0.42, 0x3a2c22);
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.box(sx * 0.44, 0.17, sz * 0.17, 0.05, 0.34, 0.05, 0x2a2018);
+    for (const sx of [-1, 1])
+      for (const sz of [-1, 1]) m.box(sx * 0.44, 0.17, sz * 0.17, 0.05, 0.34, 0.05, 0x2a2018);
     for (let i = 0; i < 5; i++)
-      m.box(-0.3 + (i % 3) * 0.09, 0.42 + Math.floor(i / 3) * 0.06, -0.04, 0.08, 0.06, 0.26, i % 2 ? 0xc89a3a : 0xb0782a);
+      m.box(
+        -0.3 + (i % 3) * 0.09,
+        0.42 + Math.floor(i / 3) * 0.06,
+        -0.04,
+        0.08,
+        0.06,
+        0.26,
+        i % 2 ? 0xc89a3a : 0xb0782a
+      );
     m.box(0.18, 0.41, 0.04, 0.26, 0.04, 0.2, 0xd8cca8);
-    m.lathe(0.36, 0.39, -0.08, [[0, 0.05], [0.04, 0.04], [0.06, 0.02]], 0x5a4e36, 6);
+    m.lathe(
+      0.36,
+      0.39,
+      -0.08,
+      [
+        [0, 0.05],
+        [0.04, 0.04],
+        [0.06, 0.02]
+      ],
+      0x5a4e36,
+      6
+    );
     m.glow(() => m.box(0.36, 0.48, -0.08, 0.03, 0.05, 0.03, 0xf3a648));
-    m.lathe(0.36, 0.39, 0.1, [[0, 0.06], [0.06, 0.06], [0.1, 0.03], [0.11, 0]], 0x6a5a3a, 7);
+    m.lathe(
+      0.36,
+      0.39,
+      0.1,
+      [
+        [0, 0.06],
+        [0.06, 0.06],
+        [0.1, 0.03],
+        [0.11, 0]
+      ],
+      0x6a5a3a,
+      7
+    );
   });
   mark(m, -1.24, 0.5, 0.54, 0.7);
   // Wooden buckets and a carrying pole.
@@ -153,15 +271,46 @@ function monksThings(m) {
     [2.35, 0.55]
   ])
     m.frame(x, 0, z, 0, 1, () => {
-      m.lathe(0, 0, 0, [[0, 0.15], [0.3, 0.17]], 0x5a4632, 8);
+      m.lathe(
+        0,
+        0,
+        0,
+        [
+          [0, 0.15],
+          [0.3, 0.17]
+        ],
+        0x5a4632,
+        8
+      );
       m.hoop(0, 0.08, 0, 0.165, 0.01, ink, 8);
       m.hoop(0, 0.24, 0, 0.17, 0.01, ink, 8);
-      m.lathe(0, 0.27, 0, [[0, 0.15], [0.002, 0.15]], 0x1d2a33, 8);
+      m.lathe(
+        0,
+        0.27,
+        0,
+        [
+          [0, 0.15],
+          [0.002, 0.15]
+        ],
+        0x1d2a33,
+        8
+      );
     });
   m.tube([1.6, 0.04, 0.85], [2.9, 0.04, 0.75], 0.025, 0.025, 0x7a6a44, 4);
   // A wooden fish on a cushion, its striker beside it.
   m.frame(3.6, 0, 0.55, 0, 1, () => {
-    m.lathe(0, 0, 0, [[0, 0.2], [0.06, 0.22], [0.08, 0]], 0x7a2a22, 8);
+    m.lathe(
+      0,
+      0,
+      0,
+      [
+        [0, 0.2],
+        [0.06, 0.22],
+        [0.08, 0]
+      ],
+      0x7a2a22,
+      8
+    );
     m.rock(0, 0.08, 0, 0.13, 0.15, 0.1, 0x6a3a22, 0x9a5a32, 7);
     m.tube([0.15, 0.1, 0.1], [0.32, 0.12, 0.02], 0.012, 0.016, 0x8a6a42, 4);
   });
@@ -169,4 +318,4 @@ function monksThings(m) {
   for (const x of [0.25, 0.42]) m.box(x, 0.012, 0.75, 0.1, 0.02, 0.26, 0x9a8a5a);
 }
 
-export { prayerFlags, lanternString, mast, candleRack, smoke, monksThings, sag };
+export { well, bench, prayerFlags, lanternString, mast, candleRack, smoke, monksThings, sag };

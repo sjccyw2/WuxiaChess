@@ -7,8 +7,8 @@ import { put, OUT } from './kit-17.js';
 
 const bark = 0x3b322c;
 const barkLight = 0x5a4c40;
-const gold = 0x9c7a26; // ginkgo in autumn, in shadow
-const goldLight = 0xe2bb52;
+const gold = 0x87692a; // ginkgo in autumn, in shadow
+const goldLight = 0xc9a24a;
 const leafTones = [0xc89a34, 0xdcb24a, 0xb0842c, 0xe6c662];
 const GARDEN = 0.02; // where garden-13's plants stand of themselves
 
@@ -17,7 +17,7 @@ function standing(m, y, draw) {
   m.frame(0, y - GARDEN, 0, 0, 1, draw);
 }
 
-// 銀杏: an old ginkgo, a straight grey trunk with limbs rising steeply, its crown in gold.
+// An old ginkgo, a straight grey trunk with limbs rising steeply, its crown in gold.
 function ginkgo(m, x, z, s = 1, y = OUT) {
   const r = m.rng;
   m.frame(x, y, z, r.range(0, circle), s, () => {
@@ -37,7 +37,18 @@ function ginkgo(m, x, z, s = 1, y = OUT) {
         seat = [0, h, 0],
         tip = [Math.cos(a) * reach, h + 0.55 + r.range(0, 0.2), Math.sin(a) * reach];
       m.line([seat, [tip[0] * 0.5, h + 0.35, tip[2] * 0.5], tip], 0.045 - k * 0.004, barkLight, 4);
-      clump(m, tip[0], tip[1] + 0.12, tip[2], 0.5 - k * 0.03, 0.4, 0.46 - k * 0.03, gold, goldLight, 7);
+      clump(
+        m,
+        tip[0],
+        tip[1] + 0.12,
+        tip[2],
+        0.5 - k * 0.03,
+        0.4,
+        0.46 - k * 0.03,
+        gold,
+        goldLight,
+        7
+      );
     }
     clump(m, 0, 3.45, 0, 0.55, 0.45, 0.5, gold, goldLight, 7);
     clump(m, 0.25, 2.6, -0.2, 0.6, 0.45, 0.55, gold, goldLight, 7);
@@ -82,7 +93,11 @@ function puddle(m, x, z, rx, rz, y = OUT, glint = true) {
     const g = [];
     for (let i = 0; i < 8; i++) {
       const a = (i * circle) / 8;
-      g.push([x + rx * 0.12 + Math.cos(a) * rx * 0.28, y + 0.005, z - rz * 0.1 + Math.sin(a) * rz * 0.16]);
+      g.push([
+        x + rx * 0.12 + Math.cos(a) * rx * 0.28,
+        y + 0.005,
+        z - rz * 0.1 + Math.sin(a) * rz * 0.16
+      ]);
     }
     put(m, g, 0x9c8c74);
   }
@@ -150,7 +165,17 @@ function pottedShrub(m, x, z, s = 1, y = OUT, flowers = 0) {
       r.pick([0x2d4f5e, 0x5a3328, 0x3c3a48]),
       9
     );
-    m.lathe(0, 0.37, 0, [[0, 0.21], [0.002, 0.21]], 0x2a221c, 9);
+    m.lathe(
+      0,
+      0.37,
+      0,
+      [
+        [0, 0.21],
+        [0.002, 0.21]
+      ],
+      0x2a221c,
+      9
+    );
     for (const [px, py, pz, k] of [
       [0, 0.62, 0, 0.27],
       [0.13, 0.54, 0.1, 0.18],
@@ -160,7 +185,77 @@ function pottedShrub(m, x, z, s = 1, y = OUT, flowers = 0) {
     for (let i = 0; i < flowers; i++) {
       const a = r.range(0, circle),
         d = r.range(0.1, 0.24);
-      m.box(Math.cos(a) * d, r.range(0.6, 0.78), Math.sin(a) * d, 0.045, 0.045, 0.045, r.pick([0xe8d07a, 0xd8a8c8, 0xf0e8d8]));
+      m.box(
+        Math.cos(a) * d,
+        r.range(0.6, 0.78),
+        Math.sin(a) * d,
+        0.045,
+        0.045,
+        0.045,
+        r.pick([0xe8d07a, 0xd8a8c8, 0xf0e8d8])
+      );
+    }
+  });
+}
+// A sweet osmanthus in a stone planter, dark glossy leaves starred with cream flowers.
+function osmanthus(m, x, z, s = 1, y = OUT) {
+  const r = m.rng;
+  m.frame(x, y, z, r.range(0, circle), s, () => {
+    m.lathe(
+      0,
+      0,
+      0,
+      [
+        [0, 0.42],
+        [0.3, 0.42],
+        [0.34, 0.46],
+        [0.38, 0.46],
+        [0.4, 0.38]
+      ],
+      0x58606e,
+      8
+    );
+    m.lathe(
+      0,
+      0.36,
+      0,
+      [
+        [0, 0.38],
+        [0.002, 0.38]
+      ],
+      0x2a221c,
+      8
+    );
+    m.line(
+      [
+        [0, 0.36, 0],
+        [0.05, 0.75, 0.02],
+        [-0.03, 1.05, 0]
+      ],
+      0.05,
+      bark,
+      5
+    );
+    for (const [px, py, pz, k] of [
+      [0, 1.42, 0, 0.42],
+      [0.3, 1.15, 0.12, 0.3],
+      [-0.28, 1.12, -0.1, 0.3],
+      [0.06, 1.0, -0.3, 0.26],
+      [-0.08, 1.05, 0.3, 0.26]
+    ]) {
+      clump(m, px, py, pz, k, k * 0.8, k, 0x1a3324, 0x3a5e40, 7);
+      for (let i = 0; i < 4; i++) {
+        const a = r.range(0, circle);
+        m.box(
+          px + Math.cos(a) * k * 0.8,
+          py + r.range(-0.1, 0.2),
+          pz + Math.sin(a) * k * 0.8,
+          0.035,
+          0.035,
+          0.035,
+          0xe8d8a0
+        );
+      }
     }
   });
 }
@@ -173,4 +268,16 @@ function bambooAt(m, x, z, s = 1, n = 9, y = OUT) {
   standing(m, y, () => bamboo(m, x, z, s, n));
 }
 
-export { ginkgo, fallenLeaves, puddle, moss, crack, pottedShrub, bonsai, bambooAt, standing, leafTones };
+export {
+  osmanthus,
+  ginkgo,
+  fallenLeaves,
+  puddle,
+  moss,
+  crack,
+  pottedShrub,
+  bonsai,
+  bambooAt,
+  standing,
+  leafTones
+};
