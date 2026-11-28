@@ -14,6 +14,7 @@ planned for each pack and which decisions are waiting on the producer.
 | `title-art/` | The title calligraphy 劍影江湖: three painted takes in black ink (`full/ink-a.png` to `ink-c.png`), the script that paints them (`make/paint.py`) and the one that cuts the game's ivory, transparent title from take c (`make/cut.py` → `game/assets/title-jianying.webp`). |
 | `story-art/` | Story pictures painted for the old story that the v1.0 story has no place for (`prompts.md` B4, B7). |
 | `battle-objects/` | The board objects of the 守 and 破 boards: 七弦琴 (空山琴臺), 城頭戰鼓 (襄陽殘垣) and 星索樁 (無刻漏臺), each intact and broken, with the script that painted them and the one that cuts the game's files. All are in the game (`game/assets/object-*.webp`). |
+| `hero-figures/` | The twenty heroes' full-length figures repainted in high definition on 2026-11-28 (`full/<id>.webp`, 1024 × 1536), each from the hero's portrait and earlier figure so face and costume are kept; `make/paint.py` paints them and `make/cut.py` writes `game/assets/figure-<id>.webp` at 560 × 880 (was 280 × 440). |
 | `jianying-roster-art/` | Thirty characters: a portrait and a sprite sheet each. |
 | `jianying-item-art/` | Eight skill effects and thirty-two item pictures, all animated. |
 

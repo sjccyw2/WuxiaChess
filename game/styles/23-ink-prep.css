@@ -1693,3 +1693,295 @@ html.polish-ink-look #modal .ink-armory > .fo-inspector > div {
 html.polish-ink-look #modal .ink-arm-figure {
   background: #e6dcc3;
 }
+
+/* ---------- 陣容, third pass (the producer, 2026-11-28) ----------
+   One row that scrolls sideways: the five sent out, then the bench. Each seat's name, then its
+   post (陣位 一) under the name, never over the portrait. Under the row, 任為領隊 and 移至候補. */
+html.polish-ink-look #modal[data-full] .ink-roster-wrap {
+  display: block;
+}
+html.polish-ink-look #modal[data-full] .ink-roster {
+  --fade: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  padding: 8px 28px 4px 6px;
+  -webkit-mask-image: var(--fade);
+  mask-image: var(--fade);
+}
+html.polish-ink-look #modal[data-full] .ink-roster::-webkit-scrollbar {
+  display: none;
+}
+html.polish-ink-look #modal[data-full] .ink-roster > :is(.fo-hand, .fo-bench) {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  min-height: 0;
+}
+html.polish-ink-look #modal[data-full] .ink-roster .fo-seat {
+  scroll-snap-align: start;
+  flex: none;
+  width: 60px;
+}
+html.polish-ink-look #modal[data-full] .ink-roster .fo-seat > .fo-action,
+html.polish-ink-look #modal[data-full] .ink-roster .fo-seat > .fo-post-label {
+  position: static;
+  display: block;
+  margin: 2px 0 0;
+  padding: 0;
+  inset: auto;
+  transform: none;
+  font: 400 10px var(--sans);
+  letter-spacing: 0.06em;
+  color: var(--ink-white-dim);
+  white-space: nowrap;
+  text-align: center;
+  background: none;
+  border: 0;
+}
+html.polish-ink-look #modal[data-full] .ink-roster .fo-seat.empty {
+  display: grid;
+  justify-items: center;
+}
+html.polish-ink-look #modal[data-full] .ink-roster .fo-vacancy {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 60px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ink-white-dim);
+  font: 400 10px var(--sans);
+}
+html.polish-ink-look #modal[data-full] .ink-roster .fo-vacancy svg {
+  box-sizing: content-box;
+  width: 18px;
+  height: 18px;
+  padding: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgba(242, 238, 230, 0.3);
+}
+html.polish-ink-look #modal[data-full] .ink-bench-mark {
+  flex: none;
+  align-self: stretch;
+  writing-mode: vertical-rl;
+  padding: 2px 0 0 10px;
+  border-left: 1px solid var(--ink-gold-rule);
+  font: 600 12px var(--sans);
+  letter-spacing: 0.3em;
+  color: var(--ink-kaya);
+}
+html.polish-ink-look #modal[data-full] .ink-bench-empty {
+  align-self: center;
+  font: 400 12px var(--sans);
+  color: rgba(242, 238, 230, 0.35);
+}
+html.polish-ink-look #modal[data-full] .ink-roster .fo-bench.vacant {
+  display: flex;
+}
+html.polish-ink-look #modal[data-full] .ink-roster-actions {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  margin-top: 8px;
+}
+html.polish-ink-look #modal[data-full] .ink-roster-actions > .fo-action {
+  padding: 4px 0;
+  font: 600 14px var(--serif);
+  letter-spacing: 0.14em;
+  color: var(--ink-white);
+  border-bottom: 2px solid var(--ink-kaya);
+}
+html.polish-ink-look #modal[data-full] .ink-roster-actions > .fo-action:disabled {
+  color: var(--ink-white-dim);
+  border-color: transparent;
+}
+html.polish-ink-look #modal[data-full] .ink-roster-actions > .fo-map-plan {
+  margin: 0 0 0 auto;
+  border: 0;
+  background: none;
+}
+html.polish-ink-look #modal[data-full] .ink-roster-actions > .fo-map-plan[open] {
+  flex: 1 0 100%;
+  margin-left: 0;
+}
+html.polish-ink-look #modal[data-full] .ink-roster-actions {
+  flex-wrap: wrap;
+}
+html.polish-ink-look #modal[data-full] .ink-roster-actions > .fo-map-plan > summary {
+  font: 500 13px var(--sans);
+  color: var(--ink-white-dim);
+}
+/* The pane's own line-up buttons moved under the row. */
+html.polish-ink-look #modal[data-full] .fy-pane .fo-captain-actions {
+  display: none;
+}
+
+/* The hero: the scroll at the left; beside it, top-aligned, the name and its line written across,
+   then the four arts as a list with 配招 at the right, about the scroll's height; the numbers and
+   the rest under both. */
+html.polish-ink-look #modal[data-full] .fy-pane {
+  grid-template-columns: minmax(120px, 34%) minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  column-gap: clamp(16px, 3vw, 36px);
+  align-items: start;
+}
+html.polish-ink-look #modal[data-full] .fy-pane > .ink-scroll {
+  grid-column: 1;
+  grid-row: 1 / 4;
+  margin: 8px 0 14px;
+}
+html.polish-ink-look #modal[data-full] .fy-pane > .ink-vname {
+  grid-column: 2;
+  grid-row: 1;
+  writing-mode: horizontal-tb;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-top: 6px;
+  font-size: clamp(30px, 3.4vw, 48px);
+  letter-spacing: 0.1em;
+}
+html.polish-ink-look #modal[data-full] .fy-pane > .ink-vname small {
+  padding: 0;
+  font-size: 14px;
+  letter-spacing: 0.16em;
+}
+html.polish-ink-look #modal[data-full] .fy-pane > .fy-pane-head {
+  grid-column: 2;
+  grid-row: 2;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  padding: 4px 0 10px;
+}
+html.polish-ink-look #modal[data-full] .fy-pane > .fy-pane-head > div {
+  flex-wrap: wrap;
+  gap: 0 10px;
+}
+html.polish-ink-look #modal[data-full] .fy-pane > .fy-pane-arts {
+  grid-column: 2;
+  grid-row: 3;
+  order: 0;
+  margin: 0;
+}
+html.polish-ink-look #modal[data-full] .fy-pane > :not(.ink-scroll, .ink-vname, .fy-pane-head, .fy-pane-arts) {
+  grid-column: 1 / -1;
+}
+html.polish-ink-look #modal[data-full] .fy-pane-arts ul {
+  grid-template-columns: 1fr;
+}
+html.polish-ink-look #modal[data-full] .fy-pane-arts li {
+  grid-template-columns: 58px 1fr;
+  padding: 7px 0;
+}
+html.polish-ink-look #modal[data-full] .fy-pane-arts li span {
+  font-size: 17px;
+}
+@media (max-width: 600px) {
+  html.polish-ink-look #modal[data-full] .fy-pane {
+    grid-template-columns: 38% minmax(0, 1fr);
+    column-gap: 14px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane > .ink-scroll {
+    max-height: 290px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane > .ink-vname {
+    font-size: 26px;
+    margin-top: 2px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane > .fy-pane-head :is(small, p) {
+    font-size: 12px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-points b {
+    font-size: 24px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-arts > h4 {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-arts li {
+    grid-template-columns: 46px 1fr;
+    padding: 5px 0;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-arts li small {
+    font-size: 11px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane-arts li span {
+    font-size: 15px;
+  }
+}
+
+/* 裝備物資: the weapon's tag by the figure's right arm, the armour's by the right hip. */
+html.polish-ink-look #modal .ink-arm-worn {
+  position: static;
+  display: contents;
+}
+html.polish-ink-look #modal .ink-wearing {
+  position: absolute;
+  right: 6%;
+  z-index: 2;
+  text-align: left;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+html.polish-ink-look #modal .ink-wearing:first-child {
+  top: 36%;
+}
+html.polish-ink-look #modal .ink-wearing:last-child {
+  top: 54%;
+  text-align: left;
+}
+html.polish-ink-look #modal .ink-wearing::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  width: 18px;
+  height: 1px;
+  background: rgba(9, 13, 12, 0.6);
+}
+html.polish-ink-look #modal .ink-arm-figure > img {
+  padding: 10px 0;
+}
+/* A seat is one column: the portrait, the name, the post under it (an older phone rule gave it two). */
+html.polish-ink-look #modal[data-full] .ink-roster .fo-seat {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas: none;
+  justify-items: center;
+}
+html.polish-ink-look #modal[data-full] .ink-roster .fo-seat > * {
+  grid-column: 1;
+  grid-area: auto;
+}
+html.polish-ink-look #modal[data-full] .ink-roster .fo-seat > .fo-portrait {
+  width: 100%;
+}
+/* A wide screen: the hero's pane no wider than it reads well. */
+@media (min-width: 900px) {
+  html.polish-ink-look #modal[data-full] .fy-lineup > .fy-pane {
+    max-width: 880px;
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  html.polish-ink-look #modal[data-full] .fy-lineup > .fy-pane {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane > .ink-scroll {
+    max-height: 240px;
+  }
+  html.polish-ink-look #modal[data-full] .fy-pane > .ink-vname {
+    font-size: 26px;
+  }
+}
