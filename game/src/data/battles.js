@@ -36,7 +36,8 @@ const SIDE_REWARDS = ['coins', 'points', 'manual'];
 // the simulated player met it in 重劍境界 (`node tools/sim-battles.mjs --runs 200 --seed 1
 // --realm 3`, 2026-11-28): 80% or more 一賠一, 40% to 80% 一賠二, under 40% 一賠三. A met bet
 // pays its reward times the odds and as many 籌碼 (journey.js paySide). 留活口 (spareLife) on
-// 空山琴臺 and 襄陽殘垣 took the place of 親手了斷 there, at 一賠二 until it is measured.
+// 空山琴臺 and 襄陽殘垣 took the place of 親手了斷 there; measured the same way after the change it
+// was met 5% on 空山琴臺 (費彬 stands in the heroes' way) and 80% on 襄陽殘垣.
 
 const BATTLES = [
   // 0 青竹渡: the gentle first board; a wave lands behind the south bridge in round 3.
@@ -177,7 +178,7 @@ const BATTLES = [
     ],
     sides: [
       { kind: 'order', first: 'lieutenant', reward: 'coins', odds: 1 },
-      { kind: 'spareLife', target: 'lieutenant', reward: 'points', odds: 2 },
+      { kind: 'spareLife', target: 'lieutenant', reward: 'points', odds: 3 },
       { kind: 'holdLine', zone: { y: [0, 4] }, place: '琴臺北階', reward: 'manual', odds: 1 },
       { kind: 'lamp', reward: 'coins', odds: 2 }
     ]
@@ -266,7 +267,7 @@ const BATTLES = [
       }
     ],
     sides: [
-      { kind: 'spareLife', target: 'lieutenant', reward: 'points', odds: 2 },
+      { kind: 'spareLife', target: 'lieutenant', reward: 'points', odds: 1 },
       { kind: 'intact', reward: 'coins', odds: 2 },
       { kind: 'double', reward: 'coins', odds: 1 },
       // 南面甬道 (holdLine, y 9–12) stood here: with the drum at the passage's mouth it was the
