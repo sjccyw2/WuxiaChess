@@ -21,6 +21,7 @@ import {
   lightAt,
   toward
 } from './kit-19.js';
+import { inlay, RING, WALK } from './inlay-19.js';
 
 const G = 6;
 // The rock of the floor at a point of the board, before light.
@@ -97,6 +98,7 @@ function ground(m, p, cell) {
       );
     });
   }
+  inlay(m, cell, (x, z, k) => tone(x, TOP, z, k));
   dress(m, cell, wx, wz);
   return true;
 }
@@ -107,7 +109,8 @@ function dress(m, cell, wx, wz) {
     y = TOP + 0.0015;
   const dark = (x, z, k = 0.55) => tone(wx + x, y, wz + z, k);
   // Chisel tooling: short parallel strokes across part of the tile.
-  if (salt < 0.45) {
+  const carved = Math.hypot(wx - RING.x, wz - RING.z) < RING.r2 + 0.7 || WALK.has(`${wx},${wz}`) || (wz === -CZ + 1 && walls.includes(wx));
+  if (salt < 0.45 && !carved) {
     const a = r.range(0, Math.PI),
       ca = Math.cos(a),
       sa = Math.sin(a);
@@ -200,6 +203,44 @@ function dress(m, cell, wx, wz) {
       m.line(pts, 0.007, r.pick([0x3c5a3c, 0x55663a, 0x6b5a32]), 3);
     }
     if (r.next() < 0.6) shell(m, r.range(-0.35, 0.35), r.range(-0.35, 0.35), r.range(0, circle));
+  }
+  // Moss where the sea's breath keeps the floor damp, and a puddle left by the spray.
+  const moist = smooth(2.5, 5.5, Math.abs(wx)) * Math.exp(-(((wz - channelZ) / 2.6) ** 2));
+  if (moist > 0.15 && cell.kind !== 'reeds') {
+    const n = Math.round(3 * moist * moist + 0.4 * (hash(wx * 3, wz) < moist ? 1 : 0));
+    for (let k = 0; k < n; k++) {
+      const x = r.range(-0.36, 0.36),
+        z = r.range(-0.36, 0.36),
+        rad = r.range(0.04, 0.1) * (0.6 + moist);
+      const ring = [];
+      for (let i = 0; i < 9; i++) {
+        const a = (i * circle) / 9,
+          q = 0.45 + 0.8 * hash(x * 9 + i, z * 7);
+        ring.push([x + Math.cos(a) * rad * q, TOP + 0.0025, z + Math.sin(a) * rad * q * 0.8]);
+      }
+      const green = blend(tone(wx + x, TOP, wz + z, 0.8), rgb(r.pick([0x3f5634, 0x4e623a, 0x5a6a40])), 0.45);
+      toward(m, ring, green);
+      for (let t = 0; t < 3; t++) {
+        const tx = x + r.range(-rad, rad) * 0.6,
+          tz = z + r.range(-rad, rad) * 0.5,
+          a = r.range(0, circle);
+        m.leaf([tx, TOP + 0.003, tz], [tx + Math.cos(a) * 0.04, TOP + 0.02, tz + Math.sin(a) * 0.04], 0.012, green, blend(green, rgb(0x9db06a), 0.4), 0.006);
+      }
+    }
+    if (moist > 0.45 && hash(wx, wz + 9.1) < 0.45) {
+      const x = r.range(-0.2, 0.2),
+        z = r.range(-0.2, 0.2),
+        ring = [],
+        rim = [];
+      for (let i = 0; i < 12; i++) {
+        const a = (i * circle) / 12,
+          q = 0.8 + 0.35 * hash(i, wx + wz);
+        ring.push([x + Math.cos(a) * 0.17 * q, TOP + 0.004, z + Math.sin(a) * 0.12 * q]);
+        rim.push([x + Math.cos(a) * 0.21 * q, TOP + 0.003, z + Math.sin(a) * 0.16 * q]);
+      }
+      for (let i = 0; i < 12; i++) toward(m, [rim[i], rim[(i + 1) % 12], ring[(i + 1) % 12], ring[i]], tone(wx + x, TOP, wz + z, 0.6));
+      toward(m, ring, blend(tone(wx + x, TOP, wz + z, 0.5), rgb(0x5f8a8e), 0.55));
+    }
   }
 }
 function shell(m, x, z, a) {
@@ -362,8 +403,88 @@ function plain(m, p, cell) {
   const wx = cell.x - CX,
     wz = cell.y - CZ,
     r = m.rng;
-  if (wz === -CZ && hash(wx, 7.1) < 0.8) cushion(m, r.range(-0.12, 0.12), -0.18, wx, wz);
-  if (wz === -CZ + 1 && hash(wx, 3.3) < 0.35) notes(m, r.range(-0.3, 0.3), r.range(-0.25, 0.3), r.range(0, circle), wx, wz);
+  if (wz === -CZ) {
+    if (hash(wx, 7.1) < 0.8) cushion(m, r.range(-0.12, 0.12), -0.2, wx, wz);
+    if (hash(wx, 7.7) < 0.6) study(m, r.pick(['bowls', 'books', 'brushes', 'scroll']), r.range(0.24, 0.32) * (hash(wx, 2) < 0.5 ? -1 : 1), -0.26, wx, wz);
+    return;
+  }
+  // The study things the island's people leave where they sit: always at a tile's edge, low,
+  // and thicker toward the carved walls; the ring and the walk are kept clear.
+  if (WALK.has(`${wx},${wz}`) || Math.hypot(wx - RING.x, wz - RING.z) < RING.r2) return;
+  const chance = wz <= -3 ? 0.75 : wz <= -1 ? 0.4 : 0.22;
+  if (hash(wx * 1.7, wz * 2.9 + 4) > chance) return;
+  const kinds = ['desk', 'scroll', 'books', 'bowls', 'brushes', 'tea', 'cushion', 'scroll'];
+  const kind = kinds[Math.floor(hash(wx + 3.3, wz - 1.1) * kinds.length)];
+  const corner = Math.floor(hash(wx, wz + 5) * 4),
+    cx = corner % 2 ? 0.27 : -0.27,
+    cz = corner > 1 ? 0.3 : -0.28;
+  study(m, kind, cx, cz, wx, wz);
+  if (kind !== 'cushion' && hash(wx, wz + 8) < 0.35) study(m, 'scroll', -cx * 0.9, -cz * 0.8, wx, wz);
+}
+// One of the things of study, centred at (x, z) in the tile's frame.
+function study(m, kind, x, z, wx, wz) {
+  const r = m.rng,
+    lit = (c) => lightAt(wx + x, 0.1, wz + z, rgb(c), 0.4);
+  const paper = lit(0xd8cdae),
+    ink = 0x26231f,
+    wood = lit(0x5b3d26),
+    bowlCol = 0xd7d2c2;
+  const yaw = r.range(-0.5, 0.5);
+  if (kind === 'cushion') return cushion(m, x, z, wx, wz);
+  m.frame(x, TOP, z, yaw, 1, () => {
+    if (kind === 'desk') {
+      // A low reading table with its legs, an open book, an inkstone and a brush on a rest.
+      m.box(0, 0.105, 0, 0.42, 0.025, 0.24, wood);
+      for (const [u, v] of [[-0.18, -0.09], [0.18, -0.09], [-0.18, 0.09], [0.18, 0.09]]) m.box(u, 0.047, v, 0.03, 0.094, 0.03, wood);
+      m.box(-0.06, 0.124, 0, 0.09, 0.008, 0.13, paper);
+      m.box(0.04, 0.124, 0, 0.09, 0.008, 0.13, paper);
+      for (let k = 0; k < 4; k++) for (const sgn of [-1, 1]) m.box(sgn * (0.025 + k * 0.016) - 0.01, 0.129, 0, 0.003, 0.002, 0.1, ink);
+      m.box(0.15, 0.125, -0.05, 0.07, 0.012, 0.05, lit(0x2e2d2a));
+      m.line([[0.1, 0.13, 0.08], [0.19, 0.13, 0.06]], 0.005, 0x8b6a3e, 4);
+      bowl(m, -0.16, 0.118, 0.06, 0.6, lit(0x6b4a33));
+    } else if (kind === 'scroll') {
+      // A scroll unrolled on the floor, weighted at one end, its columns of writing showing.
+      const L = r.range(0.28, 0.4);
+      m.box(0, 0.004, 0, 0.13, 0.004, L, paper);
+      for (const s of [-1, 1]) m.tube([-0.08, 0.016, (s * L) / 2], [0.08, 0.016, (s * L) / 2], 0.014, 0.014, s > 0 ? wood : lit(0x8a6a44), 6);
+      for (let k = 0; k < 5; k++) m.box(-0.045 + k * 0.022, 0.0075, 0, 0.004, 0.002, L * 0.8, ink);
+      m.rock(0.05, 0.004, -L / 2 + 0.06, 0.025, 0.022, 0.02, 0x5a5850, 0x77736a, 5);
+    } else if (kind === 'books') {
+      // Thread-bound books in a stack, a bowl beside them.
+      for (let k = 0; k < 3; k++)
+        m.frame(0, 0.012 + k * 0.022, 0, 0.12 * (k - 1), 1, () => {
+          m.box(0, 0, 0, 0.13, 0.02, 0.18, lit(r.pick([0x6a5a7a, 0x4a5a6e, 0x7a6248])));
+          m.box(0, 0, 0.002, 0.125, 0.016, 0.17, paper);
+          m.box(-0.06, 0.011, 0, 0.005, 0.002, 0.16, lit(0xb8a884));
+        });
+      bowl(m, 0.12, 0, 0.1, 0.8, lit(0x6b4a33));
+    } else if (kind === 'bowls') {
+      // A tray with the porridge of the island, two bowls and their spoons.
+      m.box(0, 0.008, 0, 0.26, 0.016, 0.16, wood);
+      bowl(m, -0.06, 0.016, 0, 0.9, lit(0x6b4a33));
+      bowl(m, 0.07, 0.016, 0.02, 0.85, lit(0x74503a));
+      m.line([[0.04, 0.05, -0.04], [0.11, 0.03, -0.07]], 0.004, bowlCol, 4);
+    } else if (kind === 'brushes') {
+      // A brush pot bristling with brushes, an inkstone and a water dropper.
+      m.lathe(0, 0, 0, [[0, 0.035], [0.1, 0.038], [0.11, 0.032]], lit(0x6e7f74), 10);
+      for (let k = 0; k < 5; k++) {
+        const a = (k * circle) / 5;
+        m.line([[Math.cos(a) * 0.01, 0.05, Math.sin(a) * 0.01], [Math.cos(a) * 0.035, 0.2, Math.sin(a) * 0.035]], 0.004, 0x8b6a3e, 4);
+      }
+      m.box(0.09, 0.008, 0.02, 0.07, 0.016, 0.1, lit(0x2e2d2a));
+      m.box(0.09, 0.017, 0.0, 0.05, 0.002, 0.04, lit(0x151515));
+      m.lathe(-0.08, 0, 0.05, [[0, 0.015], [0.02, 0.022], [0.035, 0.012], [0.042, 0.004]], lit(0x6a8a8a), 8);
+    } else if (kind === 'tea') {
+      // A teapot and cups on a round tray.
+      m.lathe(0, 0, 0, [[0, 0.11], [0.012, 0.11]], wood, 14);
+      m.lathe(0, 0.012, 0, [[0, 0.03], [0.03, 0.045], [0.06, 0.04], [0.07, 0.02], [0.08, 0.01]], lit(0x6a4a36), 10);
+      m.line([[0.04, 0.04, 0], [0.07, 0.06, 0]], 0.006, lit(0x6a4a36), 4);
+      for (let k = 0; k < 3; k++) {
+        const a = 2 + k * 1.2;
+        m.lathe(Math.cos(a) * 0.075, 0.012, Math.sin(a) * 0.075, [[0, 0.01], [0.022, 0.016]], bowlCol, 7);
+      }
+    }
+  });
 }
 function cushion(m, x, z, wx, wz) {
   const straw = lightAt(wx + x, 0.1, wz + z, rgb(0xa08a5c), 0.4),

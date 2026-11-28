@@ -78,7 +78,7 @@ function hillWoods(m) {
   camphor(m, 13.0, heightN(13, -9.5), -9.5, 1.15);
   camphor(m, -13.5, heightN(-13.5, -4.5), -4.5, 1.0);
   // Pines and camphors up the hill, thinning as it climbs.
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < 14; i++) {
     const x = r.range(-28, 28),
       z = r.range(-30, -20.5);
     if (inHouse(x, z)) continue;
@@ -98,10 +98,8 @@ function hillWoods(m) {
 // are the heaviest growth here.
 function bambooGroves(m) {
   for (const [x, z, rad, n] of [
-    [-6, -22.5, 3.2, 4],
-    [5.5, -23, 3.6, 4],
-    [-15.5, -16, 2.6, 3],
-    [17.5, -15.5, 2.8, 3]
+    [-6, -22.5, 3.2, 3],
+    [5.5, -23, 3.6, 3]
   ]) {
     grove(m, x, z, rad, n, heightN, 1.7);
   }
@@ -127,6 +125,17 @@ function southWoods(m) {
   ]) {
     const z = lipS(x) + 0.7;
     pine(m, x, heightS(x, z), z, r.range(2.3, 3.0), { lean, yaw: Math.PI, boughs: 7, rich: Math.abs(x) < 12 });
+  }
+  // Shade trees standing among the tea.
+  for (const [x, z, s2, kind] of [
+    [-9.2, 9.6, 0.7, 'camphor'],
+    [11.4, 9.3, 0.95, 'osmanthus'],
+    [-15, 12.2, 0.75, 'camphor'],
+    [2.6, 14.8, 0.9, 'osmanthus'],
+    [-5.8, 16.5, 0.65, 'camphor']
+  ]) {
+    if (kind === 'camphor') camphor(m, x, heightS(x, z), z, s2);
+    else osmanthus(m, x, heightS(x, z), z, s2);
   }
   for (let i = 0; i < 12; i++) {
     const x = r.range(-26, 26),

@@ -176,6 +176,29 @@ function axisTile(m, cell, wx, wz) {
     [split + j, 0.412]
   ])
     block(m, a, b, -0.497, 0.497, m.mix(slabTone, slabPale, r.next() * 0.6), wx, wz, TOP + 0.004, 0.01, allSides);
+  // Worn smooth and pale down the middle by generations of feet; a crack or two, a chipped edge.
+  const y = TOP + 0.0048,
+    n = 10,
+    worn = [],
+    wc = split > 0 ? (-0.412 + split) / 2 : (split + 0.412) / 2;
+  for (let i = 0; i < n; i++) {
+    const a = (i * circle) / n;
+    worn.push([wc + Math.cos(a) * r.range(0.13, 0.145), y, Math.sin(a) * r.range(0.42, 0.45)]);
+  }
+  const mid = [wc, y, 0];
+  for (let i = 0; i < n; i++)
+    put(m, [mid, worn[i], worn[(i + 1) % n]], tone(m, m.mix(slabTone, slabPale, 0.75), wx, wz, 1.02));
+  for (let k = 0; k < 2; k++) {
+    let x = r.range(-0.35, 0.35),
+      z = r.range(-0.45, 0.2);
+    for (let q = 0; q < 3; q++) {
+      const nx = x + r.range(-0.06, 0.06),
+        nz = z + r.range(0.05, 0.1);
+      put(m, [[x - 0.004, y + 0.0004, z], [x + 0.004, y + 0.0004, z], [nx + 0.004, y + 0.0004, nz], [nx - 0.004, y + 0.0004, nz]], 0x6a675e);
+      x = nx;
+      z = nz;
+    }
+  }
 }
 // The apron before the hall: long granite slabs laid east to west.
 function apronTile(m, cell, wx, wz) {
@@ -321,22 +344,89 @@ function plainLitter(m, p, cell) {
   const r = m.rng,
     wx = cell.x - CX,
     wz = cell.y - CZ,
-    w = weather(wx, wz);
-  if (r.next() < 0.35)
-    for (let i = 0; i < 3; i++) {
-      const x = r.range(-0.4, 0.4),
-        z = r.range(-0.4, 0.4),
+    w = weather(wx, wz),
+    stone = elementAt.has(cell.x + ',' + cell.y),
+    axis = cell.x === CX && cell.y >= 1 && cell.y <= 9;
+  // Fallen leaves of the camphors over the wall, and now and then osmanthus flowers.
+  if (r.next() < 0.55)
+    for (let i = 0, n = 2 + Math.floor(r.next() * 5); i < n; i++) {
+      const x = r.range(-0.44, 0.44),
+        z = r.range(-0.44, 0.44),
         a = r.range(0, circle),
-        l = r.range(0.05, 0.08);
-      m.leaf([x, TOP + 0.004, z], [x + Math.cos(a) * l, TOP + 0.006, z + Math.sin(a) * l], 0.012, r.pick([0x9a8a4c, 0x7d8a4a, 0xa89a5c]), 0xb8ac70, 0.003);
+        l = r.range(0.05, 0.085);
+      m.leaf([x, TOP + 0.005, z], [x + Math.cos(a) * l, TOP + 0.007, z + Math.sin(a) * l], 0.014, r.pick([0x9a8a4c, 0x7d8a4a, 0xa89a5c, 0x9a6a3c, 0x6f7d44]), 0xb8ac70, 0.003);
     }
-  if (w.mossy > 0.18)
-    for (let i = 0; i < 4; i++) {
-      const x = r.range(-0.45, 0.45),
-        z = r.range(-0.45, 0.45),
-        s = r.range(0.04, 0.08);
-      put(m, [[x - s, TOP + 0.002, z], [x, TOP + 0.002, z + s * 0.7], [x + s, TOP + 0.002, z], [x, TOP + 0.002, z - s * 0.7]], m.mix(moss, 0x8a9a5c, r.next() * 0.5));
+  if (cell.y < 4 && r.next() < 0.25)
+    for (let i = 0; i < 6; i++) m.box(r.range(-0.4, 0.4), TOP + 0.004, r.range(-0.4, 0.4), 0.018, 0.004, 0.018, 0xe0b850);
+  if (stone) return;
+  // Moss along the joints, thickest toward the walls and in the damp.
+  const f = 0.415,
+    step = (2 * f) / 3,
+    joints = Math.round((w.mossy > 0.08 ? 7 : 2) + r.next() * 3);
+  if (!axis)
+    for (let i = 0; i < joints; i++) {
+      const along = r.next() < 0.5,
+        line = -f + step * Math.floor(r.next() * 4),
+        t0 = r.range(-f, f - 0.1),
+        len = r.range(0.08, 0.24),
+        wd = r.range(0.01, 0.018),
+        col = m.mix(moss, 0x86985a, r.next() * 0.6),
+        y = TOP + 0.0015;
+      const q = along
+        ? [[line - wd, y, t0], [line + wd, y, t0], [line + wd, y, t0 + len], [line - wd, y, t0 + len]]
+        : [[t0, y, line - wd], [t0, y, line + wd], [t0 + len, y, line + wd], [t0 + len, y, line - wd]];
+      put(m, q, col);
+      if (w.mossy > 0.2 && r.next() < 0.4) {
+        const g = q[0];
+        for (let k = 0; k < 3; k++) m.leaf([g[0], TOP, g[2]], [g[0] + r.range(-0.05, 0.05), TOP + r.range(0.04, 0.07), g[2] + r.range(-0.05, 0.05)], 0.008, 0x6a8048, 0x8fa060, 0.01);
+      }
     }
+  // A puddle in a sunken patch, the sky in it, the brick darker with wet round it.
+  if (!axis && noise(wx * 0.9 + 11, wz * 0.9 - 4) > 0.62 && r.next() < 0.6) {
+    const cx = r.range(-0.15, 0.15),
+      cz = r.range(-0.15, 0.15),
+      rad = r.range(0.17, 0.3),
+      n = 11,
+      wet = [],
+      pool = [];
+    for (let i = 0; i < n; i++) {
+      const a = (i * circle) / n,
+        k = r.range(0.88, 1.12);
+      wet.push([cx + Math.cos(a) * rad * k * 1.22, TOP + 0.0022, cz + Math.sin(a) * rad * k * 0.95]);
+      pool.push([cx + Math.cos(a) * rad * k, TOP + 0.003, cz + Math.sin(a) * rad * k * 0.75]);
+    }
+    const mid = [cx, TOP + 0.003, cz],
+      low = [cx, TOP + 0.0022, cz];
+    for (let i = 0; i < n; i++) {
+      put(m, [low, wet[i], wet[(i + 1) % n]], 0x63675f);
+      put(m, [mid, pool[i], pool[(i + 1) % n]], 0x7d898c);
+    }
+    // The sky's glint on the water.
+    put(m, [[cx - rad * 0.5, TOP + 0.0034, cz - rad * 0.1], [cx + rad * 0.3, TOP + 0.0034, cz - rad * 0.3], [cx + rad * 0.35, TOP + 0.0034, cz - rad * 0.18], [cx - rad * 0.45, TOP + 0.0034, cz + 0.01]], 0xb8c6c8);
+  }
+  // By the board's edge: a small pot of herbs or a few stones set against the wall.
+  const out = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1]
+  ].find(([dx, dz]) => !walk.has(cell.x + dx + ',' + (cell.y + dz)));
+  if (out && !axis && cell.y > 0 && cell.y < 9 && r.next() < 0.45) {
+    const [dx, dz] = out,
+      side = r.next() < 0.5 ? -1 : 1,
+      x = dx ? dx * 0.38 : side * 0.36,
+      z = dz ? dz * 0.38 : side * 0.36;
+    if (r.next() < 0.55) {
+      m.lathe(x, TOP, z, [[0, 0.06], [0.02, 0.08], [0.11, 0.095], [0.13, 0.1], [0.125, 0]], r.pick([0x8a5a3c, 0x3f6a72, 0x7a7a70]), 8);
+      for (let k = 0; k < 6; k++) {
+        const a = (k * circle) / 6 + r.range(0, 0.5),
+          l = r.range(0.08, 0.14);
+        m.leaf([x, TOP + 0.12, z], [x + Math.cos(a) * l, TOP + 0.12 + l * 0.8, z + Math.sin(a) * l], 0.022, 0x3f6a3a, 0x7d9a58, 0.03);
+      }
+    } else
+      for (let k = 0; k < 3; k++)
+        m.rock(x + r.range(-0.06, 0.06), TOP - 0.005, z + r.range(-0.06, 0.06), r.range(0.04, 0.08), r.range(0.03, 0.07), r.range(0.04, 0.07), 0x6f6e66, 0x9a9a8a, 6);
+  }
 }
 
 // The stone beam bridge: the deck is cut by the borrowed tile language (three long slabs on each

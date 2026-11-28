@@ -4,13 +4,13 @@
 // the 山門 side to the pagoda steps, runs the 甬道 of great stone slabs, and the slab before the
 // steps is carved with a lotus. The colour of every corner is worked out from where it lies:
 // worn paler along the way feet have gone, cool blue in the open, warm round each burner.
-import { circle } from '../scenery-kit.js';
 import {
   CX,
   CZ,
   TOP,
   onBoard,
   lampLight,
+  lit,
   put,
   brick,
   brickLight,
@@ -18,11 +18,25 @@ import {
   stone,
   stoneLight
 } from './kit-17.js';
+import { fallenLeaves, puddle, crack } from './flora-17.js';
 
 const BED = 0.024; // the mortar showing in the joints
 const BEVEL = 0.007;
 const kerb = 0x667082;
 const moss = 0x2d3d36;
+// Tiles where the evening's rain still stands in a shallow puddle.
+const PUDDLES = new Set(['3,5', '8,8', '4,10', '10,3']);
+
+// What lies on the paving: ginkgo leaves blown in from the court (thicker toward the north,
+// under the trees), a crack here and there, and the puddles.
+function litter(m, cell) {
+  const r = m.rng;
+  if (PUDDLES.has(cell.x + ',' + cell.y))
+    lit(m, () => puddle(m, r.range(-0.1, 0.1), r.range(-0.1, 0.1), 0.3, 0.22, TOP, true));
+  if (r.next() < (cell.y < 5 ? 0.6 : 0.32))
+    lit(m, () => fallenLeaves(m, r.range(-0.15, 0.15), r.range(-0.15, 0.15), 0.42, 2 + Math.floor(r.next() * 4), TOP));
+  if (r.next() < 0.2) crack(m, r.range(-0.3, 0.3), r.range(-0.3, 0.3), 0.45, TOP);
+}
 
 // Wear: paler along the middle of the court and the way to the pagoda.
 function wear(x, z) {
@@ -32,7 +46,7 @@ function tone(m, col, x, z, k) {
   const c = m.rgb(col),
     g = lampLight(x, 0.04, z),
     w = wear(x, z) * k;
-  return [c[0] * (0.9 + 1.3 * g) * w, c[1] * (0.93 + 0.8 * g) * w, c[2] * (1.05 + 0.15 * g) * w];
+  return [c[0] * (0.8 + 1.95 * g) * w, c[1] * (0.84 + 1.15 * g) * w, c[2] * (1.0 + 0.12 * g) * w];
 }
 // One dressed stone or brick over [x0, x1] by [z0, z1] of the tile's frame, its top bevelled
 // down to the joint. `wx`, `wz` place the tile on the board so its colours can be lit.
@@ -155,6 +169,7 @@ function paveTile(m, p, cell) {
           b = s < 0 ? -j / 2 : f;
         block(m, -f, f, a, b, m.mix(stone, stoneLight, r.next() * 0.4), wx, wz, shade(1));
       }
+    litter(m, cell);
     return true;
   }
   // Basket weave: four squares of three bricks, each turned against its neighbours.
@@ -213,6 +228,7 @@ function paveTile(m, p, cell) {
         tone(m, moss, wx, wz, 1)
       );
     }
+  litter(m, cell);
   return true;
 }
 

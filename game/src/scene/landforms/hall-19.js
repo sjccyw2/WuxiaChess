@@ -369,6 +369,65 @@ function caveWall(T) {
       shell.face([off(L, 0.03), ridge, tip], [c0, c1, c1], n);
       shell.face([ridge, off(Rr, 0.03), tip], [c1, c0, c1], n);
     }
+  // Ribs of harder rock standing out of the wall from the talus to the roof line, and clusters
+  // of dripstone hanging where the wall leans over into the dark, each with the wet streak its
+  // drip has left on the rock below.
+  const openAt = (a, y) => openings.some((o) => insideOpening(o, a, y) > -0.5);
+  for (let j = 0; j < 22; j++) {
+    const a0 = -Math.PI / 2 + (j / 22) * circle + 0.09 * Math.sin(j * 3.7);
+    if (openAt(a0, 1) || openAt(a0, 4)) continue;
+    const H = wallHeight(a0) - 0.4,
+      steps = 18;
+    let prev = null;
+    for (let k = 0; k <= steps; k++) {
+      const y = 0.4 + ((H - 0.4) * k) / steps,
+        a = a0 + 0.03 * Math.sin(y * 1.3 + j),
+        f = smoothFacing(a, y);
+      const rad = (0.24 - 0.1 * (k / steps)) * (0.8 + 0.4 * hash(j, k));
+      const p = wallPoint(a, y).map((v, t) => v + f[t] * rad * 0.55);
+      if (prev) {
+        const tone = lightAt(...p, blend(wallTone(a, y, H), rgb(0x7a756a), 0.3 * (1 - smooth(2, H, y))), 0.55);
+        m.tube(prev.p, p, prev.rad, rad, tone, 6);
+        shell.mark(f, p);
+      }
+      prev = { p, rad };
+    }
+  }
+  for (let j = 0; j < 150; j++) {
+    const a = r.range(-Math.PI, Math.PI),
+      H = wallHeight(a),
+      y = H - r.range(0.3, 2.6);
+    if (openAt(a, y) || openAt(a, 2)) continue;
+    const f = smoothFacing(a, y),
+      base = wallPoint(a, y).map((v, t) => v + f[t] * r.range(0.05, 0.35));
+    const len = r.range(0.25, 1.5) * (0.6 + 0.4 * smooth(2, H, y));
+    const tone = lightAt(...base, blend(wallTone(a, y, H), rgb(0x8a8578), 0.25), 0.55);
+    m.tube(base, [base[0] + r.range(-0.03, 0.03), base[1] - len, base[2] + r.range(-0.03, 0.03)], r.range(0.05, 0.13), 0.006, tone, 6);
+    if (r.next() < 0.5) {
+      const b2 = base.map((v, t) => v + (t === 1 ? 0 : r.range(-0.12, 0.12)));
+      m.tube(b2, [b2[0], b2[1] - len * 0.55, b2[2]], 0.04, 0.005, tone, 5);
+    }
+    shell.mark(f, base);
+    // The wet streak down the wall from the drip.
+    if (r.next() < 0.35) {
+      const wet = blend(tone, rgb(0x9fb2b0), 0.25);
+      const top = wallPoint(a, y - len),
+        bot = wallPoint(a, Math.max(0.6, y - len - r.range(1, 2.5)));
+      const tx = -Math.sin(a) * 0.04,
+        tz = Math.cos(a) * 0.04;
+      const out = (p) => p.map((v, t) => v + f[t] * 0.04);
+      let q = [out([top[0] - tx, top[1], top[2] - tz]), out([top[0] + tx, top[1], top[2] + tz]), out([bot[0] + tx * 1.6, bot[1], bot[2] + tz * 1.6]), out([bot[0] - tx * 1.6, bot[1], bot[2] - tz * 1.6])],
+        c = [wet, wet, tone, tone];
+      const u = q[1].map((v, t) => v - q[0][t]),
+        w = q[2].map((v, t) => v - q[0][t]);
+      const nn = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
+      if (nn[0] * f[0] + nn[1] * f[1] + nn[2] * f[2] < 0) {
+        q = q.reverse();
+        c = c.reverse();
+      }
+      shell.face(q, c, f);
+    }
+  }
   // Sea pinks and fern in the damp by the arches.
   for (let j = 0; j < 140; j++) {
     const o = openings[j % 2],

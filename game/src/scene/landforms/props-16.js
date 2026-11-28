@@ -340,48 +340,51 @@ function stoneLantern(m) {
 // sheaths at its foot. About 1.2 tall.
 function bambooClump(m, p, cell) {
   const r = m.rng,
-    out = outward(cell),
-    bx = out * 0.26,
-    bz = -0.26;
-  m.lathe(bx, TOP, bz, [[0, 0.24], [0.04, 0.23], [0.05, 0]], 0x5a5140, 9);
-  const n = 7;
-  for (let i = 0; i < n; i++) {
-    const a = r.range(0, circle),
-      d = r.range(0, 0.16),
-      x = bx + Math.cos(a) * d,
-      z = bz + Math.sin(a) * d,
-      h = r.range(0.85, 1.35),
-      tx = x + out * r.range(0.02, 0.16),
-      tz = z - r.range(0.0, 0.12),
-      green = m.mix(0x5d8a48, 0x8aa85a, r.next());
-    let prev = [x, TOP + 0.04, z];
-    for (let k = 1; k <= 4; k++) {
-      const t = k / 4,
-        at = [x + (tx - x) * t * t, TOP + 0.04 + h * t, z + (tz - z) * t * t];
-      m.tube(prev, at, 0.02 - k * 0.002, 0.018 - k * 0.002, k % 2 ? green : m.mix(green, 0x3f6a38, 0.3), 5);
-      m.box(at[0], at[1], at[2], 0.04, 0.008, 0.04, m.mix(green, 0xc9c08a, 0.4));
-      prev = at;
-    }
-    for (let k = 0; k < 6; k++) {
-      const t = 0.5 + k * 0.09,
-        pt = [x + (tx - x) * t * t, TOP + 0.04 + h * t, z + (tz - z) * t * t],
-        b = r.range(0, circle),
-        l = r.range(0.13, 0.22);
-      m.leaf(pt, [pt[0] + Math.cos(b) * l, pt[1] - 0.06, pt[2] + Math.sin(b) * l], 0.028, 0x35633a, 0x6f9a55, 0.02);
-      m.leaf(pt, [pt[0] + Math.cos(b + 0.6) * l * 0.8, pt[1] - 0.03, pt[2] + Math.sin(b + 0.6) * l * 0.8], 0.024, 0x2f5a35, 0x5f8a4a, 0.02);
+    out = outward(cell);
+  // The main clump at the outer back corner, a smaller one along the outer edge.
+  for (const [bx, bz, n, tall] of [
+    [out * 0.26, -0.26, 10, 1],
+    [out * 0.32, 0.22, 5, 0.75]
+  ]) {
+    m.lathe(bx, TOP, bz, [[0, 0.22 * (n / 10 + 0.3)], [0.04, 0.2 * (n / 10 + 0.3)], [0.05, 0]], 0x5a5140, 9);
+    for (let i = 0; i < n; i++) {
+      const a = r.range(0, circle),
+        d = r.range(0, 0.15),
+        x = bx + Math.cos(a) * d,
+        z = bz + Math.sin(a) * d,
+        h = r.range(0.85, 1.35) * tall,
+        tx = x + out * r.range(0.02, 0.18),
+        tz = z + r.range(-0.12, 0.04),
+        green = m.mix(0x5d8a48, 0x8aa85a, r.next());
+      let prev = [x, TOP + 0.04, z];
+      for (let k = 1; k <= 4; k++) {
+        const t = k / 4,
+          at = [x + (tx - x) * t * t, TOP + 0.04 + h * t, z + (tz - z) * t * t];
+        m.tube(prev, at, 0.02 - k * 0.002, 0.018 - k * 0.002, k % 2 ? green : m.mix(green, 0x3f6a38, 0.3), 5);
+        m.box(at[0], at[1], at[2], 0.04, 0.008, 0.04, m.mix(green, 0xc9c08a, 0.4));
+        prev = at;
+      }
+      for (let k = 0; k < 6; k++) {
+        const t = 0.45 + k * 0.1,
+          pt = [x + (tx - x) * t * t, TOP + 0.04 + h * t, z + (tz - z) * t * t],
+          b = r.range(0, circle),
+          l = r.range(0.13, 0.22);
+        m.leaf(pt, [pt[0] + Math.cos(b) * l, pt[1] - 0.06, pt[2] + Math.sin(b) * l], 0.028, 0x35633a, 0x6f9a55, 0.02);
+        m.leaf(pt, [pt[0] + Math.cos(b + 0.6) * l * 0.8, pt[1] - 0.03, pt[2] + Math.sin(b + 0.6) * l * 0.8], 0.024, 0x2f5a35, 0x5f8a4a, 0.02);
+      }
     }
   }
-  // Shoots and sheaths.
-  for (let k = 0; k < 3; k++) {
-    const x = bx + r.range(-0.25, 0.2) * -out,
-      z = bz + r.range(0.05, 0.3);
-    m.tube([x, TOP, z], [x, TOP + r.range(0.08, 0.16), z], 0.025, 0.003, 0x8a7a50, 5);
-  }
+  // Shoots, and a carpet of fallen leaves and sheaths.
   for (let k = 0; k < 4; k++) {
-    const x = r.range(-0.4, 0.4),
-      z = r.range(-0.4, 0.2),
+    const x = out * r.range(0.0, 0.42),
+      z = r.range(-0.1, 0.35);
+    m.tube([x, TOP, z], [x, TOP + r.range(0.08, 0.18), z], 0.025, 0.003, 0x8a7a50, 5);
+  }
+  for (let k = 0; k < 10; k++) {
+    const x = r.range(-0.42, 0.42),
+      z = r.range(-0.42, 0.35),
       a = r.range(0, circle);
-    m.leaf([x, TOP + 0.004, z], [x + Math.cos(a) * 0.1, TOP + 0.006, z + Math.sin(a) * 0.1], 0.02, 0xb0a070, 0xc8b884, 0.003);
+    m.leaf([x, TOP + 0.004, z], [x + Math.cos(a) * 0.1, TOP + 0.006, z + Math.sin(a) * 0.1], 0.018, r.pick([0xb0a070, 0x9a9a5c, 0x7d8a4a]), 0xc8b884, 0.003);
   }
 }
 

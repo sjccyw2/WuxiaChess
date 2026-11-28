@@ -550,7 +550,6 @@ function rearCourt(m) {
     m.frame(s * 9.2, 0, -16.5, Math.PI / 2, 1, () => {
       slab(m, -2.6, 2.6, 0, 2.0, -1.4, 1.4, plaster);
       tiledRoof(m, 5.4, 3.2, 2.0, 0.8, { hip: 0, gable: true, lift: 0.06, tones: roofTones, rafters: false, rows: 2, tile: 0.5 });
-      for (const e of [-1, 1]) m.frame(e * 2.65, 0, 0, 0, 1, () => horseHeadWall(m, 3.4, 0, [2.25, 2.95], 0.24));
     });
     // A chimney with a wisp of smoke from the east kitchen.
     if (s > 0) {

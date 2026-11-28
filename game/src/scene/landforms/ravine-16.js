@@ -436,62 +436,103 @@ function mistBanks(m) {
   }
 }
 
-// 茶園: rows of clipped tea bushes along the hillside south of the ravine, each row a rounded
-// hedge following the ground, its top flushed with new leaves; the path passes through gaps.
-function teaRows(m) {
-  const r = m.rng;
-  const dark = 0x1f301d,
-    body = 0x2c4128,
-    top = 0x3d5432,
-    flush = 0x5f7646;
-  for (let k = 0; k < 10; k++) {
-    const z0 = 7.9 + k * 0.95,
-      phase = r.range(0, 1);
-    let run = null;
-    const flushRun = () => {
-      if (run && run.length > 1) {
-        for (let i = 0; i < run.length - 1; i++) {
-          const a = run[i],
-            b = run[i + 1];
-          for (let q = 0; q < a.pts.length - 1; q++)
-            put(m, [a.pts[q], b.pts[q], b.pts[q + 1], a.pts[q + 1]], [a.col[q], b.col[q], b.col[q + 1], a.col[q + 1]]);
-        }
-        // Close both ends of the row.
-        for (const end of [run[0], run[run.length - 1]]) put(m, end.pts, body, [end === run[0] ? -1 : 1, 0, 0]);
-      }
-      run = null;
-    };
-    for (let x = -24; x <= 24; x += 0.32) {
-      const z = z0 + 0.25 * Math.sin(x * 0.21 + k) + 0.15 * noise(x * 0.3, k);
-      if (z < lipS(x) + 0.9 || nearPath(x, z) || Math.abs(x) > 23.6 || noise(x * 0.45 + k * 7, k) > 0.8) {
-        flushRun();
-        continue;
-      }
-      // Each bush is about half a pace long; the row pinches a little between them.
-      const lump = Math.pow(Math.abs(Math.sin((x / 0.56 + phase) * Math.PI)), 0.6),
-        y = heightS(x, z),
-        w = (0.25 + 0.05 * noise(x * 1.7, k * 3)) * (0.62 + 0.38 * lump),
-        h = (0.3 + 0.08 * noise(x * 1.3 + 4, k * 2)) * (0.6 + 0.4 * lump);
-      const prof = [
-        [w, -0.05],
-        [w * 1.02, h * 0.5],
-        [w * 0.62, h * 0.92],
-        [0, h],
-        [-w * 0.62, h * 0.92],
-        [-w * 1.02, h * 0.5],
-        [-w, -0.05]
-      ].map(([dz, dy], q) => {
-        const j = q === 0 || q === 6 ? 0 : 0.035 * (noise(x * 5.3 + q * 1.7, k * 2.9 + q) - 0.5) * 2;
-        return [x + j * 0.6, y + dy + j, z + dz * (1 + j * 1.5)];
-      });
-      const n = noise(x * 2.1, k * 1.3),
-        crown = m.mix(top, flush, Math.max(0, n - 0.35) * 1.4),
-        shade = 0.85 + 0.25 * lump;
-      const col = [dark, body, top, crown, m.mix(top, crown, 0.5), body, dark].map((c) => (Array.isArray(c) ? c : m.rgb(c)).map((v) => v * shade));
-      (run ||= []).push({ pts: prof, col });
-    }
-    flushRun();
+// 茶園: rows of clipped tea bushes along the hillside south of the ravine. Every bush is its own
+// leafy mound, the bushes of a row crowding into one another, here and there one missing; the
+// tops are flushed with paler new leaf. Between the rows run beaten-earth paths with flowers
+// at their edges, and the pickers have left their baskets on them.
+const ROWS = 9,
+  rowZ = (k, x) => 7.9 + k * 0.95 + 0.25 * Math.sin(x * 0.21 + k) + 0.15 * noise(x * 0.3, k);
+function teaBush(m, x, y, z, rx, rz, h, tint) {
+  const r = m.rng,
+    n = 7,
+    turn = r.range(0, circle);
+  const dark = m.mix(0x2a4225, tint, 0.3),
+    body = m.mix(0x3f6034, tint, 0.3),
+    crownTone = m.mix(0x67884a, 0x90aa5e, r.next());
+  const ring = (k, lift, rad) =>
+    Array.from({ length: n }, (_, i) => {
+      const a = turn + (i * circle) / n,
+        j = r.range(0.8, 1.18);
+      return [x + Math.cos(a) * rx * rad * j, y + lift + r.range(-0.03, 0.03) * k, z + Math.sin(a) * rz * rad * j];
+    });
+  const low = ring(0, -0.04, 0.9),
+    mid = ring(1, h * 0.58, 1.05),
+    crown = [x + r.range(-0.05, 0.05), y + h * r.range(0.95, 1.08), z + r.range(-0.04, 0.04)];
+  for (let i = 0; i < n; i++) {
+    const q = (i + 1) % n;
+    m.face([low[i], low[q], mid[q], mid[i]], [dark, dark, body, body]);
+    m.face([mid[i], mid[q], crown], [body, body, m.rgb(crownTone)]);
   }
+  // A spray of new leaf standing out of the top.
+  for (let k = 0; k < 1; k++) {
+    const a = r.range(0, circle),
+      at = [x + Math.cos(a) * rx * 0.4, y + h * 0.92, z + Math.sin(a) * rz * 0.4];
+    m.leaf(at, [at[0] + Math.cos(a) * 0.11, at[1] + 0.08, at[2] + Math.sin(a) * 0.11], 0.04, 0x7a9a50, 0xa8c46e, 0.02);
+  }
+}
+// 竹簍: a picker's basket of woven bamboo, a few leaves heaped in it.
+function basket(m, x, z, yaw) {
+  const y = heightS(x, z);
+  m.frame(x, y, z, yaw, 1, () => {
+    m.lathe(0, 0, 0, [[0, 0.1], [0.02, 0.13], [0.16, 0.16], [0.26, 0.15], [0.27, 0.13]], 0xb09658, 9);
+    for (const h of [0.05, 0.13, 0.21]) m.hoop(0, h, 0, 0.14 + h * 0.08, 0.008, 0x7d6838, 9);
+    m.lathe(0, 0.2, 0, [[0, 0.13], [0.05, 0.07], [0.06, 0]], 0x587a3e, 8);
+    m.line([[-0.13, 0.25, 0], [0, 0.38, 0.02], [0.13, 0.25, 0]], 0.008, 0x6b5a34, 4);
+  });
+}
+function teaRows(m) {
+  const r = m.rng,
+    span = 17;
+  for (let k = 0; k < ROWS; k++) {
+    const tint = m.mix(0x3a5a30, 0x56763a, r.next());
+    for (let x = -span; x <= span; x += 0.4) {
+      const z = rowZ(k, x);
+      if (z < lipS(x) + 0.9 || nearPath(x, z) || noise(x * 0.45 + k * 7, k) > 0.8 || r.next() < 0.07) continue;
+      const big = 0.85 + 0.3 * noise(x * 1.7, k * 3);
+      teaBush(m, x + r.range(-0.04, 0.04), heightS(x, z), z, 0.31 * big, 0.27 * big, 0.36 * big, tint);
+    }
+    // The beaten path below the row, with flowers along its edge.
+    if (k === ROWS - 1) continue;
+    for (let x = -span; x < span; x += 0.6) {
+      const xb = x + 0.6,
+        za = (rowZ(k, x) + rowZ(k + 1, x)) / 2,
+        zb = (rowZ(k, xb) + rowZ(k + 1, xb)) / 2;
+      if (za < lipS(x) + 1.3 || zb < lipS(xb) + 1.3 || nearPath(x, za, 0.7) || nearPath(xb, zb, 0.7)) continue;
+      const w = 0.15,
+        c0 = m.mix(0x7a6a4e, 0x8d8064, noise(x * 0.9, k)),
+        c1 = m.mix(0x7a6a4e, 0x6e6a48, noise(xb * 0.9, k + 3));
+      put(m, [[x, heightS(x, za - w) + 0.012, za - w], [xb, heightS(xb, zb - w) + 0.012, zb - w], [xb, heightS(xb, zb + w) + 0.012, zb + w], [x, heightS(x, za + w) + 0.012, za + w]], [c0, c1, c1, c0]);
+      if (r.next() < 0.3) {
+        const fx = x + r.range(0, 0.6),
+          fz = za + (r.next() < 0.5 ? -1 : 1) * 0.2,
+          fy = heightS(fx, fz),
+          col = r.pick([0xe9e2c8, 0xd9b84a, 0xb88ac0, 0xd87a5a]);
+        m.tube([fx, fy, fz], [fx, fy + 0.11, fz], 0.006, 0.004, 0x5d7a45, 3);
+        m.box(fx, fy + 0.12, fz, 0.035, 0.02, 0.035, col);
+      }
+    }
+  }
+  // Baskets left on the paths.
+  for (const [x, k, yaw] of [
+    [-3.2, 0, 0.4],
+    [-6.8, 2, 1.2],
+    [4.6, 4, 2.1],
+    [-10.5, 4, 0.2],
+    [8.5, 1, 2.7],
+    [-1.6, 6, 1.6]
+  ]) {
+    const z = (rowZ(k, x) + rowZ(k + 1, x)) / 2;
+    if (!nearPath(x, z, 0.6) && z > lipS(x) + 1.3) basket(m, x, z, yaw);
+  }
+  // Boulders the terraces were built round.
+  for (const [x, z, s2] of [
+    [-12.5, 10.2, 0.5],
+    [6.2, 8.1, 0.38],
+    [-4.6, 13.4, 0.55],
+    [13.2, 11.6, 0.45],
+    [-16, 14.5, 0.6]
+  ])
+    boulder(m, x, heightS(x, z) - s2 * 0.3, z, s2, s2 * 0.7, s2 * 0.8, { wet: 0.2, green: 0.6, n: 8, turn: x });
 }
 
 // Everything above in three models' worth: the near (ravine and ground), the life on it, and the far.
@@ -538,4 +579,4 @@ function groundCover(m) {
   groundLife(m, heightS, [-24, 24, 6.2, 20], 60, (x, z) => z < lipS(x) + 0.3 || nearPath(x, z, 0.8));
 }
 
-export { ravine, ravineLife, grounds, groundCover, farHills, mistBanks, heightN, heightS, lipN, lipS, inHouse };
+export { teaRows, ravine, ravineLife, grounds, groundCover, farHills, mistBanks, heightN, heightS, lipN, lipS, inHouse };

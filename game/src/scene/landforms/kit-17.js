@@ -55,7 +55,7 @@ const courtLanterns = [
 const LAMPS = [...burners, ...courtLanterns.map(([x, z]) => [x, 0.6, z, 1])];
 
 // How much lamplight falls at a point: 0 in the open, 1 close under a lamp.
-function lampLight(x, y, z, lamps = LAMPS, reach = 1.7) {
+function lampLight(x, y, z, lamps = LAMPS, reach = 2.0) {
   let g = 0;
   for (const [lx, ly, lz, k = 1] of lamps) {
     const dx = x - lx,
@@ -68,13 +68,13 @@ function lampLight(x, y, z, lamps = LAMPS, reach = 1.7) {
 }
 // Lamplight painted into the vertex colours of a model (from vertex `from` of its solid part):
 // warm and brighter under the lamps, cool blue in the open.
-function bathe(m, lamps = LAMPS, gain = 1, from = 0, reach = 1.7) {
+function bathe(m, lamps = LAMPS, gain = 1, from = 0, reach = 2.0) {
   const { p, c } = m.parts[0];
   for (let i = from * 3; i < p.length; i += 3) {
     const g = lampLight(p[i], p[i + 1], p[i + 2], lamps, reach) * gain;
-    c[i] *= 0.94 + 1.35 * g;
-    c[i + 1] *= 0.96 + 0.82 * g;
-    c[i + 2] *= 1.04 + 0.22 * g;
+    c[i] *= 0.84 + 1.95 * g;
+    c[i + 1] *= 0.87 + 1.18 * g;
+    c[i + 2] *= 1.0 + 0.26 * g;
   }
 }
 // Draw something and light only what it added.

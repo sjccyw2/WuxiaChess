@@ -157,9 +157,9 @@ function annotate(m, x, top, bottom, s, seed, dark, lip) {
 }
 // A figure in low relief, raised a little from the face: head, body and limbs as rounded
 // strokes, posed by the angles given (radians from straight down for each limb).
-function figure(m, x, y, s, pose, col) {
-  const R = 0.011 * s * 2;
-  const at = (p) => [x + p[0] * s, y + p[1] * s, 0.006];
+// The joints of a posed figure, a unit tall, feet near 0: hip, neck, knees, feet, elbows, hands
+// and head. The floor's inlaid roundels draw the same figures (inlay-19.js).
+function joints(pose) {
   const hip = [0, 0.42 + pose.crouch * -0.08],
     neck = [pose.lean * 0.25, hip[1] + 0.34];
   const limb = (from, a, l) => [from[0] + Math.sin(a) * l, from[1] - Math.cos(a) * l];
@@ -167,6 +167,16 @@ function figure(m, x, y, s, pose, col) {
     feet = pose.legs.map((a, i) => limb(knees[i], a[1], 0.22));
   const elbows = pose.arms.map((a) => limb(neck, a[0], 0.16)),
     hands = pose.arms.map((a, i) => limb(elbows[i], a[1], 0.15));
+  const head = [neck[0] + pose.lean * 0.05, neck[1] + 0.09];
+  const sword = pose.sword
+    ? [hands[pose.sword - 1], [hands[pose.sword - 1][0] + Math.sin(pose.swordAngle) * 0.42, hands[pose.sword - 1][1] + Math.cos(pose.swordAngle) * 0.42]]
+    : null;
+  return { hip, neck, knees, feet, elbows, hands, head, sword };
+}
+function figure(m, x, y, s, pose, col) {
+  const R = 0.011 * s * 2;
+  const at = (p) => [x + p[0] * s, y + p[1] * s, 0.006];
+  const { hip, neck, knees, feet, elbows, hands } = joints(pose);
   m.line([at(hip), at(neck)], R * 1.5, col, 5);
   for (let i = 0; i < 2; i++) {
     m.line([at(hip), at(knees[i]), at(feet[i])], R, col, 5);
@@ -361,4 +371,4 @@ function carvedWalls(T) {
   return [group, low.finish('石壁基座')];
 }
 
-export { carvedWalls, character, incise, FRONT };
+export { carvedWalls, character, incise, joints, POSES, FRONT };

@@ -392,9 +392,9 @@ function apronScree(m, land) {
 // few stones fallen onto the shelves.
 function ledgeLife(m, sections) {
   const r = m.rng;
-  for (let j = 0; j < 70; j++) {
+  for (let j = 0; j < 52; j++) {
     const k = j % 2 ? 3 : 5,
-      f = (j * 4.1 + r.range(0, 3)) % SPOKES,
+      f = (j * 5.5 + r.range(0, 3)) % SPOKES,
       i = Math.floor(f),
       a = (f * circle) / SPOKES,
       [r0, y0] = sections[i][k - 1],
@@ -594,56 +594,28 @@ function secretWay(m, land) {
   oldPine(m, ...at(-7.9, -5.2), 0.62, 3.3, 0.55, 5);
 }
 
-// A bank of cloud: soft, uneven domes run together, grey below and bright on top.
-function cloudBank(m, x, y, z, length, depth, yaw, puffs) {
-  const r = m.rng,
-    n = 8;
-  const rings = [
-    [0, 1],
-    [0.45, 0.9],
-    [0.85, 0.52],
-    [1, 0]
-  ];
-  m.frame(x, y, z, yaw, 1, () => {
-    for (let k = 0; k < puffs; k++) {
-      const t = puffs > 1 ? k / (puffs - 1) - 0.5 : 0,
-        px = t * length + r.range(-0.3, 0.3),
-        pz = r.range(-0.4, 0.4) * depth,
-        rad = depth * r.range(0.75, 1.15) * (1 - Math.abs(t) * 0.5),
-        h = rad * r.range(0.3, 0.5),
-        edge = Array.from({ length: n }, () => r.range(0.72, 1.15));
-      let prev = null,
-        below = null;
-      for (const [k2, s] of rings) {
-        const ring = edge.map((e, i) => {
-          const a = (i * circle) / n + k;
-          return [px + Math.cos(a) * rad * s * e * 1.5, k2 * h, pz + Math.sin(a) * rad * s * e];
-        });
-        const tone = m.mix(0xaeb6bc, 0xf1f3f4, smooth(0, 0.85, k2));
-        if (prev)
-          for (let i = 0; i < n; i++) {
-            const j = (i + 1) % n;
-            m.face([prev[i], ring[i], ring[j], prev[j]], [below, tone, tone, below]);
-          }
-        prev = ring;
-        below = tone;
-      }
-    }
-  });
-}
-function clouds(m, land) {
-  const r = m.rng;
-  for (let j = 0; j < 10; j++) {
-    const i = Math.round((j * SPOKES) / 10 + r.range(-6, 6) + SPOKES) % SPOKES,
+// Where the banks of cloud lie: [x, y, z, length, depth, yaw, puffs]. A broken ring
+// against the mountain's foot, and a wider one further out, with gaps between banks
+// where the sea below shows through.
+function cloudBanks(land) {
+  let s = 18077;
+  const rand = (a, b) => {
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+    return a + ((b - a) * s) / 4294967296;
+  };
+  const banks = [];
+  for (let j = 0; j < 11; j++) {
+    const i = Math.round((j * SPOKES) / 11 + rand(-5, 5) + SPOKES) % SPOKES,
       a = (i * circle) / SPOKES,
-      d = land.top[i] + r.range(2.8, 4.6);
-    cloudBank(m, Math.cos(a) * d, -6.85, Math.sin(a) * d, r.range(5, 8), r.range(1.3, 2.0), -a + Math.PI / 2, 5);
+      d = land.top[i] + rand(2.6, 4.4);
+    banks.push([Math.cos(a) * d, rand(-7.0, -6.6), Math.sin(a) * d, rand(4.5, 7), rand(1.2, 1.8), a + Math.PI / 2, 6]);
   }
-  for (let j = 0; j < 9; j++) {
-    const a = (j * circle) / 9 + r.range(-0.2, 0.2),
-      d = r.range(14, 22);
-    cloudBank(m, Math.cos(a) * d, -6.9, Math.sin(a) * d, r.range(8, 13), r.range(2, 3), -a + Math.PI / 2, 6);
+  for (let j = 0; j < 10; j++) {
+    const a = (j * circle) / 10 + rand(-0.2, 0.2),
+      d = rand(13, 20);
+    banks.push([Math.cos(a) * d, rand(-7.1, -6.6), Math.sin(a) * d, rand(8, 12), rand(1.9, 2.8), a + Math.PI / 2 + rand(-0.3, 0.3), 7]);
   }
+  return banks;
 }
 
 export {
@@ -658,5 +630,5 @@ export {
   cliffPine,
   mountainRoad,
   secretWay,
-  clouds
+  cloudBanks
 };

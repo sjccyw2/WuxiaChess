@@ -174,17 +174,33 @@ const buttresses = [
 ];
 const alcoveLamps = [-4, -2, 0, 2, 4].map((x) => [x, floorHeight(x, -5.86) + 0.2, -5.86]);
 const pillarLamps = pillars.map(([x, z]) => [x, 1.92, z + 0.47]);
-// Torches in iron brackets on the wall either side of each sea arch.
-const torches = openings
-  .filter((o) => o.name !== 'mouth')
-  .flatMap((o) =>
-    [-1, 1].map((s) => {
-      const a = o.a + (s * (o.half + 0.6)) / footRadius(o.a),
-        r = footRadius(a) - 0.68;
-      return { a, at: [Math.cos(a) * r, 2.02, ZC + Math.sin(a) * r] };
-    })
-  );
-const lamps = [...alcoveLamps, ...pillarLamps, ...buttresses.map((b) => b.niche), ...torches.map((t) => t.at)];
+// Torches in iron brackets on the wall: either side of each sea arch, further along the side
+// walls toward the back corners and the mouth, and on the mouth's two inner jambs.
+const torchAt = (a) => {
+  const r = footRadius(a) - 0.68;
+  return { a, at: [Math.cos(a) * r, 2.02, ZC + Math.sin(a) * r] };
+};
+const torches = [
+  ...openings
+    .filter((o) => o.name !== 'mouth')
+    .flatMap((o) => [-1, 1].flatMap((s) => [o.half + 0.6, o.half + 2.55].map((d) => torchAt(o.a + (s * d) / footRadius(o.a))))),
+  torchAt(Math.PI / 2 + 0.78),
+  torchAt(Math.PI / 2 - 0.78)
+];
+// Standing bronze lamps on the floor at the hall's corners, off the board.
+const lampStands = [
+  [-6.05, -5.0],
+  [6.05, -5.0],
+  [-6.15, 4.25],
+  [6.15, 4.25]
+].map(([x, z]) => [x, floorHeight(x, z) + 1.02, z]);
+const lamps = [
+  ...alcoveLamps,
+  ...pillarLamps,
+  ...buttresses.map((b) => b.niche),
+  ...torches.map((t) => t.at),
+  ...lampStands
+];
 function lightAt(x, y, z, base, gloom = 1) {
   const out = base.slice();
   // The gloom: deeper toward the back wall and up the walls, never on the board itself.
@@ -199,9 +215,10 @@ function lightAt(x, y, z, base, gloom = 1) {
     for (let i = 0; i < 3; i++) out[i] += COOL[i] * w * (0.22 + out[i]);
   }
   for (const [lx, ly, lz] of lamps) {
-    const d2 = ((x - lx) ** 2 + (y - ly) ** 2 * 0.7 + (z - lz) ** 2) / 1.7;
+    // A pool of light on the floor below each flame, and a glow round it.
+    const d2 = ((x - lx) ** 2 + (y - ly) ** 2 * 0.45 + (z - lz) ** 2) / 2.1;
     if (d2 > 6) continue;
-    const w = 0.45 * Math.exp(-d2);
+    const w = 0.5 * Math.exp(-d2);
     for (let i = 0; i < 3; i++) out[i] += WARM[i] * w * (0.3 + out[i]);
   }
   return out.map((v) => Math.min(1, v));
@@ -273,7 +290,9 @@ function foldAway(T, mesh, marks) {
   g.setAttribute('position', new T.Float32BufferAttribute(hidden, 3));
   g.boundingSphere = new T.Sphere(new T.Vector3(0, 3, 0), 30);
   const mat = mesh.material;
-  mat.side = T.FrontSide;
+  // Both sides: what faces away is already folded away above, and the tubes and cones hung on
+  // the wall are wound either way.
+  mat.side = T.DoubleSide;
   mat.fog = false;
   mat.onBeforeCompile = (shader) => {
     shader.vertexShader =
@@ -335,6 +354,7 @@ export {
   alcoveLamps,
   pillarLamps,
   torches,
+  lampStands,
   lamps,
   lightAt,
   toward,

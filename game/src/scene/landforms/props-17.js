@@ -5,6 +5,7 @@
 import { circle } from '../scenery-kit.js';
 import { clump } from './garden-13.js';
 import { onBoard, lit, put, cap, stone, stoneLight, stoneDark, ink, timber } from './kit-17.js';
+import { smoke as smokeRibbons } from './life-17.js';
 
 const ember = 0xd8642c;
 const smoke = 0x737c8c;
@@ -61,6 +62,7 @@ function greatCenser(m) {
   }
   m.glow(() => m.box(0, 0.652, 0, 0.4, 0.01, 0.3, ember));
   incense(m, 0.655, 7, 0.12);
+  smokeRibbons(m, 0, 0.9, 0, 1.5, 2);
   for (const sx of [-1, 1])
     for (const sz of [-1, 1]) m.box(sx * 0.27, 0.68, sz * 0.27, 0.04, 0.8, 0.04, stoneDark);
   cap(m, 1.1, 0.36, 0.2, stoneDark, stone);

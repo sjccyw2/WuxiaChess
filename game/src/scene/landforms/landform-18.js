@@ -8,7 +8,7 @@
 // tall is kept north and west.
 import { Model, circle } from '../scenery-kit.js';
 import { setting } from '../maze-atmosphere.js';
-import { kunlunRange } from './range-18.js';
+import { kunlunRange, cloudSea } from './range-18.js';
 import { oldPine } from './peaks-4.js';
 import { tiles18 } from './tiles-18.js';
 import { sacredHall, streamer, fireBasket } from './hall-18.js';
@@ -24,7 +24,7 @@ import {
   cliffPine,
   mountainRoad,
   secretWay,
-  clouds
+  cloudBanks
 } from './summit-18.js';
 
 const hallZ = -8.35;
@@ -80,7 +80,7 @@ function landform18(T, layout) {
       [r, y] = sections[i][k];
     cliffPine(pines, Math.cos(a) * r, y - 0.25, Math.sin(a) * r, -a + pines.rng.range(-0.3, 0.3), size);
   }
-  for (const [x, y, z] of crowns) oldPine(pines, x, y - 0.1, z, 0.55, pines.rng.range(0, circle), 0.5, 4);
+  for (const [x, y, z] of crowns) oldPine(pines, x, y - 0.1, z, 0.55, pines.rng.range(0, circle), 0.5, 3);
   // Pines on the summit ground round the hall and on the north-east knoll.
   for (const [x, z, s, yaw] of [
     [5.3, -6.9, 0.75, -0.6],
@@ -94,14 +94,14 @@ function landform18(T, layout) {
   const far = new Model(T, 180719);
   // The Kunlun range round about, its feet sunk in the cloud.
   kunlunRange(far, -7.3, setting(18).horizon);
-  clouds(far, land);
 
   group.add(
     rock.finish('峰頂山岩與絕壁'),
     hall.finish('聖火大殿', { occluder: true }),
     crags.finish('秘道山石與上山石道', { occluder: true }),
     pines.finish('崖上古松', { occluder: true }),
-    far.finish('崑崙雪峰與雲海', { distant: true, cast: false })
+    far.finish('崑崙雪峰', { distant: true, cast: false }),
+    cloudSea(T, cloudBanks(land), 1807)
   );
   return group;
 }

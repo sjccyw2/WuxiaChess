@@ -13,6 +13,8 @@ import { props17 } from './props-17.js';
 import { pagoda } from './pagoda-17.js';
 import { mainHall, tower, quarters, corridor, gate, STREET } from './temple-17.js';
 import { nearCity, farCity } from './city-17.js';
+import { ginkgo, fallenLeaves, puddle, moss, crack, pottedShrub, bonsai } from './flora-17.js';
+import { prayerFlags, lanternString, mast, candleRack, smoke } from './life-17.js';
 import {
   OUT,
   LAMPS,
@@ -122,6 +124,7 @@ function court(m, layout) {
   // Stone lanterns round the board.
   for (const [x, z] of courtLanterns) stoneLantern(m, x, OUT, z, 1.0);
   furnishings(m);
+  courtLife(m, layout);
 }
 
 // What stands in the court south of the board, between it and the 山門: a great bronze censer
@@ -298,30 +301,125 @@ function furnishings(m) {
 function courtTrees(m, side) {
   const sets = {
     north: [
-      [-6.4, -8.9, 1.1, 'c'],
-      [6.4, -8.9, 1.05, 'c'],
       [-11.4, -15.6, 1.4, 'c'],
       [11.2, -16.0, 1.3, 'c'],
-      [-9.6, -16.6, 1.2, 'c']
+      [-9.6, -16.6, 1.2, 'c'],
+      [-7.6, -16.9, 1.15, 'p'],
+      [8.0, -17.0, 1.1, 'p'],
+      [9.6, -15.4, 1.0, 'c']
     ],
     west: [
-      [-7.8, -7.8, 1.3, 'p'],
+      [-8.8, -8.4, 1.1, 'g'],
       [-8.2, 7.6, 1.2, 'c'],
-      [-11.2, 8.4, 1.1, 'c']
+      [-11.2, 8.4, 1.1, 'c'],
+      [-12.0, -8.0, 1.0, 'p'],
+      [-14.3, -2.0, 1.4, 'c'],
+      [-14.3, 4.6, 1.3, 'c'],
+      [-14.4, -11.5, 1.2, 'p']
     ],
     east: [
-      [8.4, -8.0, 1.1, 'c'],
+      [8.8, -7.7, 1.0, 'g'],
       [11.6, 9.6, 1.0, 'c']
     ],
     south: [
-      [-6.8, 9.9, 1.05, 'c'],
-      [6.8, 9.9, 0.95, 'c']
+      [-8.6, 9.4, 0.95, 'g'],
+      [6.8, 9.9, 0.95, 'c'],
+      [-6.6, 14.1, 1.0, 'p'],
+      [6.6, 14.1, 0.95, 'p']
     ]
   };
   for (const [x, z, s, kind] of sets[side]) {
-    if (kind === 'p') oldPine(m, x, z, s, OUT);
-    else cypress(m, x, z, s, OUT);
+    const y = z > 13 || x < -13 ? STREET : OUT;
+    if (kind === 'p') oldPine(m, x, z, s, y);
+    else if (kind === 'g') ginkgo(m, x, z, s, y);
+    else cypress(m, x, z, s, y);
   }
+}
+
+// The masts before the great hall and the strings of five-coloured prayer flags that run from
+// them, and from the pagoda's galleries, out over the north court.
+function prayerMasts(m) {
+  const tops = [-1, 1].map((s) => mast(m, s * 5.6, -9.0, 4.7, OUT));
+  for (const s of [-1, 1]) {
+    const top = tops[(s + 1) / 2];
+    prayerFlags(m, [s * 1.33, 5.0, -6.55], top, 0.45, 16);
+    prayerFlags(m, [s * 1.2, 7.75, -6.5], [s * 8.7, 3.6, -12.4], 0.9, 26);
+    prayerFlags(m, top, [s * (s < 0 ? 9.4 : 9.2), s < 0 ? 2.6 : 1.9, -6.9], 0.35, 12);
+  }
+}
+
+// The life of the court: ginkgo leaves blown over the paving, puddles holding the lamplight,
+// moss and cracks, plants in pots, racks of votive candles before the censer, a string of
+// lanterns across the way, and smoke from the great burners.
+function courtLife(m, layout) {
+  const { width, height } = layout,
+    cx = (width - 1) / 2,
+    cz = (height - 1) / 2,
+    r = m.rng,
+    free = (x, z) =>
+      !onBoard(Math.round(x + cx), Math.round(z + cz)) &&
+      !isBuilt(x, z) &&
+      Math.abs(x) < 12.3 &&
+      z > -17.9 &&
+      z < 11.8;
+  fallenLeaves(m, -8.8, -8.4, 2.6, 70);
+  fallenLeaves(m, 8.8, -7.7, 2.4, 60);
+  fallenLeaves(m, -8.6, 9.4, 2.4, 60);
+  for (let i = 0; i < 140; i++) {
+    const x = r.range(-12, 12),
+      z = r.range(-17.5, 11.5);
+    if (free(x, z)) fallenLeaves(m, x, z, 0.3, 2);
+  }
+  for (const [x, z, rx, rz] of [
+    [-7.2, 5.2, 0.5, 0.3],
+    [7.3, 1.3, 0.45, 0.3],
+    [-2.3, 7.8, 0.55, 0.32],
+    [4.4, 7.5, 0.4, 0.28],
+    [-3.6, -7.9, 0.5, 0.3],
+    [3.4, -8.3, 0.35, 0.25],
+    [9.6, 8.6, 0.5, 0.3],
+    [-10.6, -12.6, 0.6, 0.35]
+  ])
+    puddle(m, x, z, rx, rz);
+  for (const [x, z] of [
+    [-12.0, -6.0],
+    [-12.0, 6.5],
+    [11.9, 8.5],
+    [-11.8, 11.4],
+    [11.8, 11.4],
+    [-8.8, -8.4],
+    [8.8, -7.7],
+    [-8.6, 9.4],
+    [-4.8, -9.6],
+    [4.8, -9.8]
+  ])
+    moss(m, x, z, 0.7, 9);
+  for (let i = 0; i < 40; i++) {
+    const x = r.range(-12, 12),
+      z = r.range(-17.5, 11.5);
+    if (free(x, z)) crack(m, x, z, r.range(0.4, 0.9));
+  }
+  // Plants in pots by the steps, the porches and the gate.
+  for (const s of [-1, 1]) {
+    bonsai(m, s * 2.4, -9.1, 1.2, s * 0.4);
+    pottedShrub(m, s * 2.6, 10.1, 1.1, OUT, 5);
+    for (const z of [-6.6, -1.6, 1.6, 6.6]) pottedShrub(m, 8.4, z * s, 0.9, OUT, z === 1.6 ? 4 : 0);
+  }
+  pottedShrub(m, -7.9, -1.9, 1.0, OUT, 3);
+  pottedShrub(m, -7.9, 1.1, 1.0, OUT, 0);
+  bonsai(m, -7.6, -5.4, 1.0, 0.3);
+  bonsai(m, -7.6, 4.8, 1.0, -0.4);
+  // Votive candles either side of the censer, and a string of lanterns across the way.
+  for (const s of [-1, 1]) candleRack(m, s * 1.55, 8.75, OUT, 0);
+  for (const s of [-1, 1]) {
+    m.box(s * 4.4, OUT + 0.08, 9.5, 0.3, 0.16, 0.3, stoneDark);
+    m.tube([s * 4.4, OUT, 9.5], [s * 4.4, OUT + 2.15, 9.5], 0.045, 0.035, 0x4a2a22, 5);
+    m.lathe(s * 4.4, OUT + 2.15, 9.5, [[0, 0.05], [0.08, 0.06], [0.14, 0]], 0xc9a45c, 5);
+  }
+  lanternString(m, [-4.4, OUT + 2.08, 9.5], [4.4, OUT + 2.08, 9.5], 0.32, 8);
+  // Smoke from the censer on the way and from the cauldron before the hall.
+  smoke(m, 0, OUT + 1.45, 8.7, 1.9, 3);
+  smoke(m, 0, OUT + 1.55, -8.6, 1.7, 2);
 }
 
 const tiles17 = {
@@ -351,6 +449,7 @@ function landform17(T, layout) {
       tower(m, 10.0, -11.0, 0, false);
       redWall(m, -12.6, -18.2, 12.6, -18.2, STREET, 2.95);
       courtTrees(m, 'north');
+      prayerMasts(m);
     },
     '大雄寶殿與鐘鼓樓',
     { occluder: true }
@@ -369,7 +468,6 @@ function landform17(T, layout) {
     172049,
     (m) => {
       corridor(m);
-      redWall(m, 11.45, -6.9, 11.45, 6.9, OUT, 2.0, 0.26);
       redWall(m, 12.6, -18.2, 12.6, 12.1, STREET, 2.95);
       courtTrees(m, 'east');
     },

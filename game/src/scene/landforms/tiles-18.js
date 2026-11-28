@@ -101,13 +101,19 @@ function stoneTone(m, kind, x, z, salt) {
   }
   // Wild granite: grey and buff plates side by side, a few stained rusty or dark, and
   // the rock greyer and more weathered in broad patches.
-  const tones = [0x85837d, 0x928e86, 0x9b958a, 0x7a7974, 0xa39f95, 0x8e877b];
+  const tones = [0x84837f, 0x908e89, 0x9a968e, 0x77787a, 0xa5a29b, 0x8c857a, 0x6f7071, 0x989a9a];
   let c = m.rgb(tones[Math.floor(hash2(salt, 9, 4) * tones.length)]);
   c = m.mix(c, 0x6f6e6a, 0.35 * smooth(0.55, 0.85, wave(x * 0.45 + 2, z * 0.5 - 1)));
   c = m.mix(c, 0xb0aa9d, 0.25 * h);
   const k = hash2(salt, 9, 7);
   if (k > 0.9) c = m.mix(c, 0x8a6e55, 0.4);
   else if (k < 0.08) c = m.mix(c, 0x5f5e5a, 0.45);
+  // Dark wet stone where melt water lies, in broad patches.
+  const wet = smooth(0.66, 0.86, wave(x * 0.55 - 1.3, z * 0.6 + 2.1));
+  if (wet > 0) c = m.mix(c, m.mix(0x55524e, 0x66625c, h), 0.55 * wet);
+  // Hoar frost on the slabs, thickest toward the north edge, where the sun comes late.
+  const north = smooth(-0.5, -6, z);
+  if (hash2(salt, 15, 2) < 0.18 + 0.55 * north) c = m.mix(c, 0xdce3e8, 0.22 + 0.38 * north);
   return c;
 }
 
@@ -203,6 +209,77 @@ function dais(m) {
   ring(0.4, y + 0.0006, 0x8f4a3a);
   ring(0.37, y + 0.0012, 0xb3ab9a);
   ring(0.2, y + 0.0018, 0x9a9283);
+}
+
+// A drift of snow: a low white mound with a blue-grey shadow at its foot.
+function drift(m, x, z, w, h, r, turn = 0) {
+  m.frame(x, 0, z, turn, 1, () => {
+    m.rock(0, bed - 0.02, 0, w, h, w * 0.32, 0xc9d3dc, 0xf3f6f8, 9, r.range(0, 0.4));
+    m.rock(w * 0.4, bed - 0.02, 0.03, w * 0.45, h * 0.7, w * 0.2, 0xc9d3dc, 0xeef2f5, 7, r.range(0, 3));
+  });
+}
+
+// A broken piece of a stele lying flat in a corner of the tile, characters up.
+function steleFragment(m, cell, r) {
+  const sx = hash2(cell.x, cell.y, 18) < 0.5 ? -1 : 1,
+    sz = hash2(cell.x, cell.y, 19) < 0.5 ? -1 : 1;
+  m.frame(sx * 0.31, bed + 0.018, sz * 0.32, r.range(0, circle), 1, () => {
+    m.box(0, 0.012, 0, 0.34, 0.05, 0.19, m.mix(0x8f897e, 0x9d968a, r.next()));
+    m.box(0.13, 0.012, 0.0, 0.09, 0.05, 0.15, 0x837d72);
+    inscription(m, -0.15, 0.1, -0.08, 0.08, 0.038, 4, 3, cell.x * 3 + cell.y, true);
+  });
+}
+
+// Flame lamps of stone at the corners of the tiles along the sacred way, and iron
+// braziers at the two front corners of the altar court. Each stands where four tiles
+// meet, clear of the middle of any of them.
+const lamps = [
+  [-0.5, -1.5],
+  [0.5, -1.5],
+  [-0.5, 0.5],
+  [0.5, 0.5],
+  [-0.5, 2.5],
+  [0.5, 2.5],
+  [-1.5, 4.5],
+  [1.5, 4.5]
+];
+const braziers = [
+  [-2.5, -2.5],
+  [2.5, -2.5]
+];
+const mine = (wx, wz, [x, z]) => x >= wx - 0.5 && x < wx + 0.5 && z >= wz - 0.5 && z < wz + 0.5;
+function sacredWayLamps(m, wx, wz) {
+  for (const at of lamps) {
+    if (!mine(wx, wz, at)) continue;
+    const x = at[0] - wx,
+      z = at[1] - wz;
+    m.box(x, bed + 0.03, z, 0.16, 0.06, 0.16, 0x77726a);
+    m.tube([x, bed + 0.05, z], [x, bed + 0.24, z], 0.035, 0.03, 0x8f897e, 6);
+    m.box(x, bed + 0.255, z, 0.13, 0.025, 0.13, 0x9d968a);
+    for (const [dx, dz] of [
+      [-1, -1],
+      [1, -1],
+      [1, 1],
+      [-1, 1]
+    ])
+      m.box(x + dx * 0.05, bed + 0.31, z + dz * 0.05, 0.022, 0.09, 0.022, 0x8a8479);
+    m.glow(() => m.crystal(x, bed + 0.27, z, 0.035, 0.09, 0xd8642e, 0xffc067, 5));
+    m.lathe(x, bed + 0.355, z, [[0, 0.1], [0.03, 0.085], [0.09, 0.02], [0.12, 0]], 0x6f6c66, 4);
+  }
+  for (const at of braziers) {
+    if (!mine(wx, wz, at)) continue;
+    const x = at[0] - wx,
+      z = at[1] - wz;
+    for (let k = 0; k < 3; k++) {
+      const a = (k * circle) / 3 + 0.5;
+      m.tube([x + Math.cos(a) * 0.11, bed, z + Math.sin(a) * 0.11], [x + Math.cos(a) * 0.05, bed + 0.24, z + Math.sin(a) * 0.05], 0.012, 0.01, 0x2b2b2d, 4);
+    }
+    m.lathe(x, bed + 0.22, z, [[0, 0.04], [0.05, 0.12], [0.09, 0.14], [0.1, 0.13]], 0x5a4a38, 9);
+    m.glow(() => {
+      m.crystal(x, bed + 0.3, z, 0.08, 0.2, 0xd8642e, 0xffc067, 6);
+      m.crystal(x + 0.04, bed + 0.3, z - 0.02, 0.05, 0.14, 0xd8642e, 0xffc067, 5);
+    });
+  }
 }
 
 function ground(m, p, cell) {
@@ -327,18 +404,49 @@ function ground(m, p, cell) {
       );
     }
   }
-  // Grit and chips in the joints of the wild rock, and a blade of grass or two.
-  const wild = smooth(0.1, 0.6, offDressed(wx, wz));
+  // Grit and chips in the joints of the wild rock, grass and alpine flowers in them.
+  const wild = smooth(0.1, 0.6, offDressed(wx, wz)),
+    open = cell.kind === 'plain';
   if (wild > 0.5) {
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < 2; k++) {
       const x = r.range(-0.45, 0.45),
         z = r.range(-0.45, 0.45),
-        s = r.range(0.012, 0.03);
+        s = r.range(0.015, 0.03);
       m.rock(x, bed - 0.004, z, s, s * 0.8, s * 0.8, 0x5e5a53, m.mix(p[0], p[1], 0.4), 5, r.range(0, 3));
     }
-    if (hash2(cell.x, cell.y, 14) < 0.55)
-      tuft(m, r.range(-0.4, 0.4), bed, r.range(-0.4, 0.4), 0.09);
+    // Along the tile's own joints, so the middle stays clear for the pieces.
+    const edge = () => {
+      const t = r.range(-0.44, 0.44),
+        side = r.next() < 0.5 ? -0.46 : 0.46;
+      return r.next() < 0.5 ? [t, side] : [side, t];
+    };
+    if (hash2(cell.x, cell.y, 14) < 0.7) {
+      const [x, z] = edge();
+      tuft(m, x, bed, z, r.range(0.08, 0.12));
+    }
+    const blooms = Math.floor(hash2(cell.x, cell.y, 16) * 3);
+    for (let k = 0; k < blooms; k++) {
+      const [x, z] = edge(),
+        col = r.pick([0xe9e4d6, 0x6f83cf, 0xd99ab8, 0xe8c454]);
+      for (let q = 0; q < 3; q++)
+        m.crystal(x + r.range(-0.03, 0.03), bed, z + r.range(-0.03, 0.03), 0.014, 0.035, 0x5a7a44, col, 4);
+    }
+    // A fragment of an old stele lying in a corner, its characters to the sky.
+    if (open && hash2(cell.x, cell.y, 17) < 0.2) steleFragment(m, cell, r);
   }
+  // A cushion of alpine turf grown over a corner, with a flower or two in it.
+  if (wild > 0.5 && hash2(cell.x, cell.y, 20) < 0.32) {
+    const cx = hash2(cell.x, cell.y, 21) < 0.5 ? -0.36 : 0.36,
+      cz = hash2(cell.x, cell.y, 22) < 0.5 ? -0.36 : 0.36;
+    m.rock(cx, bed, cz, 0.16, 0.035, 0.13, 0x4e5a3a, m.mix(0x6f7a48, 0x8a8a52, r.next()), 8, r.range(0, 3));
+    m.rock(cx + r.range(-0.08, 0.08), bed, cz + r.range(-0.08, 0.08), 0.09, 0.04, 0.08, 0x56623e, 0x7d8a4e, 6, r.range(0, 3));
+    tuft(m, cx, bed + 0.02, cz, 0.1);
+    m.crystal(cx + 0.05, bed + 0.03, cz - 0.03, 0.016, 0.04, 0x5a7a44, r.pick([0xe9e4d6, 0x8c6fcf, 0xe8c454]), 4);
+  }
+  // Snow drifted against the north side of the tiles along the north edge.
+  if (open && !onBoard(cell.x, cell.y - 1)) drift(m, r.range(-0.15, 0.15), -0.43, 0.36, 0.06, r);
+  if (open && !onBoard(cell.x - 1, cell.y) && cell.y < 6) drift(m, -0.43, r.range(-0.2, 0.2), 0.3, 0.05, r, Math.PI / 2);
+  sacredWayLamps(m, wx, wz);
   if (cell.x === altar[0] + midX && cell.y === altar[1] + midZ) dais(m);
   if (inCourt(wx, wz) || Math.hypot(wx - altar[0], wz - altar[1]) < 2) altarRing(m, wx, wz);
   return true;
@@ -384,14 +492,15 @@ function flameMark(m, x, y, z, s) {
 }
 
 // Columns of carved characters, worn shallow: dark dots on the stone's face.
-function inscription(m, x0, x1, y0, y1, z, cols, rows, salt) {
+function inscription(m, x0, x1, y0, y1, z, cols, rows, salt, flat = false) {
   for (let c = 0; c < cols; c++)
     for (let k = 0; k < rows; k++) {
       if (hash2(salt, c * 13 + k, 31) < 0.18) continue;
       const x = x0 + ((c + 0.5) * (x1 - x0)) / cols,
         y = y1 - ((k + 0.5) * (y1 - y0)) / rows,
         s = Math.min((x1 - x0) / cols, (y1 - y0) / rows) * 0.62;
-      m.box(x, y, z, s, s, 0.006, carved);
+      if (flat) m.box(x, z, y, s, 0.006, s, carved);
+      else m.box(x, y, z, s, s, 0.006, carved);
     }
 }
 
@@ -600,6 +709,7 @@ function ruinedWall(m, cell) {
 
 function ruins(m, p, cell) {
   const { x, y } = cell;
+  if (y < 9) drift(m, 0.34, -0.42, 0.2, 0.05, m.rng, 0.3);
   if ((x === 4 || x === 8) && y === 0) return ruinedWall(m, cell);
   if ((x === 0 || x === 12) && y === 7) return ruinedWall(m, cell);
   if ((x === 5 || x === 7) && (y === 5 || y === 10)) return tortoiseStele(m, cell);
@@ -686,6 +796,9 @@ function crags(m, p, cell) {
   }
   tuft(m, r.range(-0.35, 0.35), bed, 0.38, 0.13);
   tuft(m, -0.38, bed, r.range(-0.3, 0.3), 0.11);
+  // A stunted pine has rooted in the clefts of the outer crags.
+  if (x <= 2 || x >= 10) oldPine(m, x < midX ? 0.26 : -0.26, 0.2, 0.22, 0.34, x < midX ? 0.4 : 2.8, 0.7, 5);
+  drift(m, 0.3, -0.36, 0.22, 0.06, r, 0.6);
 }
 
 // 崖上古松: an old pine gripping a knob of rock at the back of the tile, leaning out
@@ -701,7 +814,12 @@ function clingingPine(m, p, cell) {
     bz = -0.18;
   m.rock(bx, bed - 0.03, bz, 0.3, 0.2, 0.25, granite[3], m.mix(graniteLit, 0x8a9070, 0.3), 8, r.range(0, 3));
   m.rock(bx + 0.18, bed - 0.02, bz + 0.16, 0.13, 0.1, 0.11, granite[1], graniteLit, 7, r.range(0, 3));
-  oldPine(m, bx, 0.16, bz, 0.56 + 0.06 * hash2(cell.x, cell.y, 40), -a, 0.65, 5);
+  oldPine(m, bx, 0.16, bz, 0.6 + 0.06 * hash2(cell.x, cell.y, 40), -a, 0.65, 6);
+  // A younger pine on the far side of the knob, and snow in the lee of the rock.
+  const side = Math.sin(a) > 0 ? -1 : 1;
+  m.rock(bx - 0.28, bed - 0.02, bz - 0.12 * side, 0.12, 0.09, 0.1, granite[0], graniteLit, 7, r.range(0, 3));
+  oldPine(m, bx - 0.28, 0.06, bz - 0.12 * side, 0.32, -a + 2.2, 0.4, 3);
+  drift(m, bx + 0.22, bz - 0.2, 0.2, 0.05, r, 0.4);
   // Needles and cones fallen round it.
   for (let k = 0; k < 10; k++) {
     const x = r.range(-0.45, 0.45),

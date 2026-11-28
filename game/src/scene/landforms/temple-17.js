@@ -4,6 +4,8 @@
 // its three arches, and the red precinct wall that closes it all.
 import { circle } from '../scenery-kit.js';
 import { tiledRoof, bracketRow } from './roof-13.js';
+import { monksThings } from './life-17.js';
+import { bambooAt } from './flora-17.js';
 import {
   OUT,
   put,
@@ -40,6 +42,37 @@ function architrave(m, len, y, z, bays) {
   }
 }
 
+// Ridge ornaments for a roof whose main ridge runs along x at height `top`, `half` long each
+// side: a pearl in flames on a lotus at the middle, and on a gable roof (which tiledRoof leaves
+// plain) a fish-tailed 鴟吻 rearing at either end.
+function ridgeDeco(m, half, top, gable) {
+  const ridge = 0x1b1f27;
+  m.lathe(0, top + 0.14, 0, [[0, 0.1], [0.06, 0.14], [0.12, 0.08], [0.16, 0.1], [0.3, 0.06], [0.36, 0]], ridge, 6);
+  m.lathe(0, top + 0.44, 0, [[0, 0.05], [0.06, 0.07], [0.13, 0]], gilt, 6);
+  for (const s of [-1, 1])
+    m.tube([s * 0.09, top + 0.2, 0], [s * 0.2, top + 0.38, 0], 0.035, 0.008, gilt, 4);
+  if (!gable) return;
+  for (const e of [-1, 1]) {
+    const x = e * (half + 0.02);
+    m.box(x - e * 0.06, top + 0.26, 0, 0.2, 0.32, 0.12, ridge);
+    m.line(
+      [
+        [x, top + 0.1, 0],
+        [x + e * 0.06, top + 0.38, 0],
+        [x - e * 0.04, top + 0.62, 0],
+        [x - e * 0.2, top + 0.6, 0],
+        [x - e * 0.24, top + 0.46, 0]
+      ],
+      0.06,
+      ridge,
+      5
+    );
+    m.tube([x, top + 0.55, 0], [x + e * 0.12, top + 0.7, 0], 0.03, 0.006, gilt, 4);
+    m.box(x - e * 0.12, top + 0.38, 0.065, 0.05, 0.05, 0.01, gilt);
+    m.box(x - e * 0.12, top + 0.38, -0.065, 0.05, 0.05, 0.01, gilt);
+  }
+}
+
 // A hall in its own frame, front to +z, standing at y = 0: a stone plinth with steps, red walls
 // round the back and sides, columns along an open porch, a row of lattice doors and windows
 // (some lit), a painted architrave, and a tiled roof with lanterns hung from its front eave.
@@ -58,7 +91,10 @@ function hall(m, o) {
     lamps = true,
     brackets = false,
     steps = true,
-    back = true
+    back = true,
+    ends = true,
+    ornaments = false,
+    lampTone = 0xe0663c
   } = o;
   m.box(0, base / 2, 0, w + 0.9, base, d + 0.9, stoneDark);
   m.box(0, base - 0.03, 0, w + 0.96, 0.06, d + 0.96, stone);
@@ -73,7 +109,7 @@ function hall(m, o) {
     front = d / 2 - porch,
     y = base;
   if (back) m.box(0, y + h / 2, -d / 2 + 0.1, w, h, 0.2, wallRed);
-  for (const s of [-1, 1]) {
+  for (const s of ends ? [-1, 1] : []) {
     m.box(s * (w / 2 - 0.1), y + h / 2, (front - d / 2) / 2, 0.2, h, front + d / 2, wallRed);
     m.box(
       s * (w / 2 - 0.1),
@@ -125,7 +161,12 @@ function hall(m, o) {
   architrave(m, w + 0.2, y + h - 0.1, d / 2, bays);
   const eave = y + h + (brackets ? 0.55 : 0.12);
   if (brackets) bracketRow(m, posts, y + h + 0.06, d / 2, 0, 0.85);
-  tiledRoof(m, w + over * 2, d + over * 2, eave, roof.rise ?? h * 0.62, { lift: 0.3, ...roof });
+  const rise = roof.rise ?? h * 0.62;
+  tiledRoof(m, w + over * 2, d + over * 2, eave, rise, { lift: 0.3, ...roof });
+  if (ornaments) {
+    const hip = roof.hip ?? (d + over * 2) / (w + over * 2);
+    ridgeDeco(m, ((w + over * 2) / 2) * (1 - hip), eave + rise, !!roof.gable);
+  }
   if (lamps)
     for (let i = 0; i < bays; i++)
       if (i % 2 === 0 || bays < 4)
@@ -135,7 +176,7 @@ function hall(m, o) {
           eave - 0.62,
           d / 2 + over * 0.55,
           0.8,
-          0xe0663c,
+          lampTone,
           0.25
         );
 }
@@ -333,6 +374,7 @@ function quarters(m) {
       door: 4,
       lit: (i) => [1, 2, 4, 6, 7].includes(i),
       over: 0.6,
+      ornaments: true,
       roof: {
         rise: 1.05,
         gable: true,
@@ -345,6 +387,33 @@ function quarters(m) {
       }
     })
   );
+  // A porch (抱廈) projecting over the door, its own hipped roof a step higher than the
+  // eaves, a name board under it and lanterns at its corners.
+  m.frame(-10.35, OUT, -0.4, Math.PI / 2, 1, () => {
+    const z0 = 1.5,
+      zf = 2.55,
+      y = 0.3;
+    for (const s of [-1, 1]) column(m, s * 0.8, zf, y, 1.95, 0.08);
+    m.box(0, y + 1.88, zf, 1.75, 0.16, 0.14, lacquerDark);
+    architrave(m, 1.7, y + 1.78, zf, 1);
+    m.box(0, y + 2.08, zf + 0.09, 0.8, 0.26, 0.04, 0x1f3354);
+    m.box(0, y + 2.08, zf + 0.115, 0.6, 0.14, 0.01, gilt);
+    m.box(0, 0.15, (z0 + zf) / 2 + 0.1, 2.0, 0.3, zf - z0 + 0.6, stoneDark);
+    m.frame(0, 0, (z0 + zf) / 2 + 0.1, 0, 1, () =>
+      tiledRoof(m, 2.4, zf - z0 + 1.5, y + 2.12, 0.75, {
+        hip: 0.5,
+        lift: 0.32,
+        rows: 3,
+        beasts: 2,
+        rafters: false,
+        tones: greyTile,
+        tile: 0.36
+      })
+    );
+    for (const s of [-1, 1]) hangLamp(m, s * 1.05, y + 1.55, zf + 0.5, 0.8, 0xe8a050, 0.2);
+    // The monks' things on the porch.
+    m.frame(0, y, 0.45, 0, 1, () => monksThings(m));
+  });
   // A water vat and a stack of firewood at the north end of the porch, and a bench.
   m.frame(-8.75, OUT + 0.3, -6.0, 0, 1, () => {
     m.lathe(
@@ -386,44 +455,70 @@ function quarters(m) {
   for (const z of [1.4, 2.6]) m.box(-8.75, OUT + 0.4, z, 0.24, 0.22, 0.06, 0x3a2e26);
 }
 
-// 東廊: an open corridor down the east side, kept low, a red wall at its back with small
-// lit windows, its roof hung with lanterns.
+// 東廊: an open corridor down the east side, kept low, in two runs either side of a taller
+// gate pavilion, red walls at their backs with small lit windows, lanterns along the eaves,
+// and bamboo behind them showing over the roofs.
 function corridor(m) {
+  const run = {
+    d: 1.9,
+    h: 1.4,
+    base: 0.18,
+    porch: 0,
+    over: 0.42,
+    steps: false,
+    ends: false,
+    ornaments: true,
+    roof: { rise: 0.62, hip: 0.1, lift: 0.22, rows: 3, rafters: false, tones: greyTile, tile: 0.48, beasts: 2 }
+  };
   m.frame(10.45, OUT, 0, -Math.PI / 2, 1, () => {
+    for (const s of [-1, 1])
+      m.frame(s * 4.15, 0, 0, 0, 1, () => {
+        hall(m, { ...run, w: 4.7, bays: 3 });
+        // Little lit windows in the back wall, and a bench.
+        for (let i = 0; i < 3; i++) {
+          const x = -4.7 / 2 + (i + 0.5) * (4.7 / 3);
+          if (i !== 1)
+            m.frame(x, 0.18 + 0.95, -0.83, 0, 1, () => lattice(m, 0.42, 0.42, 3, 3, (i + s) % 4 === 0));
+          else {
+            m.box(x, 0.18 + 0.32, -0.55, 0.9, 0.05, 0.28, 0x4a3a2c);
+            for (const e of [-1, 1]) m.box(x + e * 0.36, 0.18 + 0.16, -0.55, 0.06, 0.3, 0.22, 0x3a2e26);
+          }
+        }
+      });
+    // The gate pavilion: taller, hipped, its back door lamplit, lanterns front and back.
     hall(m, {
-      w: 13.0,
-      d: 1.9,
-      h: 1.4,
-      base: 0.18,
+      w: 3.0,
+      d: 2.5,
+      h: 1.95,
+      base: 0.26,
       porch: 0,
-      bays: 9,
-      over: 0.42,
-      lamps: false,
-      steps: false,
-      roof: {
-        rise: 0.62,
-        hip: 0.08,
-        lift: 0.18,
-        rows: 3,
-        rafters: false,
-        tones: greyTile,
-        tile: 0.48,
-        beasts: 0
-      }
+      bays: 2,
+      over: 0.6,
+      steps: true,
+      ends: false,
+      ornaments: true,
+      lampTone: 0xe8a050,
+      roof: { rise: 1.15, hip: 0.45, lift: 0.42, rows: 4, rafters: true, tones: greyTile, tile: 0.4, beasts: 3 }
     });
-    // Little lit windows in the back wall, and benches between the columns.
-    for (let i = 0; i < 9; i++) {
-      const x = -6.5 + (i + 0.5) * (13 / 9);
-      if (i % 2 === 0)
-        m.frame(x, 0.18 + 0.95, -0.83, 0, 1, () => lattice(m, 0.42, 0.42, 3, 3, i % 4 === 0));
-      if (i % 2) {
-        m.box(x, 0.18 + 0.32, -0.55, 0.9, 0.05, 0.28, 0x4a3a2c);
-        for (const s of [-1, 1]) m.box(x + s * 0.36, 0.18 + 0.16, -0.55, 0.06, 0.3, 0.22, 0x3a2e26);
-      }
-    }
-    for (let i = 0; i < 9; i += 2)
-      hangLamp(m, -6.5 + (i + 0.5) * (13 / 9), 1.08, 0.75, 0.62, 0xe0663c, 0.12);
+    m.glow(() =>
+      put(
+        m,
+        [
+          [-0.45, 0.28, -1.26],
+          [0.45, 0.28, -1.26],
+          [0.45, 1.75, -1.26],
+          [-0.45, 1.75, -1.26]
+        ],
+        0xd8964c,
+        [0, 0, 1]
+      )
+    );
+    for (const s of [-1, 1]) hangLamp(m, s * 0.95, 1.65, -1.72, 0.85, 0xe0583a, 0.2);
+    m.box(0, 2.0, 1.33, 0.9, 0.28, 0.04, 0x1f3354);
+    m.box(0, 2.0, 1.36, 0.66, 0.14, 0.01, gilt);
   });
+  // Bamboo behind the corridor, its tops showing over the roof.
+  for (const z of [-5.6, -3.4, 2.6, 4.4, 6.2]) bambooAt(m, 12.05, z, 1.25, 8);
 }
 
 // 山門: the gate hall at the south, a red masonry body pierced by three arches, under a hipped
@@ -534,17 +629,41 @@ function gate(m) {
     m.box(0, y + 2.08, d / 2 + 0.09, 1.1, 0.26, 0.02, 0x2b4670);
     for (let k = 0; k < 3; k++)
       m.box(-0.32 + k * 0.32, y + 2.08, d / 2 + 0.105, 0.18, 0.18, 0.01, gilt);
-    tiledRoof(m, w + 1.5, d + 1.4, y + h + 0.22, 1.5, {
-      hip: 0.42,
-      lift: 0.4,
+    // The middle bay rises a storey's worth over the side bays: a red clerestory under its own
+    // roof, the side roofs tucked in beneath its eaves.
+    const lift = 0.85;
+    m.box(0, y + h + lift / 2, 0, 3.2, lift, d - 0.3, wallRed);
+    for (const s of [-1, 1]) {
+      m.frame(0, 0, (s * (d - 0.3)) / 2, 0, 1, () => architrave(m, 3.3, y + h + lift - 0.05, 0.02 * s, 2));
+      m.frame(0, y + h + lift * 0.45, (s * (d - 0.3)) / 2 + s * 0.02, s < 0 ? Math.PI : 0, 1, () =>
+        lattice(m, 1.6, 0.36, 6, 2, s < 0)
+      );
+    }
+    tiledRoof(m, 4.6, d + 1.5, y + h + lift + 0.2, 1.45, {
+      hip: 0.36,
+      lift: 0.45,
       rows: 4,
       beasts: 4,
       tones: greyTile,
-      tile: 0.44
+      tile: 0.4
     });
+    for (const e of [-1, 1])
+      m.frame(e * 2.75, 0, 0, 0, 1, () =>
+        tiledRoof(m, 3.4, d + 1.2, y + h + 0.18, 0.95, {
+          hip: 0.55,
+          lift: 0.38,
+          rows: 3,
+          beasts: 2,
+          rafters: false,
+          tones: greyTile,
+          tile: 0.42
+        })
+      );
     for (const s of [-1, 1])
-      for (const e of [-1, 1])
-        hangLamp(m, e * 1.35, y + h - 0.35, s * (d / 2 + 0.45), 1.05, 0xe0583a, 0.2);
+      for (const e of [-1, 1]) {
+        hangLamp(m, e * 1.35, y + h + 0.35, s * (d / 2 + 0.6), 1.05, 0xe0583a, 0.2);
+        hangLamp(m, e * 3.9, y + h - 0.45, s * (d / 2 + 0.45), 0.75, 0xe8a050, 0.15);
+      }
     // Stone lions on drums either side of the street steps.
     for (const e of [-1, 1])
       m.frame(e * 2.2, 0, d / 2 + 1.2, e * -0.25, 1, () => {
