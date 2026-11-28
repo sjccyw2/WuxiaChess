@@ -5352,6 +5352,42 @@ section('boards built round one villain');
     check(name + ': the scene before it has the master’s lines and no line without a speaker', lines.length >= 3 && lines.every((l) => l.speaker && l.text) && lines.some((l) => l.speaker === ENCOUNTERS[map][0].name));
     check(name + ': a save made on it restores', !!R.restoreRun(copy(s)));
   }
+  // 五行陣 (石樑溫家, 2026-11-28): while all five brothers stand each takes 30% less; the first to
+  // fall breaks it for good, and a guest on the last board stands in no formation.
+  {
+    const s = realBoard(16, R.mapStages(16)[0]);
+    const yi = unit(s, 'wenYi'),
+      wu = unit(s, 'wenWu'),
+      hero = G.party(s)[0];
+    check('五行陣: with all five standing, each takes 30% less', ['wenDa', 'wenYi', 'wenShan', 'wenShi', 'wenWu'].every((id) => G.arrayHolds(s, unit(s, id)) && G.stanceCut(s, unit(s, id)) === 30));
+    hero.activeArt = null;
+    Object.assign(hero, { x: yi.x - 1, y: yi.y });
+    const cut = G.forecast(hero, yi, false, s);
+    check('五行陣: the forecast names it', cut.notes.includes('五行陣 · 傷害 −30%'), cut.notes.join(' / '));
+    check('五行陣: the page says it holds', G.enemyTraitLines(s, yi).some((l) => l.startsWith('【五行陣】') && l.endsWith('陣仍未破。')));
+    check('五行陣: the troops in the seats stand in no formation', G.enemies(s).filter((u) => G.pieceKey(u) === 'shiLiang').every((u) => !G.arrayHolds(s, u)));
+    wu.hp = 0;
+    check('五行陣: one brother down and it is broken for the other four', ['wenDa', 'wenYi', 'wenShan', 'wenShi'].every((id) => !G.arrayHolds(s, unit(s, id)) && G.stanceCut(s, unit(s, id)) === 0) && G.enemyTraitLines(s, yi).some((l) => l.endsWith('陣已破。')) && !G.forecast(hero, yi, false, s).notes.some((n) => n.startsWith('五行陣')));
+    const guest = { ...copy(unit(s, 'wenDa')), guest: true };
+    check('五行陣: a guest on the last board stands in no formation', !G.arrayHolds({ units: [guest] }, guest));
+  }
+  // 罰惡 (俠客島, 2026-11-28): 李四 looks for the hero who has dealt the black stones most this
+  // round; what was dealt in an earlier round, or to a board object, does not count.
+  {
+    const s = realBoard(19, R.mapStages(19)[0]);
+    const li = unit(s, 'liSi'),
+      [a, b] = G.party(s),
+      foe = G.enemies(s).find((u) => G.pieceKey(u) === 'islander');
+    check('罰惡: before anyone strikes there is no one to punish', !G.topStriker(s) && G.preference(s, li, a, G.party(s)) === 0);
+    G.wound(s, foe, 5, a);
+    G.wound(s, foe, 9, b);
+    check('罰惡: the one who dealt more this round is sought', G.topStriker(s) === b && G.preference(s, li, b, G.party(s)) < 0 && G.preference(s, li, a, G.party(s)) === 0, [a.dealt, b.dealt].join());
+    G.wound(s, foe, 7, a);
+    check('罰惡: blows add up over the round', G.topStriker(s) === a && a.dealt === 12);
+    s.round++;
+    check('罰惡: a new round starts from nothing', !G.topStriker(s));
+    check('罰惡: its page says whom he looks for', G.enemyTraitLines(s, li).includes('【偏好】專挑這一回合出手最重的俠客。'), G.enemyTraitLines(s, li).join(' / '));
+  }
   // 坐鎮 on a seat: each of the three guards its own spawn tile, not the first seat's.
   withTraits('xiaGuard', { post: { tile: 'spawn', tether: 0, wake: false } }, () => {
     const s = realBoard(13, 7),

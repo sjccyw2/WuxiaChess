@@ -65,6 +65,8 @@ asset-gen/            art not yet in the game (see asset-gen/README.md)
   jianying-roster-art/  thirty characters: portrait and sprite sheet each
   jianying-item-art/    eight skill effects and thirty-two item pictures
   story-characters/     the youth and 求敗: cards, sprite sheets, the youth's figure and sword
+  board-villains/       the fifteen characters of the four boards added on 2026-11-28, painted with the image model
+  battle-objects/       the things on the 守 and 破 boards, intact and broken
   prologue-video/       the opening film and everything it is made from
   finale-video/         the ending film and everything it is made from
 tools/
@@ -128,8 +130,8 @@ saves from before work these out from the runs won.
 ## The last board (終局) and the ending
 
 A run in the fifth 境界 does not end with its tenth board. 求敗 asks every stone to stay one board
-more, and the run goes on to an eleventh: 谷底棋臺, the valley's own stone table (map 15, after the
-fifteen boards a run draws from; the entry marked `last` in `game/src/data/battles.js`, `LAST_MAP`.
+more, and the run goes on to an eleventh: 谷底棋臺, the valley's own stone table (map 15, among the
+nineteen boards a run draws from, which are maps 0 to 14 and 16 to 19; the entry marked `last` in `game/src/data/battles.js`, `LAST_MAP`.
 `FINAL_MAP` there is the tenth board, 無刻漏臺).
 
 - **Who is on it.** 無名, the youth, takes the field himself as its leader (眼) and cannot be
@@ -326,7 +328,7 @@ masters of a run of ten boards drawn at random. Outside a battle, 開五重境�
 (the first four counted as won); 看終局影片 plays the ending film; and 開無名入盤 opens what the
 ending opens, so the next run starts with 無名 on the board.
 
-試局, always there, sets up a test battle: pick any of the fifteen boards or the last board, any
+試局, always there, sets up a test battle: pick any of the nineteen boards or the last board, any
 境界 (open or not) and any heroes, in order (the first leads, the first five fight, the rest wait on
 the bench; the last board is always in the fifth 境界, with 無名 leading and the first four heroes
 beside him). The run
@@ -408,21 +410,23 @@ Prompts for the pictures the story still needs are in `asset-gen/prompts.md`, wi
 
 The marked stone is six files, `stone-marks-0.webp` to `stone-marks-5.webp`, showing none to five marks. They were made from one painting by covering the later marks with bare stone from the same picture, so the journal can show exactly as many marks as runs have been finished.
 
-## The fifteen boards
+## The nineteen boards
 
-A run is ten boards drawn from fifteen (`routeFor` in `game/src/rules/journey.js`). 青竹渡 is always the first and 無刻漏臺 the last; the eight between stand in tiers of like strength, and each tier holds one of the five boards added on 2026-11-22, so about three of them turn up in a run:
+A run is ten boards drawn from nineteen (`routeFor` in `game/src/rules/journey.js`). 青竹渡 is always the first and 無刻漏臺 the last; the eight between stand in tiers of like strength. The five boards added on 2026-11-22 put one board built round a villain in each tier; the four added on 2026-11-28 (in *italics*) join the later tiers:
 
 | Stage of the run | Drawn from |
 | --- | --- |
 | 2nd and 3rd | two of 紅楓驛, 蘆花汀, **神龍竹堂** (洪安通) |
 | 4th and 5th | two of 聽雪棧, 空山琴臺, **絕情花徑** (公孫止) |
-| 6th and 7th | two of 桃花石陣, 襄陽殘垣, **鐵掌溪灘** (裘千仞) |
-| 8th | 寒玉石室 or **西夏夜苑** (李秋水) |
-| 9th | 倒影天街 or **黑木繡閣** (東方不敗) |
+| 6th and 7th | two of 桃花石陣, 襄陽殘垣, **鐵掌溪灘** (裘千仞), ***石樑溫家*** (溫氏五老) |
+| 8th | one of 寒玉石室, **西夏夜苑** (李秋水), ***萬安寺*** (玄冥二老, 破) |
+| 9th | one of 倒影天街, **黑木繡閣** (東方不敗), ***光明頂*** (滅絕師太 and 成昆, 守), ***俠客島*** (張三 and 李四) |
 
-A run saved before then has no `routes` field and keeps the route its seed made at the time (the first ten boards only).
+A run keeps the route edition it was started under (`run.routes`): one with none keeps the first ten boards only, and one started under edition 2 keeps the fifteen-board tiers.
 
-The five added boards are each built round one villain: he is the 局主, there is no lieutenant, and the other three of the board's fixed four pieces are his troop type (`GARRISONS` in `game/src/data/encounters.js`). A board needs an entry in each of these, by map index: `data/terrain.js` (layout), `data/encounters.js` (`ENCOUNTERS`, `RANKS`, and `GARRISONS` if it has no lieutenant), `data/martial-arts.js` (`CAPTAINS`), `data/battles.js`, `data/encounter-script.js`, `data/maze-tale.js` (`CHAMBER_TALES`), a tier in `routeFor`, `scene/maze-atmosphere.js` (sky and the plane below), `scene/stage-light.js` (light rig), `audio/ambience.js` (sound bed), `scene/maze-scenery.js` (palette, depth and, for boards 10 on, the earlier board whose tile language it borrows) and a landform module `scene/landforms/landform-N.js` listed in `scene/environment.js`, plus a picture `wiki/assets/map-N.webp`. For the last board it also needs its master's `guest` line (`data/encounter-script.js`, said when he walks onto 谷底棋臺 of his own accord), his `GUEST_GISTS` note if his own board's note speaks of things only that board has, and a kind of weapon in `ARM_OF` for each of its enemies (`data/encounters.js`; what 無名's nine forms answer). The last board itself is map 15 and stays there: a new board takes the next free index after it (16 on), and nothing reads the last board as the last index (`LAST_MAP` finds it by its `last` mark).
+The four boards of 2026-11-28 (maps 16 to 19, after the last board) are built as the five before them, with one difference: beside the 局主 stand other named black stones of the same book who are 局主 too (`masters` in `battles.js`; `VILLAINS` in `encounters.js`), and all must fall: the four younger 溫 brothers, 鶴筆翁, 成昆 (who comes out of the secret way in round 3) and 李四. The producer asked for new boards and enemies with few new mechanisms, so they use the kinds of board (斬將, 破, 守) and enemy traits the game already had, and add two small rules, each one board's alone and stated on the enemy's page rather than as a rule word (`PLAIN_FIELDS`): **五行陣** (`array`: while every piece that carries it stands, each takes 30% less from every blow; the first to fall breaks it; a guest on the last board stands in no formation) and **罰惡** (`prefers: 'striker'`: 李四 looks for the hero who has dealt the black stones most this round, counted in `wound`). Their characters' art is in `asset-gen/board-villains/` (painted with the image model, fitted to the roster pack's sheet layout by its `make/fit.py`, and cut by `tools/roster-art.py --pack board-villains`), and the cage and the sacred fire are in `asset-gen/battle-objects/`. Because maps 16 to 19 follow the last board, `ENCOUNTERS`, `RANKS` and `CAPTAINS` keep an empty slot at 15.
+
+The five added boards are each built round one villain: he is the 局主, there is no lieutenant, and the other three of the board's fixed four pieces are his troop type (`GARRISONS` in `game/src/data/encounters.js`). A board needs an entry in each of these, by map index: `data/terrain.js` (layout), `data/encounters.js` (`ENCOUNTERS`, `RANKS`, and `GARRISONS` if it has no lieutenant), `data/martial-arts.js` (`CAPTAINS`), `data/battles.js`, `data/encounter-script.js`, `data/maze-tale.js` (`CHAMBER_TALES`), a tier in `routeFor`, `scene/maze-atmosphere.js` (sky and the plane below), `scene/stage-light.js` (light rig), `audio/ambience.js` (sound bed), `scene/maze-scenery.js` (palette, depth and, for boards 10 on, the earlier board whose tile language it borrows) and a landform module `scene/landforms/landform-N.js` listed in `scene/environment.js`, plus a picture `wiki/assets/map-N.webp`. For the last board it also needs its master's `guest` line (`data/encounter-script.js`, said when he walks onto 谷底棋臺 of his own accord), his `GUEST_GISTS` note if his own board's note speaks of things only that board has, and a kind of weapon in `ARM_OF` for each of its enemies (`data/encounters.js`; what 無名's nine forms answer). The last board itself is map 15 and stays there: a new board takes the next free index after it (16 to 19 are taken; the next is 20), and nothing reads the last board as the last index (`LAST_MAP` finds it by its `last` mark). A named piece beside the master needs a `VILLAINS` entry, a gist, an `extras` entry in the board's script and, if he stands there from the start, a line before the battle (`check-story` fails without it); every painted character is named in `data/roster-art.js`; and putting a board into the tiers means a new route edition in `routeFor`, so that saved runs keep the route they had.
 
 ## A script package for a prose edit
 
@@ -467,7 +471,7 @@ The wiki holds no copy of the game's data. When the page opens it imports the ga
 | 江湖人物 | `catalog/folk.js` | the youth, the eagle and 韋小寶 |
 | 任務簿 | `catalog/missions.js` | each board's battle (how it is won, its enemies and reinforcements, its pool of secondaries) and the heroes' trials |
 | 戰鬥規則 | `catalog/rules.js` | every rule word (`data/rule-terms.js`) with the arts, items and enemies that carry it; the kinds of secondary; growth numbers; the in-game guide and its keys |
-| 棋局輿圖 | `catalog/maps.js` | map layouts and terrain: the fifteen boards and the last board |
+| 棋局輿圖 | `catalog/maps.js` | map layouts and terrain: the nineteen boards and the last board |
 | 局中紀事 | `catalog/story.js` | all scripted dialogue and narration |
 | 遊戲原文 | `corpus/` | every Chinese string in the game's source, found by parsing the files |
 
@@ -480,7 +484,7 @@ What is written by hand in the wiki:
 - `wiki/src/catalog/notes.js` — a few sentences explaining rules that exist only as code (how medicine is used, when a boss charges its signature art, late-stage enemy behaviour). Revisit this file if those rules change.
 - Page titles and section headings in `wiki/src/catalog/`.
 - `wiki/src/corpus/sections.js` — which heading each line of game text is filed under. New game code that is not listed still appears, under its function name.
-- The sixteen map pictures in `wiki/assets/`. The clickable terrain grid beside them is live.
+- The twenty map pictures in `wiki/assets/`. The clickable terrain grid beside them is live.
 
 When the wiki needs something new from the game, export it from the game module and add that module to `game-data.js`. Do not copy values into the wiki.
 
@@ -543,13 +547,13 @@ The player is `tools/lib/hero-policy.mjs` (its weights, `W`, are its whole chara
 Two more tools help when the scenery or the sound changes. Both need Playwright with Chromium, and neither needs a web server:
 
 ```bash
-node tools/shoot-map.mjs 3 pictures/     # map 3 (0 to 15; 15 is the last board) from nine camera angles, with draw calls and triangles
+node tools/shoot-map.mjs 3 pictures/     # map 3 (0 to 19; 15 is the last board) from nine camera angles, with draw calls and triangles
 node tools/sound-check.mjs               # every sound: no clipping, clean start and end, balanced loudness
 ```
 
 A character from the roster pack enters the game with `python3 tools/roster-art.py <id>`, which writes its sheets, still and portrait into `game/assets/`; its id is then added to `game/src/data/roster-art.js`. The youth and 求敗 come from `asset-gen/story-characters/` instead (`python3 tools/roster-art.py --story youth qiubai`). A piece then becomes that character by naming the id as its `mini`. For one of the pack's heroes the tool also writes the standing figure the 整備 wardrobe shows (`figure-<id>.webp`, the first idle frame enlarged) and keeps the portrait at the heroes' size. To check how a sheet draws, `node tools/shoot-roster.mjs pictures/ --ids <id> --beside chief` saves every frame of its five rows on a real board beside a piece already in the game (add `--mobile` for a phone), and `tools/roster-preview.html?ids=<id>,chief` shows them playing. Both need Playwright with Chromium, and no web server.
 
-The sixteen map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
+The twenty map pictures in `wiki/assets/` are `shoot-map.mjs` pictures: `--bare --only opening --size 1560x992`, halved to 780 by 496. Take them again after changing a map's scenery.
 
 ## Fonts
 

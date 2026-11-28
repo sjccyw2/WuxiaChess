@@ -47,7 +47,7 @@ const stonework = [
 // the tile's own frame after its ground, and `ground` (m, p, cell), which may lay a dry tile's
 // ground itself (it returns true when it has). Their palette, depth, surroundings and landmarks
 // are their own.
-const LOOKS = { 10: 2, 11: 1, 12: 2, 13: 8, 14: 1, 16: 6, 17: 9, 18: 4, 19: 7 };
+const LOOKS = { 10: 2, 11: 1, 12: 2, 13: 8, 14: 1, 16: 6, 17: 9, 18: 3, 19: 7 };
 const OWN_TILES = { 10: tiles10, 11: tiles11, 12: tiles12, 13: tiles13, 14: tiles14, 16: tiles16, 17: tiles17, 18: tiles18, 19: tiles19 };
 const lookOf = (index) => LOOKS[index] ?? index;
 const directions = [

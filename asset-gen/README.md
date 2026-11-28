@@ -13,9 +13,10 @@ planned for each pack and which decisions are waiting on the producer.
 | `finale-video/` | The 59-second manga-style ending film (放下, and the name the youth will take), made as the prologue film was and lettered like a Hong Kong comic, in an upright (9:16) and a wide (16:9) cut, the painted panels of each, and the scripts that paint and cut them (`make/`). |
 | `title-art/` | The title calligraphy 劍影江湖: three painted takes in black ink (`full/ink-a.png` to `ink-c.png`), the script that paints them (`make/paint.py`) and the one that cuts the game's ivory, transparent title from take c (`make/cut.py` → `game/assets/title-jianying.webp`). |
 | `story-art/` | Story pictures painted for the old story that the v1.0 story has no place for (`prompts.md` B4, B7). |
-| `battle-objects/` | The board objects of the 守 and 破 boards: 七弦琴 (空山琴臺), 城頭戰鼓 (襄陽殘垣) and 星索樁 (無刻漏臺), each intact and broken, with the script that painted them and the one that cuts the game's files. All are in the game (`game/assets/object-*.webp`). |
+| `battle-objects/` | The board objects of the 守 and 破 boards: 七弦琴 (空山琴臺), 城頭戰鼓 (襄陽殘垣), 星索樁 (無刻漏臺), and since 2026-11-28 鐵籠 (萬安寺) and 聖火 (光明頂), each intact and broken, with the script that painted them and the one that cuts the game's files. All are in the game (`game/assets/object-*.webp`). |
 | `hero-figures/` | The twenty heroes' full-length figures repainted in high definition on 2026-11-28 (`full/<id>.webp`, 1024 × 1536), each from the hero's portrait and earlier figure so face and costume are kept; `make/paint.py` paints them and `make/cut.py` writes `game/assets/figure-<id>.webp` at 560 × 880 (was 280 × 440). |
 | `jianying-roster-art/` | Thirty characters: a portrait and a sprite sheet each. |
+| `board-villains/` | The fifteen characters of the four boards added on 2026-11-28 (石樑溫家, 萬安寺, 光明頂, 俠客島): eleven villains and four troop types, a portrait and a sprite sheet each in the roster pack's layout, painted with the image model from the pack's own pictures. All are in the game. See its README. |
 | `jianying-item-art/` | Eight skill effects and thirty-two item pictures, all animated. |
 
 Each pack has an `index.html` that previews its sheets, and a `manifest.json` / `manifest.csv`

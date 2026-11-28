@@ -11,6 +11,8 @@ in `game/src/data/encounter-script.js` (`objects`).
 | `guqin` (art `qin`) | 七弦琴 | 空山琴臺 | 守 | The qin on the terrace that "nobody plays" in the board's opening line. 〈笑傲江湖〉 was a qin and a xiao together, and 嵩山 hated that music; 左冷禪's cold runs "along broken strings". The board's victory line already ends on its string sounding in the wind. |
 | `warDrum` (art `drum`) | 城頭戰鼓 | 襄陽殘垣 | 守 | The city's war drum: the opening line says 更鼓不響, and the victory line says the drumstick finally falls. It stands where the one passage south opens. |
 | `starPost` | 星索樁 | 無刻漏臺 | 破 | One of the two bronze posts the star ropes are tied to, beside a rope-keeper each. The board's story already says 先斷索 and ends on both ropes breaking. While a post stands it takes 35% off 慕容博's blows. |
+| `cage` | 鐵籠 | 萬安寺 | 破 | One of two iron cages by the temple walls. Nobody is inside: the board's 戰意 is locked in them, and breaking both wins (added 2026-11-28). |
+| `holyFire` | 聖火 | 光明頂 | 守 | The 明教's sacred fire in its bronze brazier on the altar before the hall. Its going out loses the board (added 2026-11-28). |
 
 ## Files
 
