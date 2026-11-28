@@ -631,3 +631,20 @@ html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot .gold-btn {
     padding-top: 230px;
   }
 }
+
+/* The action lines in a story (what someone does, between the words): the old pages' annotation
+   colour was a dark ink for cream paper and could hardly be read on the ink look's dark page
+   (the producer, 2026-11-28). A soft light grey, a little smaller than the spoken line. */
+html.polish-ink-look #modal[data-full] .fy-dialogue .fy-stage-note {
+  margin: 0 0 10px;
+  font: 400 clamp(15px, 1.35vw, 18px) / 1.8 var(--serif);
+  color: #d4cdbd;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+html.polish-ink-look #modal[data-full] .fy-narration .fy-stage-note {
+  font-size: clamp(18px, 1.7vw, 23px);
+  color: var(--ink-white);
+}
+html.polish-ink-look #modal[data-full] .fy-narration .footnote {
+  color: var(--ink-white-dim);
+}
