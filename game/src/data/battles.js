@@ -509,6 +509,115 @@ const BATTLES = [
       }
     ],
     sides: []
+  },
+  // Boards 16 to 19, added on 2026-11-28, are built as 10 to 14 are: the villain is the 局主, and
+  // the other three of the fixed four are his troop type. Each has a second named piece or more.
+  // 16 石樑溫家: the five brothers of the 溫 house, each on a point of the 五行陣 round the screen
+  // wall; all five must fall. While all five stand, each takes less from every blow
+  // (encounters.js `array`). Their men hold the hall and the bridgehead.
+  {
+    kind: 'slay',
+    masters: ['master', 'wenYi', 'wenShan', 'wenShi', 'wenWu'],
+    pieces: [
+      { id: 'wenYi', at: [9, 4] },
+      { id: 'wenShan', at: [8, 7] },
+      { id: 'wenShi', at: [4, 7] },
+      { id: 'wenWu', at: [3, 4] }
+    ],
+    waves: [],
+    sides: [
+      { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points' },
+      { kind: 'intact', reward: 'coins' },
+      { kind: 'double', reward: 'coins' },
+      { kind: 'noMedicine', reward: 'manual' }
+    ]
+  },
+  // 17 萬安寺: break the two cages by the east and west walls (破). The 玄冥二老 keep the pagoda
+  // steps and strike hardest together; a lama holds each cage, and two more come out of the
+  // pagoda in round 4.
+  {
+    kind: 'break',
+    masters: ['master', 'heBi'],
+    objects: [
+      { id: 'cage#1', at: [1, 6] },
+      { id: 'cage#2', at: [11, 6] }
+    ],
+    pieces: [{ id: 'heBi', at: [7, 3] }],
+    waves: [
+      {
+        id: 'pagoda',
+        when: { round: 4 },
+        place: '塔門',
+        pieces: [
+          { id: 'fanSeng#1', at: [4, 2] },
+          { id: 'fanSeng#2', at: [8, 2] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'intact', reward: 'manual' },
+      { kind: 'lastBlow', hero: '*', target: 'heBi', reward: 'points' },
+      { kind: 'unhurt', reward: 'coins' },
+      { kind: 'lamp', reward: 'coins' }
+    ]
+  },
+  // 18 光明頂: keep the sacred fire on its altar through round 9 (守), or fell both masters. 滅絕
+  // comes up the mountain road with her disciples; 成昆 comes out of the secret way behind the
+  // hall in round 3, and two more disciples come up the road in round 5.
+  {
+    kind: 'keep',
+    masters: ['master', 'chengKun'],
+    objects: [{ id: 'holyFire', at: [6, 2] }],
+    hold: 9,
+    pieces: [],
+    waves: [
+      {
+        id: 'tunnel',
+        when: { round: 3 },
+        place: '秘道口',
+        pieces: [{ id: 'chengKun', at: [1, 2] }]
+      },
+      {
+        id: 'road',
+        when: { round: 5 },
+        place: '南面山道',
+        pieces: [
+          { id: 'emei#1', at: [5, 12] },
+          { id: 'emei#2', at: [7, 12] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'lastBlow', hero: '*', target: 'chengKun', reward: 'points' },
+      { kind: 'intact', reward: 'coins' },
+      { kind: 'noMedicine', reward: 'manual' },
+      { kind: 'unhurt', reward: 'coins' }
+    ]
+  },
+  // 19 俠客島: the two envoys, both must fall. 張三 mends his side; 李四 goes after whoever struck
+  // hardest that round (encounters.js prefers 'striker'). Two disciples come in with the tide at
+  // both ends of the hall in round 4.
+  {
+    kind: 'slay',
+    masters: ['master', 'liSi'],
+    pieces: [{ id: 'liSi', at: [7, 1] }],
+    waves: [
+      {
+        id: 'tide',
+        when: { round: 4 },
+        place: '東西潮口',
+        pieces: [
+          { id: 'islander#1', at: [0, 6] },
+          { id: 'islander#2', at: [12, 6] }
+        ]
+      }
+    ],
+    sides: [
+      { kind: 'unhurt', reward: 'coins' },
+      { kind: 'lastBlow', hero: '*', target: 'liSi', reward: 'points' },
+      { kind: 'double', reward: 'manual' },
+      { kind: 'noMedicine', reward: 'coins' }
+    ]
   }
 ];
 // The last board's index.

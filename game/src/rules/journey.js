@@ -115,23 +115,35 @@ function keptLots(draw) {
   return valid ? ids.filter((id) => picks.includes(id)) : ids.slice(0, KEPT);
 }
 // The ten boards of a run, in order. A run always opens on 青竹渡 and ends on 無刻漏臺; between
-// them the boards stand in tiers of like strength. Since edition 2 each tier also holds a board
-// built round one villain (maps 10 to 14), so a run draws ten of fifteen: two of three for each
-// of the three early pairs of stages, and one of two for the eighth and the ninth. A run saved
-// before that (no `routes`) keeps the route its seed made then: the first ten boards only.
-const ROUTE_EDITION = 2;
+// them the boards stand in tiers of like strength. Edition 2 put a board built round one villain
+// (maps 10 to 14) in each tier, so a run drew ten of fifteen. Edition 3 (2026-11-28) adds the four
+// boards 16 to 19: a run draws ten of nineteen, two of three for the second and third stages and
+// for the fourth and fifth, two of four for the sixth and seventh, one of three for the eighth and
+// one of four for the ninth. A run keeps the edition it was started under (`routes`; none means
+// the first ten boards only), so a saved run keeps its route.
+const ROUTE_EDITION = 3;
 function routeFor(seed, edition = ROUTE_EDITION) {
   const rand = random(seed ^ 0x79ac7d53);
   if (edition < 2)
     return [0, ...shuffled([1, 2], rand), ...shuffled([3, 4], rand), ...shuffled([5, 6], rand), 7, 8, 9];
   const two = (tier) => shuffled(tier, rand).slice(0, 2);
+  if (edition < 3)
+    return [
+      0,
+      ...two([1, 2, 10]),
+      ...two([3, 4, 11]),
+      ...two([5, 6, 12]),
+      shuffled([7, 13], rand)[0],
+      shuffled([8, 14], rand)[0],
+      9
+    ];
   return [
     0,
     ...two([1, 2, 10]),
     ...two([3, 4, 11]),
-    ...two([5, 6, 12]),
-    shuffled([7, 13], rand)[0],
-    shuffled([8, 14], rand)[0],
+    ...two([5, 6, 12, 16]),
+    shuffled([7, 13, 17], rand)[0],
+    shuffled([8, 14, 18, 19], rand)[0],
     9
   ];
 }
@@ -544,7 +556,7 @@ function restoreRun(raw) {
     !Number.isInteger(r.stage) ||
     r.stage < 0 ||
     r.stage > LAST_STAGE ||
-    ![undefined, 1, ROUTE_EDITION].includes(r.routes) ||
+    ![undefined, 1, 2, ROUTE_EDITION].includes(r.routes) ||
     !Array.isArray(r.route) ||
     r.route.length !== 10 ||
     r.route.some((v, i) => v !== expectedRoute[i]) ||
@@ -1101,7 +1113,9 @@ const pieceName = (map, ref) => G.DETAILS[G.refKey(map, ref)]?.name || '';
 const heroName = (id) => G.DETAILS[id]?.name || '';
 const fallOf = (s, ref) => s.tally?.falls.find((f) => f.id === G.refId(s.mapIndex, ref));
 const fallIndex = (s, id) => s.tally?.falls.findIndex((f) => f.id === id) ?? -1;
-const masterNames = (map, board) => board.masters.map((ref) => pieceName(map, ref)).join('與');
+// Names in a list: 甲與乙, or 甲、乙、丙與丁 for more than two.
+const andList = (names) => (names.length > 2 ? names.slice(0, -1).join('、') + '與' + names[names.length - 1] : names.join('與'));
+const masterNames = (map, board) => andList(board.masters.map((ref) => pieceName(map, ref)));
 // The heroes a secondary may name: the lineup as the board is built.
 const lineup = (s) => s.run.next.map((id) => G.find(s, id)).filter(Boolean);
 // Whether a hero can make a 合招: a form that spends a mark or poison another laid.
@@ -1385,7 +1399,7 @@ function soloWords(board) {
 }
 const KIND_NAMES = { slay: '斬將', rout: '殲滅', keep: '守', break: '破', yield: '問劍' };
 const SIDE_MARKS = { open: '◇', met: '✓', failed: '✕' };
-const COUNT_WORDS = ['', '一', '兩', '三', '四'];
+const COUNT_WORDS = ['', '一', '兩', '三', '四', '五'];
 // Everything the briefing page shows, for a board at a stage. `s` is the run on this board
 // (with its drawn secondary), or null for a look at a board without one (the wiki, the shop's
 // look at the next board), which lists the pool instead. `live` adds the state of the fight.
@@ -1411,12 +1425,12 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     (kind === 'rout'
       ? within + '擊敗全部敵人' + (board.waves.length ? '，援軍也算' : '') + '。'
       : kind === 'keep'
-        ? '守住' + things.join('、') + '到' + hold + '結束；或提前擊敗' + masters.join('與') + '。'
+        ? '守住' + things.join('、') + '到' + hold + '結束；或提前擊敗' + andList(masters) + '。'
         : kind === 'break'
           ? within + '擊毀' + things.join('、') + '；局主不必擊敗。'
           : kind === 'yield'
-            ? within + '將' + masters.join('與') + '的氣血削至 1 點' + soloWords(board) + '。'
-            : within + '擊敗' + masters.join('與') + (masters.length > 1 ? '，' + COUNT_WORDS[masters.length] + '人都要擊敗' : '') + '；其餘敵人不必打完。');
+            ? within + '將' + andList(masters) + '的氣血削至 1 點' + soloWords(board) + '。'
+            : within + '擊敗' + andList(masters) + (masters.length > 1 ? '，' + COUNT_WORDS[masters.length] + '人都要擊敗' : '') + '；其餘敵人不必打完。');
   const leader = s ? heroName(r.scene === 'fight' ? s.leader : r.next[0]) : '領隊';
   // 敵情: each 局主, then each 副手; the board's own first, then the leaders of its waves.
   const villain = (key) => G.DETAILS[key]?.rank;

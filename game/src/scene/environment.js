@@ -14,6 +14,10 @@ import { landform12 } from './landforms/landform-12.js';
 import { landform13 } from './landforms/landform-13.js';
 import { landform14 } from './landforms/landform-14.js';
 import { landform15 } from './landforms/landform-15.js';
+import { landform16 } from './landforms/landform-16.js';
+import { landform17 } from './landforms/landform-17.js';
+import { landform18 } from './landforms/landform-18.js';
+import { landform19 } from './landforms/landform-19.js';
 import { buildVillage } from './village.js';
 import { buildLandscape } from './landscape.js';
 import { buildCourtyard, cutFerryLandscape } from './courtyard.js';
@@ -152,7 +156,11 @@ const reliefs = [
   landform12,
   landform13,
   landform14,
-  landform15
+  landform15,
+  landform16,
+  landform17,
+  landform18,
+  landform19
 ];
 function finishTerrain(T, map, scenery) {
   const relief = reliefs[map](T, mapLayout(map));

@@ -142,7 +142,38 @@ const BEDS = [
       ['bird', 17],
       ['plip', 9]
     ]
-  } // 谷底棋臺
+  }, // 谷底棋臺
+  {
+    // Water far down in the ravine, wind in the court's bamboo.
+    wind: [800, 1.4, 0.3],
+    water: 0.25,
+    events: [
+      ['knock', 13],
+      ['bird', 15]
+    ]
+  }, // 石樑溫家
+  {
+    // Night in the temple court: the pagoda's eave bells.
+    wind: [1100, 1.1, 0.25],
+    water: 0,
+    room: 0.2,
+    events: [['chime', 9]]
+  }, // 萬安寺
+  {
+    wind: [700, 2.2, 0.5],
+    water: 0,
+    events: [['gust', 8]]
+  }, // 光明頂
+  {
+    // The sea coming in at both ends of the cave.
+    wind: [500, 1, 0.3],
+    water: 0.55,
+    room: 0.35,
+    events: [
+      ['plip', 7],
+      ['gust', 14]
+    ]
+  } // 俠客島
 ];
 
 // The sparse sounds that punctuate a bed. Each is scheduled into the bed's own voice.

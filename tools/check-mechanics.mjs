@@ -4352,9 +4352,10 @@ section('battle data');
     text = JSON.stringify([BATTLES, VILLAINS, TROOPS]);
   check('no villain or troop kept for new stages appears on the first ten boards', kept.every((id) => !firstTen.includes(id)));
   check('no new hero appears in the boards or the villain tables', newHeroes.every((id) => !text.includes(id)));
-  check('fifteen boards, each slay, rout, keep or break, masters led by the board master', BATTLES.filter((b) => !b.last).length === 15 && BATTLES.filter((b) => !b.last).every((b) => ['slay', 'rout', 'keep', 'break'].includes(b.kind) && b.masters[0] === 'master'));
-  check('and the last board after them: 問劍, its master its own commander, no fixed four', BATTLES.length === 16 && G.LAST_MAP === 15 && BATTLES[G.LAST_MAP].kind === 'yield' && same(BATTLES[G.LAST_MAP].masters, [BATTLES[G.LAST_MAP].commander]) && !G.hasFour(G.LAST_MAP) && !mapLayout(G.LAST_MAP).enemies.length);
-  check('a board with objects has a kind for saves from before them, and a keep board a hold', BATTLES.every((b) => !b.objects || (['slay', 'rout'].includes(b.legacyKind) && (b.kind !== 'keep' || (b.hold > 0 && b.hold < G.LIMIT)))));
+  check('nineteen boards, each slay, rout, keep or break, masters led by the board master', BATTLES.filter((b) => !b.last).length === 19 && BATTLES.filter((b) => !b.last).every((b) => ['slay', 'rout', 'keep', 'break'].includes(b.kind) && b.masters[0] === 'master'));
+  check('and the last board among them (it stays map 15): 問劍, its master its own commander, no fixed four', BATTLES.length === 20 && G.LAST_MAP === 15 && BATTLES.findIndex((b) => b.last) === 15 && BATTLES[G.LAST_MAP].kind === 'yield' && same(BATTLES[G.LAST_MAP].masters, [BATTLES[G.LAST_MAP].commander]) && !G.hasFour(G.LAST_MAP) && !mapLayout(G.LAST_MAP).enemies.length);
+  // Boards 16 on had their objects from the start, so no save from before them exists.
+  check('a board with objects has a kind for saves from before them, and a keep board a hold', BATTLES.every((b, map) => !b.objects || ((map >= 16 ? !b.legacyKind : ['slay', 'rout'].includes(b.legacyKind)) && (b.kind !== 'keep' || (b.hold > 0 && b.hold < G.LIMIT)))));
   // (The last board is read as a run casts it: its guests are the masters of the ten boards.)
   for (const map of BATTLES.keys()) {
     const b = G.castBoard(map);
@@ -4386,7 +4387,8 @@ section('battle data');
     const maps = BATTLES.map((b, map) => (allPieces(b).some((p) => p.id === id) ? map : -1)).filter((m) => m >= 0);
     check(G.DETAILS[id].name + ' stands on exactly his board, ' + v.map, same(maps, [v.map]), maps);
   }
-  check('every troop type stands on one board only', Object.keys(TROOPS).every((key) => BATTLES.filter((b) => allPieces(b).some((p) => p.id?.split('#')[0] === key)).length === 1));
+  // (A troop type in a board's fixed seats only, as 石樑派弟子, stands there by GARRISONS.)
+  check('every troop type stands on one board only', Object.keys(TROOPS).every((key) => BATTLES.filter((b, map) => G.encounterKeys(map).includes(key) || allPieces(b).some((p) => p.id?.split('#')[0] === key)).length === 1));
   check('every villain and troop type has a gist', [...Object.keys(VILLAINS), ...Object.keys(TROOPS)].every((k) => GISTS[k]));
   check('the 局主 and 副手 roles follow rank (求敗 keeps the role his lines have always had)', Object.keys(VILLAINS).every((id) => G.DETAILS[id].role === (VILLAINS[id].role || (VILLAINS[id].rank === 'boss' ? '局主' : '副手'))));
 }
@@ -5259,7 +5261,7 @@ for (const [map, b] of BATTLES.entries())
   check('寒玉石室 stays lean: four pieces, no waves, no lamp in its pool', BATTLES[7].pieces.length === 0 && !BATTLES[7].waves.length && !BATTLES[7].sides.some((e) => e.kind === 'lamp'));
 }
 
-// ── Boards built round one villain (maps 10 to 14) ────────────────────────
+// ── Boards built round one villain (maps 10 to 14, and 16 to 19) ──────────────
 section('boards built round one villain');
 {
   const { GARRISONS, SIGNATURE_RULES } = await load('data/encounters.js');
@@ -5268,25 +5270,33 @@ section('boards built round one villain');
   check('a sweep’s note states its own share', SIGNATURE_RULES.sweep({ sweep: 0.33 }).includes('三分之一') && SIGNATURE_RULES.sweep({ sweep: 0.25 }).includes('四分之一') && SIGNATURE_RULES.sweep({ sweep: 0.4 }).includes('四成'));
   check('西夏夜苑: 李秋水’s page says her sweep takes 四成', G.pieceLines(13, 'master', 7)[0] === '相鄰的其他我方俠客也會受到四成傷害。', G.pieceLines(13, 'master', 7)[0]);
   const { FINAL_MAP } = await load('data/battles.js');
-  const NEW = [10, 11, 12, 13, 14],
-    MAPS15 = Array.from({ length: 15 }, (_, m) => m);
-  const TIERS = { 1: [1, 2, 10], 2: [1, 2, 10], 3: [3, 4, 11], 4: [3, 4, 11], 5: [5, 6, 12], 6: [5, 6, 12], 7: [7, 13], 8: [8, 14] };
+  // The boards built round villains: 10 to 14 (2026-11-22) and 16 to 19 (2026-11-28). The last
+  // board is 15 and is in no route.
+  const NEW = [10, 11, 12, 13, 14, 16, 17, 18, 19],
+    MAPS19 = Array.from({ length: 20 }, (_, m) => m).filter((m) => m !== 15);
+  const TIERS = { 1: [1, 2, 10], 2: [1, 2, 10], 3: [3, 4, 11], 4: [3, 4, 11], 5: [5, 6, 12, 16], 6: [5, 6, 12, 16], 7: [7, 13, 17], 8: [8, 14, 18, 19] };
 
-  // The route: ten of fifteen, the first and the last fixed, each stage from its tier.
+  // The route: ten of nineteen, the first and the last fixed, each stage from its tier.
   const routes = Array.from({ length: 600 }, (_, n) => R.routeFor((Math.imul(n, 2654435761) + 17) >>> 0));
   check('a route is ten different boards, 青竹渡 first and 無刻漏臺 last', routes.every((r) => r.length === 10 && new Set(r).size === 10 && r[0] === 0 && r[9] === FINAL_MAP && FINAL_MAP === 9));
   check('every other stage draws from its tier', routes.every((r) => r.slice(1, 9).every((map, i) => TIERS[i + 1].includes(map))));
   check('every board built round a villain is met in some runs, and none in every run', NEW.every((map) => routes.some((r) => r.includes(map)) && routes.some((r) => !r.includes(map))));
   const share = (map) => routes.filter((r) => r.includes(map)).length / routes.length;
-  check('a board of a three-board tier is in about two runs of three, of a two-board tier in about one of two', [1, 2, 10, 3, 4, 11, 5, 6, 12].every((m) => Math.abs(share(m) - 2 / 3) < 0.07) && [7, 13, 8, 14].every((m) => Math.abs(share(m) - 0.5) < 0.07), [1, 10, 11, 12, 13, 14].map((m) => share(m).toFixed(2)).join(' '));
+  check('each board is drawn as often as the others of its tier: two of three, two of four, one of three, one of four', [1, 2, 10, 3, 4, 11].every((m) => Math.abs(share(m) - 2 / 3) < 0.07) && [5, 6, 12, 16].every((m) => Math.abs(share(m) - 0.5) < 0.07) && [7, 13, 17].every((m) => Math.abs(share(m) - 1 / 3) < 0.07) && [8, 14, 18, 19].every((m) => Math.abs(share(m) - 0.25) < 0.07), NEW.map((m) => share(m).toFixed(2)).join(' '));
+  const second = Array.from({ length: 300 }, (_, n) => R.routeFor(n * 7919 + 1, 2));
+  check('the second edition’s route keeps its fifteen boards and tiers', second.every((r) => r.length === 10 && r.every((m) => m < 15) && [r[7]].every((m) => [7, 13].includes(m)) && [8, 14].includes(r[8]) && r.slice(5, 7).every((m) => [5, 6, 12].includes(m))));
   const old = Array.from({ length: 200 }, (_, n) => R.routeFor(n * 7919 + 1, 1));
   check('the first edition’s route holds the first ten boards only, in its three shuffled pairs', old.every((r) => r.length === 10 && r.every((m) => m < 10) && r[0] === 0 && same([...r.slice(1, 3)].sort(), [1, 2]) && same([...r.slice(3, 5)].sort(), [3, 4]) && same([...r.slice(5, 7)].sort(), [5, 6]) && same(r.slice(7), [7, 8, 9])));
-  check('mapStages: each new board at its tier’s stages', same(NEW.map((m) => R.mapStages(m)), [[1, 2], [3, 4], [5, 6], [7], [8]]));
+  check('mapStages: each new board at its tier’s stages', same(NEW.map((m) => R.mapStages(m)), [[1, 2], [3, 4], [5, 6], [7], [8], [5, 6], [7], [8], [8]]));
 
   // Saves: a run saved before the new boards keeps the route its seed made then.
   {
     const s = board();
-    check('a new run is marked with the route edition and restores', s.run.routes === 2 && !!R.restoreRun(copy(s)));
+    check('a new run is marked with the route edition and restores', s.run.routes === 3 && !!R.restoreRun(copy(s)));
+    const kept = copy(s);
+    kept.run.routes = 2;
+    kept.run.route = R.routeFor(kept.run.seed, 2);
+    check('a run saved under the second edition restores on its route', !!R.restoreRun(copy(kept)) && same(R.restoreRun(copy(kept)).run.route, kept.run.route));
     const before = copy(s);
     delete before.run.routes;
     before.run.route = R.routeFor(before.run.seed, 1);
@@ -5296,11 +5306,11 @@ section('boards built round one villain');
     const differs = forged.run.route.some((m, i) => m !== before.run.route[i]);
     check('an old save with a route of the new edition is refused', !differs || R.restoreRun(forged) === null);
     const unknown = copy(s);
-    unknown.run.routes = 3;
+    unknown.run.routes = 4;
     check('an unknown route edition is refused', R.restoreRun(unknown) === null);
-    check('the profile may have seen any of the fifteen boards', (() => {
+    check('the profile may have seen any of the nineteen boards', (() => {
       const t = copy(s);
-      t.run.chronicle.seen = [0, 10, 14];
+      t.run.chronicle.seen = [0, 10, 14, 16, 19];
       return !!R.restoreRun(t);
     })());
   }
@@ -5319,14 +5329,18 @@ section('boards built round one villain');
     check(name + ': on the board the three are that troop type, with no rank', fixed.slice(1).every((u) => u && G.pieceKey(u) === troop && !G.unitDetails(u).rank) && G.unitDetails(fixed[0]).name === ENCOUNTERS[map][0].name);
     const extra = G.pieceUnit(s, { id: troop + '#99', at: [0, 0] });
     check(name + ': a troop in a fixed seat has the numbers of any other of its type', fixed.slice(1).every((u) => same([u.maxHp, u.atk, u.def, u.step, u.range], [extra.maxHp, extra.atk, extra.def, extra.step, extra.range])));
-    check(name + ': the master is its only 局主; felling him alone wins a slay board', same(G.masterIds(s), [master]) && (BATTLES[map].kind !== 'slay' || (() => {
-      const t = copy(s);
-      unit(t, master).hp = 0;
+    // The boards of 2026-11-28 set named 局主 beside the master (VILLAINS): all of them must fall.
+    const masters = [master, ...BATTLES[map].masters.slice(1)];
+    check(name + ': its 局主 are the master and the named pieces beside him; felling them all wins a slay board, and not one fewer', same(G.masterIds(s), masters) && masters.slice(1).every((id) => VILLAINS[id]?.map === map && VILLAINS[id].rank === 'boss') && (BATTLES[map].kind !== 'slay' || (() => {
+      const t = copy(s), u = copy(s);
+      for (const id of masters) unit(t, id).hp = 0;
+      for (const id of masters.slice(0, -1)) unit(u, id).hp = 0;
       G.check(t);
-      return t.result === 'win';
+      G.check(u);
+      return t.result === 'win' && !u.result;
     })()));
     const brief = R.boardBrief(map, stage);
-    check(name + ': the briefing names one 局主 and no 副手', brief.foes.filter((f) => f.rank === '局主').length === 1 && !brief.foes.some((f) => f.rank === '副手'), brief.foes.map((f) => f.rank + f.name).join(' '));
+    check(name + ': the briefing names its 局主 and no 副手', brief.foes.filter((f) => f.rank === '局主').length === masters.length && !brief.foes.some((f) => f.rank === '副手'), brief.foes.map((f) => f.rank + f.name).join(' '));
     let lines = [];
     const t = realBoard(map, stage);
     t.run.scene = 'before';
@@ -5604,8 +5618,8 @@ section('boards built round one villain');
     t.result = 'loss';
     t.phase = 'done';
     R.settle(t);
-    const off = MAPS15.filter((m) => !t.run.route.includes(m));
-    check('a run lost on its eighth board has seen eight, none of them off its route', t.run.chronicle.seen.length === 8 && off.length === 5 && off.every((m) => !t.run.chronicle.seen.includes(m)), t.run.chronicle.seen.join());
+    const off = MAPS19.filter((m) => !t.run.route.includes(m));
+    check('a run lost on its eighth board has seen eight, none of them off its route', t.run.chronicle.seen.length === 8 && off.length === 9 && off.every((m) => !t.run.chronicle.seen.includes(m)), t.run.chronicle.seen.join());
   }
   // 夾衛 and 獨行 when the forecast asks with a copy of the piece (an art that lowers its attack).
   troopAs({ pincer: { atk: 8 } }, () => {
@@ -5656,7 +5670,7 @@ section('boards built round one villain');
   for (const map of NEW) {
     const brief = R.boardBrief(map, R.mapStages(map)[0]),
       troop = G.DETAILS[GARRISONS[map]].name,
-      extra = [...BATTLES[map].pieces, ...BATTLES[map].waves.flatMap((w) => w.pieces)].length;
+      extra = [...BATTLES[map].pieces, ...BATTLES[map].waves.flatMap((w) => w.pieces)].filter((p) => p.id.split('#')[0] === GARRISONS[map]).length;
     const chip = brief.force.chips.find((c) => c.name === troop);
     check(mapLayout(map).name + ': the briefing counts every ' + troop + ', the three in fixed seats included', chip?.count === 3 + extra, JSON.stringify(brief.force.chips.map((c) => [c.name, c.count])));
   }

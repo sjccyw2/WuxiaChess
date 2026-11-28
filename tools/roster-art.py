@@ -18,6 +18,11 @@ reads asset-gen/story-characters instead (the youth and 求敗, for the last boa
 three sheet files only: their portraits, npc-youth.webp and npc-qiubai.webp, are in the game
 already and are left as they are.
 
+    python3 tools/roster-art.py --pack board-villains wenDa mieJue ...
+
+reads another pack laid out as the roster pack is (portraits/, sprites/, manifest.json): here the
+characters of the four boards added on 2026-11-28 (asset-gen/board-villains).
+
 A sheet's specks of alpha 1 to 3 are cleared; the half-size sheet is averaged with colour
 weighted by alpha, so no dark fringe bleeds in from the transparent pixels round a figure.
 The pack paints villains half-length and troops closer, so a villain's portrait is cut from a
@@ -42,7 +47,10 @@ CELL_W, CELL_H, FOOT_Y = 144, 176, 162
 FACE_X = dict(fengTiannan=.44, zhaoZhong=.52, wanYan=.55, xianYu=.52, wanZhen=.55,
               fiveTiger=.45, qingShield=.5, jinBow=.5, huaBlade=.55, wanDisciple=.55,
               dongFang=.55, liQiu=.51, hongAn=.57, qiuRen=.55, gongSun=.57,
-              heiMuGuard=.55, xiaGuard=.53, shenLong=.55, ironPalm=.53, netHand=.59)
+              heiMuGuard=.55, xiaGuard=.53, shenLong=.55, ironPalm=.53, netHand=.59,
+              # asset-gen/board-villains
+              wenDa=.45, wenYi=.45, wenShan=.55, wenShi=.5, wenWu=.5, luZhang=.5, heBi=.45,
+              mieJue=.42, chengKun=.4, zhangSan=.45, liSi=.4)
 
 
 def cleaned(path):
@@ -93,13 +101,13 @@ def portrait(path, face_x, group):
     return face if side == 400 else face.resize((400, 400), Image.LANCZOS)
 
 
-def main(ids, story=False):
+def main(ids, story=False, pack=PACK):
     group = {}
     if not story:
-        with open(os.path.join(PACK, 'manifest.json'), encoding='utf-8') as f:
+        with open(os.path.join(pack, 'manifest.json'), encoding='utf-8') as f:
             group = {c['id']: c['group'] for c in json.load(f)['characters']}
     for k in ids:
-        sheet = cleaned(os.path.join(STORY if story else PACK, 'sprites', k + '.png'))
+        sheet = cleaned(os.path.join(STORY if story else pack, 'sprites', k + '.png'))
         assert sheet.size == (8 * CELL_W, 5 * CELL_H), (k, sheet.size)
         files = {
             'motion': ('motion-%s.webp' % k, lambda f: sheet.save(
@@ -111,7 +119,7 @@ def main(ids, story=False):
         }
         if not story:
             files['npc'] = ('npc-%s.webp' % k, lambda f: portrait(
-                os.path.join(PACK, 'portraits', k + '.webp'), FACE_X.get(k, .5),
+                os.path.join(pack, 'portraits', k + '.webp'), FACE_X.get(k, .5),
                 group[k]).save(f, 'WEBP', quality=82, method=6))
         if group.get(k) == 'hero':
             files['figure'] = ('figure-%s.webp' % k, lambda f: figure(sheet).save(
@@ -123,7 +131,13 @@ def main(ids, story=False):
 
 
 if __name__ == '__main__':
-    args = [a for a in sys.argv[1:] if a != '--story']
+    argv = sys.argv[1:]
+    pack = PACK
+    if '--pack' in argv:
+        i = argv.index('--pack')
+        pack = os.path.join(ROOT, 'asset-gen', argv[i + 1])
+        argv = argv[:i] + argv[i + 2:]
+    args = [a for a in argv if a != '--story']
     if not args:
         sys.exit(__doc__)
-    main(args, story='--story' in sys.argv[1:])
+    main(args, story='--story' in argv, pack=pack)

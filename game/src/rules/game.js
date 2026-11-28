@@ -431,6 +431,7 @@ const DETAILS = {
   scout: { name: '青城斥候', role: '弟子', school: '青城派', mini: 'bandit', basic: '快刀' }
 };
 for (const [index, [boss, second]] of ENCOUNTERS.entries()) {
+  if (!boss) continue; // the last board (15) has no fixed four
   const id = CAPTAINS[index][0];
   DETAILS[id] = {
     ...DETAILS[id],
@@ -680,7 +681,7 @@ function unitDetails(u) {
 function traitStage(s, u) {
   const stage = s?.run?.stage || 0;
   if (!u?.guest || !Array.isArray(s?.run?.route)) return stage;
-  const home = s.run.route.indexOf(CAPTAINS.findIndex(([captain]) => captain === u.id));
+  const home = s.run.route.indexOf(CAPTAINS.findIndex(([captain]) => captain && captain === u.id));
   return home >= 0 ? home : stage;
 }
 // A villain whose traits are written uses the stage-scaled status strengths; one without plays
@@ -810,7 +811,17 @@ function stanceCut(s, v) {
   const last = traits?.lastStand;
   // 木劍: 求敗 takes his stage's cut off every blow in it.
   const stage = !ally(v) && traits?.stages ? stageOf(v)?.cut || 0 : 0;
-  return Math.max(held, stage, last && !ally(v) && v.hp <= v.maxHp * last.below ? last.cut : 0);
+  // 五行陣: while every piece of the formation still stands.
+  const array = arrayHolds(s, v) ? traits.array.cut : 0;
+  return Math.max(held, stage, array, last && !ally(v) && v.hp <= v.maxHp * last.below ? last.cut : 0);
+}
+// 五行陣 (`array`): the black stones on a board that carry it stand as one formation, and while
+// every one of them still stands each takes less from every blow. The first to fall breaks it for
+// good. A master away from his own board (a guest on the last board) stands in no formation.
+function arrayHolds(s, v) {
+  if (!unitDetails(v)?.traits?.array || ally(v) || v.guest || !s?.units) return false;
+  const kin = s.units.filter((u) => !ally(u) && !u.guest && unitDetails(u)?.traits?.array);
+  return kin.length > 1 && kin.every(living);
 }
 // Whether a villain's `stance` is up now: 'charged' while its signature is due; 'posted' (盾牆)
 // while it stands exactly on its post, unwoken. A push off the tile ends it until it walks back.
@@ -1036,8 +1047,17 @@ const PREFERS = {
   healer: '專挑療傷者',
   mp: '專挑內力深厚者',
   nearest: '見人就撲',
-  sheltered: '專挑倚仗掩體或有人代受的俠客'
+  sheltered: '專挑倚仗掩體或有人代受的俠客',
+  striker: '專挑這一回合出手最重的俠客'
 };
+// 罰惡 (prefers 'striker'): the living hero who has dealt the most to the black stones this round
+// (wound counts it), or none before anyone has struck.
+function topStriker(s) {
+  let top = null;
+  for (const v of party(s))
+    if (living(v) && v.dealtRound === s.round && v.dealt > 0 && (!top || v.dealt > top.dealt)) top = v;
+  return top;
+}
 const tileName = (p) => '（' + (p.x + 1) + '，' + (p.y + 1) + '）';
 const COUNTS = ['', '一', '兩', '三', '四', '五'];
 const WAKES = {
@@ -1250,6 +1270,14 @@ function enemyTraitLines(s, u) {
     );
   if (t.snare)
     say('墜網', '普攻令目標絆足，移動減 ' + t.snare.power + '，持續至下回合；還擊不帶網。');
+  if (t.array && !u.guest)
+    say(
+      '五行陣',
+      '同陣的人都還站著時，受到的傷害減 ' +
+        t.array.cut +
+        '%；其中一人倒下，陣便破了。' +
+        (s.units ? (arrayHolds(s, u) ? '陣仍未破。' : '陣已破。') : '')
+    );
   if (t.prefers) say('偏好', PREFERS[t.prefers] + '。');
   if (t.stages)
     say(
@@ -1323,6 +1351,7 @@ for (const [id, o] of Object.entries(BOARD_OBJECTS))
   DETAILS[id] = { ...o, object: true, portraitFile: 'object-' + o.art + '.webp' };
 // The stage row each board's own pieces take their numbers from (stageRows).
 for (let map = 0; map < CAPTAINS.length; map++) {
+  if (!CAPTAINS[map][0]) continue;
   DETAILS[CAPTAINS[map][0]].row = 'master';
   if (GARRISONS[map]) continue; // its other three are a troop type, with that type's row
   DETAILS['lieutenant-' + map].row = 'lieutenant';
@@ -2563,6 +2592,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
   // 沉樁: told when it is what cuts this blow.
   const last = !ally(t) && unitDetails(t)?.traits?.lastStand;
   if (last && !blow.void && t.hp <= t.maxHp * last.below) result.notes.push('沉樁 · 傷害 −' + last.cut + '%');
+  if (!blow.void && arrayHolds(s, t)) result.notes.push('五行陣 · 傷害 −' + unitDetails(t).traits.array.cut + '%');
   const stage = !ally(t) && stageOf(t);
   if (stage?.cut && !blow.void) result.notes.push(stage.name + ' · 所受傷害' + (stage.cut === 50 ? '減半' : '減' + shareWords(stage.cut)));
   // What his own blows do in this stage, when he strikes in the enemy phase.
@@ -2934,6 +2964,14 @@ function wound(s, u, n, source) {
     log(s, 'combat', leaderBoon(s).name + '：留住一口氣，氣血剩 1。', unitDetails(u).name);
   }
   u.hp -= d;
+  // 罰惡 reads what each hero has dealt the black stones this round (topStriker).
+  if (d > 0 && source && ally(source) && !ally(u) && !isProp(u)) {
+    if (source.dealtRound !== s.round) {
+      source.dealtRound = s.round;
+      source.dealt = 0;
+    }
+    source.dealt += d;
+  }
   if (!living(u)) delete u.conditions;
   // 領隊無傷 counts what enemies take from the leader, through any blow, counter or poison.
   if (s.tally && u.id === s.leader && d > 0 && source && !ally(source)) s.tally.leaderHurt += d;
@@ -3738,7 +3776,7 @@ function strangerSteps(s, id) {
 // What a board's master says on the last board, where he stands of his own accord: his own
 // board's line (encounter-script.js `guest`), so a new board brings its master's with it.
 function guestLine(id) {
-  const map = CAPTAINS.findIndex(([captain]) => captain === id);
+  const map = CAPTAINS.findIndex(([captain]) => captain && captain === id);
   return (map >= 0 && ENCOUNTER_SCRIPT[map]?.guest) || '';
 }
 // One round ahead of a wave: the log says who comes next round and from where.
@@ -3893,6 +3931,8 @@ function preference(s, u, t, friends, walk = 20) {
       return -8 * (20 - Math.min(20, walk));
     case 'sheltered':
       return tileInfo(t.x, t.y, s.mapIndex).defense > 0 || coverer(s, t) ? -35 : 0;
+    case 'striker':
+      return t === topStriker(s) ? -45 : 0;
     default:
       return 0;
   }
@@ -4498,5 +4538,5 @@ function nextRound(s) {
   return true;
 }
 
-export { stageOf, stageNote, traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
+export { stageOf, stageNote, traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES, arrayHolds, topStriker };
 export { charmed, sideOf, immuneTo, holdsFire, drainOf, controlPlan, isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, MAX_ROUNDS, roundLimit, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, canOutfit, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, LEVEL_GAINS, GROWTH_PACES, GROWTH_PROFILES, growthOf, levelGain, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor, seatOf, seatRow, seatNumbers, twinForm };

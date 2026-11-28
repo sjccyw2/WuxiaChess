@@ -364,6 +364,8 @@ function measure(scene, entry, stage, realm) {
   if (T.lastStand) say('tough', '沉樁：不過' + pct(T.lastStand.below) + '時減傷 ' + T.lastStand.cut + '%');
   else if (T.stance?.while === 'posted') say('tough', '盾牆：在原位減傷 ' + T.stance.cut + '%');
   else if (cutSeen > 0 && !T.stages) say('tough', '蓄勢時減傷');
+  // 五行陣: the score is of one piece alone, so the formation's cut is told, not counted.
+  if (T.array) say('tough', '五行陣：同陣俱在時減傷 ' + T.array.cut + '%（未計入）');
   if (T.stages) say('tough', '木劍減傷 ' + Math.max(...T.stages.map((v) => v.cut || 0)) + '%，無劍唯無名傷得了他');
   // 星索: the posts that ward the master, half standing on average.
   const ward = G.wardShare(board, entry.u);

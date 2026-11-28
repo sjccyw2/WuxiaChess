@@ -142,8 +142,15 @@ const CAPTAINS = [
   'gongSun',
   'qiuRen',
   'liQiu',
-  'dongFang'
+  'dongFang',
+  // 15 is the last board: it has no fixed four, and its commander is named in battles.js.
+  null,
+  'wenDa',
+  'luZhang',
+  'mieJue',
+  'zhangSan'
 ].map((id, index) => {
+  if (!id) return [null];
   const boss = ENCOUNTERS[index][0];
   return [id, boss.name, boss.school, boss.basic, boss.mini];
 });

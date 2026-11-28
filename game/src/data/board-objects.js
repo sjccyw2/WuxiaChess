@@ -63,6 +63,35 @@ const BOARD_OBJECTS = {
     def: 4,
     traits: { ward: 35 },
     bio: '青銅鑄的索樁，八面刻滿星圖。一股星索從盤外垂下，在樁上打了個死結，再牽到慕容博身上。樁在一日，索便不斷；倒一根，他身上的遮護便卸三成半。兩根俱倒，壓在這一局的戰意便散了。'
+  },
+  // The boards added on 2026-11-28.
+  cage: {
+    kind: 'break',
+    map: 17,
+    name: '鐵籠',
+    role: '破物',
+    school: '萬安寺',
+    art: 'cage',
+    size: 1.0,
+    row: 'lieutenant',
+    hp: 0.6,
+    def: 3,
+    bio: '寺牆下一口黑鐵籠，鐵鍊鎖得極牢，籠裡卻只有一領草蓆、一串念珠。這一局的戰意鎖在籠裡：兩口鐵籠都打破了，戰意才散。'
+  },
+  holyFire: {
+    kind: 'keep',
+    map: 18,
+    name: '聖火',
+    role: '守物',
+    school: '光明頂',
+    art: 'holyFire',
+    size: 0.8,
+    row: 'master',
+    hp: 0.65,
+    def: 1,
+    lure: 60,
+    pull: 10,
+    bio: '光明頂大殿前石壇上的一盆聖火，銅盆三足，火頭極旺。這一局的戰意對著它：火滅了，這一局便輸了。'
   }
 };
 

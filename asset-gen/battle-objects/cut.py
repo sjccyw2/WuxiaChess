@@ -9,7 +9,7 @@ from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.join(os.path.dirname(os.path.dirname(HERE)), 'game', 'assets')
-IDS = ['qin', 'drum', 'starPost']
+IDS = ['qin', 'drum', 'starPost', 'cage', 'holyFire']
 HEIGHT = 288  # the longer side, in pixels; the board draws them at about a third of this or less
 
 

@@ -1,0 +1,141 @@
+{
+ "title": "Characters of the boards added on 2026-11-28",
+ "spriteSheet": {
+  "columns": 8,
+  "rows": 5,
+  "cell": [
+   144,
+   176
+  ],
+  "foot": 162,
+  "rowNames": [
+   "idle",
+   "walk",
+   "attack",
+   "hurt",
+   "special"
+  ]
+ },
+ "characters": [
+  {
+   "id": "wenDa",
+   "group": "villain",
+   "name": "溫方達",
+   "book": "碧血劍",
+   "portrait": "portraits/wenDa.webp",
+   "sheet": "sprites/wenDa.png"
+  },
+  {
+   "id": "wenYi",
+   "group": "villain",
+   "name": "溫方義",
+   "book": "碧血劍",
+   "portrait": "portraits/wenYi.webp",
+   "sheet": "sprites/wenYi.png"
+  },
+  {
+   "id": "wenShan",
+   "group": "villain",
+   "name": "溫方山",
+   "book": "碧血劍",
+   "portrait": "portraits/wenShan.webp",
+   "sheet": "sprites/wenShan.png"
+  },
+  {
+   "id": "wenShi",
+   "group": "villain",
+   "name": "溫方施",
+   "book": "碧血劍",
+   "portrait": "portraits/wenShi.webp",
+   "sheet": "sprites/wenShi.png"
+  },
+  {
+   "id": "wenWu",
+   "group": "villain",
+   "name": "溫方悟",
+   "book": "碧血劍",
+   "portrait": "portraits/wenWu.webp",
+   "sheet": "sprites/wenWu.png"
+  },
+  {
+   "id": "shiLiang",
+   "group": "troop",
+   "name": "石樑派弟子",
+   "book": "碧血劍",
+   "portrait": "portraits/shiLiang.webp",
+   "sheet": "sprites/shiLiang.png"
+  },
+  {
+   "id": "luZhang",
+   "group": "villain",
+   "name": "鹿杖客",
+   "book": "倚天屠龍記",
+   "portrait": "portraits/luZhang.webp",
+   "sheet": "sprites/luZhang.png"
+  },
+  {
+   "id": "heBi",
+   "group": "villain",
+   "name": "鶴筆翁",
+   "book": "倚天屠龍記",
+   "portrait": "portraits/heBi.webp",
+   "sheet": "sprites/heBi.png"
+  },
+  {
+   "id": "fanSeng",
+   "group": "troop",
+   "name": "西域番僧",
+   "book": "倚天屠龍記",
+   "portrait": "portraits/fanSeng.webp",
+   "sheet": "sprites/fanSeng.png"
+  },
+  {
+   "id": "mieJue",
+   "group": "villain",
+   "name": "滅絕師太",
+   "book": "倚天屠龍記",
+   "portrait": "portraits/mieJue.webp",
+   "sheet": "sprites/mieJue.png"
+  },
+  {
+   "id": "chengKun",
+   "group": "villain",
+   "name": "成昆",
+   "book": "倚天屠龍記",
+   "portrait": "portraits/chengKun.webp",
+   "sheet": "sprites/chengKun.png"
+  },
+  {
+   "id": "emei",
+   "group": "troop",
+   "name": "峨嵋弟子",
+   "book": "倚天屠龍記",
+   "portrait": "portraits/emei.webp",
+   "sheet": "sprites/emei.png"
+  },
+  {
+   "id": "zhangSan",
+   "group": "villain",
+   "name": "張三",
+   "book": "俠客行",
+   "portrait": "portraits/zhangSan.webp",
+   "sheet": "sprites/zhangSan.png"
+  },
+  {
+   "id": "liSi",
+   "group": "villain",
+   "name": "李四",
+   "book": "俠客行",
+   "portrait": "portraits/liSi.webp",
+   "sheet": "sprites/liSi.png"
+  },
+  {
+   "id": "islander",
+   "group": "troop",
+   "name": "俠客島弟子",
+   "book": "俠客行",
+   "portrait": "portraits/islander.webp",
+   "sheet": "sprites/islander.png"
+  }
+ ]
+}

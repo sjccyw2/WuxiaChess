@@ -285,7 +285,8 @@ const PLAIN_FIELDS = {
   // mods and sig are numbers; post is read by 坐鎮's test. The rest are one enemy's way each,
   // told on its own page.
   // 五劍 (求敗's five stages, 2026-11-25) is one enemy's: his page says it (enemyTraitLines).
-  trait: ['mods', 'sig', 'cover', 'stance', 'post', 'prefers', 'contact', 'banner', 'redirect', 'ward', 'glide', 'basicPoison', 'crowded', 'execute', 'flurry', 'bend', 'pull', 'fleet', 'twin', 'lone', 'pincer', 'stepPoison', 'lastStand', 'snare', 'unfelled', 'formless', 'withdraw', 'stages'],
+  // 五行陣 (`array`, 2026-11-28) is one board's, the 溫 brothers': their pages say it.
+  trait: ['mods', 'sig', 'cover', 'stance', 'post', 'prefers', 'contact', 'banner', 'redirect', 'ward', 'glide', 'basicPoison', 'crowded', 'execute', 'flurry', 'bend', 'pull', 'fleet', 'twin', 'lone', 'pincer', 'stepPoison', 'lastStand', 'snare', 'unfelled', 'formless', 'withdraw', 'stages', 'array'],
   // 戰鬥效果 whose name is a plain phrase (rules/form-rules.js PLAIN_FORMS).
   form: [...PLAIN_FORMS]
 };

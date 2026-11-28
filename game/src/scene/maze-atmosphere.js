@@ -20,7 +20,12 @@ const styles = [
   ['西夏夜苑', 0x3d4a66, 0x151c33, 0xf0d2a0, 0x2d4a5c, 'water', -0.9, 0.018, 'night'],
   ['黑木繡閣', 0xcfd3d6, 0x8097b0, 0xffe3c4, 0xa9b6bb, 'mist', -6.5, 0.02],
   // The water here is the pond under the fall; its level is WATER in landforms/valley-15.js.
-  ['谷底棋臺', 0xb0b5b6, 0x71839f, 0xffcd90, 0x4f867f, 'water', -0.13, 0.021]
+  ['谷底棋臺', 0xb0b5b6, 0x71839f, 0xffcd90, 0x4f867f, 'water', -0.13, 0.021],
+  // The boards added on 2026-11-28.
+  ['石樑溫家', 0xc6c2b4, 0x7d93a0, 0xffdcb0, 0x5f6e66, 'mist', -4.5, 0.02],
+  ['萬安寺', 0x3f4760, 0x161b30, 0xf2c890, 0x2f3a4c, 'earth', -1.0, 0.018, 'night'],
+  ['光明頂', 0xd6cfc4, 0x7f97b4, 0xffd9a8, 0xa7b0b4, 'mist', -7.0, 0.02],
+  ['俠客島', 0x9fb2b4, 0x5f8090, 0xffe2b8, 0x3d6a70, 'water', -0.7, 0.021]
 ];
 const atmospheres = styles.map(([name, horizon, zenith, sun, base, mode, level, fog, hour]) => ({
   name,

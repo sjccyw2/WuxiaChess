@@ -39,6 +39,18 @@ INTACT = {
                 "constellation lines, set on a round carved stone base. A thick rope of twisted, "
                 "faintly glowing silver-blue starlight is knotted around the post and rises straight "
                 "up out of the top edge of the picture, taut, as if hanging down from the sky.",
+    # 萬安寺 (board 17, added 2026-11-28): one of the two cages the prisoners are held in. Temple
+    # brick, iron, cold grey.
+    'cage': "A tall prisoner's cage of heavy black iron bars, square, standing on a thick timber "
+            "floor with iron corner bands, a padlocked door on the near side fastened with a thick "
+            "chain, a peaked iron top. Inside, on the floor, a straw mat, a dropped prayer-bead "
+            "string and a short broken sword, but no person. Old, rusted at the joints.",
+    # 光明頂 (board 18, added 2026-11-28): the sacred fire of the 明教 on its altar on the summit.
+    # Stone, flame, deep red.
+    'holyFire': "A sacred fire burning in a wide, shallow bronze brazier on three bronze legs, set "
+                "on a low square altar of grey carved stone with flame patterns cut into its sides. "
+                "A strong, tall, clean orange-gold flame with a white heart rises from the brazier. "
+                "Old, solemn, well tended.",
 }
 
 BROKEN = {
@@ -52,6 +64,12 @@ BROKEN = {
                 "knot, the loose end frayed and curling down, its light gone dim and drifting away "
                 "in a few faint sparks; nothing rises from the top of the picture any more. The "
                 "post itself is cracked and leans a little on its stone base.",
+    'cage': "The same iron cage, broken open: two bars of the door bent wide apart and one snapped, "
+            "the chain broken and hanging, the padlock on the floor, the door swung half open. The "
+            "cage is empty.",
+    'holyFire': "The same altar and bronze brazier, its fire put out: the brazier knocked askew on "
+                "its legs and dented, cold ashes and a few dying embers spilled across the altar, a "
+                "thin last wisp of grey smoke, no flame. A corner of the stone altar cracked.",
 }
 
 KEEP = ("Keep the object exactly the same: the same angle, size, position in the picture, "

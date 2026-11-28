@@ -530,11 +530,104 @@ const ENCOUNTERS = [
         flurry: { share: 0.8 }
       }
     )
+  ],
+  // 15 is the last board, which has no fixed four: its pieces are named in battles.js.
+  [],
+  // ── boards 16 to 19, added on 2026-11-28: each master's men are his troop type (GARRISONS);
+  // the named pieces beside him are in VILLAINS.
+  [
+    adversary(
+      '溫方達',
+      '石樑溫家',
+      '碧血劍',
+      '溫家掌法',
+      '厚土掌',
+      'weak',
+      'guo',
+      '石樑溫家五兄弟的長兄，五人向來同進同退，商量定了才出手，主意最後總由他拿。今日五人一聲未商量，各自心裡都多了同一個主意。他立在照壁北首，佔了五行的土位。',
+      'wenDa',
+      '',
+      {
+        mods: { hp: 1.05, atk: 2, def: 2, step: 3, range: 1 },
+        array: { cut: 30 },
+        post: { tile: 'spawn', tether: 1, wake: true, note: '守在照壁北首{tile}一格內；有俠客踏入攻擊範圍或受到攻擊後，才離位。' }
+      }
+    )
+  ],
+  [
+    adversary(
+      '鹿杖客',
+      '汝陽王府',
+      '倚天屠龍記',
+      '鹿杖',
+      '玄冥神掌',
+      'drain',
+      'guo',
+      '玄冥二老的師兄，替汝陽王府出力，向來拿了好處才肯動手。今日沒人許他甚麼，一掌已經拍了出去。玄冥神掌陰寒徹骨，中者內力消散、步履艱難；師弟在旁時，兩人一齊出手更狠。',
+      'luZhang',
+      '',
+      {
+        mods: { hp: 1.25, atk: 4, def: 1, step: 4, range: 1 },
+        sig: { extra: 'pin' },
+        pincer: { atk: 6 }
+      }
+    )
+  ],
+  [
+    adversary(
+      '滅絕師太',
+      '峨嵋派',
+      '倚天屠龍記',
+      '峨嵋劍法',
+      '滅劍',
+      'exposed',
+      'hero',
+      '峨嵋派掌門，生平不受人一句號令，連人情也不肯欠。今日卻有一道號令按著她的劍上山，她口裡不認，劍卻已出鞘。倚天劍削鐵如泥，滅劍一出，甲冑盡破；越到危急，劍勢越烈。',
+      'mieJue',
+      '',
+      {
+        mods: { hp: 1.35, atk: 6, def: 2, step: 4, range: 1 },
+        phase: {
+          name: '寧折不彎',
+          atk: 6,
+          log: '滅絕師太臉色鐵青，劍勢反而更烈：寧為玉碎，不為瓦全。',
+          note: '攻擊 ＋6。'
+        }
+      }
+    )
+  ],
+  [
+    adversary(
+      '張三',
+      '俠客島',
+      '俠客行',
+      '石壁掌法',
+      '賞善令',
+      'mend',
+      'medic',
+      '俠客島賞善使，矮胖，總是笑嘻嘻的。十年一回，同兄弟持銅牌出島，賞善罰惡，先問明善惡才動手。今日善惡一句不問，掌已出了；他笑容不改，順手替受傷的同夥續上一口氣。',
+      'zhangSan',
+      '',
+      {
+        mods: { hp: 1.45, atk: 4, def: 3, step: 4, range: 1 },
+        sig: { heal: 'stage' }
+      }
+    )
   ]
 ];
 // The troop type that fills the other three fixed seats of a board built round one villain, by
 // map index. Those boards have no lieutenant, archer or scout of their own.
-const GARRISONS = { 10: 'shenLong', 11: 'netHand', 12: 'ironPalm', 13: 'xiaGuard', 14: 'heiMuGuard' };
+const GARRISONS = {
+  10: 'shenLong',
+  11: 'netHand',
+  12: 'ironPalm',
+  13: 'xiaGuard',
+  14: 'heiMuGuard',
+  16: 'shiLiang',
+  17: 'fanSeng',
+  18: 'emei',
+  19: 'islander'
+};
 // The rank and file of each board, by board: { bow: {...}, scout: {...} }, each with the fields
 // of a DETAILS entry (name, role, school, mini, basic, bio) and optionally `traits` (only `mods`,
 // `post`, `cover`, `prefers`, `basicPoison`, `glide`, `crowded`, `execute` and `stance` with
@@ -743,6 +836,13 @@ const RANKS = [
   {},
   {},
   {},
+  {},
+  // ── board 15, the last board: no fixed four
+  {},
+  // ── boards 16 to 19: their rank and file are the villain's troop type (GARRISONS)
+  {},
+  {},
+  {},
   {}
 ];
 // How strong a signature's status is at each stage of the run. At stage 0 these are the numbers
@@ -829,7 +929,18 @@ const VILLAIN_FORMS = {
   鐵掌: [1.34, 'breakPalm'],
   白虹掌力: [1.24, 'vacantFist'],
   葵花飛針: [1.28, 'iceSoulNeedle'],
-  無劍勝有劍: [1.35, 'ninefoldIntent']
+  無劍勝有劍: [1.35, 'ninefoldIntent'],
+  厚土掌: [1.16, 'breakPalm'],
+  銳金手: [1.14, 'shangYang'],
+  寒水掌: [1.12, 'softPalm'],
+  青木爪: [1.12, 'beggarBind'],
+  烈火拳: [1.16, 'vacantFist'],
+  玄冥神掌: [1.24, 'lesserMarsh'],
+  鶴筆點穴: [1.12, 'iceSoulNeedle'],
+  滅劍: [1.3, 'snowPursuit'],
+  幻陰指: [1.16, 'shangYang'],
+  賞善令: [0, 'silkwormPalm'], // 續命: no blow, so no strength
+  罰惡令: [1.26, 'breakPalm']
 };
 
 // The villains added to the existing boards (battles.js). `rank` 'boss' is a 局主, 'mini' a 副手;
@@ -920,6 +1031,87 @@ const VILLAINS = {
           say: MAZE_TALE.finale.half,
           note: '攻擊 ＋4。'
         }
+      })
+  },
+  // Board 16 石樑溫家: the four younger brothers beside 溫方達, each on a point of the 五行陣.
+  // They are 局主 too (all five must fall), on the lieutenant's numbers.
+  wenYi: {
+    map: 16,
+    rank: 'boss',
+    row: 'lieutenant',
+    ...adversary('溫方義', '石樑溫家', '碧血劍', '溫家掌法', '銳金手', 'exposed', 'guo',
+      '溫家老二，身形瘦長，說話冷冰冰的。兄弟五人出手，從來先等大哥點頭；今日大哥沒點頭，他的手已先到了。他守照壁東北，佔金位，掌緣如刀，專削人守勢。', 'wenYi', '', {
+        mods: { hp: 0.85, step: 3, range: 1 },
+        array: { cut: 30 },
+        post: { tile: 'spawn', tether: 1, wake: true, note: '守在照壁東北{tile}一格內；有俠客踏入攻擊範圍或受到攻擊後，才離位。' }
+      })
+  },
+  wenShan: {
+    map: 16,
+    rank: 'boss',
+    row: 'lieutenant',
+    ...adversary('溫方山', '石樑溫家', '碧血劍', '溫家掌法', '寒水掌', 'pin', 'guo',
+      '溫家老三，五兄弟中最是剛狠，出手向來只等兄長一句話。今日不等，他反倒怔了一怔，掌已出去。他守照壁東南，佔水位，掌力陰柔，中者步子便沉。', 'wenShan', '', {
+        mods: { hp: 0.9, atk: 2, step: 3, range: 1 },
+        array: { cut: 30 },
+        post: { tile: 'spawn', tether: 1, wake: true, note: '守在照壁東南{tile}一格內；有俠客踏入攻擊範圍或受到攻擊後，才離位。' }
+      })
+  },
+  wenShi: {
+    map: 16,
+    rank: 'boss',
+    row: 'lieutenant',
+    ...adversary('溫方施', '石樑溫家', '碧血劍', '溫家掌法', '青木爪', 'weak', 'duan',
+      '溫家老四，精瘦，眼珠一轉便是一個主意，只是向來不敢越過兄長。今日心裡多了一個主意，不是他的，卻也越過了兄長。他守照壁西南，佔木位，一爪抓下，叫人使不出力。', 'wenShi', '', {
+        mods: { hp: 0.8, step: 4, range: 1 },
+        array: { cut: 30 },
+        post: { tile: 'spawn', tether: 1, wake: true, note: '守在照壁西南{tile}一格內；有俠客踏入攻擊範圍或受到攻擊後，才離位。' }
+      })
+  },
+  wenWu: {
+    map: 16,
+    rank: 'boss',
+    row: 'lieutenant',
+    ...adversary('溫方悟', '石樑溫家', '碧血劍', '溫家拳', '烈火拳', 'exposed', 'guo',
+      '溫家老五，面紅鬚張，性子最急，卻也最聽兄長的話。今日兄長一句話也沒說，他的拳頭照樣熱辣辣打出。他守照壁西北，佔火位，拳拳破人守勢。', 'wenWu', '', {
+        mods: { hp: 0.8, atk: 2, step: 3, range: 1 },
+        array: { cut: 30 },
+        post: { tile: 'spawn', tether: 1, wake: true, note: '守在照壁西北{tile}一格內；有俠客踏入攻擊範圍或受到攻擊後，才離位。' }
+      })
+  },
+  // Board 17 萬安寺: the younger of the 玄冥二老, a second 局主 beside 鹿杖客.
+  heBi: {
+    map: 17,
+    rank: 'boss',
+    row: 'master',
+    ...adversary('鶴筆翁', '汝陽王府', '倚天屠龍記', '鶴嘴筆', '鶴筆點穴', 'pin', 'duan',
+      '玄冥二老的師弟，腰懸酒葫蘆，平日有酒便罷，萬事由師兄去計較。今日沒人計較，一對鶴嘴筆已點了出去。筆尖專打穴道，中者寸步難移；師兄在旁時，兩人一齊出手更狠。', 'heBi', '', {
+        mods: { hp: 1.1, atk: 4, step: 4, range: 1 },
+        sig: { reach: 2 },
+        pincer: { atk: 6 }
+      })
+  },
+  // Board 18 光明頂: the schemer in a 少林 monk's robe, who comes out of the secret way in round 3.
+  chengKun: {
+    map: 18,
+    rank: 'boss',
+    row: 'master',
+    ...adversary('成昆', '少林寺', '倚天屠龍記', '混元霹靂手', '幻陰指', 'weak', 'duan',
+      '法名圓真，一生只在暗處佈局，借旁人的刀殺人，自己從不站到亮處。今日一道念頭推著他出了秘道，站到了峰頂亮處。幻陰指陰寒入骨，中者手上沒了力氣；他專挑落單的人下手。', 'chengKun', '', {
+        mods: { hp: 1.0, atk: 4, step: 5, range: 1 },
+        prefers: 'isolated'
+      })
+  },
+  // Board 19 俠客島: the other envoy, a second 局主 beside 張三, who goes after whoever has
+  // struck hardest this round (prefers 'striker', 罰惡).
+  liSi: {
+    map: 19,
+    rank: 'boss',
+    row: 'master',
+    ...adversary('李四', '俠客島', '俠客行', '石壁掌法', '罰惡令', 'exposed', 'guo',
+      '俠客島罰惡使，又高又瘦，一張臉從來不笑。十年一回，同兄弟持銅牌出島，罰的向來是他親眼斷定的惡人。今日不斷善惡，見人便罰；他只認得一件事：方才誰出手最重，便罰誰。', 'liSi', '', {
+        mods: { hp: 1.3, atk: 7, def: 1, step: 5, range: 1 },
+        prefers: 'striker'
       })
   }
 };
@@ -1030,6 +1222,51 @@ const TROOPS = {
     basic: '窄刀切腕',
     bio: '東方不敗念中的侍衛，慣獨繞花園，專切人持械的手腕。同伴一擠到身旁，刀路反而窄了。',
     traits: { mods: { step: 4, range: 1 }, lone: { atk: 8 } }
+  },
+  // The troop types of the boards added on 2026-11-28 (16 to 19).
+  shiLiang: {
+    row: 'scout',
+    name: '石樑派弟子',
+    role: '家丁',
+    school: '石樑溫家',
+    mini: 'shiLiang',
+    basic: '溫家刀法',
+    bio: '溫家老爺們念中的家丁，平日看守大院，老爺有事便擋在老爺身前。單刀砍得不算精，擋得倒很肯。',
+    traits: { mods: { step: 4, range: 1 }, cover: 'master' }
+  },
+  fanSeng: {
+    row: 'scout',
+    name: '西域番僧',
+    role: '守籠',
+    school: '汝陽王府',
+    mini: 'fanSeng',
+    basic: '降魔鐵杖',
+    bio: '玄冥二老念中的番僧，看守寺中鐵籠，一根鐵杖往籠前一拄，便似生了根。離了原地，卻也護不住自己。',
+    traits: {
+      mods: { hp: 1.2, def: 1, step: 3, range: 1 },
+      stance: { while: 'posted', cut: 30 },
+      post: { tile: 'spawn', tether: 1, wake: 'struck', note: '守在{tile}一格內；受到攻擊後才離位。' }
+    }
+  },
+  emei: {
+    row: 'scout',
+    name: '峨嵋弟子',
+    role: '劍陣',
+    school: '峨嵋派',
+    mini: 'emei',
+    basic: '峨嵋劍法',
+    bio: '滅絕師太念中的女弟子，師父劍尖指處便一齊上山。同門並肩時，劍陣相護，傷得輕的替傷得重的擋劍。',
+    traits: { mods: { hp: 0.85, step: 4, range: 1 }, cover: 'kin' }
+  },
+  islander: {
+    row: 'scout',
+    name: '俠客島弟子',
+    role: '短劍',
+    school: '俠客島',
+    mini: 'islander',
+    basic: '島上短劍',
+    bio: '兩位使者念中的島上弟子，隨潮水進洞。短劍刺一下便退，從不同人硬拚。',
+    traits: { mods: { step: 4, range: 1 }, glide: 1 }
   }
 };
 // One line per villain and troop type, by DETAILS key: the rule each plays by, never story. The
@@ -1085,6 +1322,21 @@ const GISTS = {
   ironPalm: '氣血不過半時，受到的傷害減半。',
   xiaGuard: '目標身旁另有黑子時，出手更重。',
   heiMuGuard: '身旁沒有同夥時，出手更重。',
+  wenDa: '五兄弟俱在時，五行陣使他受到的傷害減少；守在照壁北首，有人近身或打他才離位；厚土掌令目標攻擊降低。',
+  wenYi: '五兄弟俱在時，五行陣使他受到的傷害減少；守在照壁東北；銳金手令目標防禦降低。',
+  wenShan: '五兄弟俱在時，五行陣使他受到的傷害減少；守在照壁東南；寒水掌令目標絆足。',
+  wenShi: '五兄弟俱在時，五行陣使他受到的傷害減少；守在照壁西南；青木爪令目標攻擊降低。',
+  wenWu: '五兄弟俱在時，五行陣使他受到的傷害減少；守在照壁西北；烈火拳令目標防禦降低。',
+  shiLiang: '替溫方達受招。',
+  luZhang: '目標身旁另有黑子時，出手更重；玄冥神掌削去內力，並令目標絆足。',
+  heBi: '目標身旁另有黑子時，出手更重；鶴嘴筆隔兩格點穴，令目標絆足。',
+  fanSeng: '守在原地一格內，受擊才離位；站在原位時受到的傷害減三成。',
+  mieJue: '滅劍令目標防禦降低；氣血過半後攻擊大增。',
+  chengKun: '第三回合從秘道出來；幻陰指令目標攻擊降低；專挑落單者。',
+  emei: '相鄰的同門中，氣血較多者替對方受招。',
+  zhangSan: '蓄勢時替身邊受傷的同夥回復氣血。',
+  liSi: '專挑這一回合出手最重的俠客；罰惡令令目標防禦降低。',
+  islander: '出手後退開一步。',
   qiubai: '立在天元，有人近身或打他才離位；專挑領隊；氣血不會低於 1，任何破招對他都不成。五段五劍，一段比一段難纏；換作木劍，兩位局主趕到他身旁，此後身旁的局主替他受招；換作無劍，再來三位，唯無名傷得了他。'
 };
 // The same for a board's master as a guest on the last board, where he keeps no post, has no men
@@ -1105,7 +1357,11 @@ const GUEST_GISTS = {
   gongSun: '單數回合使金刀，攻擊提高；雙數回合使黑劍，射程多一格；絕技令目標攻擊降低。',
   qiuRen: '踏水如平地，移動不受地形拖累；鐵掌令目標防禦降低。',
   liQiu: '掌力轉折，無視地形防禦，旁人代受不了；絕技波及身旁；專挑倚仗掩體或有人代受的人。',
-  dongFang: '每次出手之後，再刺射程內另一人；飛針隔三格令目標絆足。'
+  dongFang: '每次出手之後，再刺射程內另一人；飛針隔三格令目標絆足。',
+  wenDa: '厚土掌令目標攻擊降低。',
+  luZhang: '目標身旁另有黑子時，出手更重；玄冥神掌削去內力，並令目標絆足。',
+  mieJue: '滅劍令目標防禦降低。',
+  zhangSan: '蓄勢時替身邊受傷的同夥回復氣血。'
 };
 // What each enemy fights with, by DETAILS key: the kind of weapon one of 無名's nine forms answers
 // (破招, game.js strikeFactor). Archers and dart-throwers are answered by reach, not by this, so
@@ -1114,16 +1370,16 @@ const GUEST_GISTS = {
 // the rounds he fights with the sword it is the sword that is answered (game.js armOf).
 const ARM_NAMES = { sword: '劍', blade: '刀', pole: '長兵', mace: '短兵', soft: '軟兵', hand: '拳掌' };
 const ARMS = {
-  sword: ['chief', 'blade', 'lieutenant-0', 'courier', 'qin', 'mirror', 'lieutenant-8', 'scout-4', 'zhaoZhong', 'wanZhen', 'wanDisciple'],
-  blade: ['scout', 'scout-0', 'lieutenant-1', 'snow', 'lieutenant-3', 'echoBlade', 'echoScout', 'scout-3', 'scout-6', 'qingShield', 'huaBlade', 'gongSun', 'shenLong', 'heiMuGuard'],
+  sword: ['chief', 'blade', 'lieutenant-0', 'courier', 'qin', 'mirror', 'lieutenant-8', 'scout-4', 'zhaoZhong', 'wanZhen', 'wanDisciple', 'mieJue', 'emei', 'islander'],
+  blade: ['scout', 'scout-0', 'lieutenant-1', 'snow', 'lieutenant-3', 'echoBlade', 'echoScout', 'scout-3', 'scout-6', 'qingShield', 'huaBlade', 'gongSun', 'shenLong', 'heiMuGuard', 'shiLiang'],
   // 長槍、大戟、棍、杖
-  pole: ['peach', 'scout-5', 'fengTiannan', 'fiveTiger'],
+  pole: ['peach', 'scout-5', 'fengTiannan', 'fiveTiger', 'luZhang', 'fanSeng'],
   // 鋼鞭、鐵鐧、點穴橛、摺扇、短棍、匕首、短刺、輪
-  mace: ['wall', 'lieutenant-6', 'xianYu', 'scout-1', 'scout-8', 'xiaGuard'],
+  mace: ['wall', 'lieutenant-6', 'xianYu', 'scout-1', 'scout-8', 'xiaGuard', 'heBi'],
   // 長索、軟鞭、拂塵、漁網
   soft: ['jadeHall', 'lieutenant-7', 'scout-7', 'scout-9', 'netHand'],
   // 拳、腳、指、掌
-  hand: ['reed', 'lieutenant-2', 'lieutenant-4', 'lieutenant-5', 'murong', 'lieutenant-9', 'scout-2', 'hongAn', 'qiuRen', 'liQiu', 'ironPalm']
+  hand: ['reed', 'lieutenant-2', 'lieutenant-4', 'lieutenant-5', 'murong', 'lieutenant-9', 'scout-2', 'hongAn', 'qiuRen', 'liQiu', 'ironPalm', 'wenDa', 'wenYi', 'wenShan', 'wenShi', 'wenWu', 'chengKun', 'zhangSan', 'liSi']
 };
 const ARM_OF = Object.fromEntries(Object.entries(ARMS).flatMap(([arm, keys]) => keys.map((key) => [key, arm])));
 
