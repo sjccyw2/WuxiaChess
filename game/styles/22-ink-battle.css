@@ -1437,3 +1437,114 @@ html.polish-ink-look .battlefield .field-dock {
     align-self: center;
   }
 }
+
+/* The portrait the size of 結束回合, the two standing level (bottoms on one line), and the art in
+   hand (換招, its name) in a row of its own above them, clear of the plate (the producer, 2026-11-27). */
+html.polish-ink-look .battlefield .field-dock {
+  align-items: end;
+}
+html.polish-ink-look .battlefield .unit-card {
+  grid-template-columns: var(--ink-stone-size) minmax(0, max-content);
+  align-items: end;
+}
+html.polish-ink-look .battlefield :is(.unit-face, .unit-face img) {
+  width: var(--ink-stone-size);
+  height: var(--ink-stone-size);
+}
+html.polish-ink-look .battlefield .unit-summary {
+  padding-bottom: 0;
+}
+@media (max-width: 600px) {
+  html.polish-ink-look .battlefield .field-dock {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'chips chips' 'card stone' 'tools tools';
+    align-items: end;
+  }
+  html.polish-ink-look .battlefield .unit-card {
+    grid-template-columns: var(--ink-stone-size) minmax(0, max-content);
+  }
+  html.polish-ink-look .battlefield :is(.unit-face, .unit-face img) {
+    width: var(--ink-stone-size);
+    height: var(--ink-stone-size);
+  }
+  html.polish-ink-look .battlefield .command-dock {
+    display: contents;
+  }
+  html.polish-ink-look .battlefield .command-dock .turn-action {
+    grid-area: stone;
+    align-self: end;
+    pointer-events: auto;
+  }
+  html.polish-ink-look .battlefield .command-dock .field-action:not(.turn-action) {
+    grid-row: 1;
+    pointer-events: auto;
+  }
+  html.polish-ink-look .battlefield .command-dock .field-action.aim-back {
+    grid-column: 1;
+    justify-self: start;
+  }
+  html.polish-ink-look .battlefield .command-dock .field-action.armed-art {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+  html.polish-ink-look .battlefield .command-dock .field-action.armed-art:only-of-type,
+  html.polish-ink-look .battlefield .command-dock .armed-art:first-child {
+    justify-self: start;
+  }
+  html.polish-ink-look .battlefield .unit-name strong {
+    font-size: 20px;
+  }
+  html.polish-ink-look .battlefield .unit-vital.hp > b {
+    font-size: 22px;
+  }
+}
+/* An upright phone: the tip line under the top line, clear of the plate and the stone. */
+@media (orientation: portrait) and (max-width: 800px) {
+  html.polish-ink-look .battlefield > .board-tip {
+    top: calc(var(--top) + 104px);
+    bottom: auto;
+    max-width: calc(100% - 2 * var(--left));
+  }
+}
+
+/* The reach back in the phone's arts list (the producer, 2026-11-27): on the name's line, after
+   the name, as the desktop list shows it ("普攻 · 1 格", "友軍 · 2 格"). */
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art {
+    grid-template-columns: 26px auto minmax(0, 1fr) auto;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art strong {
+    grid-column: 2;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > span > small {
+    display: block;
+    grid-column: 3;
+    grid-row: 1;
+    align-self: baseline;
+    margin-left: 4px;
+    font: 500 13px var(--sans);
+    letter-spacing: 0.04em;
+    color: var(--ink-kaya);
+    white-space: nowrap;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art > b {
+    grid-column: 4;
+  }
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-facts {
+    grid-column: 2 / 5;
+  }
+}
+/* The same words a little stronger on every screen, since the reach decides what can be struck. */
+html.polish-ink-look .battlefield #arts-panel .field-art > span > small {
+  color: var(--ink-kaya);
+}
+@media (orientation: portrait) and (max-width: 800px), (max-width: 540px) {
+  html.polish-ink-look.polish-action-flow .battlefield #arts-panel .field-art .fo-nearby {
+    display: block;
+    grid-column: 2 / 5;
+    grid-row: 3;
+    margin: 1px 0 0;
+    font: 500 12px var(--sans);
+    color: var(--ink-kaya);
+  }
+}

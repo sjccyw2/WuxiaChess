@@ -619,3 +619,15 @@ html.polish-ink-look #modal[data-full] .fy-story .mj-fixed-foot .gold-btn {
     padding-bottom: 20px;
   }
 }
+
+/* An upright phone: 三盅通吃 is a line of the page and scrolls with it, under the painting; the
+   page's words start below 韋小寶's face (the producer, 2026-11-27). */
+@media (max-width: 600px) {
+  html.polish-ink-look #modal[data-page='camp'] .lk-invite {
+    position: static;
+    margin: 0 0 14px;
+  }
+  html.polish-ink-look #modal[data-page='camp'] .mj-scroll {
+    padding-top: 230px;
+  }
+}

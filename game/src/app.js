@@ -1044,6 +1044,7 @@ function openPage(name, heroId) {
   drawModal();
   if (!dialog.open) {
     dialog.showModal();
+    openedAt = performance.now();
     startFocus();
   }
   // A page opened behind the notice that another tab has the game stays behind it.
@@ -1209,7 +1210,13 @@ dialog.addEventListener('close', () => {
     opener.focus({ preventScroll: true });
   returnControl = '';
 });
+// When a page was last opened. On a touch screen the browser sends its click after the finger
+// lifts; a tap on the board that opens a page (the strike preview, the enemy's page) lifts the
+// finger first, so that click lands on the newly opened page's backdrop and would shut it again
+// at once. A backdrop click so soon after opening is that same tap, not a wish to close.
+let openedAt = 0;
 dialog.addEventListener('click', (e) => {
+  if (e.target === dialog && performance.now() - openedAt < 500) return;
   if (e.target === dialog) {
     const r = dialog.getBoundingClientRect();
     if (e.clientX < r.left || e.clientY < r.top || e.clientX > r.right || e.clientY > r.bottom)
