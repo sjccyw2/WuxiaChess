@@ -542,7 +542,8 @@ const SIDE_TALES = {
   spareLife: '那人我押他走得下盤去，你們真就留了他一口氣。心腸好，賭運也好。',
   oneBlow: '一下子就躺了？我還沒看清呢。這口押得值。',
   counterFell: '他先動手，倒的卻是他。後發制人，這叫做學問。',
-  turned: '自己人打自己人，打得還挺賣力。借刀殺人，這把刀借得好。',
+  splashFell: '打的是這個，倒的是那個。隔山打牛，我押中了！',
+  poisonFell: '毒是下了，人是自己倒的。這一口贏得乾淨，嘿嘿，不乾淨。',
   summitFinish: '壓箱底的功夫一出，局主便收了攤。我就押這一手！',
   // A kind without a line of its own.
   done: '這一口，你押中啦。'

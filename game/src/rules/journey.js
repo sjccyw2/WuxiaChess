@@ -1301,13 +1301,27 @@ const SIDE_KINDS = {
     progress: () => '',
     lost: () => ''
   },
-  turned: {
-    name: () => '借刀殺人',
+  // 隔山打牛 and 毒發身亡 took the place of 借刀殺人 (a turned foe felling another), which was too
+  // hard (the producer, 2026-11-28, Q-N176).
+  splashFell: {
+    name: () => '隔山打牛',
     sort: 'reach',
-    // Only with a hero in the line-up who can turn a foe (受制).
-    eligible: (s) => lineup(s).some((u) => (u.learned || []).some((id) => TECHNIQUES[id]?.charm)),
-    detail: () => '讓一名受制的敵人擊倒另一名敵人。',
-    state: (s) => (s.tally?.falls.some((f) => f.turned) ? 'met' : 'open'),
+    eligible: () => true,
+    detail: () => '以打在另一名敵人身上的餘勁（濺射、餘勁躍擊、貫穿）擊倒一名敵人。',
+    state: (s) => (s.tally?.falls.some((f) => f.by && f.how === 'splash') ? 'met' : 'open'),
+    progress: () => '',
+    lost: () => ''
+  },
+  poisonFell: {
+    name: () => '毒發身亡',
+    sort: 'reach',
+    // Only with a hero in the line-up who can lay poison.
+    eligible: (s) =>
+      lineup(s).some((u) =>
+        ['signature', ...(u.learned || [])].some((id) => G.artFor(u, id)?.poison || TECHNIQUES[id]?.poison)
+      ),
+    detail: () => '讓一名敵人死於俠客所下的毒。',
+    state: (s) => (s.tally?.falls.some((f) => f.by && f.how === 'poison') ? 'met' : 'open'),
     progress: () => '',
     lost: () => ''
   },

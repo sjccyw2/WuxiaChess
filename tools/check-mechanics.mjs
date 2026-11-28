@@ -5122,7 +5122,7 @@ section('珍品, 秘笈, the cups’ grades and 籌碼 (the producer, 2026-11-28
   check('…failed once it falls, and says so', R.sideState(s) === 'failed' && R.sideLost(s).endsWith('已倒下'));
 }
 
-section('second slice: 見好就收, 灌鉛骰子, 莊家運, 挑盤口, 玄鐵令, 連中 and four kinds (2026-11-28)');
+section('second slice: 見好就收, 灌鉛骰子, 莊家運, 挑盤口, 玄鐵令, 連中 and five kinds (2026-11-28)');
 {
   const camp = () => {
     const c = realBoard(0, 0);
@@ -5237,9 +5237,17 @@ section('second slice: 見好就收, 灌鉛骰子, 莊家運, 挑盤口, 玄鐵�
   fall({ how: 'counter' });
   check('後發制人: met by a hero’s counter', R.sideState(s) === 'met');
   s.tally.falls = [];
-  s.run.side = { kind: 'turned', reward: 'manual', odds: 2 };
-  fall({ by: null, turned: true });
-  check('借刀殺人: met by a turned foe’s blow', R.sideState(s) === 'met');
+  s.run.side = { kind: 'splashFell', reward: 'manual', odds: 2 };
+  fall({ how: 'basic' });
+  check('隔山打牛: open on a fall to the blow itself', R.sideState(s) === 'open');
+  fall({ how: 'splash' });
+  check('…met by a hero’s splash', R.sideState(s) === 'met');
+  s.tally.falls = [];
+  s.run.side = { kind: 'poisonFell', reward: 'manual', odds: 2 };
+  fall({ by: null, how: 'poison' });
+  check('毒發身亡: open on poison no hero laid', R.sideState(s) === 'open');
+  fall({ how: 'poison' });
+  check('…met on a hero’s poison', R.sideState(s) === 'met');
   s.tally.falls = [];
   s.run.side = { kind: 'summitFinish', reward: 'manual', odds: 2 };
   fall({ how: 'art', art: 'sevenInjuries' });
@@ -5253,7 +5261,7 @@ section('second slice: 見好就收, 灌鉛骰子, 莊家運, 挑盤口, 玄鐵�
     foe = G.enemies(s)[0];
   Object.assign(foe, { x: 4, y: 3, hp: 1, maxHp: 1 });
   G.resolve(s, h, foe, false);
-  check('a fall from full 氣血 in one blow is marked fresh', s.tally.falls.at(-1)?.fresh === true && s.tally.falls.at(-1)?.turned === false);
+  check('a fall from full 氣血 in one blow is marked fresh', s.tally.falls.at(-1)?.fresh === true);
 }
 
 section('saves');

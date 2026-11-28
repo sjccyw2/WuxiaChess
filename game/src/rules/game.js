@@ -3569,7 +3569,7 @@ function winsIfFalls(s, ids) {
 // ── Facts a secondary objective reads (journey.js SIDE_KINDS) ────────────
 // `s.tally` is kept from the moment a run's board is set up; a game without one records nothing.
 const blankTally = () => ({
-  falls: [], // every enemy fall, in order: { id, by, how, art, combo, answered, fresh, turned, round, phase }
+  falls: [], // every enemy fall, in order: { id, by, how, art, combo, answered, fresh, round, phase }
   doses: 0, // medicine taken in the fight scene, deployment included
   leaderHurt: 0, // 氣血 the leader lost to enemies
   fired: {}, // villain behaviours that happened: { mirror, mend, herbs }
@@ -3595,8 +3595,6 @@ function noteFall(s, u, source) {
     combo: !!blowNow.combo,
     answered: !!blowNow.answered,
     fresh: !!blowNow.fresh,
-    // 借刀殺人: felled by a foe a hero had turned (受制).
-    turned: !!source && !ally(source) && charmed(source),
     round: s.round,
     phase: s.phase
   });

@@ -381,7 +381,7 @@ function holdValue(s, u, t, f, ctx) {
 const SIDE_W = {
   lastBlow: 60, lastBlowOther: -80, orderEarly: -80, lateRound: 10, double: 25, mirrorCharge: -60,
   mendValue: 30, herbsValue: 30, combo: 40, holdLineKill: 30, holdLinePlace: 8, holdLineReach: 2, answer: 50,
-  unhurtDanger: 4, intactLethal: 3, spareLife: -80, oneBlow: 40, summit: 60
+  unhurtDanger: 4, intactLethal: 3, spareLife: -80, oneBlow: 40, summit: 60, splashFell: 40
 };
 const piece = (s, ref) => G.find(s, G.refId(s.mapIndex, ref));
 const standing = (s, id) => {
@@ -451,6 +451,10 @@ const SIDE_POLICY = {
   answer: {
     fell: (s, side, blow) => ({ score: blow.main && blow.u.id === side.hero && blow.answered ? SIDE_W.answer : 0 })
   },
+  // 隔山打牛: a blow whose splash fells a piece other than the one it struck.
+  splashFell: {
+    fell: (s, side, blow) => ({ score: [...blow.gone].some((v) => v !== blow.struck) ? SIDE_W.splashFell : 0 })
+  },
   // 一擊斃命: a blow that fells a piece from full 氣血.
   oneBlow: {
     fell: (s, side, blow) => ({ score: blow.main && blow.fresh ? SIDE_W.oneBlow : 0 })
@@ -517,6 +521,7 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
       combo: !!(f.plan?.spentMark || f.plan?.spentPoison),
       answered: !!art?.answer && G.strikeFactor(s, u, art, victim).notes.some((n) => n.startsWith('破招 · ')),
       fresh: gone.has(victim) && victim.hp >= victim.maxHp,
+      struck: victim,
       summit: art?.kind === 'refinement' && gone.has(victim)
     };
     const side = ctx.sidePolicy.fell ? ctx.sidePolicy.fell(s, ctx.side, blow) : { score: 0 };
