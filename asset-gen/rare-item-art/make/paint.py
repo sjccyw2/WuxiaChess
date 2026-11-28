@@ -35,6 +35,16 @@ ITEMS = {
     'ironToken': '玄鐵令, a black iron token of command: a thick, round-cornered rectangular plaque of dull blue-black '
                  'meteoric iron, an archaic seal-script character raised on its face, a short black silk cord through a hole at the top',
     'lot-pebble': 'a single plain, smooth, flat grey river pebble, nothing else: the empty prize of a cup game',
+    'limeBag': '石灰包, a small rough cloth pouch tied at the neck with string, bulging with quicklime, a little white '
+               'powder spilling from a loose corner',
+    'thunderBomb': '霹靂雷火彈 from wuxia fiction: a round antique Chinese fire-pot of dark glazed clay, the size of a '
+                   'fist, bound with two thin bronze bands, a short twisted red paper wick on top, a small paper seal',
+    'bearPill': '九轉熊蛇丸, a single large lustrous dark red-brown medicinal pill resting in an open small carved '
+                'sandalwood box lined with yellow silk',
+    'treasureVest': '護身寶衣, a close-fitting sleeveless inner vest woven of fine dark gold silk mesh that glints, '
+                    'with frog fastenings down the front, laid flat',
+    'sutra': '四十二章經, one volume of the Forty-two Chapter Sutra: an old thread-bound book with a yellow brocade cover '
+             'edged in red, a blank title slip, Manchu-court style, its silk wrapper half open',
     'guide-secret': 'a secret martial-arts manual (秘笈): an old thread-bound Chinese book with a dark indigo cover, a '
                     'blank vermilion title slip, its corners worn and a red silk ribbon tied round it',
 }

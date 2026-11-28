@@ -287,7 +287,7 @@ const board = new BattleBoard({
       return;
     }
     let info = '';
-    if (goal && goal.x === x && goal.y === y) info = '支線燈記';
+    if (goal && goal.x === x && goal.y === y) info = G.markerName(state);
     else if (deploying() && postAt(x, y) >= 0) info = '起陣格 · 陣位' + POSTS[postAt(x, y)];
     else if (holdLineAt(x, y)) info = '支線界線 · 援軍不得踏入' + state.run.side.place;
     else if ((mode === 'move' || mode === 'glide') && steps) info = steps + ' 步';
@@ -2618,6 +2618,22 @@ function command(action, id, data = {}, keyboard = false) {
     case 'back-shop':
       if (dialogState === 'bowls') openPage('camp');
       break;
+    // 0.70: throw an item at a foe, or give 九轉熊蛇丸 to a fallen companion (the inventory page).
+    case 'item-target': {
+      const u = G.find(state, viewId),
+        t = G.find(state, data.target),
+        item = G.ITEMS[id];
+      const ok = item?.throw ? G.throwItem(state, u, t, id) : item?.revive ? G.revive(state, u, t, id) : false;
+      if (!ok) {
+        audio('deny');
+        break;
+      }
+      audio(item.throw ? 'blow' : 'heal');
+      closePage();
+      update();
+      if (state.result) result(true);
+      break;
+    }
     // 見好就收: the prize lifted is staked for the grade up or a pebble.
     case 'bowl-dare':
       if (dialogState === 'bowls' && gamble(state)) {

@@ -45,7 +45,8 @@ function boardPlan(map, s = null, route = null) {
     layout,
     foes,
     objects,
-    lamp: s && side?.kind === 'lamp' ? G.objectiveTile(s) : null,
+    lamp: s && ['lamp', 'chest'].includes(side?.kind) ? G.objectiveTile(s) : null,
+    chest: side?.kind === 'chest',
     zone: s && side?.kind === 'holdLine' ? side.zone : null
   };
 }
@@ -74,7 +75,7 @@ function planGrid(plan, posts) {
     )
     .join('');
   const lamp = plan.lamp
-    ? '<span class="wake-map-lamp" role="img" aria-label="支線燈記" style="' + place(plan.lamp.x, plan.lamp.y) + '">✦</span>'
+    ? '<span class="wake-map-lamp" role="img" aria-label="' + (plan.chest ? '寶箱' : '支線燈記') + '" style="' + place(plan.lamp.x, plan.lamp.y) + '">✦</span>'
     : '';
   return (
     '<div class="fo-map-grid plan-grid" style="--map-w:' +
@@ -105,7 +106,7 @@ function planKey(plan) {
       .filter((o, i, all) => all.findIndex((x) => x.name === o.name) === i)
       .map((o) => '<span><img class="plan-object-key ' + o.kind + '" src="' + o.art + '" alt="">' + o.name + (o.kind === 'keep' ? '（守）' : '（破）') + '</span>')
       .join('') +
-    (plan.lamp ? '<span><i class="wake-map-lamp">✦</i>支線燈記</span>' : '') +
+    (plan.lamp ? '<span><i class="wake-map-lamp">✦</i>' + (plan.chest ? '寶箱' : '支線燈記') + '</span>' : '') +
     (plan.zone ? '<span><i class="plan-zone-key"></i>支線界線</span>' : '') +
     '</p>'
   );

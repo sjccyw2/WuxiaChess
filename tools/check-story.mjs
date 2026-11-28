@@ -231,6 +231,15 @@ function forceSide(s) {
   if (side.kind === 'counterFell') fall(foe, { by: hero, how: 'counter' });
   if (side.kind === 'splashFell') fall(foe, { by: hero, how: 'splash' });
   if (side.kind === 'summitFinish') fall('master', { by: hero, how: 'art', art: 'dragonReserve' });
+  // 0.70: the chest opened; one hero fewer on the board (the last fielded who is not the leader).
+  if (side.kind === 'chest') r.marked = true;
+  if (side.kind === 'fewer') {
+    const spare = G.party(s).filter((u) => u.id !== s.leader).at(-1);
+    if (spare) {
+      s.units = s.units.filter((u) => u !== spare);
+      r.bench.push(spare); // benched, so still of the company
+    }
+  }
 }
 // A tiny seeded generator so a failure can be reproduced from the seed.
 const dice = (seed) => () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);

@@ -5,7 +5,8 @@ import { rows, links, link, cells, gameArt } from './parts.js';
 import { NOTES } from './notes.js';
 import { itemTerms, ruleLinks } from './terms.js';
 
-const KINDS = { weapon: '兵器', gear: '護具', use: '丹藥', token: '信物' };
+const KINDS = { weapon: '兵器', gear: '護具', use: '丹藥', token: '信物', relic: '奇珍' };
+const GRADE_NAMES = { rare: '珍品', secret: '秘寶' };
 // An item or manual with no line in the shop's stock is not sold there; a 珍品 or a 秘笈 comes only
 // from 三盅通吃 and the 支線.
 const shelf = (entry, rare = false) =>
@@ -26,13 +27,13 @@ function item(id) {
   return {
     id,
     name: it.name,
-    tag: it.grade === 'rare' ? '珍品 · ' + KINDS[it.kind] : KINDS[it.kind],
+    tag: it.grade ? GRADE_NAMES[it.grade] + ' · ' + KINDS[it.kind] : KINDS[it.kind],
     summary: it.desc,
     image: gameArt('item-' + id + '.webp'),
     sections: [
       rows('器物資料', [
         ['類別', KINDS[it.kind]],
-        it.grade === 'rare' && ['品級', '珍品'],
+        it.grade && ['品級', GRADE_NAMES[it.grade]],
         ['適用', owner ? owner.name + '專屬' : '全隊可用'],
         starts.length && ['起手所持', starts.map((hero) => G.DETAILS[hero].name).join('、')],
         it.atk && ['攻擊', it.atk],
@@ -47,7 +48,7 @@ function item(id) {
         it.hp && ['回復氣血', it.hp],
         it.mp && ['回復內力', it.mp]
       ]),
-      rows('取得與使用', [...shelf(G.MARKET_STOCK[id], it.grade === 'rare'), ['使用方式', NOTES.itemUse[it.kind]]]),
+      rows('取得與使用', [...shelf(G.MARKET_STOCK[id], !!it.grade), ['使用方式', it.throw || it.revive ? NOTES.itemUse.thrown : NOTES.itemUse[it.kind]]]),
       ruleLinks(itemTerms(id)),
       owner && links('所屬俠客', [link('heroes', it.owner, owner.name)])
     ].filter(Boolean),

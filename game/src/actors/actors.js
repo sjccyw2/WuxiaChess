@@ -255,6 +255,8 @@ class ActorLayer {
         // pose() extends this through the killing blow and any preceding walk.
         this.track(u.id).exit = this.time + (prefs.motion ? 600 : 280);
       }
+      // 九轉熊蛇丸 (0.70): a fallen hero who rises can fall again.
+      if (old && old.hp <= 0 && u.hp > 0) Object.assign(this.track(u.id), { exit: 0, fell: false });
       this.snapshot.set(u.id, { x: u.x, y: u.y, hp: u.hp, blinkSerial: u.blinkSerial });
     }
   }
@@ -734,6 +736,27 @@ class ActorLayer {
       c.save();
       c.translate(point.x, point.y);
       c.scale(radius, radius);
+      // 奪寶 (0.70): a small chest, banded in gold, in place of the lamp.
+      if (s.run?.side?.kind === 'chest') {
+        this.path([
+          { x: -0.8, y: -1.1 },
+          { x: 0.8, y: -1.1 },
+          { x: 0.8, y: 0 },
+          { x: -0.8, y: 0 }
+        ]);
+        c.fillStyle = '#7a4a1e';
+        c.fill();
+        c.lineWidth = 0.12;
+        c.strokeStyle = '#ffe69b';
+        c.stroke();
+        c.beginPath();
+        c.moveTo(-0.8, -0.62);
+        c.lineTo(0.8, -0.62);
+        c.moveTo(0, -0.75);
+        c.lineTo(0, -0.45);
+        c.stroke();
+        c.restore();
+      } else {
       this.path([
         { x: 0, y: -1.6 },
         { x: 0.6, y: -0.82 },
@@ -752,6 +775,7 @@ class ActorLayer {
       c.lineTo(0, -0.28);
       c.stroke();
       c.restore();
+      }
     }
     // tileCursor: cursor.js paints animated brackets and answers true.
     if (hover && !paintCursor(this, hover, this.time)) {

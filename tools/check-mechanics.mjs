@@ -5056,9 +5056,9 @@ section('珍品, 秘笈, the cups’ grades and 籌碼 (the producer, 2026-11-28
   s.stock.snowLotus = 1;
   check('天山雪蓮: clears every ailment, then 40 氣血 and 40 內力', G.consume(s, m, 'snowLotus') && m.hp === 50 && m.mp === 40 && !m.conditions.poison);
   // 珍品 and 秘笈 are never on the shelf.
-  check('no 珍品 is in the shelf’s stock', FM.RARE_STOCK.length === 7 && FM.RARE_STOCK.every((id) => !FM.MARKET_STOCK[id]));
+  check('no 珍品 is in the shelf’s stock', FM.RARE_STOCK.length === 9 && FM.RARE_STOCK.every((id) => !FM.MARKET_STOCK[id]) && FM.SECRET_ITEMS.every((id) => !FM.MARKET_STOCK[id]));
   check('…two of them tokens, which cannot be equipped', same(FM.TOKENS, ['loadedDice', 'ironToken']) && (() => { const c = board(['hero', 'medic', 'guard'], 7); c.stock.ironToken = 1; c.run.scene = 'prep'; return !G.equip(c, unit(c, 'hero'), 'ironToken'); })());
-  check('no 秘笈 can be on the shelf', FM.SECRET_MANUALS.length === 4 && FM.SECRET_MANUALS.every((id) => FM.manualStage(id) === Infinity));
+  check('no 秘笈 can be on the shelf', FM.SECRET_MANUALS.length === 8 && FM.SECRET_MANUALS.every((id) => FM.manualStage(id) === Infinity));
   // 獅子吼: hurts heroes within two of the striker, never below 1, and not one under 固守.
   s = board(['hero', 'medic', 'guard'], 7);
   const roarer = put(s, 'hero', 3, 3),
@@ -5162,7 +5162,7 @@ section('second slice: 見好就收, 灌鉛骰子, 莊家運, 挑盤口, 玄鐵�
   s = camp();
   v = table(s, ['yuanBlade', 'remedy', 'pine']);
   FM.pickBowl(s, 0);
-  check('…on a 珍品, for a 秘笈', FM.SECRET_MANUALS.includes(FM.gambleOffer(s)?.up));
+  check('…on a 珍品, for a 秘寶', FM.gradeOf(FM.gambleOffer(s)?.up) === 'secret');
   s.stock.yuanBlade = 0;
   check('…and not once the prize has left the store', !FM.gambleOffer(s));
   // 灌鉛骰子
@@ -5218,7 +5218,7 @@ section('second slice: 見好就收, 灌鉛骰子, 莊家運, 挑盤口, 玄鐵�
   s = realBoard(0, 0);
   s.run.streak = 2;
   winBet(s, true);
-  check('連中: the third bet met in a row brings a gift, and the count starts again', s.run.streak === 0 && !!s.run.last.gift && (FM.TOKENS.includes(s.run.last.gift) ? s.run.tokens[s.run.last.gift] === 1 : G.ITEMS[s.run.last.gift] ? s.stock[s.run.last.gift] >= 1 : s.run.manuals.includes(s.run.last.gift)));
+  check('連中: the third bet met in a row brings a gift, and the count starts again', s.run.streak === 0 && !!s.run.last.gift && (s.run.last.gift === 'sutra' ? s.run.chronicle.sutras?.length === 1 : FM.TOKENS.includes(s.run.last.gift) ? s.run.tokens[s.run.last.gift] === 1 : G.ITEMS[s.run.last.gift] ? s.stock[s.run.last.gift] >= 1 : s.run.manuals.includes(s.run.last.gift)));
   s = realBoard(0, 0);
   s.run.streak = 2;
   winBet(s, false);
@@ -5319,6 +5319,134 @@ section('poison: layers, growth with the hero, 引爆餘毒 without a cap (0.71;
   BM.applyCondition(s, old, { kind: 'poison', power: 4, turns: 2 }, unit(s, 'medic'));
   check('a poison saved before layers reads as one layer', BM.poisonLayers(old.conditions.poison).length === 2 && old.conditions.poison.power === 10);
   check('the board names the layers: 中毒 ×2', BM.activeEffects(old, s.round)[0].startsWith('中毒 ×2'));
+}
+
+section('third slice: endure, thrown items, revival, 奪寶, 以寡敵眾, 四十二章經 and 秘笈 (0.70)');
+{
+  // 護身寶衣: once a board, a felling blow leaves 1 氣血.
+  let s = board(['hero', 'medic', 'guard'], 7);
+  const g = unit(s, 'guard'),
+    foe = G.enemies(s)[0];
+  g.gear = 'treasureVest';
+  g.hp = 20;
+  G.wound(s, g, 50, foe);
+  check('護身寶衣: a felling blow leaves 1 氣血', g.hp === 1 && s.tally.endured.includes('guard'));
+  g.hp = 20;
+  G.wound(s, g, 50, foe);
+  check('…once a board', !G.living(g));
+  // 龜息功: 龜息 and 定身 on the user until the enemies have gone; every felling blow leaves 1.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const m = unit(s, 'medic');
+  m.learned = ['turtleBreath'];
+  m.slots = ['signature', 'turtleBreath', null];
+  m.activeArt = 'turtleBreath';
+  m.mp = m.maxMp;
+  G.resolve(s, m, m, true);
+  check('龜息功: 龜息 and 定身 on the user', !!m.conditions.endure && !!m.conditions.freeze);
+  m.hp = 9;
+  G.wound(s, m, 40, G.enemies(s)[0]);
+  G.wound(s, m, 40, G.enemies(s)[0]);
+  check('…every felling blow leaves 1 while it lasts', m.hp === 1);
+  // 蛤蟆功: only from where the hero began the turn.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const toad = unit(s, 'hero');
+  toad.learned = ['toadPower'];
+  toad.slots = ['signature', 'toadPower', null];
+  check('蛤蟆功: ready before a move', G.artReady(s, toad, 'toadPower').ok);
+  toad.moved = true;
+  check('…not after one', !G.artReady(s, toad, 'toadPower').ok);
+  // 石灰包: 定身 one round on a foe within two; a master just held shakes it off.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const h = put(s, 'hero', 3, 3),
+    near = G.enemies(s)[1],
+    far = G.enemies(s)[2];
+  Object.assign(near, { x: 5, y: 3 });
+  Object.assign(far, { x: 7, y: 3 });
+  s.stock.limeBag = 2;
+  check('石灰包: it reaches two tiles, not three', G.throwTargets(s, h, 'limeBag').includes(near) && !G.throwTargets(s, h, 'limeBag').includes(far));
+  check('…throws, holds the foe and takes the action', G.throwItem(s, h, near, 'limeBag') && !!near.conditions?.freeze && h.acted && s.stock.limeBag === 1);
+  // 霹靂雷火彈: grown with the thrower; four tenths on every piece beside, heroes too.
+  s = board(['hero', 'medic', 'guard'], 7);
+  // A free tile with free tiles beside it on this map: the target there, a hero beside, the thrower near.
+  const open = (x, y) => G.walkable(x, y, s.mapIndex) && !G.at(s, x, y);
+  const spot = (() => {
+    for (let y = 1; y < 11; y++)
+      for (let x = 3; x < 11; x++)
+        if (open(x, y) && open(x + 1, y) && open(x - 2, y)) return { x, y };
+  })();
+  const target = G.enemies(s)[0];
+  Object.assign(target, { x: spot.x, y: spot.y, hp: 500, maxHp: 500 });
+  const beside = put(s, 'medic', spot.x + 1, spot.y),
+    thrower = put(s, 'hero', spot.x - 2, spot.y);
+  s.stock.thunderBomb = 1;
+  const plan = G.throwPlan(s, thrower, target, 'thunderBomb'),
+    before = beside.hp;
+  check('霹靂雷火彈: 30 grown with the thrower, four tenths beside', plan.blast === Math.round(30 * (1 + thrower.level / 5)) && plan.splash === Math.round(plan.blast * 0.4));
+  G.throwItem(s, thrower, target, 'thunderBomb');
+  check('…the blast takes it, defence or not, and a hero beside is hurt too', target.hp === 500 - plan.blast && beside.hp === before - plan.splash);
+  // 九轉熊蛇丸: a fallen hero beside the user rises with three tenths.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const giver = put(s, 'medic', 3, 3),
+    down = put(s, 'guard', 4, 3);
+  down.hp = 0;
+  s.stock.bearPill = 1;
+  check('九轉熊蛇丸: the fallen beside are listed', G.reviveTargets(s, giver, 'bearPill').includes(down));
+  check('…and one rises with three tenths, spent for the round', G.revive(s, giver, down, 'bearPill') && down.hp === Math.round(down.maxHp * 0.3) && down.acted && giver.acted && s.stock.bearPill === 0);
+  s = board(['hero', 'medic', 'guard'], 7);
+  const giver2 = put(s, 'medic', 3, 3),
+    down2 = put(s, 'guard', 4, 3);
+  down2.hp = 0;
+  put(s, 'hero', 4, 3); // someone stands where he fell
+  s.stock.bearPill = 1;
+  check('…on a free tile beside the giver when his own is taken', G.revive(s, giver2, down2, 'bearPill') && G.distance(down2, giver2) === 1 && !(down2.x === 4 && down2.y === 3));
+  // 奪寶: open it first, or an enemy takes it.
+  s = realBoard(0, 0);
+  s.run.side = { kind: 'chest', reward: 'coins', odds: 2 };
+  const tile = G.objectiveTile(s);
+  check('奪寶: the chest stands on the lamp’s tile, named 寶箱', !!tile && G.markerName(s) === '寶箱');
+  const opener = unit(s, s.leader);
+  Object.assign(opener, tile);
+  G.waitUnit(s, opener);
+  check('…a hero who ends there opens it', s.run.marked === true && R.sideState(s) === 'met');
+  s = realBoard(0, 0);
+  s.run.side = { kind: 'chest', reward: 'coins', odds: 2 };
+  const thief = G.enemies(s)[0];
+  Object.assign(thief, G.objectiveTile(s));
+  G.noteStanding(s, thief);
+  check('…an enemy who stands there first takes it', s.tally.chestLost && R.sideState(s) === 'failed' && !G.unclaimedObjectiveTile(s));
+  s = realBoard(0, 0);
+  s.run.side = { kind: 'chest', reward: 'coins', odds: 2 };
+  s.run.marked = true;
+  for (const e of G.enemies(s)) e.hp = 0;
+  s.arrivals = {};
+  G.check(s);
+  const stockBefore = JSON.stringify(s.stock);
+  R.settle(s);
+  check('…and it pays a 珍品 with the bet', FM.RARE_STOCK.includes(s.run.last.side.chest) && JSON.stringify(s.stock) !== stockBefore);
+  // 以寡敵眾: fewer on the board than could go.
+  s = realBoard(0, 0);
+  s.run.side = { kind: 'fewer', reward: 'manual', odds: 3 };
+  check('以寡敵眾: failed with everyone fielded', R.sideState(s) === 'failed');
+  const benched = G.party(s).filter((u) => u.id !== s.leader).at(-1);
+  s.units = s.units.filter((u) => u !== benched);
+  s.run.bench.push(benched);
+  check('…open with one on the bench', R.sideState(s) === 'open');
+  // 四十二章經: the next volume, into the profile; more 珍品 with each; the first table at eight.
+  s = realBoard(0, 0);
+  for (const e of G.enemies(s)) e.hp = 0;
+  s.arrivals = {};
+  G.check(s);
+  R.settle(s);
+  s.run.scene = 'shop';
+  FM.grantLot(s, 'sutra');
+  FM.grantLot(s, 'sutra');
+  check('四十二章經: each is the next volume, kept in the profile', same(s.run.chronicle.sutras, [1, 2]) && R.validProfile(s.run.chronicle));
+  s.run.chronicle.sutras = [1, 2, 3, 4, 5, 6, 7, 8];
+  check('…none is dealt once all eight are found', !FM.secretLots(s.run).includes('sutra'));
+  s.run.stage = 0;
+  const first = FM.makeVisit(s, true);
+  check('…and with all eight the run’s first table holds a 秘寶', first.cards.some((id) => FM.gradeOf(id) === 'secret'));
+  check('秘寶 items are dealt by the cups: 護身寶衣 and 九轉熊蛇丸', ['treasureVest', 'bearPill'].every((id) => FM.secretLots(s.run).includes(id) && FM.gradeOf(id) === 'secret'));
 }
 
 section('saves');

@@ -686,7 +686,7 @@ class BattleBoard {
           G.terrain(x, y, this.mapIndex) +
           '。' +
           G.terrainInfo(x, y, this.mapIndex).note +
-          (marker && marker.x === x && marker.y === y ? '支線燈記。' : '') +
+          (marker && marker.x === x && marker.y === y ? G.markerName(this.s) + '。' : '') +
           (due ? '敵援入場處，第' + G.NUMERALS[due - 1] + '回合。' : '') +
           (post >= 0 ? '起陣格，陣位' + G.NUMERALS[post] + '。' : '') +
           (this.reach.has(G.key(x, y)) ? '可移動至此。' : '')

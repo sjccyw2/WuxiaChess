@@ -146,6 +146,7 @@ const RULE_GROUPS = [
     terms: [
       { id: 'wound', name: '內傷', art: 'wound', condition: 'wound', text: '療傷減半，每次出手攻擊後自損氣血' },
       { id: 'disarm', name: '纏械', art: 'disarm', condition: 'disarm', text: '攻擊降低，普攻與絕技只能攻擊相鄰一格' },
+      { id: 'endure', name: '龜息', art: 'endure', condition: 'endure', text: '至敵方回合結束，一擊本會令自己倒下時，留住 1 點氣血；同時定身不動' },
       { id: 'freeze', name: '定身', art: 'freeze', condition: 'freeze', text: '數回合不能移動、出手、施展絕技或還擊；局主只受一回合，下一回合可抵抗' },
       { id: 'mute', name: '閉穴', art: 'mute', condition: 'mute', text: '數回合不能出手、施展絕技或還擊，仍可移動；局主只受一回合，下一回合可抵抗' },
       {
@@ -283,11 +284,13 @@ const PLAIN_FIELDS = {
     // 秘笈 (2026-11-28): `secret` keeps a manual off the shelf; 獅子吼's `roar` (it hurts the
     // striker's companions) is one art's, and its card says so.
     'secret',
-    'roar'
+    'roar',
+    // 0.70: 蛤蟆功's `still` (not after a move); 龜息功's `endure` is the term 龜息.
+    'still'
   ],
   // 珍品 (2026-11-28): `grade` keeps an item off the shelf; 鴛鴦刀's `pair`, 莽牯朱蛤's
   // `antivenom` and 削鐵匕首's `pierce` are each one item's way, and its card says so.
-  item: ['name', 'kind', 'owner', 'atk', 'icon', 'desc', 'forms', 'power', 'def', 'step', 'hp', 'mp', 'grade', 'pair', 'antivenom', 'pierce'],
+  item: ['name', 'kind', 'owner', 'atk', 'icon', 'desc', 'forms', 'power', 'def', 'step', 'hp', 'mp', 'grade', 'pair', 'antivenom', 'pierce', 'throw', 'revive', 'endure'],
   // mods and sig are numbers; post is read by 坐鎮's test. The rest are one enemy's way each,
   // told on its own page.
   // 五劍 (求敗's five stages, 2026-11-25) is one enemy's: his page says it (enemyTraitLines).

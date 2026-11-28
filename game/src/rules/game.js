@@ -1963,6 +1963,8 @@ function artReady(s, u, id = u.activeArt || 'signature') {
   if (c.spent) return no('代價 · 本回合不能施展絕技');
   if (c.rooted && targetType(art) === 'ground' && !art.zone) return no('代價 · 本回合不能移動');
   if (art.once && u.usedOnce?.includes(id)) return no('每局一次 · 本局已用');
+  // 蛤蟆功 (`still`): only from where the hero began the turn.
+  if (art.still && u.moved) return no('本回合已移動，不能施展');
   if (s.round < ready) return no('還須 ' + (ready - s.round) + ' 回合才能再用');
   // A strike earlier this same round (after 連環 or a companion's order) does not count against
   // `poised` (it was 留力).
@@ -2176,6 +2178,8 @@ function targetOK(s, u, t, skill) {
   // 號令: a companion who has acted this turn, never the caster.
   if (art.order) return t.id !== u.id && !!t.acted;
   if (effectsOf(art).length) return true;
+  // An art on its caster alone whose whole doing is what it puts on him (龜息功, 0.70).
+  if (type === 'self' && selfEffectsOf(art).length) return true;
   const forms = formsFor(u, art);
   if (forms.includes('riposte')) return true;
   const power = art.heal ? healingPower(u, s, art) : 0;
@@ -2468,6 +2472,9 @@ const opens = (s, u) =>
   ally(u) && !!s?.tally && s.tally.opened !== s.round && !!commandBonus(s, u, 'opening');
 // 雪谷回生: whether the boon would keep this hero standing now (once a board, for anyone it covers).
 const spares = (s, u) => ally(u) && !!s?.tally && !s.tally.spared && !!commandBonus(s, u, 'spare');
+// 龜息 (a condition, 龜息功) holds every felling blow while it lasts; 護身寶衣 holds one a board.
+const endures = (s, u) =>
+  !!s?.tally && (!!u.conditions?.endure || (!!ITEMS[u.gear]?.endure && !(s.tally.endured || []).includes(u.id)));
 function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicFor(u)) {
   const type = art ? targetType(art) : 'enemy';
   const support = type === 'self' || type === 'ally',
@@ -2966,6 +2973,12 @@ function wound(s, u, n, source) {
     s.tally.spared = u.id;
     log(s, 'combat', leaderBoon(s).name + '：留住一口氣，氣血剩 1。', unitDetails(u).name);
   }
+  // 龜息 (龜息功) and 護身寶衣 (once a board): a blow that would fell the bearer leaves 1 氣血 (0.70).
+  if (d > 0 && d >= u.hp && endures(s, u)) {
+    d = u.hp - 1;
+    if (!u.conditions?.endure) (s.tally.endured ??= []).push(u.id);
+    log(s, 'combat', (u.conditions?.endure ? '龜息' : ITEMS[u.gear].name) + '護住心脈，氣血剩 1。', unitDetails(u).name);
+  }
   u.hp -= d;
   if (!living(u)) delete u.conditions;
   // 領隊無傷 counts what enemies take from the leader, through any blow, counter or poison.
@@ -3034,18 +3047,22 @@ function propBroken(s, u) {
   } else log(s, 'combat', name + '毀了。', '守物');
   sayObject(s, u, 'broken');
 }
-// The lamp's tile, when this run's secondary is to light it.
+// The lamp's tile, when this run's secondary is to light it; 奪寶's chest stands on the same tile
+// (0.70).
+const MARKED_KINDS = ['lamp', 'chest'];
 function objectiveTile(s) {
-  return s.run?.side?.kind === 'lamp' ? s.run.objectivePos || mapLayout(s.mapIndex).objective : null;
+  return MARKED_KINDS.includes(s.run?.side?.kind) ? s.run.objectivePos || mapLayout(s.mapIndex).objective : null;
 }
+// The tile still to be reached: not yet lit or opened, and no enemy has taken the chest.
 function unclaimedObjectiveTile(s) {
-  return s.run?.status === 'battle' && !s.run.marked ? objectiveTile(s) : null;
+  return s.run?.status === 'battle' && !s.run.marked && !s.tally?.chestLost ? objectiveTile(s) : null;
 }
+const markerName = (s) => (s.run?.side?.kind === 'chest' ? '寶箱' : '支線燈記');
 function holdObjective(s, u) {
   const marker = unclaimedObjectiveTile(s);
   if (marker && ally(u) && living(u) && distance(u, marker) === 0) {
     s.run.marked = true;
-    log(s, 'story', '點亮了引路燈。', unitDetails(u).name);
+    log(s, 'story', s.run.side.kind === 'chest' ? '打開了寶箱。' : '點亮了引路燈。', unitDetails(u).name);
   }
 }
 function commitSteps(u) {
@@ -3350,6 +3367,70 @@ function consume(s, u, id) {
   log(s, 'item', '服用' + item.name + '，' + parts.join('，') + '。', unitDetails(u).name);
   return true;
 }
+// ── Thrown items and revival (0.70) ─────────────────────────────────────────
+// A thrown item (`throw`) or 九轉熊蛇丸 (`revive`) takes the hero's action, from the battle's
+// inventory page, which lists whom it can reach. Its numbers grow with the hero as poison does.
+function throwTargets(s, u, id) {
+  const it = ITEMS[id]?.throw;
+  if (!it || !(s.stock[id] > 0) || !canAct(s, u)) return [];
+  return enemies(s).filter((t) => living(t) && !isProp(t) && distance(u, t) <= it.range);
+}
+function throwPlan(s, u, t, id) {
+  const it = ITEMS[id].throw,
+    boss = unitDetails(t).rank === 'boss';
+  if (it.freeze) return { freeze: !(boss && t.lastFreezeRound === s.round - 1) };
+  const blast = grownPoison(u, it.blast);
+  return { blast, splash: Math.round(blast * it.splash) };
+}
+function throwItem(s, u, t, id) {
+  if (!throwTargets(s, u, id).includes(t)) return false;
+  const plan = throwPlan(s, u, t, id),
+    who = unitDetails(u).name,
+    effects = [];
+  s.stock[id]--;
+  if ('freeze' in plan) {
+    if (plan.freeze) {
+      putEffects(s, u, t, [{ kind: 'freeze', power: 1, turns: 1 }], effects);
+      t.lastFreezeRound = s.round;
+      log(s, 'combat', '擲出' + ITEMS[id].name + '，' + unitDetails(t).name + '睜不開眼，定身一回合。', who);
+    } else log(s, 'combat', '擲出' + ITEMS[id].name + '，' + unitDetails(t).name + '已換氣，避了開去。', who);
+  } else {
+    // 霹靂雷火彈: the blast on the one it lands on, and four tenths on every piece beside it, heroes too.
+    const near = s.units.filter((v) => v !== t && living(v) && !isProp(v) && distance(v, t) === 1);
+    blowing({ how: 'item' }, () => {
+      wound(s, t, plan.blast, u);
+      for (const v of near) wound(s, v, plan.splash, u);
+    });
+    log(s, 'combat', '擲出' + ITEMS[id].name + '，轟的一聲，' + unitDetails(t).name + '損失 ' + plan.blast + ' 點氣血，旁人各受 ' + plan.splash + ' 點。', who);
+  }
+  finishAction(s, u);
+  check(s);
+  return true;
+}
+// 九轉熊蛇丸: a fallen hero beside the user rises with `revive` of his 氣血.
+function reviveTargets(s, u, id) {
+  if (!ITEMS[id]?.revive || !(s.stock[id] > 0) || !canAct(s, u)) return [];
+  return party(s).filter((v) => !living(v) && v !== u && distance(u, v) === 1);
+}
+function revive(s, u, v, id) {
+  if (!reviveTargets(s, u, id).includes(v)) return false;
+  // Where he fell, or, if someone stands there now, the free tile beside the user nearest it.
+  if (at(s, v.x, v.y)) {
+    const free = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+      .map(([dx, dy]) => ({ x: u.x + dx, y: u.y + dy }))
+      .filter((p) => walkable(p.x, p.y, s.mapIndex) && !at(s, p.x, p.y))
+      .sort((a, b) => distance(a, v) - distance(b, v) || a.y - b.y || a.x - b.x)[0];
+    if (!free) return false;
+    Object.assign(v, free);
+  }
+  s.stock[id]--;
+  v.hp = Math.max(1, Math.round(v.maxHp * ITEMS[id].revive));
+  v.conditions = {};
+  v.acted = true;
+  log(s, 'item', '餵' + unitDetails(v).name + '服下' + ITEMS[id].name + '，' + unitDetails(v).name + '緩緩站起，氣血回到 ' + v.hp + '。', unitDetails(u).name);
+  finishAction(s, u);
+  return true;
+}
 function equip(s, u, id) {
   const item = ITEMS[id];
   if (!canOutfit(s, u) || !item || !['weapon', 'gear'].includes(item.kind) || (item.owner && item.owner !== u.id))
@@ -3574,6 +3655,8 @@ const blankTally = () => ({
   doses: 0, // medicine taken in the fight scene, deployment included
   leaderHurt: 0, // 氣血 the leader lost to enemies
   fired: {}, // villain behaviours that happened: { mirror, mend, herbs }
+  endured: [], // heroes whose 護身寶衣 has held a felling blow this board
+  chestLost: false, // 奪寶: an enemy reached the chest first
   crossed: false // a wave piece stood inside the secondary's holdLine zone
 });
 // What the blow being resolved is, for the fall it may cause: set just before its wounds, put
@@ -3609,6 +3692,12 @@ const inZone = (zone, p) =>
 // Where an enemy came to stand: a wave piece inside the secondary's line, a fleeing master on herbs.
 function noteStanding(s, u) {
   const side = s.run?.side;
+  // 奪寶: an enemy who stands on the chest first takes it.
+  const chest = side?.kind === 'chest' && !ally(u) && living(u) ? unclaimedObjectiveTile(s) : null;
+  if (chest && distance(u, chest) === 0) {
+    s.tally.chestLost = true;
+    log(s, 'story', '搶走了寶箱。', unitDetails(u).name);
+  }
   if (s.tally && side?.kind === 'holdLine' && u.enteredRound != null && living(u) && inZone(side.zone, u))
     s.tally.crossed = true;
   if (fleeing(s, u) && tileInfo(u.x, u.y, s.mapIndex)?.heal) noteFired(s, 'herbs');
@@ -4549,4 +4638,5 @@ function nextRound(s) {
 }
 
 export { stageOf, stageNote, traitStage, YOUTH_ID, ROSTER, LAST_MAP, hasFour, fixedSlots, castBoard, armOf, answers, guestLine, spent, wound, ARM_NAMES };
+export { throwTargets, throwPlan, throwItem, reviveTargets, revive, endures, markerName, noteStanding };
 export { charmed, sideOf, immuneTo, holdsFire, drainOf, controlPlan, isProp, propKind, props, hostile, boardKind, propUnit, propUnits, holdLeft, brokenKeep, OBJECT_NOTE, announcedWaves, refKey, pieceLines, traitEdge, stanceHolds, KIND_RULES, objectiveLeft, winsIfFalls, wavesLeft, scheduleWaves, waveList, entryTile, arrivalGhosts, pendingWaves, arrive, announce, blankTally, inZone, SLOTS, NUMERALS, slotId, refId, pieceKey, LEGACY_BOARD, boardOf, masterIds, pieceDef, homeTile, stageRows, pieceUnit, boardLines, fleeing, mendPlan, lineVictim, wardShare, preference, traitsOf, holdOf, postTile, standCells, walkCells, signatureLines, strikeReachWhenDue, SIZE, FIELD_EDITION, LIMIT, MAX_ROUNDS, roundLimit, GROWTH, ORIGINAL_PARTY, PARTY, BOOKS, leader, key, distance, living, ally, at, find, party, company, commanderId, enemies, canAct, canPrepare, canOutfit, managesCompany, valid, terrainInfo, terrain, cover, walkable, ITEMS, TALENTS, DETAILS, encounterKeys, identifyEncounter, withMods, unitDetails, enemyTechnique, roundsToSignature, signatureDue, siphonPlan, reach, zoneAt, zoneTiles, layZone, standingLines, strikeReach, counterRatio, stanceCut, coverer, redirectOf, taunters, canGlide, glideField, glideMove, stopGlide, enemyTraitLines, STORIES, chapterScenes, makeUnit, startingHero, newGame, fitFormation, restoreGame, log, stat, artFor, rangeFor, commandDiscount, cost, artCost, basicFor, equippedArts, targetType, artReady, canPay, isSupport, canConfigure, reachable, movementPath, routeConnects, canMove, move, undo, affectedFriends, targetOK, PARTNERS, strikeFactor, priceNotes, guardNotes, attackPower, damage, healingPower, healing, healAmount, woundSelfLoss, formsFor, pushCell, wardEscorts, forecast, raiseLevel, settleExperience, exp, LEVEL_GAINS, GROWTH_PACES, GROWTH_PROFILES, growthOf, levelGain, objectiveTile, unclaimedObjectiveTile, holdObjective, resolve, waitUnit, canUseMedicine, consume, equip, transferEquipment, train, check, startEnemy, enemyAct, nextRound, medicineFor, seatOf, seatRow, seatNumbers, twinForm };

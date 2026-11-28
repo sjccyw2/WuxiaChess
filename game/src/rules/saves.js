@@ -34,7 +34,7 @@ function readJSON(store, key) {
 // so a slot saved before the parcel was taken does not hand it out twice, and one saved after
 // cannot empty it.
 const COUNTS = ['best', 'wins', 'embers', 'returns', 'realms', 'finale', 'ended', 'missed'],
-  LISTS = ['fates', 'seen', 'cleared'];
+  LISTS = ['fates', 'seen', 'cleared', 'sutras'];
 function mergeRecord(kept, other) {
   if (!other) return kept;
   if (!kept) return other;

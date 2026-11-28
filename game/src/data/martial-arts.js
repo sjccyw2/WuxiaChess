@@ -178,6 +178,49 @@ const WARES = {
     icon: 'sword',
     desc: '韋小寶從鰲拜府中抄來的匕首，削鐵如泥。攻擊增加 9。普攻與還擊穿透一半防禦。'
   },
+  // ── 0.70: thrown 珍品 (`throw`, game.js throwItem), and the 秘寶 items (`grade: 'secret'`) ──
+  limeBag: {
+    name: '石灰包',
+    kind: 'use',
+    grade: 'rare',
+    throw: { range: 2, freeze: 1 },
+    icon: 'drop',
+    desc: '韋小寶的看家本領。擲向兩格內一名敵人，石灰迷眼，令其定身一回合；局主受過後下一回合可抵抗。用去當次行動，每次用去一份。'
+  },
+  thunderBomb: {
+    name: '霹靂雷火彈',
+    kind: 'use',
+    grade: 'rare',
+    throw: { range: 3, blast: 30, splash: 0.4 },
+    icon: 'spark',
+    desc: '霹靂堂的火器。擲向三格內一名敵人，炸傷 30 點氣血起（隨等級增長，不計防禦），其四鄰的人，不論敵我，各受四成。用去當次行動，每次用去一份。'
+  },
+  bearPill: {
+    name: '九轉熊蛇丸',
+    kind: 'use',
+    grade: 'secret',
+    revive: 0.3,
+    icon: 'bottle',
+    desc: '起死回生的靈丹。餵給身旁一位倒下的同伴，他便站起，回復三成氣血，這一回合不能行動。領隊倒下時已來不及。用去當次行動，每次用去一份。'
+  },
+  treasureVest: {
+    name: '護身寶衣',
+    kind: 'gear',
+    grade: 'secret',
+    def: 6,
+    endure: true,
+    icon: 'shield',
+    desc: '韋小寶貼身穿著的寶衣，刀槍不入。防禦增加 6。每局一次，一擊本會令佩者倒下時，留住 1 點氣血。'
+  },
+  // 四十二章經 (`kind: 'relic'`): eight volumes, kept across runs in the profile (chronicle.sutras),
+  // never in the store (ferry-market.js grantLot).
+  sutra: {
+    name: '四十二章經',
+    kind: 'relic',
+    grade: 'secret',
+    icon: 'book',
+    desc: '八旗各藏一部，八部合起來，便是一幅藏寶圖。每得一部，往後各輪的盅裡多一分珍品；八部集齊，每一輪頭一桌盅裡必有秘寶。跨輪保存。'
+  },
   // 信物 (`kind: 'token'`): kept by 韋小寶 for the run (run.tokens), never in the company's store,
   // and spent with a button where they work (ferry-market.js peekBowl, journey.js swapSides).
   loadedDice: {

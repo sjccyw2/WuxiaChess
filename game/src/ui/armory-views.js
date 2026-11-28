@@ -343,7 +343,30 @@ function armory(s, u, ui, more = '') {
     const helps = G.medicineFor(u, v.item).helps,
       canUse = G.canUseMedicine(s, u) && helps;
     let actions = '';
-    if (v.item.kind === 'use') {
+    // 0.70: a thrown item lists the foes it reaches; 九轉熊蛇丸 the fallen beside the hero.
+    if (v.item.throw || v.item.revive) {
+      const list = v.item.throw ? G.throwTargets(s, u, v.id) : G.reviveTargets(s, u, v.id);
+      actions = list.length
+        ? list
+            .map((t) =>
+              small(
+                'item-target',
+                (v.item.throw ? '擲向' : '救') + who(t) + (v.item.throw ? '（' + G.distance(u, t) + ' 格）' : ''),
+                attr + ' data-target="' + t.id + '"'
+              )
+            )
+            .join('')
+        : small(
+            'item',
+            !G.canAct(s, u)
+              ? '此刻不能用'
+              : v.item.throw
+                ? v.item.throw.range + ' 格內沒有敵人'
+                : '身旁沒有倒下的同伴',
+            attr,
+            true
+          );
+    } else if (v.item.kind === 'use') {
       actions += small(
         'item',
         canUse
@@ -371,7 +394,7 @@ function armory(s, u, ui, more = '') {
       '</h4><b>' +
       bonus(v.item) +
       '</b><small>' +
-      (v.item.kind === 'use' ? '全隊共用 · 每次一份 · 保留行動' : v.item.desc) +
+      (v.item.throw || v.item.revive ? v.item.desc : v.item.kind === 'use' ? '全隊共用 · 每次一份 · 保留行動' : v.item.desc) +
       '</small></div><aside>' +
       actions +
       '</aside></section>'

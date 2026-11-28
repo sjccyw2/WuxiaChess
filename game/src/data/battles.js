@@ -187,7 +187,8 @@ const BATTLES = [
       { kind: 'order', first: 'lieutenant', reward: 'coins', odds: 1 },
       { kind: 'spareLife', target: 'lieutenant', reward: 'points', odds: 3 },
       { kind: 'holdLine', zone: { y: [0, 4] }, place: '琴臺北階', reward: 'manual', odds: 1 },
-      { kind: 'lamp', reward: 'coins', odds: 2 }
+      { kind: 'lamp', reward: 'coins', odds: 2 },
+      { kind: 'fewer', reward: 'manual', odds: 3 }
     ]
   },
   // 5 桃花石陣: lighter snake slaves come up from the east stream every two rounds.
@@ -280,7 +281,8 @@ const BATTLES = [
       { kind: 'double', reward: 'coins', odds: 1 },
       // 南面甬道 (holdLine, y 9–12) stood here: with the drum at the passage's mouth it was the
       // primary over again, met every time the board was won.
-      { kind: 'unhurt', reward: 'manual', odds: 2 }
+      { kind: 'unhurt', reward: 'manual', odds: 2 },
+      { kind: 'chest', reward: 'coins', odds: 2 }
     ]
   },
   // 7 寒玉石室: the lean board, its four pieces only.
@@ -321,7 +323,8 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'xianYu', reward: 'points', odds: 3 },
       { kind: 'order', first: 'lieutenant', reward: 'coins', odds: 3 },
       { kind: 'double', reward: 'manual', odds: 2 },
-      { kind: 'answer', hero: 'hero', reward: 'points', odds: 2 }
+      { kind: 'answer', hero: 'hero', reward: 'points', odds: 2 },
+      { kind: 'chest', reward: 'coins', odds: 2 }
     ]
   },
   // 9 無刻漏臺: the final board; break the two posts the star ropes are tied to, each guarded by a
@@ -388,7 +391,8 @@ const BATTLES = [
       { kind: 'lamp', reward: 'coins', odds: 2 },
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'intact', reward: 'coins', odds: 1 },
-      { kind: 'holdLine', zone: { y: [9, 11] }, place: '南灘', reward: 'manual', odds: 1 }
+      { kind: 'holdLine', zone: { y: [9, 11] }, place: '南灘', reward: 'manual', odds: 1 },
+      { kind: 'fewer', reward: 'manual', odds: 3 }
     ]
   },
   // 11 絕情花徑: defeat everyone; 公孫止 before his stone house, six 網手 along both paths round

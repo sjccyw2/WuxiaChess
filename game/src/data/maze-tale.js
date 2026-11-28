@@ -543,6 +543,8 @@ const SIDE_TALES = {
   oneBlow: '一下子就躺了？我還沒看清呢。這口押得值。',
   counterFell: '他先動手，倒的卻是他。後發制人，這叫做學問。',
   splashFell: '打的是這個，倒的是那個。隔山打牛，我押中了！',
+  chest: '寶箱搶到手了！裡頭的東西歸你，這口賭注我也照賠。',
+  fewer: '少一個人也贏得下來？好膽色！以寡敵眾，我押著了。',
   summitFinish: '壓箱底的功夫一出，局主便收了攤。我就押這一手！',
   // A kind without a line of its own.
   done: '這一口，你押中啦。'

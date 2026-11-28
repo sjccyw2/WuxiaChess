@@ -215,7 +215,11 @@ const ART_FORMS = {
   boneMeltPalm: [],
   dragonClaw: ['pull'],
   spiderHand: [],
-  lionRoar: []
+  lionRoar: [],
+  beautyThree: [],
+  nineYinClaw: [],
+  turtleBreath: [],
+  toadPower: []
 };
 
 const WEAPON_FORMS = {

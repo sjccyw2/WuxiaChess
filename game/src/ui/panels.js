@@ -51,6 +51,7 @@ import {
   living,
   party,
   unclaimedObjectiveTile,
+  markerName,
   wardEscorts,
   wardShare,
   stat,
@@ -914,11 +915,11 @@ function terrainPage(s) {
         u = roster.get(i);
       const isGoal = lamp && lamp.x === x && lamp.y === y;
       const label =
-        types[kind].name + (u ? ' · ' + unitDetails(u).name : '') + (isGoal ? ' · 支線燈記' : '');
+        types[kind].name + (u ? ' · ' + unitDetails(u).name : '') + (isGoal ? ' · ' + markerName(s) : '');
       const marker = u
         ? '<i class="survey-piece ' + u.side + (s.selected === u.id ? ' chosen' : '') + '"></i>'
         : isGoal
-          ? '<i class="survey-lamp" title="支線燈記">燈</i>'
+          ? '<i class="survey-lamp" title="' + markerName(s) + '">' + (s.run?.side?.kind === 'chest' ? '寶' : '燈') + '</i>'
           : '';
       row +=
         '<td class="ground-' +
@@ -962,7 +963,7 @@ function terrainPage(s) {
     rows.join('') +
     '</tbody></table><p>南</p>' +
     '<div class="survey-key"><span><i class="survey-piece ally"></i>我方</span><span><i class="survey-piece enemy"></i>敵方</span>' +
-    (lamp ? '<span><i class="survey-lamp">燈</i>支線燈記</span>' : '') +
+    (lamp ? '<span><i class="survey-lamp">' + (s.run?.side?.kind === 'chest' ? '寶' : '燈') + '</i>' + markerName(s) + '</span>' : '') +
     '</div></div>' +
     '<ul class="terrain-list">' +
     legend +

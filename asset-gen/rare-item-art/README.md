@@ -14,6 +14,11 @@ in the manner of the item pictures already in the game (寒潭短劍 and 九花�
 | `full/loadedDice.webp` | `game/assets/item-loadedDice.webp`, 灌鉛骰子 (0.69) |
 | `full/ironToken.webp` | `game/assets/item-ironToken.webp`, 玄鐵令 (0.69) |
 | `full/lot-pebble.webp` | `game/assets/lot-pebble.webp`, the pebble of 見好就收 (0.69) |
+| `full/limeBag.webp` | `game/assets/item-limeBag.webp`, 石灰包 (0.70) |
+| `full/thunderBomb.webp` | `game/assets/item-thunderBomb.webp`, 霹靂雷火彈 (0.70): made by `make/fire-pot.py` from 九花玉露丸's jar, the image model having refused it |
+| `full/bearPill.webp` | `game/assets/item-bearPill.webp`, 九轉熊蛇丸 (0.70) |
+| `full/treasureVest.webp` | `game/assets/item-treasureVest.webp`, 護身寶衣 (0.70) |
+| `full/sutra.webp` | `game/assets/item-sutra.webp`, 四十二章經 (0.70) |
 | `full/guide-secret.webp` | `game/assets/guide-secret.webp`, the cover of a 秘笈, on the parchment of `guide-cover.webp` |
 
 - `make/paint.py` paints them (1024 × 1024, transparent) through `make/api.py`; the session proxy adds the key.

@@ -1,5 +1,6 @@
 import { WAKES, closingFor } from '../data/wake-tale.js';
 import { random, shuffled } from './lots.js';
+import { chestLot } from './ferry-market.js';
 import { makeOffers, makeVisit, validVisit, grantLot, bonusManual, chipsOf, canOpenTable, TOKENS, tokensOf, STREAK_AT, giftLot, gradeOf, lotName, RARE_STOCK, SECRET_MANUALS, VISITOR, luckOf, LUCK_AT } from './ferry-market.js';
 import { seatsFor } from './formation.js';
 import { moveFacts } from './move-facts.js';
@@ -271,6 +272,8 @@ function validProfile(p) {
     (p.finale == null || (Number.isSafeInteger(p.finale) && p.finale >= 0)) &&
     (p.ended == null || (Number.isSafeInteger(p.ended) && p.ended >= 0)) &&
     (p.missed == null || (Number.isSafeInteger(p.missed) && p.missed >= 0)) &&
+    // 四十二章經 (0.70): the volumes found, 1 to 8, kept across runs.
+    (p.sutras == null || uniqueMembers(p.sutras, [1, 2, 3, 4, 5, 6, 7, 8])) &&
     p.parcel?.stock &&
     Object.entries(p.parcel.stock).every(
       ([id, n]) => Object.hasOwn(G.ITEMS, id) && Number.isInteger(n) && n >= 0
@@ -1330,6 +1333,35 @@ const SIDE_KINDS = {
     progress: () => '',
     lost: () => '局主不是倒在成名絕技之下'
   },
+  // ── 0.70 ──
+  // 奪寶: a chest on the lamp's tile (game.js objectiveTile); a hero who ends an action on it opens
+  // it, an enemy who stands on it first takes it. It holds a 珍品, paid with the bet (paySide).
+  chest: {
+    name: () => '奪寶',
+    sort: 'reach',
+    eligible: () => true,
+    detail: (s, side, map) => {
+      const tile = (s && G.objectiveTile(s)) || mapLayout(map).objective;
+      return '寶箱在第 ' + (tile.x + 1) + ' 列、第 ' + (tile.y + 1) + ' 行：搶在敵人之前，讓一名俠客在那一格結束行動，將它打開。箱裡是一件珍品。';
+    },
+    state: (s) => (s.run.marked ? 'met' : s.tally?.chestLost ? 'failed' : 'open'),
+    progress: (s) => (s.run.marked ? '寶箱已打開' : '寶箱未打開'),
+    lost: () => '敵人先搶走了寶箱'
+  },
+  // 以寡敵眾: field fewer heroes than could go (the posts, or the company if it is smaller).
+  fewer: {
+    name: () => '以寡敵眾',
+    sort: 'keep',
+    eligible: (s) => G.company(s).length >= 2,
+    detail: () => '少派一人出陣：上陣的俠客須比能上陣的少（取隊伍人數與起陣格數中的較小者）。',
+    state: (s) => {
+      const fielded = s.run.scene === 'fight' ? G.party(s).length : s.run.next.length,
+        most = Math.min(mapLayout(s.mapIndex).allies.length, G.company(s).length);
+      return fielded < most ? 'open' : 'failed';
+    },
+    progress: (s) => '上陣 ' + (s.run.scene === 'fight' ? G.party(s).length : s.run.next.length) + ' 人',
+    lost: () => '上陣的人數沒有少'
+  },
   // 留活口: the named piece must still stand when the board is won (斬將 and 守 boards only).
   spareLife: {
     name: () => '留活口',
@@ -1878,6 +1910,7 @@ function settle(s) {
     }
   }
   if (bonus) G.log(s, 'grow', '支線達成，' + rewardText(r.side, r.stage, bonus.manuals || bonus.manual, r) + '。', '支線');
+  if (bonus?.chest) G.log(s, 'item', '寶箱裡是' + (G.ITEMS[bonus.chest]?.name || bonus.chest) + '。', '奪寶');
   return true;
 }
 // A run's ten boards won: its 境界 is marked won, and winning the highest open 境界 opens the next.
@@ -1903,6 +1936,11 @@ function paySide(s) {
   const odds = oddsOf(r.side);
   const paid = { kind: r.side.kind, reward: kind, amount: 0, manual: null, odds, chips: odds };
   r.chips = chipsOf(r) + odds;
+  // 奪寶: the chest's 珍品 too.
+  if (r.side.kind === 'chest') {
+    paid.chest = chestLot(s);
+    grantLot(s, paid.chest);
+  }
   if (kind === 'coins') {
     paid.amount = (REWARDS.side + REWARDS.sidePerStage * r.stage) * odds;
     r.coins += paid.amount;
@@ -1936,7 +1974,7 @@ function rewardText(side, stage, manual = null, r = null) {
   const ends = endsRun(stage, r),
     kind = payKind(side?.reward, ends),
     odds = oddsOf(side),
-    chips = '，並得籌碼 ' + odds;
+    chips = '，並得籌碼 ' + odds + (side?.kind === 'chest' ? '，另有寶箱裡的珍品' : '');
   if (kind === 'coins') return '賞銀 ' + (REWARDS.side + REWARDS.sidePerStage * stage) * odds + ' 兩' + chips;
   if (kind === 'points') return '出陣生還的俠客各 ' + odds + ' 武學點' + chips;
   const paid = [manual].flat().filter(Boolean);
@@ -2370,6 +2408,7 @@ function campModel(s) {
     canOpen: canOpenTable(s),
     tokens: TOKENS.filter((id) => tokensOf(r, id) > 0).map((id) => ({ id, name: G.ITEMS[id].name, count: tokensOf(r, id) })),
     gift: last.gift ? { id: last.gift, name: lotName(last.gift), grade: gradeOf(last.gift) } : null,
+    sutras: r.chronicle?.sutras?.length || 0,
     luck: luckOf(r),
     luckAt: LUCK_AT,
     stageName: mapLayout(s.mapIndex).name,

@@ -193,7 +193,8 @@ const CONDITION_NAMES = {
   immune: '金剛',
   freeze: '定身',
   mute: '閉穴',
-  charm: '受制'
+  charm: '受制',
+  endure: '龜息' // 龜息功 (0.70): a felling blow leaves 1 氣血
 };
 // Whether an art is aimed at a companion or at its caster (rules/game.js targetType says the same).
 const supportArt = (art) => art.target === 'ally' || art.target === 'self' || (!art.target && !!art.heal);
@@ -238,6 +239,11 @@ function selfEffectsOf(art) {
   if (art.rooted) put('rooted', 1, 2);
   if (art.spent) put('spent', 1, 2);
   if (art.backlash) put('backlash', 1, null);
+  // 龜息功: until the enemies have gone, no blow fells him, and he lies still (定身).
+  if (art.endure) {
+    put('endure');
+    put('freeze');
+  }
   if (!supportArt(art))
     for (const kind of GUARDS) if (art[kind]) effects.push(guardEffect(art, kind));
   return effects;
@@ -272,7 +278,8 @@ function effectDescription(kind, power, turns, held = false) {
     immune: '直接攻擊無功，不受其附帶之效',
     freeze: '不能移動、出手、施展絕技或還擊',
     mute: '不能出手、施展絕技或還擊，仍可移動',
-    charm: '倒戈，以普攻攻擊同夥'
+    charm: '倒戈，以普攻攻擊同夥',
+    endure: '被擊倒時留住 1 點氣血'
   };
   // 亂氣 stays until it bursts or the board ends; a count of rounds would mislead.
   const span = kind === 'backlash' ? '本局' : turns + ' 回合';

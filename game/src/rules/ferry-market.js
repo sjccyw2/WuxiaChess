@@ -36,16 +36,22 @@ const VISITOR = {
 // `secret`) are never on the shelf: they come only from the cups and the 支線.
 const RARE_STOCK = Object.keys(G.ITEMS).filter((id) => G.ITEMS[id].grade === 'rare');
 const SECRET_MANUALS = Object.keys(MANUAL_PRICES).filter((id) => TECHNIQUES[id].secret);
+// 秘寶 items (0.70): 護身寶衣, 九轉熊蛇丸, and 四十二章經 while a volume is still to find.
+const SECRET_ITEMS = Object.keys(G.ITEMS).filter((id) => G.ITEMS[id].grade === 'secret');
+const SUTRAS = 8;
+const sutrasOf = (r) => r?.chronicle?.sutras?.length || 0;
+// What a 秘寶 can be on this run: the 秘笈, the 秘寶 items, a volume of the sutra if one is missing.
+const secretLots = (r) => [...SECRET_MANUALS, ...SECRET_ITEMS.filter((id) => id !== 'sutra' || sutrasOf(r) < SUTRAS)];
 const GRADES = {
   common: { name: '常品' },
   rare: { name: '珍品' },
   secret: { name: '秘寶' }
 };
 const gradeOf = (id) =>
-  SECRET_MANUALS.includes(id) ? 'secret' : G.ITEMS[id]?.grade === 'rare' ? 'rare' : 'common';
+  SECRET_MANUALS.includes(id) || G.ITEMS[id]?.grade === 'secret' ? 'secret' : G.ITEMS[id]?.grade === 'rare' ? 'rare' : 'common';
 // Each cup is 秘寶 at `secret`, else 珍品 at `rare` + `rarePerStage` for each board after the first,
 // else 常品.
-const CUP_ODDS = { secret: 0.05, rare: 0.25, rarePerStage: 0.02 };
+const CUP_ODDS = { secret: 0.05, rare: 0.25, rarePerStage: 0.02, perSutra: 0.02 };
 // What 籌碼 buy at the table: a second cup once one is lifted, and a table on a board with none.
 const CHIP_PRICES = { again: 2, open: 3 };
 const chipsOf = (r) => r?.chips || 0;
@@ -174,7 +180,9 @@ function makeVisit(s, paid = false) {
   const lots = [take([...groups.weapon, ...groups.gear]), take(groups.manual), take(groups.use)];
   // Each cup's grade. A 珍品 is of the cup's own kind where there is one (armour or a weapon for the
   // first cup, 天山雪蓮 for the medicine's), else any; no two cups hold the same thing.
-  const rare = CUP_ODDS.rare + CUP_ODDS.rarePerStage * r.stage;
+  // Each volume of 四十二章經 found adds CUP_ODDS.perSutra to the 珍品 chance.
+  const rare = CUP_ODDS.rare + CUP_ODDS.rarePerStage * r.stage + CUP_ODDS.perSutra * sutrasOf(r);
+  const secrets = secretLots(r);
   // After the run's last board a token could not be used: none is under a cup then.
   const rares = r.last?.terminal ? RARE_STOCK.filter((id) => !TOKENS.includes(id)) : RARE_STOCK;
   const used = new Set();
@@ -183,7 +191,7 @@ function makeVisit(s, paid = false) {
     const roll = rng(),
       free = (ids) => ids.filter((id) => !used.has(id) && !lots.includes(id));
     let id = common;
-    if (roll < CUP_ODDS.secret && free(SECRET_MANUALS).length) id = take(free(SECRET_MANUALS));
+    if (roll < CUP_ODDS.secret && free(secrets).length) id = take(free(secrets));
     else if (roll < CUP_ODDS.secret + rare) {
       const own = free(rares.filter((x) => kinds[i].includes(G.ITEMS[x].kind)));
       const any = free(rares);
@@ -193,8 +201,10 @@ function makeVisit(s, paid = false) {
     return id;
   });
   // 莊家運: after LUCK_AT tables with no 秘寶 lifted, one cup holds one, if none does already.
-  const lucky = luckOf(r) >= LUCK_AT && !cards.some((id) => gradeOf(id) === 'secret');
-  if (lucky) cards[Math.floor(rng() * 3)] = take(SECRET_MANUALS.filter((id) => !cards.includes(id)));
+  // All eight volumes of 四十二章經: the run's first table holds a 秘寶 too.
+  const lucky =
+    (luckOf(r) >= LUCK_AT || (r.stage === 0 && sutrasOf(r) >= SUTRAS)) && !cards.some((id) => gradeOf(id) === 'secret');
+  if (lucky) cards[Math.floor(rng() * 3)] = take(secrets.filter((id) => !cards.includes(id)));
   return {
     cards: shuffled(cards, rng),
     order: shuffled([0, 1, 2], rng),
@@ -229,9 +239,7 @@ function validVisit(v) {
     Array.isArray(v.cards) &&
     v.cards.length === 3 &&
     new Set(v.cards).size === 3 &&
-    v.cards.every(
-      (id) => Object.hasOwn(MARKET_STOCK, id) || RARE_STOCK.includes(id) || Object.hasOwn(MANUAL_PRICES, id)
-    ) &&
+    v.cards.every((id) => isLot(id)) &&
     (v.paid == null || v.paid === true) &&
     (v.lucky == null || v.lucky === true) &&
     (v.extra == null ||
@@ -248,7 +256,8 @@ function validVisit(v) {
   );
 }
 const isPlace = (n) => Number.isInteger(n) && n >= 0 && n < 3;
-const isLot = (id) => Object.hasOwn(MARKET_STOCK, id) || RARE_STOCK.includes(id) || Object.hasOwn(MANUAL_PRICES, id);
+const isLot = (id) =>
+  Object.hasOwn(MARKET_STOCK, id) || RARE_STOCK.includes(id) || SECRET_ITEMS.includes(id) || Object.hasOwn(MANUAL_PRICES, id);
 // 見好就收: { stake, up, at } while the two cups are down (phase 'gamble'); then `pick` and `won`.
 function validGamble(v) {
   const g = v.gamble;
@@ -274,7 +283,13 @@ function grantLot(s, id) {
   const r = s.run,
     parcel = r.last?.terminal ? r.chronicle.parcel : null;
   if (TOKENS.includes(id)) (r.tokens ??= {})[id] = tokensOf(r, id) + 1;
-  else if (Object.hasOwn(MANUAL_PRICES, id)) (parcel ? parcel.manuals : r.manuals).push(id);
+  // 四十二章經: the next volume missing, into the profile (kept across runs, whatever happens).
+  else if (id === 'sutra') {
+    const p = r.chronicle,
+      have = p.sutras || [],
+      next = [1, 2, 3, 4, 5, 6, 7, 8].find((n) => !have.includes(n));
+    if (next) p.sutras = [...have, next].sort((a, b) => a - b);
+  } else if (Object.hasOwn(MANUAL_PRICES, id)) (parcel ? parcel.manuals : r.manuals).push(id);
   else {
     const stock = parcel ? parcel.stock : s.stock;
     stock[id] = (stock[id] || 0) + 1;
@@ -285,6 +300,7 @@ function stillHeld(s, id) {
   const r = s.run,
     parcel = r.last?.terminal ? r.chronicle.parcel : null;
   if (TOKENS.includes(id)) return tokensOf(r, id) > 0;
+  if (id === 'sutra') return false; // a volume found is the profile's, never staked again
   if (Object.hasOwn(MANUAL_PRICES, id)) return (parcel ? parcel.manuals : r.manuals).includes(id);
   return ((parcel ? parcel.stock : s.stock)[id] || 0) > 0;
 }
@@ -367,7 +383,7 @@ function upgradeOf(s, id) {
     taken = (x) => v.cards.includes(x),
     rng = ferryRandom(r, 0x68e31da4);
   const pick = (ids) => (ids.length ? ids[Math.floor(rng() * ids.length)] : null);
-  if (g === 'rare') return pick(SECRET_MANUALS.filter((x) => !taken(x)));
+  if (g === 'rare') return pick(secretLots(r).filter((x) => !taken(x)));
   const rares = (r.last.terminal ? RARE_STOCK.filter((x) => !TOKENS.includes(x)) : RARE_STOCK).filter((x) => !taken(x));
   const kind = G.ITEMS[id]?.kind || 'manual';
   const own = rares.filter((x) => (G.ITEMS[x]?.kind || 'manual') === kind);
@@ -426,14 +442,22 @@ function peekBowl(s, position) {
   G.log(s, 'item', '擲出灌鉛骰子，先看了第' + ['一', '二', '三'][position] + '盅。', VISITOR.name);
   return true;
 }
+// ── 奪寶: the chest's 珍品, paid with the bet (journey.js paySide) ──────────
+function chestLot(s) {
+  const r = s.run,
+    rng = ferryRandom(r, 0x27d4eb2f),
+    pool = r.last?.terminal || r.stage === 9 ? RARE_STOCK.filter((id) => !TOKENS.includes(id)) : RARE_STOCK;
+  return pool[Math.floor(rng() * pool.length)];
+}
 // ── 連中: the gift for STREAK_AT bets met in a row (journey.js settle) ─────
 function giftLot(s) {
   const r = s.run,
     rng = ferryRandom(r, 0x4cf5ad43),
     rares = r.last?.terminal || r.stage === 9 ? RARE_STOCK.filter((id) => !TOKENS.includes(id)) : RARE_STOCK;
-  const pool = rng() < GIFT_SECRET ? SECRET_MANUALS : rares;
+  const pool = rng() < GIFT_SECRET ? secretLots(r) : rares;
   return pool[Math.floor(rng() * pool.length)];
 }
 
+export { SECRET_ITEMS, SUTRAS, sutrasOf, secretLots, chestLot };
 export { TOKENS, tokensOf, LUCK_AT, luckOf, STREAK_AT, upgradeOf, gambleOffer, gamble, canPeek, peekBowl, giftLot, stillHeld };
 export { VISITOR, MARKET_STOCK, MARKET_RULES, RARE_STOCK, SECRET_MANUALS, GRADES, gradeOf, CUP_ODDS, CHIP_PRICES, chipsOf, manualStage, bonusManual, makeOffers, makeVisit, canOpenTable, openTable, validVisit, lotName, lotImage, grantLot, coverBowls, canLiftAgain, pickBowl };
