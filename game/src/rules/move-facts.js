@@ -2,7 +2,7 @@ import { FORM_RULES, formRule, splashRadius } from './form-rules.js';
 import { STROKE_NOTES } from '../fx/technique-strokes.js';
 import * as G from './game.js';
 import { TECHNIQUES } from '../data/martial-arts.js';
-import { effectsOf, effectDescription } from './battle-mastery.js';
+import { effectsOf, effectDescription, grownEffects } from './battle-mastery.js';
 
 const percent = (fraction) => Math.round(fraction * 100) + '%';
 const roots = { force: '攻擊 ＋3', guard: '防禦 ＋2', breath: '絕技威力 ＋5、內力消耗 −2' };
@@ -173,7 +173,7 @@ function moveFacts(s, u, id = 'basic', target = null) {
     const amount = effect?.kind === 'immune' ? effect.turns : effect?.power;
     powerText = effect ? String(amount) + (entry?.[1] || '') : '自身';
   }
-  for (const effect of effectsOf(art))
+  for (const effect of grownEffects(u, effectsOf(art)))
     lines.push(effectDescription(effect.kind, effect.power, effect.turns));
   if (art) lines.push(...bonusLines(u, art), ...useLines(art), ...conditionLines(art));
   if (art?.aura) lines.push('目標及周圍 ' + art.aura + ' 格友軍');

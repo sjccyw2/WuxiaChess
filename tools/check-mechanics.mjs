@@ -5258,6 +5258,64 @@ section('second slice: 見好就收, 灌鉛骰子, 莊家運, 挑盤口, 玄鐵�
   check('a fall from full 氣血 in one blow is marked fresh', s.tally.falls.at(-1)?.fresh === true);
 }
 
+section('poison: layers, growth with the hero, 引爆餘毒 without a cap (0.71; Q-N177 to Q-N179)');
+{
+  let s = board(['hero', 'medic', 'guard'], 7);
+  const foe = G.enemies(s)[0],
+    medic = unit(s, 'medic');
+  foe.hp = foe.maxHp = 999;
+  const lay = (power, turns, by = medic) => BM.applyCondition(s, foe, { kind: 'poison', power, turns }, by);
+  lay(7, 2);
+  lay(7, 3);
+  lay(5, 1);
+  check('poisons stack in layers, the power their sum', BM.poisonLayers(foe.conditions.poison).length === 3 && foe.conditions.poison.power === 19 && foe.conditions.poison.through === s.round + 2);
+  for (let i = 0; i < 30; i++) lay(1, 3);
+  check('…with no cap', BM.poisonLayers(foe.conditions.poison).length === 33);
+  s = board(['hero', 'medic', 'guard'], 7);
+  const f2 = G.enemies(s)[0];
+  f2.hp = f2.maxHp = 999;
+  BM.applyCondition(s, f2, { kind: 'poison', power: 7, turns: 1 }, unit(s, 'medic'));
+  BM.applyCondition(s, f2, { kind: 'poison', power: 5, turns: 2 }, unit(s, 'hero'));
+  s.phase = 'enemy';
+  for (const e of G.enemies(s)) e.acted = true;
+  G.nextRound(s);
+  check('the layers bite once, together, credited to the newest layer’s caster', f2.hp === 999 - 12 && f2.conditions.poison.source === 'hero');
+  s.phase = 'enemy';
+  for (const e of G.enemies(s)) e.acted = true;
+  G.nextRound(s);
+  check('…and each layer ends on its own', f2.hp === 999 - 12 - 5 && !f2.conditions?.poison);
+  // Growth: poison a hero lays × (1 + level ÷ 5); an enemy's keeps its numbers.
+  const h = { ...G.startingHero('medic'), side: 'ally', level: 5 };
+  check('a level-5 hero’s 7 is 14, a level-10 hero’s 21', BM.grownPoison(h, 7) === 14 && BM.grownPoison({ ...h, level: 10 }, 7) === 21 && BM.grownPoison({ side: 'enemy', level: 10 }, 7) === 7);
+  // 引爆餘毒: every layer's bites still to come, no cap; the poison is spent.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const hero = put(s, 'hero', 3, 3),
+    t3 = G.enemies(s)[0];
+  Object.assign(t3, { x: 4, y: 3, hp: 999, maxHp: 999 });
+  hero.weapon = 'frost';
+  for (const [p, n] of [[20, 3], [20, 3], [20, 2]]) BM.applyCondition(s, t3, { kind: 'poison', power: p, turns: n }, unit(s, 'medic'));
+  const f = G.forecast(hero, t3, false, s);
+  check('引爆餘毒: every layer’s poison to come, no cap (60 + 60 + 40)', f.notes.includes('餘毒轉成 160 威力'), f.notes.join(' / '));
+  G.resolve(s, hero, t3, false);
+  check('…and the poison is spent', !t3.conditions?.poison);
+  // A cure clears every layer; 莽牯朱蛤 keeps every layer off.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const m = unit(s, 'medic');
+  m.hp = 10;
+  BM.applyCondition(s, m, { kind: 'poison', power: 3, turns: 3 }, G.enemies(s)[0]);
+  BM.applyCondition(s, m, { kind: 'poison', power: 3, turns: 3 }, G.enemies(s)[0]);
+  s.stock.nineFlowerPill = 1;
+  check('a cure clears every layer', G.consume(s, m, 'nineFlowerPill') && !m.conditions.poison);
+  // A poison saved before layers is one layer.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const old = G.enemies(s)[0];
+  old.hp = old.maxHp = 999;
+  old.conditions = { poison: { power: 6, through: s.round + 1, source: 'medic' } };
+  BM.applyCondition(s, old, { kind: 'poison', power: 4, turns: 2 }, unit(s, 'medic'));
+  check('a poison saved before layers reads as one layer', BM.poisonLayers(old.conditions.poison).length === 2 && old.conditions.poison.power === 10);
+  check('the board names the layers: 中毒 ×2', BM.activeEffects(old, s.round)[0].startsWith('中毒 ×2'));
+}
+
 section('saves');
 {
   // Everything new survives a save.
@@ -6437,12 +6495,13 @@ section('leader boons of the later ten');
   {
     const { s, lead, near, far, foe, other } = led('lingSu');
     const f = G.forecast(near, foe, false, s);
-    check('碧蠶毒蠱: the forecast poisons 4 for 2 rounds', same(f.effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: 4, turns: 2 }]) && f.notes.includes('碧蠶毒蠱 · 中毒 4，2 回合'), JSON.stringify(f.effects));
+    const v4 = BM.grownPoison(near, 4);
+    check('碧蠶毒蠱: the forecast poisons 4, grown with the striker, for 2 rounds', v4 === Math.round(4 * (1 + near.level / 5)) && same(f.effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: v4, turns: 2 }]) && f.notes.includes('碧蠶毒蠱 · 中毒 ' + v4 + '，2 回合'), JSON.stringify(f.effects));
     G.resolve(s, near, foe, false);
-    check('…and the strike does', foe.conditions.poison?.power === 4 && foe.conditions.poison.through === s.round + 1);
+    check('…and the strike does', foe.conditions.poison?.power === v4 && foe.conditions.poison.through === s.round + 1);
     teach(lead, defineArt({ poison: { power: 6, turns: 1 }, safe: true, mp: 2 }));
     const scout = put(s, 'scout', 3, 7);
-    check('an art’s own poison and the boon’s are one: the stronger, the longer', same(G.forecast(lead, scout, true, s).effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: 6, turns: 2 }]));
+    check('an art’s own poison and the boon’s are two layers (0.71)', same(G.forecast(lead, scout, true, s).effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: BM.grownPoison(lead, 6), turns: 1 }, { kind: 'poison', power: BM.grownPoison(lead, 4), turns: 2 }]));
     check('not eight tiles off', !G.forecast(far, other, false, s).effects.some((e) => e.kind === 'poison'));
     BM.applyCondition(s, scout, { kind: 'evade', power: 1, turns: 1 }, scout);
     check('not on a blow 閃身 makes miss, nor its line', !G.forecast(lead, scout, false, s).effects.length && !G.forecast(lead, scout, false, s).notes.some((n) => n.startsWith('碧蠶毒蠱')));

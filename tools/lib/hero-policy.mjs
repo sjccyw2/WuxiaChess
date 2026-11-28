@@ -44,6 +44,7 @@ const W = {
   breakCharge: 40, // spending a foe's charged reaction (a mirror) with a blow it turns back
   delaySignature: 6, // putting a foe's signature back a round
   foeEffectDefault: 1.2,
+  poisonLayer: 0.8, // a poison layer's damage to come, against a blow's damage now
   allyEffect: { rally: 1.2, haste: 3 },
   allyEffectDefault: 0.8,
   // 定身, 閉穴, 受制: per point of the blow the held foe would have struck, per turn it is held
@@ -499,7 +500,10 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
   if (f.amount >= victim.hp) gone.add(victim);
   else if (!G.immuneTo(victim)) {
     for (const e of f.effects)
-      if (!(e.kind in W.hold)) score += (W.foeEffect[e.kind] ?? W.foeEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
+      if (e.kind === 'poison')
+        // A poison layer (0.71) is worth the damage it will do, as a blow's is, up to what is left.
+        score += Math.min(e.power * (e.turns || 1), victim.hp - dealt) * foeValue(s, victim, ctx) * W.poisonLayer;
+      else if (!(e.kind in W.hold)) score += (W.foeEffect[e.kind] ?? W.foeEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
     const hold = holdValue(s, u, victim, f, ctx);
     score += hold;
     if (hold > 0 || f.effects.some((e) => e.kind in W.hold)) held.add(victim);

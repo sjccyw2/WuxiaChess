@@ -95,7 +95,7 @@ const COMMANDS = {
     stat: 'venom',
     power: 4,
     turns: 2,
-    text: '出手擊中的敵人中毒兩回合，每回合失去 4 氣血。',
+    text: '出手擊中的敵人中毒兩回合，每回合失去 4 氣血起（隨出手者等級增長）。',
     icon: 'leaf'
   },
   diYun: {
@@ -275,10 +275,28 @@ function effectDescription(kind, power, turns) {
   return CONDITION_NAMES[kind] + ' · ' + effect[kind] + ' · ' + span;
 }
 function activeEffects(unit, round) {
-  return Object.entries(unit.conditions || {}).map(([kind, c]) =>
-    effectDescription(kind, c.power, Math.max(1, c.through - round + 1))
-  );
+  return Object.entries(unit.conditions || {}).map(([kind, c]) => {
+    const line = effectDescription(kind, c.power, Math.max(1, c.through - round + 1));
+    // 中毒 ×3: the layers it holds (0.71).
+    const n = kind === 'poison' ? poisonLayers(c).length : 0;
+    return n > 1 ? line.replace(CONDITION_NAMES.poison, CONDITION_NAMES.poison + ' ×' + n) : line;
+  });
 }
+// ── Poison (0.71; the producer, 2026-11-28, Q-N177 to Q-N179) ─────────────
+// Every poison is a layer with its own damage and last round; at the end of each enemy turn the
+// layers still running bite once, together. There is no cap. `power` and `through` on the
+// condition are the layers' sum and the latest end, which the pages and rules read.
+// A poison saved before layers is one layer.
+const poisonLayers = (c) =>
+  !c ? [] : Array.isArray(c.layers) ? c.layers : [{ power: c.power, through: c.through, source: c.source }];
+// Poison a hero lays grows with the hero: × (1 + level ÷ 5). Enemies' poisons keep their numbers.
+const poisonGrowth = (u) => (u?.side === 'ally' ? 1 + (u.level || 1) / 5 : 1);
+const grownPoison = (u, power) => Math.round(power * poisonGrowth(u));
+const grownEffects = (u, effects) =>
+  effects.map((e) => (e.kind === 'poison' ? { ...e, power: grownPoison(u, e.power) } : e));
+// The poison still to bite on a piece: each layer's damage times the bites it has left.
+const poisonLeft = (c, round) =>
+  poisonLayers(c).reduce((n, l) => n + l.power * Math.max(0, l.through - round + 1), 0);
 function applyCondition(s, target, effect, caster) {
   if (target?.side === 'prop') return; // a board object takes no condition
   const { kind, power, turns } = effect;
@@ -290,6 +308,17 @@ function applyCondition(s, target, effect, caster) {
   if (kind === 'poison' && WARES[target.gear]?.antivenom) return false;
   const extra = ['haste', 'rally', 'fortify'].includes(kind) && target.acted ? 1 : 0;
   const through = s.round + turns - 1 + extra;
+  // 中毒: a layer of its own; the newest layer's caster is credited with the bites.
+  if (kind === 'poison') {
+    const layers = [...poisonLayers(old).filter((l) => l.through >= s.round), { power, through, source: caster.id }];
+    held.poison = {
+      layers,
+      power: layers.reduce((n, l) => n + l.power, 0),
+      through: Math.max(...layers.map((l) => l.through)),
+      source: caster.id
+    };
+    return true;
+  }
   const owner = old && old.power > power ? old.source : caster.id;
   // 亂氣 counts casts: each application adds a layer instead of keeping the stronger.
   held[kind] = {
@@ -307,4 +336,5 @@ function progress(unit, metric, delta) {
   if (unit?.mastery && delta > 0) unit.mastery[metric] = (unit.mastery[metric] || 0) + delta;
 }
 
+export { poisonLayers, poisonGrowth, grownPoison, grownEffects, poisonLeft };
 export { COMMANDS, HELD_KINDS, LINGER_KINDS, commandDescription, commandBonus, commandAura, leaderBoon, prepPost, CONDITION_NAMES, effectsOf, selfEffectsOf, effectDescription, activeEffects, applyCondition, blankRecord, progress };

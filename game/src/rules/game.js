@@ -37,7 +37,10 @@ import {
   selfEffectsOf,
   applyCondition,
   CONDITION_NAMES,
-  progress
+  progress,
+  poisonLayers,
+  grownPoison,
+  grownEffects
 } from './battle-mastery.js';
 import { FIELD_SIZE, fieldCells, mapLayout, validTile, tileInfo } from '../data/terrain.js';
 import { TECHNIQUES, WARES, CAPTAINS } from '../data/martial-arts.js';
@@ -2442,13 +2445,11 @@ function boonPlan(s, u, t, result) {
       result.notes.push(note);
       result.riders.push(note);
     };
-  const venom = commandBonus(s, u, 'venom');
+  const venom = grownPoison(u, commandBonus(s, u, 'venom'));
   if (venom) {
-    // Two poisons are one: the stronger, for the longer (applyCondition).
-    const turns = leaderBoon(s).turns,
-      had = result.effects.find((e) => e.kind === 'poison');
-    if (had) Object.assign(had, { power: Math.max(had.power, venom), turns: Math.max(had.turns, turns) });
-    else result.effects.push({ kind: 'poison', power: venom, turns });
+    // A layer of its own beside the art's (0.71), grown with the striker as any hero's poison.
+    const turns = leaderBoon(s).turns;
+    result.effects.push({ kind: 'poison', power: venom, turns });
     rider(name + ' · 中毒 ' + venom + '，' + turns + ' 回合');
   }
   const linger = commandBonus(s, u, 'linger'),
@@ -2493,7 +2494,7 @@ function forecast(u, t, skill, s, art = skill ? artFor(u) : null, basic = basicF
     recipients: [],
     splash: [],
     roar: [], // 獅子吼: companions near the striker it hurts, as { id, amount }
-    effects: effectsOf(art),
+    effects: grownEffects(u, effectsOf(art)), // poison a hero lays grows with the hero (0.71)
     hpCost: art?.hpCost || 0,
     forms: formsFor(u, art, basic),
     notes: [],
@@ -4500,7 +4501,13 @@ function nextRound(s) {
       continue;
     }
     const poison = u.conditions?.poison;
+    // 中毒: the layers still running bite once, together; the newest layer's caster is credited.
     if (poison) {
+      poison.layers = poisonLayers(poison).filter((l) => l.through >= s.round);
+      poison.power = poison.layers.reduce((n, l) => n + l.power, 0);
+      poison.source = poison.layers.at(-1)?.source ?? poison.source;
+    }
+    if (poison?.power > 0) {
       const amount = blowing({ how: 'poison' }, () =>
         wound(s, u, afterWard(poison.power, wardPercent(s, u)), find(s, poison.source))
       );

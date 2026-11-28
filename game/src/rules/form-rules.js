@@ -18,7 +18,7 @@ const FORM_RULES = {
     '在同一橫列或直行出招時濺射身後：餘勢穿過主目標，再擊其後兩格內首名敵人，威力 45%。阻地或友軍截斷餘勢。'
   ],
   arc: ['餘勁躍向兩格內另一敵人', '餘勁躍向主目標兩格內最近的另一敵人，威力 32%。等距時取靠北、再靠西者。'],
-  distill: ['引爆目標的餘毒', '引爆目標已有的餘毒，一次加上尚餘毒量，最多 16 威力，舊毒消散。'],
+  distill: ['引爆目標的餘毒', '引爆目標身上每一層餘毒：尚未發作的毒傷全數加進這一擊，沒有上限，舊毒消散。'],
   leech: ['吸回損血的四分之一', '依主目標實際損血回復四分之一氣血，捨去小數，每次最多 9 點。'],
   landing: ['落地護住身旁同伴', '落地時自己與相鄰同伴各得 8 點護盾，持續至本回合結束。'],
   // 擊退 has this in its own rule (a push that is blocked gains 7); two pull arts keep it as a
@@ -93,7 +93,11 @@ function contactPlan(s, u, t, art, forms, step, boss) {
     notes.push('乘破綻 · 首段 ＋9，封住還擊');
   }
   if (spentPoison) {
-    const n = Math.min(16, Math.max(0, c.poison.through - (s?.round ?? 1) + 1) * c.poison.power);
+    // Every layer's bites still to come, with no cap (the producer, 2026-11-28, Q-N179); a poison
+    // saved before layers is one (battle-mastery.js poisonLeft says the same).
+    const round = s?.round ?? 1,
+      layers = Array.isArray(c.poison.layers) ? c.poison.layers : [c.poison];
+    const n = layers.reduce((sum, l) => sum + l.power * Math.max(0, l.through - round + 1), 0);
     extra += n;
     notes.push('餘毒轉成 ' + n + ' 威力');
   }
