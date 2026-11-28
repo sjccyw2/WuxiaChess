@@ -127,14 +127,17 @@ function floorHeight(x, z) {
   let y = -0.025 + 0.02 * (n2 - 0.5) + 0.05 * smooth(0.4, 2.2, off) * (n1 - 0.45);
   // The talus and rim at the wall's foot, where no opening cuts it.
   const open = Math.max(channel(x, z), mouth(x, z));
-  const rim = (1.0 + 0.7 * n1 + 0.15 * Math.sin(a * 9)) * (1 - open);
-  y += rim * smooth(R - 2.0, R - 0.05, d) * smooth(0.15, 0.9, off);
-  // Past the wall, the island's flank falls in shelves to the sea floor.
-  const out = smooth(R + 0.7, R + 3.6, d);
-  if (out > 0) {
-    const shelf = Math.floor((1 - out) * 4) / 4,
-      stepped = lerp(SEA - 1.5, rim + y * 0.3, 0.55 * shelf + 0.45 * (1 - out));
-    y = lerp(y, stepped + 0.12 * (n2 - 0.5), smooth(0, 0.25, out));
+  const rim = (0.42 + 0.5 * n1 + 0.08 * Math.sin(a * 9)) * (1 - open);
+  y += rim * smooth(R - 1.35, R - 0.15, d) * smooth(0.15, 0.9, off);
+  // Past the wall, the island's flank drops in a short cliff to a wave-cut ledge and the sea.
+  const t = d - R + 0.25 * (n2 - 0.5);
+  if (t > 0.55) {
+    const ledge = SEA + 0.06 + 0.06 * n1;
+    let outer;
+    if (t < 1.05) outer = lerp(y, ledge, smooth(0.55, 1.05, t));
+    else if (t < 1.6 + 0.6 * n1) outer = ledge - 0.04 * (t - 1.05);
+    else outer = lerp(ledge, SEA - 1.5, smooth(1.6 + 0.6 * n1, 2.5 + 0.6 * n1, t));
+    y = outer;
   }
   // The tide channels, scoured below the sea.
   const ch = channel(x, z);
@@ -216,7 +219,7 @@ class Shell {
     const added = m.parts[0].p.length / 3 - before;
     const c = [0, 0, 0];
     for (const p of points) for (let i = 0; i < 3; i++) c[i] += p[i] / points.length;
-    for (let i = 0; i < added; i++) this.facing.push(c, facing);
+    for (let i = 0; i < added; i++) this.facing.push([c, facing]);
   }
 }
 function fromInside(T, group, shell) {
@@ -249,7 +252,10 @@ function fromInside(T, group, shell) {
         .replace(
           '#include <project_vertex>',
           `#include <project_vertex>
-          vec3 caveEye = normalize(cameraPosition - (modelMatrix * vec4(caveCentre, 1.)).xyz);
+          // The water's mirror looks from below the sea; it judges as the camera above does.
+          vec3 caveFrom = cameraPosition;
+          if (caveFrom.y < ${SEA.toFixed(3)}) caveFrom.y = ${(2 * SEA).toFixed(3)} - caveFrom.y;
+          vec3 caveEye = normalize(caveFrom - (modelMatrix * vec4(caveCentre, 1.)).xyz);
           vec3 caveTurn = normalize(mat3(modelMatrix) * caveFacing);
           if (dot(caveFacing, caveFacing) > .5 && dot(caveTurn, caveEye) < .16)
             gl_Position = vec4(2., 2., 2., 1.);`

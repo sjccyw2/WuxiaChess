@@ -47,7 +47,7 @@ const stonework = [
 // the tile's own frame after its ground, and `ground` (m, p, cell), which may lay a dry tile's
 // ground itself (it returns true when it has). Their palette, depth, surroundings and landmarks
 // are their own.
-const LOOKS = { 10: 2, 11: 1, 12: 2, 13: 8, 14: 1, 16: 6, 17: 9, 18: 3, 19: 7 };
+const LOOKS = { 10: 2, 11: 1, 12: 2, 13: 8, 14: 1, 16: 6, 17: 6, 18: 3, 19: 6 };
 const OWN_TILES = { 10: tiles10, 11: tiles11, 12: tiles12, 13: tiles13, 14: tiles14, 16: tiles16, 17: tiles17, 18: tiles18, 19: tiles19 };
 const lookOf = (index) => LOOKS[index] ?? index;
 const directions = [
@@ -56,7 +56,7 @@ const directions = [
   [0, 1],
   [-1, 0]
 ];
-const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32, 1.1, 1.3, 1.0, 1.6, 3.2, 0.3, 2.6, 1.2, 3.0, 1.4];
+const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32, 1.1, 1.3, 1.0, 1.6, 3.2, 0.3, 2.6, 0.5, 1.0, 1.4];
 // Each side is measured in local coordinates. The first and last point of
 // every course meet the neighbouring side even along a re-entrant corner.
 function exposedSide(m, index, p, cell, salt, depth = landDepth[index]) {

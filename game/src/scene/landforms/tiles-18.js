@@ -91,17 +91,23 @@ function stoneTone(m, kind, x, z, salt) {
   const n = wave(x, z),
     h = hash2(salt, 3, 11);
   if (kind === 'court') {
-    const c = m.mix(0xaaa294, 0xc1b9a8, 0.35 * n + 0.65 * h);
+    const c = m.mix(0xa9a59b, 0xc4bfb2, 0.35 * n + 0.65 * h);
     // A border of darker stone round the court's edge.
-    return Math.abs(x) > 2.17 || z < -5.17 || z > -2.83 ? m.mix(c, 0x6f6a62, 0.42) : c;
+    return Math.abs(x) > 2.17 || z < -5.17 || z > -2.83 ? m.mix(c, 0x5f5c57, 0.45) : c;
   }
-  if (kind === 'way') return m.mix(0xa39b8c, 0xbdb4a2, 0.4 * n + 0.6 * h);
-  // Wild granite: warm and cool slabs side by side, a few stained rusty or dark.
-  let c = m.mix(0x8a847a, 0xa69f91, 0.45 * n + 0.55 * h);
-  const k = hash2(salt, 9, 4);
-  if (k > 0.86) c = m.mix(c, 0x8c7058, 0.42);
-  else if (k < 0.12) c = m.mix(c, 0x6f706c, 0.5);
-  else if (k < 0.3) c = m.mix(c, 0xb2ab9b, 0.4);
+  if (kind === 'way') {
+    const c = m.mix(0xaba69a, 0xc6c0b1, 0.4 * n + 0.6 * h);
+    return Math.abs(x) > 0.36 && z < 4.5 ? m.mix(c, 0x6a6760, 0.4) : c;
+  }
+  // Wild granite: grey and buff plates side by side, a few stained rusty or dark, and
+  // the rock greyer and more weathered in broad patches.
+  const tones = [0x85837d, 0x928e86, 0x9b958a, 0x7a7974, 0xa39f95, 0x8e877b];
+  let c = m.rgb(tones[Math.floor(hash2(salt, 9, 4) * tones.length)]);
+  c = m.mix(c, 0x6f6e6a, 0.35 * smooth(0.55, 0.85, wave(x * 0.45 + 2, z * 0.5 - 1)));
+  c = m.mix(c, 0xb0aa9d, 0.25 * h);
+  const k = hash2(salt, 9, 7);
+  if (k > 0.9) c = m.mix(c, 0x8a6e55, 0.4);
+  else if (k < 0.08) c = m.mix(c, 0x5f5e5a, 0.45);
   return c;
 }
 
@@ -219,9 +225,9 @@ function ground(m, p, cell) {
           z = wz + v,
           n = wave(x * 2.3, z * 2.1),
           wild = smooth(0.1, 0.6, offDressed(x, z));
-        const grit = m.mix(0x575249, 0x6d675c, n),
-          turf = m.mix(0x5d6644, 0x75784f, n);
-        return [[u, bed, v], m.mix(grit, turf, wild * smooth(0.55, 0.8, wave(x * 0.8 + 3, z * 0.7)))];
+        const grit = m.mix(0x4c4a46, 0x625f58, n),
+          turf = m.mix(0x56603f, 0x6e7449, n);
+        return [[u, bed, v], m.mix(grit, turf, wild * smooth(0.45, 0.75, wave(x * 0.8 + 3, z * 0.7)))];
       });
       m.face(
         q.map(([pt]) => pt),
@@ -248,79 +254,77 @@ function ground(m, p, cell) {
       m.mix(p[0], p[2], 0.5)
     );
   }
-  // The stones, three to a tile side; some pairs are one long stone.
+  // The stones, three to a tile side. On the way they are laid in running bond and in
+  // the court as squares; the wild rock has split into plates of one to four cells.
   const I0 = cell.x * S,
-    J0 = cell.y * S;
-  for (let j = 0; j < S; j++) {
-    const J = J0 + j;
-    let i = 0;
-    while (i < S) {
+    J0 = cell.y * S,
+    kindAt = (I, J) => {
+      const x = (I + 0.5) / S - layout.width / 2,
+        z = (J + 0.5) / S - layout.height / 2;
+      return inCourt(x, z) ? 'court' : inWay(x, z) ? 'way' : 'rock';
+    };
+  const taken = new Set(),
+    groups = [];
+  const free = (i, j, kind) =>
+    i < S && j < S && !taken.has(i + j * S) && kindAt(I0 + i, J0 + j) === kind;
+  for (let j = 0; j < S; j++)
+    for (let i = 0; i < S; i++) {
+      if (taken.has(i + j * S)) continue;
       const I = I0 + i,
-        cx = (I + 0.5) / S - layout.width / 2,
-        cz = (J + 0.5) / S - layout.height / 2,
-        kind = inCourt(cx, cz) ? 'court' : inWay(cx, cz) ? 'way' : 'rock';
-      // The way is laid in running bond; the court in squares; the rock as it split.
-      let span = 1;
-      if (i < S - 1) {
-        if (kind === 'way') span = (J + (i === 0 ? 0 : 1)) % 2 === 0 ? 2 : 1;
-        else if (kind === 'rock') span = hash2(I, J, 5) < 0.42 ? 2 : 1;
-        const next = (I + 1.5) / S - layout.width / 2,
-          nextKind = inCourt(next, cz) ? 'court' : inWay(next, cz) ? 'way' : 'rock';
-        if (nextKind !== kind) span = 1;
-      }
-      const pts = [];
-      for (let k = 0; k <= span; k++) pts.push(corner(I + k, J));
-      pts.push(corner(I + span, J + 1));
-      for (let k = span - 1; k >= 0; k--) pts.push(corner(I + k, J + 1));
-      // Drop the midpoints of a long stone's sides, so its top is a quad.
-      const shape = span === 2 ? [pts[0], pts[2], pts[3], pts[5]] : pts;
-      const local = shape.map(([x, z]) => [x - wx, z - wz]);
-      const salt = I * 131 + J * 17,
-        h = stoneTop - (kind === 'rock' ? hash2(I, J, 6) * 0.008 : 0.002 * hash2(I, J, 6));
-      const [sx, sz] = slab(
-        m,
-        local,
-        h,
-        stoneTone(m, kind, cx, cz, salt),
-        kind === 'rock',
-        salt
-      );
+        J = J0 + j,
+        kind = kindAt(I, J),
+        h = hash2(I, J, 5);
+      let w = 1,
+        d = 1;
       if (kind === 'rock') {
-        // Lichen: rusty orange, sulphur and grey-green crusts on the tops.
-        const l = hash2(I, J, 8);
-        if (l < 0.45) {
-          const col =
-            l < 0.15 ? 0xb9823f : l < 0.28 ? m.mix(0xb3ad6a, 0x9da064, l) : m.mix(0x9fa792, 0xb9bca8, l);
-          lichen(
-            m,
-            sx + (hash2(I, J, 9) - 0.5) * 0.08,
-            sz + (hash2(I, J, 10) - 0.5) * 0.08,
-            h + 0.0035,
-            0.025 + 0.03 * hash2(I, J, 11),
-            col,
-            salt
-          );
-          if (l < 0.2)
-            lichen(m, sx + 0.06, sz - 0.04, h + 0.004, 0.018, m.mix(col, 0xd9b36a, 0.3), salt + 1);
-        }
-        // A frost crack across the slab.
-        if (hash2(I, J, 12) < 0.3) {
-          const a = hash2(I, J, 13) * Math.PI,
-            ca = Math.cos(a) * 0.09,
-            sa = Math.sin(a) * 0.09,
-            y = h + 0.003;
-          m.face(
-            [
-              [sx - ca, y, sz - sa],
-              [sx + ca * 0.1 - sa * 0.08, y, sz + sa * 0.1 + ca * 0.08],
-              [sx + ca, y, sz + sa],
-              [sx + ca * 0.1 - sa * 0.06, y, sz + sa * 0.1 + ca * 0.06]
-            ],
-            0x4a463f
-          );
-        }
-      }
-      i += span;
+        if (h < 0.22 && free(i + 1, j, kind) && free(i, j + 1, kind) && free(i + 1, j + 1, kind)) w = d = 2;
+        else if (h < 0.55 && free(i + 1, j, kind)) w = 2;
+        else if (h < 0.8 && free(i, j + 1, kind)) d = 2;
+      } else if (kind === 'way' && (J + (i === 0 ? 0 : 1)) % 2 === 0 && free(i + 1, j, kind)) w = 2;
+      for (let a = 0; a < w; a++) for (let b = 0; b < d; b++) taken.add(i + a + (j + b) * S);
+      groups.push([I, J, w, d, kind]);
+    }
+  for (const [I, J, w, d, kind] of groups) {
+    // The outline, corner by corner round the group, keeping the points between.
+    const pts = [];
+    for (let k = 0; k < w; k++) pts.push(corner(I + k, J));
+    for (let k = 0; k < d; k++) pts.push(corner(I + w, J + k));
+    for (let k = w; k > 0; k--) pts.push(corner(I + k, J + d));
+    for (let k = d; k > 0; k--) pts.push(corner(I, J + k));
+    const local = pts.map(([x, z]) => [x - wx, z - wz]);
+    const cx = (I + w / 2) / S - layout.width / 2,
+      cz = (J + d / 2) / S - layout.height / 2,
+      salt = I * 131 + J * 17,
+      h = stoneTop - (kind === 'rock' ? hash2(I, J, 6) * 0.01 : 0.002 * hash2(I, J, 6));
+    const [sx, sz] = slab(m, local, h, stoneTone(m, kind, cx, cz, salt), kind === 'rock', salt);
+    if (kind !== 'rock') continue;
+    // Lichen: rusty orange, sulphur and grey-green crusts on the tops.
+    const size = Math.sqrt(w * d);
+    for (let q = 0; q < (size > 1.5 ? 3 : 1); q++) {
+      const l = hash2(I + q, J, 8);
+      if (l > 0.55) continue;
+      const col =
+        l < 0.08 ? 0xa8804a : l < 0.3 ? m.mix(0xa9a466, 0x96995e, l) : m.mix(0x9aa18c, 0xb6b9a4, l);
+      const ox = (hash2(I, J + q, 9) - 0.5) * 0.12 * size,
+        oz = (hash2(I, J + q, 10) - 0.5) * 0.12 * size;
+      lichen(m, sx + ox, sz + oz, h + 0.0035, 0.03 + 0.04 * hash2(I, J + q, 11), col, salt + q);
+      lichen(m, sx + ox + 0.05, sz + oz - 0.03, h + 0.004, 0.02, m.mix(col, 0xd2ac66, 0.3), salt + q + 5);
+    }
+    // A frost crack across the slab.
+    if (hash2(I, J, 12) < 0.4) {
+      const a = hash2(I, J, 13) * Math.PI,
+        ca = Math.cos(a) * 0.09 * size,
+        sa = Math.sin(a) * 0.09 * size,
+        y = h + 0.003;
+      m.face(
+        [
+          [sx - ca, y, sz - sa],
+          [sx + ca * 0.1 - sa * 0.06, y, sz + sa * 0.1 + ca * 0.06],
+          [sx + ca, y, sz + sa],
+          [sx + ca * 0.1 - sa * 0.045, y, sz + sa * 0.1 + ca * 0.045]
+        ],
+        0x45423d
+      );
     }
   }
   // Grit and chips in the joints of the wild rock, and a blade of grass or two.

@@ -1,6 +1,10 @@
 import { circle, midway } from '../scenery-kit.js';
 import { oldPine } from './peaks-4.js';
-import { pad, tuft, needles, needleEdge, needleLight } from './kit-12.js';
+import { pad, tuft } from './kit-12.js';
+
+const needles = [0x243b2c, 0x2b4532, 0x30492f],
+  needleEdge = 0x3e5a3e,
+  needleLight = 0x58704a;
 import { granite, graniteLit, snow, flameMark } from './tiles-18.js';
 
 // The top of 光明頂: the summit rock round the board, its granite falling sheer on every

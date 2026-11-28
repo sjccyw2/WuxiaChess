@@ -351,7 +351,8 @@ function beamBridge(m, p, cell) {
     m.box(x, -0.17, 0, 0.3, 0.22, 1.08, m.mix(granite, graniteShade, 0.5 + 0.2 * j));
     m.box(x, -0.29, 0, 0.27, 0.04, 1.08, graniteDark);
   }
-  // Bearing stones under the beam ends at each abutment.
+  // Threshold stones where the deck meets the abutments, and bearing stones under the beam ends.
+  for (const s of [-1, 1]) m.box(0, 0.0, s * 0.447, 1.0, 0.124, 0.106, m.mix(granite, graniteShade, 0.25));
   for (const s of [-1, 1]) m.box(0, -0.38, s * 0.5, 1.02, 0.18, 0.22, graniteShade);
   for (const [side, on] of [
     [-1, west],

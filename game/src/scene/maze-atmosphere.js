@@ -24,8 +24,8 @@ const styles = [
   // The boards added on 2026-11-28.
   ['石樑溫家', 0xc6c2b4, 0x7d93a0, 0xffdcb0, 0x5f6e66, 'mist', -4.5, 0.02],
   ['萬安寺', 0x3f4760, 0x161b30, 0xf2c890, 0x2f3a4c, 'earth', -1.0, 0.018, 'night'],
-  ['光明頂', 0xd6cfc4, 0x7f97b4, 0xffd9a8, 0xa7b0b4, 'mist', -7.0, 0.02],
-  ['俠客島', 0x9fb2b4, 0x5f8090, 0xffe2b8, 0x3d6a70, 'water', -0.7, 0.021]
+  ['光明頂', 0xd5dde3, 0x6a8fbd, 0xffe3bc, 0xd3d9dc, 'mist', -7.0, 0.017],
+  ['俠客島', 0x9fb2b4, 0x5f8090, 0xffe2b8, 0x3d6a70, 'water', -0.25, 0.021]
 ];
 const atmospheres = styles.map(([name, horizon, zenith, sun, base, mode, level, fog, hour]) => ({
   name,
