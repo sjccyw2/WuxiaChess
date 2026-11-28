@@ -75,7 +75,15 @@ function hall(m, o) {
   if (back) m.box(0, y + h / 2, -d / 2 + 0.1, w, h, 0.2, wallRed);
   for (const s of [-1, 1]) {
     m.box(s * (w / 2 - 0.1), y + h / 2, (front - d / 2) / 2, 0.2, h, front + d / 2, wallRed);
-    m.box(s * (w / 2 - 0.1), y + 0.15, (front - d / 2) / 2, 0.24, 0.3, front + d / 2 + 0.02, stoneDark);
+    m.box(
+      s * (w / 2 - 0.1),
+      y + 0.15,
+      (front - d / 2) / 2,
+      0.24,
+      0.3,
+      front + d / 2 + 0.02,
+      stoneDark
+    );
   }
   if (back) m.box(0, y + 0.15, -d / 2 + 0.1, w + 0.02, 0.3, 0.24, stoneDark);
   for (const x of posts) column(m, x, d / 2, y, h, 0.085);
@@ -121,7 +129,15 @@ function hall(m, o) {
   if (lamps)
     for (let i = 0; i < bays; i++)
       if (i % 2 === 0 || bays < 4)
-        hangLamp(m, (posts[i] + posts[i + 1]) / 2, eave - 0.62, d / 2 + over * 0.55, 0.8, 0xe0663c, 0.25);
+        hangLamp(
+          m,
+          (posts[i] + posts[i + 1]) / 2,
+          eave - 0.62,
+          d / 2 + over * 0.55,
+          0.8,
+          0xe0663c,
+          0.25
+        );
 }
 
 // 大雄寶殿: the great hall behind the pagoda, on a terrace with a balustrade and a broad stair.
@@ -164,9 +180,47 @@ function mainHall(m) {
     );
     // A great bronze cauldron before the stair, smouldering.
     m.frame(0, 0, 5.3, 0, 1, () => {
-      m.lathe(0, 0, 0, [[0, 0.5], [0.12, 0.52], [0.2, 0.42], [0.28, 0.44]], stoneDark, 10);
-      m.lathe(0, 0.28, 0, [[0, 0.1], [0.08, 0.42], [0.3, 0.55], [0.6, 0.52], [0.68, 0.58], [0.72, 0.58]], bronze, 12);
-      m.glow(() => m.lathe(0, 0.66, 0, [[0, 0.5], [0.005, 0.5]], 0xd8642c, 12));
+      m.lathe(
+        0,
+        0,
+        0,
+        [
+          [0, 0.5],
+          [0.12, 0.52],
+          [0.2, 0.42],
+          [0.28, 0.44]
+        ],
+        stoneDark,
+        10
+      );
+      m.lathe(
+        0,
+        0.28,
+        0,
+        [
+          [0, 0.1],
+          [0.08, 0.42],
+          [0.3, 0.55],
+          [0.6, 0.52],
+          [0.68, 0.58],
+          [0.72, 0.58]
+        ],
+        bronze,
+        12
+      );
+      m.glow(() =>
+        m.lathe(
+          0,
+          0.66,
+          0,
+          [
+            [0, 0.5],
+            [0.005, 0.5]
+          ],
+          0xd8642c,
+          12
+        )
+      );
       for (const s of [-1, 1]) m.hoop(s * 0.56, 0.88, 0, 0.13, 0.03, bronze, 8, 'xy');
       mark(m, 0, 0.8, 0, 1.1);
     });
@@ -185,7 +239,17 @@ function tower(m, x, z, yaw, bell) {
     for (let f = 0; f < 4; f++)
       m.frame(0, 0, 0, (f * circle) / 4, 1, () => {
         m.box(0, 0.7, s / 2 + 0.005, 0.8, 1.1, 0.02, ink);
-        m.lathe(0, 1.25, s / 2 + 0.006, [[0, 0.4], [0.001, 0.4]], ink, 10);
+        m.lathe(
+          0,
+          1.25,
+          s / 2 + 0.006,
+          [
+            [0, 0.4],
+            [0.001, 0.4]
+          ],
+          ink,
+          10
+        );
         m.box(0, 1.3, s / 2 + 0.01, 1.0, 0.06, 0.03, stone);
       });
     const y = lower,
@@ -204,19 +268,50 @@ function tower(m, x, z, yaw, bell) {
       });
     if (bell) {
       m.box(0, y + 1.38, 0, 1.6, 0.08, 0.1, lacquerDark);
-      m.lathe(0, y + 0.45, 0, [[0, 0.42], [0.08, 0.4], [0.5, 0.32], [0.8, 0.3], [0.9, 0.18], [0.94, 0]], bronze, 12);
+      m.lathe(
+        0,
+        y + 0.45,
+        0,
+        [
+          [0, 0.42],
+          [0.08, 0.4],
+          [0.5, 0.32],
+          [0.8, 0.3],
+          [0.9, 0.18],
+          [0.94, 0]
+        ],
+        bronze,
+        12
+      );
       m.hoop(0, y + 0.62, 0, 0.36, 0.02, gilt, 12);
       m.tube([0.9, y + 0.75, 0], [0.4, y + 0.75, 0], 0.06, 0.06, 0x4a3a2a, 6);
     } else {
       m.frame(0, y + 0.85, 0, 0, 1, () => {
-        m.tube([0, 0, -0.36], [0, 0, 0.36], 0.5, 0.5, 0x7a2a22, 12);
+        m.tube([0, 0, -0.36], [0, 0, 0.36], 0.5, 0.5, 0x4e1d19, 12);
         m.hoop(0, 0, 0.36, 0.5, 0.03, gilt, 14, 'xy');
         m.hoop(0, 0, -0.36, 0.5, 0.03, gilt, 14, 'xy');
-        m.lathe(0, 0, 0.37, [[0, 0.46], [0.001, 0.46]], 0xb59a6a, 12);
+        m.lathe(
+          0,
+          0,
+          0.37,
+          [
+            [0, 0.46],
+            [0.001, 0.46]
+          ],
+          0x7d6c50,
+          12
+        );
       });
       m.box(0, y + 0.2, 0, 0.9, 0.4, 0.5, lacquerDark);
     }
-    tiledRoof(m, 4.2, 4.2, y + 1.66, 1.45, { hip: 0.55, lift: 0.4, rows: 4, beasts: 3, tones: greyTile, tile: 0.52 });
+    tiledRoof(m, 4.2, 4.2, y + 1.66, 1.45, {
+      hip: 0.55,
+      lift: 0.4,
+      rows: 4,
+      beasts: 3,
+      tones: greyTile,
+      tile: 0.52
+    });
     for (const [lx, lz] of [
       [-1.6, 1.6],
       [1.6, 1.6]
@@ -238,16 +333,55 @@ function quarters(m) {
       door: 4,
       lit: (i) => [1, 2, 4, 6, 7].includes(i),
       over: 0.6,
-      roof: { rise: 1.05, gable: true, hip: 0, lift: 0.08, rows: 4, rafters: false, tones: greyTile, tile: 0.5 }
+      roof: {
+        rise: 1.05,
+        gable: true,
+        hip: 0,
+        lift: 0.08,
+        rows: 4,
+        rafters: false,
+        tones: greyTile,
+        tile: 0.5
+      }
     })
   );
   // A water vat and a stack of firewood at the north end of the porch, and a bench.
   m.frame(-8.75, OUT + 0.3, -6.0, 0, 1, () => {
-    m.lathe(0, 0, 0, [[0, 0.24], [0.1, 0.3], [0.42, 0.33], [0.48, 0.3], [0.5, 0.31]], 0x3c3a3a, 10);
-    m.lathe(0, 0.45, 0, [[0, 0.29], [0.002, 0.29]], 0x1d2a33, 10);
+    m.lathe(
+      0,
+      0,
+      0,
+      [
+        [0, 0.24],
+        [0.1, 0.3],
+        [0.42, 0.33],
+        [0.48, 0.3],
+        [0.5, 0.31]
+      ],
+      0x3c3a3a,
+      10
+    );
+    m.lathe(
+      0,
+      0.45,
+      0,
+      [
+        [0, 0.29],
+        [0.002, 0.29]
+      ],
+      0x1d2a33,
+      10
+    );
   });
   for (let i = 0; i < 6; i++)
-    m.tube([-9.0, OUT + 0.36 + (i % 3) * 0.09, 5.3 + Math.floor(i / 3) * 0.1 - 0.25], [-9.0 + 0.0, OUT + 0.36 + (i % 3) * 0.09, 5.3 + Math.floor(i / 3) * 0.1 + 0.45], 0.045, 0.045, 0x4a3a2c, 5);
+    m.tube(
+      [-9.0, OUT + 0.36 + (i % 3) * 0.09, 5.3 + Math.floor(i / 3) * 0.1 - 0.25],
+      [-9.0 + 0.0, OUT + 0.36 + (i % 3) * 0.09, 5.3 + Math.floor(i / 3) * 0.1 + 0.45],
+      0.045,
+      0.045,
+      0x4a3a2c,
+      5
+    );
   m.box(-8.75, OUT + 0.52, 2.0, 0.3, 0.05, 1.4, 0x4a3a2c);
   for (const z of [1.4, 2.6]) m.box(-8.75, OUT + 0.4, z, 0.24, 0.22, 0.06, 0x3a2e26);
 }
@@ -266,18 +400,29 @@ function corridor(m) {
       over: 0.42,
       lamps: false,
       steps: false,
-      roof: { rise: 0.62, hip: 0.08, lift: 0.18, rows: 3, rafters: false, tones: greyTile, tile: 0.48, beasts: 0 }
+      roof: {
+        rise: 0.62,
+        hip: 0.08,
+        lift: 0.18,
+        rows: 3,
+        rafters: false,
+        tones: greyTile,
+        tile: 0.48,
+        beasts: 0
+      }
     });
     // Little lit windows in the back wall, and benches between the columns.
     for (let i = 0; i < 9; i++) {
       const x = -6.5 + (i + 0.5) * (13 / 9);
-      if (i % 2 === 0) m.frame(x, 0.18 + 0.95, -0.83, 0, 1, () => lattice(m, 0.42, 0.42, 3, 3, i % 4 === 0));
+      if (i % 2 === 0)
+        m.frame(x, 0.18 + 0.95, -0.83, 0, 1, () => lattice(m, 0.42, 0.42, 3, 3, i % 4 === 0));
       if (i % 2) {
         m.box(x, 0.18 + 0.32, -0.55, 0.9, 0.05, 0.28, 0x4a3a2c);
         for (const s of [-1, 1]) m.box(x + s * 0.36, 0.18 + 0.16, -0.55, 0.06, 0.3, 0.22, 0x3a2e26);
       }
     }
-    for (let i = 0; i < 9; i += 2) hangLamp(m, -6.5 + (i + 0.5) * (13 / 9), 1.08, 0.75, 0.62, 0xe0663c, 0.12);
+    for (let i = 0; i < 9; i += 2)
+      hangLamp(m, -6.5 + (i + 0.5) * (13 / 9), 1.08, 0.75, 0.62, 0xe0663c, 0.12);
   });
 }
 
@@ -340,12 +485,17 @@ function gate(m) {
         }
         // A white stone rim round the arch.
         m.line(
-          ring.map(([px, py]) => [cx + (px - cx) * 1.06, y + spring + (py - y - spring) * 1.06, fz + s * 0.02]),
+          ring.map(([px, py]) => [
+            cx + (px - cx) * 1.06,
+            y + spring + (py - y - spring) * 1.06,
+            fz + s * 0.02
+          ]),
           0.05,
           stoneLight,
           4
         );
-        for (const e of [-1, 1]) m.box(cx + e * (r + 0.04), y + spring / 2, fz + s * 0.02, 0.1, spring, 0.05, stoneLight);
+        for (const e of [-1, 1])
+          m.box(cx + e * (r + 0.04), y + spring / 2, fz + s * 0.02, 0.1, spring, 0.05, stoneLight);
       }
       for (let k = 0; k < n; k++) {
         const [x0, y0] = ring[k],
@@ -363,7 +513,16 @@ function gate(m) {
         );
       }
       // Door leaves folded back inside the arch.
-      for (const e of [-1, 1]) m.box(cx + e * (r - 0.05), y + spring * 0.55, -0.4, 0.06, spring * 1.05, r * 0.9, lacquerDark);
+      for (const e of [-1, 1])
+        m.box(
+          cx + e * (r - 0.05),
+          y + spring * 0.55,
+          -0.4,
+          0.06,
+          spring * 1.05,
+          r * 0.9,
+          lacquerDark
+        );
     }
     m.box(0, y + 0.2, 0, w + 0.06, 0.4, d + 0.06, stoneDark);
     m.box(0, y + h - 0.12, 0, w + 0.1, 0.24, d + 0.1, plaster);
@@ -373,10 +532,19 @@ function gate(m) {
     // The name board over the middle arch, on the street side.
     m.box(0, y + 2.08, d / 2 + 0.06, 1.3, 0.4, 0.05, 0x1f3354);
     m.box(0, y + 2.08, d / 2 + 0.09, 1.1, 0.26, 0.02, 0x2b4670);
-    for (let k = 0; k < 3; k++) m.box(-0.32 + k * 0.32, y + 2.08, d / 2 + 0.105, 0.18, 0.18, 0.01, gilt);
-    tiledRoof(m, w + 1.5, d + 1.4, y + h + 0.22, 1.5, { hip: 0.42, lift: 0.4, rows: 4, beasts: 4, tones: greyTile, tile: 0.44 });
+    for (let k = 0; k < 3; k++)
+      m.box(-0.32 + k * 0.32, y + 2.08, d / 2 + 0.105, 0.18, 0.18, 0.01, gilt);
+    tiledRoof(m, w + 1.5, d + 1.4, y + h + 0.22, 1.5, {
+      hip: 0.42,
+      lift: 0.4,
+      rows: 4,
+      beasts: 4,
+      tones: greyTile,
+      tile: 0.44
+    });
     for (const s of [-1, 1])
-      for (const e of [-1, 1]) hangLamp(m, e * 1.35, y + h - 0.35, s * (d / 2 + 0.45), 1.05, 0xe0583a, 0.2);
+      for (const e of [-1, 1])
+        hangLamp(m, e * 1.35, y + h - 0.35, s * (d / 2 + 0.45), 1.05, 0xe0583a, 0.2);
     // Stone lions on drums either side of the street steps.
     for (const e of [-1, 1])
       m.frame(e * 2.2, 0, d / 2 + 1.2, e * -0.25, 1, () => {
@@ -385,7 +553,18 @@ function gate(m) {
         m.rock(0, 0.48, 0.05, 0.2, 0.32, 0.28, stone, stoneLight, 7);
         m.rock(0, 0.72, 0.18, 0.2, 0.35, 0.18, stone, stoneLight, 7);
         m.rock(0, 1.02, 0.28, 0.16, 0.18, 0.14, stoneLight, 0xb0b8c4, 6);
-        m.lathe(-e * 0.12, 0.5, 0.3, [[0, 0.07], [0.07, 0.08], [0.14, 0]], stoneLight, 6);
+        m.lathe(
+          -e * 0.12,
+          0.5,
+          0.3,
+          [
+            [0, 0.07],
+            [0.07, 0.08],
+            [0.14, 0]
+          ],
+          stoneLight,
+          6
+        );
       });
   });
 }

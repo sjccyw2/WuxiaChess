@@ -56,7 +56,7 @@ const directions = [
   [0, 1],
   [-1, 0]
 ];
-const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32, 1.1, 1.3, 1.0, 1.6, 3.2, 0.3, 1.0,0.5, 1.0, 1.4];
+const landDepth = [0, 1.18, 1.04, 3.67, 2.83, 1.27, 1.64, 1.75, 3.09, 2.32, 1.1, 1.3, 1.0, 1.6, 3.2, 0.3, 1.0, 0.5, 1.0, 1.4];
 // Each side is measured in local coordinates. The first and last point of
 // every course meet the neighbouring side even along a re-entrant corner.
 function exposedSide(m, index, p, cell, salt, depth = landDepth[index]) {

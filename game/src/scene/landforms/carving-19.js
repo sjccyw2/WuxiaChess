@@ -84,6 +84,8 @@ function incise(m, pts, w, dark, lip) {
       dark,
       [0, 0, 1]
     );
+    // The smallest notes are too fine for a lip to show.
+    if (w < 0.004) continue;
     toward(
       m,
       [
@@ -325,4 +327,4 @@ function carvedWalls(T) {
   return m.finish('刻字石壁', { occluder: true });
 }
 
-export { carvedWalls, FRONT };
+export { carvedWalls, character, incise, FRONT };

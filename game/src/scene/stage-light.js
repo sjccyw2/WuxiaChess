@@ -61,7 +61,7 @@ const rigs = [
   { warm: 0.3, key: 2.9, fill: 1.08, cool: 0.5, mist: 0.48 }, // 石樑溫家: hazy light over the ravine
   { warm: 0.12, key: 2.9, fill: 1.3, cool: 0.3, rim: 1.0, exposure: 0.84, mist: 0.5 }, // 萬安寺: lamplight under the pagoda
   { warm: 0.32, key: 3.1, fill: 1.05, cool: 0.5, mist: 0.5 }, // 光明頂: high wind and clear sun on the summit
-  { warm: 0.12, key: 2.3, fill: 1.0, cool: 0.6, rim: 0.6, exposure: 0.92, mist: 0.45 } // 俠客島: sea light in the mouth of a cave
+  { warm: 0.08, key: 2.1, fill: 0.95, cool: 0.6, rim: 0.6, exposure: 0.92, mist: 0.45 } // 俠客島: sea light in the mouth of a cave
 ];
 function stageRig(index) {
   return { ...base, ...(rigs[index] || rigs[0]) };

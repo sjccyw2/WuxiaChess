@@ -5,7 +5,17 @@
 import { circle } from '../scenery-kit.js';
 import { tiledRoof } from './roof-13.js';
 import { cypress, trailingWillow } from './garden-13.js';
-import { put, mark, lattice, hangLamp, stoneLantern, plaster, timber, stoneDark, greyTile } from './kit-17.js';
+import {
+  put,
+  mark,
+  lattice,
+  hangLamp,
+  stoneLantern,
+  plaster,
+  timber,
+  stoneDark,
+  greyTile
+} from './kit-17.js';
 import { STREET } from './temple-17.js';
 
 const flagTone = 0x3d4352;
@@ -22,7 +32,8 @@ function house(m, x, z, yaw, w, d, h, o = {}) {
   m.frame(x, STREET, z, yaw, 1, () => {
     m.box(0, 0.1, 0, w + 0.2, 0.2, d + 0.2, stoneDark);
     m.box(0, 0.2 + h / 2, 0, w, h, d, m.mix(houseWall, 0x55504a, r.next() * 0.5));
-    for (const s of [-1, 1]) m.box(s * (w / 2 - 0.06), 0.2 + h / 2, d / 2 + 0.03, 0.12, h, 0.08, timber);
+    for (const s of [-1, 1])
+      m.box(s * (w / 2 - 0.06), 0.2 + h / 2, d / 2 + 0.03, 0.12, h, 0.08, timber);
     m.box(0, 0.2 + h - 0.08, d / 2 + 0.03, w, 0.14, 0.08, timber);
     // The door, and a window either side of it.
     m.box(0, 0.2 + 0.6, d / 2 + 0.01, 0.6, 1.2, 0.03, shutter);
@@ -31,13 +42,24 @@ function house(m, x, z, yaw, w, d, h, o = {}) {
       const wx = -w / 2 + 0.55 + ((i + 0.5) * (w - 1.1)) / n;
       if (Math.abs(wx) < 0.5) continue;
       const on = r.next() < lit;
-      m.frame(wx, 0.2 + h * 0.55, d / 2 + 0.02, 0, 1, () => lattice(m, 0.6, h * 0.38, 3, 3, on, timber));
+      m.frame(wx, 0.2 + h * 0.55, d / 2 + 0.02, 0, 1, () =>
+        lattice(m, 0.6, h * 0.38, 3, 3, on, timber)
+      );
       if (on) mark(m, wx, 0.2 + h * 0.55, d / 2 + 0.5, 0.8);
     }
     let top = 0.2 + h;
     if (upper) {
       // An upper storey set back a little behind a short roof over the shopfront.
-      tiledRoof(m, w + 0.5, 0.9, top - 0.05, 0.25, { hip: 0, gable: true, lift: 0.05, rows: 1, rafters: false, tones: greyTile, tile: 0.9, beasts: 0 });
+      tiledRoof(m, w + 0.5, 0.9, top - 0.05, 0.25, {
+        hip: 0,
+        gable: true,
+        lift: 0.05,
+        rows: 1,
+        rafters: false,
+        tones: greyTile,
+        tile: 0.9,
+        beasts: 0
+      });
       m.box(0, top + 0.6, -0.15, w - 0.3, 1.2, d - 0.4, m.mix(houseWall, plaster, 0.3));
       for (let i = 0; i < n; i++) {
         const wx = -w / 2 + 0.55 + ((i + 0.5) * (w - 1.1)) / n,
@@ -60,7 +82,16 @@ function house(m, x, z, yaw, w, d, h, o = {}) {
       m.box(w / 2 - 0.25, 0.2 + h * 0.55, d / 2 + 0.25, 0.05, 1.0, 0.24, 0x2a2622);
       m.box(w / 2 - 0.25, 0.2 + h * 0.55, d / 2 + 0.25, 0.06, 0.85, 0.18, 0x8c6a3a);
     }
-    if (lamp) hangLamp(m, -0.6, 0.2 + h - 0.35, d / 2 + 0.3, 0.75, r.next() < 0.5 ? 0xe0663c : 0xe8b060, 0.1);
+    if (lamp)
+      hangLamp(
+        m,
+        -0.6,
+        0.2 + h - 0.35,
+        d / 2 + 0.3,
+        0.75,
+        r.next() < 0.5 ? 0xe0663c : 0xe8b060,
+        0.1
+      );
   });
 }
 
@@ -68,7 +99,16 @@ function house(m, x, z, yaw, w, d, h, o = {}) {
 function street(m, x0, x1, z0, z1, along) {
   const r = m.rng,
     y = STREET + 0.012;
-  put(m, [[x0, y - 0.006, z0], [x0, y - 0.006, z1], [x1, y - 0.006, z1], [x1, y - 0.006, z0]], 0x242833);
+  put(
+    m,
+    [
+      [x0, y - 0.006, z0],
+      [x0, y - 0.006, z1],
+      [x1, y - 0.006, z1],
+      [x1, y - 0.006, z0]
+    ],
+    0x242833
+  );
   const long = along === 'x',
     a0 = long ? x0 : z0,
     a1 = long ? x1 : z1,
@@ -83,8 +123,28 @@ function street(m, x0, x1, z0, z1, along) {
       const len = r.range(0.6, 1.2),
         b = Math.min(a1, a + len) - 0.03,
         col = m.mix(flagTone, flagLight, r.next() * 0.7);
-      if (long) put(m, [[a, y, c], [a, y, e], [b, y, e], [b, y, c]], col);
-      else put(m, [[c, y, a], [c, y, b], [e, y, b], [e, y, a]], col);
+      if (long)
+        put(
+          m,
+          [
+            [a, y, c],
+            [a, y, e],
+            [b, y, e],
+            [b, y, c]
+          ],
+          col
+        );
+      else
+        put(
+          m,
+          [
+            [c, y, a],
+            [c, y, b],
+            [e, y, b],
+            [e, y, a]
+          ],
+          col
+        );
       a += len;
     }
   }
@@ -113,7 +173,8 @@ function nearCity(m) {
     house(m, 17.8, z, -Math.PI / 2, 5.2, 3.2, 1.75, { upper, sign: upper, lit: 0.55 });
   }
   // West of the temple, the backs of houses across a lane.
-  for (let i = 0; i < 2; i++) house(m, -17.8, -6.0 + i * 8.0, Math.PI / 2, 5.4, 3.2, 1.7, { lit: 0.35, lamp: i % 2 === 0 });
+  for (let i = 0; i < 2; i++)
+    house(m, -17.8, -6.0 + i * 8.0, Math.PI / 2, 5.4, 3.2, 1.7, { lit: 0.35, lamp: i % 2 === 0 });
   // Street lanterns on posts, and trees along the lanes.
   for (const [x, z] of [
     [-6.2, 14.4],
@@ -138,24 +199,68 @@ function nearCity(m) {
     m.box(0, 0.45, 0, 1.3, 0.08, 0.8, timber);
     for (const s of [-1, 1]) m.box(0, 0.6, s * 0.4, 1.3, 0.25, 0.04, timber);
     for (const s of [-1, 1]) m.hoop(0, 0.38, s * 0.47, 0.36, 0.03, 0x2c241e, 12, 'xy');
-    m.line([[0.65, 0.48, 0.3], [1.6, 0.2, 0.32]], 0.03, timber, 4);
-    m.line([[0.65, 0.48, -0.3], [1.6, 0.2, -0.32]], 0.03, timber, 4);
+    m.line(
+      [
+        [0.65, 0.48, 0.3],
+        [1.6, 0.2, 0.32]
+      ],
+      0.03,
+      timber,
+      4
+    );
+    m.line(
+      [
+        [0.65, 0.48, -0.3],
+        [1.6, 0.2, -0.32]
+      ],
+      0.03,
+      timber,
+      4
+    );
   });
   for (const [x, z] of [
     [-5.4, 15.2],
     [-5.0, 15.3],
     [-5.2, 15.65]
   ])
-    m.lathe(x, STREET, z, [[0, 0.12], [0.1, 0.2], [0.32, 0.2], [0.42, 0.12], [0.46, 0.13]], 0x4a3a2e, 8);
+    m.lathe(
+      x,
+      STREET,
+      z,
+      [
+        [0, 0.12],
+        [0.1, 0.2],
+        [0.32, 0.2],
+        [0.42, 0.12],
+        [0.46, 0.13]
+      ],
+      0x4a3a2e,
+      8
+    );
 }
 
 // A far roof: a dark block under a plain hipped roof with lifted corners.
-function farHall(m, x, z, yaw, w, d, h, rise, base = STREET) {
+function farHall(m, x, z, yaw, w, d, h, rise, base = STREET, lit = false) {
   const body = 0x161c30,
     tile = 0x1f2840,
     edge = 0x313d5a;
   m.frame(x, base, z, yaw, 1, () => {
     m.box(0, h / 2, 0, w, h, d, body);
+    // A window still lit on the face toward the temple.
+    if (lit)
+      m.glow(() =>
+        put(
+          m,
+          [
+            [-0.3, h * 0.35, d / 2 + 0.01],
+            [0.3, h * 0.35, d / 2 + 0.01],
+            [0.3, h * 0.65, d / 2 + 0.01],
+            [-0.3, h * 0.65, d / 2 + 0.01]
+          ],
+          0xe0a858,
+          [0, 0, 1]
+        )
+      );
     const ow = w / 2 + 0.7,
       od = d / 2 + 0.7,
       rw = Math.max(0, w / 2 - d / 2),
@@ -204,7 +309,10 @@ function farCity(m) {
       d = r.range(2.6, 4),
       h = r.range(1.4, 2.6);
     if (Math.max(Math.abs(x), Math.abs(z)) < 26.5) continue;
-    farHall(m, x, z, yaw, w, d, h, r.range(1.0, 1.6));
+    // Turned to face the temple, more or less, so a lit window can be seen from it.
+    const face = Math.atan2(-x, -z),
+      turn = Math.round(face / (Math.PI / 2)) * (Math.PI / 2) + (yaw % 0.1);
+    farHall(m, x, z, turn, w, d, h, r.range(1.0, 1.6), STREET, r.next() < 0.3);
   }
   // The city wall, a square about the temple's quarter, with towers on its gates and corners.
   const reach = 52;
@@ -246,16 +354,38 @@ function farCity(m) {
   // A white stupa over the roofs to the west.
   m.frame(-34, STREET, -14, 0, 1, () => {
     m.box(0, 1.2, 0, 7, 2.4, 7, 0x2a3046);
-    m.lathe(0, 2.4, 0, [[0, 2.6], [0.6, 2.6], [0.8, 2.2], [1.6, 2.4], [3.2, 2.5], [4.2, 2.1], [4.8, 1.2], [5.0, 0.9]], 0x8f96a8, 12);
-    m.lathe(0, 7.4, 0, [[0, 0.8], [3.0, 0.45], [3.3, 1.2], [3.5, 1.1], [3.8, 0.3], [4.4, 0]], 0x6f6a5a, 10);
-  });
-  // A few windows still lit.
-  m.glow(() => {
-    for (let i = 0; i < 40; i++) {
-      const a = r.range(0, circle),
-        rad = r.range(23, 44);
-      m.box(Math.cos(a) * rad, STREET + r.range(0.8, 1.8), Math.sin(a) * rad, 0.5, 0.45, 0.5, 0xe0a858);
-    }
+    m.lathe(
+      0,
+      2.4,
+      0,
+      [
+        [0, 2.6],
+        [0.6, 2.6],
+        [0.8, 2.2],
+        [1.6, 2.4],
+        [3.2, 2.5],
+        [4.2, 2.1],
+        [4.8, 1.2],
+        [5.0, 0.9]
+      ],
+      0x8f96a8,
+      12
+    );
+    m.lathe(
+      0,
+      7.4,
+      0,
+      [
+        [0, 0.8],
+        [3.0, 0.45],
+        [3.3, 1.2],
+        [3.5, 1.1],
+        [3.8, 0.3],
+        [4.4, 0]
+      ],
+      0x6f6a5a,
+      10
+    );
   });
   // Mist lying in long low banks between the roofs.
   for (let i = 0; i < 22; i++) {

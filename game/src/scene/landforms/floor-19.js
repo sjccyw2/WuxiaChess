@@ -174,7 +174,7 @@ function dress(m, cell, wx, wz) {
         ring.push([x + Math.cos(a) * rx * q, TOP + 0.002, z + Math.sin(a) * rz * q]);
       }
       const c = tone(wx + x, TOP, wz + z, 1.0),
-        sand = blend(c, rgb(0xc4b998), 0.6);
+        sand = blend(c, rgb(0xa9a088), 0.4);
       toward(m, ring, sand);
       for (let i = -1; i <= 1; i++)
         toward(m, 
@@ -184,7 +184,7 @@ function dress(m, cell, wx, wz) {
             [x + rx * 0.7, TOP + 0.0035, z + i * rz * 0.45 + 0.02],
             [x - rx * 0.7, TOP + 0.0035, z + i * rz * 0.45 + 0.01]
           ],
-          blend(sand, rgb(0x8c8268), 0.4)
+          blend(sand, rgb(0x857c66), 0.3)
         );
     }
   }

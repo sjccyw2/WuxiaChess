@@ -41,9 +41,7 @@ const up = [0, 1, 0];
 
 // The lamps that light the board: the embers of every incense burner on it, and the stone
 // lanterns that stand round it in the court (the landform sets those at these places).
-const burners = cells
-  .filter((c) => c.kind === 'cover')
-  .map((c) => [c.x - CX, 0.7, c.y - CZ, 0.85]);
+const burners = cells.filter((c) => c.kind === 'cover').map((c) => [c.x - CX, 0.7, c.y - CZ, 0.85]);
 const courtLanterns = [
   [-7.45, -3.0],
   [-7.45, 3.0],
@@ -274,7 +272,15 @@ function redWall(m, ax, az, bx, bz, y, h = 1.9, thick = 0.34) {
     for (let i = 0; i < n; i++) {
       const x = -len / 2 + ((i + 0.5) * len) / n,
         w = len / n;
-      m.box(x, 0.3 + (h - 0.45) / 2, 0, w + 0.002, h - 0.45, thick, i % 2 ? wallRed : m.mix(wallRed, wallRedDark, 0.25));
+      m.box(
+        x,
+        0.3 + (h - 0.45) / 2,
+        0,
+        w + 0.002,
+        h - 0.45,
+        thick,
+        i % 2 ? wallRed : m.mix(wallRed, wallRedDark, 0.25)
+      );
     }
     m.box(0, 0.15, 0, len + 0.02, 0.3, thick + 0.06, stoneDark);
     m.box(0, h - 0.07, 0, len + 0.01, 0.14, thick + 0.01, plaster);

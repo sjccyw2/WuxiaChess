@@ -5,7 +5,19 @@
 // steps is carved with a lotus. The colour of every corner is worked out from where it lies:
 // worn paler along the way feet have gone, cool blue in the open, warm round each burner.
 import { circle } from '../scenery-kit.js';
-import { CX, CZ, TOP, onBoard, lampLight, put, brick, brickLight, mortar, stone, stoneLight } from './kit-17.js';
+import {
+  CX,
+  CZ,
+  TOP,
+  onBoard,
+  lampLight,
+  put,
+  brick,
+  brickLight,
+  mortar,
+  stone,
+  stoneLight
+} from './kit-17.js';
 
 const BED = 0.024; // the mortar showing in the joints
 const BEVEL = 0.007;
@@ -40,7 +52,10 @@ function block(m, x0, x1, z0, z1, col, wx, wz, k = 1, top = TOP) {
     [x1 - b, top, z0 + b]
   ];
   const at = (p, f = 1) => tone(m, col, wx + p[0], wz + p[2], k * f);
-  m.face(cap, cap.map((p) => at(p)));
+  m.face(
+    cap,
+    cap.map((p) => at(p))
+  );
   for (let i = 0; i < 4; i++) {
     const j = (i + 1) % 4;
     m.face(
@@ -158,8 +173,29 @@ function paveTile(m, p, cell) {
           worn = r.next(),
           col = worn < 0.06 ? m.mix(brick, mortar, 0.35) : m.mix(brick, brickLight, worn * 0.6);
         if (across)
-          block(m, x0, x1, z0 + (z1 - z0) * t0 + j / 2, z0 + (z1 - z0) * t1 - j / 2, col, wx, wz, shade(1));
-        else block(m, x0 + (x1 - x0) * t0 + j / 2, x0 + (x1 - x0) * t1 - j / 2, z0, z1, col, wx, wz, shade(1));
+          block(
+            m,
+            x0,
+            x1,
+            z0 + (z1 - z0) * t0 + j / 2,
+            z0 + (z1 - z0) * t1 - j / 2,
+            col,
+            wx,
+            wz,
+            shade(1)
+          );
+        else
+          block(
+            m,
+            x0 + (x1 - x0) * t0 + j / 2,
+            x0 + (x1 - x0) * t1 - j / 2,
+            z0,
+            z1,
+            col,
+            wx,
+            wz,
+            shade(1)
+          );
       }
     }
   // Moss in the joints along the court's quiet edges, away from the way.

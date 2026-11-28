@@ -143,25 +143,89 @@ function furnishings(m) {
         5
       );
     }
-    m.lathe(0, 0.5, 0, [[0, 0.12], [0.05, 0.3], [0.16, 0.42], [0.3, 0.4], [0.36, 0.33], [0.4, 0.37], [0.43, 0.37]], patina, 12);
+    m.lathe(
+      0,
+      0.5,
+      0,
+      [
+        [0, 0.12],
+        [0.05, 0.3],
+        [0.16, 0.42],
+        [0.3, 0.4],
+        [0.36, 0.33],
+        [0.4, 0.37],
+        [0.43, 0.37]
+      ],
+      patina,
+      12
+    );
     for (const s of [-1, 1]) m.hoop(s * 0.41, 0.98, 0, 0.1, 0.022, bronzeDark, 6, 'xy');
-    m.glow(() => m.lathe(0, 0.9, 0, [[0, 0.32], [0.005, 0.32]], 0xd8642c, 12));
+    m.glow(() =>
+      m.lathe(
+        0,
+        0.9,
+        0,
+        [
+          [0, 0.32],
+          [0.005, 0.32]
+        ],
+        0xd8642c,
+        12
+      )
+    );
     // A pierced lid like a little pavilion roof, and a thread of smoke.
     for (let k = 0; k < 4; k++) {
       const a = (k * Math.PI) / 2 + Math.PI / 4;
-      m.tube([Math.cos(a) * 0.26, 0.93, Math.sin(a) * 0.26], [Math.cos(a) * 0.2, 1.12, Math.sin(a) * 0.2], 0.018, 0.018, bronzeDark, 4);
+      m.tube(
+        [Math.cos(a) * 0.26, 0.93, Math.sin(a) * 0.26],
+        [Math.cos(a) * 0.2, 1.12, Math.sin(a) * 0.2],
+        0.018,
+        0.018,
+        bronzeDark,
+        4
+      );
     }
-    m.lathe(0, 1.1, 0, [[0, 0.36], [0.05, 0.3], [0.16, 0.12], [0.22, 0.05], [0.3, 0.07], [0.38, 0]], patina, 8);
-    m.line([[0, 1.45, 0], [0.04, 1.75, 0.02], [-0.03, 2.05, -0.02], [0.05, 2.4, 0]], 0.01, 0x737c8c, 4);
+    m.lathe(
+      0,
+      1.1,
+      0,
+      [
+        [0, 0.36],
+        [0.05, 0.3],
+        [0.16, 0.12],
+        [0.22, 0.05],
+        [0.3, 0.07],
+        [0.38, 0]
+      ],
+      patina,
+      8
+    );
+    m.line(
+      [
+        [0, 1.45, 0],
+        [0.04, 1.75, 0.02],
+        [-0.03, 2.05, -0.02],
+        [0.05, 2.4, 0]
+      ],
+      0.01,
+      0x737c8c,
+      4
+    );
     mark(m, 0, 1.0, 0, 1.1);
   });
-  // 贔屭碑: a stele on the back of a stone tortoise, its top carved with dragons.
+  // 石碑: a stele on the back of a stone tortoise, its top carved with dragons.
   for (const s of [-1, 1])
     m.frame(s * 5.5, OUT, 9.1, (-s * Math.PI) / 2, 1, () => {
       m.box(0, 0.06, 0, 1.0, 0.12, 1.5, stoneDark);
       m.rock(0, 0.1, 0, 0.42, 0.34, 0.62, stone, stoneLight, 9);
       m.rock(0, 0.18, 0.62, 0.15, 0.2, 0.2, stone, stoneLight, 7);
-      for (const [x, z] of [[-0.38, 0.4], [0.38, 0.4], [-0.38, -0.4], [0.38, -0.4]]) m.rock(x, 0.1, z, 0.12, 0.12, 0.13, stoneDark, stone, 6);
+      for (const [x, z] of [
+        [-0.38, 0.4],
+        [0.38, 0.4],
+        [-0.38, -0.4],
+        [0.38, -0.4]
+      ])
+        m.rock(x, 0.1, z, 0.12, 0.12, 0.13, stoneDark, stone, 6);
       m.box(0, 0.98, -0.05, 0.84, 1.16, 0.2, stone);
       m.box(0, 0.98, -0.05, 0.66, 0.92, 0.205, m.mix(stone, stoneDark, 0.3));
       // Columns of characters cut into both faces.
@@ -171,16 +235,61 @@ function furnishings(m) {
             const x = -0.25 + c * 0.1,
               y = 1.33 - r * 0.11,
               z = -0.05 + f * 0.104;
-            put(m, [[x - 0.022, y - 0.03, z], [x + 0.022, y - 0.03, z], [x + 0.022, y + 0.03, z], [x - 0.022, y + 0.03, z]], stoneDark, [0, 0, f]);
+            put(
+              m,
+              [
+                [x - 0.022, y - 0.03, z],
+                [x + 0.022, y - 0.03, z],
+                [x + 0.022, y + 0.03, z],
+                [x - 0.022, y + 0.03, z]
+              ],
+              stoneDark,
+              [0, 0, f]
+            );
           }
-      m.lathe(0, 1.56, -0.05, [[0, 0.44], [0.12, 0.42], [0.26, 0.3], [0.34, 0]], stone, 8);
+      m.lathe(
+        0,
+        1.56,
+        -0.05,
+        [
+          [0, 0.44],
+          [0.12, 0.42],
+          [0.26, 0.3],
+          [0.34, 0]
+        ],
+        stone,
+        8
+      );
     });
   // 太平缸: bronze water vats on stone stands down the east side of the court.
   for (const z of [-5.0, 0.0, 5.0])
     m.frame(8.2, OUT, z, 0, 1, () => {
       m.box(0, 0.08, 0, 0.7, 0.16, 0.7, stoneDark);
-      m.lathe(0, 0.16, 0, [[0, 0.22], [0.08, 0.34], [0.42, 0.36], [0.5, 0.31], [0.52, 0.33]], patina, 12);
-      m.lathe(0, 0.64, 0, [[0, 0.3], [0.002, 0.3]], 0x1d2a33, 12);
+      m.lathe(
+        0,
+        0.16,
+        0,
+        [
+          [0, 0.22],
+          [0.08, 0.34],
+          [0.42, 0.36],
+          [0.5, 0.31],
+          [0.52, 0.33]
+        ],
+        patina,
+        12
+      );
+      m.lathe(
+        0,
+        0.64,
+        0,
+        [
+          [0, 0.3],
+          [0.002, 0.3]
+        ],
+        0x1d2a33,
+        12
+      );
       for (const s of [-1, 1]) m.hoop(s * 0.36, 0.5, 0, 0.06, 0.016, bronzeDark, 6, 'xy');
     });
 }
@@ -234,30 +343,50 @@ function landform17(T, layout) {
   add(170413, (m) => court(m, layout), '前庭磚地與石燈', {});
   add(170829, (m) => pagoda(m, 'foot'), '寶塔塔基與底層', {});
   add(170857, (m) => pagoda(m, 'tower'), '十三層寶塔', { occluder: true });
-  add(171253, (m) => {
-    mainHall(m);
-    tower(m, -10.0, -11.0, 0, true);
-    tower(m, 10.0, -11.0, 0, false);
-    redWall(m, -12.6, -18.2, 12.6, -18.2, STREET, 2.95);
-    courtTrees(m, 'north');
-  }, '大雄寶殿與鐘鼓樓', { occluder: true });
-  add(171637, (m) => {
-    quarters(m);
-    redWall(m, -12.6, -18.2, -12.6, 12.1, STREET, 2.95);
-    courtTrees(m, 'west');
-  }, '西側僧寮', { occluder: true });
-  add(172049, (m) => {
-    corridor(m);
-    redWall(m, 11.45, -6.9, 11.45, 6.9, OUT, 2.0, 0.26);
-    redWall(m, 12.6, -18.2, 12.6, 12.1, STREET, 2.95);
-    courtTrees(m, 'east');
-  }, '東廊', { occluder: true });
-  add(172463, (m) => {
-    gate(m);
-    redWall(m, -12.6, 12.1, -3.85, 12.1, STREET, 2.95);
-    redWall(m, 3.85, 12.1, 12.6, 12.1, STREET, 2.95);
-    courtTrees(m, 'south');
-  }, '山門', { occluder: true });
+  add(
+    171253,
+    (m) => {
+      mainHall(m);
+      tower(m, -10.0, -11.0, 0, true);
+      tower(m, 10.0, -11.0, 0, false);
+      redWall(m, -12.6, -18.2, 12.6, -18.2, STREET, 2.95);
+      courtTrees(m, 'north');
+    },
+    '大雄寶殿與鐘鼓樓',
+    { occluder: true }
+  );
+  add(
+    171637,
+    (m) => {
+      quarters(m);
+      redWall(m, -12.6, -18.2, -12.6, 12.1, STREET, 2.95);
+      courtTrees(m, 'west');
+    },
+    '西側僧寮',
+    { occluder: true }
+  );
+  add(
+    172049,
+    (m) => {
+      corridor(m);
+      redWall(m, 11.45, -6.9, 11.45, 6.9, OUT, 2.0, 0.26);
+      redWall(m, 12.6, -18.2, 12.6, 12.1, STREET, 2.95);
+      courtTrees(m, 'east');
+    },
+    '東廊',
+    { occluder: true }
+  );
+  add(
+    172463,
+    (m) => {
+      gate(m);
+      redWall(m, -12.6, 12.1, -3.85, 12.1, STREET, 2.95);
+      redWall(m, 3.85, 12.1, 12.6, 12.1, STREET, 2.95);
+      courtTrees(m, 'south');
+    },
+    '山門',
+    { occluder: true }
+  );
   add(172871, nearCity, '寺外街巷', {}, 0.9);
   add(173297, farCity, '大都夜色', { distant: true, cast: false }, 0);
   for (const { m, name, options, gain } of parts) {

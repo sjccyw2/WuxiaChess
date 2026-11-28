@@ -10,7 +10,7 @@ import { Model } from '../scenery-kit.js';
 import { ground, plainLitter, beamBridge } from './paving-16.js';
 import { coverTile, rockTile, bambooClump, herbBed, censer } from './props-16.js';
 import { greatHall, wing, eastGallery, eastGarden, rearCourt, PLAT } from './house-16.js';
-import { ravine, ravineLife, grounds, groundCover, farHills, mistBanks } from './ravine-16.js';
+import { ravine, ravineLife, grounds, groundCover, farHills, mistBanks, heightS } from './ravine-16.js';
 import { hillWoods, bambooGroves, courtTrees, southWoods } from './woods-16.js';
 import { pottedPine } from './garden-13.js';
 import { walk, CX, CZ, granite, graniteShade, bronze, bronzeDark, verdigris, put, slab } from './kit-16.js';
@@ -64,7 +64,22 @@ function orchidPot(m, x, y, z) {
     }
   });
 }
+// 界碑: a stone tablet at the head of the path on the landing's side, under a little stone roof,
+// with the family's name cut in it.
+function boundaryStone(m, x, z) {
+  const y = heightS(x, z);
+  m.frame(x, y, z, 2.6, 1, () => {
+    slab(m, -0.34, 0.34, -0.05, 0.14, -0.2, 0.2, graniteShade);
+    slab(m, -0.26, 0.26, 0.14, 0.95, -0.07, 0.07, granite);
+    slab(m, -0.19, 0.19, 0.25, 0.85, 0.07, 0.075, graniteShade);
+    for (let i = 0; i < 4; i++) slab(m, -0.04, 0.04, 0.32 + i * 0.13, 0.4 + i * 0.13, 0.075, 0.08, 0x4a4944);
+    slab(m, -0.34, 0.34, 0.95, 1.0, -0.13, 0.13, graniteShade);
+    put(m, [[-0.36, 1.0, -0.15], [0.36, 1.0, -0.15], [0.3, 1.1, 0], [-0.3, 1.1, 0]], granite, [0, 1, -1]);
+    put(m, [[-0.36, 1.0, 0.15], [0.36, 1.0, 0.15], [0.3, 1.1, 0], [-0.3, 1.1, 0]], granite, [0, 1, 1]);
+  });
+}
 function furnishings(m) {
+  boundaryStone(m, -1.15, 7.0);
   courtFill(m);
   for (const s of [-1, 1]) {
     waterVat(m, s * 5.55, -5.45);

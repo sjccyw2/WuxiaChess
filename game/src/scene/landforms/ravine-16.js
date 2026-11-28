@@ -15,10 +15,10 @@ const rockDark = 0x56544e;
 const rockPale = 0x9c988b;
 const rockWet = 0x3c423e;
 const mossTone = 0x5f7046;
-const grass = [0x5d6c42, 0x67744a, 0x58683f, 0x6f7a50];
+const grass = [0x506a3e, 0x5b7445, 0x4b6339, 0x637a4b];
 const earth = 0x857a60;
-const streamDeep = 0x3c5d57;
-const streamLight = 0x6f9289;
+const streamDeep = 0x2f4e4a;
+const streamLight = 0x5a7d74;
 const foam = 0xdde5df;
 const hillTones = [0x5d6f5a, 0x6f7f72, 0x8a9690, 0xa5aeab];
 
@@ -80,7 +80,7 @@ function pathPoints(sections) {
       const [ax, az] = pts[i],
         [bx, bz] = pts[i + 1],
         len = Math.hypot(bx - ax, bz - az),
-        n = Math.max(1, Math.round(len / 0.3));
+        n = Math.max(1, Math.round(len / (Math.min(Math.abs(ax), Math.abs(bx)) > 15 ? 0.6 : 0.3)));
       for (let k = i ? 1 : 0; k <= n; k++) {
         const t = k / n;
         out.push({ x: ax + (bx - ax) * t, z: az + (bz - az) * t, seg: [(bx - ax) / len, (bz - az) / len], corner: k === 0 || k === n });
@@ -282,6 +282,7 @@ function land(m, lip, sign, height, reach, skip, salt) {
         y = height(x, z);
       const g = noise(x * 0.5 + salt, z * 0.5);
       let c = m.mix(grass[Math.floor(g * 3.99)], grass[(Math.floor(g * 7) + 1) % 4], 0.4);
+      c = m.mix(c, noise(x * 1.9, z * 1.9) > 0.5 ? 0x4c5a38 : 0x7d8458, Math.abs(noise(x * 1.9, z * 1.9) - 0.5) * 0.6);
       if (d < 0.7) c = m.mix(c, rockPale, 0.35 - d * 0.3);
       if (noise(x * 0.3 - salt, z * 0.3) > 0.68) c = m.mix(c, earth, 0.4);
       // Height turns the grass toward the blue of distance a little.
@@ -384,7 +385,7 @@ function farHills(m) {
       put(m, [at(p, 1, p.h), at(q, 1, q.h), at(q, 1.06, q.h - 2), at(p, 1.06, p.h - 2)], m.mix(L.tone, 0x8a948c, 0.3), [0, 1, 0]);
       // Trees along the crest and the near flank of the nearest range.
       if (L.rad < 50)
-        for (let t = 0; t < 3; t++) {
+        for (let t = 0; t < 1; t++) {
           const f = r.range(0, 1),
             s = { a: p.a + (q.a - p.a) * f, rad: p.rad + (q.rad - p.rad) * f, h: p.h + (q.h - p.h) * f };
           const up = r.range(0.55, 1);
@@ -448,48 +449,55 @@ function teaRows(m) {
     }
     return false;
   };
-  const dark = 0x34502f,
-    body = 0x4d6d3c,
-    top = 0x7a9a52,
-    flush = 0x9cb865;
-  for (let k = 0; k < 11; k++) {
-    const z0 = 7.9 + k * 0.95;
+  const dark = 0x1f301d,
+    body = 0x2c4128,
+    top = 0x3d5432,
+    flush = 0x5f7646;
+  for (let k = 0; k < 10; k++) {
+    const z0 = 7.9 + k * 0.95,
+      phase = r.range(0, 1);
     let run = null;
     const flushRun = () => {
-      if (run && run.length > 1)
+      if (run && run.length > 1) {
         for (let i = 0; i < run.length - 1; i++) {
           const a = run[i],
             b = run[i + 1];
-          for (let q = 0; q < 4; q++) {
-            const c0 = [dark, body, top, flush][q],
-              c1 = [body, top, flush, top][q];
-            put(m, [a[q], b[q], b[q + 1], a[q + 1]], [m.rgb(c0), m.rgb(c0), m.rgb(c1), m.rgb(c1)]);
-          }
-          for (let q = 4; q < 7; q++) put(m, [a[q], b[q], b[q + 1], a[q + 1]], [[top, flush, top][q - 4], body, dark][0]);
+          for (let q = 0; q < a.pts.length - 1; q++)
+            put(m, [a.pts[q], b.pts[q], b.pts[q + 1], a.pts[q + 1]], [a.col[q], b.col[q], b.col[q + 1], a.col[q + 1]]);
         }
+        // Close both ends of the row.
+        for (const end of [run[0], run[run.length - 1]]) put(m, end.pts, body, [end === run[0] ? -1 : 1, 0, 0]);
+      }
       run = null;
     };
-    for (let x = -24; x <= 24; x += 0.4) {
+    for (let x = -24; x <= 24; x += 0.32) {
       const z = z0 + 0.25 * Math.sin(x * 0.21 + k) + 0.15 * noise(x * 0.3, k);
-      if (z < lipS(x) + 0.9 || nearPath(x, z) || Math.abs(x) > 23.6) {
+      if (z < lipS(x) + 0.9 || nearPath(x, z) || Math.abs(x) > 23.6 || noise(x * 0.45 + k * 7, k) > 0.8) {
         flushRun();
         continue;
       }
-      const y = heightS(x, z),
-        w = 0.27 + 0.04 * noise(x * 1.7, k * 3),
-        h = 0.36 + 0.06 * noise(x * 1.3 + 4, k * 2);
-      // The profile from the downhill foot over the top to the uphill foot.
+      // Each bush is about half a pace long; the row pinches a little between them.
+      const lump = Math.pow(Math.abs(Math.sin((x / 0.56 + phase) * Math.PI)), 0.6),
+        y = heightS(x, z),
+        w = (0.25 + 0.05 * noise(x * 1.7, k * 3)) * (0.62 + 0.38 * lump),
+        h = (0.3 + 0.08 * noise(x * 1.3 + 4, k * 2)) * (0.6 + 0.4 * lump);
       const prof = [
-        [w * 1.05, -0.04],
-        [w * 1.05, h * 0.45],
-        [w * 0.8, h * 0.85],
-        [w * 0.3, h],
-        [-w * 0.3, h],
-        [-w * 0.8, h * 0.85],
-        [-w * 1.05, h * 0.45],
-        [-w * 1.05, -0.04]
-      ].map(([dz, dy]) => [x, y + dy, z + dz]);
-      (run ||= []).push(prof);
+        [w, -0.05],
+        [w * 1.02, h * 0.5],
+        [w * 0.62, h * 0.92],
+        [0, h],
+        [-w * 0.62, h * 0.92],
+        [-w * 1.02, h * 0.5],
+        [-w, -0.05]
+      ].map(([dz, dy], q) => {
+        const j = q === 0 || q === 6 ? 0 : 0.035 * (noise(x * 5.3 + q * 1.7, k * 2.9 + q) - 0.5) * 2;
+        return [x + j * 0.6, y + dy + j, z + dz * (1 + j * 1.5)];
+      });
+      const n = noise(x * 2.1, k * 1.3),
+        crown = m.mix(top, flush, Math.max(0, n - 0.35) * 1.4),
+        shade = 0.85 + 0.25 * lump;
+      const col = [dark, body, top, crown, m.mix(top, crown, 0.5), body, dark].map((c) => (Array.isArray(c) ? c : m.rgb(c)).map((v) => v * shade));
+      (run ||= []).push({ pts: prof, col });
     }
     flushRun();
   }
@@ -522,7 +530,7 @@ function grounds(m) {
   hillPath(m);
 }
 function groundCover(m) {
-  groundLife(m, heightN, [-26, 26, -26, 1.5], 50, (x, z) => inHouse(x, z) || Math.abs(x + 12.2) < 0.8 || Math.abs(x - 14.9) < 0.8 || z > lipN(x) - 0.3);
+  groundLife(m, heightN, [-24, 24, -24, 1.5], 30, (x, z) => inHouse(x, z) || Math.abs(x + 12.2) < 0.8 || Math.abs(x - 14.9) < 0.8 || z > lipN(x) - 0.3);
   teaRows(m);
   groundLife(m, heightS, [-24, 24, 6.2, 20], 80, (x, z) => z < lipS(x) + 0.3 || Math.hypot(x - 4, z - 11) < 1.2);
 }

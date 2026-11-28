@@ -46,7 +46,8 @@ function greatCenser(m) {
   m.box(0, 0.21, 0, 0.5, 0.06, 0.5, stoneDark);
   m.box(0, 0.26, 0, 0.6, 0.04, 0.6, stoneLight);
   for (const sx of [-1, 1])
-    for (const sz of [-1, 1]) m.tube([sx * 0.17, 0.28, sz * 0.13], [sx * 0.15, 0.38, sz * 0.12], 0.035, 0.03, stoneDark, 5);
+    for (const sz of [-1, 1])
+      m.tube([sx * 0.17, 0.28, sz * 0.13], [sx * 0.15, 0.38, sz * 0.12], 0.035, 0.03, stoneDark, 5);
   m.box(0, 0.5, 0, 0.46, 0.24, 0.36, stone);
   m.box(0, 0.63, 0, 0.5, 0.04, 0.4, stoneLight);
   // Carved bands on the body: a key fret over a mask.
@@ -339,7 +340,12 @@ function oldCypress(m, cell) {
       [0.42, 1.44, 0.05, 0.26]
     ]) {
       const from = trunk[r.next() < 0.5 ? 4 : 5];
-      m.line([from, [(from[0] + x) / 2, (from[1] + y) / 2 + 0.04, (from[2] + z) / 2], [x, y - 0.05, z]], 0.025, bark, 4);
+      m.line(
+        [from, [(from[0] + x) / 2, (from[1] + y) / 2 + 0.04, (from[2] + z) / 2], [x, y - 0.05, z]],
+        0.025,
+        bark,
+        4
+      );
       clump(m, x, y, z, k, k * 0.42, k * 0.85, needle, needleLight, 7);
     }
     clump(m, 0.58, 1.56, -0.02, 0.22, 0.14, 0.2, needle, needleLight, 6);
@@ -349,7 +355,14 @@ function oldCypress(m, cell) {
     const x = r.range(-0.42, 0.42),
       z = r.range(-0.42, 0.42),
       a = r.range(0, circle);
-    m.leaf([x, 0.045, z], [x + Math.cos(a) * 0.05, 0.047, z + Math.sin(a) * 0.05], 0.012, 0x3b4a32, 0x52603e, 0.002);
+    m.leaf(
+      [x, 0.045, z],
+      [x + Math.cos(a) * 0.05, 0.047, z + Math.sin(a) * 0.05],
+      0.012,
+      0x3b4a32,
+      0x52603e,
+      0.002
+    );
   }
 }
 // 僧寮藥圃: a raised bed edged in brick, rows of herbs, a few in flower, a label stake.
@@ -377,13 +390,33 @@ function herbBed(m) {
       for (let k = 0; k < 4; k++) {
         const a = (k * circle) / 4 + r.range(0, 1.5),
           l = r.range(0.06, 0.1);
-        m.leaf([x, 0.1, z], [x + Math.cos(a) * l, 0.13 + l * 0.7, z + Math.sin(a) * l], l * 0.35, hue, 0x93ad78, 0.02);
+        m.leaf(
+          [x, 0.1, z],
+          [x + Math.cos(a) * l, 0.13 + l * 0.7, z + Math.sin(a) * l],
+          l * 0.35,
+          hue,
+          0x93ad78,
+          0.02
+        );
       }
       if ((i + j) % 3 === 0) m.box(x, 0.19, z, 0.025, 0.025, 0.025, j % 2 ? 0xe6dca4 : 0xc8a0c8);
     }
   m.tube([0.34, 0.1, 0.34], [0.34, 0.3, 0.34], 0.012, 0.012, timber, 4);
   m.box(0.34, 0.28, 0.35, 0.08, 0.06, 0.01, 0xb4a27e);
-  m.lathe(-0.43, 0.04, 0.44, [[0, 0.04], [0.03, 0.07], [0.1, 0.075], [0.14, 0.05], [0.16, 0.04]], 0x6a4a34, 7);
+  m.lathe(
+    -0.43,
+    0.04,
+    0.44,
+    [
+      [0, 0.04],
+      [0.03, 0.07],
+      [0.1, 0.075],
+      [0.14, 0.05],
+      [0.16, 0.04]
+    ],
+    0x6a4a34,
+    7
+  );
 }
 
 const tile = (draw) => (m, p, cell) => lit(m, () => draw(m, cell));

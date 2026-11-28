@@ -149,6 +149,15 @@ function horseHeadWall(m, depth, y0, steps, thick = 0.26) {
         z1 = s ? Math.max(s * inner, s * outer) : outer;
       plasterBlock(m, -t, t, y0 + 0.55, h, z0, z1);
       m.box(0, h - 0.05, (z0 + z1) / 2, thick + 0.03, 0.1, z1 - z0, m.mix(brick, ridgeTone, 0.3));
+      // The painted band (墨繪) under the coping.
+      m.box(0, h - 0.24, (z0 + z1) / 2, thick + 0.012, 0.035, Math.max(0.05, z1 - z0 - 0.12), 0x6b6d69);
+      if (!s && h - y0 > 2.6) {
+        // A small high window in the gable, framed in brick.
+        const wy = y0 + (h - y0) * 0.66;
+        m.box(0, wy, 0, thick + 0.016, 0.56, 0.46, m.mix(brick, plasterShade, 0.2));
+        m.box(0, wy, 0, thick + 0.026, 0.4, 0.3, 0x34302c);
+        for (const k of [-0.075, 0.075]) m.box(0, wy, k, thick + 0.034, 0.4, 0.025, m.mix(brick, plasterShade, 0.2));
+      }
       m.frame(0, 0, (z0 + z1) / 2, Math.PI / 2, 1, () => tileCap(m, z1 - z0 + 0.12, h + 0.17, t + 0.12, 0.11, false));
       for (const e of s ? [s] : [-1, 1]) {
         const z = e * (outer + 0.04);

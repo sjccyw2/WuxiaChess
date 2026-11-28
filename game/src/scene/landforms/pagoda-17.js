@@ -14,7 +14,6 @@ import {
   stone,
   stoneLight,
   stoneDark,
-  plaster,
   lacquerDark,
   ink,
   gilt,
@@ -51,7 +50,11 @@ const corner = (k, a, y = 0) => {
     r = a / C8;
   return [Math.cos(t) * r, y, PZ + Math.sin(t) * r];
 };
-const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+const lerp3 = (a, b, t) => [
+  a[0] + (b[0] - a[0]) * t,
+  a[1] + (b[1] - a[1]) * t,
+  a[2] + (b[2] - a[2]) * t
+];
 
 // A face of the octagon in its own frame: x along the face, +z out, y up from `y`.
 function onFace(m, i, a, y, draw) {
@@ -108,7 +111,15 @@ function plinth(m) {
   for (let i = 1; i <= 3; i++) {
     const zf = -4.05 - 0.15 * (i - 1),
       top = 0.2 + 0.133 * i;
-    m.box(0, (top + 0.2) / 2, (zf + z1 - 0.1) / 2, 1.1, top - 0.2, zf - z1 + 0.1, i % 2 ? stone : stoneLight);
+    m.box(
+      0,
+      (top + 0.2) / 2,
+      (zf + z1 - 0.1) / 2,
+      1.1,
+      top - 0.2,
+      zf - z1 + 0.1,
+      i % 2 ? stone : stoneLight
+    );
   }
   for (const s of [-1, 1]) {
     const xa = s * 0.55,
@@ -199,18 +210,29 @@ function octEave(m, ai, yi, ao, yo, lift, bells = true) {
           s1 = (a + 1) / n,
           t0 = k / rows,
           t1 = (k + 1) / rows;
-        put(m, [at(s0, t0), at(s1, t0), at(s1, t1), at(s0, t1)], m.mix(dark, mid, ((a * 3 + k) % 5) * 0.12), [
-          out[0],
-          1.2,
-          out[2]
-        ]);
+        put(
+          m,
+          [at(s0, t0), at(s1, t0), at(s1, t1), at(s0, t1)],
+          m.mix(dark, mid, ((a * 3 + k) % 5) * 0.12),
+          [out[0], 1.2, out[2]]
+        );
       }
     // The fascia under the eave, and a lit edge of eave tiles along it.
     for (let a = 0; a < n; a++) {
       const p = at(a / n, 0),
         q = at((a + 1) / n, 0);
       put(m, [p, q, [q[0], q[1] - 0.07, q[2]], [p[0], p[1] - 0.07, p[2]]], lacquerDark, out);
-      put(m, [p, q, [q[0] - out[0] * 0.05, q[1] + 0.02, q[2] - out[2] * 0.05], [p[0] - out[0] * 0.05, p[1] + 0.02, p[2] - out[2] * 0.05]], hi, [out[0], 1, out[2]]);
+      put(
+        m,
+        [
+          p,
+          q,
+          [q[0] - out[0] * 0.05, q[1] + 0.02, q[2] - out[2] * 0.05],
+          [p[0] - out[0] * 0.05, p[1] + 0.02, p[2] - out[2] * 0.05]
+        ],
+        hi,
+        [out[0], 1, out[2]]
+      );
     }
     // Half-round tiles over the seams.
     for (let a = 1; a < n; a++) {
@@ -226,9 +248,15 @@ function octEave(m, ai, yi, ao, yo, lift, bells = true) {
           ring = [];
         for (let q = 0; q <= 2; q++) {
           const ang = (q * Math.PI) / 2;
-          ring.push([p[0] + ex * r * Math.cos(ang), p[1] + 0.03 * Math.sin(ang) + 0.004, p[2] + ez * r * Math.cos(ang)]);
+          ring.push([
+            p[0] + ex * r * Math.cos(ang),
+            p[1] + 0.03 * Math.sin(ang) + 0.004,
+            p[2] + ez * r * Math.cos(ang)
+          ]);
         }
-        if (last) for (let q = 0; q < 2; q++) put(m, [last[q], ring[q], ring[q + 1], last[q + 1]], [hi, mid][q], [out[0], 1, out[2]]);
+        if (last)
+          for (let q = 0; q < 2; q++)
+            put(m, [last[q], ring[q], ring[q + 1], last[q + 1]], [hi, mid][q], [out[0], 1, out[2]]);
         last = ring;
       }
     }
@@ -243,7 +271,14 @@ function octEave(m, ai, yi, ao, yo, lift, bells = true) {
       dl = Math.hypot(...dir),
       tip = [c[0] + (dir[0] / dl) * 0.14, c[1] + 0.13, c[2] + (dir[1] / dl) * 0.14];
     m.line([...hip, tip], 0.034, 0x161a21, 5);
-    m.tube(tip, [tip[0] + (dir[0] / dl) * 0.03, tip[1] + 0.07, tip[2] + (dir[1] / dl) * 0.03], 0.024, 0.006, giltDark, 4);
+    m.tube(
+      tip,
+      [tip[0] + (dir[0] / dl) * 0.03, tip[1] + 0.07, tip[2] + (dir[1] / dl) * 0.03],
+      0.024,
+      0.006,
+      giltDark,
+      4
+    );
     if (bells) {
       const b = [c[0] + (dir[0] / dl) * 0.06, c[1] - 0.03, c[2] + (dir[1] / dl) * 0.06];
       m.tube(b, [b[0], b[1] - 0.12, b[2]], 0.006, 0.006, ink, 3);
@@ -276,7 +311,14 @@ function brackets(m, a, y) {
     const c = corner(i, a + 0.02, y);
     const out = [c[0], c[2] - PZ],
       l = Math.hypot(...out);
-    m.tube([c[0], y + 0.12, c[2]], [c[0] + (out[0] / l) * 0.2, y + 0.2, c[2] + (out[1] / l) * 0.2], 0.035, 0.03, bracketTone, 4);
+    m.tube(
+      [c[0], y + 0.12, c[2]],
+      [c[0] + (out[0] / l) * 0.2, y + 0.2, c[2] + (out[1] / l) * 0.2],
+      0.035,
+      0.03,
+      bracketTone,
+      4
+    );
   }
 }
 
@@ -291,7 +333,11 @@ function walls(m, k, a, y, h) {
   for (let i = 0; i < 8; i++) {
     const j = (i + 1) % 8,
       phi = (i * circle) / 8;
-    put(m, [bot[i], bot[j], top[j], top[i]], k % 2 ? body : m.mix(body, bodyDark, 0.2), [Math.cos(phi), 0, Math.sin(phi)]);
+    put(m, [bot[i], bot[j], top[j], top[i]], k % 2 ? body : m.mix(body, bodyDark, 0.2), [
+      Math.cos(phi),
+      0,
+      Math.sin(phi)
+    ]);
     m.tube(bot[i], top[i], 0.035, 0.032, lacquerDark, 5);
   }
   // A lintel band round the top and a plinth band round the foot.
@@ -314,12 +360,26 @@ function walls(m, k, a, y, h) {
           m.box(0, 1.17, 0.02, 0.62, 0.06, 0.04, stoneDark);
           for (let r = 0; r < 4; r++)
             for (const sx of [-1, 1])
-              for (let c = 0; c < 2; c++) m.box(sx * (0.07 + c * 0.1), 0.3 + r * 0.22, 0.04, 0.03, 0.03, 0.015, giltDark);
+              for (let c = 0; c < 2; c++)
+                m.box(sx * (0.07 + c * 0.1), 0.3 + r * 0.22, 0.04, 0.03, 0.03, 0.015, giltDark);
           m.box(0, 0.62, 0.04, 0.012, 1.0, 0.012, ink);
         } else {
           // A niche with a seated figure in relief.
           m.box(0, 0.72, 0.012, 0.42, 0.62, 0.02, ink);
-          m.lathe(0, 0.46, 0.04, [[0, 0.1], [0.12, 0.08], [0.18, 0.05], [0.25, 0.045], [0.29, 0]], stoneDark, 6);
+          m.lathe(
+            0,
+            0.46,
+            0.04,
+            [
+              [0, 0.1],
+              [0.12, 0.08],
+              [0.18, 0.05],
+              [0.25, 0.045],
+              [0.29, 0]
+            ],
+            stoneDark,
+            6
+          );
           m.box(0, 1.08, 0.025, 0.5, 0.06, 0.04, stone);
         }
         return;
@@ -362,7 +422,21 @@ function doorway(m) {
       )
     );
     // A figure of the Buddha within, dark against the lamp.
-    m.lathe(0, 0.08, 0.03, [[0, 0.13], [0.16, 0.1], [0.36, 0.08], [0.48, 0.07], [0.56, 0.05], [0.66, 0]], 0x6a4a2c, 6);
+    m.lathe(
+      0,
+      0.08,
+      0.03,
+      [
+        [0, 0.13],
+        [0.16, 0.1],
+        [0.36, 0.08],
+        [0.48, 0.07],
+        [0.56, 0.05],
+        [0.66, 0]
+      ],
+      0x6a4a2c,
+      6
+    );
     for (const s of [-1, 1]) {
       m.box(s * 0.36, 0.55, 0.18, 0.04, 1.06, 0.3, lacquerDark);
       m.box(s * 0.34, 0.6, 0.04, 0.08, 1.2, 0.06, stoneDark);
@@ -384,7 +458,11 @@ function gallery(m, a, y) {
       r = corner(i + 1, o, y),
       s = corner(i, o, y);
     put(m, [p, q, r, s], m.mix(bodyDark, stoneDark, 0.5));
-    put(m, [s, r, [r[0], y - 0.07, r[2]], [s[0], y - 0.07, s[2]]], lacquerDark, [Math.cos((i * circle) / 8), 0, Math.sin((i * circle) / 8)]);
+    put(m, [s, r, [r[0], y - 0.07, r[2]], [s[0], y - 0.07, s[2]]], lacquerDark, [
+      Math.cos((i * circle) / 8),
+      0,
+      Math.sin((i * circle) / 8)
+    ]);
   }
   const ring = [];
   for (let i = 0; i <= 8; i++) ring.push(corner(i, o - 0.03, y + 0.2));
@@ -415,19 +493,60 @@ function spire(m, y, a) {
   const prof = [];
   for (let k = 0; k < 9; k++) {
     const r = 0.2 - k * 0.011;
-    prof.push([0.62 + k * 0.17, r * 0.55], [0.62 + k * 0.17 + 0.05, r], [0.62 + k * 0.17 + 0.12, r]);
+    prof.push(
+      [0.62 + k * 0.17, r * 0.55],
+      [0.62 + k * 0.17 + 0.05, r],
+      [0.62 + k * 0.17 + 0.12, r]
+    );
   }
   prof.push([2.2, 0.06]);
   m.lathe(0, y, PZ, prof, giltDark, 8);
-  m.lathe(0, y + 2.2, PZ, [[0, 0.06], [0.04, 0.34], [0.1, 0.3], [0.13, 0.08]], gilt, 10);
+  m.lathe(
+    0,
+    y + 2.2,
+    PZ,
+    [
+      [0, 0.06],
+      [0.04, 0.34],
+      [0.1, 0.3],
+      [0.13, 0.08]
+    ],
+    gilt,
+    10
+  );
   for (let i = 0; i < 8; i++) {
     const t = (i * circle) / 8,
       x = Math.cos(t) * 0.33,
       z = PZ + Math.sin(t) * 0.33;
     m.tube([x, y + 2.23, z], [x, y + 2.11, z], 0.005, 0.005, ink, 3);
-    m.lathe(x, y + 2.03, z, [[0, 0.03], [0.07, 0.02], [0.08, 0]], bronze, 5);
+    m.lathe(
+      x,
+      y + 2.03,
+      z,
+      [
+        [0, 0.03],
+        [0.07, 0.02],
+        [0.08, 0]
+      ],
+      bronze,
+      5
+    );
   }
-  m.lathe(0, y + 2.33, PZ, [[0, 0.06], [0.12, 0.14], [0.26, 0.12], [0.36, 0.05], [0.46, 0.08], [0.58, 0]], gilt, 8);
+  m.lathe(
+    0,
+    y + 2.33,
+    PZ,
+    [
+      [0, 0.06],
+      [0.12, 0.14],
+      [0.26, 0.12],
+      [0.36, 0.05],
+      [0.46, 0.08],
+      [0.58, 0]
+    ],
+    gilt,
+    8
+  );
   for (let i = 0; i < 8; i++) {
     const c = corner(i, a, y - 0.35);
     const mid = [c[0] * 0.5, y + 1.0, PZ + (c[2] - PZ) * 0.5];
@@ -472,7 +591,15 @@ function pagoda(m, part) {
         const p = corner(i, a + 0.03, yi),
           q = corner(i + 1, a + 0.03, yi);
         put(m, [p, q, peak], m.mix(eaveTones[1], eaveTones[2], i % 2 ? 0.2 : 0.45));
-        m.line([[p[0], p[1] + 0.03, p[2]], [peak[0], peak[1] + 0.02, peak[2]]], 0.03, 0x161a21, 4);
+        m.line(
+          [
+            [p[0], p[1] + 0.03, p[2]],
+            [peak[0], peak[1] + 0.02, peak[2]]
+          ],
+          0.03,
+          0x161a21,
+          4
+        );
       }
       spire(m, yi + 0.45, a + 0.3);
       y = yi;

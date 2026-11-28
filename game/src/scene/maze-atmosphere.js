@@ -23,7 +23,7 @@ const styles = [
   ['谷底棋臺', 0xb0b5b6, 0x71839f, 0xffcd90, 0x4f867f, 'water', -0.13, 0.021],
   // The boards added on 2026-11-28.
   ['石樑溫家', 0xc6c2b4, 0x7d93a0, 0xffdcb0, 0x5f6e66, 'mist', -4.5, 0.02],
-  ['萬安寺', 0x3f4760, 0x161b30, 0xf2c890, 0x2f3a4c, 'earth', -1.0, 0.018, 'night'],
+  ['萬安寺', 0x3f4760, 0x161b30, 0xf2c890, 0x34383f, 'earth', -1.0, 0.018, 'night'],
   ['光明頂', 0xd5dde3, 0x6a8fbd, 0xffe3bc, 0xd3d9dc, 'mist', -7.0, 0.017],
   // The water here is the sea in the cave's channels; its level is SEA in landforms/kit-19.js.
   ['俠客島', 0x9fb2b4, 0x5f8090, 0xe6ecea, 0x3d6a70, 'water', -0.25, 0.021]

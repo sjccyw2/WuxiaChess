@@ -15,9 +15,12 @@ import {
   footRadius,
   channel,
   channelZ,
+  mouth,
   floorHeight,
-  lightAt
+  lightAt,
+  toward
 } from './kit-19.js';
+import { character } from './carving-19.js';
 
 // A sea-worn rock: wet and dark below the tide, a pale crust of barnacles and a fringe of weed
 // at it, grey and salt-streaked above. Colours go by height against the sea, wherever it sits.
@@ -205,9 +208,143 @@ function sampan(m, bx, bz, yaw, post) {
   m.line([bow, mid, post], 0.012, 0xa08f66, 4);
 }
 
+// Boulders fallen from the wall, lying on the talus at its foot inside the hall.
+function talus(m) {
+  const r = m.rng;
+  for (let k = 0; k < 130; k++) {
+    const a = r.range(0, circle),
+      R = footRadius(a),
+      d = R - r.range(0.1, 1.45);
+    const x = Math.cos(a) * d,
+      z = ZC + Math.sin(a) * d;
+    if (boardOff(x, z) < 0.5 || channel(x, z) > 0.05 || mouth(x, z) > 0.2) continue;
+    const y = floorHeight(x, z),
+      s = r.range(0.08, 0.42) * (d > R - 0.6 ? 1.3 : 0.8);
+    const col = lightAt(x, y, z, rgb(r.pick([0x4a4944, 0x55534d, 0x5f5c55])), 0.8),
+      cap = lightAt(x, y + s, z, rgb(r.pick([0x6e6b63, 0x7b776d])), 0.8);
+    m.rock(x, y - s * 0.25, z, s, s * r.range(0.6, 1.1), s * r.range(0.6, 0.95), col, cap, 8, r.range(0, circle));
+  }
+  // Pebbles and grit spread over the floor round the board.
+  for (let k = 0; k < 260; k++) {
+    const x = r.range(-8.5, 8.5),
+      z = r.range(-6.6, 7.5);
+    const off = boardOff(x, z);
+    if (off < 0.12 || off > 2.6 || channel(x, z) > 0.2) continue;
+    const y = floorHeight(x, z);
+    if (y < SEA + 0.05) continue;
+    const s = r.range(0.025, 0.07);
+    const c = lightAt(x, y, z, rgb(r.pick([0x5c5a54, 0x6f6c64, 0x847f73, 0x4c4b46])), 0.8);
+    m.rock(x, y - 0.01, z, s, s * 0.6, s * 0.8, c, blend(c, rgb(0x9a958a), 0.3), 6);
+  }
+}
+// The strand in the mouth: the heroes' footprints from the jetty to the board, pools left by
+// the tide on the ledges, driftwood, and the island's name stone by the landing.
+function strand(m) {
+  const r = m.rng;
+  const trails = [
+    [[-2.2, 6.95], [-1.6, 6.3], [-1.1, 5.6]],
+    [[-2.0, 6.95], [-0.9, 6.4], [0.1, 5.6]],
+    [[-2.35, 6.95], [-0.2, 6.6], [1.2, 5.6]],
+    [[-2.5, 6.9], [-2.6, 6.2], [-2.2, 5.6]]
+  ];
+  for (const path of trails) {
+    let side = 1;
+    for (let s = 1; s < path.length; s++) {
+      const [ax, az] = path[s - 1],
+        [bx, bz] = path[s],
+        len = Math.hypot(bx - ax, bz - az);
+      const dx = (bx - ax) / len,
+        dz = (bz - az) / len;
+      for (let t = 0.1; t < len; t += 0.17) {
+        side = -side;
+        const x = ax + dx * t - dz * 0.05 * side + r.range(-0.015, 0.015),
+          z = az + dz * t + dx * 0.05 * side;
+        const y = floorHeight(x, z) + 0.006,
+          yaw = Math.atan2(dx, dz);
+        const c = lightAt(x, y, z, rgb(0x4a463d), 0.5);
+        const ring = [];
+        for (let i = 0; i < 7; i++) {
+          const a = (i * circle) / 7,
+            u = Math.cos(a) * 0.03,
+            v = Math.sin(a) * 0.055;
+          ring.push([x + u * Math.cos(yaw) + v * Math.sin(yaw), y, z - u * Math.sin(yaw) + v * Math.cos(yaw)]);
+        }
+        toward(m, ring, c);
+      }
+    }
+  }
+  // Pools on the ledges, each a mirror of dark water in a pale rim.
+  let pools = 0;
+  for (let k = 0; k < 200 && pools < 5; k++) {
+    const x = r.range(-5.5, 5.5),
+      z = r.range(6.0, 10.0);
+    const y = floorHeight(x, z);
+    if (y < SEA + 0.04 || y > SEA + 0.35 || Math.abs(x - JETTY.x) < 0.9) continue;
+    pools++;
+    const rx = r.range(0.15, 0.45),
+      rz = rx * r.range(0.5, 0.9),
+      ring = [],
+      rim = [];
+    for (let i = 0; i < 12; i++) {
+      const a = (i * circle) / 12,
+        q = 0.85 + 0.3 * hash(x * 3 + i, z);
+      ring.push([x + Math.cos(a) * rx * q, y + 0.025, z + Math.sin(a) * rz * q]);
+      rim.push([x + Math.cos(a) * (rx * q + 0.05), y + 0.02, z + Math.sin(a) * (rz * q + 0.05)]);
+    }
+    for (let i = 0; i < 12; i++) {
+      const j = (i + 1) % 12;
+      toward(m, [rim[i], rim[j], ring[j], ring[i]], [lightAt(...rim[i], rgb(0x55554e), 0.5), lightAt(...rim[j], rgb(0x55554e), 0.5), rgb(0x3a4a48), rgb(0x3a4a48)]);
+    }
+    toward(m, ring, rgb(0x3a4f50));
+    for (let i = 0; i < 3; i++) m.rock(x + r.range(-rx, rx) * 0.6, y, z + r.range(-rz, rz) * 0.6, 0.03, 0.04, 0.025, 0x3d4a3a, 0x8c8a74, 5);
+  }
+  // Driftwood, bleached grey, thrown up at the highest tide.
+  for (const [x, z, yaw, l] of [
+    [3.2, 7.4, 0.4, 1.3],
+    [-4.6, 7.9, -0.7, 0.9],
+    [5.1, 6.6, 1.6, 0.8]
+  ]) {
+    const y = floorHeight(x, z) + 0.05;
+    const a = [x - Math.sin(yaw) * l * 0.5, y, z - Math.cos(yaw) * l * 0.5],
+      b = [x + Math.sin(yaw) * l * 0.5, y + 0.03, z + Math.cos(yaw) * l * 0.5];
+    m.tube(a, b, 0.07, 0.05, 0x8f877a, 7);
+    m.tube([x, y + 0.02, z], [x + 0.25, y + 0.12, z - 0.15], 0.025, 0.015, 0x9a9284, 5);
+  }
+  // 俠客島's name stone at the head of the landing: a rough slab set on end, three great
+  // characters cut down its face.
+  const sx = -3.55,
+    sz = 7.0,
+    sy = floorHeight(sx, sz);
+  m.frame(sx, sy, sz, 0.35, 1, () => {
+    m.rock(0, -0.15, 0, 0.5, 0.35, 0.36, 0x4d4b45, 0x6a675e, 8);
+    const face = [];
+    for (let i = 0; i <= 8; i++) {
+      const a = Math.PI * (i / 8);
+      face.push([Math.cos(a) * 0.3, 1.25 + Math.sin(a) * 0.18]);
+    }
+    const outline = [[0.3, 0.05], ...face, [-0.3, 0.05]];
+    const front = outline.map(([u, v]) => [u, v, 0.08]),
+      back = outline.map(([u, v]) => [u * 1.02, v, -0.08]);
+    const stone = lightAt(sx, 0.8, sz, rgb(0x6d6a61), 0.3),
+      side = lightAt(sx, 0.8, sz, rgb(0x55534c), 0.3);
+    toward(m, front, stone, [0, 0, 1]);
+    toward(m, back, side, [0, 0, -1]);
+    for (let i = 0; i < outline.length - 1; i++)
+      m.face([back[i], back[i + 1], front[i + 1], front[i]], side);
+    m.face([back.at(-1), back[0], front[0], front.at(-1)], side);
+    const dark = lightAt(sx, 0.8, sz, rgb(0x23221f), 0.3),
+      lip = lightAt(sx, 0.8, sz, rgb(0x9c978a), 0.3);
+    m.frame(0, 0, 0.082, 0, 1, () => {
+      for (let k = 0; k < 3; k++) character(m, 0, 1.12 - k * 0.32, 0.27, 900 + k * 17, dark, lip, 0.016);
+    });
+  });
+}
+
 function shore(T) {
   const m = new Model(T, 196013);
   rocks(m);
+  talus(m);
+  strand(m);
   const post = jetty(m);
   sampan(m, JETTY.x + 1.05, JETTY.z1 - 0.6, Math.PI + 0.12, post);
   wrack(m, JETTY.x - 1.1, 9.2, 1.2);

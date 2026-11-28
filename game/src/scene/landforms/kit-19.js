@@ -177,7 +177,7 @@ function lightAt(x, y, z, base, gloom = 1) {
   const out = base.slice();
   // The gloom: deeper toward the back wall and up the walls, never on the board itself.
   const back = smooth(-2, -7, z) * 0.22 + smooth(1.5, 9, y) * 0.55,
-    away = smooth(1.0, 3.5, boardOff(x, z)) * 0.18;
+    away = smooth(0.6, 3.0, boardOff(x, z)) * 0.38;
   const dark = 1 - gloom * Math.min(0.78, back + away);
   for (let i = 0; i < 3; i++) out[i] *= dark;
   for (const [sx, sy, sz, r, k] of seaLights) {
@@ -189,7 +189,7 @@ function lightAt(x, y, z, base, gloom = 1) {
   for (const [lx, ly, lz] of lamps) {
     const d2 = ((x - lx) ** 2 + (y - ly) ** 2 * 0.7 + (z - lz) ** 2) / 1.7;
     if (d2 > 6) continue;
-    const w = 0.42 * Math.exp(-d2);
+    const w = 0.45 * Math.exp(-d2);
     for (let i = 0; i < 3; i++) out[i] += WARM[i] * w * (0.3 + out[i]);
   }
   return out.map((v) => Math.min(1, v));
@@ -263,7 +263,12 @@ function fromInside(T, group, shell) {
           if (caveFrom.y < ${SEA.toFixed(3)}) caveFrom.y = ${(2 * SEA).toFixed(3)} - caveFrom.y;
           vec3 caveEye = normalize(caveFrom - (modelMatrix * vec4(caveCentre, 1.)).xyz);
           vec3 caveTurn = normalize(mat3(modelMatrix) * caveFacing);
-          if (dot(caveFacing, caveFacing) > .5 && dot(caveTurn, caveEye) < .16)
+          // A stretch of wall on the camera's own side of the hall is folded away as well, so a
+          // camera drawn in close, inside the ring, still sees the board past it.
+          vec2 caveAt = (modelMatrix * vec4(caveCentre, 1.)).xz - vec2(0., ${ZC.toFixed(2)}),
+            caveCam = caveFrom.xz - vec2(0., ${ZC.toFixed(2)});
+          bool caveNear = dot(normalize(caveAt), normalize(caveCam + vec2(.0001))) > .3;
+          if (dot(caveFacing, caveFacing) > .5 && (dot(caveTurn, caveEye) < .16 || caveNear))
             gl_Position = vec4(2., 2., 2., 1.);`
         );
   };

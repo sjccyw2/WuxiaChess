@@ -153,11 +153,16 @@ const BEDS = [
     ]
   }, // 石樑溫家
   {
-    // Night in the temple court: the pagoda's eave bells.
-    wind: [1100, 1.1, 0.25],
+    // Night in the temple court: the pagoda's eave bells in a cold wind, now and then a
+    // wooden fish knocked in a hall, and a gust round the pagoda.
+    wind: [1100, 1.1, 0.28],
     water: 0,
     room: 0.2,
-    events: [['chime', 9]]
+    events: [
+      ['chime', 8],
+      ['knock', 17],
+      ['gust', 15]
+    ]
   }, // 萬安寺
   {
     // High wind over the bare summit and the banners before the hall; a hawk now and then.

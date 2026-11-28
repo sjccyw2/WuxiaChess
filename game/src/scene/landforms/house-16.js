@@ -433,7 +433,37 @@ function eastGarden(m) {
   const x0 = 8.85,
     x1 = EAST,
     south = WING.south + 0.25;
-  floorTiles(m, x0 + 0.15, x1 - 0.15, HALL.back + 0.2, south - 0.1, 0.0, 0.9, 0x7f8380);
+  // Moss and gravel ground, a path of stepping stones from the moon gate to the study, and a
+  // little pond with a stone rim.
+  for (let x = x0 + 0.15; x < x1 - 0.15; x += 0.6)
+    for (let z = HALL.back + 0.2; z < south - 0.1; z += 0.6) {
+      const xb = Math.min(x + 0.6, x1 - 0.15),
+        zb = Math.min(z + 0.6, south - 0.1);
+      put(m, [[x, 0.0, z], [xb, 0.0, z], [xb, 0.0, zb], [x, 0.0, zb]], [[x, z], [xb, z], [xb, zb], [x, zb]].map(([u, v]) => m.mix(0x5a6a44, 0x7e806a, 0.5 + 0.5 * Math.sin(u * 1.3 + v * 0.7) * Math.cos(v * 1.1 - u * 0.4))));
+    }
+  for (let i = 0; i < 9; i++) {
+    const t = i / 8,
+      x = 9.25 + 1.2 * t + 0.1 * Math.sin(i * 2.1),
+      z = -2.2 - 3.0 * t * t - 0.1 * Math.cos(i * 1.7);
+    m.frame(x, 0.02, z, i * 0.7, 1, () => m.lathe(0, -0.02, 0, [[0, 0.2], [0.04, 0.21], [0.05, 0.16], [0.051, 0]], m.mix(graniteShade, graniteDark, (i % 3) * 0.3), 7));
+  }
+  const pond = { x: 11.4, z: -0.2, r: 0.95 };
+  const edge = [];
+  for (let i = 0; i < 14; i++) {
+    const a = (i * circle) / 14,
+      k = 1 + 0.15 * Math.sin(a * 3 + 1);
+    edge.push([pond.x + Math.cos(a) * pond.r * k * 1.25, pond.z + Math.sin(a) * pond.r * k * 0.8]);
+  }
+  put(m, edge.map(([x, z]) => [x, 0.015, z]), 0x3f5e5a);
+  for (let i = 0; i < edge.length; i++) {
+    const [x, z] = edge[i];
+    m.rock(x, -0.03, z, 0.17, 0.11, 0.14, 0x5a5c54, 0x6f7a5a, 6, i);
+  }
+  for (const [dx, dz] of [[-0.3, 0.1], [0.25, -0.15], [0.5, 0.2]]) {
+    const pts = [];
+    for (let i = 0; i < 8; i++) pts.push([pond.x + dx + Math.cos(i * 0.785) * 0.11, 0.02, pond.z + dz + Math.sin(i * 0.785) * 0.11]);
+    put(m, pts, 0x5a8048);
+  }
   m.frame((x0 + x1) / 2, 0, south + 0.05, 0, 1, () => plasteredWall(m, -(x1 - x0) / 2, (x1 - x0) / 2, 0, 1.15, 0.24, true));
   leakWindow(m, 11.3, 0.75, south + 0.05, 0.5, 0.5, 0.24);
   // 書齋: the study, facing west onto the garden.
@@ -474,6 +504,9 @@ function rearCourt(m) {
   const outer = 10.85;
   // Paving of the rear court.
   floorTiles(m, west, east, -19.4, HALL.back - 0.1, 0.0, 1.1, 0x7f8380);
+  // The side passages either side of the hall, between it and the wings.
+  floorTiles(m, west + 0.15, -HALL.x - 0.15, HALL.back + 0.1, WING.north, 0.0, 0.7, 0x7f8380);
+  floorTiles(m, HALL.x + 0.15, 9.0, HALL.back + 0.1, WING.north - 0.1, 0.0, 0.7, 0x7f8380);
   // 後樓: two storeys, a balcony with a railing along the upper floor, a roof over each.
   const z0 = -17.8,
     z1 = -14.2,
@@ -488,9 +521,9 @@ function rearCourt(m) {
       const x = -w + 0.4 + ((2 * w - 0.8) * i) / 8;
       column(m, x, d / 2 - 0.1, 0.3, 2.5, 0.09);
     }
-    for (let i = 0; i < 12; i++) {
-      const x = -w + 0.3 + ((2 * w - 0.6) * (i + 0.5)) / 12;
-      m.frame(x, 0.3, d / 2 - 0.6, 0, 1, () => latticePanel(m, (2 * w - 0.6) / 12 * 0.95, 2.0, { nx: 2, ny: 4, skirt: 0.45 }));
+    for (let i = 0; i < 8; i++) {
+      const x = -w + 0.3 + ((2 * w - 0.6) * (i + 0.5)) / 8;
+      m.frame(x, 0.3, d / 2 - 0.6, 0, 1, () => latticePanel(m, ((2 * w - 0.6) / 8) * 0.95, 2.0, { nx: 3, ny: 4, skirt: 0.45 }));
     }
     // The lean-to roof over the ground floor, the balcony and the upper floor.
     m.frame(0, 0, d / 2 + 0.2, 0, 1, () => {
@@ -505,11 +538,11 @@ function rearCourt(m) {
     slab(m, -w, w, 3.0, 3.1, d / 2 - 0.75, d / 2 - 0.55, timberDark);
     for (let i = 0; i <= 28; i++) m.box(-w + (2 * w * i) / 28, 3.4, d / 2 - 0.6, 0.04, 0.6, 0.04, timber);
     slab(m, -w, w, 3.68, 3.75, d / 2 - 0.65, d / 2 - 0.55, timber);
-    for (let i = 0; i < 12; i++) {
-      const x = -w + 0.3 + ((2 * w - 0.6) * (i + 0.5)) / 12;
-      m.frame(x, 3.1, d / 2 - 1.0, 0, 1, () => latticePanel(m, (2 * w - 0.6) / 12 * 0.95, 1.6, { nx: 2, ny: 3, skirt: 0.3 }));
+    for (let i = 0; i < 8; i++) {
+      const x = -w + 0.3 + ((2 * w - 0.6) * (i + 0.5)) / 8;
+      m.frame(x, 3.1, d / 2 - 1.0, 0, 1, () => latticePanel(m, ((2 * w - 0.6) / 8) * 0.95, 1.6, { nx: 3, ny: 3, skirt: 0.3 }));
     }
-    tiledRoof(m, 2 * w + 0.5, d + 0.6, 5.0, 1.35, { hip: 0, gable: true, lift: 0.1, tones: roofTones, rafters: false, rows: 4, tile: 0.38 });
+    tiledRoof(m, 2 * w + 0.5, d + 0.6, 5.0, 1.35, { hip: 0, gable: true, lift: 0.1, tones: roofTones, rafters: false, rows: 3, tile: 0.46 });
     for (const s of [-1, 1]) m.frame(s * (w + 0.12), 0, 0, 0, 1, () => horseHeadWall(m, d + 0.9, 0.3, [5.3, 5.8, 6.75], 0.3));
   });
   // Kitchen and store roofs along the sides of the rear court.

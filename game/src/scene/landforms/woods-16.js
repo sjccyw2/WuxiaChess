@@ -2,7 +2,7 @@
 // court, groves of tall bamboo on the hill behind, mountain pines along the ravine, and the
 // woods thinning up the hillsides.
 import { circle } from '../scenery-kit.js';
-import { clump, bamboo } from './garden-13.js';
+import { clump, bamboo, taihuRock } from './garden-13.js';
 import { pine } from './kit-12.js';
 import { heightN, heightS, lipN, lipS, inHouse } from './ravine-16.js';
 
@@ -98,18 +98,21 @@ function hillWoods(m) {
 // are the heaviest growth here.
 function bambooGroves(m) {
   for (const [x, z, rad, n] of [
-    [-6, -22.5, 3.2, 5],
-    [5.5, -23, 3.6, 5],
-    [-15.5, -16, 2.6, 4],
-    [17.5, -15.5, 2.8, 4],
-    [-17.5, -7, 2.0, 3]
+    [-6, -22.5, 3.2, 4],
+    [5.5, -23, 3.6, 4],
+    [-15.5, -16, 2.6, 3],
+    [17.5, -15.5, 2.8, 3]
   ]) {
     grove(m, x, z, rad, n, heightN, 1.7);
   }
 }
-// The trees inside the walls: osmanthus pairs in the rear court.
+// The trees inside the walls: osmanthus pairs in the rear court, and in the east garden an
+// osmanthus by the pond, a rockery and bamboo against the outer wall.
 function courtTrees(m) {
   for (const x of [-5.6, 5.6]) osmanthus(m, x, 0, -13.2, 1.05);
+  osmanthus(m, 12.7, 0, -1.6, 0.95);
+  taihuRock(m, 10.0, 0.9, 0.85, 0);
+  for (const z of [-11.2, -9.8, 1.3]) bamboo(m, 13.25, z, 1.05, 7);
 }
 // South of the ravine: pines leaning out over the lip, and scattered trees down the hillside.
 function southWoods(m) {
@@ -123,7 +126,7 @@ function southWoods(m) {
     [22, -0.5]
   ]) {
     const z = lipS(x) + 0.7;
-    pine(m, x, heightS(x, z), z, r.range(2.3, 3.0), { lean, yaw: Math.PI, boughs: 7, rich: true });
+    pine(m, x, heightS(x, z), z, r.range(2.3, 3.0), { lean, yaw: Math.PI, boughs: 7, rich: Math.abs(x) < 12 });
   }
   for (let i = 0; i < 12; i++) {
     const x = r.range(-26, 26),
