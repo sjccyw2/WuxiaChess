@@ -41,6 +41,7 @@
 // A `note` is the villain's own words for the enemy page; {tile} is the post's tile. A villain
 // without traits plays exactly as before the redesign. `phase.say` is a line the piece speaks as it
 // changes, logged after `phase.log`.
+import { poisonSpan, spanWord } from '../rules/poison.js';
 import { MAZE_TALE } from './maze-tale.js';
 
 function adversary(name, school, book, basic, skill, style, visual, bio, mini, robe, traits = {}) {
@@ -780,7 +781,7 @@ const SIGNATURE_RULES = {
   exposed: ({ power, turns, extra }) =>
     riding('令目標防禦降低 ' + power + '，' + lasting(turns), extra),
   poison: ({ power, turns, extra }) =>
-    riding('令目標中毒，' + (turns === 2 ? '兩' : turns) + '次毒發各損 ' + power + ' 氣血。', extra),
+    riding('令目標中毒，毒發' + spanWord(poisonSpan(turns || 2)) + '次，首次損 ' + power + ' 氣血，此後逐次遞減。', extra),
   drain: ({ power, extra }) => riding('另外削去目標 ' + power + ' 點內力。', extra),
   sweep: ({ sweep, extra }) =>
     riding(

@@ -1,3 +1,4 @@
+import { poisonLeft } from './poison.js';
 // Flat bonuses are applied once per action, before wards and shields.
 //
 // [name, rule]. Most names are rule words (破綻, 截勁, 牽引 …). The ones in PLAIN_FORMS are not:
@@ -93,11 +94,8 @@ function contactPlan(s, u, t, art, forms, step, boss) {
     notes.push('乘破綻 · 首段 ＋9，封住還擊');
   }
   if (spentPoison) {
-    // Every layer's bites still to come, with no cap (the producer, 2026-11-28, Q-N179); a poison
-    // saved before layers is one (battle-mastery.js poisonLeft says the same).
-    const round = s?.round ?? 1,
-      layers = Array.isArray(c.poison.layers) ? c.poison.layers : [c.poison];
-    const n = layers.reduce((sum, l) => sum + l.power * Math.max(0, l.through - round + 1), 0);
+    // Every layer's bites still to come, with no cap (the producer, 2026-11-28, Q-N179).
+    const n = poisonLeft(c.poison, s?.round ?? 1);
     extra += n;
     notes.push('餘毒轉成 ' + n + ' 威力');
   }

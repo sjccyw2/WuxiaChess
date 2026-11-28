@@ -38,10 +38,10 @@ import {
   applyCondition,
   CONDITION_NAMES,
   progress,
-  poisonLayers,
   grownPoison,
   grownEffects
 } from './battle-mastery.js';
+import { poisonLayers, poisonNow, poisonSpan, spanWord } from './poison.js';
 import { FIELD_SIZE, fieldCells, mapLayout, validTile, tileInfo } from '../data/terrain.js';
 import { TECHNIQUES, WARES, CAPTAINS } from '../data/martial-arts.js';
 import { CHAMBER_TALES, MAZE_TALE, QIUBAI, YOUTH, acrossTable, shade } from '../data/maze-tale.js';
@@ -1188,11 +1188,11 @@ function enemyTraitLines(s, u) {
   if (t.basicPoison)
     say(
       t.basicPoison.name || '毒手',
-      '普攻令目標中毒，' +
-        (t.basicPoison.turns === 2 ? '兩' : t.basicPoison.turns) +
-        '次毒發各損 ' +
+      '普攻令目標中毒，毒發' +
+        spanWord(poisonSpan(t.basicPoison.turns || 2)) +
+        '次，首次損 ' +
         (t.basicPoison.power + Math.floor(stage / 2)) +
-        ' 氣血。'
+        ' 氣血，此後逐次遞減。'
     );
   if (t.crowded)
     say(
@@ -1235,11 +1235,11 @@ function enemyTraitLines(s, u) {
   if (t.stepPoison)
     say(
       '步裡藏毒',
-      '走動之後的普攻令目標中毒，' +
-        (t.stepPoison.turns === 2 || !t.stepPoison.turns ? '兩' : t.stepPoison.turns) +
-        '次毒發各損 ' +
+      '走動之後的普攻令目標中毒，毒發' +
+        spanWord(poisonSpan(t.stepPoison.turns || 2)) +
+        '次，首次損 ' +
         (t.stepPoison.power + halfStage(s)) +
-        ' 氣血；原地出手與還擊不帶毒。'
+        ' 氣血，此後逐次遞減；原地出手與還擊不帶毒。'
     );
   if (t.lastStand)
     say(
@@ -2450,7 +2450,7 @@ function boonPlan(s, u, t, result) {
     // A layer of its own beside the art's (0.71), grown with the striker as any hero's poison.
     const turns = leaderBoon(s).turns;
     result.effects.push({ kind: 'poison', power: venom, turns });
-    rider(name + ' · 中毒 ' + venom + '，' + turns + ' 回合');
+    rider(name + ' · 中毒 ' + venom + '，' + poisonSpan(turns) + ' 回合，逐回合遞減');
   }
   const linger = commandBonus(s, u, 'linger'),
     kept = result.effects.filter((e) => LINGER_KINDS.includes(e.kind));
@@ -4504,7 +4504,7 @@ function nextRound(s) {
     // 中毒: the layers still running bite once, together; the newest layer's caster is credited.
     if (poison) {
       poison.layers = poisonLayers(poison).filter((l) => l.through >= s.round);
-      poison.power = poison.layers.reduce((n, l) => n + l.power, 0);
+      poison.power = poisonNow(poison, s.round); // each layer decays (rules/poison.js)
       poison.source = poison.layers.at(-1)?.source ?? poison.source;
     }
     if (poison?.power > 0) {

@@ -557,7 +557,7 @@ section('villain traits');
     '【坐鎮】守在（' + (spawn.x + 1) + '，' + (spawn.y + 1) + '）一格內；有俠客踏入攻擊範圍或受到攻擊後，才離位追擊。',
     '【化功】貼身打中他的俠客損失 8 點內力（截勁時無效）。',
     '【游擊】出手後退開至多 2 步，離俠客越遠越好。',
-    '【毒手】普攻令目標中毒，兩次毒發各損 2 氣血。',
+    '【毒手】普攻令目標中毒，毒發四次，首次損 2 氣血，此後逐次遞減。',
     '【偏好】專挑傷重者。'
   ];
   const sigLines = withTraits('chief', { sig: { reach: 3, extra: 'pin' } }, () => G.signatureLines(page, unit(page, 'chief')));
@@ -3407,8 +3407,8 @@ section('contact, banner, riders and wards');
       hero = put(s, 'hero', 4, 3);
     G.startEnemy(s);
     G.enemyAct(s, scout);
-    check('蛇毒: its plain strike poisons with 2 + ⌊stage/2⌋', hero.conditions?.poison?.power === 4 && hero.conditions.poison.through === s.round + 1);
-    check('its page says so', G.enemyTraitLines(s, scout).includes('【蛇毒】普攻令目標中毒，兩次毒發各損 4 氣血。'));
+    check('蛇毒: its plain strike poisons with 2 + ⌊stage/2⌋', hero.conditions?.poison?.power === 4 && hero.conditions.poison.through === s.round + 3);
+    check('its page says so', G.enemyTraitLines(s, scout).includes('【蛇毒】普攻令目標中毒，毒發四次，首次損 4 氣血，此後逐次遞減。'));
   });
 
   // Signature styles and riders, struck when due (board 0's master: round 3).
@@ -3433,7 +3433,7 @@ section('contact, banner, riders and wards');
   due('poison', { mods: {}, sig: { extra: 'wound' } }, (s) => put(s, 'hero', 4, 3), ({ s }) => {
     const c = unit(s, 'hero').conditions || {};
     check('poison with extra wound: poison and 內傷 both', c.poison?.power === 3 && c.wound?.power === 5);
-    check('its note names both', G.enemyTechnique(unit(s, 'chief'), s).note === '令目標中毒，兩次毒發各損 3 氣血，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。');
+    check('its note names both', G.enemyTechnique(unit(s, 'chief'), s).note === '令目標中毒，毒發四次，首次損 3 氣血，此後逐次遞減，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。');
   });
   due(
     'line',
@@ -3898,7 +3898,7 @@ for (const stage of [5, 6]) {
   check('stage ' + stage + ': 蛤蟆功 at 1.40; 靈蛇拳法 pins at 1.12', G.enemyTechnique(ou, s).factor === 1.4 && G.enemyTechnique(ke, s).style === 'pin' && G.enemyTechnique(ke, s).factor === 1.12);
   check('stage ' + stage + ': 歐陽鋒’s page', same(pageOf(s, ou).slice(1), ['【蓄勢反擊】蓄勢時原地不動，只打兩格內的人；兩格內打他，必遭全力還擊（免受還擊之招與截勁除外）。', '【半血變招 · 逆練】攻擊 ＋6、防禦 −4、移動 ＋1，絕技每兩回合一次，不再原地等待，見人就撲。']), JSON.stringify(pageOf(s, ou)));
   const venom = 2 + Math.floor(stage / 2);
-  check('stage ' + stage + ': the snake slaves’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【蛇毒】普攻令目標中毒，兩次毒發各損 ' + venom + ' 氣血。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
+  check('stage ' + stage + ': the snake slaves’ page', [bow, scout].every((u) => same(G.enemyTraitLines(s, u), ['【蛇毒】普攻令目標中毒，毒發四次，首次損 ' + venom + ' 氣血，此後逐次遞減。'])), JSON.stringify(G.enemyTraitLines(s, bow)));
   // Charged from round 2: he does not move, and the danger zone is his own tile's diamond.
   s.round = 2;
   check('stage ' + stage + ': charged in round 2, he is held to his tile', G.signatureDue(s, ou) && G.standCells(s, ou).length === 1);
@@ -3965,7 +3965,7 @@ section('board 7 寒玉石室: the venom that stops the healing');
   const [li, hong, bow, scout] = foesOf(s);
   check('李莫愁 and 洪凌波 have the spec’s numbers', same(numbersOf(li), [483, 70, 19, 4, 2]) && same(numbersOf(hong), [306, 65, 18, 3, 2]), numbersOf(li) + ' / ' + numbersOf(hong));
   check('冰魄銀針: poison 10 and 內傷, reach 3', G.enemyTechnique(li, s).power === 10 && G.enemyTechnique(li, s).extra === 'wound' && G.enemyTechnique(li, s).reach === 3);
-  check('李莫愁’s page', same(pageOf(s, li), ['令目標中毒，兩次毒發各損 10 氣血，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。', '絕技射程 3 格。', '【偏好】專挑療傷者。']), JSON.stringify(pageOf(s, li)));
+  check('李莫愁’s page', same(pageOf(s, li), ['令目標中毒，毒發四次，首次損 10 氣血，此後逐次遞減，並受內傷：療傷減半，每次出手後自損 5 氣血，持續至下回合。', '絕技射程 3 格。', '【偏好】專挑療傷者。']), JSON.stringify(pageOf(s, li)));
   check('洪凌波’s post is (6,4), walkable', G.walkable(5, 3, 7) && same(G.enemyTraitLines(s, hong), ['【坐鎮】守在石頸北口（6，4）一格內，不離位。']), JSON.stringify(G.enemyTraitLines(s, hong)));
   check('the posts are ground the heroes can walk to', postsReachable(s));
   check('the rank and file are 赤練門下', G.unitDetails(bow).name === '赤練門下' && G.unitDetails(scout).name === '赤練門下');
@@ -5268,22 +5268,26 @@ section('poison: layers, growth with the hero, 引爆餘毒 without a cap (0.71;
   lay(7, 2);
   lay(7, 3);
   lay(5, 1);
-  check('poisons stack in layers, the power their sum', BM.poisonLayers(foe.conditions.poison).length === 3 && foe.conditions.poison.power === 19 && foe.conditions.poison.through === s.round + 2);
+  check('poisons stack in layers, this round’s bite their sum, each lasting twice its turns', BM.poisonLayers(foe.conditions.poison).length === 3 && foe.conditions.poison.power === 19 && foe.conditions.poison.through === s.round + 5);
   for (let i = 0; i < 30; i++) lay(1, 3);
   check('…with no cap', BM.poisonLayers(foe.conditions.poison).length === 33);
   s = board(['hero', 'medic', 'guard'], 7);
   const f2 = G.enemies(s)[0];
   f2.hp = f2.maxHp = 999;
-  BM.applyCondition(s, f2, { kind: 'poison', power: 7, turns: 1 }, unit(s, 'medic'));
-  BM.applyCondition(s, f2, { kind: 'poison', power: 5, turns: 2 }, unit(s, 'hero'));
-  s.phase = 'enemy';
-  for (const e of G.enemies(s)) e.acted = true;
-  G.nextRound(s);
-  check('the layers bite once, together, credited to the newest layer’s caster', f2.hp === 999 - 12 && f2.conditions.poison.source === 'hero');
-  s.phase = 'enemy';
-  for (const e of G.enemies(s)) e.acted = true;
-  G.nextRound(s);
-  check('…and each layer ends on its own', f2.hp === 999 - 12 - 5 && !f2.conditions?.poison);
+  BM.applyCondition(s, f2, { kind: 'poison', power: 8, turns: 1 }, unit(s, 'medic')); // bites 8, 4
+  BM.applyCondition(s, f2, { kind: 'poison', power: 12, turns: 2 }, unit(s, 'hero')); // bites 12, 9, 6, 3
+  const tick = () => {
+    s.phase = 'enemy';
+    for (const e of G.enemies(s)) e.acted = true;
+    G.nextRound(s);
+  };
+  tick();
+  check('the layers bite once, together, credited to the newest layer’s caster', f2.hp === 999 - 20 && f2.conditions.poison.source === 'hero');
+  tick();
+  check('…each less by an equal step each round (8, 4 and 12, 9, 6, 3)', f2.hp === 999 - 20 - 13);
+  tick();
+  tick();
+  check('…and each layer ends on its own', f2.hp === 999 - 20 - 13 - 6 - 3 && !f2.conditions?.poison);
   // Growth: poison a hero lays × (1 + level ÷ 5); an enemy's keeps its numbers.
   const h = { ...G.startingHero('medic'), side: 'ally', level: 5 };
   check('a level-5 hero’s 7 is 14, a level-10 hero’s 21', BM.grownPoison(h, 7) === 14 && BM.grownPoison({ ...h, level: 10 }, 7) === 21 && BM.grownPoison({ side: 'enemy', level: 10 }, 7) === 7);
@@ -5295,7 +5299,8 @@ section('poison: layers, growth with the hero, 引爆餘毒 without a cap (0.71;
   hero.weapon = 'frost';
   for (const [p, n] of [[20, 3], [20, 3], [20, 2]]) BM.applyCondition(s, t3, { kind: 'poison', power: p, turns: n }, unit(s, 'medic'));
   const f = G.forecast(hero, t3, false, s);
-  check('引爆餘毒: every layer’s poison to come, no cap (60 + 60 + 40)', f.notes.includes('餘毒轉成 160 威力'), f.notes.join(' / '));
+  // Layers of 20 for 3 turns last 6 and bite 20, 17, 13, 10, 7, 3 (70); for 2, 4: 20, 15, 10, 5 (50).
+  check('引爆餘毒: every layer’s poison to come, no cap (70 + 70 + 50)', f.notes.includes('餘毒轉成 190 威力'), f.notes.join(' / '));
   G.resolve(s, hero, t3, false);
   check('…and the poison is spent', !t3.conditions?.poison);
   // A cure clears every layer; 莽牯朱蛤 keeps every layer off.
@@ -5731,7 +5736,7 @@ section('boards built round one villain');
     G.startEnemy(stand);
     G.enemyAct(stand, still);
     check('步裡藏毒: a blow struck from where it stood does not', !still.moved && target.hp < target.maxHp && !target.conditions?.poison);
-    check('步裡藏毒: its page says so', G.enemyTraitLines(stand, still).includes('【步裡藏毒】走動之後的普攻令目標中毒，兩次毒發各損 2 氣血；原地出手與還擊不帶毒。'));
+    check('步裡藏毒: its page says so', G.enemyTraitLines(stand, still).includes('【步裡藏毒】走動之後的普攻令目標中毒，毒發四次，首次損 2 氣血，此後逐次遞減；原地出手與還擊不帶毒。'));
   });
   troopAs({ snare: { power: 2, turns: 2 } }, () => {
     const s = board();
@@ -6496,9 +6501,9 @@ section('leader boons of the later ten');
     const { s, lead, near, far, foe, other } = led('lingSu');
     const f = G.forecast(near, foe, false, s);
     const v4 = BM.grownPoison(near, 4);
-    check('碧蠶毒蠱: the forecast poisons 4, grown with the striker, for 2 rounds', v4 === Math.round(4 * (1 + near.level / 5)) && same(f.effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: v4, turns: 2 }]) && f.notes.includes('碧蠶毒蠱 · 中毒 ' + v4 + '，2 回合'), JSON.stringify(f.effects));
+    check('碧蠶毒蠱: the forecast poisons 4, grown with the striker, for 2 rounds', v4 === Math.round(4 * (1 + near.level / 5)) && same(f.effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: v4, turns: 2 }]) && f.notes.includes('碧蠶毒蠱 · 中毒 ' + v4 + '，4 回合，逐回合遞減'), JSON.stringify(f.effects));
     G.resolve(s, near, foe, false);
-    check('…and the strike does', foe.conditions.poison?.power === v4 && foe.conditions.poison.through === s.round + 1);
+    check('…and the strike does, for four rounds (twice its two)', foe.conditions.poison?.power === v4 && foe.conditions.poison.through === s.round + 3);
     teach(lead, defineArt({ poison: { power: 6, turns: 1 }, safe: true, mp: 2 }));
     const scout = put(s, 'scout', 3, 7);
     check('an art’s own poison and the boon’s are two layers (0.71)', same(G.forecast(lead, scout, true, s).effects.filter((e) => e.kind === 'poison'), [{ kind: 'poison', power: BM.grownPoison(lead, 6), turns: 1 }, { kind: 'poison', power: BM.grownPoison(lead, 4), turns: 2 }]));

@@ -13,6 +13,7 @@
 // It loads only the game's own modules and ./skill-measure.mjs, so a browser can load it as it is.
 import { G, R, TECHNIQUES, HERO_PATHS, profile, classify, mainMeasure, heroTree, ancestors } from './skill-measure.mjs';
 const FM = await import(new URL('../../game/src/rules/ferry-market.js', import.meta.url));
+const { poisonSpan } = await import(new URL('../../game/src/rules/poison.js', import.meta.url));
 const { mapLayout, fieldCells, tileInfo } = await import(new URL('../../game/src/data/terrain.js', import.meta.url));
 
 // ── Policy weights: the player's whole character in one place ─────────────
@@ -501,8 +502,9 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
   else if (!G.immuneTo(victim)) {
     for (const e of f.effects)
       if (e.kind === 'poison')
-        // A poison layer (0.71) is worth the damage it will do, as a blow's is, up to what is left.
-        score += Math.min(e.power * (e.turns || 1), victim.hp - dealt) * foeValue(s, victim, ctx) * W.poisonLayer;
+        // A poison layer (0.71) is worth the damage it will do, as a blow's is, up to what is left:
+        // it lasts POISON_SPAN times its turns, from its full power down by equal steps.
+        score += Math.min((e.power * (poisonSpan(e.turns) + 1)) / 2, victim.hp - dealt) * foeValue(s, victim, ctx) * W.poisonLayer;
       else if (!(e.kind in W.hold)) score += (W.foeEffect[e.kind] ?? W.foeEffectDefault) * (e.power || 1) * Math.min(e.turns || 1, 2);
     const hold = holdValue(s, u, victim, f, ctx);
     score += hold;
