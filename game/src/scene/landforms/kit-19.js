@@ -127,7 +127,9 @@ function floorHeight(x, z) {
   // wall away, the rim is what is left of it: a broken ridge round the hall.
   const open = Math.max(channel(x, z), mouth(x, z));
   const rim = (0.75 + 0.6 * n1 + 0.1 * Math.sin(a * 9)) * (1 - open);
-  y += rim * smooth(R - 1.35, R - 0.1, d) * smooth(0.15, 0.9, off);
+  // The rim's rock lies in beds, so it rises in rough steps rather than a smooth bank.
+  const rise = rim * smooth(R - 1.35, R - 0.1, d) * smooth(0.15, 0.9, off);
+  y += 0.55 * Math.floor(rise / 0.2 + 0.35 * n2) * 0.2 + 0.45 * rise;
   // Past the wall, the island's flank drops in a short cliff to a wave-cut ledge and the sea.
   const t = d - R + 0.2 * (n2 - 0.5);
   if (t > 0.45) {
@@ -161,7 +163,7 @@ function floorHeight(x, z) {
 // Light painted into the rock: cool daylight where the sea comes in, warm round the lamps,
 // and the cave's gloom gathering away from both. `lamps` are [x, y, z] of every flame.
 const COOL = rgb(0xcfe7ea),
-  WARM = rgb(0xffb466);
+  WARM = rgb(0xffc488);
 const seaLights = [
   [-9.4, 0.9, 0.5, 2.6, 0.75],
   [9.4, 0.9, 0.5, 2.6, 0.7],
@@ -216,9 +218,9 @@ function lightAt(x, y, z, base, gloom = 1) {
   }
   for (const [lx, ly, lz] of lamps) {
     // A pool of light on the floor below each flame, and a glow round it.
-    const d2 = ((x - lx) ** 2 + (y - ly) ** 2 * 0.45 + (z - lz) ** 2) / 2.1;
+    const d2 = ((x - lx) ** 2 + (y - ly) ** 2 * 0.45 + (z - lz) ** 2) / 1.6;
     if (d2 > 6) continue;
-    const w = 0.5 * Math.exp(-d2);
+    const w = 0.4 * Math.exp(-d2);
     for (let i = 0; i < 3; i++) out[i] += WARM[i] * w * (0.3 + out[i]);
   }
   return out.map((v) => Math.min(1, v));

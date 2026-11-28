@@ -216,7 +216,7 @@ function mainHall(m) {
         lit: (i) => i >= 2 && i <= 4,
         brackets: true,
         over: 0.95,
-        roof: { rise: 2.0, lift: 0.45, rows: 4, beasts: 5, tones: yellowGlaze, tile: 0.5 }
+        roof: { rise: 2.0, lift: 0.45, rows: 4, beasts: 5, tones: yellowGlaze, tile: 0.6 }
       })
     );
     // A great bronze cauldron before the stair, smouldering.
@@ -328,7 +328,7 @@ function tower(m, x, z, yaw, bell) {
       m.tube([0.9, y + 0.75, 0], [0.4, y + 0.75, 0], 0.06, 0.06, 0x4a3a2a, 6);
     } else {
       m.frame(0, y + 0.85, 0, 0, 1, () => {
-        m.tube([0, 0, -0.36], [0, 0, 0.36], 0.5, 0.5, 0x4e1d19, 12);
+        m.tube([0, 0, -0.36], [0, 0, 0.36], 0.5, 0.5, 0x341614, 12);
         m.hoop(0, 0, 0.36, 0.5, 0.03, gilt, 14, 'xy');
         m.hoop(0, 0, -0.36, 0.5, 0.03, gilt, 14, 'xy');
         m.lathe(
@@ -339,7 +339,7 @@ function tower(m, x, z, yaw, bell) {
             [0, 0.46],
             [0.001, 0.46]
           ],
-          0x7d6c50,
+          0x4e4436,
           12
         );
       });
@@ -351,7 +351,7 @@ function tower(m, x, z, yaw, bell) {
       rows: 4,
       beasts: 3,
       tones: greyTile,
-      tile: 0.52
+      tile: 0.6
     });
     for (const [lx, lz] of [
       [-1.6, 1.6],
@@ -383,7 +383,7 @@ function quarters(m) {
         rows: 4,
         rafters: false,
         tones: greyTile,
-        tile: 0.5
+        tile: 0.62
       }
     })
   );
@@ -468,7 +468,7 @@ function corridor(m) {
     steps: false,
     ends: false,
     ornaments: true,
-    roof: { rise: 0.62, hip: 0.1, lift: 0.22, rows: 3, rafters: false, tones: greyTile, tile: 0.48, beasts: 2 }
+    roof: { rise: 0.62, hip: 0.1, lift: 0.22, rows: 3, rafters: false, tones: greyTile, tile: 0.62, beasts: 2 }
   };
   m.frame(10.45, OUT, 0, -Math.PI / 2, 1, () => {
     for (const s of [-1, 1])
@@ -498,7 +498,7 @@ function corridor(m) {
       ends: false,
       ornaments: true,
       lampTone: 0xe8a050,
-      roof: { rise: 1.15, hip: 0.45, lift: 0.42, rows: 4, rafters: true, tones: greyTile, tile: 0.4, beasts: 3 }
+      roof: { rise: 1.15, hip: 0.45, lift: 0.42, rows: 3, rafters: false, tones: greyTile, tile: 0.5, beasts: 3 }
     });
     m.glow(() =>
       put(
@@ -645,7 +645,7 @@ function gate(m) {
       rows: 4,
       beasts: 4,
       tones: greyTile,
-      tile: 0.4
+      tile: 0.5
     });
     for (const e of [-1, 1])
       m.frame(e * 2.75, 0, 0, 0, 1, () =>
@@ -656,7 +656,7 @@ function gate(m) {
           beasts: 2,
           rafters: false,
           tones: greyTile,
-          tile: 0.42
+          tile: 0.55
         })
       );
     for (const s of [-1, 1])

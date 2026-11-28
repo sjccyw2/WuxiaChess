@@ -130,8 +130,8 @@ for (const c of layout.cells) {
     const tx = -dz,
       tz = dx;
     const P = (s, d) => [x + dx * (0.5 - d) + tx * s, z + dz * (0.5 - d) + tz * s];
-    line(P(-0.5, 0.07), P(0.5, 0.07), 0.009);
-    line(P(-0.5, 0.2), P(0.5, 0.2), 0.009);
+    line(P(-0.5, 0.07), P(0.5, 0.07), 0.0084);
+    line(P(-0.5, 0.2), P(0.5, 0.2), 0.0084);
     for (let s = -0.5; s < 0.49; s += 0.25) {
       const pts = [P(s, 0.1), P(s, 0.17), P(s + 0.125, 0.17), P(s + 0.125, 0.1), P(s + 0.25, 0.1)];
       for (let k = 1; k < pts.length; k++) grooves.push([pts[k - 1], pts[k], 0.007]);

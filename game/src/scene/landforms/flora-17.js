@@ -75,19 +75,17 @@ function puddle(m, x, z, rx, rz, y = OUT, glint = true) {
     rim.push([x + Math.cos(a) * rx * k, y + 0.003, z + Math.sin(a) * rz * k]);
     mid.push([x + Math.cos(a) * rx * k * 0.62, y + 0.004, z + Math.sin(a) * rz * k * 0.62]);
   }
-  put(m, rim, 0x1a2130);
-  put(m, mid, 0x2d3850);
-  if (glint)
-    put(
-      m,
-      [
-        [x - rx * 0.3, y + 0.005, z - rz * 0.08],
-        [x + rx * 0.25, y + 0.005, z - rz * 0.12],
-        [x + rx * 0.3, y + 0.005, z + rz * 0.05],
-        [x - rx * 0.2, y + 0.005, z + rz * 0.1]
-      ],
-      0xb08850
-    );
+  // Wet brick round the edge, the water a paler grey-blue holding the sky.
+  put(m, rim, 0x3a4152);
+  put(m, mid, 0x56637c);
+  if (glint) {
+    const g = [];
+    for (let i = 0; i < 8; i++) {
+      const a = (i * circle) / 8;
+      g.push([x + rx * 0.12 + Math.cos(a) * rx * 0.28, y + 0.005, z - rz * 0.1 + Math.sin(a) * rz * 0.16]);
+    }
+    put(m, g, 0x9c8c74);
+  }
 }
 // Moss creeping over the joints of the paving round (x, z).
 function moss(m, x, z, spread, n, y = OUT) {

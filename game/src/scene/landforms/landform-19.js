@@ -15,7 +15,7 @@ import { carvedWalls } from './carving-19.js';
 import { pillarGroups } from './pillars-19.js';
 import { shore, farSea } from './shore-19.js';
 import { tiles19 } from './floor-19.js';
-import { rgb, blend, alcoveLamps, pillarLamps, lightAt } from './kit-19.js';
+import { rgb, blend, alcoveLamps, pillarLamps, lampStands, lightAt } from './kit-19.js';
 
 // The lamps that stand on the rock shelf at the back of each alcove: a bronze dish on a short
 // stand, on a flat stone.
@@ -45,10 +45,27 @@ function alcoveLampStands(m) {
 }
 // The flames of the alcove lamps and the pillars' hanging lamps, in one glowing batch (the
 // buttresses carry their own, which fold away with them).
+// The tall bronze lamps on the floor at the hall's corners: a tripod foot, a knopped shaft,
+// a drip pan and the oil dish.
+function standingLamps(m) {
+  for (const [x, y, z] of lampStands) {
+    const foot = y - 1.02,
+      bronze = 0x6e5a36,
+      dark = 0x463a26;
+    for (let k = 0; k < 3; k++) {
+      const a = (k * Math.PI * 2) / 3 + 0.3;
+      m.line([[x + Math.cos(a) * 0.2, foot, z + Math.sin(a) * 0.2], [x + Math.cos(a) * 0.09, foot + 0.14, z + Math.sin(a) * 0.09], [x, foot + 0.22, z]], 0.018, dark, 5);
+    }
+    m.tube([x, foot + 0.2, z], [x, y - 0.1, z], 0.022, 0.018, bronze, 7);
+    for (const h of [0.35, 0.6]) m.lathe(x, foot + h, z, [[-0.03, 0.02], [0, 0.045], [0.03, 0.02]], bronze, 8);
+    m.lathe(x, y - 0.16, z, [[0, 0.02], [0.03, 0.13], [0.045, 0.14]], dark, 12);
+    m.lathe(x, y - 0.08, z, [[0, 0.018], [0.04, 0.07], [0.07, 0.085], [0.075, 0.075]], bronze, 12);
+  }
+}
 function flames(T) {
   const m = new Model(T, 197207);
   m.glow(() => {
-    for (const [x, y, z] of [...alcoveLamps, ...pillarLamps]) {
+    for (const [x, y, z] of [...alcoveLamps, ...pillarLamps, ...lampStands]) {
       m.crystal(x, y - 0.03, z, 0.03, 0.12, 0xe8963e, 0xffe1a0, 6, 0.01);
       m.crystal(x + 0.008, y - 0.03, z - 0.006, 0.016, 0.07, 0xffd27a, 0xfff2c8, 5, -0.01);
     }
@@ -60,6 +77,7 @@ function landform19(T) {
   group.name = '俠客島・石洞刻壁';
   const props = new Model(T, 197011);
   alcoveLampStands(props);
+  standingLamps(props);
   group.add(
     caveFloor(T),
     caveWall(T),

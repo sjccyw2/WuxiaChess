@@ -203,7 +203,7 @@ function octEave(m, ai, yi, ao, yo, lift, bells = true) {
       p[1] = yo + prof(t) + lift * Math.pow(Math.abs(2 * s - 1), 3) * (1 - t) * (1 - t);
       return p;
     };
-    const n = Math.max(4, Math.round((ao * 0.83) / 0.21));
+    const n = Math.max(4, Math.round((ao * 0.83) / 0.25));
     for (let a = 0; a < n; a++)
       for (let k = 0; k < rows; k++) {
         const s0 = a / n,
@@ -294,7 +294,6 @@ function octEave(m, ai, yi, ao, yo, lift, bells = true) {
         bronze,
         5
       );
-      m.box(b[0], b[1] - 0.28, b[2], 0.012, 0.05, 0.012, gilt);
     }
   }
 }

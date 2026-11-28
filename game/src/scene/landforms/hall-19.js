@@ -393,7 +393,7 @@ function caveWall(T) {
       prev = { p, rad };
     }
   }
-  for (let j = 0; j < 150; j++) {
+  for (let j = 0; j < 125; j++) {
     const a = r.range(-Math.PI, Math.PI),
       H = wallHeight(a),
       y = H - r.range(0.3, 2.6);

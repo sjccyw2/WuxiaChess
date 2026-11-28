@@ -28,6 +28,7 @@ function pier(m, low, wx, salt) {
   // Wound like the kit's lathes, so the faces turn outward.
   outline.reverse();
   const n = outline.length;
+  const prevRing = {};
   let prev;
   heights.forEach((y, k) => {
     // Above the panel the rock leans back into the wall and narrows.
@@ -36,8 +37,11 @@ function pier(m, low, wx, salt) {
       const rough = kind === 'front' && y > 0.2 && y < 3.0 ? 0 : 1;
       const wob = rough * (0.045 * (noise(u * 6 + salt, y * 2.2) - 0.5) + 0.025 * Math.sin(y * 9 + i));
       const narrow = 1 - 0.18 * smooth(3.0, 3.9, y);
+      // Below the dado the pier reaches back only as far as the talus, so that what the
+      // cutaway leaves is a squared block of the rock, not a long slab.
+      const short = y <= DADO && kind !== 'front' ? Math.max(v, -1.55) : v;
       const x = wx + u * narrow + (kind === 'side' ? Math.sign(u) * wob : 0),
-        z = FRONT + v - recede + (kind === 'front' ? wob : 0);
+        z = FRONT + short - recede + (kind === 'front' ? wob : 0);
       const band = 0.5 + 0.5 * Math.sin(y * 3.4 + salt);
       let c = blend(rgb(0x5a5a56), rgb(0x76746b), 0.3 + 0.5 * band);
       if (kind === 'front' && !rough) c = rgb(0x8d897d);
@@ -47,11 +51,39 @@ function pier(m, low, wx, salt) {
     });
     const into = y <= DADO ? low : m;
     // The base is closed at the top, so that with the wall folded away it shows as cut stone.
+    // Its top is broken stone: a darker rim, a rough paler section rising to where it snapped.
     if (y === DADO) {
       const mid = ring.reduce((t, p) => [t[0] + p[0] / n, t[1], t[2] + p[2] / n], [0, DADO, 0]);
-      const cut = lightAt(mid[0], DADO, mid[2], rgb(0x6d6a62), 0.3);
-      for (let i = 0; i < n; i++) toward(low, [ring[i].slice(0, 3), ring[(i + 1) % n].slice(0, 3), mid], cut);
+      const peak = [mid[0] + 0.08 * Math.sin(salt * 3), DADO + 0.16, mid[2] - 0.1];
+      const inner = ring.map((p, i) => [
+        p[0] + (mid[0] - p[0]) * 0.3,
+        DADO + 0.03 + 0.09 * hash(i, salt),
+        p[2] + (mid[2] - p[2]) * 0.3
+      ]);
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        const rim = lightAt(mid[0], DADO, mid[2], rgb(0x4a4843), 0.3),
+          cut = lightAt(mid[0], DADO, mid[2], blend(rgb(0x7a766c), rgb(0x8f8a7e), hash(i, salt + 1)), 0.3);
+        toward(low, [ring[i].slice(0, 3), ring[j].slice(0, 3), inner[j], inner[i]], rim);
+        toward(low, [inner[i], inner[j], peak], cut);
+      }
+      // The joints of the courses, cut round the flanks and back.
+      const joint = lightAt(mid[0], 0.5, mid[2], rgb(0x22211e), 0.4);
+      const course = prevRing.course;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        if (outline[i][2] === 'front' && outline[j][2] === 'front') continue;
+        low.tube(course[i], course[j], 0.009, 0.009, joint, 4);
+      }
+      for (const t of [0.3, 0.7]) {
+        const b = outline.findIndex((o) => o[2] === 'back');
+        const p0 = course[b],
+          p1 = course[(b + 1) % n];
+        const at = [p0[0] + (p1[0] - p0[0]) * t, 0, p0[2] + (p1[2] - p0[2]) * t - 0.01];
+        low.tube([at[0], t < 0.5 ? 0.0 : 0.52, at[2]], [at[0], t < 0.5 ? 0.52 : DADO, at[2]], 0.008, 0.008, joint, 4);
+      }
     }
+    if (y === 0.52) prevRing.course = ring.map((p) => [p[0], p[1], p[2]]);
     if (prev)
       for (let i = 0; i < n; i++) {
         const j = (i + 1) % n;

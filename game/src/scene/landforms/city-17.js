@@ -157,24 +157,22 @@ function nearCity(m) {
   street(m, -15.9, -13.1, -26, 14.8, 'z');
   // South of the gate, facing it across the street.
   const south = [
-    [-11.6, 5.2, 3.2, 1.8, false],
-    [-5.6, 5.4, 3.0, 1.7, false],
-    [0.4, 5.4, 3.4, 1.9, true],
-    [6.4, 5.2, 3.0, 1.7, false],
-    [12.2, 5.0, 3.2, 1.8, false],
-    [18.0, 5.2, 3.0, 1.7, false]
+    [-8.6, 5.2, 3.2, 1.8, false],
+    [-1.8, 5.4, 3.4, 1.9, true],
+    [5.2, 5.2, 3.0, 1.7, false],
+    [12.0, 5.0, 3.2, 1.8, false]
   ];
   for (const [x, w, d, h, upper] of south)
     house(m, x, 17.8 + d / 2 + 0.3, Math.PI, w, d, h, { upper, sign: upper, lit: 0.6 });
   // East of the temple, facing its wall.
-  for (let i = 0; i < 5; i++) {
-    const z = -15.4 + i * 6.0,
-      upper = i === 2;
+  for (let i = 0; i < 3; i++) {
+    const z = -9.4 + i * 7.5,
+      upper = i === 1;
     house(m, 17.8, z, -Math.PI / 2, 5.2, 3.2, 1.75, { upper, sign: upper, lit: 0.55 });
   }
   // West of the temple, the backs of houses across a lane.
-  for (let i = 0; i < 2; i++)
-    house(m, -17.8, -6.0 + i * 8.0, Math.PI / 2, 5.4, 3.2, 1.7, { lit: 0.35, lamp: i % 2 === 0 });
+  for (let i = 0; i < 1; i++)
+    house(m, -17.8, -2.0, Math.PI / 2, 5.4, 3.2, 1.7, { lit: 0.35, lamp: i % 2 === 0 });
   // Street lanterns on posts, and trees along the lanes.
   for (const [x, z] of [
     [-6.2, 14.4],
@@ -299,7 +297,7 @@ function farHall(m, x, z, yaw, w, d, h, rise, base = STREET, lit = false) {
 function farCity(m) {
   const r = m.rng;
   // Rings of roofs, thinning with distance.
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; i < 30; i++) {
     const a = r.range(0, circle),
       rad = r.range(25, 47),
       x = Math.cos(a) * rad,
@@ -388,7 +386,7 @@ function farCity(m) {
     );
   });
   // Mist lying in long low banks between the roofs.
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < 12; i++) {
     const a = (i / 22) * circle + r.range(-0.1, 0.1),
       rad = r.range(26, 44),
       x = Math.cos(a) * rad,
@@ -414,7 +412,7 @@ function farCity(m) {
     });
   }
   // Dark trees over the far roofs.
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 6; i++) {
     const a = r.range(0, circle),
       rad = r.range(21, 30);
     cypress(m, Math.cos(a) * rad, Math.sin(a) * rad, r.range(1.3, 1.8), STREET);

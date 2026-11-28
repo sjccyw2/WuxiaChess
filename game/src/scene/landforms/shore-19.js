@@ -16,11 +16,14 @@ import {
   channel,
   channelZ,
   mouth,
+  alcoveLamps,
+  openings,
   floorHeight,
   lightAt,
   toward
 } from './kit-19.js';
 import { character } from './carving-19.js';
+import { lantern } from '../maze-models.js';
 
 // A sea-worn rock: wet and dark below the tide, a pale crust of barnacles and a fringe of weed
 // at it, grey and salt-streaked above. Colours go by height against the sea, wherever it sits.
@@ -92,7 +95,7 @@ function rocks(m) {
     }
   }
   // The reef: boulders round the cliff foot outside the wall, half awash.
-  for (let k = 0; k < 120; k++) {
+  for (let k = 0; k < 62; k++) {
     const a = r.range(0, circle),
       R = footRadius(a),
       d = R + r.range(0.95, 2.6);
@@ -199,8 +202,8 @@ function driftLine(m) {
 
 // The boat that brought the heroes: a sampan with a mat awning over its waist, its sculling
 // oar shipped, made fast to the jetty's last bollard.
-function sampan(m, bx, bz, yaw, post) {
-  m.frame(bx, SEA - 0.05, bz, yaw, 1, () => {
+function sampan(m, bx, bz, yaw, post, { y = SEA - 0.05, size = 1, awning = true, roll = 0 } = {}) {
+  m.frame(bx, y, bz, yaw, size, () => {
     const len = 2.5,
       beam = 0.42,
       n = 12;
@@ -235,6 +238,7 @@ function sampan(m, bx, bz, yaw, post) {
       m.box(0, 0.3, sections[i][0][2], h * 2, 0.03, 0.1, 0x7a5a3a);
     }
     m.box(0, 0.06, 0, 0.5, 0.02, len * 0.7, 0x5e4630);
+    if (!awning) return;
     // The awning: hoops of split bamboo under a mat.
     const hoops = [-0.35, -0.12, 0.12, 0.35];
     for (const z of hoops) {
@@ -256,7 +260,8 @@ function sampan(m, bx, bz, yaw, post) {
     m.box(0.27, 0.42, 0.72, 0.08, 0.015, 0.3, 0x7a5a38);
     m.hoop(-0.2, 0.08, 0.85, 0.08, 0.018, 0x9b8a62, 10);
     m.lathe(0.15, 0.06, -0.8, [[0, 0.06], [0.08, 0.1], [0.18, 0.08], [0.22, 0.04], [0.25, 0.05]], 0x5b4632, 9);
-  });
+  }, 0, roll);
+  if (!post) return;
   // The painter, from the bow to the bollard.
   const bow = [bx + Math.sin(yaw) * 1.2, SEA + 0.35, bz + Math.cos(yaw) * 1.2];
   const mid = [(bow[0] + post[0]) / 2, Math.min(bow[1], post[1]) - 0.12, (bow[2] + post[2]) / 2];
@@ -280,7 +285,7 @@ function talus(m) {
     m.rock(x, y - s * 0.25, z, s, s * r.range(0.6, 1.1), s * r.range(0.6, 0.95), col, cap, 8, r.range(0, circle));
   }
   // Pebbles and grit spread over the floor round the board.
-  for (let k = 0; k < 260; k++) {
+  for (let k = 0; k < 150; k++) {
     const x = r.range(-8.5, 8.5),
       z = r.range(-6.6, 7.5);
     const off = boardOff(x, z);
@@ -395,16 +400,125 @@ function strand(m) {
   });
 }
 
+// Behind the alcoves, along the foot of the north wall: blocks of the bedrock, split along
+// their joints and shifted a little, stepping up to the wall.
+function northLedge(m) {
+  const r = m.rng;
+  for (let x = -6.3; x <= 6.3; x += 0.42) {
+    for (const [z0, lift] of [
+      [-5.78, 0],
+      [-6.3, 0.18]
+    ]) {
+      const xx = x + r.range(-0.08, 0.08),
+        zz = z0 + r.range(-0.08, 0.08);
+      if (lift === 0 && alcoveLamps.some(([lx]) => Math.abs(lx - xx) < 0.36)) continue;
+      const base = floorHeight(xx, zz),
+        w = r.range(0.32, 0.46),
+        d = r.range(0.34, 0.5),
+        h = r.range(0.12, 0.3) + lift;
+      const yaw = r.range(-0.12, 0.12);
+      const side = lightAt(xx, base, zz, rgb(r.pick([0x45443f, 0x4f4d47, 0x56534c])), 0.8),
+        top = lightAt(xx, base + h, zz, rgb(r.pick([0x6a665d, 0x77726a])), 0.8);
+      m.frame(xx, base - 0.08, zz, yaw, 1, () => {
+        m.box(0, (h + 0.08) / 2, 0, w, h + 0.08, d, side);
+        m.box(0, h + 0.085, 0, w * 0.94, 0.012, d * 0.94, top);
+      });
+    }
+  }
+}
+// White water where the sea comes in: lace of foam on the channels and round the arches'
+// feet, and spray flung up on the rocks there.
+function foam(m) {
+  const r = m.rng;
+  const lace = (x, z, rad, k) => {
+    let prev = null;
+    for (let i = 0; i <= 14; i++) {
+      const a = (i / 14) * circle,
+        q = rad * (0.8 + 0.35 * hash(i + k, x));
+      const p = [x + Math.cos(a) * q, SEA + 0.012, z + Math.sin(a) * q * 0.7];
+      if (prev && hash(i * 3 + k, z) > 0.3) {
+        const w = 0.02 + 0.02 * hash(i, k);
+        toward(m, [[prev[0], p[1], prev[2] - w], [p[0], p[1], p[2] - w], [p[0], p[1], p[2] + w], [prev[0], p[1], prev[2] + w]], 0xe2ebe8);
+      }
+      prev = p;
+    }
+  };
+  for (const o of openings.filter((o) => o.name !== 'mouth')) {
+    const side = Math.cos(o.a) > 0 ? 1 : -1;
+    for (let k = 0; k < 18; k++) {
+      const x = side * r.range(6.8, 10.5),
+        z = channelZ + r.range(-1.3, 1.3);
+      if (floorHeight(x, z) > SEA - 0.05) continue;
+      lace(x, z, r.range(0.15, 0.55), k);
+    }
+    // Spray on the rocks at the arch's foot: drops caught in the air.
+    const ax = side * 8.9;
+    for (let k = 0; k < 40; k++) {
+      const x = ax + r.range(-0.9, 0.9),
+        z = channelZ + r.range(-1, 1),
+        y = SEA + r.range(0.1, 0.9);
+      m.crystal(x, y, z, r.range(0.012, 0.025), r.range(0.03, 0.06), 0xd6e6e8, 0xffffff, 4, 0);
+    }
+  }
+}
+
+// What the boat brought and the island keeps at its landing: crates and wine jars on the jetty,
+// a coil of rope, a basket of the morning's fish, a lantern on a post at the jetty's head, and
+// a skiff hauled up on the sand with its oars beside it.
+function landing(m) {
+  const { x, z0, top } = JETTY,
+    r = m.rng;
+  const at = (dx, z) => [x + dx, top + 0.035, z];
+  const crate = (px, py, pz, s, yaw) =>
+    m.frame(px, py, pz, yaw, s, () => {
+      m.box(0, 0.16, 0, 0.36, 0.32, 0.3, lightAt(px, 0.2, pz, rgb(0x7a5e3e), 0.2));
+      for (const v of [0.05, 0.27]) m.box(0, v, 0, 0.37, 0.03, 0.31, lightAt(px, 0.2, pz, rgb(0x4e3a26), 0.2));
+      m.box(0, 0.16, 0.152, 0.2, 0.12, 0.005, lightAt(px, 0.2, pz, rgb(0xc9b88f), 0.2));
+    });
+  let [px, py, pz] = at(-0.25, 8.0);
+  crate(px, py, pz, 1, 0.1);
+  crate(px + 0.02, py + 0.32, pz + 0.02, 0.85, -0.2);
+  [px, py, pz] = at(0.28, 8.3);
+  for (const [dx, dz] of [[0, 0], [0.02, 0.26]])
+    m.lathe(px + dx, py, pz + dz, [[0, 0.07], [0.05, 0.12], [0.18, 0.13], [0.27, 0.08], [0.3, 0.05], [0.33, 0.06]], lightAt(px, 0.2, pz, rgb(0x5c4330), 0.2), 10);
+  for (const [dx, dz] of [[0, 0], [0.02, 0.26]]) m.lathe(px + dx, py + 0.33, pz + dz, [[0, 0.065], [0.03, 0.05]], 0x9a3a2a, 8);
+  [px, py, pz] = at(-0.3, 9.1);
+  for (let k = 0; k < 4; k++) m.hoop(px, py + 0.02 + k * 0.022, pz, 0.12 - k * 0.012, 0.016, 0x9b8a62, 12);
+  [px, py, pz] = at(0.25, 9.6);
+  m.lathe(px, py, pz, [[0, 0.1], [0.12, 0.14], [0.14, 0.145]], lightAt(px, 0.2, pz, rgb(0x9a8656), 0.2), 12);
+  for (let k = 0; k < 6; k++) {
+    const a = (k * circle) / 6;
+    m.frame(px + Math.cos(a) * 0.05, py + 0.14, pz + Math.sin(a) * 0.05, a, 1, () =>
+      m.lathe(0, 0, 0, [[-0.06, 0.004], [-0.03, 0.022], [0.04, 0.02], [0.07, 0.004]], 0x9eaab0, 6), 0, Math.PI / 2);
+  }
+  // The lantern on its post, lit for whoever comes in from the sea.
+  const lx = x - 0.56,
+    lz = z0 + 0.25,
+    ly = floorHeight(lx, lz);
+  m.tube([lx, ly - 0.1, lz], [lx, ly + 1.35, lz], 0.045, 0.04, 0x4e3a28, 6);
+  m.line([[lx, ly + 1.32, lz], [lx + 0.26, ly + 1.36, lz], [lx + 0.26, ly + 1.26, lz]], 0.014, 0x4e3a28, 4);
+  lantern(m, lx + 0.26, ly + 1.08, lz, 0.55, 0xd88a4a);
+  // The skiff on the sand, keel up a little, its oars across the thwarts and on the sand.
+  const sx = 3.1,
+    sz = 7.45;
+  sampan(m, sx, sz, 1.25, null, { y: floorHeight(sx, sz) + 0.02, size: 0.62, awning: false, roll: 0.12 });
+  m.line([[sx - 0.6, floorHeight(sx - 0.6, sz + 0.5) + 0.03, sz + 0.5], [sx + 0.5, floorHeight(sx + 0.5, sz + 0.62) + 0.03, sz + 0.62]], 0.018, 0x7a5a38, 5);
+  m.box(sx + 0.55, floorHeight(sx + 0.55, sz + 0.62) + 0.03, sz + 0.62, 0.22, 0.015, 0.07, 0x7a5a38);
+}
+
 function shore(T) {
   const m = new Model(T, 196013);
   rocks(m);
   talus(m);
+  northLedge(m);
+  foam(m);
   strand(m);
   const post = jetty(m);
   sampan(m, JETTY.x + 1.05, JETTY.z1 - 0.6, Math.PI + 0.12, post);
   wrack(m, JETTY.x - 1.1, 9.2, 1.2);
   wrack(m, 3.5, 9.6, 1.0);
   net(m, -4.3, 6.55, 0.5);
+  landing(m);
   driftLine(m);
   return m.finish('海門礁石與南口渡頭');
 }

@@ -68,8 +68,8 @@ function mountain(m, x, z, base, w, d, H, opts) {
       rad = (q) => Math.hypot(q[0] - x, q[2] - z);
     return clamp((0.5 * (rad(a) + rad(b)) - rad(p)) / (0.12 * w) + 0.3);
   };
-  const rock = m.mix(0x343a41, 0x474d55, r.next()),
-    band = [m.rgb(rock), m.mix(rock, 0x5b5650, 0.55), m.mix(rock, 0x23272c, 0.4), m.mix(rock, 0x6a6c6e, 0.35)],
+  const rock = m.mix(0x3d444c, 0x4f5660, r.next()),
+    band = [m.rgb(rock), m.mix(rock, 0x5b5650, 0.3), m.mix(rock, 0x2a2e33, 0.25), m.mix(rock, 0x6a6c6e, 0.2)],
     snowLine = r.range(0.42, 0.55);
   for (let k = 0; k < L; k++)
     for (let i = 0; i < n; i++) {
@@ -83,27 +83,31 @@ function mountain(m, x, z, base, w, d, H, opts) {
               [lo[i], hi[i], hi[q]],
               [lo[i], hi[q], lo[q]]
             ];
-      for (const tri of tris) {
-        const [a, b, c] = tri,
-          ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]],
-          ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-        const nx = ab[1] * ac[2] - ab[2] * ac[1],
-          ny = ab[2] * ac[0] - ab[0] * ac[2],
-          nz = ab[0] * ac[1] - ab[1] * ac[0],
-          len = Math.hypot(nx, ny, nz) || 1,
-          up = Math.abs(ny) / len;
-        const t = ((a[1] + b[1] + c[1]) / 3 - base) / H,
-          g = 0.5 * (gully(k, i) + gully(k, q));
-        const hold =
-          smooth(0.06, 0.18, up - 0.5 + 0.9 * (t - snowLine) + 0.45 * g + 0.04 * Math.sin(t * 25 + seed)) *
-          smooth(snowLine - 0.3, snowLine, t + 0.25 * g);
-        const sun = clamp((-nx * 0.7 + nz * 0.3) / len + 0.3);
-        let stone = band[(k + (hash(seed, k) > 0.7 ? 1 : 0)) % 4];
-        stone = m.mix(stone, 0x1c2025, 0.35 * (1 - t));
-        stone = m.mix(stone, horizon, haze * 0.8 + 0.35 * (1 - smooth(0, 0.3, t)));
-        const white = m.mix(m.mix(0xdde6ef, 0xfff6ea, sun), horizon, haze * 0.45);
-        m.face(tri, m.mix(stone, white, hold), 0.9 + 0.06 * ((i * 3 + k) % 3));
-      }
+      // One normal for the whole quad, so its two halves take the snow alike.
+      const p0 = lo[i],
+        p1 = hi[k === L - 1 ? i : q],
+        p2 = hi[i],
+        p3 = lo[q],
+        u = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]],
+        v = [p3[0] - p2[0], p3[1] - p2[1], p3[2] - p2[2]];
+      const nx = u[1] * v[2] - u[2] * v[1],
+        ny = u[2] * v[0] - u[0] * v[2],
+        nz = u[0] * v[1] - u[1] * v[0],
+        len = Math.hypot(nx, ny, nz) || 1,
+        up = Math.abs(ny) / len;
+      const t = (lo[i][1] + hi[i][1]) / 2 - base,
+        h = t / H,
+        g = 0.5 * (gully(k, i) + gully(k, q));
+      const hold =
+        smooth(0.05, 0.2, up - 0.45 + 0.8 * (h - snowLine) + 0.4 * g) *
+        smooth(snowLine - 0.32, snowLine - 0.02, h + 0.25 * g);
+      const sun = clamp((-nx * 0.7 + nz * 0.3) / len + 0.3);
+      let stone = band[(k + (hash(seed, k) > 0.7 ? 1 : 0)) % 4];
+      stone = m.mix(stone, 0x1c2025, 0.3 * (1 - h));
+      stone = m.mix(stone, horizon, haze * 0.8 + 0.3 * (1 - smooth(0, 0.3, h)));
+      const white = m.mix(m.mix(0xd6dfe8, 0xfff6ea, sun), horizon, haze * 0.45),
+        tone = m.mix(stone, white, hold);
+      for (const tri of tris) m.face(tri, tone, 0.92 + 0.05 * ((i * 3 + k) % 3));
     }
 }
 
@@ -111,7 +115,7 @@ function kunlunRange(m, level, horizon) {
   const r = m.rng;
   // [radius, count, haze, girth, height, spokes, levels, shoulders]
   for (const [radius, count, haze, size, tall, spokes, levels, shoulders] of [
-    [23, 9, 0.06, 3.0, 10, 24, 12, 2],
+    [23, 9, 0.2, 3.0, 10, 24, 12, 2],
     [33, 12, 0.36, 4.2, 15, 20, 10, 1],
     [46, 16, 0.62, 5.5, 19, 14, 7, 0]
   ]) {
