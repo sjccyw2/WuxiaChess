@@ -37,7 +37,10 @@ const SIDE_REWARDS = ['coins', 'points', 'manual'];
 // --realm 3`, 2026-11-28): 80% or more 一賠一, 40% to 80% 一賠二, under 40% 一賠三. A met bet
 // pays its reward times the odds and as many 籌碼 (journey.js paySide). 留活口 (spareLife) on
 // 空山琴臺 and 襄陽殘垣 took the place of 親手了斷 there; measured the same way after the change it
-// was met 5% on 空山琴臺 (費彬 stands in the heroes' way) and 80% on 襄陽殘垣.
+// was met 5% on 空山琴臺 (費彬 stands in the heroes' way) and 80% on 襄陽殘垣. The four kinds of
+// 0.69, measured the same way: 一擊斃命 54% on 紅楓驛, 6% on 絕情花徑; 後發制人 0% on both (the
+// simulated player never plays for a counter); 借刀殺人 0% (drawn 6 times: few line-ups can turn
+// a foe); 絕技收官 84% on 寒玉石室, 71% on 黑木繡閣.
 
 const BATTLES = [
   // 0 青竹渡: the gentle first board; a wave lands behind the south bridge in round 3.
@@ -121,7 +124,7 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'noMedicine', reward: 'coins', odds: 1 },
       { kind: 'swift', by: 5, reward: 'coins', odds: 1 },
-      { kind: 'counterFell', reward: 'points', odds: 2 }
+      { kind: 'counterFell', reward: 'points', odds: 3 }
     ]
   },
   // 4 空山琴臺: keep the qin on its stone seat at the foot of the heroes' steps, through round 8
@@ -224,7 +227,7 @@ const BATTLES = [
       { kind: 'unhurt', reward: 'coins', odds: 1 },
       { kind: 'holdLine', zone: { x: [0, 8] }, place: '陣井以西', reward: 'manual', odds: 1 },
       { kind: 'lamp', reward: 'coins', odds: 1 },
-      { kind: 'turned', reward: 'manual', odds: 2 }
+      { kind: 'turned', reward: 'manual', odds: 3 }
     ]
   },
   // 6 襄陽殘垣: keep the city's war drum through round 9 in the passage below the wall, where the
@@ -289,7 +292,7 @@ const BATTLES = [
       { kind: 'noMedicine', reward: 'coins', odds: 1 },
       { kind: 'unhurt', reward: 'coins', odds: 1 },
       { kind: 'double', reward: 'manual', odds: 3 },
-      { kind: 'summitFinish', reward: 'manual', odds: 2 }
+      { kind: 'summitFinish', reward: 'manual', odds: 1 }
     ]
   },
   // 8 倒影天街: two masters, both must fall; a second blade pair when either is first at half.
@@ -402,7 +405,7 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'unhurt', reward: 'coins', odds: 1 },
       { kind: 'noMedicine', reward: 'manual', odds: 1 },
-      { kind: 'oneBlow', reward: 'coins', odds: 2 }
+      { kind: 'oneBlow', reward: 'coins', odds: 3 }
     ]
   },
   // 12 鐵掌溪灘: 裘千仞 crosses the stream as if it were dry ground; his men stand on the stepping
@@ -427,7 +430,7 @@ const BATTLES = [
       { kind: 'intact', reward: 'coins', odds: 1 },
       { kind: 'lamp', reward: 'coins', odds: 2 },
       { kind: 'unhurt', reward: 'manual', odds: 1 },
-      { kind: 'counterFell', reward: 'points', odds: 2 }
+      { kind: 'counterFell', reward: 'points', odds: 3 }
     ]
   },
   // 13 西夏夜苑: 李秋水 before the hall steps, a guard pair before her and one on the bridge; two
@@ -452,7 +455,7 @@ const BATTLES = [
       { kind: 'double', reward: 'manual', odds: 3 },
       { kind: 'noMedicine', reward: 'coins', odds: 1 },
       { kind: 'lamp', reward: 'coins', odds: 2 },
-      { kind: 'turned', reward: 'manual', odds: 2 }
+      { kind: 'turned', reward: 'manual', odds: 3 }
     ]
   },
   // 14 黑木繡閣: 東方不敗 before the small house, the guards each alone about the garden; two more
