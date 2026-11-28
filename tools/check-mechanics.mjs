@@ -4378,7 +4378,7 @@ section('battle data');
       return d && d.row && (!Object.keys(d.traits || {}).length || GISTS[id.split('#')[0]]);
     }));
     check('map ' + map + ': no holdLine zone holds an entry tile; holdLine only with waves', b.sides.filter((e) => e.kind === 'holdLine').every((e) => b.waves.length && b.waves.every((w) => w.pieces.every((p) => !G.inZone(e.zone, at2(p.at))))));
-    check('map ' + map + ': a pool of 3–4 secondaries (none on the last board), each a known kind and reward', (b.last ? b.sides.length === 0 : b.sides.length >= 3 && b.sides.length <= 4) && b.sides.every((e) => R.SIDE_KINDS[e.kind] && SIDE_REWARDS.includes(e.reward)));
+    check('map ' + map + ': a pool of 3–5 secondaries (none on the last board), each a known kind and reward', (b.last ? b.sides.length === 0 : b.sides.length >= 3 && b.sides.length <= 5) && b.sides.every((e) => R.SIDE_KINDS[e.kind] && SIDE_REWARDS.includes(e.reward)));
     check('map ' + map + ': no spare names a piece without that behaviour, no order names a master', b.sides.every((e) => e.kind !== 'order' || !b.masters.includes(e.first)) && b.sides.every((e) => e.kind !== 'spare' || ({ mend: 'lieutenant-1', herbs: 'snow', mirror: 'murong' }[e.behaviour] === (G.SLOTS.includes(e.piece) ? G.encounterKeys(map)[G.SLOTS.indexOf(e.piece)] : e.piece))));
     for (const key of G.encounterKeys(map)) if (Object.keys(G.DETAILS[key].traits || {}).length && !GISTS[key]) check('map ' + map + ': ' + key + ' has a gist', false);
   }
@@ -5056,7 +5056,8 @@ section('珍品, 秘笈, the cups’ grades and 籌碼 (the producer, 2026-11-28
   s.stock.snowLotus = 1;
   check('天山雪蓮: clears every ailment, then 40 氣血 and 40 內力', G.consume(s, m, 'snowLotus') && m.hp === 50 && m.mp === 40 && !m.conditions.poison);
   // 珍品 and 秘笈 are never on the shelf.
-  check('no 珍品 is in the shelf’s stock', FM.RARE_STOCK.length === 5 && FM.RARE_STOCK.every((id) => !FM.MARKET_STOCK[id]));
+  check('no 珍品 is in the shelf’s stock', FM.RARE_STOCK.length === 7 && FM.RARE_STOCK.every((id) => !FM.MARKET_STOCK[id]));
+  check('…two of them tokens, which cannot be equipped', same(FM.TOKENS, ['loadedDice', 'ironToken']) && (() => { const c = board(['hero', 'medic', 'guard'], 7); c.stock.ironToken = 1; c.run.scene = 'prep'; return !G.equip(c, unit(c, 'hero'), 'ironToken'); })());
   check('no 秘笈 can be on the shelf', FM.SECRET_MANUALS.length === 4 && FM.SECRET_MANUALS.every((id) => FM.manualStage(id) === Infinity));
   // 獅子吼: hurts heroes within two of the striker, never below 1, and not one under 固守.
   s = board(['hero', 'medic', 'guard'], 7);
@@ -5119,6 +5120,140 @@ section('珍品, 秘笈, the cups’ grades and 籌碼 (the producer, 2026-11-28
   check('留活口: open while the piece stands', R.sideState(s) === 'open');
   s.tally.falls.push({ id: G.refId(s.mapIndex, 'master'), by: 'hero', round: 1, phase: 'ally' });
   check('…failed once it falls, and says so', R.sideState(s) === 'failed' && R.sideLost(s).endsWith('已倒下'));
+}
+
+section('second slice: 見好就收, 灌鉛骰子, 莊家運, 挑盤口, 玄鐵令, 連中 and four kinds (2026-11-28)');
+{
+  const camp = () => {
+    const c = realBoard(0, 0);
+    c.run.side = { kind: 'intact', reward: 'coins', odds: 1 };
+    for (const e of G.enemies(c)) e.hp = 0;
+    c.arrivals = {};
+    G.check(c);
+    R.settle(c);
+    c.run.scene = 'shop';
+    return c;
+  };
+  const table = (c, cards) => {
+    c.run.last.visit = { cards, order: [0, 1, 2], phase: 'hidden', pick: null };
+    return c.run.last.visit;
+  };
+  // 見好就收: the prize goes back; the cup at `at` holds the grade up, the other a pebble.
+  let s = camp();
+  let v = table(s, ['pine', 'remedy', 'fingerFlick']);
+  FM.pickBowl(s, 0);
+  const offer = FM.gambleOffer(s);
+  check('見好就收: offered after a 常品, for a 珍品 of its kind', offer?.stake === 'pine' && FM.gradeOf(offer.up) === 'rare' && G.ITEMS[offer.up].kind === 'weapon');
+  check('…staking takes the prize back', FM.gamble(s) && !(s.stock.pine > 0) && v.phase === 'gamble' && FM.validVisit(v));
+  check('…the staked cup cannot be lifted, nor a second for 籌碼', !FM.pickBowl(s, 0) && !FM.canLiftAgain(s));
+  const up = v.gamble.up;
+  check('…the right cup pays the grade up', FM.pickBowl(s, v.gamble.at) && v.gamble.won && s.stock[up] === 1 && v.phase === 'claimed' && FM.validVisit(v));
+  check('…once a table', !FM.gambleOffer(s) && !FM.gamble(s));
+  s = camp();
+  v = table(s, ['pine', 'remedy', 'fingerFlick']);
+  FM.pickBowl(s, 0);
+  FM.gamble(s);
+  const pebble = [1, 2].find((i) => i !== v.gamble.at);
+  check('…the other a pebble: nothing, and the stake is gone', FM.pickBowl(s, pebble) && !v.gamble.won && !(s.stock.pine > 0) && !(s.stock[v.gamble.up] > 0));
+  s = camp();
+  v = table(s, ['lionRoar', 'remedy', 'pine']);
+  FM.pickBowl(s, 0);
+  check('…never offered on a 秘寶', !FM.gambleOffer(s));
+  s = camp();
+  v = table(s, ['yuanBlade', 'remedy', 'pine']);
+  FM.pickBowl(s, 0);
+  check('…on a 珍品, for a 秘笈', FM.SECRET_MANUALS.includes(FM.gambleOffer(s)?.up));
+  s.stock.yuanBlade = 0;
+  check('…and not once the prize has left the store', !FM.gambleOffer(s));
+  // 灌鉛骰子
+  s = camp();
+  v = table(s, ['pine', 'remedy', 'fingerFlick']);
+  check('灌鉛骰子: none, no look', !FM.canPeek(s) && !FM.peekBowl(s, 1));
+  s.run.tokens = { loadedDice: 2 };
+  check('…with one, a look under a cup, the token spent', FM.peekBowl(s, 1) && v.peek === 1 && s.run.tokens.loadedDice === 1 && FM.validVisit(v));
+  check('…once a table', !FM.canPeek(s));
+  check('…a token prize goes to the run, not the store', (FM.grantLot(s, 'ironToken'), s.run.tokens.ironToken === 1 && !s.stock.ironToken));
+  // 莊家運
+  s = camp();
+  s.run.luck = 0;
+  v = table(s, ['pine', 'remedy', 'fingerFlick']);
+  FM.pickBowl(s, 0);
+  check('莊家運: a table with no 秘寶 lifted counts one', s.run.luck === 1);
+  s.run.luck = FM.LUCK_AT;
+  s.run.last.visit = null;
+  s.run.chips = 3;
+  FM.openTable(s);
+  check('…at ' + FM.LUCK_AT + ', the next table holds a 秘寶', s.run.last.visit.lucky && s.run.last.visit.cards.some((id) => FM.gradeOf(id) === 'secret') && FM.validVisit(s.run.last.visit));
+  FM.coverBowls(s);
+  const at = [0, 1, 2].find((i) => FM.gradeOf(s.run.last.visit.cards[s.run.last.visit.order[i]]) === 'secret');
+  FM.pickBowl(s, at);
+  check('…and lifting it starts the count again', s.run.luck === 0);
+  // 挑盤口 and 玄鐵令
+  s = realBoard(0, 0);
+  s.run.scene = 'prep';
+  s.run.status = 'battle';
+  R.dealSides?.(s);
+  const opts = R.drawSides(s);
+  s.run.sideOptions = opts;
+  s.run.side = opts[0];
+  check('挑盤口: two bets offered, the first taken', opts.length === 2 && !R.sameSide(opts[0], opts[1]));
+  check('…the other can be taken before the fight', R.chooseSide(s, 1) && R.sameSide(s.run.side, opts[1]));
+  s.run.scene = 'fight';
+  check('…not once it begins', !R.chooseSide(s, 0));
+  s.run.scene = 'prep';
+  check('玄鐵令: none, no swap', !R.canSwapSides(s));
+  s.run.tokens = { ironToken: 1 };
+  check('…with one, the two bets go back and others come', R.swapSides(s) && s.run.sideOptions.every((e) => !opts.some((o) => R.sameSide(o, e))) && s.run.tokens.ironToken === 0 && R.sameSide(s.run.side, s.run.sideOptions[0]));
+  s.run.tokens.ironToken = 1;
+  check('…once a board', !R.canSwapSides(s));
+  // 連中
+  const winBet = (c, met) => {
+    c.run.side = { kind: 'intact', reward: 'coins', odds: 1 };
+    if (!met) unit(c, 'medic').hp = 0;
+    for (const e of G.enemies(c)) e.hp = 0;
+    c.arrivals = {};
+    G.check(c);
+    R.settle(c);
+  };
+  s = realBoard(0, 0);
+  s.run.streak = 2;
+  winBet(s, true);
+  check('連中: the third bet met in a row brings a gift, and the count starts again', s.run.streak === 0 && !!s.run.last.gift && (FM.TOKENS.includes(s.run.last.gift) ? s.run.tokens[s.run.last.gift] === 1 : G.ITEMS[s.run.last.gift] ? s.stock[s.run.last.gift] >= 1 : s.run.manuals.includes(s.run.last.gift)));
+  s = realBoard(0, 0);
+  s.run.streak = 2;
+  winBet(s, false);
+  check('…a bet missed ends the run of them', s.run.streak === 0 && !s.run.last.gift);
+  // Four kinds, read from the fall record.
+  s = realBoard(0, 0);
+  const master = G.refId(s.mapIndex, 'master');
+  const fall = (f) => s.tally.falls.push({ id: master, by: 'hero', how: 'basic', art: null, round: 1, phase: 'ally', ...f });
+  s.run.side = { kind: 'oneBlow', reward: 'coins', odds: 2 };
+  fall({ fresh: false });
+  check('一擊斃命: open on a fall from below full', R.sideState(s) === 'open');
+  fall({ fresh: true });
+  check('…met on one from full', R.sideState(s) === 'met');
+  s.tally.falls = [];
+  s.run.side = { kind: 'counterFell', reward: 'points', odds: 2 };
+  fall({ how: 'counter' });
+  check('後發制人: met by a hero’s counter', R.sideState(s) === 'met');
+  s.tally.falls = [];
+  s.run.side = { kind: 'turned', reward: 'manual', odds: 2 };
+  fall({ by: null, turned: true });
+  check('借刀殺人: met by a turned foe’s blow', R.sideState(s) === 'met');
+  s.tally.falls = [];
+  s.run.side = { kind: 'summitFinish', reward: 'manual', odds: 2 };
+  fall({ how: 'art', art: 'sevenInjuries' });
+  check('絕技收官: failed when the master falls to anything else', R.sideState(s) === 'failed');
+  s.tally.falls = [];
+  fall({ how: 'art', art: 'dragonReserve' });
+  check('…met when he falls to a 成名絕技', R.sideState(s) === 'met');
+  // The fall record: fresh and turned are written by the rules.
+  s = board(['hero', 'medic', 'guard'], 7);
+  const h = put(s, 'hero', 3, 3),
+    foe = G.enemies(s)[0];
+  Object.assign(foe, { x: 4, y: 3, hp: 1, maxHp: 1 });
+  G.resolve(s, h, foe, false);
+  check('a fall from full 氣血 in one blow is marked fresh', s.tally.falls.at(-1)?.fresh === true && s.tally.falls.at(-1)?.turned === false);
 }
 
 section('saves');

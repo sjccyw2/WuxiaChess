@@ -177,6 +177,22 @@ const WARES = {
     pierce: 0.5,
     icon: 'sword',
     desc: '韋小寶從鰲拜府中抄來的匕首，削鐵如泥。攻擊增加 9。普攻與還擊穿透一半防禦。'
+  },
+  // 信物 (`kind: 'token'`): kept by 韋小寶 for the run (run.tokens), never in the company's store,
+  // and spent with a button where they work (ferry-market.js peekBowl, journey.js swapSides).
+  loadedDice: {
+    name: '灌鉛骰子',
+    kind: 'token',
+    grade: 'rare',
+    icon: 'diamond',
+    desc: '韋小寶的看家寶貝，骰心灌了鉛。三盅扣下之後，用一枚可先看其中一盅裝的是甚麼。每次用去一枚。'
+  },
+  ironToken: {
+    name: '玄鐵令',
+    kind: 'token',
+    grade: 'rare',
+    icon: 'diamond',
+    desc: '持令者可求一事。在軍情用一枚，韋小寶便把這一局開出的兩口注收回，另開兩口；每局一次，每次用去一枚。'
   }
 };
 const CAPTAINS = [

@@ -1689,6 +1689,55 @@
 .mj-chips {
   margin-left: 12px;
 }
+/* 見好就收: the prize staked, dimmed; the cup that held the pebble when it was the one lifted. */
+.lk-lot.lk-staked {
+  opacity: 0.55;
+}
+.lk-lot.lk-lost {
+  border-color: #8a4a3a;
+}
+.lk-lot.lk-peeked {
+  border-style: dashed;
+}
+/* 灌鉛骰子: a button per cup while they are down; 莊家運's tally under the status. */
+.lk-peek {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 10px;
+}
+.lk-luck {
+  text-align: center;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  letter-spacing: 0.04em;
+}
+/* 連中's gift, a row of the shop above the shelves. */
+.lk-gift {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  margin: 6px 0 14px;
+  padding: 8px 12px;
+  border: 1px solid rgba(233, 205, 135, 0.35);
+  border-radius: 4px;
+  background: rgba(20, 30, 26, 0.45);
+}
+.lk-gift img {
+  grid-row: span 2;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+.lk-gift p {
+  margin: 0;
+}
+.lk-gift small {
+  opacity: 0.8;
+}
 @media (max-width: 480px) {
   .lk-invite {
     gap: 7px;

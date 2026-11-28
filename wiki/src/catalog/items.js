@@ -5,10 +5,13 @@ import { rows, links, link, cells, gameArt } from './parts.js';
 import { NOTES } from './notes.js';
 import { itemTerms, ruleLinks } from './terms.js';
 
-const KINDS = { weapon: '兵器', gear: '護具', use: '丹藥' };
-// An item or manual with no line in the shop's stock is not sold there.
-const shelf = (entry) =>
-  entry?.[0] != null
+const KINDS = { weapon: '兵器', gear: '護具', use: '丹藥', token: '信物' };
+// An item or manual with no line in the shop's stock is not sold there; a 珍品 or a 秘笈 comes only
+// from 三盅通吃 and the 支線.
+const shelf = (entry, rare = false) =>
+  rare
+    ? [['取得', NOTES.rareOnly]]
+    : entry?.[0] != null
     ? [
         ['通吃坊底價', entry[0] + ' 兩'],
         ['最早上架', '第 ' + entry[1] + ' 局戰後']
@@ -23,12 +26,13 @@ function item(id) {
   return {
     id,
     name: it.name,
-    tag: KINDS[it.kind],
+    tag: it.grade === 'rare' ? '珍品 · ' + KINDS[it.kind] : KINDS[it.kind],
     summary: it.desc,
     image: gameArt('item-' + id + '.webp'),
     sections: [
       rows('器物資料', [
         ['類別', KINDS[it.kind]],
+        it.grade === 'rare' && ['品級', '珍品'],
         ['適用', owner ? owner.name + '專屬' : '全隊可用'],
         starts.length && ['起手所持', starts.map((hero) => G.DETAILS[hero].name).join('、')],
         it.atk && ['攻擊', it.atk],
@@ -36,11 +40,14 @@ function item(id) {
         it.power && ['絕技威力', it.power],
         it.step && ['移動', it.step],
         it.barbs && ['反震', it.barbs + ' 點，相鄰敵人打中佩者時'],
+        it.pierce && ['普攻穿透', Math.round(it.pierce * 100) + '% 防禦（還擊亦然）'],
+        it.antivenom && ['百毒不侵', '佩者不會中毒'],
+        it.pair && ['成對', '持' + G.ITEMS[it.pair.with].name + '的同伴在旁：攻擊、防禦各 ＋' + it.pair.atk],
         it.cleanse && ['解除', '中毒、內傷等不良狀態'],
         it.hp && ['回復氣血', it.hp],
         it.mp && ['回復內力', it.mp]
       ]),
-      rows('取得與使用', [...shelf(G.MARKET_STOCK[id]), ['使用方式', NOTES.itemUse[it.kind]]]),
+      rows('取得與使用', [...shelf(G.MARKET_STOCK[id], it.grade === 'rare'), ['使用方式', NOTES.itemUse[it.kind]]]),
       ruleLinks(itemTerms(id)),
       owner && links('所屬俠客', [link('heroes', it.owner, owner.name)])
     ].filter(Boolean),
@@ -53,12 +60,13 @@ function manual(id) {
   return {
     id: 'guide-' + id,
     name: '《' + art.name + '》',
-    tag: '武譜',
+    tag: art.secret ? '秘笈' : '武譜',
     summary: art.desc,
-    image: gameArt('guide-cover.webp'),
+    image: gameArt(art.secret ? 'guide-secret.webp' : 'guide-cover.webp'),
     sections: [
-      rows('武譜資料', [
-        ...shelf([G.MANUAL_PRICES[id], G.manualStage(id)]),
+      rows(art.secret ? '秘笈資料' : '武譜資料', [
+        ...shelf([G.MANUAL_PRICES[id], G.manualStage(id)], !!art.secret),
+        art.secret && ['品級', '秘寶'],
         ['階位', art.tier],
         ['參悟', art.points + ' 武學點'],
         ['授譜', NOTES.manualUse]

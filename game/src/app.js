@@ -6,7 +6,7 @@ import * as X from './ui/field-extras.js';
 import * as F from './ui/action-flow.js';
 import { journalPage } from './ui/wake-views.js';
 import { bowlsPage } from './ui/bowl-views.js';
-import { coverBowls, pickBowl, openTable } from './rules/ferry-market.js';
+import { coverBowls, pickBowl, openTable, gamble, peekBowl } from './rules/ferry-market.js';
 import { panelDrag } from './ui/panel-drag.js';
 import { canPlaceEquipment, equipmentPlacement, planningMap } from './ui/armory-views.js';
 import { POSTS } from './ui/board-plan.js';
@@ -2617,6 +2617,37 @@ function command(action, id, data = {}, keyboard = false) {
       break;
     case 'back-shop':
       if (dialogState === 'bowls') openPage('camp');
+      break;
+    // 見好就收: the prize lifted is staked for the grade up or a pebble.
+    case 'bowl-dare':
+      if (dialogState === 'bowls' && gamble(state)) {
+        update();
+        drawModal(true);
+        audio('bowl');
+      }
+      break;
+    // 灌鉛骰子: look under one cup while they are down.
+    case 'bowl-peek':
+      if (dialogState === 'bowls' && Date.now() >= bowlUntil && peekBowl(state, Number(id))) {
+        update();
+        drawModal(true);
+        audio('seat');
+      }
+      break;
+    // 挑盤口 and 玄鐵令, on 軍情 before the fight.
+    case 'pick-side':
+      if (R.chooseSide(state, Number(id))) {
+        update();
+        drawModal(true);
+        audio('seat');
+      }
+      break;
+    case 'swap-sides':
+      if (R.swapSides(state)) {
+        update();
+        drawModal(true);
+        audio('bowl');
+      }
       break;
     // 開盅: 籌碼 open the table on a board where it did not open by itself.
     case 'open-table':

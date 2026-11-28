@@ -30,6 +30,11 @@ ITEMS = {
                    'pendant on a braided gold cord with a small jade bead',
     'ironDagger': '削鐵匕首, a short dagger that cuts iron like mud: a narrow, very keen blue-black blade with a faint '
                   'cold sheen, a plain gilt guard, a hilt wrapped in black sharkskin, in no scabbard',
+    'loadedDice': '灌鉛骰子, 韋小寶\'s loaded dice: three small old ivory Chinese dice with red one-pips and black pips, '
+                  'one of them cracked open a little to show a bead of grey lead inside, lying together',
+    'ironToken': '玄鐵令, a black iron token of command: a thick, round-cornered rectangular plaque of dull blue-black '
+                 'meteoric iron, an archaic seal-script character raised on its face, a short black silk cord through a hole at the top',
+    'lot-pebble': 'a single plain, smooth, flat grey river pebble, nothing else: the empty prize of a cup game',
     'guide-secret': 'a secret martial-arts manual (秘笈): an old thread-bound Chinese book with a dark indigo cover, a '
                     'blank vermilion title slip, its corners worn and a red silk ribbon tied round it',
 }

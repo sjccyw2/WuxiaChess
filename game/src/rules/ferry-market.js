@@ -20,7 +20,16 @@ const VISITOR = {
   rules: '第一局獲勝後必定開局。其餘各局戰後有四成機會。每次可免費揭一盅，三個位置機會均等。盅裡分常品、珍品、秘寶三品：珍品與秘寶攤上不賣。揭過一盅，可花 2 籌碼再揭一盅；沒開盅的一局，可花 3 籌碼請他開盅。籌碼只在押中支線時得。',
   // His line when a second cup is lifted for chips, and when he is paid to open the table.
   again: '再揭？成，籌碼拿來。韋小寶做生意，向來童叟無欺。',
-  paid: '好，好，有籌碼便是大爺。三樣揀一樣，老規矩。'
+  paid: '好，好，有籌碼便是大爺。三樣揀一樣，老規矩。',
+  // 見好就收 (the producer, 2026-11-28, Q-N173): his offer, and what he says as it falls.
+  dare: '敢不敢再賭一把？這件押回來，另兩盅一盅好的，一盅是塊石頭。',
+  gambleWon: '他奶奶的，又給你押中了！拿去，拿去。',
+  gambleLost: '石頭一塊，送你壓壓驚。早說了見好就收。',
+  // 莊家運: the table where his luck turns, and 灌鉛骰子 used.
+  lucky: '今兒莊家運到了，這三盅裡準有一件秘寶。別說我不照顧你。',
+  peek: '咦，你這骰子哪來的？……罷了罷了，給你瞧一盅。',
+  // 連中: the gift for three bets in a row.
+  gift: '連中三口！這口彩頭是你的，韋小寶說話算話。'
 };
 // ── Grades (the producer, 2026-11-28, Q-N170) ────────────────────────────
 // 常品 is what the shelf sells. 珍品 (items with `grade: 'rare'`) and 秘寶 (the 秘笈, manuals with
@@ -40,6 +49,15 @@ const CUP_ODDS = { secret: 0.05, rare: 0.25, rarePerStage: 0.02 };
 // What 籌碼 buy at the table: a second cup once one is lifted, and a table on a board with none.
 const CHIP_PRICES = { again: 2, open: 3 };
 const chipsOf = (r) => r?.chips || 0;
+// 信物 (tokens): kept on the run (run.tokens), never in the company's store.
+const TOKENS = RARE_STOCK.filter((id) => G.ITEMS[id].kind === 'token');
+const tokensOf = (r, id) => r?.tokens?.[id] || 0;
+// 莊家運: after this many tables in a row with no 秘寶 lifted, one cup of the next holds one.
+const LUCK_AT = 4;
+const luckOf = (r) => r?.luck || 0;
+// 連中: this many bets met in a row bring a gift (彩頭) of 珍品 or better; 秘寶 at `GIFT_SECRET`.
+const STREAK_AT = 3;
+const GIFT_SECRET = 0.15;
 // Base prices exclude a small, seeded premium. Minimum depth is one-based.
 // Only what is listed here is ever on the shelf or under a cup: to keep an item for a quest or
 // another way of earning it, delete its line.
@@ -157,6 +175,8 @@ function makeVisit(s, paid = false) {
   // Each cup's grade. A 珍品 is of the cup's own kind where there is one (armour or a weapon for the
   // first cup, 天山雪蓮 for the medicine's), else any; no two cups hold the same thing.
   const rare = CUP_ODDS.rare + CUP_ODDS.rarePerStage * r.stage;
+  // After the run's last board a token could not be used: none is under a cup then.
+  const rares = r.last?.terminal ? RARE_STOCK.filter((id) => !TOKENS.includes(id)) : RARE_STOCK;
   const used = new Set();
   const kinds = [['weapon', 'gear'], [], ['use']];
   const cards = lots.map((common, i) => {
@@ -165,19 +185,23 @@ function makeVisit(s, paid = false) {
     let id = common;
     if (roll < CUP_ODDS.secret && free(SECRET_MANUALS).length) id = take(free(SECRET_MANUALS));
     else if (roll < CUP_ODDS.secret + rare) {
-      const own = free(RARE_STOCK.filter((x) => kinds[i].includes(G.ITEMS[x].kind)));
-      const any = free(RARE_STOCK);
+      const own = free(rares.filter((x) => kinds[i].includes(G.ITEMS[x].kind)));
+      const any = free(rares);
       if (own.length || any.length) id = take(own.length ? own : any);
     }
     used.add(id);
     return id;
   });
+  // 莊家運: after LUCK_AT tables with no 秘寶 lifted, one cup holds one, if none does already.
+  const lucky = luckOf(r) >= LUCK_AT && !cards.some((id) => gradeOf(id) === 'secret');
+  if (lucky) cards[Math.floor(rng() * 3)] = take(SECRET_MANUALS.filter((id) => !cards.includes(id)));
   return {
     cards: shuffled(cards, rng),
     order: shuffled([0, 1, 2], rng),
     phase: 'show',
     pick: null,
-    ...(paid ? { paid: true } : {})
+    ...(paid ? { paid: true } : {}),
+    ...(lucky ? { lucky: true } : {})
   };
 }
 // 開盅: on a board where the table did not open, 籌碼 open it.
@@ -209,15 +233,35 @@ function validVisit(v) {
       (id) => Object.hasOwn(MARKET_STOCK, id) || RARE_STOCK.includes(id) || Object.hasOwn(MANUAL_PRICES, id)
     ) &&
     (v.paid == null || v.paid === true) &&
+    (v.lucky == null || v.lucky === true) &&
     (v.extra == null ||
-      (v.phase === 'claimed' && Number.isInteger(v.extra) && v.extra >= 0 && v.extra < 3 && v.extra !== v.pick)) &&
+      (v.phase === 'claimed' && !v.gamble && isPlace(v.extra) && v.extra !== v.pick)) &&
+    (v.peek == null || (v.phase !== 'show' && isPlace(v.peek))) &&
+    (v.gamble == null || validGamble(v)) &&
     Array.isArray(v.order) &&
     v.order.length === 3 &&
     new Set(v.order).size === 3 &&
-    v.order.every((n) => Number.isInteger(n) && n >= 0 && n < 3) &&
-    (v.phase === 'claimed'
-      ? Number.isInteger(v.pick) && v.pick >= 0 && v.pick < 3
+    v.order.every(isPlace) &&
+    (['claimed', 'gamble'].includes(v.phase)
+      ? isPlace(v.pick) && (v.phase === 'claimed' || !!v.gamble)
       : ['show', 'hidden'].includes(v.phase) && v.pick === null)
+  );
+}
+const isPlace = (n) => Number.isInteger(n) && n >= 0 && n < 3;
+const isLot = (id) => Object.hasOwn(MARKET_STOCK, id) || RARE_STOCK.includes(id) || Object.hasOwn(MANUAL_PRICES, id);
+// 見好就收: { stake, up, at } while the two cups are down (phase 'gamble'); then `pick` and `won`.
+function validGamble(v) {
+  const g = v.gamble;
+  return (
+    !!g &&
+    typeof g === 'object' &&
+    g.stake === v.cards[v.order[v.pick]] &&
+    isLot(g.up) &&
+    isPlace(g.at) &&
+    g.at !== v.pick &&
+    (v.phase === 'gamble'
+      ? g.pick == null && g.won == null
+      : isPlace(g.pick) && g.pick !== v.pick && g.won === (g.pick === g.at))
   );
 }
 function lotName(id) {
@@ -228,12 +272,32 @@ function lotImage(id) {
 }
 function grantLot(s, id) {
   const r = s.run,
-    parcel = r.last.terminal ? r.chronicle.parcel : null;
-  if (Object.hasOwn(MANUAL_PRICES, id)) (parcel ? parcel.manuals : r.manuals).push(id);
+    parcel = r.last?.terminal ? r.chronicle.parcel : null;
+  if (TOKENS.includes(id)) (r.tokens ??= {})[id] = tokensOf(r, id) + 1;
+  else if (Object.hasOwn(MANUAL_PRICES, id)) (parcel ? parcel.manuals : r.manuals).push(id);
   else {
     const stock = parcel ? parcel.stock : s.stock;
     stock[id] = (stock[id] || 0) + 1;
   }
+}
+// Whether a prize granted is still where grantLot put it (not equipped, taught or spent since).
+function stillHeld(s, id) {
+  const r = s.run,
+    parcel = r.last?.terminal ? r.chronicle.parcel : null;
+  if (TOKENS.includes(id)) return tokensOf(r, id) > 0;
+  if (Object.hasOwn(MANUAL_PRICES, id)) return (parcel ? parcel.manuals : r.manuals).includes(id);
+  return ((parcel ? parcel.stock : s.stock)[id] || 0) > 0;
+}
+function takeBack(s, id) {
+  const r = s.run,
+    parcel = r.last?.terminal ? r.chronicle.parcel : null;
+  if (!stillHeld(s, id)) return false;
+  if (TOKENS.includes(id)) r.tokens[id]--;
+  else if (Object.hasOwn(MANUAL_PRICES, id)) {
+    const list = parcel ? parcel.manuals : r.manuals;
+    list.splice(list.lastIndexOf(id), 1);
+  } else (parcel ? parcel.stock : s.stock)[id]--;
+  return true;
 }
 function visiting(s) {
   return s.run?.status === 'camp' && s.run.scene === 'shop' ? s.run.last?.visit : null;
@@ -255,12 +319,14 @@ function canLiftAgain(s, position = null) {
   return (
     v?.phase === 'claimed' &&
     v.extra == null &&
+    !v.gamble &&
     chipsOf(s.run) >= CHIP_PRICES.again &&
     (position == null || (Number.isInteger(position) && position >= 0 && position < 3 && position !== v.pick))
   );
 }
 function pickBowl(s, position) {
   const v = visiting(s);
+  if (v?.phase === 'gamble') return settleGamble(s, position);
   if (v?.phase === 'claimed') {
     if (!canLiftAgain(s, position)) return false;
     s.run.chips -= CHIP_PRICES.again;
@@ -269,6 +335,10 @@ function pickBowl(s, position) {
     return false;
   const id = v.cards[v.order[position]];
   grantLot(s, id);
+  // 莊家運: a table's first cup counts; any 秘寶 lifted puts it back to nothing.
+  const r = s.run;
+  if (gradeOf(id) === 'secret') r.luck = 0;
+  else if (v.phase === 'hidden') r.luck = luckOf(r) + 1;
   if (v.phase === 'hidden') {
     v.pick = position;
     v.phase = 'claimed';
@@ -286,4 +356,84 @@ function pickBowl(s, position) {
   return true;
 }
 
+// ── 見好就收 (the producer, 2026-11-28, Q-N173) ────────────────────────────
+// Once a table, after the first cup is lifted and before any other, the prize can be put back on
+// the table: one of the two other cups then holds the next grade up of the same kind, the other
+// a pebble, fifty-fifty. Never on a 秘寶, and only while the prize is still in the store.
+function upgradeOf(s, id) {
+  const r = s.run,
+    v = r.last.visit,
+    g = gradeOf(id),
+    taken = (x) => v.cards.includes(x),
+    rng = ferryRandom(r, 0x68e31da4);
+  const pick = (ids) => (ids.length ? ids[Math.floor(rng() * ids.length)] : null);
+  if (g === 'rare') return pick(SECRET_MANUALS.filter((x) => !taken(x)));
+  const rares = (r.last.terminal ? RARE_STOCK.filter((x) => !TOKENS.includes(x)) : RARE_STOCK).filter((x) => !taken(x));
+  const kind = G.ITEMS[id]?.kind || 'manual';
+  const own = rares.filter((x) => (G.ITEMS[x]?.kind || 'manual') === kind);
+  return pick(own.length ? own : rares);
+}
+function gambleOffer(s) {
+  const v = visiting(s);
+  if (v?.phase !== 'claimed' || v.extra != null || v.gamble) return null;
+  const stake = v.cards[v.order[v.pick]];
+  if (gradeOf(stake) === 'secret' || !stillHeld(s, stake)) return null;
+  const up = upgradeOf(s, stake);
+  return up ? { stake, up } : null;
+}
+function gamble(s) {
+  const offer = gambleOffer(s);
+  if (!offer) return false;
+  const v = s.run.last.visit,
+    others = [0, 1, 2].filter((i) => i !== v.pick);
+  takeBack(s, offer.stake);
+  v.gamble = { ...offer, at: others[Math.floor(ferryRandom(s.run, 0x1e35a7bd)() * 2)] };
+  v.phase = 'gamble';
+  G.log(s, 'item', '把' + lotName(offer.stake) + '押回盅局，賭' + lotName(offer.up) + '。', VISITOR.name);
+  return true;
+}
+function settleGamble(s, position) {
+  const v = visiting(s);
+  if (v?.phase !== 'gamble' || !isPlace(position) || position === v.pick) return false;
+  const g = v.gamble;
+  g.pick = position;
+  g.won = position === g.at;
+  v.phase = 'claimed';
+  if (g.won) {
+    grantLot(s, g.up);
+    if (gradeOf(g.up) === 'secret') s.run.luck = 0;
+  }
+  G.log(
+    s,
+    'item',
+    g.won
+      ? '再賭一把，揭出' + lotName(g.up) + (s.run.last.terminal ? '，寄在通吃坊，下一輪取用。' : '，收入隊伍公庫。')
+      : '再賭一把，揭出一塊石頭，' + lotName(g.stake) + '歸了韋小寶。',
+    VISITOR.name
+  );
+  return true;
+}
+// ── 灌鉛骰子: once the cups are down, look under one ──────────────────────
+function canPeek(s) {
+  const v = visiting(s);
+  return v?.phase === 'hidden' && v.peek == null && tokensOf(s.run, 'loadedDice') > 0;
+}
+function peekBowl(s, position) {
+  if (!canPeek(s) || !isPlace(position)) return false;
+  const v = s.run.last.visit;
+  s.run.tokens.loadedDice--;
+  v.peek = position;
+  G.log(s, 'item', '擲出灌鉛骰子，先看了第' + ['一', '二', '三'][position] + '盅。', VISITOR.name);
+  return true;
+}
+// ── 連中: the gift for STREAK_AT bets met in a row (journey.js settle) ─────
+function giftLot(s) {
+  const r = s.run,
+    rng = ferryRandom(r, 0x4cf5ad43),
+    rares = r.last?.terminal || r.stage === 9 ? RARE_STOCK.filter((id) => !TOKENS.includes(id)) : RARE_STOCK;
+  const pool = rng() < GIFT_SECRET ? SECRET_MANUALS : rares;
+  return pool[Math.floor(rng() * pool.length)];
+}
+
+export { TOKENS, tokensOf, LUCK_AT, luckOf, STREAK_AT, upgradeOf, gambleOffer, gamble, canPeek, peekBowl, giftLot, stillHeld };
 export { VISITOR, MARKET_STOCK, MARKET_RULES, RARE_STOCK, SECRET_MANUALS, GRADES, gradeOf, CUP_ODDS, CHIP_PRICES, chipsOf, manualStage, bonusManual, makeOffers, makeVisit, canOpenTable, openTable, validVisit, lotName, lotImage, grantLot, coverBowls, canLiftAgain, pickBowl };

@@ -381,7 +381,7 @@ function holdValue(s, u, t, f, ctx) {
 const SIDE_W = {
   lastBlow: 60, lastBlowOther: -80, orderEarly: -80, lateRound: 10, double: 25, mirrorCharge: -60,
   mendValue: 30, herbsValue: 30, combo: 40, holdLineKill: 30, holdLinePlace: 8, holdLineReach: 2, answer: 50,
-  unhurtDanger: 4, intactLethal: 3, spareLife: -80
+  unhurtDanger: 4, intactLethal: 3, spareLife: -80, oneBlow: 40, summit: 60
 };
 const piece = (s, ref) => G.find(s, G.refId(s.mapIndex, ref));
 const standing = (s, id) => {
@@ -451,6 +451,18 @@ const SIDE_POLICY = {
   answer: {
     fell: (s, side, blow) => ({ score: blow.main && blow.u.id === side.hero && blow.answered ? SIDE_W.answer : 0 })
   },
+  // 一擊斃命: a blow that fells a piece from full 氣血.
+  oneBlow: {
+    fell: (s, side, blow) => ({ score: blow.main && blow.fresh ? SIDE_W.oneBlow : 0 })
+  },
+  // 絕技收官: the master felled by a 成名絕技; any other blow that would fell him waits, until late.
+  summitFinish: {
+    fell: (s, side, blow) => {
+      if (![...blow.gone].some((v) => G.masterIds(s).includes(v.id))) return { score: 0 };
+      if (blow.summit) return { score: SIDE_W.summit };
+      return s.round >= SIDE_W.lateRound ? { score: 0 } : { score: SIDE_W.lastBlowOther, holdWin: true };
+    }
+  },
   // 留活口: never fell the piece named, unless late in the board, as for lastBlow and order.
   spareLife: {
     fell: (s, side, blow) => {
@@ -503,7 +515,9 @@ function strikeScore(s, u, t, f, ctx, mp, art = null) {
       gone,
       wins: G.winsIfFalls(s, [...gone].map((v) => v.id)),
       combo: !!(f.plan?.spentMark || f.plan?.spentPoison),
-      answered: !!art?.answer && G.strikeFactor(s, u, art, victim).notes.some((n) => n.startsWith('破招 · '))
+      answered: !!art?.answer && G.strikeFactor(s, u, art, victim).notes.some((n) => n.startsWith('破招 · ')),
+      fresh: gone.has(victim) && victim.hp >= victim.maxHp,
+      summit: art?.kind === 'refinement' && gone.has(victim)
     };
     const side = ctx.sidePolicy.fell ? ctx.sidePolicy.fell(s, ctx.side, blow) : { score: 0 };
     score += side.score;

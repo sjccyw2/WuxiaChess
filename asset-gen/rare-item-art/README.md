@@ -11,6 +11,9 @@ in the manner of the item pictures already in the game (寒潭短劍 and 九花�
 | `full/yangBlade.webp` | `game/assets/item-yangBlade.webp`, 鴦刀 |
 | `full/scarletToad.webp` | `game/assets/item-scarletToad.webp`, 莽牯朱蛤 |
 | `full/ironDagger.webp` | `game/assets/item-ironDagger.webp`, 削鐵匕首 |
+| `full/loadedDice.webp` | `game/assets/item-loadedDice.webp`, 灌鉛骰子 (0.69) |
+| `full/ironToken.webp` | `game/assets/item-ironToken.webp`, 玄鐵令 (0.69) |
+| `full/lot-pebble.webp` | `game/assets/lot-pebble.webp`, the pebble of 見好就收 (0.69) |
 | `full/guide-secret.webp` | `game/assets/guide-secret.webp`, the cover of a 秘笈, on the parchment of `guide-cover.webp` |
 
 - `make/paint.py` paints them (1024 × 1024, transparent) through `make/api.py`; the session proxy adds the key.

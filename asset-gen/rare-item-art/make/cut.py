@@ -24,6 +24,7 @@ for name in sorted(os.listdir(FULL)):
         out = os.path.join(ASSETS, id + '.webp')
     else:
         size = (256, 256)
-        out = os.path.join(ASSETS, 'item-' + id + '.webp')
+        # lot-<name>: a cup's picture that is not an item (the pebble of 見好就收).
+        out = os.path.join(ASSETS, (id if id.startswith('lot-') else 'item-' + id) + '.webp')
     im.resize(size, Image.LANCZOS).save(out, 'WEBP', quality=88, method=6)
     print(out)

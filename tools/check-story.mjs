@@ -224,6 +224,13 @@ function forceSide(s) {
   }
   if (side.kind === 'combo') fall('bow', { combo: true });
   if (side.kind === 'answer') fall('bow', { by: side.hero, answered: true });
+  // 0.69's four kinds (spareLife, a keep kind, needs nothing).
+  const foe = G.hasFour(map) ? 'bow' : G.boardOf(s).pieces[0].id,
+    hero = r.next[0];
+  if (side.kind === 'oneBlow') fall(foe, { by: hero, fresh: true });
+  if (side.kind === 'counterFell') fall(foe, { by: hero, how: 'counter' });
+  if (side.kind === 'turned') fall(foe, { turned: true });
+  if (side.kind === 'summitFinish') fall('master', { by: hero, how: 'art', art: 'dragonReserve' });
 }
 // A tiny seeded generator so a failure can be reproduced from the seed.
 const dice = (seed) => () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);

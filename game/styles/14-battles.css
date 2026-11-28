@@ -271,6 +271,59 @@
   font-size: 13px;
   padding: 2px 0;
 }
+/* 挑盤口 (2026-11-28): the two bets offered, the one taken in gold. */
+.brief-bets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 4px 0 6px;
+}
+.brief-bet {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid rgba(233, 205, 135, 0.28);
+  border-radius: 4px;
+  background: rgba(20, 30, 26, 0.55);
+  color: #e8dfc8;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.brief-bet strong {
+  font-size: 15px;
+  color: #f4ead2;
+}
+.brief-bet span,
+.brief-bet small {
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.brief-bet small {
+  color: #b9b29c;
+}
+.brief-bet .brief-odds {
+  padding: 0 6px;
+  border: 1px solid #b3362a;
+  border-radius: 2px;
+  color: #ffd9cf;
+  font-size: 12px;
+}
+.brief-bet.chosen {
+  border-color: #e9cd87;
+  background: rgba(64, 76, 48, 0.7);
+  box-shadow: inset 0 0 0 1px #e9cd87;
+}
+.brief-swap {
+  margin: 2px 0 6px;
+}
+@media (max-width: 480px) {
+  .brief-bets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .brief-route {
   margin-top: 12px;
 }

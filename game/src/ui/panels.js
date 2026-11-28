@@ -775,7 +775,32 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
     progress = rows.length ? '<ul class="brief-progress">' + rows.join('') + '</ul>' : '';
   }
   const sd = model.side;
-  const side = sd
+  // 挑盤口: before the fight, the two bets offered side by side, the one taken marked; 玄鐵令 below.
+  const streak = model.streak
+    ? p('連中 ' + model.streak + '／' + model.streakAt + '：再中 ' + (model.streakAt - model.streak) + ' 口，韋小寶送一份彩頭。', 'brief-note')
+    : '';
+  const choices = model.choices?.length > 1
+    ? '<div class="brief-bets">' +
+      model.choices
+        .map((c) =>
+          btn(
+            'pick-side',
+            '<span class="brief-odds">' + esc(c.oddsName) + '</span><strong>' + esc(c.name) + '</strong>' +
+              '<span>' + esc(c.detail) + '</span><small>' + esc(c.rewardText.replace(c.oddsName + ' · ', '')) + '</small>' +
+              (c.warning ? '<small class="warn">' + esc(c.warning) + '</small>' : ''),
+            'brief-bet' + (c.chosen ? ' chosen' : ''),
+            'data-id="' + c.index + '" aria-pressed="' + c.chosen + '"'
+          )
+        )
+        .join('') +
+      '</div>' +
+      p('兩口注任押一口，入局前可改。', 'brief-small') +
+      (model.canSwap ? btn('swap-sides', '出玄鐵令，換兩口注（' + model.ironTokens + ' 枚）', 'mj-action brief-swap') : '') +
+      streak
+    : '';
+  const side = choices
+    ? choices
+    : sd
     ? '<p class="brief-side-name">' +
       (sd.mark ? '<b class="side-mark ' + sd.state + '">' + sd.mark + '</b>' : '') +
       '<strong>' +
@@ -787,7 +812,8 @@ function briefPage(s, { live = false, ahead = false, back = '', extra = '' } = {
       (sd.progress && sd.state === 'open' ? p(sd.progress, 'brief-note') : '') +
       (sd.lost ? p(sd.lost, 'brief-note warn') : '') +
       p(sd.rewardText, 'brief-small') +
-      p(sd.warning, 'brief-note warn')
+      p(sd.warning, 'brief-note warn') +
+      streak
     : model.pool.length
       ? p(model.sideNote) +
         '<ul class="brief-pool">' +

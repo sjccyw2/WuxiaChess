@@ -78,7 +78,8 @@ const BATTLES = [
       { kind: 'spare', behaviour: 'mend', piece: 'lieutenant', reward: 'points', odds: 1 },
       { kind: 'order', first: 'zhaoZhong', reward: 'coins', odds: 3 },
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'manual', odds: 2 },
-      { kind: 'noMedicine', reward: 'coins', odds: 1 }
+      { kind: 'noMedicine', reward: 'coins', odds: 1 },
+      { kind: 'oneBlow', reward: 'coins', odds: 2 }
     ]
   },
   // 2 蘆花汀: defeat everyone; six disciples crowd round their master.
@@ -119,7 +120,8 @@ const BATTLES = [
       { kind: 'spare', behaviour: 'herbs', piece: 'master', reward: 'manual', odds: 1 },
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'noMedicine', reward: 'coins', odds: 1 },
-      { kind: 'swift', by: 5, reward: 'coins', odds: 1 }
+      { kind: 'swift', by: 5, reward: 'coins', odds: 1 },
+      { kind: 'counterFell', reward: 'points', odds: 2 }
     ]
   },
   // 4 空山琴臺: keep the qin on its stone seat at the foot of the heroes' steps, through round 8
@@ -221,7 +223,8 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'unhurt', reward: 'coins', odds: 1 },
       { kind: 'holdLine', zone: { x: [0, 8] }, place: '陣井以西', reward: 'manual', odds: 1 },
-      { kind: 'lamp', reward: 'coins', odds: 1 }
+      { kind: 'lamp', reward: 'coins', odds: 1 },
+      { kind: 'turned', reward: 'manual', odds: 2 }
     ]
   },
   // 6 襄陽殘垣: keep the city's war drum through round 9 in the passage below the wall, where the
@@ -285,7 +288,8 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'noMedicine', reward: 'coins', odds: 1 },
       { kind: 'unhurt', reward: 'coins', odds: 1 },
-      { kind: 'double', reward: 'manual', odds: 3 }
+      { kind: 'double', reward: 'manual', odds: 3 },
+      { kind: 'summitFinish', reward: 'manual', odds: 2 }
     ]
   },
   // 8 倒影天街: two masters, both must fall; a second blade pair when either is first at half.
@@ -397,7 +401,8 @@ const BATTLES = [
       { kind: 'double', reward: 'coins', odds: 1 },
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'unhurt', reward: 'coins', odds: 1 },
-      { kind: 'noMedicine', reward: 'manual', odds: 1 }
+      { kind: 'noMedicine', reward: 'manual', odds: 1 },
+      { kind: 'oneBlow', reward: 'coins', odds: 2 }
     ]
   },
   // 12 鐵掌溪灘: 裘千仞 crosses the stream as if it were dry ground; his men stand on the stepping
@@ -421,7 +426,8 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'intact', reward: 'coins', odds: 1 },
       { kind: 'lamp', reward: 'coins', odds: 2 },
-      { kind: 'unhurt', reward: 'manual', odds: 1 }
+      { kind: 'unhurt', reward: 'manual', odds: 1 },
+      { kind: 'counterFell', reward: 'points', odds: 2 }
     ]
   },
   // 13 西夏夜苑: 李秋水 before the hall steps, a guard pair before her and one on the bridge; two
@@ -445,7 +451,8 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'double', reward: 'manual', odds: 3 },
       { kind: 'noMedicine', reward: 'coins', odds: 1 },
-      { kind: 'lamp', reward: 'coins', odds: 2 }
+      { kind: 'lamp', reward: 'coins', odds: 2 },
+      { kind: 'turned', reward: 'manual', odds: 2 }
     ]
   },
   // 14 黑木繡閣: 東方不敗 before the small house, the guards each alone about the garden; two more
@@ -469,7 +476,8 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 3 },
       { kind: 'intact', reward: 'manual', odds: 2 },
       { kind: 'unhurt', reward: 'coins', odds: 2 },
-      { kind: 'lamp', reward: 'coins', odds: 2 }
+      { kind: 'lamp', reward: 'coins', odds: 2 },
+      { kind: 'summitFinish', reward: 'manual', odds: 2 }
     ]
   },
   // 15 谷底棋臺: the last board (world view §8.4). 求敗 stands at 天元 and is never felled: bring

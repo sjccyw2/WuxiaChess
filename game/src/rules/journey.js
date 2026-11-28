@@ -1,6 +1,6 @@
 import { WAKES, closingFor } from '../data/wake-tale.js';
 import { random, shuffled } from './lots.js';
-import { makeOffers, makeVisit, validVisit, grantLot, bonusManual, chipsOf, canOpenTable } from './ferry-market.js';
+import { makeOffers, makeVisit, validVisit, grantLot, bonusManual, chipsOf, canOpenTable, TOKENS, tokensOf, STREAK_AT, giftLot, gradeOf, lotName, RARE_STOCK, SECRET_MANUALS, VISITOR, luckOf, LUCK_AT } from './ferry-market.js';
 import { seatsFor } from './formation.js';
 import { moveFacts } from './move-facts.js';
 import { ENCOUNTER_SCRIPT } from '../data/encounter-script.js';
@@ -403,7 +403,15 @@ function setUpBoard(s) {
   delete r.legacyBoard;
   G.scheduleWaves(s);
   s.tally = G.blankTally();
-  r.side = drawSide(s);
+  dealSides(s);
+}
+// 挑盤口 (the producer, 2026-11-28, Q-N170): two bets are offered and the first is taken unless the
+// player picks the other before the fight. `sideSwapped`: 玄鐵令 was used on this board.
+function dealSides(s) {
+  const r = s.run;
+  r.sideOptions = drawSides(s);
+  r.side = r.sideOptions[0] ?? null;
+  delete r.sideSwapped;
 }
 // A save from before boards had kinds. A board already in the fight finishes under its old rules
 // (its master, its four); one not yet fought is rebuilt with its new pieces. Nothing is logged:
@@ -443,7 +451,17 @@ function tidyBoard(s) {
     if (Number.isInteger(due) && due >= s.round && due <= G.roundLimit(s) && waiting) s.arrivals[w.id] = due;
   }
   if (!validTally(s.tally)) s.tally = G.blankTally();
-  if (r.status === 'battle' && !validSide(s, r.side)) r.side = drawSide(s);
+  if (r.status === 'battle' && !validSide(s, r.side)) dealSides(s);
+  // Bets offered: each one of the pool, the one taken among them (a save from before has one).
+  if (
+    !Array.isArray(r.sideOptions) ||
+    r.sideOptions.length > 2 ||
+    !r.sideOptions.every((e) => validSide(s, e)) ||
+    (r.side && !r.sideOptions.some((e) => sameSide(e, r.side)))
+  )
+    r.sideOptions = r.side ? [r.side] : [];
+  if (r.sideSwapped !== true) delete r.sideSwapped;
+  if (r.last?.gift != null && !(RARE_STOCK.includes(r.last.gift) || SECRET_MANUALS.includes(r.last.gift))) delete r.last.gift;
   if (r.last?.side != null && typeof r.last.side !== 'object') delete r.last.side;
 }
 const count = (n) => Number.isSafeInteger(n) && n >= 0;
@@ -554,6 +572,11 @@ function restoreRun(raw) {
     !Number.isInteger(r.coins) ||
     r.coins < 0 ||
     (r.chips != null && (!Number.isInteger(r.chips) || r.chips < 0)) ||
+    (r.luck != null && (!Number.isInteger(r.luck) || r.luck < 0)) ||
+    (r.streak != null && (!Number.isInteger(r.streak) || r.streak < 0)) ||
+    (r.tokens != null &&
+      (typeof r.tokens !== 'object' ||
+        !Object.entries(r.tokens).every(([id, n]) => TOKENS.includes(id) && Number.isInteger(n) && n >= 0))) ||
     !validProfile(r.chronicle) ||
     !Array.isArray(r.shop) ||
     !Array.isArray(r.manuals) ||
@@ -1259,6 +1282,52 @@ const SIDE_KINDS = {
     progress: (s) => (s.tally?.crossed ? '援軍已越線' : '援軍未越線'),
     lost: (s, side) => '援軍踏入' + side.place
   },
+  // ── 0.69 (the producer, 2026-11-28, Q-N170) ──
+  oneBlow: {
+    name: () => '一擊斃命',
+    sort: 'reach',
+    eligible: () => true,
+    detail: () => '以一記招式或普攻，擊倒一名氣血全滿的敵人。',
+    state: (s) => (s.tally?.falls.some((f) => f.by && f.fresh) ? 'met' : 'open'),
+    progress: () => '',
+    lost: () => ''
+  },
+  counterFell: {
+    name: () => '後發制人',
+    sort: 'reach',
+    eligible: () => true,
+    detail: () => '以還擊擊倒一名敵人。',
+    state: (s) => (s.tally?.falls.some((f) => f.by && f.how === 'counter') ? 'met' : 'open'),
+    progress: () => '',
+    lost: () => ''
+  },
+  turned: {
+    name: () => '借刀殺人',
+    sort: 'reach',
+    // Only with a hero in the line-up who can turn a foe (受制).
+    eligible: (s) => lineup(s).some((u) => (u.learned || []).some((id) => TECHNIQUES[id]?.charm)),
+    detail: () => '讓一名受制的敵人擊倒另一名敵人。',
+    state: (s) => (s.tally?.falls.some((f) => f.turned) ? 'met' : 'open'),
+    progress: () => '',
+    lost: () => ''
+  },
+  summitFinish: {
+    name: () => '絕技收官',
+    sort: 'reach',
+    // 斬將 boards, with a hero in the line-up who has a 成名絕技.
+    eligible: (s) =>
+      G.boardKind(s) === 'slay' &&
+      lineup(s).some((u) => (u.learned || []).some((id) => TECHNIQUES[id]?.kind === 'refinement')),
+    detail: (s, side, map) => '以成名絕技擊倒' + masterNames(map, s ? G.boardOf(s) : G.castBoard(map)) + '。',
+    state: (s) => {
+      const masters = G.masterIds(s),
+        falls = (s.tally?.falls || []).filter((f) => masters.includes(f.id));
+      if (falls.some((f) => f.by && f.how === 'art' && TECHNIQUES[f.art]?.kind === 'refinement')) return 'met';
+      return falls.length >= masters.length ? 'failed' : 'open';
+    },
+    progress: () => '',
+    lost: () => '局主不是倒在成名絕技之下'
+  },
   // 留活口: the named piece must still stand when the board is won (斬將 and 守 boards only).
   spareLife: {
     name: () => '留活口',
@@ -1292,11 +1361,14 @@ const oddsOf = (side) => (ODDS_NAMES[side?.odds] ? side.odds : 1);
 // lineup can meet. The same seed, stage and lineup always give the same secondary; a named hero
 // is drawn from the lineup as the board is built.
 function drawSide(s) {
+  return drawSides(s)[0] ?? null;
+}
+// Every bet of the pool the line-up can meet, in the run's own order, as { at (pool index), side }.
+function sideDraws(s) {
   const r = s.run,
     pool = G.boardOf(s).sides;
-  // The last board has no pool: 韋小寶 opens no book on it, and `run.side` is null there.
-  if (!pool.length && G.boardOf(s).last) return null;
   const rand = random((r.seed ^ Math.imul(r.stage + 1, 0x2545f491) ^ 0x5eed51de) >>> 0);
+  const out = [];
   for (const i of shuffled(
     pool.map((_, i) => i),
     rand
@@ -1305,9 +1377,59 @@ function drawSide(s) {
     if (!SIDE_KINDS[e.kind].eligible(s, e)) continue;
     const side = { ...e };
     if (e.hero === '*') side.hero = shuffled(r.next, rand)[0];
-    return side;
+    out.push({ at: i, side });
   }
-  return { kind: 'intact', reward: 'coins' }; // no pool of battles.js comes here
+  return out;
+}
+// The two bets offered (fewer when the pool has fewer the line-up can meet); `skip`: pool indices
+// not to offer (those 玄鐵令 sends back).
+function drawSides(s, skip = []) {
+  const pool = G.boardOf(s).sides;
+  // The last board has no pool: 韋小寶 opens no book on it, and `run.side` is null there.
+  if (!pool.length) return [];
+  const draws = sideDraws(s);
+  const left = draws.filter((d) => !skip.includes(d.at)).slice(0, 2);
+  if (left.length) return left.map((d) => d.side);
+  return draws.length ? [] : [{ kind: 'intact', reward: 'coins' }]; // no pool of battles.js comes here
+}
+// Two bets are the same entry of the pool (the hero drawn for '*' included).
+const sameSide = (a, b) =>
+  !!a && !!b && JSON.stringify({ ...a, odds: 0 }) === JSON.stringify({ ...b, odds: 0 });
+// The pool index of a bet offered, or -1.
+const poolAt = (s, side) =>
+  G.boardOf(s).sides.findIndex((e) =>
+    [...new Set([...Object.keys(e), ...Object.keys(side)])].every((k) =>
+      k === 'odds' ? true : k === 'hero' && e.hero === '*' ? true : JSON.stringify(e[k]) === JSON.stringify(side[k])
+    )
+  );
+// Whether the bet can still be chosen or swapped: the board not yet fought.
+const betsOpen = (s) => s.run?.status === 'battle' && s.run.scene !== 'fight' && !s.run.legacyBoard;
+function chooseSide(s, index) {
+  const r = s.run;
+  if (!betsOpen(s) || !Number.isInteger(index) || !r.sideOptions?.[index]) return false;
+  if (sameSide(r.side, r.sideOptions[index])) return false;
+  r.side = r.sideOptions[index];
+  return true;
+}
+// 玄鐵令: the two bets offered go back, and the next two of the pool are offered (once a board).
+function canSwapSides(s) {
+  const r = s.run;
+  if (!betsOpen(s) || r.sideSwapped || tokensOf(r, 'ironToken') < 1) return false;
+  const skip = (r.sideOptions || []).map((e) => poolAt(s, e));
+  return sideDraws(s).some((d) => !skip.includes(d.at));
+}
+function swapSides(s) {
+  if (!canSwapSides(s)) return false;
+  const r = s.run;
+  r.sideOptions = drawSides(
+    s,
+    r.sideOptions.map((e) => poolAt(s, e))
+  );
+  r.side = r.sideOptions[0];
+  r.sideSwapped = true;
+  r.tokens.ironToken--;
+  G.log(s, 'item', '亮出玄鐵令，韋小寶收回兩口注，另開兩口。', VISITOR.name);
+  return true;
 }
 // A secondary that names a hero cannot be met without him: out of the lineup before the fight,
 // not on the board in it.
@@ -1340,7 +1462,7 @@ function sideLost(s, side = s.run.side) {
 // The forecast's line when this blow would fell its target and so meet or fail the secondary.
 function sideForecast(s, u, t, f) {
   const side = s.run?.side;
-  if (!side || !s.tally || !['lastBlow', 'order', 'double', 'combo', 'answer', 'spareLife'].includes(side.kind)) return '';
+  if (!side || !s.tally || !['lastBlow', 'order', 'double', 'combo', 'answer', 'spareLife', 'oneBlow', 'summitFinish'].includes(side.kind)) return '';
   const target = f.coveredBy ? G.find(s, f.coveredBy) : t;
   if (!target || f.type !== 'enemy' || f.amount < target.hp) return '';
   const art = f.mpCost ? G.artFor(u) : null;
@@ -1348,6 +1470,8 @@ function sideForecast(s, u, t, f) {
     id: target.id,
     by: u.id,
     how: art ? 'art' : 'basic',
+    art: art ? u.activeArt : null,
+    fresh: target.hp >= target.maxHp,
     combo: !!(f.plan?.spentMark || f.plan?.spentPoison),
     answered: !!art?.answer && G.strikeFactor(s, u, art, target).notes.some((n) => n.startsWith('破招')),
     round: s.round,
@@ -1531,6 +1655,15 @@ function boardModel(map, stage, s = null, live = false, route = null) {
       return { id: o.id, key, name: d.name, kind: d.kind, kindName: d.role, art: d.portraitFile, x: o.at[0], y: o.at[1] };
     }),
     side: r?.side ? sideRow(r.side, live) : null,
+    // 挑盤口: the two bets offered while the board is not yet fought, and 玄鐵令's swap.
+    choices:
+      s && betsOpen(s) && r.sideOptions?.length > 1
+        ? r.sideOptions.map((e, index) => ({ ...sideRow(e, false), index, chosen: sameSide(e, r.side) }))
+        : [],
+    canSwap: !!s && canSwapSides(s),
+    ironTokens: tokensOf(r, 'ironToken'),
+    streak: r?.streak || 0,
+    streakAt: STREAK_AT,
     pool: s ? [] : board.sides.map((e) => sideRow(e, false)),
     // The last board has no secondary: its pages show no 支線 at all.
     noSide: !board.sides.length,
@@ -1697,6 +1830,10 @@ function settle(s) {
   }
   const bonus = optional ? paySide(s) : null;
   delete r.devSide;
+  // 連中: bets met in a row; a won board with its bet missed, or a lost board, ends the run of them.
+  if (r.side) r.streak = optional ? (r.streak || 0) + 1 : 0;
+  const giftDue = (r.streak || 0) >= STREAK_AT;
+  if (giftDue) r.streak = 0;
   if (bonus?.reward === 'coins') reward += bonus.amount;
   // The bench gains experience first, so the newcomer is not counted among it.
   const benchRose = won && !last ? benchExperience(s) : [];
@@ -1717,6 +1854,12 @@ function settle(s) {
     ...(last ? { lastBoard: true, ...(won ? { ended: true } : {}) } : {})
   };
   delete r.cleared;
+  // 連中 STREAK_AT bets: a gift of 珍品 or better, granted now (the shop shows it).
+  if (giftDue) {
+    r.last.gift = giftLot(s);
+    grantLot(s, r.last.gift);
+    G.log(s, 'item', '連中 ' + STREAK_AT + ' 口支線，韋小寶送上彩頭：' + lotName(r.last.gift) + '。', VISITOR.name);
+  }
   r.shop = makeOffers(s);
   r.last.visit = makeVisit(s);
   r.status = 'camp';
@@ -2223,6 +2366,10 @@ function campModel(s) {
     visit: r.last.visit,
     chips: chipsOf(r),
     canOpen: canOpenTable(s),
+    tokens: TOKENS.filter((id) => tokensOf(r, id) > 0).map((id) => ({ id, name: G.ITEMS[id].name, count: tokensOf(r, id) })),
+    gift: last.gift ? { id: last.gift, name: lotName(last.gift), grade: gradeOf(last.gift) } : null,
+    luck: luckOf(r),
+    luckAt: LUCK_AT,
     stageName: mapLayout(s.mapIndex).name,
     nextName: final ? '' : mapLayout(mapAt(r, r.stage + 1)).name,
     final,
@@ -2277,5 +2424,5 @@ function campModel(s) {
 }
 
 export { LAST_BOON, devPress, devFirstBoard, stagesOf, nextMap, TENTH, LAST_STAGE, endsWithLast, finalStage, mapAt, plusRun, enterLast, fixedLead, stageTitle, KIND_NAMES, validProfile, fillProfile };
-export { ODDS_NAMES, oddsOf };
+export { ODDS_NAMES, oddsOf, drawSides, sameSide, betsOpen, chooseSide, canSwapSides, swapSides };
 export { DRAWN, KEPT, keptLots, routeFor, ROUTE_EDITION, devFinish, devTestRun, DEV_TEST, REALM_NUMBERS, openRealms, allCleared, SIDE_KINDS, LEGACY_SIDES, drawSide, sideState, sideDone, sideLost, sideForecast, sideBenched, rewardText, paySide, waveLine, briefing, boardBrief, swapStart, beginBattle, BATTLES_EDITION, setUpBoard, migrateBattles, defenders, mapStages, TECHNIQUES_RENAMED, TECHNIQUES_REMOVED, migrateSave, BOARD_MARKS, NUMERALS, REWARDS, LEGACY, cleanName, youthName, closingFor, newSeed, drawLots, parcelCount, startRun, lotPreview, restoreRun, dialogue, turnPage, deployLineup, settle, buy, canPlaceHero, placeHero, toggleSeat, appointLeader, advance, acceptsGuide, giveGuide, guideInventory, studyState, learn, setSlot, readyArt, treeModel, campModel };
