@@ -4,6 +4,7 @@
 // the 山門 side to the pagoda steps, runs the 甬道 of great stone slabs, and the slab before the
 // steps is carved with a lotus. The colour of every corner is worked out from where it lies:
 // worn paler along the way feet have gone, cool blue in the open, warm round each burner.
+import { circle } from '../scenery-kit.js';
 import {
   CX,
   CZ,
