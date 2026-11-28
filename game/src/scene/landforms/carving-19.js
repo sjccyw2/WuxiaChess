@@ -10,13 +10,16 @@ import { Model, circle } from '../scenery-kit.js';
 import { TOP, smooth, rgb, blend, noise, hash, walls, lightAt, toward } from './kit-19.js';
 
 const FRONT = -4.72; // the dressed face of every pier
-const PANEL = { x0: -0.37, x1: 0.37, y0: 0.42, y1: 2.82 };
+const PANEL = { x0: -0.37, x1: 0.37, y0: 0.9, y1: 2.84 };
 
 // One pier of rock, from below the floor up into the wall, its face flat where it is dressed.
-function pier(m, wx, salt) {
-  const r = m.rng,
-    rows = 16,
-    back = -7.0;
+// Its foot, up to DADO, goes in `low`, a group that never fades: from the usual cameras it
+// stands over its own rock tile, and is no taller than a lamp; the rest goes in `m`.
+const DADO = 0.86;
+function pier(m, low, wx, salt) {
+  const back = -7.0;
+  const heights = [-0.12, 0.22, 0.52, DADO];
+  for (let k = 1; k <= 13; k++) heights.push(DADO + ((3.83 - DADO) * k) / 13);
   const outline = [];
   // Front edge (dressed, straight), then the rough flanks and the back buried in the wall.
   for (let i = 0; i <= 4; i++) outline.push([-0.46 + (0.92 * i) / 4, 0, 'front']);
@@ -26,9 +29,7 @@ function pier(m, wx, salt) {
   outline.reverse();
   const n = outline.length;
   let prev;
-  for (let k = 0; k <= rows; k++) {
-    const t = k / rows,
-      y = -0.12 + 3.95 * t;
+  heights.forEach((y, k) => {
     // Above the panel the rock leans back into the wall and narrows.
     const recede = 0.95 * smooth(3.0, 3.9, y) + 0.08 * smooth(2.9, 3.05, y);
     const ring = outline.map(([u, v, kind], i) => {
@@ -44,23 +45,43 @@ function pier(m, wx, salt) {
       c = blend(c, rgb(0x3e3d38), 0.4 * smooth(0.5, -0.1, y));
       return [x, y, z, lightAt(x, y, z, c, 0.5)];
     });
+    const into = y <= DADO ? low : m;
     if (prev)
       for (let i = 0; i < n; i++) {
         const j = (i + 1) % n;
-        m.face(
+        into.face(
           [prev[i].slice(0, 3), ring[i].slice(0, 3), ring[j].slice(0, 3), prev[j].slice(0, 3)],
           [prev[i][3], ring[i][3], ring[j][3], prev[j][3]]
         );
       }
     prev = ring;
-  }
-  // A plinth of set stones along the foot of the face.
+  });
+  // The dado under the panel: a moulded base with a band of waves cut between its mouldings,
+  // standing on a plinth of set stones.
+  const L = (c, y) => lightAt(wx, y, FRONT + 0.2, rgb(c), 0.5);
   for (let k = 0; k < 3; k++) {
     const x = wx - 0.31 + k * 0.31;
     const c = lightAt(x, 0.1, FRONT, rgb(0x6c6a62), 0.5);
-    m.box(x, TOP + 0.09, FRONT + 0.06, 0.3, 0.18, 0.14, c);
-    m.box(x, TOP + 0.185, FRONT + 0.06, 0.29, 0.012, 0.13, blend(c, rgb(0x9a958a), 0.4));
+    low.box(x, TOP + 0.07, FRONT + 0.05, 0.3, 0.14, 0.12, c);
+    low.box(x, TOP + 0.145, FRONT + 0.05, 0.29, 0.012, 0.11, blend(c, rgb(0x9a958a), 0.4));
   }
+  for (const [y, r] of [
+    [0.3, 0.02],
+    [0.8, 0.024]
+  ])
+    low.tube([wx - 0.44, y, FRONT + 0.01], [wx + 0.44, y, FRONT + 0.01], r, r, L(0x9e998c, y), 6);
+  low.frame(wx, 0, FRONT + 0.004, 0, 1, () => {
+    const dark = L(0x2d2c29, 0.5),
+      lip = L(0xb8b2a3, 0.5);
+    for (const v of [0.45, 0.62]) {
+      const wave = [];
+      for (let i = 0; i <= 24; i++) {
+        const u = -0.4 + (0.8 * i) / 24;
+        wave.push([u, v + 0.035 * Math.sin(i * 1.35 + v * 9)]);
+      }
+      incise(low, wave, 0.006, dark, lip);
+    }
+  });
 }
 
 // An incised stroke: a dark groove along a path on the face, with the lit lip below it.
@@ -250,26 +271,26 @@ function panel(m, wx, index) {
     // Beneath them, the figures, different on every wall, with the scholars' notes round them.
     const v = index % 3;
     if (v === 0) {
-      figure(m, x0 + 0.2, 0.98, 0.62, POSES[(index + 0) % 5], relief);
-      figure(m, x1 - 0.19, 1.04, 0.5, POSES[(index + 2) % 5], relief);
+      figure(m, x0 + 0.19, 1.2, 0.56, POSES[(index + 0) % 5], relief);
+      figure(m, x1 - 0.18, 1.24, 0.48, POSES[(index + 2) % 5], relief);
     } else if (v === 1) {
-      meridians(m, 0, 1.0, 0.7, dark, lip, relief);
+      meridians(m, 0, 1.18, 0.62, dark, lip, relief);
     } else {
-      figure(m, x0 + 0.17, 1.02, 0.55, POSES[(index + 1) % 5], relief);
-      footwork(m, x1 - 0.17, 1.2, 0.12, dark, lip);
+      figure(m, x0 + 0.17, 1.2, 0.52, POSES[(index + 1) % 5], relief);
+      footwork(m, x1 - 0.17, 1.5, 0.11, dark, lip);
       for (let k = 0; k < 3; k++)
-        incise(m, [[x1 - 0.3 + k * 0.05, 0.62], [x1 - 0.24 + k * 0.05, 1.0]], 0.0045, dark, lip);
+        incise(m, [[x1 - 0.3 + k * 0.05, 1.04], [x1 - 0.24 + k * 0.05, 1.3]], 0.0045, dark, lip);
     }
     // The notes: small columns wherever there is room, by many hands.
     const small = 0.034;
-    for (let k = 0; k < 4; k++) annotate(m, x0 + 0.035 + k * 0.045, y1 - 0.1, 1.86, small, index * 7 + k, dark, lip);
+    for (let k = 0; k < 4; k++) annotate(m, x0 + 0.035 + k * 0.045, y1 - 0.1, 2.02, small, index * 7 + k, dark, lip);
     for (let k = 0; k < 15; k++) {
       const x = x0 + 0.03 + k * 0.047;
-      if (hash(index + k, 4.2) < 0.25) continue;
-      annotate(m, x, 0.84, y0 + 0.04, small, index * 11 + k + 50, dark, lip);
+      if (hash(index + k, 4.2) < 0.3) continue;
+      annotate(m, x, 1.14, y0 + 0.03, small, index * 11 + k + 50, dark, lip);
     }
     const mid = v === 1 ? [x0 + 0.035, x0 + 0.08, x1 - 0.08, x1 - 0.035] : [0.0, 0.045];
-    for (const x of mid) annotate(m, x, 1.82, 0.92, small, index * 13 + Math.round(x * 100), dark, lip);
+    for (const x of mid) annotate(m, x, 2.0, 1.2, small, index * 13 + Math.round(x * 100), dark, lip);
   });
 }
 
@@ -318,13 +339,14 @@ function cornice(m) {
 // The carved walls and their piers: one group, so the cutaway can fade the whole row when a
 // camera behind it looks across it at the board.
 function carvedWalls(T) {
-  const m = new Model(T, 194423);
+  const m = new Model(T, 194423),
+    low = new Model(T, 194427);
   walls.forEach((wx, i) => {
-    pier(m, wx, i * 1.7 + 0.4);
+    pier(m, low, wx, i * 1.7 + 0.4);
     panel(m, wx, i);
   });
   cornice(m);
-  return m.finish('刻字石壁', { occluder: true });
+  return [m.finish('刻字石壁', { occluder: true }), low.finish('石壁基座')];
 }
 
 export { carvedWalls, character, incise, FRONT };

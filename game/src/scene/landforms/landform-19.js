@@ -64,7 +64,7 @@ function landform19(T) {
     caveFloor(T),
     caveWall(T),
     cornerButtresses(T),
-    carvedWalls(T),
+    ...carvedWalls(T),
     ...pillarGroups(T),
     shore(T),
     props.finish('壁龕燈臺'),

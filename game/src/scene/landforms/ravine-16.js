@@ -322,18 +322,32 @@ function groundLife(m, height, area, count, skip) {
   }
 }
 
-// The stone path from the landing down the hillside to the south.
+// The stone path from the landing down the hillside, and whether a point is on it.
+const PATH = [
+  [0, 6.1],
+  [0.3, 7.5],
+  [1.4, 9.2],
+  [3.2, 10.6],
+  [5.6, 11.8],
+  [8.4, 13.4],
+  [10.5, 15.6],
+  [12.0, 18.5]
+];
+function nearPath(x, z, d = 0.95) {
+  for (let i = 0; i < PATH.length - 1; i++) {
+    const [ax, az] = PATH[i],
+      [bx, bz] = PATH[i + 1],
+      dx = bx - ax,
+      dz = bz - az,
+      t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
+    if (Math.hypot(x - ax - dx * t, z - az - dz * t) < d) return true;
+  }
+  return false;
+}
+
+// Its steps.
 function hillPath(m) {
-  const pts = [
-    [0, 6.1],
-    [0.3, 7.5],
-    [1.4, 9.2],
-    [3.2, 10.6],
-    [5.6, 11.8],
-    [8.4, 13.4],
-    [10.5, 15.6],
-    [12.0, 18.5]
-  ];
+  const pts = PATH;
   for (let i = 0; i < pts.length - 1; i++) {
     const [ax, az] = pts[i],
       [bx, bz] = pts[i + 1],
@@ -358,10 +372,10 @@ function hillPath(m) {
 function farHills(m) {
   const r = m.rng;
   const layers = [
-    { rad: 46, h: [5, 11], tone: hillTones[0], n: 120, salt: 1 },
-    { rad: 60, h: [8, 16], tone: hillTones[1], n: 110, salt: 5 },
-    { rad: 78, h: [12, 22], tone: hillTones[2], n: 96, salt: 9 },
-    { rad: 98, h: [16, 28], tone: hillTones[3], n: 80, salt: 13 }
+    { rad: 34, h: [4, 9], tone: 0x506450, n: 120, salt: 1 },
+    { rad: 47, h: [7, 14], tone: hillTones[0], n: 110, salt: 5 },
+    { rad: 63, h: [10, 19], tone: hillTones[1], n: 96, salt: 9 },
+    { rad: 82, h: [14, 25], tone: hillTones[2], n: 80, salt: 13 }
   ];
   for (const L of layers) {
     const ring = [];
@@ -384,7 +398,7 @@ function farHills(m) {
       put(m, [at(p, 1.04, shoulder(p)), at(q, 1.04, shoulder(q)), at(q, 1, q.h), at(p, 1, p.h)], [m.rgb(L.tone), m.rgb(L.tone), hi, hi], [-Math.cos(p.a), 0.5, -Math.sin(p.a)]);
       put(m, [at(p, 1, p.h), at(q, 1, q.h), at(q, 1.06, q.h - 2), at(p, 1.06, p.h - 2)], m.mix(L.tone, 0x8a948c, 0.3), [0, 1, 0]);
       // Trees along the crest and the near flank of the nearest range.
-      if (L.rad < 50)
+      if (L.rad < 40)
         for (let t = 0; t < 1; t++) {
           const f = r.range(0, 1),
             s = { a: p.a + (q.a - p.a) * f, rad: p.rad + (q.rad - p.rad) * f, h: p.h + (q.h - p.h) * f };
@@ -427,28 +441,7 @@ function mistBanks(m) {
 // 茶園: rows of clipped tea bushes along the hillside south of the ravine, each row a rounded
 // hedge following the ground, its top flushed with new leaves; the path passes through gaps.
 function teaRows(m) {
-  const r = m.rng,
-    path = [
-      [0, 6.1],
-      [0.3, 7.5],
-      [1.4, 9.2],
-      [3.2, 10.6],
-      [5.6, 11.8],
-      [8.4, 13.4],
-      [10.5, 15.6],
-      [12.0, 18.5]
-    ];
-  const nearPath = (x, z) => {
-    for (let i = 0; i < path.length - 1; i++) {
-      const [ax, az] = path[i],
-        [bx, bz] = path[i + 1],
-        dx = bx - ax,
-        dz = bz - az,
-        t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
-      if (Math.hypot(x - ax - dx * t, z - az - dz * t) < 0.95) return true;
-    }
-    return false;
-  };
+  const r = m.rng;
   const dark = 0x1f301d,
     body = 0x2c4128,
     top = 0x3d5432,
@@ -532,7 +525,20 @@ function grounds(m) {
 function groundCover(m) {
   groundLife(m, heightN, [-24, 24, -24, 1.5], 30, (x, z) => inHouse(x, z) || Math.abs(x + 12.2) < 0.8 || Math.abs(x - 14.9) < 0.8 || z > lipN(x) - 0.3);
   teaRows(m);
-  groundLife(m, heightS, [-24, 24, 6.2, 20], 80, (x, z) => z < lipS(x) + 0.3 || Math.hypot(x - 4, z - 11) < 1.2);
+  // Grass and small flowers thick about the head of the path, where the eye first falls.
+  const r = m.rng;
+  for (let i = 0; i < 150; i++) {
+    const x = r.range(-9, 9),
+      z = r.range(5.6, 9.5);
+    if (z < lipS(x) + 0.15 || (Math.abs(x) < 3.6 && z < 6.15) || nearPath(x, z, 0.7)) continue;
+    const y = heightS(x, z);
+    if (i % 5 === 0) {
+      const col = r.pick([0xe9e2c8, 0xd9b84a, 0xb88ac0]);
+      m.tube([x, y, z], [x, y + 0.12, z], 0.006, 0.004, 0x5d7a45, 3);
+      m.box(x, y + 0.13, z, 0.035, 0.02, 0.035, col);
+    } else grassClump(m, x, y, z, r.range(0.12, 0.26), 6);
+  }
+  groundLife(m, heightS, [-24, 24, 6.2, 20], 80, (x, z) => z < lipS(x) + 0.3 || nearPath(x, z, 0.8));
 }
 
 export { ravine, ravineLife, grounds, groundCover, farHills, mistBanks, heightN, heightS, lipN, lipS, inHouse };
