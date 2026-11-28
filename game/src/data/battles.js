@@ -40,7 +40,8 @@ const SIDE_REWARDS = ['coins', 'points', 'manual'];
 // was met 5% on 空山琴臺 (費彬 stands in the heroes' way) and 80% on 襄陽殘垣. The four kinds of
 // 0.69, measured the same way: 一擊斃命 54% on 紅楓驛, 6% on 絕情花徑; 後發制人 0% on both (the
 // simulated player never plays for a counter; kept at 一賠三, Q-N176); 絕技收官 84% on 寒玉石室, 71%
-// on 黑木繡閣. 借刀殺人 (0 of 6) was too hard: 隔山打牛 and 毒發身亡 took its place (Q-N176).
+// on 黑木繡閣. 借刀殺人 (0 of 6) was too hard: 隔山打牛 took its place (Q-N176), met 42% on 蘆花汀
+// and 32% on 桃花石陣. 毒發身亡 was tried with it and dropped (0 of 22).
 
 const BATTLES = [
   // 0 青竹渡: the gentle first board; a wave lands behind the south bridge in round 3.
@@ -228,7 +229,7 @@ const BATTLES = [
       { kind: 'unhurt', reward: 'coins', odds: 1 },
       { kind: 'holdLine', zone: { x: [0, 8] }, place: '陣井以西', reward: 'manual', odds: 1 },
       { kind: 'lamp', reward: 'coins', odds: 1 },
-      { kind: 'splashFell', reward: 'manual', odds: 2 }
+      { kind: 'splashFell', reward: 'manual', odds: 3 }
     ]
   },
   // 6 襄陽殘垣: keep the city's war drum through round 9 in the passage below the wall, where the
@@ -387,8 +388,7 @@ const BATTLES = [
       { kind: 'lamp', reward: 'coins', odds: 2 },
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'intact', reward: 'coins', odds: 1 },
-      { kind: 'holdLine', zone: { y: [9, 11] }, place: '南灘', reward: 'manual', odds: 1 },
-      { kind: 'poisonFell', reward: 'coins', odds: 2 }
+      { kind: 'holdLine', zone: { y: [9, 11] }, place: '南灘', reward: 'manual', odds: 1 }
     ]
   },
   // 11 絕情花徑: defeat everyone; 公孫止 before his stone house, six 網手 along both paths round
@@ -456,8 +456,7 @@ const BATTLES = [
       { kind: 'lastBlow', hero: '*', target: 'master', reward: 'points', odds: 2 },
       { kind: 'double', reward: 'manual', odds: 3 },
       { kind: 'noMedicine', reward: 'coins', odds: 1 },
-      { kind: 'lamp', reward: 'coins', odds: 2 },
-      { kind: 'poisonFell', reward: 'manual', odds: 2 }
+      { kind: 'lamp', reward: 'coins', odds: 2 }
     ]
   },
   // 14 黑木繡閣: 東方不敗 before the small house, the guards each alone about the garden; two more

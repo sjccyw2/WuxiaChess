@@ -230,7 +230,6 @@ function forceSide(s) {
   if (side.kind === 'oneBlow') fall(foe, { by: hero, fresh: true });
   if (side.kind === 'counterFell') fall(foe, { by: hero, how: 'counter' });
   if (side.kind === 'splashFell') fall(foe, { by: hero, how: 'splash' });
-  if (side.kind === 'poisonFell') fall(foe, { by: hero, how: 'poison' });
   if (side.kind === 'summitFinish') fall('master', { by: hero, how: 'art', art: 'dragonReserve' });
 }
 // A tiny seeded generator so a failure can be reproduced from the seed.
