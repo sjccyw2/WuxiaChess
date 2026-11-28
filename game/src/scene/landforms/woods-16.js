@@ -1,4 +1,4 @@
-// The trees round the 溫 house: old camphors (樟) with broad crowns, osmanthus (桂) in the rear
+// The trees round the 溫 house: old camphors with broad crowns, osmanthus in the rear
 // court, groves of tall bamboo on the hill behind, mountain pines along the ravine, and the
 // woods thinning up the hillsides.
 import { circle } from '../scenery-kit.js';
@@ -14,7 +14,7 @@ const osmanthusDark = 0x2e4a30;
 const osmanthusLight = 0x5d7d48;
 const bloom = 0xe8c86a;
 
-// 樟: a short massive trunk that splits into spreading limbs under a broad, lumpy crown.
+// Camphor: a short massive trunk that splits into spreading limbs under a broad, lumpy crown.
 function camphor(m, x, y, z, s, plain = false) {
   const r = m.rng;
   m.frame(x, y, z, r.range(0, circle), s, () => {
@@ -39,7 +39,7 @@ function camphor(m, x, y, z, s, plain = false) {
     clump(m, 0, 3.35, 0, 1.3, 0.75, 1.2, camphorDark, camphorLight, 10);
   });
 }
-// 桂: a dense round evergreen on a short trunk, dotted with its tiny golden flowers.
+// Osmanthus: a dense round evergreen on a short trunk, dotted with its tiny golden flowers.
 function osmanthus(m, x, y, z, s) {
   const r = m.rng;
   m.frame(x, y, z, r.range(0, circle), s, () => {
@@ -78,9 +78,9 @@ function hillWoods(m) {
   camphor(m, 13.0, heightN(13, -9.5), -9.5, 1.15);
   camphor(m, -13.5, heightN(-13.5, -4.5), -4.5, 1.0);
   // Pines and camphors up the hill, thinning as it climbs.
-  for (let i = 0; i < 30; i++) {
-    const x = r.range(-30, 30),
-      z = r.range(-32, -20.5);
+  for (let i = 0; i < 22; i++) {
+    const x = r.range(-28, 28),
+      z = r.range(-30, -20.5);
     if (inHouse(x, z)) continue;
     const y = heightN(x, z);
     camphor(m, x, y, z, r.range(0.7, 1.1), true);

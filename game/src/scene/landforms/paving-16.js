@@ -30,7 +30,7 @@ const ELEMENTS = [
 ];
 const elementAt = new Map(ELEMENTS.map((e) => [e.at.join(','), e]));
 // The ring through the five, centred on the screen wall.
-const RING = { x: 0, z: -0.65, r: 3.02, w: 0.075 };
+const RING = { x: 0, z: -0.65, r: 3.02, w: 0.055 };
 const ringAngle = (e) => Math.atan2(e.at[1] - CZ - RING.z, e.at[0] - CX - RING.x);
 
 // Moss, damp and wear across the court (world x, z): a colour multiplier and a moss amount.
@@ -195,8 +195,7 @@ function apronTile(m, cell, wx, wz) {
 // One element stone: a great flagstone with a ring and a sign inlaid flush in the element's
 // colour, a hair above the stone so it reads as colour and never as a step under a piece.
 function elementTile(m, cell, wx, wz, e) {
-  const r = m.rng,
-    o = 0.497,
+  const o = 0.497,
     y = TOP + 0.0035,
     col = e.col;
   block(m, -o, o, -o, o, m.mix(slabTone, slabPale, 0.3), wx, wz, TOP, 0.012, allSides);
@@ -262,7 +261,6 @@ function elementTile(m, cell, wx, wz, e) {
   // Bits of the brick border showing at the corners.
   for (const sx of [-1, 1])
     for (const sz of [-1, 1]) put(m, [[sx * 0.44, y, sz * 0.47], [sx * 0.47, y, sz * 0.47], [sx * 0.47, y, sz * 0.44]], tone(m, graniteDark, wx, wz));
-  void r;
 }
 
 // The ring through the five, laid on any tile it crosses: short flush strips of stone whose
@@ -277,7 +275,7 @@ function ringStrips(m, wx, wz) {
         t = a - p.a;
       if (span <= 0) span += circle;
       if (t < 0) t += circle;
-      if (t <= span) return m.mix(m.mix(p.col, q.col, t / span), slabPale, 0.42);
+      if (t <= span) return m.mix(m.mix(p.col, q.col, t / span), slabPale, 0.3);
     }
     return m.rgb(slabPale);
   };

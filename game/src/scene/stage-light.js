@@ -58,7 +58,7 @@ const rigs = [
   { warm: 0.3, key: 3.0, fill: 1.1, cool: 0.45, mist: 0.5 }, // 黑木繡閣: bright air above the cloud
   // 谷底棋臺: late sun over the west cliff, cool shade. Its base colour is the pond's, so the bounce is given: earth.
   { warm: 0.3, key: 2.4, fill: 1.08, cool: 0.7, rim: 0.7, exposure: 0.95, mist: 0.6, ground: 0x6f6a58 },
-  { warm: 0.3, key: 2.9, fill: 1.08, cool: 0.5, mist: 0.48 }, // 石樑溫家: hazy light over the ravine
+  { warm: 0.24, key: 2.75, fill: 1.12, cool: 0.5, mist: 0.5, ground: 0x726f64 }, // 石樑溫家: hazy light over the ravine; bounce off brick
   { warm: 0.12, key: 2.9, fill: 1.3, cool: 0.3, rim: 1.0, exposure: 0.84, mist: 0.5 }, // 萬安寺: lamplight under the pagoda
   { warm: 0.32, key: 3.1, fill: 1.05, cool: 0.5, mist: 0.5 }, // 光明頂: high wind and clear sun on the summit
   { warm: 0.08, key: 2.1, fill: 0.95, cool: 0.6, rim: 0.6, exposure: 0.92, mist: 0.45 } // 俠客島: sea light in the mouth of a cave

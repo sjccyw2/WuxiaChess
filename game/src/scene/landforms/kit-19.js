@@ -123,18 +123,20 @@ function floorHeight(x, z) {
   const off = boardOff(x, z);
   // The hall floor: nearly flat by the board, a little rougher away from it.
   let y = -0.025 + 0.02 * (n2 - 0.5) + 0.05 * smooth(0.4, 2.2, off) * (n1 - 0.45);
-  // The talus and rim at the wall's foot, where no opening cuts it.
+  // The talus and rim at the wall's foot, where no opening cuts it. Where the cutaway takes the
+  // wall away, the rim is what is left of it: a broken ridge round the hall.
   const open = Math.max(channel(x, z), mouth(x, z));
-  const rim = (0.42 + 0.5 * n1 + 0.08 * Math.sin(a * 9)) * (1 - open);
-  y += rim * smooth(R - 1.35, R - 0.15, d) * smooth(0.15, 0.9, off);
+  const rim = (0.75 + 0.6 * n1 + 0.1 * Math.sin(a * 9)) * (1 - open);
+  y += rim * smooth(R - 1.35, R - 0.1, d) * smooth(0.15, 0.9, off);
   // Past the wall, the island's flank drops in a short cliff to a wave-cut ledge and the sea.
-  const t = d - R + 0.25 * (n2 - 0.5);
-  if (t > 0.55) {
-    const ledge = SEA + 0.06 + 0.06 * n1;
+  const t = d - R + 0.2 * (n2 - 0.5);
+  if (t > 0.45) {
+    const ledge = SEA + 0.06 + 0.06 * n1,
+      edge = 1.05 + 0.35 * n1;
     let outer;
-    if (t < 1.05) outer = lerp(y, ledge, smooth(0.55, 1.05, t));
-    else if (t < 1.6 + 0.6 * n1) outer = ledge - 0.04 * (t - 1.05);
-    else outer = lerp(ledge, SEA - 1.5, smooth(1.6 + 0.6 * n1, 2.5 + 0.6 * n1, t));
+    if (t < 0.8) outer = lerp(y, ledge, smooth(0.45, 0.8, t));
+    else if (t < edge) outer = ledge - 0.05 * (t - 0.8);
+    else outer = lerp(ledge, SEA - 1.5, smooth(edge, edge + 0.7, t));
     y = outer;
   }
   // The tide channels, scoured below the sea.
@@ -149,7 +151,7 @@ function floorHeight(x, z) {
     const zz = z + 0.3 * Math.sin(x * 1.3) + 0.4 * (n1 - 0.5),
       ledges = Math.floor(smooth(7.6, 10.8, zz) * 4) / 4;
     const target =
-      -0.03 - 0.2 * smooth(5.4, 7.7, zz) - 1.4 * (0.6 * ledges + 0.4 * smooth(7.6, 10.8, zz)) + 0.05 * (n2 - 0.5);
+      -0.03 - 0.09 * smooth(5.4, 7.6, zz) - 1.4 * (0.6 * ledges + 0.4 * smooth(7.6, 10.8, zz)) + 0.04 * (n2 - 0.5);
     y = lerp(y, target, mo);
   }
   return Math.max(y, SEA - 2.2);
@@ -172,12 +174,22 @@ const buttresses = [
 ];
 const alcoveLamps = [-4, -2, 0, 2, 4].map((x) => [x, floorHeight(x, -5.86) + 0.2, -5.86]);
 const pillarLamps = pillars.map(([x, z]) => [x, 1.92, z + 0.47]);
-const lamps = [...alcoveLamps, ...pillarLamps, ...buttresses.map((b) => b.niche)];
+// Torches in iron brackets on the wall either side of each sea arch.
+const torches = openings
+  .filter((o) => o.name !== 'mouth')
+  .flatMap((o) =>
+    [-1, 1].map((s) => {
+      const a = o.a + (s * (o.half + 0.6)) / footRadius(o.a),
+        r = footRadius(a) - 0.68;
+      return { a, at: [Math.cos(a) * r, 2.02, ZC + Math.sin(a) * r] };
+    })
+  );
+const lamps = [...alcoveLamps, ...pillarLamps, ...buttresses.map((b) => b.niche), ...torches.map((t) => t.at)];
 function lightAt(x, y, z, base, gloom = 1) {
   const out = base.slice();
   // The gloom: deeper toward the back wall and up the walls, never on the board itself.
   const back = smooth(-2, -7, z) * 0.22 + smooth(1.5, 9, y) * 0.55,
-    away = smooth(0.6, 3.0, boardOff(x, z)) * 0.38;
+    away = smooth(0.6, 3.0, boardOff(x, z)) * 0.48;
   const dark = 1 - gloom * Math.min(0.78, back + away);
   for (let i = 0; i < 3; i++) out[i] *= dark;
   for (const [sx, sy, sz, r, k] of seaLights) {
@@ -216,28 +228,41 @@ function toward(m, pts, col, dir = [0, 1, 0]) {
 class Shell {
   constructor(m) {
     this.m = m;
-    this.facing = [];
+    this.facing = [[], []];
+    this.done = [0, 0];
+  }
+  // Everything drawn into the model since the last mark goes with the given stretch of wall:
+  // it faces `facing` and is judged from `centre`. A zero facing is never folded away.
+  mark(facing, centre) {
+    for (let k = 0; k < 2; k++) {
+      const n = this.m.parts[k].p.length / 3;
+      for (let i = this.done[k]; i < n; i++) this.facing[k].push([centre, facing]);
+      this.done[k] = n;
+    }
   }
   face(points, cols, facing) {
-    const m = this.m,
-      before = m.parts[0].p.length / 3;
-    m.face(points, cols);
-    const added = m.parts[0].p.length / 3 - before;
+    this.mark([0, 0, 0], [0, 0, 0]);
+    this.m.face(points, cols);
     const c = [0, 0, 0];
     for (const p of points) for (let i = 0; i < 3; i++) c[i] += p[i] / points.length;
-    for (let i = 0; i < added; i++) this.facing.push([c, facing]);
+    this.mark(facing, c);
   }
 }
 function fromInside(T, group, shell) {
-  const mesh = group.children.find((c) => c.isMesh && c.material.name === 'Maze_Stone_Wood');
-  if (!mesh) return;
+  shell.mark([0, 0, 0], [0, 0, 0]);
+  for (const [k, name] of ['Maze_Stone_Wood', 'Maze_Luminous'].entries()) {
+    const mesh = group.children.find((c) => c.isMesh && c.material.name === name);
+    if (mesh) foldAway(T, mesh, shell.facing[k]);
+  }
+}
+function foldAway(T, mesh, marks) {
   const g = mesh.geometry,
     shape = g.attributes.position,
     n = shape.count;
   const centre = new Float32Array(n * 3),
     facing = new Float32Array(n * 3),
     hidden = new Float32Array(n * 3);
-  shell.facing.forEach(([c, f], i) => {
+  marks.forEach(([c, f], i) => {
     centre.set(c, i * 3);
     facing.set(f, i * 3);
   });
@@ -309,6 +334,7 @@ export {
   buttresses,
   alcoveLamps,
   pillarLamps,
+  torches,
   lamps,
   lightAt,
   toward,

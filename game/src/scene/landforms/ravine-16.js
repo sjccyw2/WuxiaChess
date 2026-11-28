@@ -127,7 +127,7 @@ function face(m, line, topOf, salt) {
       top = topOf(p),
       ends = i === 0 || i === pts.length - 1,
       ys = [top, top - 0.22, top - 0.6];
-    for (let y = top - 1.05; y > WATER - 0.5; y -= 0.48) ys.push(y);
+    for (let y = top - 1.05; y > WATER - 0.5; y -= 0.56) ys.push(y);
     ys.push(WATER - 0.6);
     const fall = Math.abs(p.x + 13.6) < 1.1 ? 0.2 : 1;
     rows.push(
@@ -272,8 +272,7 @@ function fall(m) {
 // A strip of natural ground beside a lip: rows run away from the lip to `reach`, sampled from
 // `height`; `skip` leaves out the quads the house stands on.
 function land(m, lip, sign, height, reach, skip, salt) {
-  const r = m.rng,
-    xs = [];
+  const xs = [];
   for (let x = -36; x <= 36.001; x += 0.6) xs.push(x);
   const ds = [0, 0.25, 0.6, 1.1, 1.8, 2.7, 3.8, 5.1, 6.6, 8.3, 10.2, 12.4, 15, 18, 21.5, 25.5, 30, 35, 40.5];
   const grid = xs.map((x) =>
@@ -301,7 +300,6 @@ function land(m, lip, sign, height, reach, skip, salt) {
       if (skip(cx, cz)) continue;
       put(m, [a.pos, b.pos, c.pos, d.pos], [a.col, b.col, c.col, d.col]);
     }
-  void r;
 }
 
 // Rocks and growth on the open ground: boulders half sunk in the grass, clumps of grass and fern.
@@ -372,7 +370,7 @@ function hillPath(m) {
 function farHills(m) {
   const r = m.rng;
   const layers = [
-    { rad: 34, h: [4, 9], tone: 0x506450, n: 120, salt: 1 },
+    { rad: 34, h: [3, 11], tone: 0x5f736c, n: 120, salt: 1 },
     { rad: 47, h: [7, 14], tone: hillTones[0], n: 110, salt: 5 },
     { rad: 63, h: [10, 19], tone: hillTones[1], n: 96, salt: 9 },
     { rad: 82, h: [14, 25], tone: hillTones[2], n: 80, salt: 13 }
@@ -382,7 +380,7 @@ function farHills(m) {
     for (let i = 0; i <= L.n; i++) {
       const a = (i * circle) / L.n,
         k = fbm(Math.cos(a) * 3 + L.salt, Math.sin(a) * 3 - L.salt),
-        peak = Math.pow(k, 1.6),
+        peak = Math.pow(k, L.rad < 40 ? 2.2 : 1.6) * (L.rad < 40 ? 1.25 : 1),
         rad = L.rad * (0.92 + 0.16 * noise(a * 4 + L.salt, 2));
       ring.push({ a, rad, h: L.h[0] + (L.h[1] - L.h[0]) * peak * 1.4 });
     }
@@ -494,7 +492,6 @@ function teaRows(m) {
     }
     flushRun();
   }
-  void r;
 }
 
 // Everything above in three models' worth: the near (ravine and ground), the life on it, and the far.
@@ -523,11 +520,11 @@ function grounds(m) {
   hillPath(m);
 }
 function groundCover(m) {
-  groundLife(m, heightN, [-24, 24, -24, 1.5], 30, (x, z) => inHouse(x, z) || Math.abs(x + 12.2) < 0.8 || Math.abs(x - 14.9) < 0.8 || z > lipN(x) - 0.3);
+  groundLife(m, heightN, [-22, 22, -22, 1.5], 18, (x, z) => inHouse(x, z) || Math.abs(x + 12.2) < 0.8 || Math.abs(x - 14.9) < 0.8 || z > lipN(x) - 0.3);
   teaRows(m);
   // Grass and small flowers thick about the head of the path, where the eye first falls.
   const r = m.rng;
-  for (let i = 0; i < 150; i++) {
+  for (let i = 0; i < 120; i++) {
     const x = r.range(-9, 9),
       z = r.range(5.6, 9.5);
     if (z < lipS(x) + 0.15 || (Math.abs(x) < 3.6 && z < 6.15) || nearPath(x, z, 0.7)) continue;
@@ -538,7 +535,7 @@ function groundCover(m) {
       m.box(x, y + 0.13, z, 0.035, 0.02, 0.035, col);
     } else grassClump(m, x, y, z, r.range(0.12, 0.26), 6);
   }
-  groundLife(m, heightS, [-24, 24, 6.2, 20], 80, (x, z) => z < lipS(x) + 0.3 || nearPath(x, z, 0.8));
+  groundLife(m, heightS, [-24, 24, 6.2, 20], 60, (x, z) => z < lipS(x) + 0.3 || nearPath(x, z, 0.8));
 }
 
 export { ravine, ravineLife, grounds, groundCover, farHills, mistBanks, heightN, heightS, lipN, lipS, inHouse };

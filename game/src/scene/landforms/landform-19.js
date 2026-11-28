@@ -15,7 +15,7 @@ import { carvedWalls } from './carving-19.js';
 import { pillarGroups } from './pillars-19.js';
 import { shore, farSea } from './shore-19.js';
 import { tiles19 } from './floor-19.js';
-import { rgb, blend, alcoveLamps, lamps, lightAt } from './kit-19.js';
+import { rgb, blend, alcoveLamps, pillarLamps, lightAt } from './kit-19.js';
 
 // The lamps that stand on the rock shelf at the back of each alcove: a bronze dish on a short
 // stand, on a flat stone.
@@ -43,12 +43,12 @@ function alcoveLampStands(m) {
     );
   }
 }
-// Every flame in the hall, in one glowing batch: the alcove lamps, the pillars' hanging lamps
-// and the lamps in the buttresses' niches.
+// The flames of the alcove lamps and the pillars' hanging lamps, in one glowing batch (the
+// buttresses carry their own, which fold away with them).
 function flames(T) {
   const m = new Model(T, 197207);
   m.glow(() => {
-    for (const [x, y, z] of lamps) {
+    for (const [x, y, z] of [...alcoveLamps, ...pillarLamps]) {
       m.crystal(x, y - 0.03, z, 0.03, 0.12, 0xe8963e, 0xffe1a0, 6, 0.01);
       m.crystal(x + 0.008, y - 0.03, z - 0.006, 0.016, 0.07, 0xffd27a, 0xfff2c8, 5, -0.01);
     }

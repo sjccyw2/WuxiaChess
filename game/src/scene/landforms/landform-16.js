@@ -35,7 +35,7 @@ function courtFill(m) {
   }
   put(m, [[6.5, -0.01, -6.75], [7.12, -0.01, -6.75], [7.12, -0.01, 2.0], [6.5, -0.01, 2.0]], 0x51554f);
 }
-// 太平缸: a great bronze water vat on a stone stand, kept full against fire.
+// A great bronze water vat on a stone stand, kept full against fire.
 function waterVat(m, x, z) {
   m.frame(x, 0, z, 0, 1, () => {
     slab(m, -0.34, 0.34, 0, 0.1, -0.34, 0.34, graniteShade);
@@ -103,17 +103,16 @@ const tiles16 = {
   crate: (m) => censer(m)
 };
 
-function landform16(T, layout) {
+function landform16(T) {
   const group = new T.Group();
   group.name = '石樑溫家';
-  void layout;
   const parts = [
     [160411, greatHall, '溫家大堂', { occluder: true }],
     [160829, (m) => wing(m, -1), '西廂房', { occluder: true }],
     [161237, eastGallery, '東遊廊與月洞門', { occluder: true }],
-    [161447, eastGarden, '東園書齋', { occluder: true }],
+    [161447, eastGarden, '東園書房', { occluder: true }],
     [161653, rearCourt, '後院、後樓與圍牆', { occluder: true }],
-    [162067, furnishings, '院中太平缸與盆景', {}],
+    [162067, furnishings, '院中陳設', {}],
     [162481, (m) => {
       ravine(m);
       grounds(m);
@@ -126,12 +125,12 @@ function landform16(T, layout) {
       hillWoods(m);
       courtTrees(m);
       southWoods(m);
-    }, '樟松與桂樹', {}],
+    }, '古樹與松林', {}],
     [163721, bambooGroves, '屋後竹林', {}],
     [164137, (m) => {
       farHills(m);
       mistBanks(m);
-    }, '浙中遠山與山嵐', { distant: true, cast: false }]
+    }, '遠山與山霧', { distant: true, cast: false }]
   ];
   for (const [seed, draw, name, options] of parts) {
     const m = new Model(T, seed);

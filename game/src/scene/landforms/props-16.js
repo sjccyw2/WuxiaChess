@@ -4,11 +4,11 @@
 // lanterns, the bamboo in the corners and the herb beds before the wings. Everything on a tile
 // a piece can stand on is kept low and to the back or outer side of the tile.
 import { circle } from '../scenery-kit.js';
-import { CX, TOP, put, slab, tileCap, granite, graniteShade, graniteDark, plaster, plasterShade, plasterStain, brick, ridgeTone, bronze, bronzeDark, verdigris, gilt, timber, timberDark } from './kit-16.js';
+import { CX, TOP, tiles, put, slab, granite, graniteShade, graniteDark, plaster, plasterShade, plasterStain, brick, ridgeTone, bronze, bronzeDark, verdigris, gilt, timber, timberDark } from './kit-16.js';
 import { ELEMENTS } from './paving-16.js';
 
-const lionStone = 0x9c998e;
-const lionShade = 0x76746b;
+const lionStone = 0xb3b0a3;
+const lionShade = 0x8c897e;
 const soil = 0x4e4236;
 
 // Which way the outer side of the board lies from a tile: -1 west, 1 east.
@@ -49,7 +49,7 @@ function drum(m, x, z, yaw, s = 1, stand = false) {
     m.box(0.02, 0.09, 0, 0.28, 0.1, 0.235, m.mix(graniteShade, graniteDark, 0.3));
     m.frame(0.02, 0.37, 0, 0, 1, () => {
       m.tube([0, 0, -0.08], [0, 0, 0.08], 0.16, 0.16, lionStone, 14);
-      m.tube([0, 0, -0.095], [0, 0, -0.08], 0.13, 0.13, lionShade, 14);
+      m.tube([0, 0, -0.08], [0, 0, -0.095], 0.13, 0.13, lionShade, 14);
       m.tube([0, 0, 0.08], [0, 0, 0.095], 0.13, 0.13, lionShade, 14);
       // A little crouching beast on top of the drum.
       m.box(0, 0.19, 0, 0.13, 0.06, 0.08, lionShade);
@@ -58,7 +58,7 @@ function drum(m, x, z, yaw, s = 1, stand = false) {
   });
 }
 
-// 石獅: a seated lion on a carved plinth, facing +z of its frame. The male (ball) or female (cub)
+// A seated stone lion on a carved plinth, facing +z of its frame. The male (ball) or female (cub)
 // is set by `ball`. About 0.62 tall overall.
 function lion(m, x, z, yaw, ball) {
   m.frame(x, TOP, z, yaw, 1, () => {
@@ -196,7 +196,37 @@ function screenWall(m) {
   }
   // Brick cornice and the little roof.
   slab(m, -len / 2 - 0.03, len / 2 + 0.03, y1, y1 + 0.05, -t / 2 - 0.04, t / 2 + 0.04, m.mix(brick, ridgeTone, 0.3));
-  m.frame(0, 0, 0, 0, 1, () => tileCap(m, len + 0.12, y1 + 0.24, t / 2 + 0.16, 0.16, true));
+  miniRoof(m, len + 0.26, t + 0.4, y1 + 0.05, 0.22);
+}
+
+// A little hipped roof of grey tiles, w by d with its eaves at y: rows of round tiles down both
+// long slopes, a lit lip along the eaves, and a ridge whose ends curl up.
+function miniRoof(m, w, d, y, rise) {
+  const [dark, mid, hi] = tiles,
+    half = (w - d) / 2,
+    top = y + rise;
+  const n = Math.max(4, Math.round(w / 0.09));
+  for (const s of [-1, 1]) {
+    for (let i = 0; i < n; i++) {
+      const u0 = -w / 2 + (w * i) / n,
+        u1 = -w / 2 + (w * (i + 1)) / n;
+      // Where a strip meets the ridge (clamped to the ridge's length; past it, to the hips).
+      const r0 = Math.max(-half, Math.min(half, u0)),
+        r1 = Math.max(-half, Math.min(half, u1));
+      put(m, [[u0, y, (s * d) / 2], [u1, y, (s * d) / 2], [r1, top, 0], [r0, top, 0]], i % 2 ? mid : m.mix(mid, dark, 0.4), [0, 1, s]);
+      if (i % 2) m.line([[u0, y + 0.02, (s * d) / 2], [r0, top + 0.01, 0]], 0.014, hi, 4);
+    }
+    // The end slopes, and the lip of the eaves.
+    put(m, [[s * (w / 2), y, -d / 2], [s * (w / 2), y, d / 2], [s * half, top, 0]], mid, [s, 1, 0]);
+    put(m, [[-w / 2, y, (s * d) / 2], [w / 2, y, (s * d) / 2], [w / 2, y - 0.035, (s * d) / 2], [-w / 2, y - 0.035, (s * d) / 2]], hi, [0, 0, s]);
+    put(m, [[s * (w / 2), y, -d / 2], [s * (w / 2), y, d / 2], [s * (w / 2), y - 0.035, d / 2], [s * (w / 2), y - 0.035, -d / 2]], hi, [s, 0, 0]);
+  }
+  m.box(0, top + 0.02, 0, 2 * half + 0.06, 0.06, 0.07, ridgeTone);
+  for (const e of [-1, 1]) {
+    m.tube([e * (half + 0.02), top + 0.03, 0], [e * (half + 0.1), top + 0.13, 0], 0.03, 0.012, ridgeTone, 5);
+    // The hip ridges down to the corners.
+    for (const f of [-1, 1]) m.line([[e * half, top + 0.02, 0], [e * (w / 2), y + 0.03, (f * d) / 2]], 0.02, ridgeTone, 4);
+  }
 }
 
 // 銅香爐: a round bronze censer on three legs with a pierced lid, on a granite stand, with
@@ -369,7 +399,7 @@ function herbBed(m, p, cell) {
     [0x5e8a4e, 0x9ab86e, 0xe9e2c2], // 白芍
     [0x4f7a4a, 0x86a868, 0xd9a03c], // 金銀花
     [0x6a8f58, 0xa4c07c, 0xb68ac8], // 紫蘇 in flower
-    [0x56804a, 0x8fb06a, 0xf0d860] // 菊
+    [0x56804a, 0x8fb06a, 0xf0d860] // chrysanthemum
   ];
   for (let row = 0; row < 3; row++) {
     const [dark, light, flower] = kinds[(row + cell.x) % kinds.length],

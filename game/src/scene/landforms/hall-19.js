@@ -23,6 +23,7 @@ import {
   mouth,
   floorHeight,
   buttresses,
+  torches,
   lightAt,
   Shell,
   fromInside
@@ -47,22 +48,28 @@ function floorTone(x, y, z) {
     off = boardOff(x, z);
   // Bedded sandstone: bands that cross the hall from south-west to north-east.
   const bed = 0.5 + 0.5 * Math.sin(x * 0.9 - z * 1.25 + 2.2 * n1);
-  let c = blend(rgb(0x55534d), rgb(0x77736a), 0.25 + 0.45 * bed + 0.2 * n2);
+  let c = blend(rgb(0x4d4b46), rgb(0x7a766c), 0.2 + 0.5 * bed + 0.3 * n2);
+  // Dark wet patches where water seeps, pale salt where it has dried.
+  c = blend(c, rgb(0x3c3d39), 0.45 * smooth(0.62, 0.75, n1));
+  c = blend(c, rgb(0x8e8b80), 0.35 * smooth(0.7, 0.85, noise(x * 1.7 - 3, z * 1.7 + 8)));
   // Worn paler round the board, where the island's people have walked for decades.
   c = blend(c, rgb(0x8a8578), 0.35 * (1 - smooth(0.2, 1.6, off)) * (0.6 + 0.4 * n2));
   // The talus and rim: broken rock, darker in its gaps.
   const rubble = smooth(0.12, 0.7, y) * (1 - smooth(1.6, 2.4, y));
   c = blend(c, blend(rgb(0x3f3d39), rgb(0x67645b), n2), 0.6 * rubble);
-  // Sand blown and washed into the mouth.
-  const sand = mouth(x, z) * smooth(0.42, 0.62, n1 + 0.1 * smooth(5, 8, z));
-  c = blend(c, blend(rgb(0x8f887a), rgb(0xa59d88), n2), 0.6 * sand);
+  // A cove of pale sand in the mouth, the rock of the ledges breaking through it, darker and
+  // firmer where the waves have just left it.
+  const sand =
+    mouth(x, z) * smooth(5.5, 6.3, z) * smooth(0.3, 0.5, n1 + 0.25 - 0.08 * Math.abs(x)) * smooth(SEA - 0.05, SEA + 0.08, y);
+  const dry = blend(rgb(0xa89c7e), rgb(0xbbae90), n2);
+  c = blend(c, blend(rgb(0x8a8069), dry, smooth(SEA + 0.02, SEA + 0.13, y)), 0.92 * sand);
   // The tide: wet dark rock below the high-water line, a pale crust of barnacles at it,
   // weed under it, and the pale sand of the sea floor below.
-  const wet = 1 - smooth(SEA + 0.12, SEA + 0.42, y);
+  const wet = 1 - smooth(SEA + 0.03, SEA + 0.13, y);
   c = blend(c, rgb(0x3e423d), 0.75 * wet);
-  const crust = Math.exp(-(((y - SEA - 0.2) / 0.08) ** 2));
+  const crust = Math.exp(-(((y - SEA - 0.09) / 0.04) ** 2));
   c = blend(c, rgb(0xb2ad98), 0.55 * crust * (0.5 + 0.5 * n2));
-  const weed = Math.exp(-(((y - SEA + 0.02) / 0.12) ** 2));
+  const weed = Math.exp(-(((y - SEA + 0.01) / 0.06) ** 2));
   c = blend(c, rgb(0x4c6a4c), 0.6 * weed * smooth(0.3, 0.7, n1));
   if (y < SEA - 0.1) c = blend(rgb(0x8d9479), rgb(0x2d4a4c), smooth(SEA - 0.1, SEA - 1.4, y));
   // Outside the wall, the island's weathered top: paler, crusted with salt and lichen.
@@ -142,7 +149,7 @@ function joint(a, y) {
 }
 function wallPoint(a, y) {
   const R = footRadius(a);
-  const block = 0.2 * joint(a, y) * smooth(0.2, 1.4, y);
+  const block = 0.13 * joint(a, y) * smooth(0.2, 1.4, y);
   const bulge =
     (0.18 * Math.sin(a * 5 + 0.7) + 0.12 * (fbm(a * 4.1, y * 0.35) - 0.5)) * smooth(0.3, 1.8, y);
   const flare = 0.3 * smooth(0.8, -0.6, y);
@@ -380,6 +387,23 @@ function caveWall(T) {
       );
     }
   }
+  // The torches by the arches: an iron bracket let into the rock, the torch leaning out of
+  // its ring, pitch-wrapped at the head, burning.
+  for (const { a, at } of torches) {
+    const foot = wallPoint(a, 1.7),
+      n = [-Math.cos(a), 0, -Math.sin(a)];
+    const iron = 0x2b2a27,
+      shaft = [at[0] - n[0] * 0.1, at[1] - 0.42, at[2] - n[2] * 0.1];
+    m.line([foot, [foot[0] + n[0] * 0.2, 1.72, foot[2] + n[2] * 0.2], [at[0] - n[0] * 0.04, 1.78, at[2] - n[2] * 0.04]], 0.016, iron, 5);
+    m.line([wallPoint(a, 2.05), [at[0] - n[0] * 0.02, 1.98, at[2] - n[2] * 0.02]], 0.012, iron, 5);
+    m.tube(shaft, [at[0], at[1] - 0.08, at[2]], 0.022, 0.03, 0x5a4029, 6);
+    m.tube([at[0], at[1] - 0.1, at[2]], [at[0], at[1] + 0.02, at[2]], 0.045, 0.05, 0x2a2018, 7);
+    m.glow(() => {
+      m.crystal(at[0], at[1], at[2], 0.05, 0.2, 0xe8863a, 0xffd890, 6, 0.02);
+      m.crystal(at[0] + 0.01, at[1], at[2] - 0.01, 0.028, 0.12, 0xffc870, 0xfff0c0, 5, -0.02);
+    });
+    shell.mark(n, foot);
+  }
   const group = m.finish('洞壁、海門與洞口', { cast: false });
   fromInside(T, group, shell);
   return group;
@@ -455,10 +479,24 @@ function buttress(m, b) {
     m.rock(px, floorHeight(px, pz) - 0.06, pz, r.range(0.12, 0.3), r.range(0.1, 0.28), r.range(0.1, 0.24), 0x57534a, 0x8c8676, 7);
   }
 }
+// The buttresses belong to the cave wall: like it, each is seen only from inside the hall,
+// and folds away with its stretch of wall, its lamp with it.
 function cornerButtresses(T) {
-  const m = new Model(T, 192233);
-  for (const b of buttresses) buttress(m, b);
-  return m.finish('洞角石壁與燈龕', { occluder: true });
+  const m = new Model(T, 192233),
+    shell = new Shell(m);
+  for (const b of buttresses) {
+    buttress(m, b);
+    const [x, y, z] = b.niche;
+    m.glow(() => {
+      m.crystal(x, y - 0.03, z, 0.03, 0.12, 0xe8963e, 0xffe1a0, 6, 0.01);
+      m.crystal(x + 0.008, y - 0.03, z - 0.006, 0.016, 0.07, 0xffd27a, 0xfff2c8, 5, -0.01);
+    });
+    const l = Math.hypot(b.x, b.z - ZC);
+    shell.mark([-b.x / l, 0, (ZC - b.z) / l], [b.x, 2, b.z]);
+  }
+  const group = m.finish('洞角石壁與燈龕', { cast: false });
+  fromInside(T, group, shell);
+  return group;
 }
 
 export { caveFloor, caveWall, cornerButtresses, wallPoint, lean };

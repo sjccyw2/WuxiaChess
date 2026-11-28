@@ -95,7 +95,7 @@ function rocks(m) {
   for (let k = 0; k < 120; k++) {
     const a = r.range(0, circle),
       R = footRadius(a),
-      d = R + r.range(1.3, 3.4);
+      d = R + r.range(0.95, 2.6);
     const x = Math.cos(a) * d,
       z = ZC + Math.sin(a) * d;
     const bed = floorHeight(x, z);
@@ -116,32 +116,87 @@ function rocks(m) {
 
 // The landing: a jetty of dressed blocks from the mouth's ledge out into the sea, with stone
 // bollards, and a step down at its end where a boat can lie.
-const JETTY = { x: -2.2, z0: 6.9, z1: 10.6, w: 1.05, top: -0.05 };
+const JETTY = { x: -2.2, z0: 6.9, z1: 10.5, w: 1.0, top: -0.02 };
 function jetty(m) {
-  const { x, z0, z1, w, top } = JETTY;
-  const L = (c, z, y = top) => lightAt(x, y, z, rgb(c), 0.2).map((v) => v * 0.8);
-  for (let z = z0, k = 0; z < z1; z += 0.52, k++) {
-    // Each course: a pier block going down to the sea floor, and the deck slabs over it.
-    const bed = Math.min(floorHeight(x, z + 0.26), top - 0.2);
-    m.box(x, (top - 0.08 + bed - 0.2) / 2, z + 0.26, w * 0.96, top - 0.08 - bed + 0.2, 0.5, L(0x5f5d55, z, top - 0.3));
-    const tint = blend(rgb(0x5f5c55), rgb(0x76726a), hash(k, 2.2)).map((v) => v * 0.85);
-    for (const s of [-1, 1])
-      m.box(x + s * w * 0.25, top - 0.04, z + 0.26, w * 0.49, 0.08, 0.5, lightAt(x, top, z, tint, 0.2));
-    // The tide line on the piers: a band of weed and barnacles.
+  const { x, z0, z1, w, top } = JETTY,
+    r = m.rng;
+  const wood = (k, y) => {
+    let c = blend(rgb(0x6b5a45), rgb(0x8a7a62), hash(k, 5.1));
+    c = blend(c, rgb(0x2c2a24), smooth(SEA + 0.2, SEA - 0.05, y));
+    c = blend(c, rgb(0x55693f), 0.5 * Math.exp(-(((y - SEA) / 0.06) ** 2)));
+    return lightAt(x, y, z0 + 1, c, 0.2);
+  };
+  // A stone abutment on the ledge, then the timber stage on its piles.
+  const bed0 = floorHeight(x, z0);
+  m.box(x, (top + bed0 - 0.3) / 2, z0 + 0.1, w * 1.1, top - bed0 + 0.3, 0.7, lightAt(x, top, z0, rgb(0x5d5a52), 0.3));
+  m.box(x, top - 0.02, z0 + 0.1, w * 1.12, 0.05, 0.72, lightAt(x, top, z0, rgb(0x79756a), 0.3));
+  let k = 0;
+  for (let z = z0 + 0.7; z <= z1 + 0.01; z += 0.85, k++) {
+    const bed = Math.min(floorHeight(x, z), SEA - 0.3);
     for (const s of [-1, 1]) {
-      m.box(x + s * w * 0.485, SEA + 0.12, z + 0.26, 0.012, 0.12, 0.5, L(0xa9a48e, z));
-      m.box(x + s * w * 0.485, SEA - 0.01, z + 0.26, 0.012, 0.12, 0.5, L(0x3d5a3c, z));
+      const px = x + s * w * 0.42,
+        tall = z > z1 - 0.5 ? 0.32 : 0;
+      for (let y = bed; y < top + tall - 0.05; y += 0.25)
+        m.tube([px, y, z], [px, Math.min(top + tall, y + 0.26), z], 0.06, 0.058, wood(k * 7 + s, y + 0.12), 7);
+      if (tall) m.hoop(px, top + 0.15, z, 0.075, 0.015, 0x9a8a62, 10);
+    }
+    m.box(x, top - 0.1, z, w, 0.08, 0.11, wood(k, top));
+  }
+  for (const s of [-1, 1]) m.box(x + s * w * 0.3, top - 0.05, (z0 + 0.45 + z1) / 2, 0.09, 0.07, z1 - z0 - 0.45, wood(s + 9, top));
+  // The deck: planks laid across, weathered unevenly, one or two sprung or missing.
+  let i = 0;
+  for (let z = z0 + 0.47; z < z1 + 0.1; z += 0.155, i++) {
+    if (hash(i, 3.3) < 0.06) continue;
+    const lift = hash(i, 4.4) < 0.1 ? 0.02 : 0;
+    m.frame(x, top + lift, z, 0.03 * (hash(i, 6.6) - 0.5), 1, () =>
+      m.box(0, 0, 0, w * (0.98 + 0.06 * hash(i, 7)), 0.035, 0.14, wood(i + 20, top))
+    );
+  }
+  // A ladder of rungs down to the water at the end.
+  for (let k = 0; k < 4; k++) m.box(x, top - 0.12 - k * 0.16, z1 + 0.12, w * 0.5, 0.03, 0.05, wood(40 + k, top - 0.1 - k * 0.16));
+  return [x + w * 0.42, top + 0.2, z1 - 0.04];
+}
+// A net hung to dry over two rocks by the landing, sagging between them.
+function net(m, x, z, yaw) {
+  const y = floorHeight(x, z);
+  m.frame(x, y, z, yaw, 1, () => {
+    m.rock(-0.5, -0.05, 0, 0.2, 0.42, 0.18, 0x55534c, 0x77736a, 7);
+    m.rock(0.5, -0.05, 0.05, 0.18, 0.36, 0.16, 0x55534c, 0x77736a, 7);
+    const at = (u, v) => [u, 0.4 - 0.25 * (1 - (u / 0.5) ** 2) - v * 0.35 + 0.04 * Math.sin(u * 9 + v * 5), v * 0.35];
+    for (let j = 0; j <= 5; j++) {
+      const pts = [];
+      for (let i = 0; i <= 10; i++) pts.push(at(-0.5 + i * 0.1, j / 5));
+      m.line(pts, 0.006, 0x8c7c58, 3);
+    }
+    for (let i = 0; i <= 10; i++) {
+      const pts = [];
+      for (let j = 0; j <= 5; j++) pts.push(at(-0.5 + i * 0.1, j / 5));
+      m.line(pts, 0.006, 0x8c7c58, 3);
+    }
+    for (let i = 0; i < 4; i++) m.lathe(-0.4 + i * 0.27, 0.2 - 0.12 * Math.sin(i * 1.1), 0.01, [[0, 0.03], [0.03, 0.035], [0.06, 0.03]], 0xc9a85a, 7);
+  });
+}
+// The drift line of the highest tide across the mouth: weed, shells, a crab's cast.
+function driftLine(m) {
+  const r = m.rng;
+  for (let x = -5.6; x <= 5.6; x += 0.3) {
+    if (Math.abs(x - JETTY.x) < 0.7) continue;
+    let z = 6.2;
+    while (z < 11 && floorHeight(x, z) > SEA + 0.12) z += 0.05;
+    if (z >= 11) continue;
+    const y = floorHeight(x, z) + 0.01;
+    const a = r.range(-0.6, 0.6);
+    const pts = [];
+    for (let i = 0; i < 5; i++) pts.push([x + Math.cos(a) * i * 0.06, y + 0.004, z - 0.04 + Math.sin(a) * i * 0.06 + 0.02 * Math.sin(i * 2 + x)]);
+    m.line(pts, 0.009, r.pick([0x5a6040, 0x6b6a48, 0x7a6a44, 0x5e5a3c]), 3);
+    if (r.next() < 0.25) {
+      const sx = x + r.range(-0.1, 0.1),
+        sz = z - r.range(0.05, 0.2);
+      m.rock(sx, floorHeight(sx, sz), sz, 0.03, 0.02, 0.025, 0xc9bca4, 0xe0d6c4, 5);
     }
   }
-  // A step down at the seaward end.
-  m.box(x, top - 0.2, z1 + 0.25, w * 0.9, 0.14, 0.4, L(0x6d6a60, z1));
-  for (const z of [z0 + 1.2, z1 - 0.3])
-    for (const s of [-1, 1]) {
-      const bx = x + s * w * 0.38;
-      m.lathe(bx, top, z, [[0, 0.09], [0.18, 0.08], [0.24, 0.1], [0.28, 0.06]], L(0x6a675e, z), 9);
-    }
-  return [x + w * 0.38, top + 0.2, z1 - 0.3];
 }
+
 // The boat that brought the heroes: a sampan with a mat awning over its waist, its sculling
 // oar shipped, made fast to the jetty's last bollard.
 function sampan(m, bx, bz, yaw, post) {
@@ -349,6 +404,8 @@ function shore(T) {
   sampan(m, JETTY.x + 1.05, JETTY.z1 - 0.6, Math.PI + 0.12, post);
   wrack(m, JETTY.x - 1.1, 9.2, 1.2);
   wrack(m, 3.5, 9.6, 1.0);
+  net(m, -4.3, 6.55, 0.5);
+  driftLine(m);
   return m.finish('海門礁石與南口渡頭');
 }
 

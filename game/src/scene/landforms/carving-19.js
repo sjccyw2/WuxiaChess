@@ -7,7 +7,7 @@
 // No character is legible from the camera; the strokes are cut as Chinese is cut, so the wall
 // reads as writing.
 import { Model, circle } from '../scenery-kit.js';
-import { TOP, smooth, rgb, blend, noise, hash, walls, lightAt, toward } from './kit-19.js';
+import { TOP, smooth, rgb, blend, noise, hash, walls, lightAt, toward, Shell, fromInside } from './kit-19.js';
 
 const FRONT = -4.72; // the dressed face of every pier
 const PANEL = { x0: -0.37, x1: 0.37, y0: 0.9, y1: 2.84 };
@@ -46,6 +46,12 @@ function pier(m, low, wx, salt) {
       return [x, y, z, lightAt(x, y, z, c, 0.5)];
     });
     const into = y <= DADO ? low : m;
+    // The base is closed at the top, so that with the wall folded away it shows as cut stone.
+    if (y === DADO) {
+      const mid = ring.reduce((t, p) => [t[0] + p[0] / n, t[1], t[2] + p[2] / n], [0, DADO, 0]);
+      const cut = lightAt(mid[0], DADO, mid[2], rgb(0x6d6a62), 0.3);
+      for (let i = 0; i < n; i++) toward(low, [ring[i].slice(0, 3), ring[(i + 1) % n].slice(0, 3), mid], cut);
+    }
     if (prev)
       for (let i = 0; i < n; i++) {
         const j = (i + 1) % n;
@@ -336,8 +342,7 @@ function cornice(m) {
   }
 }
 
-// The carved walls and their piers: one group, so the cutaway can fade the whole row when a
-// camera behind it looks across it at the board.
+// The carved walls and their piers.
 function carvedWalls(T) {
   const m = new Model(T, 194423),
     low = new Model(T, 194427);
@@ -346,7 +351,14 @@ function carvedWalls(T) {
     panel(m, wx, i);
   });
   cornice(m);
-  return [m.finish('刻字石壁', { occluder: true }), low.finish('石壁基座')];
+  // Above their bases the walls belong to the cave's north wall: seen only from the hall, they
+  // fold away whole, with it, for a camera behind them, instead of standing dark before the
+  // board. They never stand between the hall's own cameras and a tile.
+  const shell = new Shell(m);
+  shell.mark([0, 0, 1], [0, 1.6, -5.3]);
+  const group = m.finish('刻字石壁', { cast: false });
+  fromInside(T, group, shell);
+  return [group, low.finish('石壁基座')];
 }
 
 export { carvedWalls, character, incise, FRONT };

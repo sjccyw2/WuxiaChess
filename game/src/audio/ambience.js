@@ -144,12 +144,15 @@ const BEDS = [
     ]
   }, // 谷底棋臺
   {
-    // Water far down in the ravine, wind in the court's bamboo.
-    wind: [800, 1.4, 0.3],
-    water: 0.25,
+    // The stream far down in the ravine and its little fall, wind in the court's bamboo, birds
+    // on the tea slopes and now and then the wind bell under the hall's eaves.
+    wind: [850, 1.3, 0.32],
+    water: 0.3,
     events: [
-      ['knock', 13],
-      ['bird', 15]
+      ['bird', 11],
+      ['plip', 14],
+      ['chime', 21],
+      ['knock', 27]
     ]
   }, // 石樑溫家
   {

@@ -466,7 +466,7 @@ function eastGarden(m) {
   }
   m.frame((x0 + x1) / 2, 0, south + 0.05, 0, 1, () => plasteredWall(m, -(x1 - x0) / 2, (x1 - x0) / 2, 0, 1.15, 0.24, true));
   leakWindow(m, 11.3, 0.75, south + 0.05, 0.5, 0.5, 0.24);
-  // 書齋: the study, facing west onto the garden.
+  // The study, facing west onto the garden.
   const sx0 = 10.3,
     sx1 = 13.4,
     sz0 = -7.2,
@@ -542,14 +542,14 @@ function rearCourt(m) {
       const x = -w + 0.3 + ((2 * w - 0.6) * (i + 0.5)) / 8;
       m.frame(x, 3.1, d / 2 - 1.0, 0, 1, () => latticePanel(m, ((2 * w - 0.6) / 8) * 0.95, 1.6, { nx: 3, ny: 3, skirt: 0.3 }));
     }
-    tiledRoof(m, 2 * w + 0.5, d + 0.6, 5.0, 1.35, { hip: 0, gable: true, lift: 0.1, tones: roofTones, rafters: false, rows: 3, tile: 0.46 });
+    tiledRoof(m, 2 * w + 0.5, d + 0.6, 5.0, 1.35, { hip: 0, gable: true, lift: 0.1, tones: roofTones, rafters: false, rows: 3, tile: 0.55 });
     for (const s of [-1, 1]) m.frame(s * (w + 0.12), 0, 0, 0, 1, () => horseHeadWall(m, d + 0.9, 0.3, [5.3, 5.8, 6.75], 0.3));
   });
   // Kitchen and store roofs along the sides of the rear court.
   for (const s of [-1, 1]) {
     m.frame(s * 9.2, 0, -16.5, Math.PI / 2, 1, () => {
       slab(m, -2.6, 2.6, 0, 2.0, -1.4, 1.4, plaster);
-      tiledRoof(m, 5.4, 3.2, 2.0, 0.8, { hip: 0, gable: true, lift: 0.06, tones: roofTones, rafters: false, rows: 3, tile: 0.36 });
+      tiledRoof(m, 5.4, 3.2, 2.0, 0.8, { hip: 0, gable: true, lift: 0.06, tones: roofTones, rafters: false, rows: 2, tile: 0.5 });
       for (const e of [-1, 1]) m.frame(e * 2.65, 0, 0, 0, 1, () => horseHeadWall(m, 3.4, 0, [2.25, 2.95], 0.24));
     });
     // A chimney with a wisp of smoke from the east kitchen.
