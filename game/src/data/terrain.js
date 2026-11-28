@@ -1051,7 +1051,7 @@ const fields = [
     tactic:
       '萬安寺的前庭，北面一座十三層寶塔，塔門前石階兩旁各一口香爐。東西兩牆下各擺一口鐵籠，籠裡關著人；庭中古柏、經幢錯落，南面是山門。'
   },
-  // 18 光明頂: the summit before the hall of the sacred fire (守: keep the fire through round 9).
+  // 18 光明頂: the summit before the hall of the sacred fire (守: keep the fire through round 8).
   // The heroes stand by the altar; the road comes up from the south, and a secret way opens behind
   // the hall to the north-west.
   {

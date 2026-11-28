@@ -55,7 +55,7 @@ function floorTone(x, y, z) {
   c = blend(c, blend(rgb(0x3f3d39), rgb(0x67645b), n2), 0.6 * rubble);
   // Sand blown and washed into the mouth.
   const sand = mouth(x, z) * smooth(0.42, 0.62, n1 + 0.1 * smooth(5, 8, z));
-  c = blend(c, blend(rgb(0xa39a80), rgb(0xbcb294), n2), 0.7 * sand);
+  c = blend(c, blend(rgb(0x8f887a), rgb(0xa59d88), n2), 0.6 * sand);
   // The tide: wet dark rock below the high-water line, a pale crust of barnacles at it,
   // weed under it, and the pale sand of the sea floor below.
   const wet = 1 - smooth(SEA + 0.12, SEA + 0.42, y);
@@ -69,7 +69,7 @@ function floorTone(x, y, z) {
   const d = Math.hypot(x, z - ZC),
     R = footRadius(Math.atan2(z - ZC, x));
   const outside = smooth(R + 0.2, R + 1.2, d) * smooth(SEA + 0.4, SEA + 0.9, y);
-  c = blend(c, blend(rgb(0x5d5b54), rgb(0x86827a), n2), 0.7 * outside);
+  c = blend(c, blend(rgb(0x4e4d48), rgb(0x6e6b64), n2), 0.75 * outside);
   return c.map((v) => v * (0.94 + 0.12 * n2));
 }
 function caveFloor(T) {
@@ -408,7 +408,7 @@ function buttress(m, b) {
       const px = b.x + Math.cos(a) * b.rx * q * taper * j - Math.sign(b.x) * 0.5 * t * t,
         pz = b.z + Math.sin(a) * b.rz * q * taper * j - 0.6 * t * t;
       const band = 0.5 + 0.5 * Math.sin(y * 3.1 + salt);
-      let c = blend(rgb(0x4d4a42), rgb(0x736d60), 0.2 + 0.6 * band);
+      let c = blend(rgb(0x45443f), rgb(0x625f57), 0.2 + 0.6 * band);
       c = blend(c, rgb(0x34352f), 0.5 * smooth(1.2, 0, y));
       c = blend(c, rgb(0x111214), 0.7 * smooth(2.4, b.h, y));
       return [px, y, pz, lightAt(px, y, pz, c, 0.6)];

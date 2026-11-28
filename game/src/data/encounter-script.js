@@ -885,7 +885,7 @@ const ENCOUNTER_SCRIPT = [
         half: { who: 'youth', text: '火頭矮了一半。再撐幾回合。' },
         broken: { who: 'boss', text: '魔教的火，滅了也好。只是這火，不是老尼要滅的。' },
         lost: '聖火熄了，峰頂一片昏暗。戰意所逼之事既成，這一局便輸了。',
-        held: { who: 'youth', text: '九合已過，那股力先散了。火還燒著。' }
+        held: { who: 'youth', text: '八合已過，那股力先散了。火還燒著。' }
       }
     }
   },

@@ -28,11 +28,11 @@ import {
   mortar,
   stone,
   stoneLight,
-  stoneDark,
-  bronze
+  stoneDark
 } from './kit-17.js';
 
-const bronzeDark = 0x3e3829;
+const patina = 0x46483c; // old bronze, dulled green-grey
+const bronzeDark = 0x2c2e27;
 
 // Ground that is not to be paved: the footprints of the buildings round the court.
 const built = [
@@ -143,7 +143,7 @@ function furnishings(m) {
         5
       );
     }
-    m.lathe(0, 0.5, 0, [[0, 0.12], [0.05, 0.3], [0.16, 0.42], [0.3, 0.4], [0.36, 0.33], [0.4, 0.37], [0.43, 0.37]], bronze, 12);
+    m.lathe(0, 0.5, 0, [[0, 0.12], [0.05, 0.3], [0.16, 0.42], [0.3, 0.4], [0.36, 0.33], [0.4, 0.37], [0.43, 0.37]], patina, 12);
     for (const s of [-1, 1]) m.hoop(s * 0.41, 0.98, 0, 0.1, 0.022, bronzeDark, 6, 'xy');
     m.glow(() => m.lathe(0, 0.9, 0, [[0, 0.32], [0.005, 0.32]], 0xd8642c, 12));
     // A pierced lid like a little pavilion roof, and a thread of smoke.
@@ -151,7 +151,7 @@ function furnishings(m) {
       const a = (k * Math.PI) / 2 + Math.PI / 4;
       m.tube([Math.cos(a) * 0.26, 0.93, Math.sin(a) * 0.26], [Math.cos(a) * 0.2, 1.12, Math.sin(a) * 0.2], 0.018, 0.018, bronzeDark, 4);
     }
-    m.lathe(0, 1.1, 0, [[0, 0.36], [0.05, 0.3], [0.16, 0.12], [0.22, 0.05], [0.3, 0.07], [0.38, 0]], bronze, 8);
+    m.lathe(0, 1.1, 0, [[0, 0.36], [0.05, 0.3], [0.16, 0.12], [0.22, 0.05], [0.3, 0.07], [0.38, 0]], patina, 8);
     m.line([[0, 1.45, 0], [0.04, 1.75, 0.02], [-0.03, 2.05, -0.02], [0.05, 2.4, 0]], 0.01, 0x737c8c, 4);
     mark(m, 0, 1.0, 0, 1.1);
   });
@@ -162,17 +162,24 @@ function furnishings(m) {
       m.rock(0, 0.1, 0, 0.42, 0.34, 0.62, stone, stoneLight, 9);
       m.rock(0, 0.18, 0.62, 0.15, 0.2, 0.2, stone, stoneLight, 7);
       for (const [x, z] of [[-0.38, 0.4], [0.38, 0.4], [-0.38, -0.4], [0.38, -0.4]]) m.rock(x, 0.1, z, 0.12, 0.12, 0.13, stoneDark, stone, 6);
-      m.box(0, 0.98, -0.05, 0.84, 1.16, 0.2, stoneLight);
-      m.box(0, 0.98, -0.05, 0.66, 0.92, 0.205, m.mix(stoneLight, stone, 0.4));
-      for (let c = 0; c < 6; c++)
-        for (let r = 0; r < 7; r++) m.box(-0.25 + c * 0.1, 1.33 - r * 0.11, 0.055, 0.05, 0.06, 0.004, stoneDark);
-      m.lathe(0, 1.56, -0.05, [[0, 0.44], [0.12, 0.42], [0.26, 0.3], [0.34, 0]], stoneLight, 8);
+      m.box(0, 0.98, -0.05, 0.84, 1.16, 0.2, stone);
+      m.box(0, 0.98, -0.05, 0.66, 0.92, 0.205, m.mix(stone, stoneDark, 0.3));
+      // Columns of characters cut into both faces.
+      for (const f of [-1, 1])
+        for (let c = 0; c < 6; c++)
+          for (let r = 0; r < 7; r++) {
+            const x = -0.25 + c * 0.1,
+              y = 1.33 - r * 0.11,
+              z = -0.05 + f * 0.104;
+            put(m, [[x - 0.022, y - 0.03, z], [x + 0.022, y - 0.03, z], [x + 0.022, y + 0.03, z], [x - 0.022, y + 0.03, z]], stoneDark, [0, 0, f]);
+          }
+      m.lathe(0, 1.56, -0.05, [[0, 0.44], [0.12, 0.42], [0.26, 0.3], [0.34, 0]], stone, 8);
     });
   // 太平缸: bronze water vats on stone stands down the east side of the court.
   for (const z of [-5.0, 0.0, 5.0])
     m.frame(8.2, OUT, z, 0, 1, () => {
       m.box(0, 0.08, 0, 0.7, 0.16, 0.7, stoneDark);
-      m.lathe(0, 0.16, 0, [[0, 0.22], [0.08, 0.34], [0.42, 0.36], [0.5, 0.31], [0.52, 0.33]], bronze, 12);
+      m.lathe(0, 0.16, 0, [[0, 0.22], [0.08, 0.34], [0.42, 0.36], [0.5, 0.31], [0.52, 0.33]], patina, 12);
       m.lathe(0, 0.64, 0, [[0, 0.3], [0.002, 0.3]], 0x1d2a33, 12);
       for (const s of [-1, 1]) m.hoop(s * 0.36, 0.5, 0, 0.06, 0.016, bronzeDark, 6, 'xy');
     });

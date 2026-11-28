@@ -22,12 +22,10 @@ import {
   interior,
   gilt,
   inkBoard,
-  footing,
   SHELF,
   put,
   slab,
   plasteredWall,
-  plasterBlock,
   horseHeadWall,
   column,
   latticePanel,
@@ -533,11 +531,6 @@ function rearCourt(m) {
   // Its windlass frame.
   for (const s of [-1, 1]) m.box(-3.5 + s * 0.5, 0.9, -12.9, 0.06, 0.9, 0.06, timber);
   m.tube([-4.0, 1.25, -12.9], [-3.0, 1.25, -12.9], 0.06, 0.06, timberDark, 6);
-  void circle;
-  void plasterShade;
-  void footing;
-  void tileCap;
-  void plasterBlock;
 }
 
 export { greatHall, wing, eastGallery, eastGarden, rearCourt, lantern, floorTiles, terrace, HALL, WING, PLAT, EAST };

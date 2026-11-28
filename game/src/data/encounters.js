@@ -609,7 +609,7 @@ const ENCOUNTERS = [
       'zhangSan',
       '',
       {
-        mods: { hp: 1.45, atk: 4, def: 3, step: 4, range: 1 },
+        mods: { hp: 1.35, atk: 4, def: 3, step: 4, range: 1 },
         sig: { heal: 'stage' }
       }
     )
@@ -1110,7 +1110,7 @@ const VILLAINS = {
     row: 'master',
     ...adversary('李四', '俠客島', '俠客行', '石壁掌法', '罰惡令', 'exposed', 'guo',
       '俠客島罰惡使，又高又瘦，一張臉從來不笑。十年一回，同兄弟持銅牌出島，罰的向來是他親眼斷定的惡人。今日不斷善惡，見人便罰；他只認得一件事：方才誰出手最重，便罰誰。', 'liSi', '', {
-        mods: { hp: 1.3, atk: 7, def: 1, step: 5, range: 1 },
+        mods: { hp: 1.2, atk: 5, def: 1, step: 5, range: 1 },
         prefers: 'striker'
       })
   }

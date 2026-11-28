@@ -8,16 +8,22 @@ import { heightN, heightS, lipN, lipS, inHouse } from './ravine-16.js';
 
 const bark = 0x4a3e34;
 const barkLight = 0x6a5c4e;
-const camphorDark = 0x3a5534;
-const camphorLight = 0x7c9a58;
+const camphorDark = 0x334b2f;
+const camphorLight = 0x6a8650;
 const osmanthusDark = 0x2e4a30;
 const osmanthusLight = 0x5d7d48;
 const bloom = 0xe8c86a;
 
 // 樟: a short massive trunk that splits into spreading limbs under a broad, lumpy crown.
-function camphor(m, x, y, z, s) {
+function camphor(m, x, y, z, s, plain = false) {
   const r = m.rng;
   m.frame(x, y, z, r.range(0, circle), s, () => {
+    if (plain) {
+      m.tube([0, -0.1, 0], [0.05, 1.4, 0], 0.22, 0.14, bark, 5);
+      clump(m, 0, 2.4, 0, 1.6, 1.0, 1.5, camphorDark, camphorLight, 7);
+      clump(m, 0.5, 3.1, 0.2, 0.9, 0.6, 0.9, camphorDark, camphorLight, 6);
+      return;
+    }
     m.tube([0, -0.1, 0], [0.05, 1.0, 0], 0.26, 0.2, bark, 8);
     m.lathe(0, -0.1, 0, [[0, 0.42], [0.25, 0.3], [0.45, 0.25]], bark, 8);
     const limbs = 5;
@@ -72,33 +78,31 @@ function hillWoods(m) {
   camphor(m, 13.0, heightN(13, -9.5), -9.5, 1.15);
   camphor(m, -13.5, heightN(-13.5, -4.5), -4.5, 1.0);
   // Pines and camphors up the hill, thinning as it climbs.
-  for (let i = 0; i < 70; i++) {
-    const x = r.range(-34, 34),
-      z = r.range(-36, -20.5);
+  for (let i = 0; i < 30; i++) {
+    const x = r.range(-30, 30),
+      z = r.range(-32, -20.5);
     if (inHouse(x, z)) continue;
     const y = heightN(x, z);
-    if (r.next() < 0.3) camphor(m, x, y, z, r.range(0.7, 1.05));
-    else pine(m, x, y, z, r.range(2.2, 3.6), { lean: r.range(-0.4, 0.4), yaw: r.range(0, circle), boughs: 6, rich: false });
+    camphor(m, x, y, z, r.range(0.7, 1.1), true);
   }
   // Pines along the lanes east and west and on the slopes beyond them.
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 10; i++) {
     const side = i % 2 ? 1 : -1,
-      x = side * r.range(14, 34),
+      x = side * r.range(15, 30),
       z = r.range(-20, 0.5);
     if (z > lipN(x) - 1.2) continue;
-    pine(m, x, heightN(x, z), z, r.range(2.2, 3.4), { lean: r.range(-0.5, 0.5), yaw: r.range(0, circle), boughs: 6, rich: i % 3 === 0 });
+    pine(m, x, heightN(x, z), z, r.range(2.2, 3.4), { lean: r.range(-0.5, 0.5), yaw: r.range(0, circle), boughs: 5, rich: false });
   }
 }
 // Bamboo groves on the hill behind and beside the house: drawn as a separate model, since they
 // are the heaviest growth here.
 function bambooGroves(m) {
   for (const [x, z, rad, n] of [
-    [-6, -22.5, 3.2, 10],
-    [5.5, -23, 3.6, 11],
-    [-15.5, -17, 2.6, 8],
-    [16, -16.5, 2.8, 8],
-    [-17.5, -7, 2.0, 6],
-    [0.5, -27, 3.0, 8]
+    [-6, -22.5, 3.2, 5],
+    [5.5, -23, 3.6, 5],
+    [-15.5, -16, 2.6, 4],
+    [17.5, -15.5, 2.8, 4],
+    [-17.5, -7, 2.0, 3]
   ]) {
     grove(m, x, z, rad, n, heightN, 1.7);
   }
@@ -121,12 +125,12 @@ function southWoods(m) {
     const z = lipS(x) + 0.7;
     pine(m, x, heightS(x, z), z, r.range(2.3, 3.0), { lean, yaw: Math.PI, boughs: 7, rich: true });
   }
-  for (let i = 0; i < 26; i++) {
-    const x = r.range(-30, 30),
-      z = r.range(10, 22);
+  for (let i = 0; i < 12; i++) {
+    const x = r.range(-26, 26),
+      z = r.range(12, 21);
     if (Math.abs(x - z * 0.6 + 2) < 2.5) continue;
     const y = heightS(x, z);
-    if (r.next() < 0.4) camphor(m, x, y, z, r.range(0.6, 0.9));
+    if (r.next() < 0.4) camphor(m, x, y, z, r.range(0.6, 0.9), true);
     else pine(m, x, y, z, r.range(2, 3), { lean: r.range(-0.4, 0.4), yaw: r.range(0, circle), boughs: 6, rich: false });
   }
 }

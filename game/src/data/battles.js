@@ -561,14 +561,14 @@ const BATTLES = [
       { kind: 'lamp', reward: 'coins' }
     ]
   },
-  // 18 光明頂: keep the sacred fire on its altar through round 9 (守), or fell both masters. 滅絕
+  // 18 光明頂: keep the sacred fire on its altar through round 8 (守), or fell both masters. 滅絕
   // comes up the mountain road with her disciples; 成昆 comes out of the secret way behind the
   // hall in round 3, and two more disciples come up the road in round 5.
   {
     kind: 'keep',
     masters: ['master', 'chengKun'],
     objects: [{ id: 'holyFire', at: [6, 2] }],
-    hold: 9,
+    hold: 8,
     pieces: [],
     waves: [
       {

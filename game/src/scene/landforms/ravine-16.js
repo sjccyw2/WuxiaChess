@@ -15,7 +15,7 @@ const rockDark = 0x56544e;
 const rockPale = 0x9c988b;
 const rockWet = 0x3c423e;
 const mossTone = 0x5f7046;
-const grass = [0x6e7f4c, 0x7c8a55, 0x67784a, 0x83905e];
+const grass = [0x5d6c42, 0x67744a, 0x58683f, 0x6f7a50];
 const earth = 0x857a60;
 const streamDeep = 0x3c5d57;
 const streamLight = 0x6f9289;
@@ -27,8 +27,8 @@ const hillTones = [0x5d6f5a, 0x6f7f72, 0x8a9690, 0xa5aeab];
 // to east and the south lip east to west, so the ravine always lies to the right of the line.
 const NORTH = [
   { land: [[-36, 1.5], [-31, 2.1], [-26, 1.6], [-21, 2.4], [-16.5, 1.9], [-13.8, 2.1], [-12.4, 2.5], [-11.2, 2.32]] },
-  { wall: [[-11.2, 2.32], [-6.5, 2.32], [-6.5, 2.0], [-5.5, 2.0], [-5.5, 3.0], [-3.5, 3.0], [-3.5, 4.0], [3.5, 4.0], [3.5, 3.0], [5.5, 3.0], [5.5, 2.0], [6.5, 2.0], [6.5, 2.32], [11.2, 2.32]] },
-  { land: [[11.2, 2.32], [12.5, 2.6], [15, 2.1], [19, 2.6], [24, 1.8], [29, 2.3], [36, 1.6]] }
+  { wall: [[-11.2, 2.32], [-6.5, 2.32], [-6.5, 2.0], [-5.5, 2.0], [-5.5, 3.0], [-3.5, 3.0], [-3.5, 4.0], [3.5, 4.0], [3.5, 3.0], [5.5, 3.0], [5.5, 2.0], [6.5, 2.0], [6.5, 2.32], [14.0, 2.32]] },
+  { land: [[14.0, 2.32], [15.2, 2.6], [17.5, 2.1], [21, 2.6], [25, 1.8], [30, 2.3], [36, 1.6]] }
 ];
 const SOUTH = [
   { land: [[36, 6.9], [30, 6.3], [25, 7.0], [20, 6.4], [15, 6.9], [11, 6.3], [7.5, 6.1], [5, 5.9], [3.5, 6.0]] },
@@ -52,7 +52,7 @@ function lipAt(sections, x) {
   }
   return best ?? (sections === NORTH ? 2 : 6.5);
 }
-const lipN = (x) => (Math.abs(x) <= 11.2 ? 2.32 : lipAt(NORTH, x));
+const lipN = (x) => (x >= -11.2 && x <= 14.0 ? 2.32 : lipAt(NORTH, x));
 const lipS = (x) => (Math.abs(x) <= 3.5 ? 6.0 : lipAt(SOUTH, x));
 
 // The ground north of the ravine: level lanes beside the house, rising into the hills behind.
@@ -152,7 +152,7 @@ function face(m, line, topOf, salt) {
 // Ledge plants, hanging vines and a few boulders along a face.
 function faceLife(m, line, topOf) {
   const r = m.rng;
-  for (let i = 2; i < line.pts.length - 2; i += 2) {
+  for (let i = 2; i < line.pts.length - 2; i += 3) {
     const p = line.pts[i],
       top = topOf(p);
     const at = (y, out) => [p.x + p.n[0] * out, y, p.z + p.n[1] * out];
@@ -312,9 +312,9 @@ function groundLife(m, height, area, count, skip) {
     if (skip(x, z)) continue;
     const y = height(x, z),
       roll = r.next();
-    if (roll < 0.25) {
-      const s = r.range(0.2, 0.6);
-      boulder(m, x, y - s * 0.25, z, s, s * r.range(0.5, 0.9), s * 0.8, { wet: 0, green: 0.4, n: 7, turn: r.range(0, 3) });
+    if (roll < 0.14) {
+      const s = r.range(0.15, 0.38);
+      boulder(m, x, y - s * 0.3, z, s, s * r.range(0.45, 0.75), s * 0.8, { wet: 0.3, green: 0.6, n: 7, turn: r.range(0, 3) });
     } else if (roll < 0.7) grassClump(m, x, y, z, r.range(0.2, 0.4), 7);
     else if (roll < 0.85) fern(m, x, y, z, r.range(0.25, 0.4), 5);
     else bush(m, x, y, z, r.range(0.35, 0.6));
@@ -397,7 +397,7 @@ function farHills(m) {
   }
 }
 
-// Banks of mist: low flat drifts in the ravine and lying in the folds of the hills.
+// Banks of mist lying in the folds of the far hills.
 function mistBanks(m) {
   const r = m.rng,
     drift = (x, y, z, len, depth, tone) => {
@@ -416,22 +416,84 @@ function mistBanks(m) {
         for (let i = 0; i < n; i++) put(m, [ring[i], ring[(i + 1) % n], top], [m.rgb(tone), m.rgb(tone), m.mix(tone, 0xffffff, 0.25)]);
       }
     };
-  for (const [x, len] of [
-    [-22, 3.2],
-    [-16, 2.4],
-    [-8.5, 1.8],
-    [9, 2.0],
-    [17, 2.8],
-    [25, 3.4]
-  ]) {
-    const z = (lipAt(NORTH, x) + lipAt(SOUTH, x)) / 2;
-    drift(x, WATER + 0.35 + r.range(0, 0.4), z, len, (lipAt(SOUTH, x) - lipAt(NORTH, x)) * 0.35, 0xd6d8d0);
-  }
   for (let i = 0; i < 18; i++) {
     const a = r.range(0, circle),
       d = r.range(40, 70);
     drift(Math.cos(a) * d, r.range(-3, 1.5), Math.sin(a) * d, r.range(6, 12), r.range(2.5, 4), 0xcfd0c6);
   }
+}
+
+// 茶園: rows of clipped tea bushes along the hillside south of the ravine, each row a rounded
+// hedge following the ground, its top flushed with new leaves; the path passes through gaps.
+function teaRows(m) {
+  const r = m.rng,
+    path = [
+      [0, 6.1],
+      [0.3, 7.5],
+      [1.4, 9.2],
+      [3.2, 10.6],
+      [5.6, 11.8],
+      [8.4, 13.4],
+      [10.5, 15.6],
+      [12.0, 18.5]
+    ];
+  const nearPath = (x, z) => {
+    for (let i = 0; i < path.length - 1; i++) {
+      const [ax, az] = path[i],
+        [bx, bz] = path[i + 1],
+        dx = bx - ax,
+        dz = bz - az,
+        t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
+      if (Math.hypot(x - ax - dx * t, z - az - dz * t) < 0.95) return true;
+    }
+    return false;
+  };
+  const dark = 0x34502f,
+    body = 0x4d6d3c,
+    top = 0x7a9a52,
+    flush = 0x9cb865;
+  for (let k = 0; k < 11; k++) {
+    const z0 = 7.9 + k * 0.95;
+    let run = null;
+    const flushRun = () => {
+      if (run && run.length > 1)
+        for (let i = 0; i < run.length - 1; i++) {
+          const a = run[i],
+            b = run[i + 1];
+          for (let q = 0; q < 4; q++) {
+            const c0 = [dark, body, top, flush][q],
+              c1 = [body, top, flush, top][q];
+            put(m, [a[q], b[q], b[q + 1], a[q + 1]], [m.rgb(c0), m.rgb(c0), m.rgb(c1), m.rgb(c1)]);
+          }
+          for (let q = 4; q < 7; q++) put(m, [a[q], b[q], b[q + 1], a[q + 1]], [[top, flush, top][q - 4], body, dark][0]);
+        }
+      run = null;
+    };
+    for (let x = -24; x <= 24; x += 0.4) {
+      const z = z0 + 0.25 * Math.sin(x * 0.21 + k) + 0.15 * noise(x * 0.3, k);
+      if (z < lipS(x) + 0.9 || nearPath(x, z) || Math.abs(x) > 23.6) {
+        flushRun();
+        continue;
+      }
+      const y = heightS(x, z),
+        w = 0.27 + 0.04 * noise(x * 1.7, k * 3),
+        h = 0.36 + 0.06 * noise(x * 1.3 + 4, k * 2);
+      // The profile from the downhill foot over the top to the uphill foot.
+      const prof = [
+        [w * 1.05, -0.04],
+        [w * 1.05, h * 0.45],
+        [w * 0.8, h * 0.85],
+        [w * 0.3, h],
+        [-w * 0.3, h],
+        [-w * 0.8, h * 0.85],
+        [-w * 1.05, h * 0.45],
+        [-w * 1.05, -0.04]
+      ].map(([dz, dy]) => [x, y + dy, z + dz]);
+      (run ||= []).push(prof);
+    }
+    flushRun();
+  }
+  void r;
 }
 
 // Everything above in three models' worth: the near (ravine and ground), the life on it, and the far.
@@ -452,7 +514,7 @@ function ravineLife(m) {
   south.forEach((line) => faceLife(m, line, line.kind === 'wall' ? () => -SHELF : (p) => heightS(p.x, p.z)));
 }
 // The compound, and the court and terraces the house builds for itself, are not natural ground.
-const inHouse = (x, z) => Math.abs(x) < 10.9 && z > -19.65;
+const inHouse = (x, z) => x > -10.95 && x < 13.8 && z > -19.65;
 const onLanding = (x, z) => Math.abs(x) < 3.5 && z < 6.0;
 function grounds(m) {
   land(m, lipN, -1, heightN, 40.5, inHouse, 3);
@@ -460,8 +522,9 @@ function grounds(m) {
   hillPath(m);
 }
 function groundCover(m) {
-  groundLife(m, heightN, [-30, 30, -34, 1.5], 260, (x, z) => inHouse(x, z) || Math.abs(Math.abs(x) - 12.2) < 0.8 || z > lipN(x) - 0.3);
-  groundLife(m, heightS, [-28, 28, 6.2, 22], 220, (x, z) => z < lipS(x) + 0.3 || Math.hypot(x - 4, z - 11) < 1.2);
+  groundLife(m, heightN, [-26, 26, -26, 1.5], 50, (x, z) => inHouse(x, z) || Math.abs(x + 12.2) < 0.8 || Math.abs(x - 14.9) < 0.8 || z > lipN(x) - 0.3);
+  teaRows(m);
+  groundLife(m, heightS, [-24, 24, 6.2, 20], 80, (x, z) => z < lipS(x) + 0.3 || Math.hypot(x - 4, z - 11) < 1.2);
 }
 
 export { ravine, ravineLife, grounds, groundCover, farHills, mistBanks, heightN, heightS, lipN, lipS, inHouse };

@@ -1,12 +1,11 @@
 // 俠客島's pillars: four columns of the island's rock, left standing when the hall was cut
 // and dressed round, rising toward the roof. Each stands on a plinth of set stones, carries a
 // line of characters cut down its face, and hangs an oil lamp from an iron arm toward the
-// south; above head height it flares into the roof, which the cutaway takes away. Each is its
-// own group, so the cutaway fades only the one that stands before a tile.
+// south; above head height it flares toward the roof, and there the cutaway takes it off.
 import { Model, circle } from '../scenery-kit.js';
 import { TOP, smooth, rgb, blend, noise, hash, pillars, lightAt } from './kit-19.js';
 
-const HEIGHT = 3.05;
+const HEIGHT = 2.85;
 function column(m, px, pz, salt) {
   const n = 14,
     rows = 22;
@@ -16,7 +15,7 @@ function column(m, px, pz, salt) {
     const t = k / rows,
       y = TOP + 0.3 + (HEIGHT - 0.3) * t;
     // A slight swell in the shaft, then the flare into the roof, ragged where it was broken.
-    const flare = 0.36 * smooth(2.45, HEIGHT, y) ** 1.6;
+    const flare = 0.34 * smooth(2.3, HEIGHT, y) ** 1.6;
     const base = 0.33 - 0.025 * Math.sin(t * Math.PI) + flare;
     const ring = sides.map((a, i) => {
       const rough = 0.012 * (noise(a * 3 + salt, y * 4) - 0.5) + flare * 0.25 * (hash(i + salt, k) - 0.5);
@@ -56,7 +55,7 @@ function column(m, px, pz, salt) {
   // A line of characters cut down the south face.
   const face = Math.PI / 2;
   for (let k = 0; k < 6; k++) {
-    const y = 2.35 - k * 0.2;
+    const y = 2.1 - k * 0.19;
     for (let s = 0; s < 4; s++) {
       const h = hash(salt * 3 + k, s * 1.7);
       const u = (h - 0.5) * 0.12,
@@ -105,7 +104,9 @@ function pillarGroups(T) {
     const m = new Model(T, 195101 + i * 37);
     column(m, px, pz, i * 2.3 + 0.7);
     hangingLamp(m, px, pz);
-    return m.finish('石柱' + (i + 1), { occluder: true });
+    // Only plain tiles lie behind a pillar from any of the usual cameras, and the fighters
+    // and the tile marks are drawn over the world, so a pillar stands solid rather than fading.
+    return m.finish('石柱' + (i + 1));
   });
 }
 

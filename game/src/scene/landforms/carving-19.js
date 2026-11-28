@@ -271,6 +271,48 @@ function panel(m, wx, index) {
   });
 }
 
+// The rock that spans from pier to pier over the alcoves, so each alcove is a round-headed
+// niche in the wall and the piers read as parts of one carved face, not stones set apart.
+function cornice(m) {
+  const step = 0.1,
+    x0 = -6.4,
+    x1 = 6.4;
+  let prev;
+  for (let x = x0; x <= x1 + 1e-6; x += step) {
+    const d = Math.abs(x - 2 * Math.round(x / 2)),
+      under = 3.02 + 0.32 * Math.sqrt(Math.max(0, 1 - (d / 0.56) ** 2));
+    const j = (k) => 0.05 * (noise(x * 2.3 + k, k * 1.7) - 0.5);
+    const front = FRONT - 0.08 + j(1);
+    const section = [
+      [-7.0, under - 0.1],
+      [-6.1, under + j(2)],
+      [-5.3, under + 0.02 + j(3)],
+      [front, under],
+      [front - 0.04 + j(4), under + 0.22],
+      [front - 0.2 + j(5), under + 0.52],
+      [front - 0.75 + j(6), under + 0.92 + j(7)],
+      [-6.0 + j(8), 4.45],
+      [-7.1, 4.8]
+    ];
+    const ring = section.map(([z, y], k) => {
+      const band = 0.5 + 0.5 * Math.sin(y * 3.1 + x * 0.4);
+      let c = blend(rgb(0x55554f), rgb(0x706d64), 0.3 + 0.5 * band);
+      if (k === 3 || k === 4) c = blend(c, rgb(0x87827a), 0.35);
+      c = blend(c, rgb(0x141516), 0.7 * smooth(3.1, 4.6, y));
+      return [x, y, z, lightAt(x, y, z, c, 0.5)];
+    });
+    if (prev)
+      for (let k = 0; k < ring.length - 1; k++)
+        toward(
+          m,
+          [prev[k].slice(0, 3), ring[k].slice(0, 3), ring[k + 1].slice(0, 3), prev[k + 1].slice(0, 3)],
+          [prev[k][3], ring[k][3], ring[k + 1][3], prev[k + 1][3]],
+          k < 3 ? [0, -1, 0] : [0, 0.6, 0.8]
+        );
+    prev = ring;
+  }
+}
+
 // The carved walls and their piers: one group, so the cutaway can fade the whole row when a
 // camera behind it looks across it at the board.
 function carvedWalls(T) {
@@ -279,6 +321,7 @@ function carvedWalls(T) {
     pier(m, wx, i * 1.7 + 0.4);
     panel(m, wx, i);
   });
+  cornice(m);
   return m.finish('刻字石壁', { occluder: true });
 }
 

@@ -9,7 +9,7 @@
 import { Model } from '../scenery-kit.js';
 import { ground, plainLitter, beamBridge } from './paving-16.js';
 import { coverTile, rockTile, bambooClump, herbBed, censer } from './props-16.js';
-import { greatHall, wing, rearCourt, floorTiles, PLAT } from './house-16.js';
+import { greatHall, wing, eastGallery, eastGarden, rearCourt, PLAT } from './house-16.js';
 import { ravine, ravineLife, grounds, groundCover, farHills, mistBanks } from './ravine-16.js';
 import { hillWoods, bambooGroves, courtTrees, southWoods } from './woods-16.js';
 import { pottedPine } from './garden-13.js';
@@ -28,6 +28,12 @@ function courtFill(m) {
       put(m, [[x + 0.012, 0, z + 0.012], [x + 0.488, 0, z + 0.012], [x + 0.488, 0, z1 - 0.012], [x + 0.012, 0, z1 - 0.012]], m.mix(0x8b8e88, 0xa3a59e, m.rng.next() * 0.6));
       put(m, [[x, -0.01, z], [x + 0.5, -0.01, z], [x + 0.5, -0.01, z1], [x, -0.01, z1]], 0x51554f);
     }
+  // The strip between the board's east edge and the gallery.
+  for (let z = -6.75; z < 2.0; z += 0.5) {
+    const z1 = Math.min(z + 0.5, 2.0);
+    put(m, [[6.512, 0, z + 0.012], [7.11, 0, z + 0.012], [7.11, 0, z1 - 0.012], [6.512, 0, z1 - 0.012]], m.mix(0x8b8e88, 0xa3a59e, m.rng.next() * 0.6));
+  }
+  put(m, [[6.5, -0.01, -6.75], [7.12, -0.01, -6.75], [7.12, -0.01, 2.0], [6.5, -0.01, 2.0]], 0x51554f);
 }
 // 太平缸: a great bronze water vat on a stone stand, kept full against fire.
 function waterVat(m, x, z) {
@@ -69,7 +75,6 @@ function furnishings(m) {
     // Orchids along the hall's terrace edge, either side of the steps.
     for (const x of [2.5, 3.1]) orchidPot(m, s * x, PLAT, -6.95);
   }
-  void floorTiles;
 }
 
 const tiles16 = {
@@ -90,7 +95,8 @@ function landform16(T, layout) {
   const parts = [
     [160411, greatHall, '溫家大堂', { occluder: true }],
     [160829, (m) => wing(m, -1), '西廂房', { occluder: true }],
-    [161237, (m) => wing(m, 1), '東廂房', { occluder: true }],
+    [161237, eastGallery, '東遊廊與月洞門', { occluder: true }],
+    [161447, eastGarden, '東園書齋', { occluder: true }],
     [161653, rearCourt, '後院、後樓與圍牆', { occluder: true }],
     [162067, furnishings, '院中太平缸與盆景', {}],
     [162481, (m) => {

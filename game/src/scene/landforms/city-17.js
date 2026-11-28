@@ -97,11 +97,11 @@ function nearCity(m) {
   street(m, -15.9, -13.1, -26, 14.8, 'z');
   // South of the gate, facing it across the street.
   const south = [
-    [-11.6, 5.2, 3.2, 1.8, true],
+    [-11.6, 5.2, 3.2, 1.8, false],
     [-5.6, 5.4, 3.0, 1.7, false],
     [0.4, 5.4, 3.4, 1.9, true],
     [6.4, 5.2, 3.0, 1.7, false],
-    [12.2, 5.0, 3.2, 1.8, true],
+    [12.2, 5.0, 3.2, 1.8, false],
     [18.0, 5.2, 3.0, 1.7, false]
   ];
   for (const [x, w, d, h, upper] of south)
@@ -109,7 +109,7 @@ function nearCity(m) {
   // East of the temple, facing its wall.
   for (let i = 0; i < 5; i++) {
     const z = -15.4 + i * 6.0,
-      upper = i % 3 === 1;
+      upper = i === 2;
     house(m, 17.8, z, -Math.PI / 2, 5.2, 3.2, 1.75, { upper, sign: upper, lit: 0.55 });
   }
   // West of the temple, the backs of houses across a lane.

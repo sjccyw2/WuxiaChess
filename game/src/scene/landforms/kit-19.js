@@ -163,7 +163,7 @@ const COOL = rgb(0xcfe7ea),
 const seaLights = [
   [-9.4, 0.9, 0.5, 2.6, 0.75],
   [9.4, 0.9, 0.5, 2.6, 0.7],
-  [0, 1.6, 8.6, 5.2, 0.6]
+  [0, 1.2, 6.9, 3.4, 0.45]
 ];
 // The rock buttresses at the hall's two back corners, each with a lamp niche toward the board.
 const buttresses = [

@@ -330,14 +330,14 @@ function shallows(m, p, cell) {
     m.line(pts, 0.009, r.pick([0x3c5a3c, 0x55663a, 0x6b5a32]), 3);
   }
   // Foam: a broken arc where the wave runs out, toward the board.
-  const toward = wx < 0 ? 1 : -1;
+  const inland = wx < 0 ? 1 : -1;
   for (let k = 0; k < 2; k++) {
-    const cx = -toward * (0.2 + 0.25 * k) + r.range(-0.05, 0.05),
+    const cx = -inland * (0.2 + 0.25 * k) + r.range(-0.05, 0.05),
       rad = 0.35 + 0.1 * k;
     let prev;
     for (let i = 0; i <= 10; i++) {
       const a = -0.9 + (i / 10) * 1.8;
-      const pt = [cx + toward * Math.cos(a) * rad, -0.004, Math.sin(a) * rad * 1.1];
+      const pt = [cx + inland * Math.cos(a) * rad, -0.004, Math.sin(a) * rad * 1.1];
       if (prev && Math.abs(pt[0]) < 0.49 && Math.abs(pt[2]) < 0.49 && Math.abs(prev[0]) < 0.49 && Math.abs(prev[2]) < 0.49 && hash(i, k + wx) > 0.25) {
         const w = 0.012 + 0.008 * Math.sin(i);
         toward(m, 

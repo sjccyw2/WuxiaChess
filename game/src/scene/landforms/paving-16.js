@@ -47,7 +47,7 @@ function tone(m, col, x, z, k = 1) {
   return [c[0] * w.k * k, c[1] * w.k * k, c[2] * w.k * k];
 }
 // One bevelled block over [x0, x1] by [z0, z1] of the tile's frame. `wx`, `wz` place the tile.
-function block(m, x0, x1, z0, z1, col, wx, wz, top = TOP, bevel = 0.006) {
+function block(m, x0, x1, z0, z1, col, wx, wz, top = TOP, bevel = 0.006, sides = [1, 2]) {
   const b = Math.min(bevel, (x1 - x0) * 0.2, (z1 - z0) * 0.2),
     lo = top - 0.012;
   const foot = [
@@ -64,7 +64,9 @@ function block(m, x0, x1, z0, z1, col, wx, wz, top = TOP, bevel = 0.006) {
   ];
   const at = (p, f = 1) => tone(m, col, wx + p[0], wz + p[2], f);
   m.face(cap, cap.map((p) => at(p)));
-  for (let i = 0; i < 4; i++) {
+  // The arrises toward the south and east (the side the game first looks from) are drawn; the
+  // others show only as the dark joint.
+  for (const i of sides) {
     const j = (i + 1) % 4;
     m.face([foot[i], foot[j], cap[j], cap[i]], [at(foot[i], 0.72), at(foot[j], 0.72), at(cap[j], 0.9), at(cap[i], 0.9)]);
   }
@@ -82,6 +84,7 @@ function brick(m, x0, x1, z0, z1, wx, wz, col) {
   if (onRing(wx, wz, cx, cz, half * 0.55)) return;
   block(m, x0, x1, z0, z1, col, wx, wz, TOP, 0.005);
 }
+const allSides = [0, 1, 2, 3];
 
 function bed(m, y = BED, col = bedTone) {
   put(
@@ -172,7 +175,7 @@ function axisTile(m, cell, wx, wz) {
     [-0.412, split - j],
     [split + j, 0.412]
   ])
-    block(m, a, b, -0.497, 0.497, m.mix(slabTone, slabPale, r.next() * 0.6), wx, wz, TOP + 0.004, 0.01);
+    block(m, a, b, -0.497, 0.497, m.mix(slabTone, slabPale, r.next() * 0.6), wx, wz, TOP + 0.004, 0.01, allSides);
 }
 // The apron before the hall: long granite slabs laid east to west.
 function apronTile(m, cell, wx, wz) {
@@ -185,7 +188,7 @@ function apronTile(m, cell, wx, wz) {
       [-0.497, cut - j],
       [cut + j, 0.497]
     ])
-      block(m, a, b, rows[k] + j, rows[k + 1] - j, m.mix(slabTone, slabPale, r.next() * 0.5), wx, wz, TOP, 0.01);
+      block(m, a, b, rows[k] + j, rows[k + 1] - j, m.mix(slabTone, slabPale, r.next() * 0.5), wx, wz, TOP, 0.01, allSides);
   }
 }
 
@@ -196,7 +199,7 @@ function elementTile(m, cell, wx, wz, e) {
     o = 0.497,
     y = TOP + 0.0035,
     col = e.col;
-  block(m, -o, o, -o, o, m.mix(slabTone, slabPale, 0.3), wx, wz, TOP, 0.012);
+  block(m, -o, o, -o, o, m.mix(slabTone, slabPale, 0.3), wx, wz, TOP, 0.012, allSides);
   const ring = (r0, r1, c, n = 24, h = y) => {
     for (let i = 0; i < n; i++) {
       const a = (i * circle) / n,

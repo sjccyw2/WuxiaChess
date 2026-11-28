@@ -116,12 +116,12 @@ function rocks(m) {
 const JETTY = { x: -2.2, z0: 6.9, z1: 10.6, w: 1.05, top: -0.05 };
 function jetty(m) {
   const { x, z0, z1, w, top } = JETTY;
-  const L = (c, z, y = top) => lightAt(x, y, z, rgb(c), 0.2);
+  const L = (c, z, y = top) => lightAt(x, y, z, rgb(c), 0.2).map((v) => v * 0.8);
   for (let z = z0, k = 0; z < z1; z += 0.52, k++) {
     // Each course: a pier block going down to the sea floor, and the deck slabs over it.
     const bed = Math.min(floorHeight(x, z + 0.26), top - 0.2);
     m.box(x, (top - 0.08 + bed - 0.2) / 2, z + 0.26, w * 0.96, top - 0.08 - bed + 0.2, 0.5, L(0x5f5d55, z, top - 0.3));
-    const tint = blend(rgb(0x7c786d), rgb(0x969184), hash(k, 2.2));
+    const tint = blend(rgb(0x5f5c55), rgb(0x76726a), hash(k, 2.2)).map((v) => v * 0.85);
     for (const s of [-1, 1])
       m.box(x + s * w * 0.25, top - 0.04, z + 0.26, w * 0.49, 0.08, 0.5, lightAt(x, top, z, tint, 0.2));
     // The tide line on the piers: a band of weed and barnacles.

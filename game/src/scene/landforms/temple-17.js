@@ -159,7 +159,7 @@ function mainHall(m) {
         lit: (i) => i >= 2 && i <= 4,
         brackets: true,
         over: 0.95,
-        roof: { rise: 2.0, lift: 0.45, rows: 5, beasts: 5, tones: yellowGlaze, tile: 0.5 }
+        roof: { rise: 2.0, lift: 0.45, rows: 4, beasts: 5, tones: yellowGlaze, tile: 0.5 }
       })
     );
     // A great bronze cauldron before the stair, smouldering.
@@ -216,7 +216,7 @@ function tower(m, x, z, yaw, bell) {
       });
       m.box(0, y + 0.2, 0, 0.9, 0.4, 0.5, lacquerDark);
     }
-    tiledRoof(m, 4.2, 4.2, y + 1.66, 1.45, { hip: 0.55, lift: 0.4, rows: 4, beasts: 3, tones: greyTile, tile: 0.46 });
+    tiledRoof(m, 4.2, 4.2, y + 1.66, 1.45, { hip: 0.55, lift: 0.4, rows: 4, beasts: 3, tones: greyTile, tile: 0.52 });
     for (const [lx, lz] of [
       [-1.6, 1.6],
       [1.6, 1.6]
@@ -238,7 +238,7 @@ function quarters(m) {
       door: 4,
       lit: (i) => [1, 2, 4, 6, 7].includes(i),
       over: 0.6,
-      roof: { rise: 1.05, gable: true, hip: 0, lift: 0.08, rows: 4, rafters: false, tones: greyTile, tile: 0.4 }
+      roof: { rise: 1.05, gable: true, hip: 0, lift: 0.08, rows: 4, rafters: false, tones: greyTile, tile: 0.5 }
     })
   );
   // A water vat and a stack of firewood at the north end of the porch, and a bench.
@@ -266,7 +266,7 @@ function corridor(m) {
       over: 0.42,
       lamps: false,
       steps: false,
-      roof: { rise: 0.62, hip: 0.08, lift: 0.18, rows: 3, rafters: false, tones: greyTile, tile: 0.36, beasts: 0 }
+      roof: { rise: 0.62, hip: 0.08, lift: 0.18, rows: 3, rafters: false, tones: greyTile, tile: 0.48, beasts: 0 }
     });
     // Little lit windows in the back wall, and benches between the columns.
     for (let i = 0; i < 9; i++) {
@@ -374,7 +374,7 @@ function gate(m) {
     m.box(0, y + 2.08, d / 2 + 0.06, 1.3, 0.4, 0.05, 0x1f3354);
     m.box(0, y + 2.08, d / 2 + 0.09, 1.1, 0.26, 0.02, 0x2b4670);
     for (let k = 0; k < 3; k++) m.box(-0.32 + k * 0.32, y + 2.08, d / 2 + 0.105, 0.18, 0.18, 0.01, gilt);
-    tiledRoof(m, w + 1.5, d + 1.4, y + h + 0.22, 1.5, { hip: 0.42, lift: 0.4, rows: 4, beasts: 4, tones: greyTile, tile: 0.36 });
+    tiledRoof(m, w + 1.5, d + 1.4, y + h + 0.22, 1.5, { hip: 0.42, lift: 0.4, rows: 4, beasts: 4, tones: greyTile, tile: 0.44 });
     for (const s of [-1, 1])
       for (const e of [-1, 1]) hangLamp(m, e * 1.35, y + h - 0.35, s * (d / 2 + 0.45), 1.05, 0xe0583a, 0.2);
     // Stone lions on drums either side of the street steps.

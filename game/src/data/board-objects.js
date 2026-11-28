@@ -87,8 +87,8 @@ const BOARD_OBJECTS = {
     art: 'holyFire',
     size: 0.8,
     row: 'master',
-    hp: 0.65,
-    def: 1,
+    hp: 0.8,
+    def: 2,
     lure: 60,
     pull: 10,
     bio: '光明頂大殿前石壇上的一盆聖火，銅盆三足，火頭極旺。這一局的戰意對著它：火滅了，這一局便輸了。'
