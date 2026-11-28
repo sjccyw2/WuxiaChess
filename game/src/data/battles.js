@@ -42,6 +42,9 @@ const SIDE_REWARDS = ['coins', 'points', 'manual'];
 // simulated player never plays for a counter; kept at 一賠三, Q-N176); 絕技收官 84% on 寒玉石室, 71%
 // on 黑木繡閣. 借刀殺人 (0 of 6) was too hard: 隔山打牛 took its place (Q-N176), met 42% on 蘆花汀
 // and 32% on 桃花石陣. 毒發身亡 was tried with it and dropped (0 of 22).
+// 0.70: 奪寶 met about 40% on 襄陽殘垣 (38% and 43% at seeds 1 and 2: 一賠二) and 6–10% on 倒影天街, where
+// the chest stands beside the master's post (一賠三); 以寡敵眾 is 一賠三 by design (the simulated
+// player never benches a hero, so it was never met).
 
 const BATTLES = [
   // 0 青竹渡: the gentle first board; a wave lands behind the south bridge in round 3.
@@ -324,7 +327,7 @@ const BATTLES = [
       { kind: 'order', first: 'lieutenant', reward: 'coins', odds: 3 },
       { kind: 'double', reward: 'manual', odds: 2 },
       { kind: 'answer', hero: 'hero', reward: 'points', odds: 2 },
-      { kind: 'chest', reward: 'coins', odds: 2 }
+      { kind: 'chest', reward: 'coins', odds: 3 }
     ]
   },
   // 9 無刻漏臺: the final board; break the two posts the star ropes are tied to, each guarded by a
