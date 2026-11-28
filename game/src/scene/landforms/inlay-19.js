@@ -7,11 +7,11 @@
 // cut flush into the tile tops (a dark groove and its lit lip, or a slab of other stone a hair
 // proud), so nothing stands up on a walkable tile.
 import { circle } from '../scenery-kit.js';
-import { TOP, CX, CZ, layout, walls, blend, rgb, toward } from './kit-19.js';
+import { TOP, CX, CZ, layout, walls, onBoard, isWaterCell, blend, rgb, toward } from './kit-19.js';
 import { joints, POSES } from './carving-19.js';
 
-const RING = { x: 0, z: 0.5, r1: 2.12, r2: 2.42, inner: 0.98 };
-const WALK = new Set([-4, -3, -2, 3, 4, 5].map((z) => `0,${z}`));
+const RING = { x: 0, z: -0.5, r1: 1.6, r2: 1.83, inner: 0.72 };
+const WALK = new Set([-4, -3, 2, 3, 4, 5].map((z) => `0,${z}`));
 // Every stroke of the floor, in world coordinates: grooves [a, b, width] and filled shapes.
 const grooves = [],
   fills = [];
@@ -36,7 +36,7 @@ function line(a, b, w) {
 // The great ring: the band, its two grooves and the ticks across it.
 {
   const { x, z, r1, r2 } = RING,
-    n = 168;
+    n = 136;
   for (let i = 0; i < n; i++) {
     const a0 = (i * circle) / n,
       a1 = ((i + 1) * circle) / n;
@@ -56,12 +56,12 @@ function line(a, b, w) {
       ca = Math.cos(a),
       sa = Math.sin(a);
     for (let b = 0; b < 3; b++) {
-      const r = 1.5 + b * 0.15,
+      const r = 1.08 + b * 0.12,
         broken = (k >> b) & 1;
-      const pieces = broken ? [[-0.17, -0.035], [0.035, 0.17]] : [[-0.17, 0.17]];
+      const pieces = broken ? [[-0.14, -0.03], [0.03, 0.14]] : [[-0.14, 0.14]];
       for (const [s0, s1] of pieces) {
         const at = (s, d) => [x + ca * (r + d) - sa * s, z + sa * (r + d) + ca * s];
-        fills.push({ poly: [at(s0, -0.03), at(s1, -0.03), at(s1, 0.03), at(s0, 0.03)], col: 'dark' });
+        fills.push({ poly: [at(s0, -0.026), at(s1, -0.026), at(s1, 0.026), at(s0, 0.026)], col: 'dark' });
       }
     }
   }
@@ -96,6 +96,7 @@ function line(a, b, w) {
 // The roundels before the carved walls, each with a figure from its wall.
 walls.forEach((wx, i) => {
   const cz = -4.0;
+  if (!onBoard(wx, cz)) return;
   arc(wx, cz, 0.37, 0, circle, 0.012, 0.07);
   arc(wx, cz, 0.32, 0, circle, 0.008, 0.07);
   const pose = POSES[(i * 2 + 1) % 5],
@@ -125,7 +126,8 @@ for (const c of layout.cells) {
     [0, 1],
     [-1, 0]
   ]) {
-    if (layout.mask[c.y + dz]?.[c.x + dx] === '#') continue;
+    // Toward the sea in the channels and pools the edge is worn rock, not a cut border.
+    if (layout.mask[c.y + dz]?.[c.x + dx] === '#' || isWaterCell(c.x - CX + dx, c.y - CZ + dz)) continue;
     // Along the side, s runs from -0.5 to 0.5; d is the distance in from the edge.
     const tx = -dz,
       tz = dx;

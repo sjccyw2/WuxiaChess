@@ -43,16 +43,28 @@ const up = [0, 1, 0];
 // lanterns that stand round it in the court (the landform sets those at these places).
 const burners = cells.filter((c) => c.kind === 'cover').map((c) => [c.x - CX, 0.7, c.y - CZ, 0.85]);
 const courtLanterns = [
-  [-7.45, -3.0],
-  [-7.45, 3.0],
-  [7.75, -3.0],
-  [7.75, 3.0],
+  [-6.0, -2.6],
+  [-6.1, 3.0],
+  [6.0, -2.6],
+  [6.1, 3.0],
   [-3.2, 7.05],
   [3.2, 7.05],
   [-2.65, -6.75],
   [2.65, -6.75]
 ];
-const LAMPS = [...burners, ...courtLanterns.map(([x, z]) => [x, 0.6, z, 1])];
+// The ground inside the board's bounds that is not board: a void cell with board on both its
+// east and west is a wall between a side court and the centre; a board cell with such walls
+// north and south of it is the doorway through them; every other void cell is a planted bed.
+const inBounds = (x, y) => x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT;
+const isWall = (x, y) =>
+  inBounds(x, y) && !onBoard(x, y) && onBoard(x - 1, y) && onBoard(x + 1, y);
+const isBed = (x, y) => inBounds(x, y) && !onBoard(x, y) && !isWall(x, y);
+const doorways = cells.filter((c) => isWall(c.x, c.y - 1) && isWall(c.x, c.y + 1));
+// Each doorway has a lamp on the pier either side of it.
+const doorLamps = doorways.flatMap((c) =>
+  [-1, 1].map((s) => [c.x - CX, 0.8, c.y - CZ + s * 0.62, 0.8])
+);
+const LAMPS = [...burners, ...doorLamps, ...courtLanterns.map(([x, z]) => [x, 0.6, z, 1])];
 
 // How much lamplight falls at a point: 0 in the open, 1 close under a lamp.
 function lampLight(x, y, z, lamps = LAMPS, reach = 2.0) {
@@ -331,6 +343,9 @@ export {
   LAMPS,
   courtLanterns,
   onBoard,
+  isWall,
+  isBed,
+  doorways,
   lampLight,
   bathe,
   lit,

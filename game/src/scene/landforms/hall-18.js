@@ -20,9 +20,9 @@ const lacquer = 0x9a2f24,
   glowHot = 0xffc067;
 
 // The hall's measures: podium, walls and columns.
-const P = { w: 6.6, d: 4.1, top: 0.42, front: 1.95 },
-  H = { w: 5.4, d: 2.9, porch: 0.55, column: 1.5 };
-const colX = [-2.7, -1.62, -0.54, 0.54, 1.62, 2.7];
+const P = { w: 5.4, d: 4.1, top: 0.42, front: 1.95 },
+  H = { w: 4.6, d: 2.9, porch: 0.55, column: 1.5 };
+const colX = [-2.3, -1.38, -0.46, 0.46, 1.38, 2.3];
 
 // The podium (須彌座): a plinth, a recessed waist under a dark band, a cornice, and
 // the front stair with its carved ramp between two flights.
@@ -322,11 +322,11 @@ function sacredHall(m) {
   // Hanging banners in the two outer bays and either side of the doors.
   const front = P.front - 0.35,
     eave = P.top + H.column;
-  for (const x of [-2.16, 2.16]) hangingBanner(m, x, eave - 0.16, front + 0.02, 0.95);
+  for (const x of [-1.84, 1.84]) hangingBanner(m, x, eave - 0.16, front + 0.02, 0.95);
   // Fire baskets at the head of the stair, streamers at the podium's front corners.
   for (const s of [-1, 1]) fireBasket(m, s * 1.6, P.top, P.front - 0.25);
-  streamer(m, -3.05, P.top, P.front - 0.2, 3.1, 1.9, 0.62, 1);
-  streamer(m, 3.05, P.top, P.front - 0.2, 3.1, 1.9, 0.62, 2.5);
+  streamer(m, -2.5, P.top, P.front - 0.2, 3.1, 1.9, 0.62, 1);
+  streamer(m, 2.5, P.top, P.front - 0.2, 3.1, 1.9, 0.62, 2.5);
 }
 
 export { sacredHall, streamer, fireBasket, P as podiumSize };

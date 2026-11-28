@@ -420,7 +420,7 @@ function herbBed(m, p, cell) {
   }
 }
 
-const lions = new Set(['3,9', '9,9', '3,11', '9,11']);
+const lions = new Set(['4,9', '8,9', '3,11', '9,11']);
 const braces = new Set(['5,5', '7,5']);
 // Cover tiles: lions at the bridgeheads, drum stones bracing the screen wall, and seat drums
 // elsewhere, each pushed to the back or outer side of its tile.
@@ -460,4 +460,4 @@ function rockTile(m, p, cell) {
   return stoneLantern(m);
 }
 
-export { lion, drum, censer, stoneLantern, bambooClump, herbBed, coverTile, rockTile };
+export { flagpole, lion, drum, censer, stoneLantern, bambooClump, herbBed, coverTile, rockTile };

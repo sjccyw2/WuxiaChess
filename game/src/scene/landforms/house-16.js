@@ -35,7 +35,10 @@ import {
 const PLAT = 0.42; // the hall's terrace
 const HALL = { x: 6.45, front: -6.75, back: -12.1, cols: -7.05, facade: -7.95, eave: 2.62, rise: 1.55 };
 const EAST = 13.7; // the east garden's outer wall
-const WING = { plat: 0.25, front: 6.52, cols: 6.86, wall: 7.7, back: 10.7, north: -6.35, south: 2.0, eave: 2.25, rise: 1.05 };
+// The west wing; its south gable stands where the ravine bites into the court's west side.
+const WING = { plat: 0.25, front: 6.52, cols: 6.86, wall: 7.7, back: 10.7, north: -6.35, south: -1.0, eave: 2.25, rise: 1.05 };
+// The east gallery's ends.
+const GALLERY = { north: -6.45, south: 2.05 };
 const roofTones = tiles;
 const lanternRed = 0xb8402e;
 const squareTile = 0x8d908a; // 方磚 of the terrace
@@ -239,10 +242,11 @@ function wing(m, s) {
   // Steps down to the court in the middle bay.
   for (let k = 0; k < 2; k++) {
     const xf = front - 0.32 + k * 0.16;
-    slab(m, x(xf), x(xf + 0.16), 0, (plat * (k + 1)) / 2, -2.6, -1.3, k ? granite : graniteShade);
+    slab(m, x(xf), x(xf + 0.16), 0, (plat * (k + 1)) / 2, zc - 0.55, zc + 0.55, k ? granite : graniteShade);
   }
   // Veranda columns and their beam.
-  const posts = [north + 0.25, -4.2, -1.95, 0.3, south - 0.25];
+  const step = (len - 0.5) / 3,
+    posts = [0, 1, 2, 3].map((i) => north + 0.25 + i * step);
   for (const z of posts) column(m, x(cols), z, plat, eave - 0.1, 0.1);
   m.frame(x(cols), 0, zc, Math.PI / 2, 1, () => {
     slab(m, -len / 2, len / 2, eave - 0.36, eave - 0.1, -0.08, 0.08, timberDark);
@@ -250,10 +254,9 @@ function wing(m, s) {
   });
   // The front wall: windows over a brick sill in the end bays, doors in the middle two.
   const bays = [
-    [north + 0.25, -4.2, 'window'],
-    [-4.2, -1.95, 'door'],
-    [-1.95, 0.3, 'door'],
-    [0.3, south - 0.25, 'window']
+    [posts[0], posts[1], 'window'],
+    [posts[1], posts[2], 'door'],
+    [posts[2], posts[3], 'window']
   ];
   for (const [z0, z1, kind] of bays) {
     const n = kind === 'door' ? 4 : 3,
@@ -262,7 +265,7 @@ function wing(m, s) {
       const z = z0 + w * (i + 0.5);
       // Panels face the court: yaw turns the panel's +z toward -s along x.
       m.frame(x(wall), plat, z, -s * Math.PI / 2, 1, () => {
-        if (kind === 'door') latticePanel(m, w * 0.96, 1.7, { nx: 3, ny: 6, skirt: 0.45, dark: i === 1 && z0 < -3 });
+        if (kind === 'door') latticePanel(m, w * 0.96, 1.7, { nx: 3, ny: 6, skirt: 0.45, dark: i === 1 });
         else {
           slab(m, -w / 2, w / 2, 0, 0.7, -0.1, 0.08, brick);
           m.frame(0, 0.7, 0.02, 0, 1, () => latticePanel(m, w * 0.96, 1.0, { nx: 3, ny: 4, skirt: 0.05 }));
@@ -364,8 +367,8 @@ function eastGallery(m) {
   const front = 7.12,
     cols = 7.48,
     wall = 8.85,
-    north = WING.north - 0.1,
-    south = WING.south + 0.05,
+    north = GALLERY.north,
+    south = GALLERY.south,
     plat = 0.2;
   terrace(m, front, wall + 0.2, north, south, plat, [1, 0, 0, 1]);
   floorTiles(m, front, wall - 0.15, north, south, plat, 0.42);
@@ -432,7 +435,7 @@ function eastGallery(m) {
 function eastGarden(m) {
   const x0 = 8.85,
     x1 = EAST,
-    south = WING.south + 0.25;
+    south = GALLERY.south + 0.2;
   // Moss and gravel ground, a path of stepping stones from the moon gate to the study, and a
   // little pond with a stone rim.
   for (let x = x0 + 0.15; x < x1 - 0.15; x += 0.6)

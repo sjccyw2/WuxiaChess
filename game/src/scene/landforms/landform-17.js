@@ -6,8 +6,8 @@
 // the camera, so kept low) an open corridor; the 山門 with its three arches closes the south.
 // Outside the red precinct wall lie the streets of the city, and far off its roofs and walls.
 // Everything is lit by its own lamps, whose warm light is painted into the stone round them.
-import { Model } from '../scenery-kit.js';
-import { cypress, oldPine } from './garden-13.js';
+import { Model, circle } from '../scenery-kit.js';
+import { clump, cypress, oldPine } from './garden-13.js';
 import { paveTile } from './paving-17.js';
 import { props17 } from './props-17.js';
 import { pagoda } from './pagoda-17.js';
@@ -29,6 +29,17 @@ import {
   LAMPS,
   courtLanterns,
   onBoard,
+  isWall,
+  isBed,
+  doorways,
+  coping,
+  cap,
+  wallRed,
+  plaster,
+  CX,
+  CZ,
+  WIDTH,
+  HEIGHT,
   bathe,
   put,
   mark,
@@ -54,7 +65,7 @@ const built = [
 ];
 const isBuilt = (x, z) => built.some(([x0, x1, z0, z1]) => x > x0 && x < x1 && z > z0 && z < z1);
 
-// The court round the board: square bricks over mortar in a grid that runs on from the board's,
+// The court round the board: long bricks over mortar in a grid that runs on from the board's,
 // the stone way down the middle, and a drip course of dark stone along the foot of the board.
 function court(m, layout) {
   const { width, height } = layout,
@@ -65,7 +76,8 @@ function court(m, layout) {
     for (let gz = -18; gz <= 11; gz++) {
       const x = gx,
         z = gz + 0.5;
-      if (onBoard(x + cx, z + cz) || isBuilt(x, z)) continue;
+      if (onBoard(x + cx, z + cz) || isBed(x + cx, z + cz) || isWall(x + cx, z + cz) || isBuilt(x, z))
+        continue;
       put(
         m,
         [
@@ -92,16 +104,14 @@ function court(m, layout) {
         );
         continue;
       }
-      for (const [sx, sz] of [
-        [-1, -1],
-        [-1, 1],
-        [1, -1],
-        [1, 1]
-      ]) {
-        const x0 = x + (sx < 0 ? -0.49 : 0.012),
-          x1 = x + (sx < 0 ? -0.012 : 0.49),
-          z0 = z + (sz < 0 ? -0.49 : 0.012),
-          z1 = z + (sz < 0 ? -0.012 : 0.49);
+      // Two long bricks to a cell, laid across the cell's neighbours in alternate rows.
+      const across = (gx + gz) % 2 === 0;
+      for (const sx of [-1, 1]) {
+        const lo = sx < 0 ? -0.49 : 0.012,
+          hi = sx < 0 ? -0.012 : 0.49,
+          [x0, x1, z0, z1] = across
+            ? [x + lo, x + hi, z - 0.49, z + 0.49]
+            : [x - 0.49, x + 0.49, z + lo, z + hi];
         put(
           m,
           [
@@ -134,6 +144,8 @@ function court(m, layout) {
   for (const [x, z] of courtLanterns) stoneLantern(m, x, OUT, z, 1.0);
   furnishings(m);
   courtLife(m, layout);
+  sideWalls(m);
+  beds(m);
 }
 
 // What stands in the court south of the board, between it and the 山門: a great bronze censer
@@ -306,6 +318,111 @@ function furnishings(m) {
     });
 }
 
+// The walls between the side courts and the centre, built on the board's void tiles: a stone
+// foot filling the tile up to the board, a low red wall under a tile coping with a lattice
+// window, and a pier with a lamp in its face either side of each doorway.
+function sideWalls(m) {
+  for (let y = 0; y < HEIGHT; y++)
+    for (let x = 0; x < WIDTH; x++) {
+      if (!isWall(x, y)) continue;
+      const wx = x - CX,
+        wz = y - CZ;
+      m.box(wx, (OUT + 0.1) / 2, wz, 1.0, 0.1 - OUT, 1.0, stoneDark);
+      m.box(wx, 0.09, wz, 1.03, 0.04, 1.03, stone);
+      m.box(wx, 0.45, wz, 0.42, 0.7, 1.0, wallRed);
+      m.box(wx, 0.77, wz, 0.44, 0.06, 1.0, plaster);
+      m.frame(wx, 0, wz, Math.PI / 2, 1, () => coping(m, 1.0, 0.8, 0.3, 0.15));
+      const door = doorways.find((c) => c.x === x && Math.abs(c.y - y) === 1);
+      if (door) {
+        // A pier at the doorway, a lamp set in a niche on either face.
+        const pz = wz + (door.y - y) * 0.38;
+        m.box(wx, 0.6, pz, 0.6, 1.0, 0.26, wallRed);
+        m.box(wx, 1.11, pz, 0.64, 0.04, 0.3, plaster);
+        m.frame(wx, 0, pz, 0, 1, () => cap(m, 1.16, 0.22, 0.14, stoneDark, stone));
+        for (const s of [-1, 1]) {
+          m.glow(() => m.box(wx + s * 0.3, 0.8, pz, 0.02, 0.16, 0.12, 0xf0b060));
+          m.box(wx + s * 0.31, 0.89, pz, 0.03, 0.03, 0.18, stoneDark);
+        }
+        mark(m, wx, 0.8, pz, 0.8);
+      } else
+        // A lattice window through the wall, framed in stone.
+        for (const s of [-1, 1]) {
+          const fx = wx + s * 0.215;
+          m.box(fx, 0.45, wz, 0.02, 0.42, 0.56, stone);
+          m.box(fx + s * 0.002, 0.45, wz, 0.02, 0.34, 0.48, 0x23262e);
+          for (const k of [-1, 0, 1]) {
+            m.box(fx + s * 0.006, 0.45 + k * 0.1, wz, 0.02, 0.025, 0.48, plaster);
+            m.box(fx + s * 0.006, 0.45, wz + k * 0.14, 0.02, 0.34, 0.025, plaster);
+          }
+        }
+    }
+}
+
+// The other voids inside the board's bounds are raised beds, filled to a little under the board
+// and kerbed where they meet the court: low shrubs, grasses and flowers, a stone here and
+// there, and a sweet osmanthus in each corner bed.
+const BED = -0.1;
+function beds(m) {
+  const r = m.rng;
+  for (let y = 0; y < HEIGHT; y++)
+    for (let x = 0; x < WIDTH; x++) {
+      if (!isBed(x, y)) continue;
+      const wx = x - CX,
+        wz = y - CZ;
+      put(
+        m,
+        [
+          [wx - 0.5, BED, wz - 0.5],
+          [wx - 0.5, BED, wz + 0.5],
+          [wx + 0.5, BED, wz + 0.5],
+          [wx + 0.5, BED, wz - 0.5]
+        ],
+        m.mix(0x2a231d, 0x342a22, r.next())
+      );
+      for (const [dx, dz] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1]
+      ]) {
+        const nx = x + dx,
+          ny = y + dz;
+        if (onBoard(nx, ny) || isBed(nx, ny) || isWall(nx, ny)) continue;
+        m.box(
+          wx + dx * 0.44,
+          (OUT + BED + 0.05) / 2,
+          wz + dz * 0.44,
+          dx ? 0.12 : 1.0,
+          BED + 0.05 - OUT,
+          dz ? 0.12 : 1.0,
+          stone
+        );
+      }
+      // Low shrubs and grass, kept under knee height.
+      for (let k = 0; k < 1 + ((x + y) % 2); k++) {
+        const px = wx + r.range(-0.3, 0.3),
+          pz = wz + r.range(-0.3, 0.3),
+          s = r.range(0.16, 0.26);
+        clump(m, px, BED + s * 0.7, pz, s, s * 0.8, s, 0x1d3526, 0x3c5f42, 6);
+      }
+      for (let k = 0; k < 4; k++) {
+        const px = wx + r.range(-0.42, 0.42),
+          pz = wz + r.range(-0.42, 0.42),
+          a = r.range(0, circle),
+          l = r.range(0.12, 0.2);
+        m.leaf([px, BED, pz], [px + Math.cos(a) * l * 0.4, BED + l, pz + Math.sin(a) * l * 0.4], 0.02, 0x3d5a34, 0x6a8a4c, 0.03);
+      }
+      if (r.next() < 0.45)
+        for (let k = 0; k < 3; k++)
+          m.box(wx + r.range(-0.35, 0.35), BED + r.range(0.12, 0.3), wz + r.range(-0.35, 0.35), 0.04, 0.04, 0.04, r.pick([0xd8c070, 0xc888a8, 0xe8e0d0]));
+      if (r.next() < 0.3) m.rock(wx + r.range(-0.3, 0.3), BED - 0.02, wz + r.range(-0.3, 0.3), 0.14, 0.14, 0.11, 0x56606e, 0x8a94a2, 7);
+    }
+  for (const sx of [-1, 1]) {
+    osmanthus(m, sx * 5.75, -5.45, 0.95, BED);
+    osmanthus(m, sx * 5.55, 4.85, 0.9, BED);
+  }
+}
+
 // Old trees in the court: columnar cypresses and pines in the corners and by the walls.
 function courtTrees(m, side) {
   const sets = {
@@ -366,6 +483,8 @@ function courtLife(m, layout) {
     r = m.rng,
     free = (x, z) =>
       !onBoard(Math.round(x + cx), Math.round(z + cz)) &&
+      !isBed(Math.round(x + cx), Math.round(z + cz)) &&
+      !isWall(Math.round(x + cx), Math.round(z + cz)) &&
       !isBuilt(x, z) &&
       Math.abs(x) < 12.3 &&
       z > -17.9 &&
@@ -373,7 +492,7 @@ function courtLife(m, layout) {
   fallenLeaves(m, -11.2, -8.3, 2.0, 55);
   fallenLeaves(m, 8.8, -7.7, 2.4, 60);
   fallenLeaves(m, -8.6, 9.4, 2.4, 60);
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 50; i++) {
     const x = r.range(-12, 12),
       z = r.range(-17.5, 11.5);
     if (free(x, z)) fallenLeaves(m, x, z, 0.3, 2);

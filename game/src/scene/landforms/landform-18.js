@@ -19,6 +19,7 @@ import {
   cliffSection,
   crag,
   snowPatches,
+  chasms,
   apronScree,
   ledgeLife,
   cliffPine,
@@ -39,6 +40,7 @@ function landform18(T, layout) {
   const crowns = crag(rock, land, sections);
   snowPatches(rock, land);
   apronScree(rock, land);
+  chasms(rock, layout);
 
   const hall = new Model(T, 180203);
   hall.frame(0, 0, hallZ, 0, 1, () => sacredHall(hall));
@@ -49,15 +51,11 @@ function landform18(T, layout) {
   // Banners on the rocks at the board's two north corners, a fire basket by each.
   for (const [x, z, salt] of [
     [-5, -5, 4],
-    [5, -5, 6]
+    [4, -5, 6]
   ]) {
     streamer(crags, x - 0.15, 0.6, z - 0.1, 2.6, 1.6, 0.5, salt);
   }
-  for (const [x, z] of [
-    [-3.85, -6.75],
-    [3.85, -6.75]
-  ])
-    fireBasket(crags, x, land.ground(x, z), z);
+  fireBasket(crags, 3.75, land.ground(3.75, -7.1), -7.1);
 
   // Pines rooted in the joints of the cliff, leaning out over the drop: [bearing,
   // stratum they root in, size].
@@ -85,10 +83,10 @@ function landform18(T, layout) {
   for (const [x, z, s, yaw] of [
     [5.3, -6.9, 0.75, -0.6],
     [6.3, -5.9, 0.6, 0.3],
-    [4.6, -8.6, 0.7, -1.2],
-    [-4.4, -9.2, 0.65, 2.4]
+    [4.0, -8.3, 0.7, -1.2],
+    [-2.6, -10.6, 0.65, 2.4]
   ])
-    oldPine(pines, x, land.ground(x, z), z, s, yaw, 0.6, 5);
+    if (land.inside(x, z, 0.25)) oldPine(pines, x, land.ground(x, z), z, s, yaw, 0.6, 5);
   ledgeLife(pines, sections);
 
   const far = new Model(T, 180719);

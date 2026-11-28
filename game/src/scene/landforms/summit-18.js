@@ -32,12 +32,15 @@ const mist = 0xc6ced3;
 // Summit ground beyond the board, as rounds [x, z, radius]: the terrace the hall
 // stands on, the crags of the secret way in the north-west, a knoll in the
 // north-east and the landing at the head of the road.
+// The beds keep clear of the gap at (3,1), which opens into a gully between the hall's
+// terrace and the north-west spur.
 const beds = [
   [0, -8.4, 3.1],
-  [-2.3, -9.1, 2.0],
-  [2.3, -9.1, 2.0],
-  [-5.7, -6.5, 1.9],
-  [-6.9, -4.4, 1.0],
+  [-2.0, -9.2, 1.9],
+  [2.0, -9.2, 1.9],
+  [3.6, -7.6, 1.2],
+  [-6.7, -4.6, 1.4],
+  [-6.3, -5.9, 1.0],
   [5.7, -6.5, 1.5],
   [0, 7.0, 1.4]
 ];
@@ -66,11 +69,13 @@ function summit(layout) {
     while (r > 3 && !paved(Math.cos(a) * r, Math.sin(a) * r)) r -= 0.02;
     return r;
   });
-  const rim = blur(widen(board, 3), 2);
+  // The rim follows the board's own jagged edge closely, so its bites and spurs
+  // carry down into the cliff.
+  const rim = widen(board, 1);
   let top = ring((i, a) => {
     const c = Math.cos(a),
       s = Math.sin(a);
-    let r = rim[i] + 0.34;
+    let r = rim[i] + 0.3;
     for (const [x, z, rad] of beds) {
       const along = x * c + z * s,
         off = x * s - z * c;
@@ -78,7 +83,7 @@ function summit(layout) {
     }
     return r;
   });
-  top = blur(blur(top, 3), 2).map((r, i) => Math.max(r, rim[i] + 0.32));
+  top = blur(top, 1).map((r, i) => Math.max(r, rim[i] + 0.28));
   const broad = top.map((r, i) => smooth(0.45, 1.2, r - rim[i]));
   top = top.map((r, i) => r + 0.12 * Math.sin(i * 0.41) * Math.sin(i * 0.13 + 1) + 0.05 * Math.sin(i * 1.7));
   const lip = broad.map((g, i) => lerp(-0.46, -0.26, g) + 0.04 * Math.sin(i * 0.9));
@@ -100,7 +105,9 @@ function summit(layout) {
       -0.3 + inland * (0.1 + 0.06 * Math.sin(x * 1.3 + z * 0.7) + 0.05 * Math.sin(z * 2.1 - x * 0.9));
     return lerp(y, read(lip, f), smooth(T - 0.5, T, r));
   };
-  return { rim, top, broad, lip, read, spoke, ground };
+  // Whether a point lies on the summit ground, at least `margin` in from its lip.
+  const inside = (x, z, margin = 0.2) => Math.hypot(x, z) < read(top, spoke(x, z)) - margin;
+  return { rim, top, broad, lip, read, spoke, ground, inside };
 }
 
 // The cliff in section, from the lip down: [joint set, reach beyond the lip, depth of
@@ -252,7 +259,7 @@ function crag(m, land, sections) {
       tone = [];
     for (let j = 0; j < stations; j++) {
       const inner = land.rim[i] - 0.35,
-        r = j === 0 ? 4.5 : lerp(inner, land.top[i], (j - 1) / (stations - 2));
+        r = j === 0 ? Math.min(4.5, inner - 0.5) : lerp(inner, land.top[i], (j - 1) / (stations - 2));
       const x = c * r,
         z = s * r;
       row.push([x, j === stations - 1 ? land.lip[i] : land.ground(x, z), z]);
@@ -362,6 +369,98 @@ function snowPatches(m, land) {
     const mid = [cx, land.ground(cx, cz) + 0.03, cz];
     for (let q = 0; q < 9; q++)
       m.face([mid, ring[(q + 1) % 9], ring[q]], [m.rgb(snow), m.rgb(0xdfe6ec), m.rgb(0xdfe6ec)]);
+  }
+}
+
+// The clefts inside the board: holes in its mask that do not reach its edge. Each side
+// a hole shares with a tile is a wall of granite going down from under the board's cut
+// edge into the cloud, bulging and jointed, darker as it goes down and lost in the
+// mist below. A boulder is wedged in the longer cleft, and a pine grows from its wall.
+function chasms(m, layout) {
+  const { width, height, mask } = layout,
+    cx = (width - 1) / 2,
+    cz = (height - 1) / 2,
+    paved = (x, y) => mask[y]?.[x] === '#';
+  // Flood the open air in from the rectangle's edge; what is left unreached is a hole.
+  const outside = new Set(),
+    queue = [];
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++)
+      if (!paved(x, y) && (x === 0 || y === 0 || x === width - 1 || y === height - 1)) {
+        outside.add(y * width + x);
+        queue.push([x, y]);
+      }
+  while (queue.length) {
+    const [x, y] = queue.pop();
+    for (const [dx, dy] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1]
+    ]) {
+      const nx = x + dx,
+        ny = y + dy,
+        k = ny * width + nx;
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height || paved(nx, ny) || outside.has(k)) continue;
+      outside.add(k);
+      queue.push([nx, ny]);
+    }
+  }
+  const holes = [];
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) if (!paved(x, y) && !outside.has(y * width + x)) holes.push([x, y]);
+  const levels = [-0.9, -1.3, -1.8, -2.5, -3.3, -4.3, -5.4, -6.6, -8.2],
+    cols = 6;
+  for (const [hx, hy] of holes) {
+    const wx = hx - cx,
+      wz = hy - cz;
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1]
+    ]) {
+      if (!paved(hx + dx, hy + dz)) continue;
+      // Along the wall (u) and into the hole (n).
+      const ux = -dz,
+        uz = dx,
+        ex = wx + dx * 0.5,
+        ez = wz + dz * 0.5;
+      const grid = levels.map((y, k) =>
+        Array.from({ length: cols + 1 }, (_, c) => {
+          const t = c / cols - 0.5,
+            ends = Math.sin(Math.PI * (t + 0.5)),
+            px = Math.round((ex + ux * t) * 7),
+            pz = Math.round((ez + uz * t) * 7),
+            bulge = ends * (0.06 + 0.2 * hash(px * 31 + pz, k + 3) + 0.08 * Math.sin(y * 1.7 + px));
+          return [ex + ux * t - dx * bulge, y + (k && k < levels.length - 1 ? 0.12 * (hash(px + k, pz) - 0.5) : 0), ez + uz * t - dz * bulge];
+        })
+      );
+      for (let k = 0; k < levels.length - 1; k++)
+        for (let c = 0; c < cols; c++) {
+          const y = levels[k],
+            cell = hash(Math.round((ex + ux * (c / cols)) * 5) * 13 + Math.round(ez * 5), k);
+          let tone = m.mix(0x6f6b64, 0x958f84, cell);
+          if (cell > 0.85) tone = m.mix(tone, 0x8a6a52, 0.4);
+          tone = m.mix(tone, 0x2f3236, 0.45 * smooth(-0.8, -3.5, y));
+          tone = m.mix(tone, mist, 0.85 * smooth(-3.8, -7.6, y));
+          m.face([grid[k][c], grid[k + 1][c], grid[k + 1][c + 1], grid[k][c + 1]], tone, 0.88 + 0.1 * hash(c, k));
+        }
+      // A ledge of snow and a tuft partway down.
+      const t = hash(hx * 7 + dx, hy * 3 + dz) - 0.5,
+        y = -1.55 - 0.6 * hash(hx, hy + dx);
+      m.rock(ex + ux * t * 0.6 - dx * 0.12, y, ez + uz * t * 0.6 - dz * 0.12, 0.16, 0.05, 0.12, 0xc9d3dc, snow, 6, t);
+      tuft(m, ex + ux * (t * 0.6 + 0.15) - dx * 0.1, y + 0.03, ez + uz * (t * 0.6 + 0.15) - dz * 0.1, 0.16);
+    }
+  }
+  // The longer cleft (two holes, one behind the other) holds a chockstone and a pine.
+  const pair = holes.find(([x, y]) => holes.some(([a, b]) => a === x && b === y + 1));
+  if (pair) {
+    const x = pair[0] - cx,
+      z = pair[1] - cz + 0.5;
+    m.rock(x, -2.05, z + 0.1, 0.34, 0.4, 0.3, 0x6f6b64, 0x9a9488, 8, 0.7);
+    m.rock(x - 0.05, -1.72, z + 0.1, 0.22, 0.06, 0.18, 0xc9d3dc, snow, 7, 0.3);
+    cliffPine(m, x + 0.42, -1.25, z - 0.45, Math.PI, 0.45);
   }
 }
 
@@ -524,21 +623,22 @@ function secretWay(m, land) {
   const at = (x, z) => [x, land.ground(x, z), z];
   // The crags round about.
   for (const [x, z, w, h, d] of [
-    [-6.9, -6.9, 0.9, 2.6, 0.8],
-    [-5.6, -7.6, 0.8, 2.1, 0.7],
-    [-7.5, -5.6, 0.7, 1.8, 0.7],
-    [-4.6, -7.9, 0.6, 1.3, 0.5],
-    [-7.8, -4.3, 0.55, 1.1, 0.5],
-    [-6.2, -8.2, 0.7, 1.6, 0.6]
+    [-7.4, -5.6, 0.85, 2.5, 0.75],
+    [-6.6, -6.5, 0.7, 2.0, 0.6],
+    [-7.6, -4.1, 0.65, 1.6, 0.6],
+    [-5.9, -6.6, 0.5, 1.3, 0.45],
+    [-7.1, -3.3, 0.45, 0.9, 0.4]
   ]) {
+    if (!land.inside(x, z, 0.1)) continue;
     const [, y] = at(x, z);
     m.rock(x, y - 0.1, z, w, h, d, granite[r.range(0, 4) | 0], graniteLit, 9, r.range(0, 3));
     m.rock(x + w * 0.3, y + h * 0.85, z - d * 0.2, w * 0.6, h * 0.35, d * 0.55, granite[1], snow, 7, r.range(0, 3));
   }
   // The cleft faces the board, toward the tile the way comes out at.
-  const cx = -6.35,
-    cz = -5.75,
-    yaw = Math.atan2(1.2, 1.05),
+  // It sits at the end of the north-west spur, by (1,2), and faces that tile.
+  const cx = -6.55,
+    cz = -4.75,
+    yaw = Math.atan2(1.55, 0.75),
     base = land.ground(cx, cz);
   m.frame(cx, base, cz, yaw, 1, () => {
     const dark = 0x0f0e0d,
@@ -590,8 +690,11 @@ function secretWay(m, land) {
     for (let k = 0; k < 5; k++) tuft(m, r.range(-0.9, 0.9), 0, r.range(0.1, 0.7), r.range(0.12, 0.2));
   });
   // Pines on the crags.
-  oldPine(m, ...at(-6.7, -7.6), 0.8, 2.6, 0.7, 6);
-  oldPine(m, ...at(-7.9, -5.2), 0.62, 3.3, 0.55, 5);
+  for (const [x, z, s, yaw] of [
+    [-7.0, -6.3, 0.75, 2.6],
+    [-7.7, -4.9, 0.6, 3.3]
+  ])
+    if (land.inside(x, z, 0.2)) oldPine(m, ...at(x, z), s, yaw, 0.6, 5);
 }
 
 // Where the banks of cloud lie: [x, y, z, length, depth, yaw, puffs]. A broken ring
@@ -625,6 +728,7 @@ export {
   cliffSection,
   crag,
   snowPatches,
+  chasms,
   apronScree,
   ledgeLife,
   cliffPine,

@@ -26,7 +26,7 @@ const BEVEL = 0.007;
 const kerb = 0x667082;
 const moss = 0x2d3d36;
 // Tiles where the evening's rain still stands in a shallow puddle.
-const PUDDLES = new Set(['3,5', '8,8', '4,10', '10,3']);
+const PUDDLES = new Set(['5,5', '10,5', '4,10', '7,3']);
 
 // What lies on the paving: ginkgo leaves blown in from the court (thicker toward the north,
 // under the trees), a crack here and there, and the puddles.

@@ -4,7 +4,7 @@
 // a drum tower, and banks of pale mist lying in the low ground.
 import { circle } from '../scenery-kit.js';
 import { tiledRoof } from './roof-13.js';
-import { cypress, trailingWillow } from './garden-13.js';
+import { cypress } from './garden-13.js';
 import {
   put,
   mark,
@@ -157,7 +157,6 @@ function nearCity(m) {
   street(m, -15.9, -13.1, -26, 14.8, 'z');
   // South of the gate, facing it across the street.
   const south = [
-    [-8.6, 5.2, 3.2, 1.8, false],
     [-1.8, 5.4, 3.4, 1.9, true],
     [5.2, 5.2, 3.0, 1.7, false],
     [12.0, 5.0, 3.2, 1.8, false]
@@ -183,7 +182,6 @@ function nearCity(m) {
     [-13.5, -4.0]
   ])
     stoneLantern(m, x, STREET, z, 1.05);
-  trailingWillow(m, 20.6, 15.6, 0.95, 2.6, 12);
   for (const [x, z, s] of [
     [-14.6, -20.6, 1.1],
     [14.6, 8.5, 0.9],
@@ -297,7 +295,7 @@ function farHall(m, x, z, yaw, w, d, h, rise, base = STREET, lit = false) {
 function farCity(m) {
   const r = m.rng;
   // Rings of roofs, thinning with distance.
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 16; i++) {
     const a = r.range(0, circle),
       rad = r.range(25, 47),
       x = Math.cos(a) * rad,
@@ -386,7 +384,7 @@ function farCity(m) {
     );
   });
   // Mist lying in long low banks between the roofs.
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 7; i++) {
     const a = (i / 22) * circle + r.range(-0.1, 0.1),
       rad = r.range(26, 44),
       x = Math.cos(a) * rad,

@@ -8,32 +8,69 @@
 // ravine a grassy slope falls away; misty ranges close the view.
 import { Model } from '../scenery-kit.js';
 import { ground, plainLitter, beamBridge } from './paving-16.js';
-import { coverTile, rockTile, bambooClump, herbBed, censer } from './props-16.js';
+import { coverTile, rockTile, bambooClump, herbBed, censer, flagpole } from './props-16.js';
 import { greatHall, wing, eastGallery, eastGarden, rearCourt, PLAT } from './house-16.js';
 import { ravine, ravineLife, grounds, groundCover, farHills, mistBanks, heightS } from './ravine-16.js';
-import { hillWoods, bambooGroves, courtTrees, southWoods } from './woods-16.js';
-import { pottedPine } from './garden-13.js';
-import { walk, CX, CZ, granite, graniteShade, bronze, bronzeDark, verdigris, put, slab } from './kit-16.js';
+import { hillWoods, bambooGroves, courtTrees, southWoods, osmanthus } from './woods-16.js';
+import { pottedPine, taihuRock, bamboo, clump } from './garden-13.js';
+import { walk, CX, CZ, TOP, granite, graniteShade, bronze, bronzeDark, verdigris, put, slab } from './kit-16.js';
 
-// The court round the board, outside its tiles: large square tiles in the corners and before
-// the hall's terrace.
+// The court round the board, outside its tiles, out to the hall's terrace, the west wing and the
+// east gallery and down to the ravine's lip; the north-east corner is the little garden.
+// Where the ravine's north lip runs, by x (the board's own south and west edges).
+function courtLip(x) {
+  if (x < -5.5) return -1;
+  if (x < -4.5) return 0;
+  if (x < -3.5) return 1;
+  if (x < -2.5) return 2;
+  if (x < 2.5) return 4;
+  if (x < 4.5) return 3;
+  return 2;
+}
+const inGarden = (x, z) => (x > 4.5 && z < -2) || (x > 3.5 && z > -3 && z < -2);
 function courtFill(m) {
-  for (let x = -6.5; x < 6.5; x += 0.5)
-    for (let z = -6.75; z < -3.9; z += 0.5) {
-      const z1 = Math.min(z + 0.5, -3.9),
-        cx = x + 0.25,
+  const rows = [-6.75, -6.5];
+  for (let z = -6.0; z <= 4.0; z += 0.5) rows.push(z);
+  for (let x = -6.5; x < 7.12; x += 0.5) {
+    const xb = Math.min(x + 0.5, 7.12),
+      cx = (x + xb) / 2;
+    for (let i = 0; i < rows.length - 1; i++) {
+      const z = rows[i],
+        z1 = rows[i + 1],
         cz = (z + z1) / 2;
-      if (walk.has(Math.floor(cx + CX + 0.5) + ',' + Math.floor(cz + CZ + 0.5))) continue;
+      if (walk.has(Math.round(cx + CX) + ',' + Math.round(cz + CZ))) continue;
       if (Math.abs(cx) < 1.95 && cz < -6.05) continue;
-      put(m, [[x + 0.012, 0, z + 0.012], [x + 0.488, 0, z + 0.012], [x + 0.488, 0, z1 - 0.012], [x + 0.012, 0, z1 - 0.012]], m.mix(0x8b8e88, 0xa3a59e, m.rng.next() * 0.6));
-      put(m, [[x, -0.01, z], [x + 0.5, -0.01, z], [x + 0.5, -0.01, z1], [x, -0.01, z1]], 0x51554f);
+      if (cz > courtLip(cx)) continue;
+      put(m, [[x, -0.01, z], [xb, -0.01, z], [xb, -0.01, z1], [x, -0.01, z1]], 0x51554f);
+      if (inGarden(cx, cz)) {
+        // Moss and dark earth, a few fallen leaves.
+        put(m, [[x, 0.004, z], [xb, 0.004, z], [xb, 0.004, z1], [x, 0.004, z1]], [[x, z], [xb, z], [xb, z1], [x, z1]].map(([u, v]) => m.mix(0x55683f, 0x6f6450, 0.5 + 0.5 * Math.sin(u * 2.1 + v * 1.3))));
+        continue;
+      }
+      put(m, [[x + 0.012, 0, z + 0.012], [xb - 0.012, 0, z + 0.012], [xb - 0.012, 0, z1 - 0.012], [x + 0.012, 0, z1 - 0.012]], m.mix(0x8b8e88, 0xa3a59e, m.rng.next() * 0.6));
     }
-  // The strip between the board's east edge and the gallery.
-  for (let z = -6.75; z < 2.0; z += 0.5) {
-    const z1 = Math.min(z + 0.5, 2.0);
-    put(m, [[6.512, 0, z + 0.012], [7.11, 0, z + 0.012], [7.11, 0, z1 - 0.012], [6.512, 0, z1 - 0.012]], m.mix(0x8b8e88, 0xa3a59e, m.rng.next() * 0.6));
   }
-  put(m, [[6.5, -0.01, -6.75], [7.12, -0.01, -6.75], [7.12, -0.01, 2.0], [6.5, -0.01, 2.0]], 0x51554f);
+}
+// The little garden in the court's north-east corner: a pierced rock, an osmanthus, bamboo in
+// the angle of the gallery, and low flowering plants.
+function cornerGarden(m) {
+  const r = m.rng;
+  taihuRock(m, 5.75, -3.05, 0.62, 0);
+  osmanthus(m, 5.85, 0, -5.35, 0.78);
+  bamboo(m, 6.8, -4.1, 0.75, 6);
+  for (const [x, z] of [
+    [4.95, -2.45],
+    [6.4, -2.4],
+    [5.1, -4.3],
+    [6.6, -3.3],
+    [4.9, -3.6]
+  ]) {
+    clump(m, x, 0.12, z, 0.24, 0.16, 0.22, 0x2f4a2c, 0x5f8048, 6);
+    const col = r.pick([0xd8566b, 0xf2d6dc, 0xe8c86a, 0xb88ac0]);
+    for (let k = 0; k < 3; k++) m.box(x + r.range(-0.15, 0.15), 0.25 + r.range(0, 0.05), z + r.range(-0.12, 0.12), 0.06, 0.04, 0.06, col);
+  }
+  // A grey brick kerb along the gallery's foot.
+  slab(m, 7.0, 7.12, 0, 0.08, -6.45, -2.05, 0x6f7472);
 }
 // A great bronze water vat on a stone stand, kept full against fire.
 function waterVat(m, x, z) {
@@ -81,15 +118,16 @@ function boundaryStone(m, x, z) {
 function furnishings(m) {
   boundaryStone(m, -1.15, 7.0);
   courtFill(m);
-  for (const s of [-1, 1]) {
-    waterVat(m, s * 5.55, -5.45);
-    m.frame(s * 6.0, 0, -4.5, 0, 1, () => {
-      slab(m, -0.2, 0.2, 0, 0.12, -0.2, 0.2, granite);
-      pottedPine(m, 0, 0, 0.9);
-    });
-    // Orchids along the hall's terrace edge, either side of the steps.
-    for (const x of [2.5, 3.1]) orchidPot(m, s * x, PLAT, -6.95);
-  }
+  cornerGarden(m);
+  // The family's two flagpole stones flank the front of the hall, beyond the board's edge.
+  for (const s of [-1, 1]) m.frame(s * 4.1, -TOP, -5.55, 0, 1, () => flagpole(m));
+  waterVat(m, -5.55, -5.45);
+  m.frame(-6.0, 0, -4.5, 0, 1, () => {
+    slab(m, -0.2, 0.2, 0, 0.12, -0.2, 0.2, granite);
+    pottedPine(m, 0, 0, 0.9);
+  });
+  // Orchids along the hall's terrace edge, either side of the steps.
+  for (const s of [-1, 1]) for (const x of [2.5, 3.1]) orchidPot(m, s * x, PLAT, -6.95);
 }
 
 const tiles16 = {

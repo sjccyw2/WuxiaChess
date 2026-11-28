@@ -271,6 +271,18 @@ function oldCypress(m, cell) {
       ox += dx;
       oz += dz;
     }
+  // With board on all four sides, lean toward the nearest open corner.
+  if (!ox && !oz)
+    for (const [dx, dz] of [
+      [-1, -1],
+      [1, -1],
+      [-1, 1],
+      [1, 1]
+    ])
+      if (!onBoard(cell.x + dx, cell.y + dz)) {
+        ox += dx;
+        oz += dz;
+      }
   const l = Math.hypot(ox, oz) || 1;
   ox /= l;
   oz /= l;

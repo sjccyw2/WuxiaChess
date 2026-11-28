@@ -26,8 +26,13 @@ const hillTones = [0x5d6f5a, 0x6f7f72, 0x8a9690, 0xa5aeab];
 // masonry stands above, 'land' where the face meets the natural ground). The north lip runs west
 // to east and the south lip east to west, so the ravine always lies to the right of the line.
 const NORTH = [
-  { land: [[-36, 1.5], [-31, 2.1], [-26, 1.6], [-21, 2.4], [-16.5, 1.9], [-13.8, 2.1], [-12.4, 2.5], [-11.2, 2.32]] },
-  { wall: [[-11.2, 2.32], [-6.5, 2.32], [-6.5, 2.0], [-5.5, 2.0], [-5.5, 3.0], [-3.5, 3.0], [-3.5, 4.0], [3.5, 4.0], [3.5, 3.0], [5.5, 3.0], [5.5, 2.0], [6.5, 2.0], [6.5, 2.32], [14.0, 2.32]] },
+  { land: [[-36, -0.2], [-31, 0.5], [-26, -0.1], [-21, 0.8], [-16.5, 0.4], [-13.8, 0.6], [-12.4, 0.1], [-11.2, -0.68]] },
+  {
+    wall: [
+      [-11.2, -0.68], [-6.5, -0.68], [-6.5, -1.0], [-5.5, -1.0], [-5.5, 0.0], [-4.5, 0.0], [-4.5, 1.0], [-3.5, 1.0],
+      [-3.5, 2.0], [-2.5, 2.0], [-2.5, 4.0], [2.5, 4.0], [2.5, 3.0], [4.5, 3.0], [4.5, 2.0], [6.5, 2.0], [6.5, 2.32], [14.0, 2.32]
+    ]
+  },
   { land: [[14.0, 2.32], [15.2, 2.6], [17.5, 2.1], [21, 2.6], [25, 1.8], [30, 2.3], [36, 1.6]] }
 ];
 const SOUTH = [
@@ -52,7 +57,7 @@ function lipAt(sections, x) {
   }
   return best ?? (sections === NORTH ? 2 : 6.5);
 }
-const lipN = (x) => (x >= -11.2 && x <= 14.0 ? 2.32 : lipAt(NORTH, x));
+const lipN = (x) => lipAt(NORTH, x);
 const lipS = (x) => (Math.abs(x) <= 3.5 ? 6.0 : lipAt(SOUTH, x));
 
 // The ground north of the ravine: level lanes beside the house, rising into the hills behind.
@@ -199,8 +204,13 @@ function stream(m) {
   const r = m.rng,
     step = 0.5;
   for (let x = -36; x < 36; x += step) {
-    const z0 = (xx) => lipN(xx) - 0.6 + (Math.abs(xx) <= 3.5 ? 1.4 : Math.abs(xx) <= 5.5 ? 0.6 : 0),
-      z1 = (xx) => lipS(xx) + 0.5 - (Math.abs(xx) <= 3.5 ? 1.0 : 0);
+    // The water runs in under both faces; each strip takes the nearer lip across its width so the
+    // stepped north face never leaves a gap.
+    const across = [x, x + step / 2, x + step],
+      north = Math.min(...across.map(lipN)) - 0.5,
+      south = Math.max(...across.map((xx) => (Math.abs(xx) <= 3.5 ? 5.0 : lipS(xx)))) + 0.5,
+      z0 = () => north,
+      z1 = () => south;
     const cols = 6;
     for (let j = 0; j < cols; j++) {
       const t0 = j / cols,

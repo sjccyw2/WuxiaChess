@@ -44,6 +44,16 @@ function boardOff(x, z) {
   }
   return Math.sqrt(best);
 }
+// Water cut into the hall's floor: every gap in a row of the board that has the board on both
+// sides of it. On this board they are the two tide channels running in from the shallows at
+// the hall's ends, and a tide pool on each side further south.
+const water = [];
+layout.mask.forEach((row, y) => {
+  for (let x = 0; x < row.length; x++)
+    if (row[x] !== '#' && row.slice(0, x).includes('#') && row.slice(x + 1).includes('#')) water.push([x - CX, y - CZ]);
+});
+const inWater = (x, z, pad = 0) => water.some(([wx, wz]) => Math.abs(x - wx) <= 0.5 + pad && Math.abs(z - wz) <= 0.5 + pad);
+const isWaterCell = (x, z) => water.some(([wx, wz]) => wx === x && wz === z);
 // The carved walls stand on the rock tiles of the north row; the pillars on the others.
 const walls = tiles.filter((t) => t.kind === 'rock' && t.z === -CZ).map((t) => t.x);
 const pillars = tiles.filter((t) => t.kind === 'rock' && t.z !== -CZ).map((t) => [t.x, t.z]);
@@ -114,6 +124,9 @@ function mouth(x, z) {
   return smooth(4.4, 6.0, z) * (1 - smooth(4.6, 6.2, Math.abs(x)));
 }
 function floorHeight(x, z) {
+  // The channels and pools: a bed of rock and sand well under the sea, the board's own worn
+  // edges standing round them.
+  if (inWater(x, z, 0.001)) return SEA - 0.48 - 0.16 * noise(x * 2.7 + 1, z * 2.7 - 3);
   if (onBoard(x, z) && boardOff(x, z) === 0) return -0.12;
   const a = Math.atan2(z - ZC, x),
     R = footRadius(a),
@@ -338,6 +351,9 @@ export {
   layout,
   tiles,
   onBoard,
+  water,
+  inWater,
+  isWaterCell,
   kindAt,
   boardOff,
   walls,

@@ -19,7 +19,11 @@ import {
   channelZ,
   walls,
   lightAt,
-  toward
+  toward,
+  SEA,
+  onBoard,
+  isWaterCell,
+  floorHeight
 } from './kit-19.js';
 import { inlay, RING, WALK } from './inlay-19.js';
 
@@ -99,8 +103,76 @@ function ground(m, p, cell) {
     });
   }
   inlay(m, cell, (x, z, k) => tone(x, TOP, z, k));
+  waterEdges(m, cell, TOP);
   dress(m, cell, wx, wz);
   return true;
+}
+// Where a tile meets the sea (a channel, a pool, the water beyond the shallows) its edge is
+// worn rock: rounded over and down past the waterline, wet and dark, crusted pale with
+// barnacles at the tide mark and fringed with weed under it. A shallows tile spills over into
+// the channel below it in a line of foam.
+function waterEdges(m, cell, top) {
+  const wx = cell.x - CX,
+    wz = cell.y - CZ;
+  for (const [dx, dz] of [
+    [0, -1],
+    [1, 0],
+    [0, 1],
+    [-1, 0]
+  ]) {
+    const nx = wx + dx,
+      nz = wz + dz;
+    if (onBoard(nx, nz) || !(isWaterCell(nx, nz) || floorHeight(nx, nz) < SEA)) continue;
+    const tx = -dz,
+      tz = dx,
+      n = 8;
+    const P = (s, d, y) => [dx * (0.5 + d) + tx * s, y, dz * (0.5 + d) + tz * s];
+    const bands = (s) => {
+      const k = hash(wx * 3.1 + s * 7, wz * 2.3 + dx + 2 * dz);
+      return [
+        [-0.09, top],
+        [-0.03, top - 0.02 - 0.015 * k],
+        [0.03 + 0.04 * k, top - 0.09],
+        [0.07 + 0.05 * k, SEA + 0.07],
+        [0.09 + 0.04 * k, SEA - 0.22]
+      ];
+    };
+    const col = (j, s) => {
+      const x = wx + dx * 0.5 + tx * s,
+        z = wz + dz * 0.5 + tz * s;
+      const c = [0, 0, 0];
+      return j === 0
+        ? tone(x, top, z, 0.95)
+        : j === 1
+          ? tone(x, top, z, 1.08)
+          : j === 2
+            ? blend(tone(x, top, z, 0.55), rgb(0x34373a), 0.4)
+            : j === 3
+              ? blend(tone(x, SEA, z, 0.9), rgb(0xb0ab96), 0.55)
+              : blend(c, rgb(0x3e5a3e), 0.9);
+    };
+    let prev = null;
+    for (let i = 0; i <= n; i++) {
+      const sv = -0.5 + i / n,
+        b = bands(i === 0 || i === n ? 0.5 : sv);
+      const ring = b.map(([d, y], j) => [P(sv, d, y), col(j, sv)]);
+      if (prev)
+        for (let j = 0; j < ring.length - 1; j++)
+          toward(
+            m,
+            [prev[j][0], ring[j][0], ring[j + 1][0], prev[j + 1][0]],
+            [prev[j][1], ring[j][1], ring[j + 1][1], prev[j + 1][1]],
+            [dx, 0.4, dz]
+          );
+      prev = ring;
+    }
+    if (cell.kind === 'reeds' && isWaterCell(nx, nz))
+      for (let i = 0; i < 6; i++) {
+        const s0 = -0.45 + i * 0.16,
+          d = 0.12 + 0.06 * hash(i, wx);
+        toward(m, [P(s0, d, SEA + 0.012), P(s0 + 0.13, d + 0.03, SEA + 0.012), P(s0 + 0.13, d + 0.09, SEA + 0.012), P(s0, d + 0.05, SEA + 0.012)], 0xe3ece9);
+      }
+  }
 }
 // The marks on a tile's face: tooling, cracks, grit, a drift of sand, weed by the water.
 function dress(m, cell, wx, wz) {
@@ -356,6 +428,7 @@ function herbBed(m, p, cell) {
 function shallows(m, p, cell) {
   const r = m.rng,
     wx = cell.x - CX;
+  waterEdges(m, cell, -0.03);
   for (let k = 0; k < 4; k++) {
     const x = r.range(-0.38, 0.38),
       z = r.range(-0.38, 0.38),

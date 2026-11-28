@@ -236,10 +236,10 @@ function steleFragment(m, cell, r) {
 const lamps = [
   [-0.5, -1.5],
   [0.5, -1.5],
-  [-0.5, 0.5],
-  [0.5, 0.5],
   [-0.5, 2.5],
   [0.5, 2.5],
+  [-0.5, 3.5],
+  [0.5, 3.5],
   [-1.5, 4.5],
   [1.5, 4.5]
 ];
@@ -444,8 +444,8 @@ function ground(m, p, cell) {
     m.crystal(cx + 0.05, bed + 0.03, cz - 0.03, 0.016, 0.04, 0x5a7a44, r.pick([0xe9e4d6, 0x8c6fcf, 0xe8c454]), 4);
   }
   // Snow drifted against the north side of the tiles along the north edge.
-  if (open && !onBoard(cell.x, cell.y - 1)) drift(m, r.range(-0.15, 0.15), -0.43, 0.36, 0.06, r);
-  if (open && !onBoard(cell.x - 1, cell.y) && cell.y < 6) drift(m, -0.43, r.range(-0.2, 0.2), 0.3, 0.05, r, Math.PI / 2);
+  if (open && cell.y <= 2 && !onBoard(cell.x, cell.y - 1)) drift(m, r.range(-0.15, 0.15), -0.38, 0.34, 0.06, r);
+  if (open && !onBoard(cell.x - 1, cell.y) && cell.y < 6) drift(m, -0.38, r.range(-0.2, 0.2), 0.3, 0.05, r, Math.PI / 2);
   sacredWayLamps(m, wx, wz);
   if (cell.x === altar[0] + midX && cell.y === altar[1] + midZ) dais(m);
   if (inCourt(wx, wz) || Math.hypot(wx - altar[0], wz - altar[1]) < 2) altarRing(m, wx, wz);
@@ -711,7 +711,7 @@ function ruins(m, p, cell) {
   const { x, y } = cell;
   if (y < 9) drift(m, 0.34, -0.42, 0.2, 0.05, m.rng, 0.3);
   if ((x === 4 || x === 8) && y === 0) return ruinedWall(m, cell);
-  if ((x === 0 || x === 12) && y === 7) return ruinedWall(m, cell);
+  if ((x === 0 && y === 6) || (x === 10 && y === 7)) return ruinedWall(m, cell);
   if ((x === 5 || x === 7) && (y === 5 || y === 10)) return tortoiseStele(m, cell);
   return brokenStele(m, cell);
 }

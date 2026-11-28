@@ -18,6 +18,7 @@ import {
   mouth,
   alcoveLamps,
   openings,
+  water,
   floorHeight,
   lightAt,
   toward
@@ -506,11 +507,82 @@ function landing(m) {
   m.box(sx + 0.55, floorHeight(sx + 0.55, sz + 0.62) + 0.03, sz + 0.62, 0.22, 0.015, 0.07, 0x7a5a38);
 }
 
+// The water in the channels and pools cut into the floor: deep and dark in the middle, paler
+// over the shelving rock at the edges, with a lace of foam where it laps the worn lips, slow
+// rings of ripples, and here and there a weed-hung stone or a starfish on one.
+function cutWater(m) {
+  const r = m.rng,
+    y = SEA + 0.004,
+    G = 6;
+  const tint = (x, z) => {
+    const d = boardOff(x, z),
+      deep = smooth(0.05, 0.42, d);
+    return blend(rgb(0x55837f), rgb(0x1d3b41), deep).map((v) => v * (0.92 + 0.12 * noise(x * 3, z * 3)));
+  };
+  for (const [cx, cz] of water) {
+    const at = (i, j) => [cx - 0.5 + i / G, y, cz - 0.5 + j / G];
+    for (let j = 0; j < G; j++)
+      for (let i = 0; i < G; i++) {
+        const q = [at(i, j), at(i, j + 1), at(i + 1, j + 1), at(i + 1, j)];
+        toward(m, q, q.map((p) => tint(p[0], p[2])));
+      }
+    // Foam along every side of the cell that meets the floor.
+    for (const [dx, dz] of [
+      [0, -1],
+      [1, 0],
+      [0, 1],
+      [-1, 0]
+    ]) {
+      if (water.some(([wx, wz]) => wx === cx + dx && wz === cz + dz)) continue;
+      const tx = -dz,
+        tz = dx;
+      for (let k = 0; k < 9; k++) {
+        const s0 = r.range(-0.5, 0.42),
+          len = r.range(0.05, 0.2),
+          dd = r.range(0.1, 0.24),
+          w = r.range(0.012, 0.035),
+          bow = r.range(-0.03, 0.03);
+        const P = (s, d) => [cx + dx * (0.5 - d) + tx * s, y + 0.003, cz + dz * (0.5 - d) + tz * s];
+        const e = Math.min(0.5, s0 + len),
+          mid = (s0 + e) / 2;
+        toward(m, [P(s0, dd), P(mid, dd + bow), P(e, dd), P(e, dd + w * 0.4), P(mid, dd + bow + w), P(s0, dd + w * 0.4)], 0xdde7e4);
+      }
+    }
+    // Ripple rings and a stone or two.
+    for (let k = 0; k < 2; k++) {
+      const x = cx + r.range(-0.22, 0.22),
+        z = cz + r.range(-0.22, 0.22),
+        rad = r.range(0.06, 0.14);
+      let prev = null;
+      for (let i = 0; i <= 12; i++) {
+        const a = (i / 12) * circle,
+          p = [x + Math.cos(a) * rad, y + 0.002, z + Math.sin(a) * rad * 0.8];
+        if (prev && i % 3) toward(m, [prev, p, [p[0], p[1], p[2] + 0.008], [prev[0], prev[1], prev[2] + 0.008]], rgb(0x7fa6a2));
+        prev = p;
+      }
+    }
+    if (hash(cx, cz + 4) < 0.7) {
+      const x = cx + r.range(-0.25, 0.25),
+        z = cz + r.range(-0.25, 0.25);
+      seaRock(m, x, SEA - 0.4, z, r.range(0.09, 0.16), r.range(0.45, 0.6), r.range(0.08, 0.13), 0.5, 7);
+      wrack(m, x + 0.05, z + 0.08, 0.5);
+      if (hash(cz, cx) < 0.5) {
+        const sy = SEA + 0.1;
+        for (let k = 0; k < 5; k++) {
+          const a = (k * circle) / 5;
+          m.leaf([x, sy + 0.01, z], [x + Math.cos(a) * 0.06, sy + 0.012, z + Math.sin(a) * 0.06], 0.015, 0xc0683c, 0xd88a52, 0.005);
+        }
+      }
+    }
+  }
+}
+
 function shore(T) {
   const m = new Model(T, 196013);
   rocks(m);
   talus(m);
   northLedge(m);
+  cutWater(m);
   foam(m);
   strand(m);
   const post = jetty(m);
