@@ -76,7 +76,12 @@ function court(m, layout) {
     for (let gz = -18; gz <= 11; gz++) {
       const x = gx,
         z = gz + 0.5;
-      if (onBoard(x + cx, z + cz) || isBed(x + cx, z + cz) || isWall(x + cx, z + cz) || isBuilt(x, z))
+      if (
+        onBoard(x + cx, z + cz) ||
+        isBed(x + cx, z + cz) ||
+        isWall(x + cx, z + cz) ||
+        isBuilt(x, z)
+      )
         continue;
       put(
         m,
@@ -344,8 +349,9 @@ function sideWalls(m) {
           m.box(wx + s * 0.31, 0.89, pz, 0.03, 0.03, 0.18, stoneDark);
         }
         mark(m, wx, 0.8, pz, 0.8);
-      } else
-        // A lattice window through the wall, framed in stone.
+      }
+      // A lattice window through the wall, framed in stone.
+      else
         for (const s of [-1, 1]) {
           const fx = wx + s * 0.215;
           m.box(fx, 0.45, wz, 0.02, 0.42, 0.56, stone);
@@ -410,12 +416,38 @@ function beds(m) {
           pz = wz + r.range(-0.42, 0.42),
           a = r.range(0, circle),
           l = r.range(0.12, 0.2);
-        m.leaf([px, BED, pz], [px + Math.cos(a) * l * 0.4, BED + l, pz + Math.sin(a) * l * 0.4], 0.02, 0x3d5a34, 0x6a8a4c, 0.03);
+        m.leaf(
+          [px, BED, pz],
+          [px + Math.cos(a) * l * 0.4, BED + l, pz + Math.sin(a) * l * 0.4],
+          0.02,
+          0x3d5a34,
+          0x6a8a4c,
+          0.03
+        );
       }
       if (r.next() < 0.45)
         for (let k = 0; k < 3; k++)
-          m.box(wx + r.range(-0.35, 0.35), BED + r.range(0.12, 0.3), wz + r.range(-0.35, 0.35), 0.04, 0.04, 0.04, r.pick([0xd8c070, 0xc888a8, 0xe8e0d0]));
-      if (r.next() < 0.3) m.rock(wx + r.range(-0.3, 0.3), BED - 0.02, wz + r.range(-0.3, 0.3), 0.14, 0.14, 0.11, 0x56606e, 0x8a94a2, 7);
+          m.box(
+            wx + r.range(-0.35, 0.35),
+            BED + r.range(0.12, 0.3),
+            wz + r.range(-0.35, 0.35),
+            0.04,
+            0.04,
+            0.04,
+            r.pick([0xd8c070, 0xc888a8, 0xe8e0d0])
+          );
+      if (r.next() < 0.3)
+        m.rock(
+          wx + r.range(-0.3, 0.3),
+          BED - 0.02,
+          wz + r.range(-0.3, 0.3),
+          0.14,
+          0.14,
+          0.11,
+          0x56606e,
+          0x8a94a2,
+          7
+        );
     }
   for (const sx of [-1, 1]) {
     osmanthus(m, sx * 5.75, -5.45, 0.95, BED);

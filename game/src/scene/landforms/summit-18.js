@@ -84,6 +84,12 @@ function summit(layout) {
     return r;
   });
   top = blur(top, 1).map((r, i) => Math.max(r, rim[i] + 0.28));
+  // The gap at (3,1) opens into a gully between the spur and the hall's terrace: there
+  // the rock falls away right at the board's edge.
+  for (let i = 0; i < SPOKES; i++) {
+    const d = ((i / SPOKES) * 360 + 540) % 360 - 180;
+    if (d > -123.5 && d < -115) top[i] = rim[i] + 0.04;
+  }
   const broad = top.map((r, i) => smooth(0.45, 1.2, r - rim[i]));
   top = top.map((r, i) => r + 0.12 * Math.sin(i * 0.41) * Math.sin(i * 0.13 + 1) + 0.05 * Math.sin(i * 1.7));
   const lip = broad.map((g, i) => lerp(-0.46, -0.26, g) + 0.04 * Math.sin(i * 0.9));

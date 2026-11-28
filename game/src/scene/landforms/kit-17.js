@@ -56,8 +56,7 @@ const courtLanterns = [
 // east and west is a wall between a side court and the centre; a board cell with such walls
 // north and south of it is the doorway through them; every other void cell is a planted bed.
 const inBounds = (x, y) => x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT;
-const isWall = (x, y) =>
-  inBounds(x, y) && !onBoard(x, y) && onBoard(x - 1, y) && onBoard(x + 1, y);
+const isWall = (x, y) => inBounds(x, y) && !onBoard(x, y) && onBoard(x - 1, y) && onBoard(x + 1, y);
 const isBed = (x, y) => inBounds(x, y) && !onBoard(x, y) && !isWall(x, y);
 const doorways = cells.filter((c) => isWall(c.x, c.y - 1) && isWall(c.x, c.y + 1));
 // Each doorway has a lamp on the pier either side of it.
