@@ -1409,10 +1409,10 @@ function boardModel(map, stage, s = null, live = false, route = null) {
     r = s?.run;
   const masters = board.masters.map((ref) => pieceName(map, ref));
   const kind = s ? G.boardKind(s) : board.kind;
-  // The board's objects, by kind of thing: '七弦琴', '星索樁兩根'.
+  // The board's objects, by kind of thing: '七弦琴', '星索樁兩根', '鐵籠兩口'.
   const things = [...new Set((board.objects || []).map((o) => o.id.split('#')[0]))].map((key) => {
     const n = board.objects.filter((o) => o.id.split('#')[0] === key).length;
-    return G.DETAILS[key].name + (n > 1 ? COUNT_WORDS[n] + '根' : '');
+    return G.DETAILS[key].name + (n > 1 ? COUNT_WORDS[n] + (G.DETAILS[key].measure || '根') : '');
   });
   // How the board is won, in one plain line (the producer's ruling of 2026-11-23: this page
   // states rules, once): the kind's name, the board's own condition, then what need not be done.

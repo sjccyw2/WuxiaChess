@@ -929,7 +929,11 @@ function inkGoal() {
       ? '全數敵軍'
       : m.kind === 'keep' || m.kind === 'break'
         ? m.thingNames.join('、')
-        : m.masterNames.join('、');
+        : // Three or more masters (石樑溫家's five) are named by the first: 溫方達等五人. The
+          // briefing names them all.
+          m.masterNames.length > 2
+          ? m.masterNames[0] + '等' + '　一兩三四五六七八九'[m.masterNames.length] + '人'
+          : m.masterNames.join('、');
   const left = Math.max(0, m.roundLimit - state.round + 1);
   const html =
     `<b>${P.esc(m.kindName)}　${P.esc(what)}</b>` +

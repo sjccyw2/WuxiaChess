@@ -256,7 +256,7 @@ const EVENTS = [
   ['lineHit', (e) => e.text.startsWith('被穿透的勁力擊中')],
   ['mirrored', (e) => e.text.startsWith('斗轉星移反震')],
   ['ropeBroke', (e) => e.who === '星索'],
-  ['objectBroke', (e) => (e.who === '守物' || e.who === '破物') && /(毀了|倒了|盡數倒了)/.test(e.text)],
+  ['objectBroke', (e) => (e.who === '守物' || e.who === '破物') && /(毀了|倒了|破了)/.test(e.text)],
   ['glidedOff', (e) => /^出手後退開/.test(e.text)],
   ['dragged', (e) => e.text.startsWith('給一把扯到')],
   ['secondNeedle', (e) => e.text.startsWith('針影一分')],

@@ -3035,7 +3035,8 @@ function propBroken(s, u) {
   const name = unitDetails(u).name;
   if (propKind(u) === 'break') {
     const left = props(s).filter((v) => propKind(v) === 'break' && living(v)).length;
-    log(s, 'combat', left ? name + '倒了，尚餘 ' + left + ' 根。' : name + '盡數倒了。', '破物');
+    const { measure = '根', fall = '倒了' } = unitDetails(u);
+    log(s, 'combat', left ? name + fall + '，尚餘 ' + left + ' ' + measure + '。' : name + '盡數' + fall + '。', '破物');
   } else log(s, 'combat', name + '毀了。', '守物');
   sayObject(s, u, 'broken');
 }

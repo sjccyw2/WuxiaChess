@@ -39,7 +39,7 @@ const stonework = [
   [0x8e8a80, 0xb0aa9c, 0x5e5c56, 0x77746a, 0xa89a7c, 0x55786e], // 石樑溫家: grey brick and old stone
   [0x5e6272, 0x878b98, 0x3d4150, 0x50566a, 0xc39a5c, 0x40566a], // 萬安寺: temple brick by lamplight
   [0x9a968e, 0xbab4a8, 0x66635d, 0x86827a, 0xa9a397, 0x7f98a6], // 光明頂: summit granite
-  [0x7c8580, 0x9da59c, 0x4e5753, 0x66706a, 0xa8a088, 0x3f6f74] // 俠客島: cave stone and sea
+  [0x76746d, 0x8f8b80, 0x4b4a45, 0x5d5b55, 0x86827a, 0x36605f] // 俠客島: granite of the cave and the sea in its shallows
 ];
 // The boards built round one villain (10 on) borrow the tile language of an earlier board (how
 // its ground, sides and rims are cut) and dress the tiles that are theirs alone through their own

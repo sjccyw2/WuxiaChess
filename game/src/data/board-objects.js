@@ -15,6 +15,8 @@
 //   traits as a villain's (encounters.js): only `ward`, the share it takes off its master's blows
 //   art    its picture, game/assets/object-<art>.webp, and the broken one object-<art>-broken.webp
 //   size   its height on the board, as a share of a fighter's (never wider than a tile and a half)
+//   measure  the measure word it is counted with (星索樁兩根, 鐵籠兩口); '根' when not given
+//   fall   what a 'break' object does as it breaks, in the log (倒了, 破了); '倒了' when not given
 //
 // An object takes no turn, never strikes or counters, cannot be pushed, and takes no condition.
 // Its ids are kept in saves, like a piece's. Its story lines are its board's
@@ -73,6 +75,8 @@ const BOARD_OBJECTS = {
     school: '萬安寺',
     art: 'cage',
     size: 1.0,
+    measure: '口',
+    fall: '破了',
     row: 'lieutenant',
     hp: 0.6,
     def: 3,
