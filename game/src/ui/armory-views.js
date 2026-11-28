@@ -175,6 +175,33 @@ function formationCards(s, u, ui) {
     );
   };
   const bench = company.filter((a) => !seats.includes(a.id));
+  // Polish (inkLook): one row that scrolls sideways, the five sent out first and the bench after
+  // them; under it, 任為領隊 and 移至候補 for the hero shown (the producer, 2026-11-28).
+  if (POLISH.inkLook && manage) {
+    const active = seats.includes(u.id);
+    const sent = seats.filter(Boolean).length;
+    return (
+      '<section class="fo-formation ink-roster-wrap"><div class="ink-roster" role="group" aria-label="出陣與候補">' +
+      '<div class="fo-hand">' +
+      seats.map(card).join('') +
+      '</div><div class="fo-bench' +
+      (bench.length ? '' : ' vacant') +
+      '" ' +
+      dropAttrs('post', -1) +
+      '><span class="ink-bench-mark">候補</span>' +
+      (bench.length ? bench.map((v) => card(v.id, -1)).join('') : '<span class="ink-bench-empty">無</span>') +
+      '</div></div><div class="ink-roster-actions">' +
+      small('appoint', chief === u.id ? '現任領隊' : '任為領隊', 'data-id="' + u.id + '"', !active || chief === u.id) +
+      small(
+        'lineup',
+        active ? '移至候補' : '加入出陣',
+        'data-id="' + u.id + '"',
+        active ? sent <= 1 || chief === u.id : sent >= 5
+      ) +
+      planDiagram(s, seats, chief) +
+      '</div></section>'
+    );
+  }
   return (
     '<section class="fo-formation"><header class="fo-section"><h3>出陣</h3><span>' +
     seats.filter(Boolean).length +
